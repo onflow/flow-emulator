@@ -3,15 +3,15 @@ package emulator_test
 import (
 	"testing"
 
+	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/dapperlabs/flow-go-sdk/keys"
+	"github.com/dapperlabs/flow-go-sdk/templates"
+	"github.com/dapperlabs/flow-go-sdk/utils/unittest"
 	"github.com/dapperlabs/flow-go/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-emulator"
-	"github.com/dapperlabs/flow-go-sdk/keys"
-	"github.com/dapperlabs/flow-go-sdk/templates"
-	"github.com/dapperlabs/flow-go-sdk/utils/unittest"
 )
 
 const testContract = "pub contract Test {}"

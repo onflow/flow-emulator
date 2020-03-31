@@ -7,12 +7,12 @@ import (
 	"github.com/dapperlabs/cadence"
 	"github.com/dapperlabs/cadence/encoding"
 	"github.com/dapperlabs/cadence/runtime"
+	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/dapperlabs/flow-go-sdk/keys"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-emulator"
-	"github.com/dapperlabs/flow-go-sdk/keys"
 )
 
 func TestEventEmitted(t *testing.T) {

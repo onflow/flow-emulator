@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/dapperlabs/cadence"
+	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-emulator"
 )
 

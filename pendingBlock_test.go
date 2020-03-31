@@ -3,12 +3,12 @@ package emulator_test
 import (
 	"testing"
 
+	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/dapperlabs/flow-go-sdk/keys"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-emulator"
-	"github.com/dapperlabs/flow-go-sdk/keys"
 )
 
 func TestPendingBlockBeforeExecution(t *testing.T) {

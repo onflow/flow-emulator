@@ -4,12 +4,12 @@ import (
 	"testing"
 
 	"github.com/dapperlabs/cadence"
+	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/dapperlabs/flow-go-sdk/keys"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-emulator"
-	"github.com/dapperlabs/flow-go-sdk/keys"
 )
 
 func TestExecuteScript(t *testing.T) {
