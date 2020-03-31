@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/dapperlabs/cadence"
-	"github.com/dapperlabs/cadence/encoding"
+	encoding "github.com/dapperlabs/cadence/encoding/xdr"
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go-sdk/convert"
 	"github.com/dapperlabs/flow-go-sdk/utils/unittest"
@@ -19,7 +19,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/dapperlabs/flow-emulator"
+	emulator "github.com/dapperlabs/flow-emulator"
 	"github.com/dapperlabs/flow-emulator/mocks"
 	"github.com/dapperlabs/flow-emulator/server"
 	"github.com/dapperlabs/flow-emulator/types"
