@@ -8,11 +8,10 @@ import (
 	"github.com/dapperlabs/cadence"
 	"github.com/dapperlabs/cadence/encoding"
 	"github.com/dapperlabs/cadence/runtime"
-	"github.com/dapperlabs/flow-go/model/hash"
 
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/emulator/execution"
-	"github.com/dapperlabs/flow-go-sdk/emulator/types"
+	"github.com/dapperlabs/flow-emulator/execution"
+	"github.com/dapperlabs/flow-emulator/types"
 )
 
 // A computer uses a runtime instance to execute transactions and scripts.
@@ -82,7 +81,8 @@ func (c *computer) ExecuteTransaction(ledger *types.LedgerView, tx flow.Transact
 func (c *computer) ExecuteScript(view *types.LedgerView, script []byte) (ScriptResult, error) {
 	runtimeContext := execution.NewRuntimeContext(view)
 
-	scriptHash := hash.DefaultHasher.ComputeHash(script)
+	hasher := crypto.NewSHA3_256()
+	scriptHash := hasher.ComputeHash(script)
 
 	location := runtime.ScriptLocation(scriptHash)
 

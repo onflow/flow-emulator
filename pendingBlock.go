@@ -4,7 +4,7 @@ import (
 	"github.com/dapperlabs/flow-go/crypto"
 
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/emulator/types"
+	"github.com/dapperlabs/flow-emulator/types"
 )
 
 // A pendingBlock contains the pending state required to form a new block.

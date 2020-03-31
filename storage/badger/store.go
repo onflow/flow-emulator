@@ -8,8 +8,8 @@ import (
 
 	"github.com/dapperlabs/flow-go/crypto"
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/emulator/storage"
-	"github.com/dapperlabs/flow-go-sdk/emulator/types"
+	"github.com/dapperlabs/flow-emulator/storage"
+	"github.com/dapperlabs/flow-emulator/types"
 )
 
 // Store is an embedded storage implementation using Badger as the underlying

@@ -19,10 +19,10 @@ import (
 	"github.com/dapperlabs/cadence/runtime"
 
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/emulator/execution"
-	"github.com/dapperlabs/flow-go-sdk/emulator/storage"
-	"github.com/dapperlabs/flow-go-sdk/emulator/storage/memstore"
-	"github.com/dapperlabs/flow-go-sdk/emulator/types"
+	"github.com/dapperlabs/flow-emulator/execution"
+	"github.com/dapperlabs/flow-emulator/storage"
+	"github.com/dapperlabs/flow-emulator/storage/memstore"
+	"github.com/dapperlabs/flow-emulator/types"
 	"github.com/dapperlabs/flow-go-sdk/keys"
 	"github.com/dapperlabs/flow-go-sdk/templates"
 )
