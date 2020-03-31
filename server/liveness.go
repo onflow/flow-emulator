@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dapperlabs/flow-go-sdk/utils/liveness"
+	"github.com/dapperlabs/flow-emulator/server/liveness"
 )
 
 type LivenessTicker struct {
