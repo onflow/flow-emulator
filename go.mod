@@ -15,7 +15,9 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.5.1
 	github.com/psiemens/graceland v1.0.0
+	github.com/psiemens/sconfig v0.0.0-20190623041652-6e01eb1354fc
 	github.com/sirupsen/logrus v1.4.2
+	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.5.1
 	google.golang.org/grpc v1.28.0
 )
