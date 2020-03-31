@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dapperlabs/flow-go/crypto"
-
 	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/dapperlabs/flow-go/crypto"
 )
 
 // ErrBlockNotFound indicates that a block specified by hash or number cannot be found.

@@ -15,16 +15,16 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/dapperlabs/flow-go/crypto"
 	"github.com/dapperlabs/cadence/runtime"
-
 	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/dapperlabs/flow-go-sdk/keys"
+	"github.com/dapperlabs/flow-go-sdk/templates"
+	"github.com/dapperlabs/flow-go/crypto"
+
 	"github.com/dapperlabs/flow-emulator/execution"
 	"github.com/dapperlabs/flow-emulator/storage"
 	"github.com/dapperlabs/flow-emulator/storage/memstore"
 	"github.com/dapperlabs/flow-emulator/types"
-	"github.com/dapperlabs/flow-go-sdk/keys"
-	"github.com/dapperlabs/flow-go-sdk/templates"
 )
 
 // Blockchain emulates the functionality of the Flow blockchain.

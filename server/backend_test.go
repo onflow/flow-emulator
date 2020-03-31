@@ -6,6 +6,10 @@ import (
 	"testing"
 
 	"github.com/dapperlabs/cadence"
+	"github.com/dapperlabs/cadence/encoding"
+	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/dapperlabs/flow-go-sdk/convert"
+	"github.com/dapperlabs/flow-go-sdk/utils/unittest"
 	"github.com/dapperlabs/flow-go/protobuf/sdk/entities"
 	"github.com/dapperlabs/flow-go/protobuf/services/observation"
 	"github.com/golang/mock/gomock"
@@ -15,14 +19,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/convert"
 	"github.com/dapperlabs/flow-emulator"
 	"github.com/dapperlabs/flow-emulator/mocks"
 	"github.com/dapperlabs/flow-emulator/server"
 	"github.com/dapperlabs/flow-emulator/types"
-	"github.com/dapperlabs/flow-go-sdk/utils/unittest"
-	"github.com/dapperlabs/cadence/encoding"
 )
 
 func TestPing(t *testing.T) {

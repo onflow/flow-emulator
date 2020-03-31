@@ -7,18 +7,15 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/dapperlabs/flow-go/crypto"
-
 	"github.com/dapperlabs/flow-go-sdk"
-
-	"github.com/dapperlabs/flow-emulator/storage"
-	"github.com/dapperlabs/flow-emulator/types"
-
-	"github.com/dapperlabs/flow-emulator/storage/badger"
 	"github.com/dapperlabs/flow-go-sdk/utils/unittest"
-
+	"github.com/dapperlabs/flow-go/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/dapperlabs/flow-emulator/storage"
+	"github.com/dapperlabs/flow-emulator/storage/badger"
+	"github.com/dapperlabs/flow-emulator/types"
 )
 
 func TestBlocks(t *testing.T) {
