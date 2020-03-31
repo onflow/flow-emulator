@@ -8,7 +8,7 @@ import (
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dapperlabs/flow-emulator"
+	emulator "github.com/dapperlabs/flow-emulator"
 )
 
 const counterScript = `
@@ -37,13 +37,11 @@ const counterScript = `
 `
 
 var countIncrementedType = cadence.EventType{
-	CompositeType: cadence.CompositeType{
-		Identifier: "CountIncremented",
-		Fields: []cadence.Field{
-			{
-				Identifier: "count",
-				Type:       cadence.IntType{},
-			},
+	Identifier: "CountIncremented",
+	Fields: []cadence.Field{
+		{
+			Identifier: "count",
+			Type:       cadence.IntType{},
 		},
 	},
 }
