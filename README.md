@@ -88,7 +88,7 @@ flow keys generate
 
 ## Building
 
-To build the container locally, use `make docker-build-emulator` from the root of this repository.
+To build the container locally, use `make docker-build` from the root of this repository.
 
 Images are automatically built and pushed to `gcr.io/dl-flow/emulator` via [Team City](https://ci.eng.dapperlabs.com/project/Flow_FlowGo_FlowEmulator) on any push to master, i.e. Pull Request merge
 

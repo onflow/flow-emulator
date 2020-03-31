@@ -53,14 +53,14 @@ generate-mocks:
 ci: install-tools generate test coverage
 
 .PHONY: docker-build-emulator
-docker-build-emulator:
+docker-build:
 	docker build --ssh default -f cmd/emulator/Dockerfile -t gcr.io/dl-flow/emulator:latest -t "gcr.io/dl-flow/emulator:$(SHORT_COMMIT)" .
 ifneq (${VERSION},)
 	docker tag gcr.io/dl-flow/emulator:latest gcr.io/dl-flow/emulator:${VERSION}
 endif
 
 .PHONY: docker-push-emulator
-docker-push-emulator:
+docker-push:
 	docker push gcr.io/dl-flow/emulator:latest
 	docker push "gcr.io/dl-flow/emulator:$(SHORT_COMMIT)"
 ifneq (${VERSION},)
