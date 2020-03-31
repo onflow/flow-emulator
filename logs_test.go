@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dapperlabs/flow-go-sdk/emulator"
+	"github.com/dapperlabs/flow-emulator"
 )
 
 func TestRuntimeLogs(t *testing.T) {

@@ -1,10 +1,8 @@
 package types
 
 import (
-	"github.com/dapperlabs/flow-go/crypto"
-	"github.com/dapperlabs/flow-go/model/hash"
-
 	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/dapperlabs/flow-go/crypto"
 )
 
 // Block is a naive data structure used to represent blocks in the emulator.
@@ -16,7 +14,8 @@ type Block struct {
 
 // Hash returns the hash of this block.
 func (b Block) Hash() crypto.Hash {
-	return hash.DefaultHasher.ComputeHash(b.Encode())
+	hasher := crypto.NewSHA3_256()
+	return hasher.ComputeHash(b.Encode())
 }
 
 func (b Block) Encode() []byte {

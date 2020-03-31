@@ -5,15 +5,16 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/psiemens/graceland"
 	"github.com/sirupsen/logrus"
 
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/emulator"
-	"github.com/dapperlabs/flow-go-sdk/emulator/storage"
-	"github.com/dapperlabs/flow-go-sdk/emulator/storage/badger"
-	"github.com/dapperlabs/flow-go-sdk/emulator/storage/memstore"
 	"github.com/dapperlabs/flow-go-sdk/keys"
-	"github.com/dapperlabs/flow-go-sdk/utils/graceful"
+
+	"github.com/dapperlabs/flow-emulator"
+	"github.com/dapperlabs/flow-emulator/storage"
+	"github.com/dapperlabs/flow-emulator/storage/badger"
+	"github.com/dapperlabs/flow-emulator/storage/memstore"
 )
 
 // EmulatorServer is a local server that runs a Flow Emulator instance.
@@ -129,7 +130,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 func (s *EmulatorServer) Start() {
 	defer s.cleanup()
 
-	g := graceful.NewGroup()
+	g := graceland.NewGroup()
 
 	s.logger.
 		WithField("port", s.config.GRPCPort).

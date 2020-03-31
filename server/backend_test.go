@@ -17,10 +17,10 @@ import (
 
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go-sdk/convert"
-	"github.com/dapperlabs/flow-go-sdk/emulator"
-	"github.com/dapperlabs/flow-go-sdk/emulator/mocks"
-	"github.com/dapperlabs/flow-go-sdk/emulator/server"
-	"github.com/dapperlabs/flow-go-sdk/emulator/types"
+	"github.com/dapperlabs/flow-emulator"
+	"github.com/dapperlabs/flow-emulator/mocks"
+	"github.com/dapperlabs/flow-emulator/server"
+	"github.com/dapperlabs/flow-emulator/types"
 	"github.com/dapperlabs/flow-go-sdk/utils/unittest"
 	"github.com/dapperlabs/cadence/encoding"
 )
