@@ -61,7 +61,8 @@ Here's how to run the emulator Docker image on port 9001 in verbose mode:
 docker run -e FLOW_PORT=9001 -e FLOW_VERBOSE=true gcr.io/dl-flow/emulator
 ```
 
-The full list of configurable variables is specified [by the config of the `start` command](https://github.com/dapperlabs/flow-go-sdk/blob/master/cli/emulator/start/start.go#L20-L27).
+The full list of configurable variables is specified [by the `Config` struct](cmd/emulator/main.go). 
+
 The environment variable names are the upper-case struct fields names, prefixed with `FLOW_`.
 
 #### Accounts
@@ -121,6 +122,7 @@ kubectl port-forward -n flow $EMULATOR_POD_NAME 3569:3569
 If you are in the same namespace (flow), you can simply access the service via it's service name, e.g. `flow-emulator-v1`.
 If you are in a different namespace, you will need to use a [Service without selectors](https://kubernetes.io/docs/concepts/services-networking/service/#services-without-selectors)
 e.g.
+
 ```yaml
 kind: Service
 apiVersion: v1
