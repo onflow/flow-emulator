@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/dapperlabs/cadence/runtime/interpreter"
-	"github.com/dapperlabs/flow-go/crypto"
 	"github.com/dapperlabs/cadence"
 	"github.com/dapperlabs/cadence/encoding"
 	"github.com/dapperlabs/cadence/runtime"
+	"github.com/dapperlabs/cadence/runtime/interpreter"
+	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/dapperlabs/flow-go-sdk/keys"
+	"github.com/dapperlabs/flow-go/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-emulator"
-	"github.com/dapperlabs/flow-go-sdk/keys"
 )
 
 func TestSubmitTransaction(t *testing.T) {

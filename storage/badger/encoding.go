@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 
 	"github.com/dapperlabs/flow-go-sdk"
+
 	"github.com/dapperlabs/flow-emulator/types"
 )
 

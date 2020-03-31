@@ -4,12 +4,11 @@ import (
 	"encoding/hex"
 	"time"
 
+	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/dapperlabs/flow-go-sdk/keys"
 	"github.com/pkg/errors"
 	"github.com/psiemens/graceland"
 	"github.com/sirupsen/logrus"
-
-	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/keys"
 
 	"github.com/dapperlabs/flow-emulator"
 	"github.com/dapperlabs/flow-emulator/storage"

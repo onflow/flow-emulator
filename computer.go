@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/dapperlabs/flow-go/crypto"
 	"github.com/dapperlabs/cadence"
 	"github.com/dapperlabs/cadence/encoding"
 	"github.com/dapperlabs/cadence/runtime"
-
 	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/dapperlabs/flow-go/crypto"
+
 	"github.com/dapperlabs/flow-emulator/execution"
 	"github.com/dapperlabs/flow-emulator/types"
 )

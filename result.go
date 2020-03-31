@@ -1,10 +1,9 @@
 package emulator
 
 import (
-	"github.com/dapperlabs/flow-go/crypto"
 	"github.com/dapperlabs/cadence"
-
 	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/dapperlabs/flow-go/crypto"
 )
 
 // A TransactionResult is the result of executing a transaction.

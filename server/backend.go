@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/dapperlabs/cadence/encoding"
+	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/dapperlabs/flow-go-sdk/convert"
 	"github.com/dapperlabs/flow-go/crypto"
 	"github.com/dapperlabs/flow-go/protobuf/sdk/entities"
 	"github.com/dapperlabs/flow-go/protobuf/services/observation"
@@ -12,10 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/convert"
 	"github.com/dapperlabs/flow-emulator"
-	"github.com/dapperlabs/cadence/encoding"
 )
 
 // Backend wraps an emulated blockchain and implements the RPC handlers
