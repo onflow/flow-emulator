@@ -13,13 +13,13 @@ WORKDIR /app
 RUN mkdir -p /root/.ssh && ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
 RUN git config --global 'url.ssh://git@github.com/.insteadOf' https://github.com/
 
-COPY flow/emulator .
+COPY . .
 
 RUN --mount=type=ssh \
     --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     GO111MODULE=on CGO_ENABLED=0 GOOOS=linux GOARCH=amd64 \
-    go build -ldflags "-extldflags -static" -o ./app ./cmd/flow
+    go build -ldflags "-extldflags -static" -o ./app ./cmd/emulator
 
 ## Add the binary to a fresh distroless image
 FROM gcr.io/distroless/static
