@@ -7,11 +7,11 @@ with the real network API.
 
 ## Running the emulator with the Flow CLI
 
-The emulator is bundled with the Flow CLI, a command-line interface for working with Flow.
+The emulator is bundled with the [Flow CLI](https://github.com/dapperlabs/flow-cli), a command-line interface for working with Flow.
 
 ### Installation
 
-Follow [these steps](../../../cli/README.md) to install the Flow CLI.
+Follow [these steps](https://github.com/dapperlabs/flow-cli#flow-cli) to install the Flow CLI.
 
 ### Starting the server
 
@@ -80,9 +80,9 @@ unit tests) you can specify a hex-encoded key as an environment variable.
 docker run -e FLOW_ROOTKEY=<hex-encoded key> gcr.io/dl-flow/emulator
 ```
 
-To generate a root key, use the `keys generate` command.
+To generate a root key, use the `keys generate` command in the Flow CLI.
 ```bash
-docker run gcr.io/dl-flow/emulator keys generate
+flow keys generate
 ```
 
 ## Building
@@ -138,7 +138,7 @@ spec:
 
 ### Creating your own deployment
 
-Our current deployment settings are available in the [k8s](k8s) sub directory, if you'd like to setup the emulator in your own Kubernetes cluster. We are using the `Traefik` Ingress controller, but if that is not needed for your purposes, that can be removed, along with any corresponding annotations in the deployment file.
+Our current deployment settings are available in the [k8s](cmd/emulator/k8s) sub directory, if you'd like to setup the emulator in your own Kubernetes cluster. We are using the `Traefik` Ingress controller, but if that is not needed for your purposes, that can be removed, along with any corresponding annotations in the deployment file.
 
 If not using Kubernetes, you can run the Docker container independently. Make sure to run the Docker container with the gRPC port exposed (default is `3569`). Metrics are also available on port `8080` on the `/metrics` endpoint.
 
