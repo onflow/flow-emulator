@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/emulator"
+	"github.com/dapperlabs/flow-emulator"
 	"github.com/dapperlabs/flow-go-sdk/keys"
 )
 

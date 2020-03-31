@@ -5,7 +5,7 @@ import (
 	"encoding/gob"
 
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/emulator/types"
+	"github.com/dapperlabs/flow-emulator/types"
 )
 
 func encodeTransaction(tx flow.Transaction) ([]byte, error) {

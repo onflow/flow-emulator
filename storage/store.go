@@ -5,7 +5,7 @@ package storage
 import (
 	"github.com/dapperlabs/flow-go/crypto"
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/emulator/types"
+	"github.com/dapperlabs/flow-emulator/types"
 )
 
 // Store defines the storage layer for persistent chain state.

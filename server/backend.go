@@ -14,7 +14,7 @@ import (
 
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go-sdk/convert"
-	"github.com/dapperlabs/flow-go-sdk/emulator"
+	"github.com/dapperlabs/flow-emulator"
 	"github.com/dapperlabs/cadence/encoding"
 )
 
