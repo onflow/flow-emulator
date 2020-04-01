@@ -151,3 +151,17 @@ Make sure the emulator also has access to the same `flow.json` file, or always l
 ```bash
 docker run -e FLOW_ROOTKEY=<hex-encoded key> -e FLOW_DBPATH="/flowdb" -v "$(pwd)/flowdb":"/flowdb"  -p 3569:3569 gcr.io/dl-flow/emulator
 ```
+
+## Development
+
+Run a development version of emulator server:
+
+```shell script
+make run
+```
+
+Run all unit tests in this repository:
+
+```shell script
+make test
+```
