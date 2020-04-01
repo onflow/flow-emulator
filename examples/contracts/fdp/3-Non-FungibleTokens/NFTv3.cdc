@@ -112,7 +112,7 @@ access(all) contract NonFungibleToken {
         //
         // Function that mints a new NFT with a new ID
         // and deposits it in the recipients collection using their collection reference
-        access(all) fun mintNFT(recipient: &NFTReceiver) {
+        access(all) fun mintNFT(recipient: &AnyResource{NFTReceiver}) {
 
             // create a new NFT
             var newNFT <- create NFT(initID: self.idCount)
@@ -131,10 +131,11 @@ access(all) contract NonFungibleToken {
         destroy oldCollection
 
         // publish a reference to the Collection in storage
-        self.account.published[&NFTReceiver] = &self.account.storage[Collection] as &NFTReceiver
+        self.account.published[&AnyResource{NFTReceiver}] = &self.account.storage[Collection] as &AnyResource{NFTReceiver}
 
         // store a minter resource in account storage
         let oldMinter <- self.account.storage[NFTMinter] <- create NFTMinter()
         destroy oldMinter
 	}
 }
+ 

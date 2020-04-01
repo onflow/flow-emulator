@@ -10,7 +10,7 @@ access(all) fun main() {
 
     // Use optional chaining to read and log balance fields
     log("Account 1 Balance")
-	log(acct1.published[&FungibleToken.Receiver]?.balance)
+	log(acct1.published[&AnyResource{FungibleToken.Receiver}]?.balance)
     log("Account 2 Balance")
-    log(acct2.published[&FungibleToken.Receiver]?.balance)
+    log(acct2.published[&AnyResource{FungibleToken.Receiver}]?.balance)
 }
