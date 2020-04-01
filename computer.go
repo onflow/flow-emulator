@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/dapperlabs/cadence"
-	encoding "github.com/dapperlabs/cadence/encoding/xdr"
+	encoding "github.com/dapperlabs/cadence/encoding/json"
 	"github.com/dapperlabs/cadence/runtime"
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go/crypto"
