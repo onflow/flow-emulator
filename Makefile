@@ -28,7 +28,7 @@ test:
 
 .PHONY: run
 run:
-	GO111MODULE=on go run ./cmd
+	GO111MODULE=on go run ./cmd/emulator
 
 .PHONY: coverage
 coverage:
