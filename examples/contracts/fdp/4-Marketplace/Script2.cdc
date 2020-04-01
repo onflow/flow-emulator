@@ -10,7 +10,7 @@ pub fun main() {
     let account1 = getAccount(0x01)
 
     // Find the public Sale reference to their Collection
-    let acct1saleRef = account1.published[&Marketplace.SalePublic] ?? nil
+    let acct1saleRef = account1.published[&AnyResource{Marketplace.SalePublic}] ?? nil
 
     // Los the NFTs that are for sale
     log("Account 1 NFTs for sale")

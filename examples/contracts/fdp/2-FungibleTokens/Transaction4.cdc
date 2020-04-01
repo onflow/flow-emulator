@@ -18,7 +18,7 @@ transaction {
         let recipient = getAccount(0x01)
 
         // get the recipient's Receiver reference to their Vault
-        let receiverRef = recipient.published[&FungibleToken.Receiver] ?? panic("No receiver!")
+        let receiverRef = recipient.published[&AnyResource{FungibleToken.Receiver}] ?? panic("No receiver!")
 
         // deposit your tokens to their Vault
         receiverRef.deposit(from: <-self.temporaryVault)
@@ -26,3 +26,4 @@ transaction {
         log("Transfer succeeded!")
     }
 }
+ 

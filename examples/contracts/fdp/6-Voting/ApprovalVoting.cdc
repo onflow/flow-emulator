@@ -1,5 +1,6 @@
 /*
-* 
+*   ApprovalVoting.cdc 
+*
 *   In this example, we want to create a simple approval voting contract 
 *   where a polling place issues ballots to addresses. 
 *   
@@ -63,6 +64,13 @@ pub contract ApprovalVoting {
                 proposals.length > 0: "Cannot initialize with no proposals"
             }
             ApprovalVoting.proposals = proposals
+
+            // Set each tally of votes to zero
+            var i = 0
+            while i < proposals.length {
+                ApprovalVoting.votes[i] = 0
+                i = i + 1
+            }
         }
 
         // The admin calls this function to create a new Ballo

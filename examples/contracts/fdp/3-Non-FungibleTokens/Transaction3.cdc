@@ -7,14 +7,14 @@ import NonFungibleToken from 0x02
 transaction {
 
     // The reference to the collection that will be receiving the NFT
-    let receiverRef: &NonFungibleToken.NFTReceiver
+    let receiverRef: &AnyResource{NonFungibleToken.NFTReceiver}
 
     // The reference to the Minter resource stored in account storage
     let minterRef: &NonFungibleToken.NFTMinter
 
     prepare(acct: AuthAccount) {
         // Get the owner's collection reference
-        self.receiverRef = acct.published[&NonFungibleToken.NFTReceiver] ?? panic("No receiver")
+        self.receiverRef = acct.published[&AnyResource{NonFungibleToken.NFTReceiver}] ?? panic("No receiver")
         
         // Create a Reference to the minter resource
         self.minterRef = &acct.storage[NonFungibleToken.NFTMinter] as &NonFungibleToken.NFTMinter
