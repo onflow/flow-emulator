@@ -29,11 +29,10 @@ func TestPing(t *testing.T) {
 	ctx := context.Background()
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
-	server := server.NewBackend(logrus.New(), b)
+	backend := server.NewBackend(logrus.New(), b)
 
-	res, err := server.Ping(ctx, &observation.PingRequest{})
+	_, err = backend.Ping(ctx, &observation.PingRequest{})
 	assert.NoError(t, err)
-	assert.Equal(t, res.GetAddress(), []byte("pong!"))
 }
 
 func TestBackend(t *testing.T) {
