@@ -1,5 +1,7 @@
 import ApprovalVoting from 0x01
 
+// Transaction2.cdc
+//
 // This transaction allows the administrator of the Voting contract
 // to create a new ballot and store it in a voter's account
 // The voter and the administrator have to both sign the transaction
@@ -13,5 +15,7 @@ transaction {
 
         // store that ballot in the voter's account storage
         voter.storage[ApprovalVoting.Ballot] <-! ballot
+
+        log("Ballot transferred to voter")
     }
 }

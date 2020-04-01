@@ -95,3 +95,4 @@ access(all) contract NonFungibleToken {
         destroy oldCollection
 	}
 }
+ 

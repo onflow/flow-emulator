@@ -8,7 +8,7 @@ access(all) fun main() {
     let nftOwner = getAccount(0x03)
 
     // Find the public Receiver reference to their Collection
-    let collectionRef = nftOwner.published[&NonFungibleToken.NFTReceiver] ?? panic("missing reference!")
+    let collectionRef = nftOwner.published[&AnyResource{NonFungibleToken.NFTReceiver}] ?? panic("missing reference!")
 
     // Log the NFTs that they own as an array of IDs
     log("Account 3 NFTs")

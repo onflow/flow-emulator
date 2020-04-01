@@ -36,3 +36,4 @@ access(all) contract HelloWorld {
         log("HelloAsset created and stored")
 	}
 }
+ 

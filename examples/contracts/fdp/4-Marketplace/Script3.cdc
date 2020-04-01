@@ -15,8 +15,8 @@ pub fun main() {
 	let account2 = getAccount(0x02)
 
     // Get published Vault Receiver references from both accounts
-    let acct1ftRef = account1.published[&FungibleToken.Receiver] ?? panic("missing account 1 vault reference")
-    let acct2ftRef = account2.published[&FungibleToken.Receiver] ?? panic("missing account 2 vault reference")
+    let acct1ftRef = account1.published[&AnyResource{FungibleToken.Receiver}] ?? panic("missing account 1 vault reference")
+    let acct2ftRef = account2.published[&AnyResource{FungibleToken.Receiver}] ?? panic("missing account 2 vault reference")
 
     // Log the Vault balance of both accounts and ensure they are
     // the correct numbers.
@@ -34,8 +34,8 @@ pub fun main() {
     }
 
     // Get published NFT Collection Receiver references from both accounts
-    let acct1nftRef = account1.published[&NonFungibleToken.NFTReceiver] ?? panic("missing account 1 nft reference!")
-	let acct2nftRef = account2.published[&NonFungibleToken.NFTReceiver] ?? panic("missing account 2 nft reference!")
+    let acct1nftRef = account1.published[&AnyResource{NonFungibleToken.NFTReceiver}] ?? panic("missing account 1 nft reference!")
+	let acct2nftRef = account2.published[&AnyResource{NonFungibleToken.NFTReceiver}] ?? panic("missing account 2 nft reference!")
 
     // Log the NFT IDs that owned by both accounts.
     // Account 0x01 should have none
@@ -50,7 +50,7 @@ pub fun main() {
     }
 
     // Get the public sale reference for Account 0x01
-    let acct1SaleRef = account1.published[&Marketplace.SalePublic] ?? panic("missing account 1 Sale reference!")
+    let acct1SaleRef = account1.published[&AnyResource{Marketplace.SalePublic}] ?? panic("missing account 1 Sale reference!")
 
     // Print the NFTs that account 0x01 has for sale
     log("Account 1 NFTs for sale")

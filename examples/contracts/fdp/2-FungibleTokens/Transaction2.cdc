@@ -17,13 +17,14 @@ transaction {
         log("Empty Vault stored")
 
 		// Publish a new Receiver reference to the Vault
-		acct.published[&FungibleToken.Receiver] = &acct.storage[FungibleToken.Vault] as &FungibleToken.Receiver
+		acct.published[&AnyResource{FungibleToken.Receiver}] = &acct.storage[FungibleToken.Vault] as &AnyResource{FungibleToken.Receiver}
 
         log("Reference created")
 	}
 
     post {
         // Check that the reference was created correctly
-        getAccount(0x02).published[&FungibleToken.Receiver] != nil:  "Vault Receiver Reference was not created correctly"
+        getAccount(0x02).published[&AnyResource{FungibleToken.Receiver}] != nil:  "Vault Receiver Reference was not created correctly"
     }
 }
+ 
