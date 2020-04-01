@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/dapperlabs/cadence"
-	encoding "github.com/dapperlabs/cadence/encoding/xdr"
+	encoding "github.com/dapperlabs/cadence/encoding/json"
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go-sdk/convert"
 	"github.com/dapperlabs/flow-go-sdk/utils/unittest"
@@ -69,7 +69,7 @@ func TestBackend(t *testing.T) {
 		response, err := backend.ExecuteScript(context.Background(), &executionScriptRequest)
 		assert.NoError(t, err)
 
-		value, err := encoding.Decode(cadence.IntType{}, response.GetValue())
+		value, err := encoding.Decode(response.GetValue())
 		assert.NoError(t, err)
 
 		assert.Equal(t, cadence.NewInt(2137), value)
