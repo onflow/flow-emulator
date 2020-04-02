@@ -2,8 +2,7 @@
 
 import FungibleToken from 0x01
 
-// This transaction performs a token transfer from one account to another using the
-// FungibleToken contract.
+// This transaction mints tokens and deposits them into account 2's vault
 transaction {
 
     // Local variable for storing the reference to the minter resource
