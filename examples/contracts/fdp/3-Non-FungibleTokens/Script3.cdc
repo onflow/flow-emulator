@@ -9,8 +9,8 @@ pub fun main() {
 	let account2 = getAccount(0x02)
 
     // Get both Receiver references to their Collections
-    let acct1Ref = account1.published[&NonFungibleToken.NFTReceiver] ?? panic("missing account 1 reference!")
-	let acct2Ref = account2.published[&NonFungibleToken.NFTReceiver] ?? panic("missing account 2 reference!")
+    let acct1Ref = account1.published[&AnyResource{NonFungibleToken.NFTReceiver}] ?? panic("missing account 1 reference!")
+	let acct2Ref = account2.published[&AnyResource{NonFungibleToken.NFTReceiver}] ?? panic("missing account 2 reference!")
 
     // Print both collections as arrays of IDs
     log("Account 1 NFTs")

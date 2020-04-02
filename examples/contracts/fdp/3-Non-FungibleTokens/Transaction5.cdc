@@ -22,7 +22,7 @@ transaction {
         let recipient = getAccount(0x01)
 
         // Get the Collection reference for the receiver
-        let receiverRef = recipient.published[&NonFungibleToken.NFTReceiver] ?? panic("missing deposit reference")
+        let receiverRef = recipient.published[&AnyResource{NonFungibleToken.NFTReceiver}] ?? panic("missing deposit reference")
 
         // Deposit the NFT in the receivers collection
         receiverRef.deposit(token: <-self.transferToken)
@@ -30,3 +30,4 @@ transaction {
         log("NFT ID 1 transferred from account 2 to account 1")
     }
 }
+ 
