@@ -41,6 +41,13 @@ pub contract ApprovalVoting {
         init() {
             self.proposals = ApprovalVoting.proposals
             self.choices = {}
+            
+            // Set each choice to false
+            var i = 0
+            while i < self.proposals.length {
+                self.choices[i] = false
+                i = i + 1
+            }
         }
 
         // modifies the ballot

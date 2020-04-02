@@ -14,7 +14,7 @@ transaction {
         let ballot <- admin.storage[ApprovalVoting.Administrator]?.issueBallot()
 
         // store that ballot in the voter's account storage
-        voter.storage[ApprovalVoting.Ballot] <-! ballot
+        voter.storage[ApprovalVoting.Ballot] <-! ballot ?? panic("No ballot")
 
         log("Ballot transferred to voter")
     }
