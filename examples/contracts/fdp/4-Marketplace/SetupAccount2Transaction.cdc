@@ -9,7 +9,7 @@ import NonFungibleToken from 0x02
 transaction {
 
     // public receiver for account 1's NFT Collection
-    let acct1nftReceiver: &NonFungibleToken.NFTReceiver
+    let acct1nftReceiver: &AnyResource{NonFungibleToken.NFTReceiver}
 
     // Private reference to this account's minter resource
     let minterRef: &NonFungibleToken.NFTMinter
@@ -23,18 +23,18 @@ transaction {
         let oldVault <- acct.storage[FungibleToken.Vault] <- vaultA
         destroy oldVault
         // publish a receiver reference to the stored Vault
-        acct.published[&FungibleToken.Receiver] = &acct.storage[FungibleToken.Vault] as &FungibleToken.Receiver
+        acct.published[&AnyResource{FungibleToken.Receiver}] = &acct.storage[FungibleToken.Vault] as &AnyResource{FungibleToken.Receiver}
 
         log("Created a Vault and published a reference")
 
         // publish a public interface that only exposes ownedNFTs and deposit
-        acct.published[&NonFungibleToken.NFTReceiver] = &acct.storage[NonFungibleToken.Collection] as &NonFungibleToken.Collection
+        acct.published[&AnyResource{NonFungibleToken.NFTReceiver}] = &acct.storage[NonFungibleToken.Collection] as &AnyResource{NonFungibleToken.NFTReceiver}
 
         // get account 1's public account object
         let account1 = getAccount(0x01)
 
         // Get the NFT receiver public reference from account 1
-        self.acct1nftReceiver = account1.published[&NonFungibleToken.NFTReceiver] ?? panic("no receiver found")
+        self.acct1nftReceiver = account1.published[&AnyResource{NonFungibleToken.NFTReceiver}] ?? panic("no receiver found")
 
         // Get the Minter reference from account storage for account 2
         self.minterRef = &acct.storage[NonFungibleToken.NFTMinter] as &NonFungibleToken.NFTMinter
@@ -47,3 +47,4 @@ transaction {
         log("New NFT minted for account 1")
     }
 }
+ 
