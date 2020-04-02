@@ -18,8 +18,9 @@ transaction {
         log("Collection created for account 1")
 
         // Publish a public reference
-        acct.published[&NonFungibleToken.NFTReceiver] = &acct.storage[NonFungibleToken.Collection] as &NonFungibleToken.NFTReceiver
+        acct.published[&AnyResource{NonFungibleToken.NFTReceiver}] = &acct.storage[NonFungibleToken.Collection] as &AnyResource{NonFungibleToken.NFTReceiver}
 
         log("Reference published")
     }
 }
+ 

@@ -138,7 +138,9 @@ access(all) contract FungibleToken {
 
 		// Function that mints new tokens and deposits into an account's vault
 		// using their `Receiver` reference.
-        access(all) fun mintTokens(amount: UInt64, recipient: &Receiver) {
+        // We say `&AnyResource{Receiver}` to say that the recipient can be any resource
+        // as long as it implements and is cast as the Receiver interface
+        access(all) fun mintTokens(amount: UInt64, recipient: &AnyResource{Receiver}) {
 			FungibleToken.totalSupply = FungibleToken.totalSupply + UInt64(amount)
             recipient.deposit(from: <-create Vault(balance: amount))
         }
@@ -159,3 +161,4 @@ access(all) contract FungibleToken {
         destroy oldMinter
     }
 }
+ 

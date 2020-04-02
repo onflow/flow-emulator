@@ -7,7 +7,7 @@ transaction {
     prepare(acct: AuthAccount) {
 
         // Publish a public interface that only exposes "ownedNFTs", "deposit", "getIDs", and "idExists".
-        acct.published[&NonFungibleToken.NFTReceiver] = &acct.storage[NonFungibleToken.Collection] as &NonFungibleToken.NFTReceiver
+        acct.published[&AnyResource{NonFungibleToken.NFTReceiver}] = &acct.storage[NonFungibleToken.Collection] as &AnyResource{NonFungibleToken.NFTReceiver}
 
         log("Collection Reference created successfully")
     }

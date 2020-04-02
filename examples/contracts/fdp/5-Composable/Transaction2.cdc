@@ -26,8 +26,5 @@ transaction {
         // also moves its hat along with it.
         let oldKitty <- acct.storage[KittyVerse.Kitty] <- kitty
         destroy oldKitty
-
-        destroy kittyOpt
-        destroy cowboyHatOpt
     }
 }
