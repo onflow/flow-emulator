@@ -46,7 +46,7 @@ func decodeUint64(v *uint64, from []byte) error {
 	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(v)
 }
 
-func encodeLedger(ledger vm.Ledger) ([]byte, error) {
+func encodeLedger(ledger vm.MapLedger) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(&ledger); err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func encodeLedger(ledger vm.Ledger) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func decodeLedger(ledger *vm.Ledger, from []byte) error {
+func decodeLedger(ledger *vm.MapLedger, from []byte) error {
 	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(ledger)
 }
 

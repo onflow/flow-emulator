@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	encoding "github.com/dapperlabs/cadence/encoding/xdr"
+	encoding "github.com/dapperlabs/cadence/encoding/json"
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go-sdk/client/protobuf/convert"
 	"github.com/dapperlabs/flow-go/crypto"
@@ -94,8 +94,8 @@ func (b *Backend) GetLatestBlockHeader(ctx context.Context, req *access.GetLates
 	}
 
 	b.logger.WithFields(logrus.Fields{
-		"blockNum":  blockHeader.Height,
-		"blockHash": blockHeader.ID,
+		"blockHeight": blockHeader.Height,
+		"blockHash":   blockHeader.ID,
 	}).Debug("🎁  GetLatestBlock called")
 
 	response := &access.BlockHeaderResponse{
@@ -132,7 +132,7 @@ func (b *Backend) GetLatestBlock(ctx context.Context, req *access.GetLatestBlock
 	// }
 
 	// b.logger.WithFields(logrus.Fields{
-	// 	"blockNum":  blockHeader.Height,
+	// 	"blockHeight":  blockHeader.Height,
 	// 	"blockHash": blockHeader.ID,
 	// }).Debug("🎁  GetLatestBlock called")
 
@@ -179,20 +179,8 @@ func (b *Backend) GetTransaction(ctx context.Context, req *access.GetTransaction
 		WithField("txHash", hash.Hex()).
 		Debugf("💵  GetTransaction called")
 
-	txMsg := convert.TransactionToMessage(*tx)
-
-	eventMessages := make([]*entities.Event, len(tx.Events))
-	for i, event := range tx.Events {
-		eventMessages[i], err = convert.EventToMessage(event)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return &access.TransactionResponse{
-		Transaction: txMsg,
-		// TODO events
-		// Events:      eventMessages,
+		Transaction: convert.TransactionToMessage(*tx),
 	}, nil
 }
 
@@ -363,9 +351,9 @@ func (b *Backend) commitBlock() {
 	}
 
 	b.logger.WithFields(logrus.Fields{
-		"blockNum":  block.Number,
-		"blockHash": block.Hash().Hex(),
-		"blockSize": len(block.TransactionHashes),
+		"blockHeight": block.Number,
+		"blockHash":   block.Hash().Hex(),
+		"blockSize":   len(block.TransactionHashes),
 	}).Debugf("📦  Block #%d committed", block.Number)
 }
 
