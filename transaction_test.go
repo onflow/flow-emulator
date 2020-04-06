@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/dapperlabs/cadence"
-	encoding "github.com/dapperlabs/cadence/encoding/xdr"
+	encoding "github.com/dapperlabs/cadence/encoding/json"
 	"github.com/dapperlabs/cadence/runtime"
 	"github.com/dapperlabs/cadence/runtime/interpreter"
 	"github.com/dapperlabs/flow-go-sdk"
@@ -576,7 +576,7 @@ func TestGetTransaction(t *testing.T) {
 		require.Len(t, resTx.Events, 1)
 		actualEvent := resTx.Events[0]
 
-		eventValue, err := encoding.Decode(countIncrementedType, actualEvent.Payload)
+		eventValue, err := encoding.Decode(actualEvent.Payload)
 		require.NoError(t, err)
 
 		decodedEvent := eventValue.(cadence.Event)
