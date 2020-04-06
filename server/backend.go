@@ -37,11 +37,7 @@ func NewBackend(logger *logrus.Logger, blockchain emulator.BlockchainAPI) *Backe
 
 // Ping the Observation API server for a response.
 func (b *Backend) Ping(ctx context.Context, req *observation.PingRequest) (*observation.PingResponse, error) {
-	response := &observation.PingResponse{
-		Address: []byte("pong!"),
-	}
-
-	return response, nil
+	return &observation.PingResponse{}, nil
 }
 
 // SendTransaction submits a transaction to the network.
