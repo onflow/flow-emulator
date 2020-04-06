@@ -14,9 +14,7 @@ import (
 
 	"github.com/dapperlabs/cadence"
 	encoding "github.com/dapperlabs/cadence/encoding/json"
-	encoding "github.com/dapperlabs/cadence/encoding/xdr"
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go/protobuf/sdk/entities"
 	access "github.com/dapperlabs/flow/protobuf/go/flow/access"
 	"github.com/dapperlabs/flow/protobuf/go/flow/entities"
 
@@ -33,7 +31,7 @@ func TestPing(t *testing.T) {
 	require.NoError(t, err)
 	backend := server.NewBackend(logrus.New(), b)
 
-	_, err = server.Ping(ctx, &access.PingRequest{})
+	_, err = backend.Ping(ctx, &access.PingRequest{})
 	assert.NoError(t, err)
 }
 
