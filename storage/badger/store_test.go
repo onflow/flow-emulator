@@ -7,15 +7,16 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/utils/unittest"
-	"github.com/dapperlabs/flow-go/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/dapperlabs/flow-go/crypto"
 
 	"github.com/dapperlabs/flow-emulator/storage"
 	"github.com/dapperlabs/flow-emulator/storage/badger"
 	"github.com/dapperlabs/flow-emulator/types"
+	"github.com/dapperlabs/flow-emulator/utils/unittest"
 )
 
 func TestBlocks(t *testing.T) {
@@ -220,9 +221,7 @@ func TestEvents(t *testing.T) {
 	}()
 
 	t.Run("should be able to insert events", func(t *testing.T) {
-		events := []flow.Event{unittest.EventFixture(func(e *flow.Event) {
-			e.Payload = []byte{1, 2, 3, 4}
-		})}
+		events := []flow.Event{unittest.EventFixture(func(e *flow.Event) {})}
 		var blockNumber uint64 = 1
 
 		err := store.InsertEvents(blockNumber, events)
@@ -244,7 +243,6 @@ func TestEvents(t *testing.T) {
 			var events []flow.Event
 			for j := 1; j <= i; j++ {
 				event := unittest.EventFixture(func(e *flow.Event) {
-					e.Payload = []byte{1, 2, 3, 4}
 					e.Type = fmt.Sprintf("%d", j)
 				})
 				events = append(events, event)
@@ -325,9 +323,7 @@ func TestPersistence(t *testing.T) {
 
 	block := types.Block{Number: 1}
 	tx := unittest.TransactionFixture()
-	events := []flow.Event{unittest.EventFixture(func(e *flow.Event) {
-		e.Payload = []byte{1, 2, 3, 4}
-	})}
+	events := []flow.Event{unittest.EventFixture(func(e *flow.Event) {})}
 
 	ledger := make(types.LedgerDelta)
 	ledger["foo"] = []byte("bar")
