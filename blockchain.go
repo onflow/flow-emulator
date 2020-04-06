@@ -660,10 +660,7 @@ func (b *Blockchain) handleEvents(events []flow.Event, blockNumber uint64) {
 	for _, event := range events {
 		// update lastCreatedAccount if this is an AccountCreated event
 		if event.Type == flow.EventAccountCreated {
-			acctCreatedEvent, err := flow.DecodeAccountCreatedEvent(event.Payload)
-			if err != nil {
-				panic("failed to decode AccountCreated event")
-			}
+			acctCreatedEvent := flow.AccountCreatedEvent(event)
 
 			b.lastCreatedAddress = acctCreatedEvent.Address()
 		}

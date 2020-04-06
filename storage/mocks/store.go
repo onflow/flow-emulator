@@ -5,8 +5,8 @@
 package mocks
 
 import (
-	flow_go_sdk "github.com/dapperlabs/flow-go-sdk"
 	types "github.com/dapperlabs/flow-emulator/types"
+	flow_go_sdk "github.com/dapperlabs/flow-go-sdk"
 	crypto "github.com/dapperlabs/flow-go/crypto"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"

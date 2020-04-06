@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 
 	"github.com/dapperlabs/flow-go-sdk"
+	vm "github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
 
 	"github.com/dapperlabs/flow-emulator/types"
 )
@@ -45,7 +46,7 @@ func decodeUint64(v *uint64, from []byte) error {
 	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(v)
 }
 
-func encodeLedger(ledger flow.Ledger) ([]byte, error) {
+func encodeLedger(ledger vm.Ledger) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(&ledger); err != nil {
 		return nil, err
@@ -53,7 +54,7 @@ func encodeLedger(ledger flow.Ledger) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func decodeLedger(ledger *flow.Ledger, from []byte) error {
+func decodeLedger(ledger *vm.Ledger, from []byte) error {
 	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(ledger)
 }
 
