@@ -12,7 +12,7 @@ transaction {
     prepare(acct: AuthAccount) {
 
         // Get a reference to the signer's vault Receiver
-        let ownerVault = acct.published[&FungibleToken.Receiver] ?? panic("No receiver reference!")
+        let ownerVault = acct.published[&AnyResource{FungibleToken.Receiver}] ?? panic("No receiver reference!")
 
         // Create a new Sale object, 
         // initializing it with the reference to the owner's vault
@@ -30,8 +30,9 @@ transaction {
         destroy oldSale
 
         // Create a public reference to the sale so that others can call its methods
-        acct.published[&Marketplace.SalePublic] = &acct.storage[Marketplace.SaleCollection] as &Marketplace.SalePublic
+        acct.published[&AnyResource{Marketplace.SalePublic}] = &acct.storage[Marketplace.SaleCollection] as &AnyResource{Marketplace.SalePublic}
 
         log("Sale Created for account 1. Selling NFT 1 for 10 tokens")
     }
 }
+ 

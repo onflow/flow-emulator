@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dapperlabs/flow-emulator"
+	emulator "github.com/dapperlabs/flow-emulator"
 )
 
 const testContract = "pub contract Test {}"
@@ -254,9 +254,8 @@ func TestCreateAccount(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, events, 1)
 
-		accountCreatedEvent, err := flow.DecodeAccountCreatedEvent(events[0].Payload)
+		accountAddress, err := emulator.DecodeAccountCreatedEvent(events[0])
 		assert.Nil(t, err)
-		accountAddress := accountCreatedEvent.Address()
 
 		account, err := b.GetAccount(accountAddress)
 		assert.NoError(t, err)

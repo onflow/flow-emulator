@@ -9,13 +9,13 @@ transaction {
 
         // Cast the Vault as a FungibleToken.Receiver interface, which only exposes the
         // balance field and deposit function of the underlying vault.
-        acct.published[&FungibleToken.Receiver] = &acct.storage[FungibleToken.Vault] as &FungibleToken.Receiver
+        acct.published[&AnyResource{FungibleToken.Receiver}] = &acct.storage[FungibleToken.Vault] as &AnyResource{FungibleToken.Receiver}
 
         log("Public Receiver reference created!")
     }
 
     post {
         // Check that the reference was created correctly
-        getAccount(0x01).published[&FungibleToken.Receiver] != nil:  "Vault Receiver Reference was not created correctly"
+        getAccount(0x01).published[&AnyResource{FungibleToken.Receiver}] != nil:  "Vault Receiver Reference was not created correctly"
     }
 }
