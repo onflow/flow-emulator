@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/dapperlabs/cadence"
-	encoding "github.com/dapperlabs/cadence/encoding/xdr"
+	encoding "github.com/dapperlabs/cadence/encoding/json"
 	"github.com/dapperlabs/cadence/runtime"
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go-sdk/keys"
@@ -16,21 +16,6 @@ import (
 )
 
 func TestEventEmitted(t *testing.T) {
-	// event type definition that is reused in tests
-	myEventType := cadence.EventType{
-		Identifier: "MyEvent",
-		Fields: []cadence.Field{
-			{
-				Identifier: "x",
-				Type:       cadence.IntType{},
-			},
-			{
-				Identifier: "y",
-				Type:       cadence.IntType{},
-			},
-		},
-	}
-
 	t.Run("EmittedFromScript", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
@@ -49,7 +34,7 @@ func TestEventEmitted(t *testing.T) {
 
 		actualEvent := result.Events[0]
 
-		eventValue, err := encoding.Decode(myEventType, actualEvent.Payload)
+		eventValue, err := encoding.Decode(actualEvent.Payload)
 		assert.NoError(t, err)
 
 		decodedEvent := eventValue.(cadence.Event)
@@ -125,7 +110,7 @@ func TestEventEmitted(t *testing.T) {
 
 		actualEvent := events[0]
 
-		eventValue, err := encoding.Decode(myEventType, actualEvent.Payload)
+		eventValue, err := encoding.Decode(actualEvent.Payload)
 		assert.NoError(t, err)
 
 		decodedEvent := eventValue.(cadence.Event)
