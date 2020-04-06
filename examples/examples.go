@@ -154,8 +154,7 @@ func createAccount(publicKeys []flow.AccountPublicKey, code []byte) flow.Address
 
 	tx := WaitForSeal(ctx, flowClient, createAccountTx.Hash())
 
-	accountCreatedEvent, err := flow.AccountCreatedEvent(tx.Events[0].Payload)
-	Handle(err)
+	accountCreatedEvent := flow.AccountCreatedEvent(tx.Events[0])
 
 	return accountCreatedEvent.Address()
 }
