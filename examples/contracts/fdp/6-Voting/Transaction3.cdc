@@ -1,5 +1,7 @@
 import ApprovalVoting from 0x01
 
+// Transaction3.cdc
+//
 // This transaction allows a voter to select the votes they would like to make
 // and cast that vote by using the castVote function 
 // of the ApprovalVoting smart contract
@@ -15,5 +17,7 @@ transaction {
 
         // Cast the vote by submitting it to the smart contract
         ApprovalVoting.cast(ballot: <-ballot)
+
+        log("Vote cast and tallied")
     }
 }

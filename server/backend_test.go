@@ -13,8 +13,10 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/dapperlabs/cadence"
+	encoding "github.com/dapperlabs/cadence/encoding/json"
 	encoding "github.com/dapperlabs/cadence/encoding/xdr"
 	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/dapperlabs/flow-go/protobuf/sdk/entities"
 	access "github.com/dapperlabs/flow/protobuf/go/flow/access"
 	"github.com/dapperlabs/flow/protobuf/go/flow/entities"
 
@@ -29,7 +31,7 @@ func TestPing(t *testing.T) {
 	ctx := context.Background()
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
-	server := server.NewBackend(logrus.New(), b)
+	backend := server.NewBackend(logrus.New(), b)
 
 	_, err = server.Ping(ctx, &access.PingRequest{})
 	assert.NoError(t, err)
@@ -68,7 +70,7 @@ func TestBackend(t *testing.T) {
 		response, err := backend.ExecuteScriptAtLatestBlock(context.Background(), &executionScriptRequest)
 		assert.NoError(t, err)
 
-		value, err := encoding.Decode(cadence.IntType{}, response.GetValue())
+		value, err := encoding.Decode(response.GetValue())
 		assert.NoError(t, err)
 
 		assert.Equal(t, cadence.NewInt(2137), value)

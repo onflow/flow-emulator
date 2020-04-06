@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/dapperlabs/cadence"
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/stretchr/testify/require"
 
@@ -35,16 +34,6 @@ const counterScript = `
       }
   }
 `
-
-var countIncrementedType = cadence.EventType{
-	Identifier: "CountIncremented",
-	Fields: []cadence.Field{
-		{
-			Identifier: "count",
-			Type:       cadence.IntType{},
-		},
-	},
-}
 
 // generateAddTwoToCounterScript generates a script that increments a counter.
 // If no counter exists, it is created.

@@ -28,7 +28,7 @@ access(all) contract Marketplace {
     // that only exposes the methods that are supposed to be public
     //
     access(all) resource interface SalePublic {
-        access(all) fun purchase(tokenID: UInt64, recipient: &NonFungibleToken.NFTReceiver, buyTokens: @FungibleToken.Vault)
+        access(all) fun purchase(tokenID: UInt64, recipient: &AnyResource{NonFungibleToken.NFTReceiver}, buyTokens: @FungibleToken.Vault)
         access(all) fun idPrice(tokenID: UInt64): UInt64?
         access(all) fun getIDs(): [UInt64]
     }
@@ -49,9 +49,9 @@ access(all) contract Marketplace {
         // The fungible token vault of the owner of this sale.
         // When someone buys a token, this resource can deposit
         // tokens into their account.
-        access(account) let ownerVault: &FungibleToken.Receiver
+        access(account) let ownerVault: &AnyResource{FungibleToken.Receiver}
 
-        init (vault: &FungibleToken.Receiver) {
+        init (vault: &AnyResource{FungibleToken.Receiver}) {
             self.forSale <- {}
             self.ownerVault = vault
             self.prices = {}
@@ -88,7 +88,7 @@ access(all) contract Marketplace {
         }
 
         // purchase lets a user send tokens to purchase an NFT that is for sale
-        access(all) fun purchase(tokenID: UInt64, recipient: &NonFungibleToken.NFTReceiver, buyTokens: @FungibleToken.Vault) {
+        access(all) fun purchase(tokenID: UInt64, recipient: &AnyResource{NonFungibleToken.NFTReceiver}, buyTokens: @FungibleToken.Vault) {
             pre {
                 self.forSale[tokenID] != nil && self.prices[tokenID] != nil:
                     "No token matching this ID for sale!"
@@ -126,7 +126,8 @@ access(all) contract Marketplace {
     }
 
     // createCollection returns a new collection resource to the caller
-    access(all) fun createSaleCollection(ownerVault: &FungibleToken.Receiver): @SaleCollection {
+    access(all) fun createSaleCollection(ownerVault: &AnyResource{FungibleToken.Receiver}): @SaleCollection {
         return <- create SaleCollection(vault: ownerVault)
     }
 }
+ 
