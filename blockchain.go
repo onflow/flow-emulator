@@ -15,8 +15,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/dapperlabs/cadence"
-	encoding "github.com/dapperlabs/cadence/encoding/json"
 	"github.com/dapperlabs/cadence/runtime"
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go-sdk/keys"
@@ -662,12 +660,9 @@ func (b *Blockchain) handleEvents(events []flow.Event, blockNumber uint64) {
 	for _, event := range events {
 		// update lastCreatedAccount if this is an AccountCreated event
 		if event.Type == flow.EventAccountCreated {
-			accountAddress, err := DecodeAccountCreatedEvent(event)
-			if err != nil {
-				panic("failed to decode AccountCreated event")
-			}
+			acctCreatedEvent := flow.AccountCreatedEvent(event)
 
-			b.lastCreatedAddress = accountAddress
+			b.lastCreatedAddress = acctCreatedEvent.Address()
 		}
 
 	}
@@ -704,16 +699,4 @@ func init() {
 	}
 
 	defaultConfig.RootAccountKey = defaultRootKey
-}
-
-func DecodeAccountCreatedEvent(event flow.Event) (flow.Address, error) {
-	// TODO: improve event decoding after flow.Event model is updated in flow-go-sdk
-	acctCreatedEvent, err := encoding.Decode(event.Payload)
-	if err != nil {
-		return flow.ZeroAddress, err
-	}
-
-	address := acctCreatedEvent.(cadence.Event).Fields[0].(cadence.Address).Bytes()
-
-	return flow.BytesToAddress(address), nil
 }
