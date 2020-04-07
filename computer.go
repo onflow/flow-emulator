@@ -2,10 +2,8 @@ package emulator
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/dapperlabs/cadence"
-	encoding "github.com/dapperlabs/cadence/encoding/json"
 	"github.com/dapperlabs/cadence/runtime"
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go/crypto"
@@ -124,18 +122,11 @@ func convertEvents(rtEvents []runtime.Event, txHash crypto.Hash) ([]flow.Event, 
 	flowEvents := make([]flow.Event, len(rtEvents))
 
 	for i, event := range rtEvents {
-		eventValue := cadence.ConvertEvent(event)
-
-		payload, err := encoding.Encode(eventValue)
-		if err != nil {
-			return nil, fmt.Errorf("failed to encode event: %w", err)
-		}
-
 		flowEvents[i] = flow.Event{
-			Type:    string(event.Type.ID()),
-			TxHash:  txHash,
-			Index:   uint(i),
-			Payload: payload,
+			Type:   string(event.Type.ID()),
+			TxHash: txHash,
+			Index:  uint(i),
+			Value:  cadence.ConvertEvent(event),
 		}
 	}
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go/crypto"
+	vm "github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
 
 	"github.com/dapperlabs/flow-emulator/storage"
 	"github.com/dapperlabs/flow-emulator/types"
@@ -20,7 +21,7 @@ type Store struct {
 	// Finalized transactions by hash
 	transactions map[string]flow.Transaction
 	// Ledger states by block number
-	ledger map[uint64]flow.Ledger
+	ledger map[uint64]vm.MapLedger
 	// Stores events by block number
 	eventsByBlockNumber map[uint64][]flow.Event
 	// Tracks the highest block number
@@ -34,7 +35,7 @@ func New() *Store {
 		blockHashToNumber:   make(map[string]uint64),
 		blocks:              make(map[uint64]types.Block),
 		transactions:        make(map[string]flow.Transaction),
-		ledger:              make(map[uint64]flow.Ledger),
+		ledger:              make(map[uint64]vm.MapLedger),
 		eventsByBlockNumber: make(map[uint64][]flow.Event),
 	}
 }
@@ -170,16 +171,16 @@ func (s *Store) InsertLedgerDelta(blockNumber uint64, delta types.LedgerDelta) e
 }
 
 func (s *Store) insertLedgerDelta(blockNumber uint64, delta types.LedgerDelta) error {
-	var oldLedger flow.Ledger
+	var oldLedger vm.MapLedger
 
 	// use empty ledger if this is the genesis block
 	if blockNumber == 0 {
-		oldLedger = make(flow.Ledger)
+		oldLedger = make(vm.MapLedger)
 	} else {
 		oldLedger = s.ledger[blockNumber-1]
 	}
 
-	newLedger := make(flow.Ledger)
+	newLedger := make(vm.MapLedger)
 
 	// copy values from the previous ledger
 	for key, value := range oldLedger {

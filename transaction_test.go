@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/dapperlabs/cadence"
-	encoding "github.com/dapperlabs/cadence/encoding/json"
 	"github.com/dapperlabs/cadence/runtime"
 	"github.com/dapperlabs/cadence/runtime/interpreter"
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go-sdk/keys"
 	"github.com/dapperlabs/flow-go/crypto"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	emulator "github.com/dapperlabs/flow-emulator"
 )
@@ -576,10 +576,7 @@ func TestGetTransaction(t *testing.T) {
 		require.Len(t, resTx.Events, 1)
 		actualEvent := resTx.Events[0]
 
-		eventValue, err := encoding.Decode(actualEvent.Payload)
-		require.NoError(t, err)
-
-		decodedEvent := eventValue.(cadence.Event)
+		decodedEvent := actualEvent.Value
 
 		location := runtime.AddressLocation(counterAddress.Bytes())
 		eventType := fmt.Sprintf("%s.Counting.CountIncremented", location.ID())
