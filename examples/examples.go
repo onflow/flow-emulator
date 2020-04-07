@@ -8,14 +8,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/dapperlabs/cadence/runtime/cmd"
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go-sdk/client"
 	"github.com/dapperlabs/flow-go-sdk/keys"
 	"github.com/dapperlabs/flow-go-sdk/templates"
 	"github.com/dapperlabs/flow-go/crypto"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	emulator "github.com/dapperlabs/flow-emulator"
 )
@@ -153,8 +154,7 @@ func createAccount(publicKeys []flow.AccountPublicKey, code []byte) flow.Address
 
 	tx := WaitForSeal(ctx, flowClient, createAccountTx.Hash())
 
-	accountCreatedEvent, err := flow.DecodeAccountCreatedEvent(tx.Events[0].Payload)
-	Handle(err)
+	accountCreatedEvent := flow.AccountCreatedEvent(tx.Events[0])
 
 	return accountCreatedEvent.Address()
 }

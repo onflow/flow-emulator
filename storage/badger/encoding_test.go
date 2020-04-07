@@ -7,10 +7,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/utils/unittest"
 	"github.com/dapperlabs/flow-go/crypto"
 
 	"github.com/dapperlabs/flow-emulator/types"
+	"github.com/dapperlabs/flow-emulator/utils/unittest"
 )
 
 func TestEncodeTransaction(t *testing.T) {
@@ -43,9 +43,7 @@ func TestEncodeBlock(t *testing.T) {
 }
 
 func TestEncodeEventList(t *testing.T) {
-	eventList := []flow.Event{unittest.EventFixture(func(e *flow.Event) {
-		e.Payload = []byte{1, 2, 3, 4}
-	})}
+	eventList := []flow.Event{unittest.EventFixture(func(e *flow.Event) {})}
 	data, err := encodeEvents(eventList)
 	require.Nil(t, err)
 
