@@ -88,7 +88,7 @@ func TestCreateSale(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateSaleScript(tokenAddr, marketAddr)).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
 			AddAuthorizer(bastianAddress, 0)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
@@ -98,7 +98,7 @@ func TestCreateSale(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateStartSaleScript(nftAddr, marketAddr, 1, 10)).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
 			AddAuthorizer(bastianAddress, 0)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
@@ -108,7 +108,7 @@ func TestCreateSale(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 1, 9)).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
 			AddAuthorizer(joshAddress, 0)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, true)
@@ -118,7 +118,7 @@ func TestCreateSale(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 2, 10)).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
 			AddAuthorizer(joshAddress, 0)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, true)
@@ -128,7 +128,7 @@ func TestCreateSale(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 1, 10)).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
 			AddAuthorizer(joshAddress, 0)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, false)

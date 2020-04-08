@@ -38,8 +38,8 @@ func TestCreateMinter(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateMinterScript(contractAddr, -1, 2)).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, true)
 	})
@@ -48,8 +48,8 @@ func TestCreateMinter(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateMinterScript(contractAddr, 1, 1)).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, true)
 	})
@@ -58,8 +58,8 @@ func TestCreateMinter(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateMinterScript(contractAddr, 1, 2)).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
 	})
@@ -77,8 +77,8 @@ func TestMinting(t *testing.T) {
 	createMinterTx := flow.NewTransaction().
 		SetScript(GenerateCreateMinterScript(contractAddr, 1, 2)).
 		SetGasLimit(10).
-		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+		SetPayer(b.RootKey().Address, b.RootKey().ID).
+		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
 	SignAndSubmit(t, b, createMinterTx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
 
@@ -86,8 +86,8 @@ func TestMinting(t *testing.T) {
 	mintTx := flow.NewTransaction().
 		SetScript(GenerateMintScript(contractAddr)).
 		SetGasLimit(10).
-		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+		SetPayer(b.RootKey().Address, b.RootKey().ID).
+		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
 	SignAndSubmit(t, b, mintTx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
 
@@ -102,8 +102,8 @@ func TestMinting(t *testing.T) {
 	mintTx2 := flow.NewTransaction().
 		SetScript(GenerateMintScript(contractAddr)).
 		SetGasLimit(10).
-		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+		SetPayer(b.RootKey().Address, b.RootKey().ID).
+		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
 	SignAndSubmit(t, b, mintTx2, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
 

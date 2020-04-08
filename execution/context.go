@@ -367,31 +367,45 @@ func (r *RuntimeContext) GetAccount(address flow.Address) *flow.Account {
 	}
 }
 
-// IncrementSequenceNumber increments the sequence number with the given ID.
-func (r *RuntimeContext) IncrementSequenceNumber(address flow.Address, keyID int) error {
+// CheckAndIncrementSequenceNumber validates and increments a sequence number for with an account key.
+//
+// This function first checks that the provided sequence number matches the version stored on-chain.
+// If they are equal, the on-chain sequence number is incremented.
+// If they are not equal, the on-chain sequence number is not incremented.
+//
+// This function returns a boolean flag indicating validity as well as the updated sequence number value.
+// This function returns an error if the sequence number cannot be read from storage.
+func (r *RuntimeContext) CheckAndIncrementSequenceNumber(
+	address flow.Address,
+	keyID int,
+	sequenceNumber uint64,
+) (bool, uint64, error) {
 	accountID := address.Bytes()
 
 	seqNumKey := keyPublicKeySequenceNumber(keyID)
 
-	seqNumBytes, err := r.ledger.Get(
+	storedSeqNumBytes, err := r.ledger.Get(
 		fullKey(string(accountID), string(accountID), seqNumKey),
 	)
 	if err != nil {
-		return err
+		return false, 0, err
 	}
 
-	// increment sequence number by 1
-	seqNum := big.NewInt(0).SetBytes(seqNumBytes)
-	seqNum.Add(seqNum, big.NewInt(1))
+	storedSeqNum := big.NewInt(0).SetBytes(storedSeqNumBytes).Uint64()
 
-	seqNumBytes = seqNum.Bytes()
+	valid := storedSeqNum == sequenceNumber
 
-	r.ledger.Set(
-		fullKey(string(accountID), string(accountID), seqNumKey),
-		seqNumBytes,
-	)
+	if valid {
+		storedSeqNum++
+		storedSeqNumBytes = big.NewInt(0).SetUint64(storedSeqNum).Bytes()
 
-	return nil
+		r.ledger.Set(
+			fullKey(string(accountID), string(accountID), seqNumKey),
+			storedSeqNumBytes,
+		)
+	}
+
+	return valid, storedSeqNum, nil
 }
 
 // ResolveImport imports code for the provided import location.

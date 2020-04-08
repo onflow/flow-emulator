@@ -55,8 +55,8 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 				),
 			)).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
 	})
