@@ -38,30 +38,33 @@ func TestCreateMinter(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateMinterScript(contractAddr, -1, 2)).
 			SetGasLimit(10).
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address, b.RootKey().ID).
 			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, true)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, true)
 	})
 
 	t.Run("Cannot create minter with special mod < 2", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateMinterScript(contractAddr, 1, 1)).
 			SetGasLimit(10).
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address, b.RootKey().ID).
 			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, true)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, true)
 	})
 
 	t.Run("Should be able to create minter", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateMinterScript(contractAddr, 1, 2)).
 			SetGasLimit(10).
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address, b.RootKey().ID).
 			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 	})
 }
 
@@ -77,19 +80,21 @@ func TestMinting(t *testing.T) {
 	createMinterTx := flow.NewTransaction().
 		SetScript(GenerateCreateMinterScript(contractAddr, 1, 2)).
 		SetGasLimit(10).
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address, b.RootKey().ID).
 		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-	SignAndSubmit(t, b, createMinterTx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
+	SignAndSubmit(t, b, createMinterTx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 
 	// Mint the first NFT
 	mintTx := flow.NewTransaction().
 		SetScript(GenerateMintScript(contractAddr)).
 		SetGasLimit(10).
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address, b.RootKey().ID).
 		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-	SignAndSubmit(t, b, mintTx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
+	SignAndSubmit(t, b, mintTx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 
 	// Assert that ID/specialness are correct
 	result, err := b.ExecuteScript(GenerateInspectNFTScript(contractAddr, b.RootAccountAddress(), 1, false))
@@ -102,10 +107,11 @@ func TestMinting(t *testing.T) {
 	mintTx2 := flow.NewTransaction().
 		SetScript(GenerateMintScript(contractAddr)).
 		SetGasLimit(10).
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address, b.RootKey().ID).
 		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-	SignAndSubmit(t, b, mintTx2, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
+	SignAndSubmit(t, b, mintTx2, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 
 	// Assert that ID/specialness are correct
 	result, err = b.ExecuteScript(GenerateInspectNFTScript(contractAddr, b.RootAccountAddress(), 2, true))

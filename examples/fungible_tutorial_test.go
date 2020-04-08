@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/dapperlabs/flow-go-sdk/keys"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/dapperlabs/flow-go-sdk"
@@ -55,19 +54,18 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 				),
 			)).
 			SetGasLimit(10).
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address, b.RootKey().ID).
 			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 	})
 
 	var account2Address flow.Address
 
 	t.Run("Create account 2", func(t *testing.T) {
 		var err error
-		publicKey := b.RootKey().ToAccountKey()
-		publicKey.Weight = keys.PublicKeyWeightThreshold
-
+		publicKey := b.RootKey().AccountKey()
 		publicKeys := []flow.AccountKey{publicKey}
 		account2Address, err = b.CreateAccount(publicKeys, nil, GetNonce())
 		assert.NoError(t, err)
@@ -104,9 +102,10 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 				),
 			)).
 			SetGasLimit(10).
+			SetProposalKey(account2Address, 0, 0).
 			SetPayer(account2Address, 0).
 			AddAuthorizer(account2Address, 0)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{account2Address}, false)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{account2Address}, false)
 	})
 }
