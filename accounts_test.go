@@ -37,13 +37,13 @@ func TestCreateAccount(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(createAccountScript).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), 0)
+			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
 
-		err = tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
+		err = tx.SignContainer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)

@@ -499,12 +499,19 @@ func (b *Blockchain) LastCreatedAccount() flow.Account {
 //
 // An error is returned if any of the expected signatures are invalid or missing.
 func (b *Blockchain) verifySignatures(tx flow.Transaction) error {
+	payer := tx.Payer()
+	if payer == nil {
+		// TODO: add error type for missing payer
+		return fmt.Errorf("missing payer signature")
+	}
+
 	accountWeights := make(map[flow.Address]int)
 
-	encodedTx := tx.Encode()
+	payloadMessage := tx.Payload.Message()
+	containerMessage := tx.Message()
 
 	for _, txSig := range tx.Signatures {
-		accountPublicKey, err := b.verifyAccountSignature(txSig, encodedTx)
+		accountPublicKey, err := b.verifyAccountSignature(txSig, payloadMessage, containerMessage)
 		if err != nil {
 			return err
 		}
@@ -512,8 +519,8 @@ func (b *Blockchain) verifySignatures(tx flow.Transaction) error {
 		accountWeights[txSig.Address] += accountPublicKey.Weight
 	}
 
-	if accountWeights[tx.Payer().Address] < keys.PublicKeyWeightThreshold {
-		return &ErrMissingSignature{tx.Payer().Address}
+	if accountWeights[payer.Address] < keys.PublicKeyWeightThreshold {
+		return &ErrMissingSignature{payer.Address}
 	}
 
 	for _, auth := range tx.Authorizers() {
@@ -609,11 +616,24 @@ func (b *Blockchain) UpdateAccountCode(
 // correctly verifies the signature against the given message.
 func (b *Blockchain) verifyAccountSignature(
 	txSig flow.TransactionSignature,
-	message []byte,
+	payloadMessage []byte,
+	containerMessage []byte,
 ) (accountPublicKey flow.AccountKey, err error) {
 	account, err := b.getAccount(txSig.Address)
 	if err != nil {
 		return accountPublicKey, &ErrInvalidSignatureAccount{Address: txSig.Address}
+	}
+
+	var message []byte
+
+	switch txSig.Kind {
+	case flow.TransactionSignatureKindPayload:
+		message = payloadMessage
+	case flow.TransactionSignatureKindContainer:
+		message = containerMessage
+	default:
+		// TODO: add proper error and test case for invalid signature kind
+		return accountPublicKey, fmt.Errorf("invalid signature kind %s", txSig.Kind)
 	}
 
 	signature := crypto.Signature(txSig.Signature)
