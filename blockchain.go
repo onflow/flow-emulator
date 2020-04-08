@@ -581,13 +581,15 @@ func (b *Blockchain) CreateAccount(
 		return flow.Address{}, err
 	}
 
+	rootKey := b.RootKey()
+
 	tx := flow.NewTransaction().
 		SetScript(createAccountScript).
 		SetGasLimit(10).
-		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-		SetPayer(b.RootKey().Address, 0)
+		SetProposalKey(rootKey.Address, rootKey.ID, rootKey.SequenceNumber).
+		SetPayer(rootKey.Address, rootKey.ID)
 
-	err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	err = tx.SignContainer(rootKey.Address, rootKey.ID, rootKey.Signer())
 	if err != nil {
 		return flow.Address{}, err
 	}
@@ -621,13 +623,16 @@ func (b *Blockchain) UpdateAccountCode(
 ) error {
 	updateAccountScript := templates.UpdateAccountCode(code)
 
+	rootKey := b.RootKey()
+
 	tx := flow.NewTransaction().
 		SetScript(updateAccountScript).
 		SetGasLimit(10).
-		SetPayer(b.rootAccountAddress, 0).
-		AddAuthorizer(b.rootAccountAddress, 0)
+		SetProposalKey(rootKey.Address, rootKey.ID, rootKey.SequenceNumber).
+		SetPayer(rootKey.Address, rootKey.ID).
+		AddAuthorizer(rootKey.Address, rootKey.ID)
 
-	err := tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	err := tx.SignContainer(rootKey.Address, rootKey.ID, rootKey.Signer())
 	if err != nil {
 		return err
 	}
