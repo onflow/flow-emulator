@@ -260,10 +260,10 @@ func (mr *MockBlockchainAPIMockRecorder) RootAccountAddress() *gomock.Call {
 }
 
 // RootKey mocks base method
-func (m *MockBlockchainAPI) RootKey() flow_go_sdk.AccountPrivateKey {
+func (m *MockBlockchainAPI) RootKey() flow_emulator.RootKey {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RootKey")
-	ret0, _ := ret[0].(flow_go_sdk.AccountPrivateKey)
+	ret0, _ := ret[0].(flow_emulator.RootKey)
 	return ret0
 }
 
