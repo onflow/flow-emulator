@@ -32,6 +32,14 @@ func (b Block) Encode() []byte {
 	return flow.DefaultEncoder.MustEncode(&temp)
 }
 
+func (b Block) Header() flow.BlockHeader {
+	return flow.BlockHeader{
+		ID:       flow.HashToID(b.Hash()),
+		ParentID: flow.HashToID(b.PreviousBlockHash),
+		Height:   b.Number,
+	}
+}
+
 // GenesisBlock returns the genesis block for an emulated blockchain.
 func GenesisBlock() Block {
 	return Block{
