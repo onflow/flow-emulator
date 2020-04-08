@@ -34,9 +34,9 @@ func (b Block) Encode() []byte {
 
 func (b Block) Header() flow.BlockHeader {
 	return flow.BlockHeader{
-		ID:       flow.HashToID(b.Hash()),
-		ParentID: flow.HashToID(b.PreviousBlockHash),
-		Height:   b.Number,
+		ID:       b.ID(),
+		ParentID: b.ParentID,
+		Height:   b.Height,
 	}
 }
 
