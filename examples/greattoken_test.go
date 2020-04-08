@@ -36,36 +36,30 @@ func TestCreateMinter(t *testing.T) {
 	// specialMod > 1
 	t.Run("Cannot create minter with negative initial ID", func(t *testing.T) {
 		tx := flow.NewTransaction().
-SetScript(GenerateCreateMinterScript(contractAddr, -1, 2)).
-
+			SetScript(GenerateCreateMinterScript(contractAddr, -1, 2)).
 			SetGasLimit(10).
 			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
 			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
-		}
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, true)
 	})
 
 	t.Run("Cannot create minter with special mod < 2", func(t *testing.T) {
 		tx := flow.NewTransaction().
-SetScript(GenerateCreateMinterScript(contractAddr, 1, 1)).
-
+			SetScript(GenerateCreateMinterScript(contractAddr, 1, 1)).
 			SetGasLimit(10).
 			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
 			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
-		}
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, true)
 	})
 
 	t.Run("Should be able to create minter", func(t *testing.T) {
 		tx := flow.NewTransaction().
-SetScript(GenerateCreateMinterScript(contractAddr, 1, 2)).
-
+			SetScript(GenerateCreateMinterScript(contractAddr, 1, 2)).
 			SetGasLimit(10).
 			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
 			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
-		}
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
 	})
@@ -80,24 +74,20 @@ func TestMinting(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Next, instantiate the minter
-	createMintertx := flow.NewTransaction().
-SetScript(GenerateCreateMinterScript(contractAddr, 1, 2)).
-
+	createMinterTx := flow.NewTransaction().
+		SetScript(GenerateCreateMinterScript(contractAddr, 1, 2)).
 		SetGasLimit(10).
 		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
 		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
-	}
 
 	SignAndSubmit(t, b, createMinterTx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
 
 	// Mint the first NFT
-	minttx := flow.NewTransaction().
-SetScript(GenerateMintScript(contractAddr)).
-
+	mintTx := flow.NewTransaction().
+		SetScript(GenerateMintScript(contractAddr)).
 		SetGasLimit(10).
 		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
 		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
-	}
 
 	SignAndSubmit(t, b, mintTx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
 
@@ -110,12 +100,10 @@ SetScript(GenerateMintScript(contractAddr)).
 
 	// Mint a second NF
 	mintTx2 := flow.NewTransaction().
-SetScript(GenerateMintScript(contractAddr)).
-
+		SetScript(GenerateMintScript(contractAddr)).
 		SetGasLimit(10).
 		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
 		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
-	}
 
 	SignAndSubmit(t, b, mintTx2, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
 
