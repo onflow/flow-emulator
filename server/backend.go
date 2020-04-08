@@ -92,7 +92,7 @@ func (b *Backend) GetLatestBlockHeader(ctx context.Context, req *access.GetLates
 		"blockHash":   block.Hash().Hex(),
 	}).Debug("🎁  GetLatestBlock called")
 
-	return b.getBlockHeaderAtBlock(block)
+	return b.blockToHeaderResponse(block), nil
 }
 
 // GetBlockHeaderByHeight gets a block header by it's height
@@ -107,7 +107,7 @@ func (b *Backend) GetBlockHeaderByHeight(ctx context.Context, req *access.GetBlo
 		"blockHash":   block.Hash().Hex(),
 	}).Debug("🎁  GetBlockHeaderByHeight called")
 
-	return b.getBlockHeaderAtBlock(block)
+	return b.blockToHeaderResponse(block), nil
 }
 
 // GetBlockHeaderByID gets a block header by it's ID
@@ -122,7 +122,7 @@ func (b *Backend) GetBlockHeaderByID(ctx context.Context, req *access.GetBlockHe
 		"blockHash":   block.Hash().Hex(),
 	}).Debug("🎁  GetBlockHeaderByID called")
 
-	return b.getBlockHeaderAtBlock(block)
+	return b.blockToHeaderResponse(block), nil
 }
 
 // GetLatestBlock gets the latest sealed block.
@@ -339,20 +339,11 @@ func (b *Backend) executeScriptAtBlock(script []byte, blockNumber uint64) (*acce
 	return response, nil
 }
 
-// executeScriptAtBlock is a helper for getting the block header at a specific block
-func (b *Backend) getBlockHeaderAtBlock(block *types.Block) (*access.BlockHeaderResponse, error) {
-	// create block header for block
-	blockHeader := flow.BlockHeader{
-		ID:       flow.HashToID(block.Hash()),
-		ParentID: flow.HashToID(block.PreviousBlockHash),
-		Height:   block.Number,
+// blockToHeaderResponse is a helper for getting the block header for a specific block
+func (b *Backend) blockToHeaderResponse(block *types.Block) *access.BlockHeaderResponse {
+	return &access.BlockHeaderResponse{
+		Block: convert.BlockHeaderToMessage(block.Header()),
 	}
-
-	response := &access.BlockHeaderResponse{
-		Block: convert.BlockHeaderToMessage(blockHeader),
-	}
-
-	return response, nil
 }
 
 // EnableAutoMine enables the automine flag.
