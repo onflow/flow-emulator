@@ -3,6 +3,7 @@ package server_test
 import (
 	"context"
 	"errors"
+	"math/rand"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -51,16 +52,23 @@ func TestBackend(t *testing.T) {
 		}
 	}
 
-	t.Run("ExecuteScript", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("ExecuteScriptAtLatestBlock", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
 		sampleScriptText := []byte("hey I'm so totally uninterpretable script text with unicode ć, ń, ó, ś, ź")
+		scriptResponse := cadence.NewInt(rand.Int())
 		executionScriptRequest := access.ExecuteScriptAtLatestBlockRequest{
 			Script: sampleScriptText,
 		}
+		latestBlock := &types.Block{Number: rand.Uint64()}
 
 		api.EXPECT().
-			ExecuteScript(sampleScriptText).
+			GetLatestBlock().
+			Return(latestBlock, nil).
+			Times(1)
+
+		api.EXPECT().
+			ExecuteScriptAtBlock(sampleScriptText, latestBlock.Number).
 			Return(emulator.ScriptResult{
-				Value: cadence.NewInt(2137),
+				Value: scriptResponse,
 				Error: nil,
 			}, nil).
 			Times(1)
@@ -71,7 +79,64 @@ func TestBackend(t *testing.T) {
 		value, err := encoding.Decode(response.GetValue())
 		assert.NoError(t, err)
 
-		assert.Equal(t, cadence.NewInt(2137), value)
+		assert.Equal(t, scriptResponse, value)
+	}))
+
+	t.Run("ExecuteScriptAtBlockHeight", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+		sampleScriptText := []byte("hey I'm so totally uninterpretable script text with unicode ć, ń, ó, ś, ź")
+		scriptResponse := cadence.NewInt(rand.Int())
+		executionScriptRequest := access.ExecuteScriptAtBlockHeightRequest{
+			Script:      sampleScriptText,
+			BlockHeight: rand.Uint64(),
+		}
+
+		api.EXPECT().
+			ExecuteScriptAtBlock(sampleScriptText, executionScriptRequest.BlockHeight).
+			Return(emulator.ScriptResult{
+				Value: scriptResponse,
+				Error: nil,
+			}, nil).
+			Times(1)
+
+		response, err := backend.ExecuteScriptAtBlockHeight(context.Background(), &executionScriptRequest)
+		assert.NoError(t, err)
+
+		value, err := encoding.Decode(response.GetValue())
+		assert.NoError(t, err)
+
+		assert.Equal(t, scriptResponse, value)
+	}))
+
+	t.Run("ExecuteScriptAtBlockID", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+		sampleScriptText := []byte("hey I'm so totally uninterpretable script text with unicode ć, ń, ó, ś, ź")
+		scriptResponse := cadence.NewInt(rand.Int())
+		randomBlock := &types.Block{Number: rand.Uint64()}
+
+		executionScriptRequest := access.ExecuteScriptAtBlockIDRequest{
+			Script:  sampleScriptText,
+			BlockId: randomBlock.Hash(),
+		}
+
+		api.EXPECT().
+			GetBlockByHash(randomBlock.Hash()).
+			Return(randomBlock, nil).
+			Times(1)
+
+		api.EXPECT().
+			ExecuteScriptAtBlock(sampleScriptText, randomBlock.Number).
+			Return(emulator.ScriptResult{
+				Value: scriptResponse,
+				Error: nil,
+			}, nil).
+			Times(1)
+
+		response, err := backend.ExecuteScriptAtBlockID(context.Background(), &executionScriptRequest)
+		assert.NoError(t, err)
+
+		value, err := encoding.Decode(response.GetValue())
+		assert.NoError(t, err)
+
+		assert.Equal(t, scriptResponse, value)
 	}))
 
 	t.Run("GetAccount", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {

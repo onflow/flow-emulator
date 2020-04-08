@@ -218,84 +218,33 @@ func (b *Backend) GetAccount(ctx context.Context, req *access.GetAccountRequest)
 	}, nil
 }
 
-// ExecuteScriptAtLatestBlock performs a call.
+// ExecuteScriptAtLatestBlock executes a script at a the latest block
 func (b *Backend) ExecuteScriptAtLatestBlock(ctx context.Context, req *access.ExecuteScriptAtLatestBlockRequest) (*access.ExecuteScriptResponse, error) {
 	script := req.GetScript()
-	result, err := b.blockchain.ExecuteScript(script)
+	block, err := b.blockchain.GetLatestBlock()
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	printScriptResult(b.logger, result)
-
-	if result.Value == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid script")
-	}
-
-	valueBytes, err := encoding.Encode(result.Value)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	response := &access.ExecuteScriptResponse{
-		Value: valueBytes,
-	}
-
-	return response, nil
+	return b.executeScriptAtBlock(script, block.Number)
 }
 
-// ExecuteScriptAtBlockHeight performs a call.
+// ExecuteScriptAtBlockHeight executes a script at a specific block height
 func (b *Backend) ExecuteScriptAtBlockHeight(ctx context.Context, req *access.ExecuteScriptAtBlockHeightRequest) (*access.ExecuteScriptResponse, error) {
-	// TODO: Execute at specific block height
 	script := req.GetScript()
-	result, err := b.blockchain.ExecuteScript(script)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	printScriptResult(b.logger, result)
-
-	if result.Value == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid script")
-	}
-
-	valueBytes, err := encoding.Encode(result.Value)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	response := &access.ExecuteScriptResponse{
-		Value: valueBytes,
-	}
-
-	return response, nil
+	blockHeight := req.GetBlockHeight()
+	return b.executeScriptAtBlock(script, blockHeight)
 }
 
-// ExecuteScriptAtBlockID performs a call.
+// ExecuteScriptAtBlockID executes a script at a specific block ID
 func (b *Backend) ExecuteScriptAtBlockID(ctx context.Context, req *access.ExecuteScriptAtBlockIDRequest) (*access.ExecuteScriptResponse, error) {
-	// TODO: Execute at specific block ID
 	script := req.GetScript()
-	result, err := b.blockchain.ExecuteScript(script)
+	blockID := req.GetBlockId()
+
+	block, err := b.blockchain.GetBlockByHash(blockID)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	printScriptResult(b.logger, result)
-
-	if result.Value == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid script")
-	}
-
-	valueBytes, err := encoding.Encode(result.Value)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	response := &access.ExecuteScriptResponse{
-		Value: valueBytes,
-	}
-
-	return response, nil
+	return b.executeScriptAtBlock(script, block.Number)
 }
 
 // GetEventsForHeightRange returns events matching a query.
@@ -355,6 +304,31 @@ func (b *Backend) commitBlock() {
 		"blockHash":   block.Hash().Hex(),
 		"blockSize":   len(block.TransactionHashes),
 	}).Debugf("📦  Block #%d committed", block.Number)
+}
+
+// executeScriptAtBlock is a helper for executing a script at a specific block
+func (b *Backend) executeScriptAtBlock(script []byte, blockNumber uint64) (*access.ExecuteScriptResponse, error) {
+	result, err := b.blockchain.ExecuteScriptAtBlock(script, blockNumber)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	printScriptResult(b.logger, result)
+
+	if result.Value == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid script")
+	}
+
+	valueBytes, err := encoding.Encode(result.Value)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	response := &access.ExecuteScriptResponse{
+		Value: valueBytes,
+	}
+
+	return response, nil
 }
 
 // EnableAutoMine enables the automine flag.
