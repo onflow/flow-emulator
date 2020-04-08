@@ -17,6 +17,7 @@ import (
 
 	"github.com/dapperlabs/cadence/runtime"
 	"github.com/dapperlabs/flow-go-sdk"
+	sdkcrypto "github.com/dapperlabs/flow-go-sdk/crypto"
 	"github.com/dapperlabs/flow-go-sdk/keys"
 	"github.com/dapperlabs/flow-go-sdk/templates"
 	"github.com/dapperlabs/flow-go/crypto"
@@ -41,9 +42,9 @@ type Blockchain struct {
 	// runtime context used to execute transactions and scripts
 	computer *computer
 
-	rootAccountAddress flow.Address
-	rootAccountKey     flow.AccountPrivateKey
-	lastCreatedAddress flow.Address
+	rootAccountAddress    flow.Address
+	rootAccountPrivateKey flow.AccountPrivateKey
+	lastCreatedAddress    flow.Address
 }
 
 // BlockchainAPI defines the method set of an emulated blockchain.
@@ -63,7 +64,24 @@ type BlockchainAPI interface {
 	ExecuteScript(script []byte) (ScriptResult, error)
 	ExecuteScriptAtBlock(script []byte, blockHeight uint64) (ScriptResult, error)
 	RootAccountAddress() flow.Address
-	RootKey() flow.AccountPrivateKey
+	RootKey() RootKey
+}
+
+type RootKey struct {
+	ID             int
+	Address        flow.Address
+	SequenceNumber uint64
+	PrivateKey     flow.AccountPrivateKey
+}
+
+func (r RootKey) Signer() sdkcrypto.Signer {
+	return r.PrivateKey.Signer()
+}
+
+func (r RootKey) AccountKey() flow.AccountKey {
+	accountKey := r.PrivateKey.ToAccountKey()
+	accountKey.Weight = keys.PublicKeyWeightThreshold
+	return accountKey
 }
 
 // config is a set of configuration options for an emulated blockchain.
@@ -147,11 +165,11 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	}
 
 	b := &Blockchain{
-		storage:            config.Store,
-		pendingBlock:       pendingBlock,
-		rootAccountAddress: rootAccount.Address,
-		rootAccountKey:     config.RootAccountKey,
-		lastCreatedAddress: rootAccount.Address,
+		storage:               config.Store,
+		pendingBlock:          pendingBlock,
+		rootAccountAddress:    rootAccount.Address,
+		rootAccountPrivateKey: config.RootAccountKey,
+		lastCreatedAddress:    rootAccount.Address,
 	}
 
 	interpreterRuntime := runtime.NewInterpreterRuntime()
@@ -166,8 +184,23 @@ func (b *Blockchain) RootAccountAddress() flow.Address {
 }
 
 // RootKey returns the root private key for this blockchain.
-func (b *Blockchain) RootKey() flow.AccountPrivateKey {
-	return b.rootAccountKey
+func (b *Blockchain) RootKey() RootKey {
+	rootAccountKey := RootKey{
+		Address:    b.rootAccountAddress,
+		PrivateKey: b.rootAccountPrivateKey,
+	}
+
+	rootAccount, err := b.GetAccount(b.rootAccountAddress)
+	if err != nil {
+		return rootAccountKey
+	}
+
+	if len(rootAccount.Keys) > 0 {
+		rootAccountKey.ID = rootAccount.Keys[0].ID
+		rootAccountKey.SequenceNumber = rootAccount.Keys[0].SequenceNumber
+	}
+
+	return rootAccountKey
 }
 
 // PendingBlockID returns the ID of the pending block.
@@ -294,6 +327,10 @@ func (b *Blockchain) AddTransaction(tx flow.Transaction) error {
 	} else if !errors.Is(err, storage.ErrNotFound{}) {
 		// Error in the storage provider
 		return fmt.Errorf("failed to check storage for transaction %w", err)
+	}
+
+	if tx.ProposalKey() == nil {
+		return &ErrInvalidTransaction{TxID: tx.ID(), MissingFields: []string{"proposal_key"}}
 	}
 
 	if err := b.verifySignatures(tx); err != nil {
@@ -547,9 +584,10 @@ func (b *Blockchain) CreateAccount(
 	tx := flow.NewTransaction().
 		SetScript(createAccountScript).
 		SetGasLimit(10).
-		SetPayer(b.RootAccountAddress(), 0)
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+		SetPayer(b.RootKey().Address, 0)
 
-	err = tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
+	err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	if err != nil {
 		return flow.Address{}, err
 	}
@@ -589,7 +627,7 @@ func (b *Blockchain) UpdateAccountCode(
 		SetPayer(b.rootAccountAddress, 0).
 		AddAuthorizer(b.rootAccountAddress, 0)
 
-	err := tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
+	err := tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	if err != nil {
 		return err
 	}

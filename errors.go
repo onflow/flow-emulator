@@ -16,7 +16,7 @@ type ErrBlockNotFound struct {
 
 func (e *ErrBlockNotFound) Error() string {
 	if e.BlockNum == 0 {
-		return fmt.Sprintf("Block with ID %x cannot be found", e.BlockID)
+		return fmt.Sprintf("Block with ID %s cannot be found", e.BlockID)
 	}
 
 	return fmt.Sprintf("Block number %d cannot be found", e.BlockNum)
@@ -28,7 +28,7 @@ type ErrTransactionNotFound struct {
 }
 
 func (e *ErrTransactionNotFound) Error() string {
-	return fmt.Sprintf("Transaction with ID %x cannot be found", e.TxID)
+	return fmt.Sprintf("Transaction with ID %s cannot be found", e.TxID)
 }
 
 // ErrAccountNotFound indicates that an account specified by address cannot be found.
@@ -46,7 +46,7 @@ type ErrDuplicateTransaction struct {
 }
 
 func (e *ErrDuplicateTransaction) Error() string {
-	return fmt.Sprintf("Transaction with ID %x has already been submitted", e.TxID)
+	return fmt.Sprintf("Transaction with ID %s has already been submitted", e.TxID)
 }
 
 // ErrMissingSignature indicates that a transaction is missing a required signature.
@@ -84,7 +84,7 @@ type ErrInvalidTransaction struct {
 
 func (e *ErrInvalidTransaction) Error() string {
 	return fmt.Sprintf(
-		"Transaction with ID %x is invalid (missing required fields): %s",
+		"Transaction with ID %s is invalid (missing required fields): %s",
 		e.TxID,
 		strings.Join(e.MissingFields, ", "),
 	)
@@ -96,7 +96,7 @@ type ErrInvalidStateVersion struct {
 }
 
 func (e *ErrInvalidStateVersion) Error() string {
-	return fmt.Sprintf("World State with version hash %x is invalid", e.Version)
+	return fmt.Sprintf("Execution state with version hash %x is invalid", e.Version)
 }
 
 // ErrPendingBlockCommitBeforeExecution indicates that the current pending block has not been executed (cannot commit).
@@ -105,7 +105,7 @@ type ErrPendingBlockCommitBeforeExecution struct {
 }
 
 func (e *ErrPendingBlockCommitBeforeExecution) Error() string {
-	return fmt.Sprintf("Pending block with ID %x cannot be commited before execution", e.BlockID)
+	return fmt.Sprintf("Pending block with ID %s cannot be commited before execution", e.BlockID)
 }
 
 // ErrPendingBlockMidExecution indicates that the current pending block is mid-execution.
@@ -114,7 +114,7 @@ type ErrPendingBlockMidExecution struct {
 }
 
 func (e *ErrPendingBlockMidExecution) Error() string {
-	return fmt.Sprintf("Pending block with ID %x is currently being executed", e.BlockID)
+	return fmt.Sprintf("Pending block with ID %s is currently being executed", e.BlockID)
 }
 
 // ErrPendingBlockTransactionsExhausted indicates that the current pending block has finished executing (no more transactions to execute).
@@ -123,7 +123,7 @@ type ErrPendingBlockTransactionsExhausted struct {
 }
 
 func (e *ErrPendingBlockTransactionsExhausted) Error() string {
-	return fmt.Sprintf("Pending block with ID %x contains no more transactions to execute", e.BlockID)
+	return fmt.Sprintf("Pending block with ID %s contains no more transactions to execute", e.BlockID)
 }
 
 // ErrStorage indicates that an error occurred in the storage provider.

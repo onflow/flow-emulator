@@ -198,7 +198,7 @@ func setupUsersTokens(
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateTokenScript(tokenAddr, 30)).
 			SetGasLimit(20).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
 			AddAuthorizer(signingAddresses[i], 0)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
@@ -207,7 +207,7 @@ func setupUsersTokens(
 		tx = flow.NewTransaction().
 			SetScript(GenerateCreateNFTScript(nftAddr, i+1)).
 			SetGasLimit(20).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
 			AddAuthorizer(signingAddresses[i], 0)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
