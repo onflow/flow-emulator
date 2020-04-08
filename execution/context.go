@@ -367,6 +367,33 @@ func (r *RuntimeContext) GetAccount(address flow.Address) *flow.Account {
 	}
 }
 
+// IncrementSequenceNumber increments the sequence number with the given ID.
+func (r *RuntimeContext) IncrementSequenceNumber(address flow.Address, keyID int) error {
+	accountID := address.Bytes()
+
+	seqNumKey := keyPublicKeySequenceNumber(keyID)
+
+	seqNumBytes, err := r.ledger.Get(
+		fullKey(string(accountID), string(accountID), seqNumKey),
+	)
+	if err != nil {
+		return err
+	}
+
+	// increment sequence number by 1
+	seqNum := big.NewInt(0).SetBytes(seqNumBytes)
+	seqNum.Add(seqNum, big.NewInt(1))
+
+	seqNumBytes = seqNum.Bytes()
+
+	r.ledger.Set(
+		fullKey(string(accountID), string(accountID), seqNumKey),
+		seqNumBytes,
+	)
+
+	return nil
+}
+
 // ResolveImport imports code for the provided import location.
 //
 // This function returns an error if the import location is not an account address,
