@@ -109,16 +109,17 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	// only create blocks ticker if block time > 0
 	if conf.BlockTime > 0 {
 		server.blocksTicker = NewBlocksTicker(backend, conf.BlockTime)
-
 	}
 
 	address := blockchain.RootAccountAddress()
 	prKey := blockchain.RootKey()
-	prKeyBytes, _ := prKey.PrivateKey.Encode()
+	prKeyBytes, _ := prKey.PrivateKey.PrivateKey.Encode()
 
 	logger.WithFields(logrus.Fields{
-		"address": address.Hex(),
-		"prKey":   hex.EncodeToString(prKeyBytes),
+		"address":       address.Hex(),
+		"prKey":         hex.EncodeToString(prKeyBytes),
+		"prKeySigAlgo":  prKey.AccountKey().SignAlgo.String(),
+		"prKeyHashAlgo": prKey.AccountKey().HashAlgo.String(),
 	}).Infof("⚙️   Using root account 0x%s", address.Hex())
 
 	return server
