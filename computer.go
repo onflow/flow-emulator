@@ -39,8 +39,8 @@ func (c *computer) ExecuteTransaction(ledger *types.LedgerView, tx flow.Transact
 
 	proposalKey := tx.ProposalKey()
 	if proposalKey == nil {
-		// TODO: check this earlier
-		panic("proposal key should not be nil")
+		// TODO: add dedicated error type
+		return TransactionResult{}, fmt.Errorf("missing sequence number")
 	}
 
 	valid, updatedSeqNum, err := runtimeContext.CheckAndIncrementSequenceNumber(
