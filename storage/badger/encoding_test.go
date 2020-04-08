@@ -21,7 +21,8 @@ func TestEncodeTransaction(t *testing.T) {
 	var decodedTx flow.Transaction
 	err = decodeTransaction(&decodedTx, data)
 	require.Nil(t, err)
-	assert.Equal(t, tx, decodedTx)
+
+	assert.Equal(t, tx.ID(), decodedTx.ID())
 }
 
 func TestEncodeBlock(t *testing.T) {
