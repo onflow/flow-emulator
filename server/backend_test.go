@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/dapperlabs/flow-go-sdk/client/convert"
+	"github.com/dapperlabs/flow-go-sdk/test"
 	"github.com/golang/mock/gomock"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +19,6 @@ import (
 	encoding "github.com/dapperlabs/cadence/encoding/json"
 	"github.com/dapperlabs/flow-go-sdk"
 	access "github.com/dapperlabs/flow/protobuf/go/flow/access"
-	"github.com/dapperlabs/flow/protobuf/go/flow/entities"
 
 	emulator "github.com/dapperlabs/flow-emulator"
 	"github.com/dapperlabs/flow-emulator/mocks"
@@ -56,7 +57,8 @@ func TestBackend(t *testing.T) {
 		sampleScriptText := []byte("hey I'm so totally uninterpretable script text with unicode ć, ń, ó, ś, ź")
 		scriptResponse := cadence.NewInt(rand.Int())
 		executionScriptRequest := access.ExecuteScriptAtLatestBlockRequest{
-SetScript(sampleScriptText)
+			Script: sampleScriptText,
+		}
 		latestBlock := &types.Block{Height: rand.Uint64()}
 
 		api.EXPECT().
@@ -85,7 +87,7 @@ SetScript(sampleScriptText)
 		sampleScriptText := []byte("hey I'm so totally uninterpretable script text with unicode ć, ń, ó, ś, ź")
 		scriptResponse := cadence.NewInt(rand.Int())
 		executionScriptRequest := access.ExecuteScriptAtBlockHeightRequest{
-SetScript(sampleScriptText).
+			Script:      sampleScriptText,
 			BlockHeight: rand.Uint64(),
 		}
 
@@ -113,7 +115,7 @@ SetScript(sampleScriptText).
 
 		executionScriptRequest := access.ExecuteScriptAtBlockIDRequest{
 			Script:  sampleScriptText,
-			BlockId: randomBlock.ID(),
+			BlockId: randomBlock.ID().Bytes(),
 		}
 
 		api.EXPECT().
@@ -358,33 +360,19 @@ SetScript(sampleScriptText).
 			}).
 			Times(1)
 
+		tx := test.TransactionGenerator().New()
+		txMsg := convert.TransactionToMessage(*tx)
+
 		requestTx := access.SendTransactionRequest{
-			Transaction: &entities.Transaction{
-				Script:           nil,
-				ReferenceBlockId: nil,
-				PayerAccount:     nil,
-				ScriptAccounts: [][]byte{
-					nil,
-					{1, 2, 3, 4},
-				},
-				Signatures: []*entities.AccountSignature{
-					{
-						Account:   []byte{2, 2, 2, 2},
-						Signature: []byte{4, 4, 4, 4},
-					}, nil,
-				},
-				Status: 0,
-			},
+			Transaction: txMsg,
 		}
 		response, err := backend.SendTransaction(context.Background(), &requestTx)
 
 		assert.NoError(t, err)
-		assert.NotNil(t, response)
+		require.NotNil(t, response)
 
-		assert.Len(t, capturedTx.ScriptAccounts, 2)
-		assert.Len(t, capturedTx.Signatures, 2)
-
-		assert.True(t, capturedTx.ID().Equal(response.GetId()))
+		assert.Equal(t, capturedTx.ID(), capturedTx.ID())
+		assert.Equal(t, capturedTx.ID().Bytes(), response.GetId())
 	}))
 
 	t.Run("SendTransaction which errors while processing", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
@@ -394,15 +382,15 @@ SetScript(sampleScriptText).
 			Return(&emulator.ErrInvalidSignaturePublicKey{}).
 			Times(1)
 
+		tx := test.TransactionGenerator().New()
+
+		// remove payer to make transaction invalid
+		tx.Payload.Payer = nil
+
+		txMsg := convert.TransactionToMessage(*tx)
+
 		requestTx := access.SendTransactionRequest{
-			Transaction: &entities.Transaction{
-				Script:           nil,
-				ReferenceBlockId: nil,
-				PayerAccount:     nil,
-				ScriptAccounts:   nil,
-				Signatures:       nil,
-				Status:           0,
-			},
+			Transaction: txMsg,
 		}
 		response, err := backend.SendTransaction(context.Background(), &requestTx)
 
@@ -441,32 +429,18 @@ SetScript(sampleScriptText).
 			}).
 			Times(1)
 
+		tx := test.TransactionGenerator().New()
+		txMsg := convert.TransactionToMessage(*tx)
+
 		requestTx := access.SendTransactionRequest{
-			Transaction: &entities.Transaction{
-				Script:           nil,
-				ReferenceBlockId: nil,
-				PayerAccount:     nil,
-				ScriptAccounts: [][]byte{
-					nil,
-					{1, 2, 3, 4},
-				},
-				Signatures: []*entities.AccountSignature{
-					{
-						Account:   []byte{2, 2, 2, 2},
-						Signature: []byte{4, 4, 4, 4},
-					}, nil,
-				},
-				Status: 0,
-			},
+			Transaction: txMsg,
 		}
 		response, err := backend.SendTransaction(context.Background(), &requestTx)
 
 		assert.NoError(t, err)
-		assert.NotNil(t, response)
+		require.NotNil(t, response)
 
-		assert.Len(t, capturedTx.ScriptAccounts, 2)
-		assert.Len(t, capturedTx.Signatures, 2)
-
-		assert.True(t, capturedTx.ID().Equal(response.GetId()))
+		assert.Equal(t, capturedTx.ID(), capturedTx.ID())
+		assert.Equal(t, capturedTx.ID().Bytes(), response.GetId())
 	}))
 }
