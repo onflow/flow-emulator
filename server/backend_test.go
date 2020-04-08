@@ -38,7 +38,7 @@ func TestPing(t *testing.T) {
 
 func TestBackend(t *testing.T) {
 
-	//wrapper which manages mock lifecycle
+	// wrapper which manages mock lifecycle
 	withMocks := func(sut func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI)) func(t *testing.T) {
 		return func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
@@ -56,9 +56,8 @@ func TestBackend(t *testing.T) {
 		sampleScriptText := []byte("hey I'm so totally uninterpretable script text with unicode ć, ń, ó, ś, ź")
 		scriptResponse := cadence.NewInt(rand.Int())
 		executionScriptRequest := access.ExecuteScriptAtLatestBlockRequest{
-			Script: sampleScriptText,
-		}
-		latestBlock := &types.Block{Number: rand.Uint64()}
+SetScript(sampleScriptText)
+		latestBlock := &types.Block{Height: rand.Uint64()}
 
 		api.EXPECT().
 			GetLatestBlock().
@@ -66,7 +65,7 @@ func TestBackend(t *testing.T) {
 			Times(1)
 
 		api.EXPECT().
-			ExecuteScriptAtBlock(sampleScriptText, latestBlock.Number).
+			ExecuteScriptAtBlock(sampleScriptText, latestBlock.Height).
 			Return(emulator.ScriptResult{
 				Value: scriptResponse,
 				Error: nil,
@@ -86,7 +85,7 @@ func TestBackend(t *testing.T) {
 		sampleScriptText := []byte("hey I'm so totally uninterpretable script text with unicode ć, ń, ó, ś, ź")
 		scriptResponse := cadence.NewInt(rand.Int())
 		executionScriptRequest := access.ExecuteScriptAtBlockHeightRequest{
-			Script:      sampleScriptText,
+SetScript(sampleScriptText).
 			BlockHeight: rand.Uint64(),
 		}
 
@@ -110,20 +109,20 @@ func TestBackend(t *testing.T) {
 	t.Run("ExecuteScriptAtBlockID", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
 		sampleScriptText := []byte("hey I'm so totally uninterpretable script text with unicode ć, ń, ó, ś, ź")
 		scriptResponse := cadence.NewInt(rand.Int())
-		randomBlock := &types.Block{Number: rand.Uint64()}
+		randomBlock := &types.Block{Height: rand.Uint64()}
 
 		executionScriptRequest := access.ExecuteScriptAtBlockIDRequest{
 			Script:  sampleScriptText,
-			BlockId: randomBlock.Hash(),
+			BlockId: randomBlock.ID(),
 		}
 
 		api.EXPECT().
-			GetBlockByHash(randomBlock.Hash()).
+			GetBlockByID(randomBlock.ID()).
 			Return(randomBlock, nil).
 			Times(1)
 
 		api.EXPECT().
-			ExecuteScriptAtBlock(sampleScriptText, randomBlock.Number).
+			ExecuteScriptAtBlock(sampleScriptText, randomBlock.Height).
 			Return(emulator.ScriptResult{
 				Value: scriptResponse,
 				Error: nil,
@@ -145,7 +144,7 @@ func TestBackend(t *testing.T) {
 			Address: flow.RootAddress,
 			Balance: 10,
 			Code:    []byte("pub fun main() {}"),
-			Keys:    []flow.AccountPublicKey{},
+			Keys:    []flow.AccountKey{},
 		}
 
 		api.EXPECT().
@@ -164,7 +163,7 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, account.Balance, response.Account.Balance)
 	}))
 
-	t.Run("GetEvents fails with wrong block numbers", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetEvents fails with wrong block heights", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
 
 		api.EXPECT().
 			GetEvents(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -233,15 +232,15 @@ func TestBackend(t *testing.T) {
 		resEvents := response.GetEvents()
 
 		assert.Len(t, resEvents, 2)
-		assert.EqualValues(t, 0, resEvents[0].GetIndex())
-		assert.EqualValues(t, 1, resEvents[1].GetIndex())
+		assert.EqualValues(t, 0, resEvents[0].GetEventIndex())
+		assert.EqualValues(t, 1, resEvents[1].GetEventIndex())
 	}))
 
 	t.Run("GetLatestBlockHeader", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
 		block := types.Block{
-			Number:            11,
-			PreviousBlockHash: nil,
-			TransactionHashes: nil,
+			Height:         11,
+			ParentID:       nil,
+			TransactionIDs: nil,
 		}
 
 		api.EXPECT().
@@ -254,7 +253,7 @@ func TestBackend(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, response)
 
-		assert.Equal(t, block.Number, response.Block.Height)
+		assert.Equal(t, block.Height, response.Block.Height)
 	}))
 
 	t.Run("GetTransaction tx does not exists", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
@@ -288,7 +287,7 @@ func TestBackend(t *testing.T) {
 	// 		t.Status = flow.TransactionSealed
 	// 	})
 
-	// 	txHash := tx.Hash()
+	// 	txHash := tx.ID()
 
 	// 	txEvents := []flow.Event{
 	// 		unittest.EventFixture(func(e *flow.Event) {
@@ -385,7 +384,7 @@ func TestBackend(t *testing.T) {
 		assert.Len(t, capturedTx.ScriptAccounts, 2)
 		assert.Len(t, capturedTx.Signatures, 2)
 
-		assert.True(t, capturedTx.Hash().Equal(response.GetId()))
+		assert.True(t, capturedTx.ID().Equal(response.GetId()))
 	}))
 
 	t.Run("SendTransaction which errors while processing", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
@@ -468,6 +467,6 @@ func TestBackend(t *testing.T) {
 		assert.Len(t, capturedTx.ScriptAccounts, 2)
 		assert.Len(t, capturedTx.Signatures, 2)
 
-		assert.True(t, capturedTx.Hash().Equal(response.GetId()))
+		assert.True(t, capturedTx.ID().Equal(response.GetId()))
 	}))
 }

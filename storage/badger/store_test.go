@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/dapperlabs/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go/crypto"
 
 	"github.com/dapperlabs/flow-emulator/storage"
 	"github.com/dapperlabs/flow-emulator/storage/badger"
@@ -27,22 +27,22 @@ func TestBlocks(t *testing.T) {
 	}()
 
 	block1 := types.Block{
-		Number: 1,
+		Height: 1,
 	}
 	block2 := types.Block{
-		Number: 2,
+		Height: 2,
 	}
 
 	t.Run("should return error for not found", func(t *testing.T) {
-		t.Run("BlockByHash", func(t *testing.T) {
-			_, err := store.BlockByHash(unittest.HashFixture(32))
+		t.Run("BlockByID", func(t *testing.T) {
+			_, err := store.BlockByID(test.IdentifierGenerator().New())
 			if assert.Error(t, err) {
 				assert.IsType(t, storage.ErrNotFound{}, err)
 			}
 		})
 
-		t.Run("BlockByNumber", func(t *testing.T) {
-			_, err := store.BlockByNumber(block1.Number)
+		t.Run("BlockByHeight", func(t *testing.T) {
+			_, err := store.BlockByHeight(block1.Height)
 			if assert.Error(t, err) {
 				assert.IsType(t, storage.ErrNotFound{}, err)
 			}
@@ -66,14 +66,14 @@ func TestBlocks(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("should be able to get inserted block", func(t *testing.T) {
-		t.Run("BlockByNumber", func(t *testing.T) {
-			block, err := store.BlockByNumber(block1.Number)
+		t.Run("BlockByHeight", func(t *testing.T) {
+			block, err := store.BlockByHeight(block1.Height)
 			assert.NoError(t, err)
 			assert.Equal(t, block1, block)
 		})
 
-		t.Run("BlockByHash", func(t *testing.T) {
-			block, err := store.BlockByHash(block1.Hash())
+		t.Run("BlockByID", func(t *testing.T) {
+			block, err := store.BlockByID(block1.ID())
 			assert.NoError(t, err)
 			assert.Equal(t, block1, block)
 		})
@@ -106,7 +106,7 @@ func TestTransactions(t *testing.T) {
 	tx := unittest.TransactionFixture()
 
 	t.Run("should return error for not found", func(t *testing.T) {
-		_, err := store.TransactionByHash(tx.Hash())
+		_, err := store.TransactionByID(tx.ID())
 		if assert.Error(t, err) {
 			assert.IsType(t, storage.ErrNotFound{}, err)
 		}
@@ -117,7 +117,7 @@ func TestTransactions(t *testing.T) {
 		assert.NoError(t, err)
 
 		t.Run("should be able to get inserted tx", func(t *testing.T) {
-			storedTx, err := store.TransactionByHash(tx.Hash())
+			storedTx, err := store.TransactionByID(tx.ID())
 			require.Nil(t, err)
 			assert.Equal(t, tx, storedTx)
 		})
@@ -132,18 +132,18 @@ func TestLedger(t *testing.T) {
 			require.Nil(t, os.RemoveAll(dir))
 		}()
 
-		var blockNumber uint64 = 1
+		var blockHeight uint64 = 1
 
 		ledger := make(types.LedgerDelta)
 		ledger["foo"] = []byte("bar")
 
 		t.Run("should get able to set ledger", func(t *testing.T) {
-			err := store.InsertLedgerDelta(blockNumber, ledger)
+			err := store.InsertLedgerDelta(blockHeight, ledger)
 			assert.NoError(t, err)
 		})
 
 		t.Run("should be to get set ledger", func(t *testing.T) {
-			gotLedger := store.LedgerViewByNumber(blockNumber)
+			gotLedger := store.LedgerViewByHeight(blockHeight)
 			gotRegister, err := gotLedger.Get("foo")
 			assert.NoError(t, err)
 			assert.Equal(t, ledger["foo"], gotRegister)
@@ -184,7 +184,7 @@ func TestLedger(t *testing.T) {
 
 		// View at block 1 should have keys 1, 2, 3
 		t.Run("should version the first written block", func(t *testing.T) {
-			gotLedger := store.LedgerViewByNumber(1)
+			gotLedger := store.LedgerViewByHeight(1)
 			for i := 1; i <= 3; i++ {
 				val, err := gotLedger.Get(fmt.Sprintf("%d", i))
 				assert.NoError(t, err)
@@ -195,7 +195,7 @@ func TestLedger(t *testing.T) {
 		// View at block N should have values 1->N+2
 		t.Run("should version all blocks", func(t *testing.T) {
 			for block := 2; block < totalBlocks; block++ {
-				gotLedger := store.LedgerViewByNumber(uint64(block))
+				gotLedger := store.LedgerViewByHeight(uint64(block))
 				// The keys 1->N-1 are defined in previous blocks
 				for i := 1; i < block; i++ {
 					val, err := gotLedger.Get(fmt.Sprintf("%d", i))
@@ -222,13 +222,13 @@ func TestEvents(t *testing.T) {
 
 	t.Run("should be able to insert events", func(t *testing.T) {
 		events := []flow.Event{unittest.EventFixture(func(e *flow.Event) {})}
-		var blockNumber uint64 = 1
+		var blockHeight uint64 = 1
 
-		err := store.InsertEvents(blockNumber, events)
+		err := store.InsertEvents(blockHeight, events)
 		assert.NoError(t, err)
 
 		t.Run("should be able to get inserted events", func(t *testing.T) {
-			gotEvents, err := store.RetrieveEvents("", blockNumber, blockNumber)
+			gotEvents, err := store.RetrieveEvents("", blockHeight, blockHeight)
 			assert.NoError(t, err)
 			assert.Equal(t, events, gotEvents)
 		})
@@ -321,7 +321,7 @@ func TestPersistence(t *testing.T) {
 		require.Nil(t, os.RemoveAll(dir))
 	}()
 
-	block := types.Block{Number: 1}
+	block := types.Block{Height: 1}
 	tx := unittest.TransactionFixture()
 	events := []flow.Event{unittest.EventFixture(func(e *flow.Event) {})}
 
@@ -333,9 +333,9 @@ func TestPersistence(t *testing.T) {
 	assert.NoError(t, err)
 	err = store.InsertTransaction(tx)
 	assert.NoError(t, err)
-	err = store.InsertEvents(block.Number, events)
+	err = store.InsertEvents(block.Height, events)
 	assert.NoError(t, err)
-	err = store.InsertLedgerDelta(block.Number, ledger)
+	err = store.InsertLedgerDelta(block.Height, ledger)
 
 	// close the store
 	err = store.Close()
@@ -350,15 +350,15 @@ func TestPersistence(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, block, gotBlock)
 
-	gotTx, err := store.TransactionByHash(tx.Hash())
+	gotTx, err := store.TransactionByID(tx.ID())
 	assert.NoError(t, err)
 	assert.Equal(t, tx, gotTx)
 
-	gotEvents, err := store.RetrieveEvents("", block.Number, block.Number)
+	gotEvents, err := store.RetrieveEvents("", block.Height, block.Height)
 	assert.NoError(t, err)
 	assert.Equal(t, events, gotEvents)
 
-	gotLedger := store.LedgerViewByNumber(block.Number)
+	gotLedger := store.LedgerViewByHeight(block.Height)
 	gotRegister, err := gotLedger.Get("foo")
 	assert.NoError(t, err)
 	assert.Equal(t, ledger["foo"], gotRegister)
@@ -408,13 +408,15 @@ func BenchmarkBlockDiskUsage(b *testing.B) {
 	}
 	defer store.Close()
 
+	ids := test.IdentifierGenerator()
+
 	b.StartTimer()
 	var lastDBSize int64
 	for i := 0; i < b.N; i++ {
 		block := types.Block{
-			Number:            uint64(i),
-			PreviousBlockHash: unittest.HashFixture(32),
-			TransactionHashes: []crypto.Hash{unittest.HashFixture(32)},
+			Height:         uint64(i),
+			ParentID:       ids.New(),
+			TransactionIDs: []flow.Identifier{ids.New()},
 		}
 		if err := store.InsertBlock(block); err != nil {
 			b.Fatal(err)

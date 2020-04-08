@@ -4,7 +4,6 @@ package storage
 
 import (
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go/crypto"
 
 	"github.com/dapperlabs/flow-emulator/types"
 )
@@ -22,13 +21,13 @@ import (
 // Implementations must be safe for use by multiple goroutines.
 type Store interface {
 
-	// BlockByHash returns the block with the given hash.
-	BlockByHash(crypto.Hash) (types.Block, error)
+	// BlockByID returns the block with the given ID.
+	BlockByID(flow.Identifier) (types.Block, error)
 
-	// BlockByNumber returns the block with the given number.
-	BlockByNumber(blockNumber uint64) (types.Block, error)
+	// BlockByHeight returns the block with the given height.
+	BlockByHeight(blockHeight uint64) (types.Block, error)
 
-	// LatestBlock returns the block with the highest block number.
+	// LatestBlock returns the block with the highest block height.
 	LatestBlock() (types.Block, error)
 
 	// InsertBlock inserts a block.
@@ -42,17 +41,17 @@ type Store interface {
 		events []flow.Event,
 	) error
 
-	// TransactionByHash gets the transaction with the given hash.
-	TransactionByHash(crypto.Hash) (flow.Transaction, error)
+	// TransactionByID gets the transaction with the given ID.
+	TransactionByID(flow.Identifier) (flow.Transaction, error)
 
 	// InsertTransaction inserts a transaction.
 	InsertTransaction(flow.Transaction) error
 
-	// LedgerViewByNumber returns a view into the ledger state at a given block.
-	LedgerViewByNumber(blockNumber uint64) *types.LedgerView
+	// LedgerViewByHeight returns a view into the ledger state at a given block.
+	LedgerViewByHeight(blockHeight uint64) *types.LedgerView
 
 	// InsertLedgerDelta inserts a register delta at a given block.
-	InsertLedgerDelta(blockNumber uint64, delta types.LedgerDelta) error
+	InsertLedgerDelta(blockHeight uint64, delta types.LedgerDelta) error
 
 	// RetrieveEvents returns all events with the given type between startBlock and
 	// endBlock (inclusive). If eventType is empty, returns all events in the
@@ -60,5 +59,5 @@ type Store interface {
 	RetrieveEvents(eventType string, startBlock, endBlock uint64) ([]flow.Event, error)
 
 	// InsertEvents inserts events for a block.
-	InsertEvents(blockNumber uint64, events []flow.Event) error
+	InsertEvents(blockHeight uint64, events []flow.Event) error
 }

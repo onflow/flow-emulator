@@ -89,11 +89,11 @@ func SignAndSubmit(
 		sig, err := keys.SignTransaction(tx, signingKeys[i])
 		assert.NoError(t, err)
 
-		tx.AddSignature(signingAddresses[i], sig)
+
 	}
 
 	// submit the signed transaction
-	err := b.AddTransaction(tx)
+	err := b.AddTransaction(*tx)
 	require.NoError(t, err)
 
 	result, err := b.ExecuteNextTransaction()
@@ -116,7 +116,7 @@ func CreateAccount() (flow.AccountPrivateKey, flow.Address) {
 	privateKey := RandomPrivateKey()
 
 	addr := createAccount(
-		[]flow.AccountPublicKey{privateKey.PublicKey(keys.PublicKeyWeightThreshold)},
+		[]flow.AccountKey{privateKey.PublicKey(keys.PublicKeyWeightThreshold)},
 		nil,
 	)
 
@@ -127,7 +127,7 @@ func DeployContract(code []byte) flow.Address {
 	return createAccount(nil, code)
 }
 
-func createAccount(publicKeys []flow.AccountPublicKey, code []byte) flow.Address {
+func createAccount(publicKeys []flow.AccountKey, code []byte) flow.Address {
 	ctx := context.Background()
 	flowClient, err := client.New("127.0.0.1:3569")
 	Handle(err)
@@ -137,22 +137,22 @@ func createAccount(publicKeys []flow.AccountPublicKey, code []byte) flow.Address
 	createAccountScript, err := templates.CreateAccount(publicKeys, code)
 	Handle(err)
 
-	createAccountTx := flow.Transaction{
-		Script:       createAccountScript,
-		Nonce:        GetNonce(),
-		ComputeLimit: 10,
-		PayerAccount: rootAcctAddr,
+	createAccounttx := flow.NewTransaction().
+SetScript(createAccountScript).
+
+		SetGasLimit(10).
+		SetPayer(rootAcctAddr, 0).
 	}
 
 	sig, err := keys.SignTransaction(createAccountTx, rootAcctKey)
 	Handle(err)
 
-	createAccountTx.AddSignature(rootAcctAddr, sig)
+	createAccount
 
 	err = flowClient.SendTransaction(ctx, createAccountTx)
 	Handle(err)
 
-	tx := WaitForSeal(ctx, flowClient, createAccountTx.Hash())
+	tx := WaitForSeal(ctx, flowClient, createAccountTx.ID())
 
 	accountCreatedEvent := flow.AccountCreatedEvent(tx.Events[0])
 
@@ -197,22 +197,22 @@ func setupUsersTokens(
 ) {
 	// add array of signers to transaction
 	for i := 0; i < len(signingAddresses); i++ {
-		tx := flow.Transaction{
-			Script:         GenerateCreateTokenScript(tokenAddr, 30),
-			Nonce:          GetNonce(),
-			ComputeLimit:   20,
-			PayerAccount:   b.RootAccountAddress(),
+		tx := flow.NewTransaction().
+SetScript(GenerateCreateTokenScript(tokenAddr, 30)).
+
+			SetGasLimit(20).
+			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
 			ScriptAccounts: []flow.Address{signingAddresses[i]},
 		}
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
 
 		// then deploy a NFT to the accounts
-		tx = flow.Transaction{
-			Script:         GenerateCreateNFTScript(nftAddr, i+1),
-			Nonce:          GetNonce(),
-			ComputeLimit:   20,
-			PayerAccount:   b.RootAccountAddress(),
+		tx = flow.NewTransaction()
+SetScript(GenerateCreateNFTScript(nftAddr, i+1)).
+
+			SetGasLimit(20).
+			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
 			ScriptAccounts: []flow.Address{signingAddresses[i]},
 		}
 

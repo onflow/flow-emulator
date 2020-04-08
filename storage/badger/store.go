@@ -7,7 +7,6 @@ import (
 	"github.com/dgraph-io/badger"
 
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go/crypto"
 
 	"github.com/dapperlabs/flow-emulator/storage"
 	"github.com/dapperlabs/flow-emulator/types"
@@ -78,23 +77,22 @@ func (s *Store) setup() error {
 	})
 }
 
-func (s *Store) BlockByHash(blockHash crypto.Hash) (block types.Block, err error) {
-
+func (s *Store) BlockByID(blockID flow.Identifier) (block types.Block, err error) {
 	err = s.db.View(func(txn *badger.Txn) error {
-		// get block number by block hash
-		encBlockNumber, err := getTx(txn)(blockHashIndexKey(blockHash))
+		// get block height by block ID
+		encBlockHeight, err := getTx(txn)(blockIDIndexKey(blockID))
 		if err != nil {
 			return err
 		}
 
-		// decode block number
-		var blockNumber uint64
-		if err := decodeUint64(&blockNumber, encBlockNumber); err != nil {
+		// decode block height
+		var blockHeight uint64
+		if err := decodeUint64(&blockHeight, encBlockHeight); err != nil {
 			return err
 		}
 
-		// get block by block number and decode
-		encBlock, err := getTx(txn)(blockKey(blockNumber))
+		// get block by block height and decode
+		encBlock, err := getTx(txn)(blockKey(blockHeight))
 		if err != nil {
 			return err
 		}
@@ -103,9 +101,9 @@ func (s *Store) BlockByHash(blockHash crypto.Hash) (block types.Block, err error
 	return
 }
 
-func (s *Store) BlockByNumber(blockNumber uint64) (block types.Block, err error) {
+func (s *Store) BlockByHeight(blockHeight uint64) (block types.Block, err error) {
 	err = s.db.View(func(txn *badger.Txn) error {
-		encBlock, err := getTx(txn)(blockKey(blockNumber))
+		encBlock, err := getTx(txn)(blockKey(blockHeight))
 		if err != nil {
 			return err
 		}
@@ -116,14 +114,14 @@ func (s *Store) BlockByNumber(blockNumber uint64) (block types.Block, err error)
 
 func (s *Store) LatestBlock() (block types.Block, err error) {
 	err = s.db.View(func(txn *badger.Txn) error {
-		// get latest block number
-		latestBlockNumber, err := getLatestBlockNumberTx(txn)
+		// get latest block height
+		latestBlockHeight, err := getLatestBlockHeightTx(txn)
 		if err != nil {
 			return err
 		}
 
 		// get corresponding block
-		encBlock, err := getTx(txn)(blockKey(latestBlockNumber))
+		encBlock, err := getTx(txn)(blockKey(latestBlockHeight))
 		if err != nil {
 			return err
 		}
@@ -142,29 +140,29 @@ func insertBlock(block types.Block) func(txn *badger.Txn) error {
 		if err != nil {
 			return err
 		}
-		encBlockNumber, err := encodeUint64(block.Number)
+		encBlockHeight, err := encodeUint64(block.Height)
 		if err != nil {
 			return err
 		}
 
-		// get latest block number
-		latestBlockNumber, err := getLatestBlockNumberTx(txn)
+		// get latest block height
+		latestBlockHeight, err := getLatestBlockHeightTx(txn)
 		if err != nil && !errors.Is(err, storage.ErrNotFound{}) {
 			return err
 		}
 
-		// insert the block by block number
-		if err := txn.Set(blockKey(block.Number), encBlock); err != nil {
+		// insert the block by block height
+		if err := txn.Set(blockKey(block.Height), encBlock); err != nil {
 			return err
 		}
-		// add block hash to hash->number lookup
-		if err := txn.Set(blockHashIndexKey(block.Hash()), encBlockNumber); err != nil {
+		// add block ID to ID->height lookup
+		if err := txn.Set(blockIDIndexKey(block.ID()), encBlockHeight); err != nil {
 			return err
 		}
 
 		// if this is latest block, set latest block
-		if block.Number >= latestBlockNumber {
-			return txn.Set(latestBlockKey(), encBlockNumber)
+		if block.Height >= latestBlockHeight {
+			return txn.Set(latestBlockKey(), encBlockHeight)
 		}
 
 		return nil
@@ -190,13 +188,13 @@ func (s Store) CommitBlock(
 			}
 		}
 
-		err = s.insertLedgerDelta(block.Number, delta)(txn)
+		err = s.insertLedgerDelta(block.Height, delta)(txn)
 		if err != nil {
 			return err
 		}
 
 		if events != nil {
-			err = insertEvents(block.Number, events)(txn)
+			err = insertEvents(block.Height, events)(txn)
 			if err != nil {
 				return err
 			}
@@ -208,9 +206,9 @@ func (s Store) CommitBlock(
 	return err
 }
 
-func (s *Store) TransactionByHash(txHash crypto.Hash) (tx flow.Transaction, err error) {
+func (s *Store) TransactionByID(txID flow.Identifier) (tx flow.Transaction, err error) {
 	err = s.db.View(func(txn *badger.Txn) error {
-		encTx, err := getTx(txn)(transactionKey(txHash))
+		encTx, err := getTx(txn)(transactionKey(txID))
 		if err != nil {
 			return err
 		}
@@ -230,16 +228,16 @@ func insertTransaction(tx flow.Transaction) func(txn *badger.Txn) error {
 			return err
 		}
 
-		return txn.Set(transactionKey(tx.Hash()), encTx)
+		return txn.Set(transactionKey(tx.ID()), encTx)
 	}
 }
 
-func (s *Store) LedgerViewByNumber(blockNumber uint64) *types.LedgerView {
+func (s *Store) LedgerViewByHeight(blockHeight uint64) *types.LedgerView {
 	return types.NewLedgerView(func(key string) (value []byte, err error) {
 		s.ledgerChangeLog.RLock()
 		defer s.ledgerChangeLog.RUnlock()
 
-		lastChangedBlock := s.ledgerChangeLog.getMostRecentChange(key, blockNumber)
+		lastChangedBlock := s.ledgerChangeLog.getMostRecentChange(key, blockHeight)
 
 		err = s.db.View(func(txn *badger.Txn) error {
 			value, err = getTx(txn)(ledgerValueKey(key, lastChangedBlock))
@@ -262,11 +260,11 @@ func (s *Store) LedgerViewByNumber(blockNumber uint64) *types.LedgerView {
 	})
 }
 
-func (s *Store) InsertLedgerDelta(blockNumber uint64, delta types.LedgerDelta) error {
-	return s.db.Update(s.insertLedgerDelta(blockNumber, delta))
+func (s *Store) InsertLedgerDelta(blockHeight uint64, delta types.LedgerDelta) error {
+	return s.db.Update(s.insertLedgerDelta(blockHeight, delta))
 }
 
-func (s *Store) insertLedgerDelta(blockNumber uint64, delta types.LedgerDelta) func(txn *badger.Txn) error {
+func (s *Store) insertLedgerDelta(blockHeight uint64, delta types.LedgerDelta) func(txn *badger.Txn) error {
 	return func(txn *badger.Txn) error {
 		s.ledgerChangeLog.Lock()
 		defer s.ledgerChangeLog.Unlock()
@@ -274,7 +272,7 @@ func (s *Store) insertLedgerDelta(blockNumber uint64, delta types.LedgerDelta) f
 		for registerID, value := range delta.Updates() {
 			if value != nil {
 				// if register has an updated value, write it at this block
-				err := txn.Set(ledgerValueKey(registerID, blockNumber), value)
+				err := txn.Set(ledgerValueKey(registerID, blockHeight), value)
 				if err != nil {
 					return err
 				}
@@ -284,7 +282,7 @@ func (s *Store) insertLedgerDelta(blockNumber uint64, delta types.LedgerDelta) f
 			// and keep value as nil
 
 			// update the in-memory changelog
-			s.ledgerChangeLog.addChange(registerID, blockNumber)
+			s.ledgerChangeLog.addChange(registerID, blockHeight)
 
 			// encode and write the changelist for the register to disk
 			encChangelist, err := encodeChangelist(s.ledgerChangeLog.getChangelist(registerID))
@@ -317,9 +315,9 @@ func (s *Store) RetrieveEvents(eventType string, startBlock, endBlock uint64) (e
 		iter.Seek(eventsKey(startBlock))
 		for ; iter.Valid(); iter.Next() {
 			item := iter.Item()
-			// ensure the events are within the block number range
-			blockNumber := blockNumberFromEventsKey(item.Key())
-			if blockNumber < startBlock || blockNumber > endBlock {
+			// ensure the events are within the block height range
+			blockHeight := blockHeightFromEventsKey(item.Key())
+			if blockHeight < startBlock || blockHeight > endBlock {
 				break
 			}
 
@@ -350,18 +348,18 @@ func (s *Store) RetrieveEvents(eventType string, startBlock, endBlock uint64) (e
 	return
 }
 
-func (s *Store) InsertEvents(blockNumber uint64, events []flow.Event) error {
-	return s.db.Update(insertEvents(blockNumber, events))
+func (s *Store) InsertEvents(blockHeight uint64, events []flow.Event) error {
+	return s.db.Update(insertEvents(blockHeight, events))
 }
 
-func insertEvents(blockNumber uint64, events []flow.Event) func(txn *badger.Txn) error {
+func insertEvents(blockHeight uint64, events []flow.Event) func(txn *badger.Txn) error {
 	return func(txn *badger.Txn) error {
 		encEvents, err := encodeEvents(events)
 		if err != nil {
 			return err
 		}
 
-		return txn.Set(eventsKey(blockNumber), encEvents)
+		return txn.Set(eventsKey(blockHeight), encEvents)
 	}
 }
 
@@ -400,18 +398,18 @@ func getTx(txn *badger.Txn) func([]byte) ([]byte, error) {
 	}
 }
 
-// getLatestBlockNumberTx retrieves the latest block number and returns it.
+// getLatestBlockHeightTx retrieves the latest block height and returns it.
 // Must be called from within a Badger transaction.
-func getLatestBlockNumberTx(txn *badger.Txn) (uint64, error) {
-	encBlockNumber, err := getTx(txn)(latestBlockKey())
+func getLatestBlockHeightTx(txn *badger.Txn) (uint64, error) {
+	encBlockHeight, err := getTx(txn)(latestBlockKey())
 	if err != nil {
 		return 0, err
 	}
 
-	var blockNumber uint64
-	if err := decodeUint64(&blockNumber, encBlockNumber); err != nil {
+	var blockHeight uint64
+	if err := decodeUint64(&blockHeight, encBlockHeight); err != nil {
 		return 0, err
 	}
 
-	return blockNumber, nil
+	return blockHeight, nil
 }
