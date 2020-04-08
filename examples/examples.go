@@ -1,9 +1,7 @@
 package examples
 
 import (
-	"context"
 	"crypto/rand"
-	"fmt"
 	"io/ioutil"
 	"testing"
 
@@ -12,9 +10,7 @@ import (
 
 	"github.com/dapperlabs/cadence/runtime/cmd"
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/client"
 	"github.com/dapperlabs/flow-go-sdk/keys"
-	"github.com/dapperlabs/flow-go-sdk/templates"
 
 	emulator "github.com/dapperlabs/flow-emulator"
 )
@@ -59,16 +55,6 @@ func NewEmulator() *emulator.Blockchain {
 	return b
 }
 
-func RootAccount() (flow.Address, flow.AccountPrivateKey) {
-	privateKeyHex := "f87db87930770201010420c2e6c8cb9e8c9b9a7afe1df8ae431e68317ff7a9f42f8982b7877a9da76b28a7a00a06082a8648ce3d030107a14403420004c2c482bf01344a085af036f9413dd17a0d98a5b6fb4915c3ad4c3cb574e03ea5e2d47608093a26081c165722621bf9d8ff4b880cac0e7c586af3d86c0818a4af0203"
-	privateKey := keys.MustDecodePrivateKeyHex(privateKeyHex)
-
-	// root account always has address 0x01
-	addr := flow.HexToAddress("01")
-
-	return addr, privateKey
-}
-
 // SignAndSubmit signs a transaction with an array of signers and adds their signatures to the transaction
 // Then submits the transaction to the emulator. If the private keys don't match up with the addresses,
 // the transaction will not succeed.
@@ -109,80 +95,6 @@ func SignAndSubmit(
 	assert.NoError(t, err)
 }
 
-func CreateAccount() (flow.AccountPrivateKey, flow.Address) {
-	privateKey := RandomPrivateKey()
-	publicKey := privateKey.ToAccountKey()
-	publicKey.Weight = keys.PublicKeyWeightThreshold
-
-	addr := createAccount(
-		[]flow.AccountKey{publicKey},
-		nil,
-	)
-
-	return privateKey, addr
-}
-
-func DeployContract(code []byte) flow.Address {
-	return createAccount(nil, code)
-}
-
-func createAccount(publicKeys []flow.AccountKey, code []byte) flow.Address {
-	ctx := context.Background()
-	flowClient, err := client.New("127.0.0.1:3569")
-	Handle(err)
-
-	rootAcctAddr, rootAcctKey := RootAccount()
-
-	createAccountScript, err := templates.CreateAccount(publicKeys, code)
-	Handle(err)
-
-	createAccountTx := flow.NewTransaction().
-		SetScript(createAccountScript).
-		SetGasLimit(10).
-		SetPayer(rootAcctAddr, 0)
-
-	err = createAccountTx.SignContainer(rootAcctAddr, rootAcctKey.ToAccountKey().ID, rootAcctKey.Signer())
-	Handle(err)
-
-	err = flowClient.SendTransaction(ctx, *createAccountTx)
-	Handle(err)
-
-	// TODO: replace once GetTransactionStatus is implemented
-	// tx := WaitForSeal(ctx, flowClient, createAccountTx.ID())
-	// accountCreatedEvent := flow.AccountCreatedEvent(tx.Events[0])
-	//
-	// return accountCreatedEvent.Address()
-
-	return flow.Address{}
-}
-
-func Handle(err error) {
-	if err != nil {
-		fmt.Println("err:", err.Error())
-		panic(err)
-	}
-}
-
-func WaitForSeal(ctx context.Context, c *client.Client, id flow.Identifier) *flow.Transaction {
-	tx, err := c.GetTransaction(ctx, id)
-	Handle(err)
-
-	fmt.Printf("Waiting for transaction %x to be sealed...\n", id)
-
-	// TODO: replace once GetTransactionStatus is implemented
-	// for tx.Status != flow.TransactionSealed {
-	// 	time.Sleep(time.Second)
-	// 	fmt.Print(".")
-	// 	tx, err = c.GetTransaction(ctx, hash)
-	// 	Handle(err)
-	// }
-
-	fmt.Println()
-	fmt.Printf("Transaction %x sealed\n", id)
-
-	return tx
-}
-
 // setupUsersTokens sets up two accounts with 30 Fungible Tokens each
 // and a NFT collection with 1 NFT each
 func setupUsersTokens(
@@ -198,18 +110,20 @@ func setupUsersTokens(
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateTokenScript(tokenAddr, 30)).
 			SetGasLimit(20).
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address, b.RootKey().ID).
 			AddAuthorizer(signingAddresses[i], 0)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
 
 		// then deploy a NFT to the accounts
 		tx = flow.NewTransaction().
 			SetScript(GenerateCreateNFTScript(nftAddr, i+1)).
 			SetGasLimit(20).
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address, b.RootKey().ID).
 			AddAuthorizer(signingAddresses[i], 0)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
 	}
 }
