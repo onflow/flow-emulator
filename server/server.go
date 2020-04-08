@@ -4,16 +4,15 @@ import (
 	"encoding/hex"
 	"time"
 
-	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/keys"
 	"github.com/pkg/errors"
 	"github.com/psiemens/graceland"
 	"github.com/sirupsen/logrus"
 
-	"github.com/dapperlabs/flow-emulator"
+	emulator "github.com/dapperlabs/flow-emulator"
 	"github.com/dapperlabs/flow-emulator/storage"
 	"github.com/dapperlabs/flow-emulator/storage/badger"
 	"github.com/dapperlabs/flow-emulator/storage/memstore"
+	"github.com/dapperlabs/flow-go-sdk"
 )
 
 // EmulatorServer is a local server that runs a Flow Emulator instance.
@@ -115,7 +114,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 
 	address := blockchain.RootAccountAddress()
 	prKey := blockchain.RootKey()
-	prKeyBytes, _ := keys.EncodePrivateKey(prKey)
+	prKeyBytes, _ := prKey.PrivateKey.Encode()
 
 	logger.WithFields(logrus.Fields{
 		"address": address.Hex(),

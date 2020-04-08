@@ -8,11 +8,10 @@ import (
 
 	"github.com/dapperlabs/cadence"
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/keys"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dapperlabs/flow-emulator"
+	emulator "github.com/dapperlabs/flow-emulator"
 	"github.com/dapperlabs/flow-emulator/storage/badger"
 	"github.com/dapperlabs/flow-emulator/types"
 )
@@ -34,8 +33,8 @@ func TestInitialization(t *testing.T) {
 
 		latestBlock, err := b.GetLatestBlock()
 		assert.NoError(t, err)
-		assert.EqualValues(t, 0, latestBlock.Number)
-		assert.Equal(t, types.GenesisBlock().Hash(), latestBlock.Hash())
+		assert.EqualValues(t, 0, latestBlock.Height)
+		assert.Equal(t, types.GenesisBlock().ID(), latestBlock.ID())
 	})
 
 	t.Run("should restore state when initialized with non-empty store", func(t *testing.T) {
@@ -65,19 +64,16 @@ func TestInitialization(t *testing.T) {
 			counterAddress,
 		)
 
-		tx := flow.Transaction{
-			Script:         []byte(script),
-			Nonce:          getNonce(),
-			ComputeLimit:   10,
-			PayerAccount:   b.RootAccountAddress(),
-			ScriptAccounts: []flow.Address{b.RootAccountAddress()},
-		}
+		tx := flow.NewTransaction().
+			SetScript([]byte(script)).
+			SetGasLimit(10).
+			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
 
-		sig, err := keys.SignTransaction(tx, b.RootKey())
+		err = tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
 		assert.NoError(t, err)
-		tx.AddSignature(b.RootAccountAddress(), sig)
 
-		err = b.AddTransaction(tx)
+		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
 
 		result, err := b.ExecuteNextTransaction()
@@ -88,10 +84,10 @@ func TestInitialization(t *testing.T) {
 		assert.NoError(t, err)
 		require.NotNil(t, block)
 
-		minedTx, err := b.GetTransaction(tx.Hash())
+		minedTx, err := b.GetTransaction(tx.ID())
 		assert.NoError(t, err)
 
-		minedEvents, err := b.GetEvents("", block.Number, block.Number)
+		minedEvents, err := b.GetEvents("", block.Height, block.Height)
 
 		// Create a new blockchain with the same store
 		b, _ = emulator.NewBlockchain(emulator.WithStore(store))
@@ -99,25 +95,25 @@ func TestInitialization(t *testing.T) {
 		t.Run("should be able to read blocks", func(t *testing.T) {
 			latestBlock, err := b.GetLatestBlock()
 			assert.NoError(t, err)
-			assert.Equal(t, block.Hash(), latestBlock.Hash())
+			assert.Equal(t, block.ID(), latestBlock.ID())
 
-			blockByNumber, err := b.GetBlockByNumber(block.Number)
+			blockByHeight, err := b.GetBlockByHeight(block.Height)
 			assert.NoError(t, err)
-			assert.Equal(t, block.Hash(), blockByNumber.Hash())
+			assert.Equal(t, block.ID(), blockByHeight.ID())
 
-			blockByHash, err := b.GetBlockByHash(block.Hash())
+			blockByHash, err := b.GetBlockByID(block.ID())
 			assert.NoError(t, err)
-			assert.Equal(t, block.Hash(), blockByHash.Hash())
+			assert.Equal(t, block.ID(), blockByHash.ID())
 		})
 
 		t.Run("should be able to read transactions", func(t *testing.T) {
-			txByHash, err := b.GetTransaction(tx.Hash())
+			txByHash, err := b.GetTransaction(tx.ID())
 			assert.NoError(t, err)
 			assert.Equal(t, minedTx, txByHash)
 		})
 
 		t.Run("should be able to read events", func(t *testing.T) {
-			gotEvents, err := b.GetEvents("", block.Number, block.Number)
+			gotEvents, err := b.GetEvents("", block.Height, block.Height)
 			assert.NoError(t, err)
 			assert.Equal(t, minedEvents, gotEvents)
 		})

@@ -37,24 +37,24 @@ func TestCreateNFT(t *testing.T) {
 
 	// Vault must be instantiated with a positive ID
 	t.Run("Cannot create token with negative ID", func(t *testing.T) {
-		tx := flow.Transaction{
-			Script:         GenerateCreateNFTScript(contractAddr, -7),
-			Nonce:          GetNonce(),
-			ComputeLimit:   10,
-			PayerAccount:   b.RootAccountAddress(),
-			ScriptAccounts: []flow.Address{b.RootAccountAddress()},
+		tx := flow.NewTransaction().
+SetScript(GenerateCreateNFTScript(contractAddr, -7)).
+
+			SetGasLimit(10).
+			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
 		}
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, true)
 	})
 
 	t.Run("Should be able to create token", func(t *testing.T) {
-		tx := flow.Transaction{
-			Script:         GenerateCreateNFTScript(contractAddr, 1),
-			Nonce:          GetNonce(),
-			ComputeLimit:   20,
-			PayerAccount:   b.RootAccountAddress(),
-			ScriptAccounts: []flow.Address{b.RootAccountAddress()},
+		tx := flow.NewTransaction().
+SetScript(GenerateCreateNFTScript(contractAddr, 1)).
+
+			SetGasLimit(20).
+			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
 		}
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
@@ -82,12 +82,12 @@ func TestTransferNFT(t *testing.T) {
 	assert.NoError(t, err)
 
 	// then deploy a NFT to the root account
-	tx := flow.Transaction{
-		Script:         GenerateCreateNFTScript(contractAddr, 1),
-		Nonce:          GetNonce(),
-		ComputeLimit:   20,
-		PayerAccount:   b.RootAccountAddress(),
-		ScriptAccounts: []flow.Address{b.RootAccountAddress()},
+	tx := flow.NewTransaction().
+SetScript(GenerateCreateNFTScript(contractAddr, 1)).
+
+		SetGasLimit(20).
+		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
 	}
 
 	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
@@ -102,14 +102,14 @@ func TestTransferNFT(t *testing.T) {
 	// create a new account
 	bastianPrivateKey := RandomPrivateKey()
 	bastianPublicKey := bastianPrivateKey.PublicKey(keys.PublicKeyWeightThreshold)
-	bastianAddress, err := b.CreateAccount([]flow.AccountPublicKey{bastianPublicKey}, nil, GetNonce())
+	bastianAddress, err := b.CreateAccount([]flow.AccountKey{bastianPublicKey}, nil, GetNonce())
 
 	// then deploy an NFT to another account
-	tx = flow.Transaction{
-		Script:         GenerateCreateNFTScript(contractAddr, 2),
-		Nonce:          GetNonce(),
-		ComputeLimit:   20,
-		PayerAccount:   b.RootAccountAddress(),
+	tx = flow.NewTransaction()
+SetScript(GenerateCreateNFTScript(contractAddr, 2)).
+
+		SetGasLimit(20).
+		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
 		ScriptAccounts: []flow.Address{bastianAddress},
 	}
 
@@ -117,12 +117,12 @@ func TestTransferNFT(t *testing.T) {
 
 	// transfer an NFT
 	t.Run("Should be able to withdraw an NFT and deposit to another accounts collection", func(t *testing.T) {
-		tx := flow.Transaction{
-			Script:         GenerateDepositScript(contractAddr, bastianAddress, 1),
-			Nonce:          GetNonce(),
-			ComputeLimit:   20,
-			PayerAccount:   b.RootAccountAddress(),
-			ScriptAccounts: []flow.Address{b.RootAccountAddress()},
+		tx := flow.NewTransaction().
+SetScript(GenerateDepositScript(contractAddr, bastianAddress, 1)).
+
+			SetGasLimit(20).
+			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
 		}
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)

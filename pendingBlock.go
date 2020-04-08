@@ -2,17 +2,16 @@ package emulator
 
 import (
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go/crypto"
 
 	"github.com/dapperlabs/flow-emulator/types"
 )
 
 // A pendingBlock contains the pending state required to form a new block.
 type pendingBlock struct {
-	// block information (Number, PreviousBlockHash, TransactionHashes)
+	// block information (Height, ParentID, TransactionIDs)
 	block *types.Block
-	// mapping from transaction hash to transaction
-	transactions map[string]*flow.Transaction
+	// mapping from transaction ID to transaction
+	transactions map[flow.Identifier]*flow.Transaction
 	// current working ledger, updated after each transaction execution
 	ledgerView *types.LedgerView
 	// events emitted during execution
@@ -23,13 +22,13 @@ type pendingBlock struct {
 
 // newPendingBlock creates a new pending block sequentially after a specified block.
 func newPendingBlock(prevBlock types.Block, ledgerView *types.LedgerView) *pendingBlock {
-	transactions := make(map[string]*flow.Transaction)
-	transactionHashes := make([]crypto.Hash, 0)
+	transactions := make(map[flow.Identifier]*flow.Transaction)
+	transactionIDs := make([]flow.Identifier, 0)
 
 	block := &types.Block{
-		Number:            prevBlock.Number + 1,
-		PreviousBlockHash: prevBlock.Hash(),
-		TransactionHashes: transactionHashes,
+		Height:         prevBlock.Height + 1,
+		ParentID:       prevBlock.ID(),
+		TransactionIDs: transactionIDs,
 	}
 
 	return &pendingBlock{
@@ -41,14 +40,14 @@ func newPendingBlock(prevBlock types.Block, ledgerView *types.LedgerView) *pendi
 	}
 }
 
-// Hash returns the hash of the pending block.
-func (b *pendingBlock) Hash() crypto.Hash {
-	return b.block.Hash()
+// ID returns the ID of the pending block.
+func (b *pendingBlock) ID() flow.Identifier {
+	return b.block.ID()
 }
 
-// Number returns the number of the pending block.
-func (b *pendingBlock) Number() uint64 {
-	return b.block.Number
+// Height returns the number of the pending block.
+func (b *pendingBlock) Height() uint64 {
+	return b.block.Height
 }
 
 // Block returns the block information for the pending block.
@@ -63,34 +62,34 @@ func (b *pendingBlock) LedgerDelta() types.LedgerDelta {
 
 // AddTransaction adds a transaction to the pending block.
 func (b *pendingBlock) AddTransaction(tx flow.Transaction) {
-	b.block.TransactionHashes = append(b.block.TransactionHashes, tx.Hash())
-	b.transactions[string(tx.Hash())] = &tx
+	b.block.TransactionIDs = append(b.block.TransactionIDs, tx.ID())
+	b.transactions[tx.ID()] = &tx
 }
 
 // ContainsTransaction checks if a transaction is included in the pending block.
-func (b *pendingBlock) ContainsTransaction(txHash crypto.Hash) bool {
-	_, exists := b.transactions[string(txHash)]
+func (b *pendingBlock) ContainsTransaction(txID flow.Identifier) bool {
+	_, exists := b.transactions[txID]
 	return exists
 }
 
-// GetTransaction retrieves a transaction in the pending block by hash, or nil
+// GetTransaction retrieves a transaction in the pending block by ID, or nil
 // if it does not exist.
-func (b *pendingBlock) GetTransaction(txHash crypto.Hash) *flow.Transaction {
-	return b.transactions[string(txHash)]
+func (b *pendingBlock) GetTransaction(txID flow.Identifier) *flow.Transaction {
+	return b.transactions[txID]
 }
 
 // nextTransaction returns the next indexed transaction.
 func (b *pendingBlock) nextTransaction() *flow.Transaction {
-	txHash := b.block.TransactionHashes[b.index]
-	return b.GetTransaction(txHash)
+	txID := b.block.TransactionIDs[b.index]
+	return b.GetTransaction(txID)
 }
 
 // Transactions returns the transactions in the pending block.
 func (b *pendingBlock) Transactions() []flow.Transaction {
-	transactions := make([]flow.Transaction, len(b.block.TransactionHashes))
+	transactions := make([]flow.Transaction, len(b.block.TransactionIDs))
 
-	for i, txHash := range b.block.TransactionHashes {
-		transactions[i] = *b.transactions[string(txHash)]
+	for i, txID := range b.block.TransactionIDs {
+		transactions[i] = *b.transactions[txID]
 	}
 
 	return transactions
@@ -114,12 +113,8 @@ func (b *pendingBlock) ExecuteNextTransaction(
 	// increment transaction index even if transaction reverts
 	b.index++
 
-	if result.Reverted() {
-		tx.Status = flow.TransactionReverted
-	} else {
-		tx.Status = flow.TransactionFinalized
-		tx.Events = result.Events
-
+	if result.Succeeded() {
+		// TODO: save events with transaction
 		b.events = append(b.events, result.Events...)
 	}
 
@@ -143,7 +138,7 @@ func (b *pendingBlock) ExecutionComplete() bool {
 
 // Size returns the number of transactions in the pending block.
 func (b *pendingBlock) Size() int {
-	return len(b.block.TransactionHashes)
+	return len(b.block.TransactionIDs)
 }
 
 // Empty returns true if the pending block is empty.
