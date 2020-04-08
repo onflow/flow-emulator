@@ -119,7 +119,7 @@ func TestTransactions(t *testing.T) {
 		t.Run("should be able to get inserted tx", func(t *testing.T) {
 			storedTx, err := store.TransactionByID(tx.ID())
 			require.Nil(t, err)
-			assert.Equal(t, tx, storedTx)
+			assert.Equal(t, tx.ID(), storedTx.ID())
 		})
 	})
 }
@@ -352,7 +352,7 @@ func TestPersistence(t *testing.T) {
 
 	gotTx, err := store.TransactionByID(tx.ID())
 	assert.NoError(t, err)
-	assert.Equal(t, tx, gotTx)
+	assert.Equal(t, tx.ID(), gotTx.ID())
 
 	gotEvents, err := store.RetrieveEvents("", block.Height, block.Height)
 	assert.NoError(t, err)
