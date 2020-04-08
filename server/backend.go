@@ -17,6 +17,7 @@ import (
 	"github.com/dapperlabs/flow/protobuf/go/flow/entities"
 
 	emulator "github.com/dapperlabs/flow-emulator"
+	"github.com/dapperlabs/flow-emulator/types"
 )
 
 // Backend wraps an emulated blockchain and implements the RPC handlers
@@ -86,35 +87,42 @@ func (b *Backend) GetLatestBlockHeader(ctx context.Context, req *access.GetLates
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	// create block header for block
-	blockHeader := flow.BlockHeader{
-		ID:       flow.HashToID(block.Hash()),
-		ParentID: flow.HashToID(block.PreviousBlockHash),
-		Height:   block.Number,
-	}
-
 	b.logger.WithFields(logrus.Fields{
-		"blockHeight": blockHeader.Height,
-		"blockHash":   blockHeader.ID,
+		"blockHeight": block.Number,
+		"blockHash":   block.Hash().Hex(),
 	}).Debug("🎁  GetLatestBlock called")
 
-	response := &access.BlockHeaderResponse{
-		Block: convert.BlockHeaderToMessage(blockHeader),
-	}
-
-	return response, nil
+	return b.getBlockHeaderAtBlock(block)
 }
 
 // GetBlockHeaderByHeight gets a block header by it's height
 func (b *Backend) GetBlockHeaderByHeight(ctx context.Context, req *access.GetBlockHeaderByHeightRequest) (*access.BlockHeaderResponse, error) {
-	panic("not implemented")
-	return nil, nil
+	block, err := b.blockchain.GetBlockByNumber(req.GetHeight())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	b.logger.WithFields(logrus.Fields{
+		"blockHeight": block.Number,
+		"blockHash":   block.Hash().Hex(),
+	}).Debug("🎁  GetBlockHeaderByHeight called")
+
+	return b.getBlockHeaderAtBlock(block)
 }
 
 // GetBlockHeaderByID gets a block header by it's ID
 func (b *Backend) GetBlockHeaderByID(ctx context.Context, req *access.GetBlockHeaderByIDRequest) (*access.BlockHeaderResponse, error) {
-	panic("not implemented")
-	return nil, nil
+	block, err := b.blockchain.GetBlockByHash(req.GetId())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	b.logger.WithFields(logrus.Fields{
+		"blockHeight": block.Number,
+		"blockHash":   block.Hash().Hex(),
+	}).Debug("🎁  GetBlockHeaderByID called")
+
+	return b.getBlockHeaderAtBlock(block)
 }
 
 // GetLatestBlock gets the latest sealed block.
@@ -326,6 +334,22 @@ func (b *Backend) executeScriptAtBlock(script []byte, blockNumber uint64) (*acce
 
 	response := &access.ExecuteScriptResponse{
 		Value: valueBytes,
+	}
+
+	return response, nil
+}
+
+// executeScriptAtBlock is a helper for getting the block header at a specific block
+func (b *Backend) getBlockHeaderAtBlock(block *types.Block) (*access.BlockHeaderResponse, error) {
+	// create block header for block
+	blockHeader := flow.BlockHeader{
+		ID:       flow.HashToID(block.Hash()),
+		ParentID: flow.HashToID(block.PreviousBlockHash),
+		Height:   block.Number,
+	}
+
+	response := &access.BlockHeaderResponse{
+		Block: convert.BlockHeaderToMessage(blockHeader),
 	}
 
 	return response, nil
