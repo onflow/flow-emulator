@@ -18,6 +18,7 @@ import (
 	"github.com/dapperlabs/cadence"
 	encoding "github.com/dapperlabs/cadence/encoding/json"
 	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/dapperlabs/flow-go/crypto"
 	access "github.com/dapperlabs/flow/protobuf/go/flow/access"
 
 	emulator "github.com/dapperlabs/flow-emulator"
@@ -239,23 +240,74 @@ func TestBackend(t *testing.T) {
 	}))
 
 	t.Run("GetLatestBlockHeader", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
-		block := types.Block{
-			Height:         11,
-			ParentID:       flow.ZeroID,
-			TransactionIDs: nil,
+		parentID := types.Block{Height: rand.Uint64()}.ID()
+		latestBlock := &types.Block{
+			Height:   rand.Uint64(),
+			ParentID: parentID,
 		}
 
 		api.EXPECT().
 			GetLatestBlock().
-			Return(&block, nil).
+			Return(latestBlock, nil).
 			Times(1)
 
-		response, err := backend.GetLatestBlockHeader(context.Background(), &access.GetLatestBlockHeaderRequest{})
+		getBlockHeaderRequest := access.GetLatestBlockHeaderRequest{}
 
+		response, err := backend.GetLatestBlockHeader(context.Background(), &getBlockHeaderRequest)
 		assert.NoError(t, err)
-		assert.NotNil(t, response)
 
-		assert.Equal(t, block.Height, response.Block.Height)
+		blockResponse := response.GetBlock()
+		assert.Equal(t, latestBlock.Height, blockResponse.GetHeight())
+		assert.Equal(t, latestBlock.ID(), crypto.Hash(blockResponse.GetId()))
+		assert.Equal(t, latestBlock.ParentID, crypto.Hash(blockResponse.GetParentId()))
+	}))
+
+	t.Run("GetBlockHeaderAtBlockHeight", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+		parentID := types.Block{Height: rand.Uint64()}.ID()
+		requestedBlock := &types.Block{
+			Height:   rand.Uint64(),
+			ParentID: parentID,
+		}
+
+		api.EXPECT().
+			GetBlockByHeight(requestedBlock.Height).
+			Return(requestedBlock, nil).
+			Times(1)
+
+		getBlockHeaderRequest := access.GetBlockHeaderByHeightRequest{
+			Height: requestedBlock.Height,
+		}
+		response, err := backend.GetBlockHeaderByHeight(context.Background(), &getBlockHeaderRequest)
+		assert.NoError(t, err)
+
+		blockResponse := response.GetBlock()
+		assert.Equal(t, requestedBlock.Height, blockResponse.GetHeight())
+		assert.Equal(t, requestedBlock.ID(), crypto.Hash(blockResponse.GetId()))
+		assert.Equal(t, requestedBlock.ParentID, crypto.Hash(blockResponse.GetParentId()))
+	}))
+
+	t.Run("GetBlockHeaderAtBlockID", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+		parentID := types.Block{Height: rand.Uint64()}.ID()
+		requestedBlock := &types.Block{
+			Height:   rand.Uint64(),
+			ParentID: parentID,
+		}
+
+		api.EXPECT().
+			GetBlockByID(requestedBlock.ID()).
+			Return(requestedBlock, nil).
+			Times(1)
+
+		getBlockHeaderRequest := access.GetBlockHeaderByIDRequest{
+			Id: requestedBlock.ID().Bytes(),
+		}
+		response, err := backend.GetBlockHeaderByID(context.Background(), &getBlockHeaderRequest)
+		assert.NoError(t, err)
+
+		blockResponse := response.GetBlock()
+		assert.Equal(t, requestedBlock.Height, blockResponse.GetHeight())
+		assert.Equal(t, requestedBlock.ID(), crypto.Hash(blockResponse.GetId()))
+		assert.Equal(t, requestedBlock.ParentID, crypto.Hash(blockResponse.GetParentId()))
 	}))
 
 	t.Run("GetTransaction tx does not exists", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
