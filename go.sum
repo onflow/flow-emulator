@@ -84,6 +84,7 @@ github.com/dapperlabs/flow v0.0.0-20200403223221-0685a2afc8af h1:4ei4rzHa0BY+4+Z
 github.com/dapperlabs/flow v0.0.0-20200404014555-6e780d96b5ed h1:Z3nae1GIOVAXe3dbJHthqbGikWtxkTLGhioyQFcSKOU=
 github.com/dapperlabs/flow v0.0.0-20200405035006-e82d5bf52630 h1:N00Tiw9BCG38wJvFPDSOgeeK5uVyq4Wl7fxYqFFwR/M=
 github.com/dapperlabs/flow v0.0.0-20200405045545-03db81265125 h1:ifpdhl3xozLCXe0l+s7BhjiimQd6TwDbOcjlP3hKzac=
+github.com/dapperlabs/flow v0.1.2 h1:wb8WHWcV+0XNm5zfPU4GeWY4Y6JYI+BxCriyzNeqd+U=
 github.com/dapperlabs/flow-go v0.3.1 h1:FwlSqVzx22JbPNkGCqxliVa+hdjHU0/p1o1BR6EiATI=
 github.com/dapperlabs/flow-go v0.3.2-0.20200225001519-9a07bfb642cb h1:4kAfR7S/i0F1YeI03h367py7NRcWW1PYhD+aT2lMJEw=
 github.com/dapperlabs/flow-go v0.3.2-0.20200225001519-9a07bfb642cb/go.mod h1:cvrp2t4KQLghzmE38pGchCN4ACZSFX2PR3R8oyshZFs=
@@ -126,6 +127,7 @@ github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200403223221-0685a2afc8af/g
 github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200404014555-6e780d96b5ed h1:r4hT0tjVv2nKdBrGsnkvt3s6ICrU5d+46JfnE17Tc3I=
 github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200405035006-e82d5bf52630 h1:Sz4AYl6dt7/rg3BCX5+5MMK+ykkqxMwzUbz2s2ZeeDQ=
 github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200405045545-03db81265125 h1:Zc17Y/8ycLcVd1T/tsiho0k9XVq+SxCHhYBuzkn5kkQ=
+github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200407055017-1aa4ec9fa16c h1:MfPILPGSWvIu4kVPiK1DI01G3eWHEz73UHehvzhk6Bo=
 github.com/dave/jennifer v1.4.0/go.mod h1:fIb+770HOpJ2fmN9EPPKOqm1vMGhB+TwXKMZhrIygKg=
 github.com/davecgh/go-spew v0.0.0-20171005155431-ecdeabc65495/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
