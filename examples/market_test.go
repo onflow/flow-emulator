@@ -68,10 +68,15 @@ func TestCreateSale(t *testing.T) {
 
 	// create two new accounts
 	bastianPrivateKey := RandomPrivateKey()
-	bastianPublicKey := bastianPrivateKey.PublicKey(keys.PublicKeyWeightThreshold)
+	bastianPublicKey := bastianPrivateKey.ToAccountKey()
+	bastianPublicKey.Weight = keys.PublicKeyWeightThreshold
+
 	bastianAddress, err := b.CreateAccount([]flow.AccountKey{bastianPublicKey}, nil, GetNonce())
+
 	joshPrivateKey := RandomPrivateKey()
-	joshPublicKey := joshPrivateKey.PublicKey(keys.PublicKeyWeightThreshold)
+	joshPublicKey := joshPrivateKey.ToAccountKey()
+	joshPublicKey.Weight = keys.PublicKeyWeightThreshold
+
 	joshAddress, err := b.CreateAccount([]flow.AccountKey{joshPublicKey}, nil, GetNonce())
 
 	t.Run("Should be able to create FTs and NFT collections in each accounts storage", func(t *testing.T) {
@@ -81,60 +86,50 @@ func TestCreateSale(t *testing.T) {
 
 	t.Run("Can create sale collection", func(t *testing.T) {
 		tx := flow.NewTransaction().
-SetScript(GenerateCreateSaleScript(tokenAddr, marketAddr)).
-
+			SetScript(GenerateCreateSaleScript(tokenAddr, marketAddr)).
 			SetGasLimit(10).
 			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			ScriptAccounts: []flow.Address{bastianAddress},
-		}
+			AddAuthorizer(bastianAddress, 0)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
 	})
 
 	t.Run("Can put an NFT up for sale", func(t *testing.T) {
 		tx := flow.NewTransaction().
-SetScript(GenerateStartSaleScript(nftAddr, marketAddr, 1, 10)).
-
+			SetScript(GenerateStartSaleScript(nftAddr, marketAddr, 1, 10)).
 			SetGasLimit(10).
 			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			ScriptAccounts: []flow.Address{bastianAddress},
-		}
+			AddAuthorizer(bastianAddress, 0)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
 	})
 
 	t.Run("Cannot buy an NFT for less than the sale price", func(t *testing.T) {
 		tx := flow.NewTransaction().
-SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 1, 9)).
-
+			SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 1, 9)).
 			SetGasLimit(10).
 			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			ScriptAccounts: []flow.Address{joshAddress},
-		}
+			AddAuthorizer(joshAddress, 0)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, true)
 	})
 
 	t.Run("Cannot buy an NFT that is not for sale", func(t *testing.T) {
 		tx := flow.NewTransaction().
-SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 2, 10)).
-
+			SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 2, 10)).
 			SetGasLimit(10).
 			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			ScriptAccounts: []flow.Address{joshAddress},
-		}
+			AddAuthorizer(joshAddress, 0)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, true)
 	})
 
 	t.Run("Can buy an NFT that is for sale", func(t *testing.T) {
 		tx := flow.NewTransaction().
-SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 1, 10)).
-
+			SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 1, 10)).
 			SetGasLimit(10).
 			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			ScriptAccounts: []flow.Address{joshAddress},
-		}
+			AddAuthorizer(joshAddress, 0)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, false)
 
