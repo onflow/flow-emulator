@@ -190,7 +190,7 @@ func (b *Blockchain) RootKey() RootKey {
 		PrivateKey: b.rootAccountPrivateKey,
 	}
 
-	rootAccount, err := b.GetAccount(b.rootAccountAddress)
+	rootAccount, err := b.getAccount(b.rootAccountAddress)
 	if err != nil {
 		return rootAccountKey
 	}
