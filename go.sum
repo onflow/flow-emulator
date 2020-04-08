@@ -104,6 +104,7 @@ github.com/dapperlabs/flow-go-sdk v0.5.0 h1:OobwQ/JGXVII0kHf/8dOWu7vvS47nxK+7i2g
 github.com/dapperlabs/flow-go-sdk v0.5.0/go.mod h1:2VU4XARtugo2Jdqlvosp8beg5i1wbJAw7qvOt/KgnG4=
 github.com/dapperlabs/flow-go-sdk v0.5.1-0.20200331204254-106080334b97 h1:ujztQNuwVqXZk/0zvsXuMJ2cB0Tl0XHVZ/tmCq0Uoug=
 github.com/dapperlabs/flow-go-sdk v0.5.1-0.20200331204254-106080334b97/go.mod h1:pGECXvBL/xqFux60jnMhnrCqANvcph/1xIO6duneumk=
+github.com/dapperlabs/flow-go-sdk v0.5.2/go.mod h1:gtyYLx3uNlCd4Iv7rqOh9JlVYxdmO6440C+ms2EUYZ4=
 github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200404000511-01ff8895ce47 h1:76W7A0eDik8NeWC//D20ilzDr/w1Pqd3V9vHPO2NUUI=
 github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200404000511-01ff8895ce47/go.mod h1:afu82kNkeJN8MJuUtjqSDuubdLQdVSPL8RiakCSt7iU=
 github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200405031416-1e1e94b70c8e h1:LeEYaH8SMLYb0dU7Qmm5SiRf/wwEyP7JNRvU8e1GwqY=
@@ -112,6 +113,8 @@ github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200406183126-1778d1ad2022 h1:x72s5Z
 github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200406183126-1778d1ad2022/go.mod h1:kV3gjkJPNILJ+9484mZrNfyzkNtPZxHmJeATb9wMGkw=
 github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200406235036-c4382e56db45 h1:oL8Is42ECbpJ3WVnF3bO29NOuOdmyeSO+u3Iv4wXs2M=
 github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200406235036-c4382e56db45/go.mod h1:+rJRV3tH7q37Z5G7T0XmYa7PgStUflVdUuZTx6XBpqA=
+github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200408180156-9e64639a791a h1:QemwaorfHukxBEwNPxW0RLPJdKwe0Fd9lZ/S34XzxKA=
+github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200408180156-9e64639a791a/go.mod h1:AuPL6FiFynDhvLtd0BLrbzFeMje4DeHZ8drNGO60ItI=
 github.com/dapperlabs/flow-go-sdk v0.5.3-feature-access-api h1:m0KyXmO0B0NCJhEEm3lZW23hHdZtMOMaFT6F7vYTGXU=
 github.com/dapperlabs/flow-go-sdk v0.5.3-feature-access-api/go.mod h1:cJtmHbmK9C5na/sH50GuBNYJPKTSivfWqri6Qx2+cME=
 github.com/dapperlabs/flow-go/crypto v0.3.1 h1:sct0sh5aDbyqy0v/2xCvBAY9fsxlbkfHAK3abeK163g=
