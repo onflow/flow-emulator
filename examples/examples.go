@@ -88,8 +88,6 @@ func SignAndSubmit(
 	for i := 0; i < len(signingAddresses); i++ {
 		sig, err := keys.SignTransaction(tx, signingKeys[i])
 		assert.NoError(t, err)
-
-
 	}
 
 	// submit the signed transaction
@@ -114,9 +112,11 @@ func SignAndSubmit(
 
 func CreateAccount() (flow.AccountPrivateKey, flow.Address) {
 	privateKey := RandomPrivateKey()
+	publicKey := privateKey.ToAccountKey()
+	publicKey.Weight = keys.PublicKeyWeightThreshold
 
 	addr := createAccount(
-		[]flow.AccountKey{privateKey.PublicKey(keys.PublicKeyWeightThreshold)},
+		[]flow.AccountKey{publicKey},
 		nil,
 	)
 
@@ -198,24 +198,20 @@ func setupUsersTokens(
 	// add array of signers to transaction
 	for i := 0; i < len(signingAddresses); i++ {
 		tx := flow.NewTransaction().
-SetScript(GenerateCreateTokenScript(tokenAddr, 30)).
-
+			SetScript(GenerateCreateTokenScript(tokenAddr, 30)).
 			SetGasLimit(20).
 			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			ScriptAccounts: []flow.Address{signingAddresses[i]},
-		}
+			AddAuthorizer(signingAddresses[i], 0)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
+		SignAndSubmit(t, b, *tx, []flow.AccountPrivateKey{b.RootKey(), signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
 
 		// then deploy a NFT to the accounts
-		tx = flow.NewTransaction()
-SetScript(GenerateCreateNFTScript(nftAddr, i+1)).
-
+		tx = flow.NewTransaction().
+			SetScript(GenerateCreateNFTScript(nftAddr, i+1)).
 			SetGasLimit(20).
 			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			ScriptAccounts: []flow.Address{signingAddresses[i]},
-		}
+			AddAuthorizer(signingAddresses[i], 0)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
+		SignAndSubmit(t, b, *tx, []flow.AccountPrivateKey{b.RootKey(), signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
 	}
 }
