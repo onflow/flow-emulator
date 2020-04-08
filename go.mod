@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/dapperlabs/cadence v0.0.0-20200401151421-7c78a2da20a6
 	github.com/dapperlabs/flow-go v0.3.2-0.20200331201607-7630da6300eb
-	github.com/dapperlabs/flow-go-sdk v0.5.2
+	github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200408180156-9e64639a791a
 	github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200331201607-7630da6300eb
 	github.com/dapperlabs/flow-go/language v0.3.1 // indirect
 	github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200407055017-1aa4ec9fa16c
@@ -31,5 +31,3 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	google.golang.org/grpc v1.28.0
 )
-
-replace github.com/dapperlabs/flow-go-sdk => ../flow-go-sdk

@@ -241,7 +241,7 @@ func TestBackend(t *testing.T) {
 	t.Run("GetLatestBlockHeader", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
 		block := types.Block{
 			Height:         11,
-			ParentID:       nil,
+			ParentID:       flow.ZeroID,
 			TransactionIDs: nil,
 		}
 
