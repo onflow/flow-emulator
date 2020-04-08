@@ -35,7 +35,7 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("Set up account 1", func(t *testing.T) {
-		tx := flow.Transaction{
+		tx := flow.NewTransaction().
 			Script: []byte(
 				fmt.Sprintf(
 					`
@@ -54,10 +54,10 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 					b.RootAccountAddress().Short(),
 				),
 			),
-			Nonce:          GetNonce(),
-			ComputeLimit:   10,
-			PayerAccount:   b.RootAccountAddress(),
-			ScriptAccounts: []flow.Address{b.RootAccountAddress()},
+
+			SetGasLimit(10).
+			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
 		}
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
@@ -68,13 +68,13 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 	t.Run("Create account 2", func(t *testing.T) {
 
 		var err error
-		publicKeys := []flow.AccountPublicKey{b.RootKey().PublicKey(keys.PublicKeyWeightThreshold)}
+		publicKeys := []flow.AccountKey{b.RootKey().PublicKey(keys.PublicKeyWeightThreshold)}
 		account2Address, err = b.CreateAccount(publicKeys, nil, GetNonce())
 		assert.NoError(t, err)
 	})
 
 	t.Run("Set up account 2", func(t *testing.T) {
-		tx := flow.Transaction{
+		tx := flow.NewTransaction().
 			Script: []byte(
 				fmt.Sprintf(
 					`
@@ -103,9 +103,9 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 					b.RootAccountAddress().Short(),
 				),
 			),
-			Nonce:          GetNonce(),
-			ComputeLimit:   10,
-			PayerAccount:   account2Address,
+
+			SetGasLimit(10).
+			SetPayer(account2Address, 0).
 			ScriptAccounts: []flow.Address{account2Address},
 		}
 

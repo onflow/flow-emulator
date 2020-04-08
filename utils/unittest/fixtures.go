@@ -3,10 +3,10 @@ package unittest
 import (
 	"encoding/hex"
 
+	"github.com/dapperlabs/flow-go-sdk/test"
 	"github.com/dapperlabs/flow-go/crypto"
 
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/keys"
 )
 
 const PublicKeyFixtureCount = 2
@@ -28,56 +28,14 @@ func PublicKeyFixtures() [PublicKeyFixtureCount]crypto.PublicKey {
 	return keys
 }
 
-func AddressFixture() flow.Address {
-	return flow.RootAddress
-}
-
-func AccountSignatureFixture() flow.AccountSignature {
-	return flow.AccountSignature{
-		Account:   AddressFixture(),
-		Signature: []byte{1, 2, 3, 4},
-	}
-}
-
-func BlockHeaderFixture() flow.BlockHeader {
-	return flow.BlockHeader{
-		// ParentID: crypto.Hash("parent"),
-		Height: 100,
-	}
-}
-
 func TransactionFixture(n ...func(t *flow.Transaction)) flow.Transaction {
-	tx := flow.Transaction{
-		Script:             []byte("pub fun main() {}"),
-		ReferenceBlockHash: HashFixture(32),
-		Nonce:              1,
-		ComputeLimit:       10,
-		PayerAccount:       AddressFixture(),
-		ScriptAccounts:     []flow.Address{AddressFixture()},
-		Signatures:         []flow.AccountSignature{AccountSignatureFixture()},
-	}
+	tx := test.TransactionGenerator().New()
+
 	if len(n) > 0 {
-		n[0](&tx)
+		n[0](tx)
 	}
-	return tx
-}
 
-func AccountFixture() flow.Account {
-	return flow.Account{
-		Address: AddressFixture(),
-		Balance: 10,
-		Code:    []byte("pub fun main() {}"),
-		Keys:    []flow.AccountPublicKey{AccountPublicKeyFixture()},
-	}
-}
-
-func AccountPublicKeyFixture() flow.AccountPublicKey {
-	return flow.AccountPublicKey{
-		PublicKey: PublicKeyFixtures()[0],
-		SignAlgo:  crypto.ECDSA_P256,
-		HashAlgo:  crypto.SHA3_256,
-		Weight:    keys.PublicKeyWeightThreshold,
-	}
+	return *tx
 }
 
 func EventFixture(n ...func(e *flow.Event)) flow.Event {
@@ -96,12 +54,4 @@ func EventFixture(n ...func(e *flow.Event)) flow.Event {
 	}
 
 	return event
-}
-
-func HashFixture(size int) crypto.Hash {
-	hash := make(crypto.Hash, size)
-	for i := 0; i < size; i++ {
-		hash[i] = byte(i)
-	}
-	return hash
 }

@@ -3,11 +3,11 @@ package badger
 import (
 	"testing"
 
+	"github.com/dapperlabs/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go/crypto"
 
 	"github.com/dapperlabs/flow-emulator/types"
 	"github.com/dapperlabs/flow-emulator/utils/unittest"
@@ -25,10 +25,12 @@ func TestEncodeTransaction(t *testing.T) {
 }
 
 func TestEncodeBlock(t *testing.T) {
+	ids := test.IdentifierGenerator()
+
 	block := types.Block{
-		Number:            1234,
-		PreviousBlockHash: unittest.HashFixture(32),
-		TransactionHashes: []crypto.Hash{unittest.HashFixture(32)},
+		Height:         1234,
+		ParentID:       ids.New(),
+		TransactionIDs: []flow.Identifier{ids.New()},
 	}
 	data, err := encodeBlock(block)
 	require.Nil(t, err)
@@ -37,9 +39,9 @@ func TestEncodeBlock(t *testing.T) {
 	err = decodeBlock(&decodedBlock, data)
 	require.Nil(t, err)
 
-	assert.Equal(t, block.Number, decodedBlock.Number)
-	assert.Equal(t, block.PreviousBlockHash, decodedBlock.PreviousBlockHash)
-	assert.Equal(t, block.TransactionHashes, decodedBlock.TransactionHashes)
+	assert.Equal(t, block.Height, decodedBlock.Height)
+	assert.Equal(t, block.ParentID, decodedBlock.ParentID)
+	assert.Equal(t, block.TransactionIDs, decodedBlock.TransactionIDs)
 }
 
 func TestEncodeEventList(t *testing.T) {

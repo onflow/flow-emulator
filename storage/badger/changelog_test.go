@@ -94,30 +94,30 @@ func TestChangelog(t *testing.T) {
 		clog := newChangelog()
 
 		// should not find anything in empty changelog
-		blockNumber := clog.getMostRecentChange(key1, 1)
-		assert.EqualValues(t, notFound, blockNumber)
-		blockNumber = clog.getMostRecentChange(key2, 2)
-		assert.EqualValues(t, notFound, blockNumber)
+		blockHeight := clog.getMostRecentChange(key1, 1)
+		assert.EqualValues(t, notFound, blockHeight)
+		blockHeight = clog.getMostRecentChange(key2, 2)
+		assert.EqualValues(t, notFound, blockHeight)
 
 		// should not find anything for unwritten key
 		clog.addChange(key1, 1)
-		blockNumber = clog.getMostRecentChange(key2, 1)
-		assert.EqualValues(t, notFound, blockNumber)
+		blockHeight = clog.getMostRecentChange(key2, 1)
+		assert.EqualValues(t, notFound, blockHeight)
 	})
 
 	t.Run("should find exact block/register matches", func(t *testing.T) {
 		clog := newChangelog()
 
 		clog.addChange(key1, 1)
-		blockNumber := clog.getMostRecentChange(key1, 1)
-		assert.EqualValues(t, 1, blockNumber)
+		blockHeight := clog.getMostRecentChange(key1, 1)
+		assert.EqualValues(t, 1, blockHeight)
 	})
 
 	t.Run("should find approx matches", func(t *testing.T) {
 		clog := newChangelog()
 
 		clog.addChange(key1, 1)
-		blockNumber := clog.getMostRecentChange(key1, 2)
-		assert.EqualValues(t, 1, blockNumber)
+		blockHeight := clog.getMostRecentChange(key1, 2)
+		assert.EqualValues(t, 1, blockHeight)
 	})
 }
