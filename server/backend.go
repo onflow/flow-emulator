@@ -228,14 +228,14 @@ func (b *Backend) ExecuteScriptAtLatestBlock(ctx context.Context, req *access.Ex
 	return b.executeScriptAtBlock(script, block.Number)
 }
 
-// ExecuteScriptAtBlockHeight executes a script at a specific height
+// ExecuteScriptAtBlockHeight executes a script at a specific block height
 func (b *Backend) ExecuteScriptAtBlockHeight(ctx context.Context, req *access.ExecuteScriptAtBlockHeightRequest) (*access.ExecuteScriptResponse, error) {
 	script := req.GetScript()
 	blockHeight := req.GetBlockHeight()
 	return b.executeScriptAtBlock(script, blockHeight)
 }
 
-// ExecuteScriptAtBlockID executes a script at a specific block id
+// ExecuteScriptAtBlockID executes a script at a specific block ID
 func (b *Backend) ExecuteScriptAtBlockID(ctx context.Context, req *access.ExecuteScriptAtBlockIDRequest) (*access.ExecuteScriptResponse, error) {
 	script := req.GetScript()
 	blockID := req.GetBlockId()
