@@ -18,7 +18,6 @@ import (
 	"github.com/dapperlabs/cadence"
 	encoding "github.com/dapperlabs/cadence/encoding/json"
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go/crypto"
 	access "github.com/dapperlabs/flow/protobuf/go/flow/access"
 
 	emulator "github.com/dapperlabs/flow-emulator"
@@ -162,7 +161,7 @@ func TestBackend(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		assert.Equal(t, account.Address.Bytes(), response.Account.Address)
+		assert.Equal(t, account.Address, flow.BytesToAddress(response.Account.Address))
 		assert.Equal(t, account.Balance, response.Account.Balance)
 	}))
 
@@ -258,8 +257,8 @@ func TestBackend(t *testing.T) {
 
 		blockResponse := response.GetBlock()
 		assert.Equal(t, latestBlock.Height, blockResponse.GetHeight())
-		assert.Equal(t, latestBlock.ID(), crypto.Hash(blockResponse.GetId()))
-		assert.Equal(t, latestBlock.ParentID, crypto.Hash(blockResponse.GetParentId()))
+		assert.Equal(t, latestBlock.ID(), flow.HashToID(blockResponse.GetId()))
+		assert.Equal(t, latestBlock.ParentID, flow.HashToID(blockResponse.GetParentId()))
 	}))
 
 	t.Run("GetBlockHeaderAtBlockHeight", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
@@ -282,8 +281,8 @@ func TestBackend(t *testing.T) {
 
 		blockResponse := response.GetBlock()
 		assert.Equal(t, requestedBlock.Height, blockResponse.GetHeight())
-		assert.Equal(t, requestedBlock.ID(), crypto.Hash(blockResponse.GetId()))
-		assert.Equal(t, requestedBlock.ParentID, crypto.Hash(blockResponse.GetParentId()))
+		assert.Equal(t, requestedBlock.ID(), flow.HashToID(blockResponse.GetId()))
+		assert.Equal(t, requestedBlock.ParentID, flow.HashToID(blockResponse.GetParentId()))
 	}))
 
 	t.Run("GetBlockHeaderAtBlockID", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
@@ -306,8 +305,8 @@ func TestBackend(t *testing.T) {
 
 		blockResponse := response.GetBlock()
 		assert.Equal(t, requestedBlock.Height, blockResponse.GetHeight())
-		assert.Equal(t, requestedBlock.ID(), crypto.Hash(blockResponse.GetId()))
-		assert.Equal(t, requestedBlock.ParentID, crypto.Hash(blockResponse.GetParentId()))
+		assert.Equal(t, requestedBlock.ID(), flow.HashToID(blockResponse.GetId()))
+		assert.Equal(t, requestedBlock.ParentID, flow.HashToID(blockResponse.GetParentId()))
 	}))
 
 	t.Run("GetTransaction tx does not exists", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
@@ -424,7 +423,7 @@ func TestBackend(t *testing.T) {
 		require.NotNil(t, response)
 
 		assert.Equal(t, capturedTx.ID(), capturedTx.ID())
-		assert.Equal(t, capturedTx.ID().Bytes(), response.GetId())
+		assert.Equal(t, capturedTx.ID(), flow.HashToID(response.GetId()))
 	}))
 
 	t.Run("SendTransaction which errors while processing", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
@@ -493,6 +492,6 @@ func TestBackend(t *testing.T) {
 		require.NotNil(t, response)
 
 		assert.Equal(t, capturedTx.ID(), capturedTx.ID())
-		assert.Equal(t, capturedTx.ID().Bytes(), response.GetId())
+		assert.Equal(t, capturedTx.ID(), flow.HashToID(response.GetId()))
 	}))
 }
