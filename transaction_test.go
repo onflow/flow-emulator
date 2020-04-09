@@ -45,9 +45,9 @@ func TestSubmitTransaction(t *testing.T) {
 	assert.NoError(t, err)
 
 	// tx1 status becomes TransactionStatusSealed
-	tx2Result, err := b.GetTransactionResult(tx1.ID())
+	tx1Result, err := b.GetTransactionResult(tx1.ID())
 	assert.NoError(t, err)
-	assert.Equal(t, flow.TransactionStatusSealed, tx2Result.Status)
+	assert.Equal(t, flow.TransactionStatusSealed, tx1Result.Status)
 }
 
 // TODO: Add test case for missing ReferenceBlockID
