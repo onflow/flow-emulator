@@ -245,6 +245,21 @@ func (mr *MockBlockchainAPIMockRecorder) GetTransaction(arg0 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransaction", reflect.TypeOf((*MockBlockchainAPI)(nil).GetTransaction), arg0)
 }
 
+// GetTransactionResult mocks base method
+func (m *MockBlockchainAPI) GetTransactionResult(arg0 flow_go_sdk.Identifier) (*flow_go_sdk.TransactionResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTransactionResult", arg0)
+	ret0, _ := ret[0].(*flow_go_sdk.TransactionResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTransactionResult indicates an expected call of GetTransactionResult
+func (mr *MockBlockchainAPIMockRecorder) GetTransactionResult(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionResult", reflect.TypeOf((*MockBlockchainAPI)(nil).GetTransactionResult), arg0)
+}
+
 // RootAccountAddress mocks base method
 func (m *MockBlockchainAPI) RootAccountAddress() flow_go_sdk.Address {
 	m.ctrl.T.Helper()

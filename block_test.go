@@ -30,10 +30,9 @@ func TestCommitBlock(t *testing.T) {
 	err = b.AddTransaction(*tx1)
 	assert.NoError(t, err)
 
-	// TODO: fix once GetTransactionStatus is implemented
-	// tx, err := b.GetTransaction(tx1.ID())
-	// assert.NoError(t, err)
-	// assert.Equal(t, flow.TransactionPending, tx.Status)
+	tx1Result, err := b.GetTransactionResult(tx1.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, flow.TransactionStatusPending, tx1Result.Status)
 
 	tx2 := flow.NewTransaction().
 		SetScript([]byte("invalid script")).
@@ -49,10 +48,9 @@ func TestCommitBlock(t *testing.T) {
 	err = b.AddTransaction(*tx2)
 	assert.NoError(t, err)
 
-	// TODO: fix once GetTransactionStatus is implemented
-	// tx, err = b.GetTransaction(tx2.ID())
-	// assert.NoError(t, err)
-	// assert.Equal(t, flow.TransactionPending, tx.Status)
+	tx2Result, err := b.GetTransactionResult(tx2.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, flow.TransactionStatusPending, tx2Result.Status)
 
 	// Execute tx1
 	result, err := b.ExecuteNextTransaction()
@@ -68,15 +66,14 @@ func TestCommitBlock(t *testing.T) {
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
 
-	// TODO: fix once GetTransactionStatus is implemented
-	// tx1 status becomes TransactionSealed
-	// tx, err = b.GetTransaction(tx1.ID())
-	// require.NoError(t, err)
-	// assert.Equal(t, flow.TransactionSealed, tx.Status)
+	// tx1 status becomes TransactionStatusSealed
+	tx1Result, err = b.GetTransactionResult(tx1.ID())
+	require.NoError(t, err)
+	assert.Equal(t, flow.TransactionStatusSealed, tx1Result.Status)
 
-	// TODO: fix once GetTransactionStatus is implemented
-	// tx2 status stays TransactionReverted
-	// tx, err = b.GetTransaction(tx2.ID())
-	// require.NoError(t, err)
-	// assert.Equal(t, flow.TransactionReverted, tx.Status)
+	// tx2 status also becomes TransactionStatusSealed, even though it is reverted
+	tx2Result, err = b.GetTransactionResult(tx2.ID())
+	require.NoError(t, err)
+	assert.Equal(t, flow.TransactionStatusSealed, tx2Result.Status)
+	assert.Error(t, tx2Result.Error)
 }

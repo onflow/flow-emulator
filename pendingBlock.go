@@ -12,6 +12,8 @@ type pendingBlock struct {
 	block *types.Block
 	// mapping from transaction ID to transaction
 	transactions map[flow.Identifier]*flow.Transaction
+	// mapping from transaction ID to transaction result
+	transactionResults map[flow.Identifier]TransactionResult
 	// current working ledger, updated after each transaction execution
 	ledgerView *types.LedgerView
 	// events emitted during execution
@@ -20,9 +22,16 @@ type pendingBlock struct {
 	index int
 }
 
+type executionResult struct {
+	Transaction flow.Transaction
+	Result      TransactionResult
+}
+
 // newPendingBlock creates a new pending block sequentially after a specified block.
 func newPendingBlock(prevBlock types.Block, ledgerView *types.LedgerView) *pendingBlock {
 	transactions := make(map[flow.Identifier]*flow.Transaction)
+	transactionResults := make(map[flow.Identifier]TransactionResult)
+
 	transactionIDs := make([]flow.Identifier, 0)
 
 	block := &types.Block{
@@ -32,11 +41,12 @@ func newPendingBlock(prevBlock types.Block, ledgerView *types.LedgerView) *pendi
 	}
 
 	return &pendingBlock{
-		block:        block,
-		transactions: transactions,
-		ledgerView:   ledgerView,
-		events:       make([]flow.Event, 0),
-		index:        0,
+		block:              block,
+		transactions:       transactions,
+		transactionResults: transactionResults,
+		ledgerView:         ledgerView,
+		events:             make([]flow.Event, 0),
+		index:              0,
 	}
 }
 
@@ -72,8 +82,7 @@ func (b *pendingBlock) ContainsTransaction(txID flow.Identifier) bool {
 	return exists
 }
 
-// GetTransaction retrieves a transaction in the pending block by ID, or nil
-// if it does not exist.
+// GetTransaction retrieves a transaction in the pending block by ID.
 func (b *pendingBlock) GetTransaction(txID flow.Identifier) *flow.Transaction {
 	return b.transactions[txID]
 }
@@ -84,15 +93,21 @@ func (b *pendingBlock) nextTransaction() *flow.Transaction {
 	return b.GetTransaction(txID)
 }
 
-// Transactions returns the transactions in the pending block.
-func (b *pendingBlock) Transactions() []flow.Transaction {
-	transactions := make([]flow.Transaction, len(b.block.TransactionIDs))
+// ExecutionResults returns the transaction execution results from the pending block.
+func (b *pendingBlock) ExecutionResults() []executionResult {
+	blockResults := make([]executionResult, len(b.block.TransactionIDs))
 
 	for i, txID := range b.block.TransactionIDs {
-		transactions[i] = *b.transactions[txID]
+		transaction := b.transactions[txID]
+		result := b.transactionResults[txID]
+
+		blockResults[i] = executionResult{
+			Transaction: *transaction,
+			Result:      result,
+		}
 	}
 
-	return transactions
+	return blockResults
 }
 
 // ExecuteNextTransaction executes the next transaction in the pending block.
@@ -114,9 +129,10 @@ func (b *pendingBlock) ExecuteNextTransaction(
 	b.index++
 
 	if result.Succeeded() {
-		// TODO: save events with transaction
 		b.events = append(b.events, result.Events...)
 	}
+
+	b.transactionResults[tx.ID()] = result
 
 	return result, nil
 }

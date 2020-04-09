@@ -1,6 +1,7 @@
 package memstore
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/dapperlabs/flow-go-sdk"
@@ -17,8 +18,10 @@ type Store struct {
 	blockIDToHeight map[flow.Identifier]uint64
 	// Finalized blocks indexed by block height
 	blocks map[uint64]types.Block
-	// Finalized transactions by OD
+	// Transactions by ID
 	transactions map[flow.Identifier]flow.Transaction
+	// Transaction results by ID
+	transactionResults map[flow.Identifier]flow.TransactionResult
 	// Ledger states by block height
 	ledger map[uint64]vm.MapLedger
 	// Stores events by block height
@@ -34,6 +37,7 @@ func New() *Store {
 		blockIDToHeight:     make(map[flow.Identifier]uint64),
 		blocks:              make(map[uint64]types.Block),
 		transactions:        make(map[flow.Identifier]flow.Transaction),
+		transactionResults:  make(map[flow.Identifier]flow.TransactionResult),
 		ledger:              make(map[uint64]vm.MapLedger),
 		eventsByBlockHeight: make(map[uint64][]flow.Event),
 	}
@@ -94,6 +98,7 @@ func (s *Store) insertBlock(block types.Block) error {
 func (s *Store) CommitBlock(
 	block types.Block,
 	transactions []flow.Transaction,
+	transactionResults []flow.TransactionResult,
 	delta types.LedgerDelta,
 	events []flow.Event,
 ) error {
@@ -105,8 +110,23 @@ func (s *Store) CommitBlock(
 		return err
 	}
 
-	for _, tx := range transactions {
+	if len(transactions) != len(transactionResults) {
+		return fmt.Errorf(
+			"transactions count (%d) does not match result count (%d)",
+			len(transactions),
+			len(transactionResults),
+		)
+	}
+
+	for i, tx := range transactions {
 		err := s.insertTransaction(tx)
+		if err != nil {
+			return err
+		}
+
+		result := transactionResults[i]
+
+		err = s.insertTransactionResult(tx.ID(), result)
 		if err != nil {
 			return err
 		}
@@ -136,15 +156,24 @@ func (s *Store) TransactionByID(txID flow.Identifier) (flow.Transaction, error) 
 	return tx, nil
 }
 
-func (s *Store) InsertTransaction(tx flow.Transaction) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	return s.insertTransaction(tx)
-}
-
 func (s *Store) insertTransaction(tx flow.Transaction) error {
 	s.transactions[tx.ID()] = tx
+	return nil
+}
+
+func (s *Store) TransactionResultByID(txID flow.Identifier) (flow.TransactionResult, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	result, ok := s.transactionResults[txID]
+	if !ok {
+		return flow.TransactionResult{}, storage.ErrNotFound{}
+	}
+	return result, nil
+}
+
+func (s *Store) insertTransactionResult(txID flow.Identifier, result flow.TransactionResult) error {
+	s.transactionResults[txID] = result
 	return nil
 }
 
@@ -160,13 +189,6 @@ func (s *Store) LedgerViewByHeight(blockHeight uint64) *types.LedgerView {
 
 		return ledger[key], nil
 	})
-}
-
-func (s *Store) InsertLedgerDelta(blockHeight uint64, delta types.LedgerDelta) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	return s.insertLedgerDelta(blockHeight, delta)
 }
 
 func (s *Store) insertLedgerDelta(blockHeight uint64, delta types.LedgerDelta) error {
@@ -225,13 +247,6 @@ func (s *Store) RetrieveEvents(eventType string, startBlock, endBlock uint64) ([
 	}
 
 	return events, nil
-}
-
-func (s *Store) InsertEvents(blockHeight uint64, events []flow.Event) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	return s.insertEvents(blockHeight, events)
 }
 
 func (s *Store) insertEvents(blockHeight uint64, events []flow.Event) error {
