@@ -88,50 +88,55 @@ func TestCreateSale(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateSaleScript(tokenAddr, marketAddr)).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(bastianAddress, 0)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(bastianAddress, bastianPublicKey.ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
 	})
 
 	t.Run("Can put an NFT up for sale", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateStartSaleScript(nftAddr, marketAddr, 1, 10)).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(bastianAddress, 0)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(bastianAddress, bastianPublicKey.ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
 	})
 
 	t.Run("Cannot buy an NFT for less than the sale price", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 1, 9)).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(joshAddress, 0)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(joshAddress, joshPublicKey.ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, true)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, true)
 	})
 
 	t.Run("Cannot buy an NFT that is not for sale", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 2, 10)).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(joshAddress, 0)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(joshAddress, joshPublicKey.ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, true)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, true)
 	})
 
 	t.Run("Can buy an NFT that is for sale", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 1, 10)).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(joshAddress, 0)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(joshAddress, joshPublicKey.ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, false)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, false)
 
 		result, err := b.ExecuteScript(GenerateInspectVaultScript(tokenAddr, bastianAddress, 40))
 		require.NoError(t, err)

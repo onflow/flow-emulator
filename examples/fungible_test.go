@@ -38,20 +38,22 @@ func TestCreateToken(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateTokenScript(contractAddr, -7)).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, true)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, true)
 	})
 
 	t.Run("Should be able to create token", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateTokenScript(contractAddr, 10)).
 			SetGasLimit(20).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 
 		result, err := b.ExecuteScript(GenerateInspectVaultScript(contractAddr, b.RootAccountAddress(), 10))
 		require.NoError(t, err)
@@ -64,10 +66,11 @@ func TestCreateToken(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateThreeTokensArrayScript(contractAddr, 10, 20, 5)).
 			SetGasLimit(20).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 	})
 }
 
@@ -83,19 +86,21 @@ func TestInAccountTransfers(t *testing.T) {
 	tx := flow.NewTransaction().
 		SetScript(GenerateCreateThreeTokensArrayScript(contractAddr, 10, 20, 5)).
 		SetGasLimit(20).
-		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+		SetPayer(b.RootKey().Address, b.RootKey().ID).
+		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
+	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 
 	t.Run("Should be able to withdraw tokens from a vault", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateWithdrawScript(contractAddr, 0, 3)).
 			SetGasLimit(20).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 
 		// Assert that the vaults balance is correct
 		result, err := b.ExecuteScript(GenerateInspectVaultArrayScript(contractAddr, b.RootAccountAddress(), 0, 7))
@@ -110,10 +115,11 @@ func TestInAccountTransfers(t *testing.T) {
 		tx = flow.NewTransaction().
 			SetScript(GenerateWithdrawDepositScript(contractAddr, 1, 2, 8)).
 			SetGasLimit(20).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 
 		// Assert that the vault's balance is correct
 		result, err := b.ExecuteScript(GenerateInspectVaultArrayScript(contractAddr, b.RootAccountAddress(), 1, 12))
@@ -143,10 +149,11 @@ func TestExternalTransfers(t *testing.T) {
 	tx := flow.NewTransaction().
 		SetScript(GenerateCreateTokenScript(contractAddr, 10)).
 		SetGasLimit(20).
-		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+		SetPayer(b.RootKey().Address, b.RootKey().ID).
+		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
+	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 
 	// create a new account
 	bastianPrivateKey := RandomPrivateKey()
@@ -159,19 +166,21 @@ func TestExternalTransfers(t *testing.T) {
 	tx = flow.NewTransaction().
 		SetScript(GenerateCreateTokenScript(contractAddr, 10)).
 		SetGasLimit(20).
-		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-		AddAuthorizer(bastianAddress, 0)
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+		SetPayer(b.RootKey().Address, b.RootKey().ID).
+		AddAuthorizer(bastianAddress, bastianPublicKey.ID)
 
-	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
+	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
 
 	t.Run("Should be able to withdraw and deposit tokens from a vault", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateDepositVaultScript(contractAddr, bastianAddress, 3)).
 			SetGasLimit(20).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 
 		// Assert that the vaults' balances are correct
 		result, err := b.ExecuteScript(GenerateInspectVaultScript(contractAddr, b.RootAccountAddress(), 7))

@@ -17,18 +17,17 @@ func TestExecuteScript(t *testing.T) {
 
 	addTwoScript, counterAddress := deployAndGenerateAddTwoScript(t, b)
 
-	accountAddress := b.RootAccountAddress()
-
 	tx := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
 		SetGasLimit(10).
-		SetPayer(accountAddress, 0).
-		AddAuthorizer(accountAddress, 0)
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+		SetPayer(b.RootKey().Address, b.RootKey().ID).
+		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-	err = tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
+	err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
-	callScript := generateGetCounterCountScript(counterAddress, accountAddress)
+	callScript := generateGetCounterCountScript(counterAddress, b.RootKey().Address)
 
 	// Sample call (value is 0)
 	scriptResult, err := b.ExecuteScript([]byte(callScript))
@@ -41,7 +40,7 @@ func TestExecuteScript(t *testing.T) {
 
 	txResult, err := b.ExecuteNextTransaction()
 	assert.NoError(t, err)
-	assert.True(t, txResult.Succeeded())
+	assertTransactionSucceeded(t, txResult)
 
 	t.Run("BeforeCommit", func(t *testing.T) {
 		t.Skip("TODO: fix stored ledger")

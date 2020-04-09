@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	emulator "github.com/dapperlabs/flow-emulator"
@@ -89,3 +90,9 @@ var getNonce = func() func() uint64 {
 		return nonce
 	}
 }()
+
+func assertTransactionSucceeded(t *testing.T, result emulator.TransactionResult) {
+	if !assert.True(t, result.Succeeded()) {
+		t.Error(result.Error)
+	}
+}
