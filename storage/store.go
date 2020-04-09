@@ -37,6 +37,7 @@ type Store interface {
 	CommitBlock(
 		block types.Block,
 		transactions []flow.Transaction,
+		transactionResults []flow.TransactionResult,
 		delta types.LedgerDelta,
 		events []flow.Event,
 	) error
@@ -44,20 +45,14 @@ type Store interface {
 	// TransactionByID gets the transaction with the given ID.
 	TransactionByID(flow.Identifier) (flow.Transaction, error)
 
-	// InsertTransaction inserts a transaction.
-	InsertTransaction(flow.Transaction) error
+	// TransactionResultByID gets the transaction result with the given ID.
+	TransactionResultByID(flow.Identifier) (flow.Transaction, error)
 
 	// LedgerViewByHeight returns a view into the ledger state at a given block.
 	LedgerViewByHeight(blockHeight uint64) *types.LedgerView
-
-	// InsertLedgerDelta inserts a register delta at a given block.
-	InsertLedgerDelta(blockHeight uint64, delta types.LedgerDelta) error
 
 	// RetrieveEvents returns all events with the given type between startBlock and
 	// endBlock (inclusive). If eventType is empty, returns all events in the
 	// range, regardless of type.
 	RetrieveEvents(eventType string, startBlock, endBlock uint64) ([]flow.Event, error)
-
-	// InsertEvents inserts events for a block.
-	InsertEvents(blockHeight uint64, events []flow.Event) error
 }
