@@ -40,7 +40,7 @@ func TestInitialization(t *testing.T) {
 	t.Run("should restore state when initialized with non-empty store", func(t *testing.T) {
 		b, _ := emulator.NewBlockchain(emulator.WithStore(store))
 
-		counterAddress, err := b.CreateAccount(nil, []byte(counterScript), getNonce())
+		counterAddress, err := b.CreateAccount(nil, []byte(counterScript))
 		require.NoError(t, err)
 
 		// Submit a transaction adds some ledger state and event state

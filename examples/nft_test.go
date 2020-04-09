@@ -19,7 +19,7 @@ func TestNFTDeployment(t *testing.T) {
 
 	// Should be able to deploy a contract as a new account with no keys.
 	tokenCode := ReadFile(NFTContractFile)
-	_, err := b.CreateAccount(nil, tokenCode, GetNonce())
+	_, err := b.CreateAccount(nil, tokenCode)
 	if !assert.NoError(t, err) {
 		t.Log(err.Error())
 	}
@@ -32,7 +32,7 @@ func TestCreateNFT(t *testing.T) {
 
 	// First, deploy the contract
 	tokenCode := ReadFile(NFTContractFile)
-	contractAddr, err := b.CreateAccount(nil, tokenCode, GetNonce())
+	contractAddr, err := b.CreateAccount(nil, tokenCode)
 	assert.NoError(t, err)
 
 	// Vault must be instantiated with a positive ID
@@ -76,7 +76,7 @@ func TestTransferNFT(t *testing.T) {
 
 	// First, deploy the contract
 	tokenCode := ReadFile(NFTContractFile)
-	contractAddr, err := b.CreateAccount(nil, tokenCode, GetNonce())
+	contractAddr, err := b.CreateAccount(nil, tokenCode)
 	assert.NoError(t, err)
 
 	// then deploy a NFT to the root account
@@ -101,7 +101,7 @@ func TestTransferNFT(t *testing.T) {
 	bastianPublicKey := bastianPrivateKey.ToAccountKey()
 	bastianPublicKey.Weight = keys.PublicKeyWeightThreshold
 
-	bastianAddress, err := b.CreateAccount([]flow.AccountKey{bastianPublicKey}, nil, GetNonce())
+	bastianAddress, err := b.CreateAccount([]flow.AccountKey{bastianPublicKey}, nil)
 
 	// then deploy an NFT to another account
 	tx = flow.NewTransaction().
