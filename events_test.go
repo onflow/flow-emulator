@@ -78,7 +78,7 @@ func TestEventEmitted(t *testing.T) {
 			SetScript(script).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, 0)
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
 		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
