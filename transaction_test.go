@@ -1,11 +1,14 @@
 package emulator_test
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/dapperlabs/cadence"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/dapperlabs/cadence/runtime"
 	"github.com/dapperlabs/cadence/runtime/interpreter"
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go-sdk/keys"
@@ -38,11 +41,10 @@ func TestSubmitTransaction(t *testing.T) {
 	assert.NoError(t, err)
 	assertTransactionSucceeded(t, result)
 
-	// TODO: fix once GetTransactionStatus is implemented
 	// tx1 status becomes TransactionFinalized
-	// tx2, err := b.GetTransaction(tx1.ID())
-	// assert.NoError(t, err)
-	// assert.Equal(t, flow.TransactionFinalized, tx2.Status)
+	tx2Result, err := b.GetTransactionResult(tx1.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, flow.TransactionFinalized, tx2Result.Status)
 }
 
 // TODO: Add test case for missing ReferenceBlockID
@@ -173,11 +175,11 @@ func TestSubmitTransactionReverted(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, result.Reverted())
 
-	// TODO: fix once GetTransactionStatus is implemented
-	// tx1 status becomes TransactionReverted
-	// tx1, err := b.GetTransaction(tx.ID())
-	// assert.NoError(t, err)
-	// assert.Equal(t, flow.TransactionReverted, tx1.Status)
+	// tx1 status becomes TransactionSealed
+	// TODO: include error code in result
+	tx1Result, err := b.GetTransactionResult(tx.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, flow.TransactionSealed, tx1Result.Status)
 }
 
 func TestSubmitTransactionScriptAccounts(t *testing.T) {
@@ -463,49 +465,34 @@ func TestGetTransaction(t *testing.T) {
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
-	// TODO: fix once GetTransactionStatus is implemented
-	// addTwoScript, counterAddress := deployAndGenerateAddTwoScript(t, b)
 	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
-	tx := flow.NewTransaction().
+	tx1 := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
 		SetGasLimit(10).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address, b.RootKey().ID).
 		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-	err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	err = tx1.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
-	err = b.AddTransaction(*tx)
+	err = b.AddTransaction(*tx1)
 	assert.NoError(t, err)
 
 	result, err := b.ExecuteNextTransaction()
 	assert.NoError(t, err)
 	assertTransactionSucceeded(t, result)
 
-	t.Run("InvalidHash", func(t *testing.T) {
+	t.Run("Non-existent", func(t *testing.T) {
 		_, err := b.GetTransaction(flow.ZeroID)
 		assert.IsType(t, &emulator.ErrTransactionNotFound{}, err)
 	})
 
-	t.Run("ValidHash", func(t *testing.T) {
-		// TODO: fix once GetTransactionStatus is implemented
-		// resTx, err := b.GetTransaction(tx.ID())
-		// require.NoError(t, err)
-		// assert.Equal(t, resTx.Status, flow.TransactionFinalized)
-		//
-		// require.Len(t, resTx.Events, 1)
-		// actualEvent := resTx.Events[0]
-		//
-		// decodedEvent := actualEvent.Value
-		//
-		// location := runtime.AddressLocation(counterAddress.Bytes())
-		// eventType := fmt.Sprintf("%s.Counting.CountIncremented", location.ID())
-		//
-		// assert.Equal(t, tx.ID(), actualEvent.TransactionID)
-		// assert.Equal(t, eventType, actualEvent.Type)
-		// assert.Equal(t, uint(0), actualEvent.EventIndex)
-		// assert.Equal(t, cadence.NewInt(2), decodedEvent.Fields[0])
+	t.Run("Exists", func(t *testing.T) {
+		tx2, err := b.GetTransaction(tx1.ID())
+		require.NoError(t, err)
+
+		assert.Equal(t, tx1.ID(), tx2.ID())
 	})
 }
