@@ -38,6 +38,15 @@ func TransactionFixture(n ...func(t *flow.Transaction)) flow.Transaction {
 	return *tx
 }
 
+func TransactionResultFixture() flow.TransactionResult {
+	return flow.TransactionResult{
+		Status: flow.TransactionPending,
+		Events: []flow.Event{
+			EventFixture(func(e *flow.Event) {}),
+		},
+	}
+}
+
 func EventFixture(n ...func(e *flow.Event)) flow.Event {
 	event := flow.Event{
 		Type: "Transfer",
