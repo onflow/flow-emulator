@@ -41,10 +41,13 @@ func TestSubmitTransaction(t *testing.T) {
 	assert.NoError(t, err)
 	assertTransactionSucceeded(t, result)
 
-	// tx1 status becomes TransactionFinalized
+	_, err = b.CommitBlock()
+	assert.NoError(t, err)
+
+	// tx1 status becomes TransactionSealed
 	tx2Result, err := b.GetTransactionResult(tx1.ID())
 	assert.NoError(t, err)
-	assert.Equal(t, flow.TransactionFinalized, tx2Result.Status)
+	assert.Equal(t, flow.TransactionSealed, tx2Result.Status)
 }
 
 // TODO: Add test case for missing ReferenceBlockID
@@ -174,6 +177,9 @@ func TestSubmitTransactionReverted(t *testing.T) {
 	result, err := b.ExecuteNextTransaction()
 	assert.NoError(t, err)
 	assert.True(t, result.Reverted())
+
+	_, err = b.CommitBlock()
+	assert.NoError(t, err)
 
 	// tx1 status becomes TransactionSealed
 	// TODO: include error code in result
