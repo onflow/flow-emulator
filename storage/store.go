@@ -46,7 +46,7 @@ type Store interface {
 	TransactionByID(flow.Identifier) (flow.Transaction, error)
 
 	// TransactionResultByID gets the transaction result with the given ID.
-	TransactionResultByID(flow.Identifier) (flow.Transaction, error)
+	TransactionResultByID(flow.Identifier) (flow.TransactionResult, error)
 
 	// LedgerViewByHeight returns a view into the ledger state at a given block.
 	LedgerViewByHeight(blockHeight uint64) *types.LedgerView
