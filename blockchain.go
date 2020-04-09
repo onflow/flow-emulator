@@ -58,6 +58,7 @@ type BlockchainAPI interface {
 	GetBlockByID(id flow.Identifier) (*types.Block, error)
 	GetBlockByHeight(height uint64) (*types.Block, error)
 	GetTransaction(txID flow.Identifier) (*flow.Transaction, error)
+	GetTransactionResult(txID flow.Identifier) (*flow.TransactionResult, error)
 	GetAccount(address flow.Address) (*flow.Account, error)
 	GetAccountAtBlock(address flow.Address, blockHeight uint64) (*flow.Account, error)
 	GetEvents(eventType string, startBlock, endBlock uint64) ([]flow.Event, error)
@@ -152,7 +153,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		// commit the genesis block to storage
 		genesis := types.GenesisBlock()
 
-		err := store.CommitBlock(genesis, nil, genesisLedgerView.Delta(), nil)
+		err := store.CommitBlock(genesis, nil, nil, genesisLedgerView.Delta(), nil)
 		if err != nil {
 			return nil, err
 		}
@@ -264,6 +265,31 @@ func (b *Blockchain) GetTransaction(txID flow.Identifier) (*flow.Transaction, er
 	}
 
 	return &tx, nil
+}
+
+func (b *Blockchain) GetTransactionResult(txID flow.Identifier) (*flow.TransactionResult, error) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	if b.pendingBlock.ContainsTransaction(txID) {
+		return &flow.TransactionResult{
+			Status: flow.TransactionPending,
+			Events: nil,
+		}, nil
+	}
+
+	result, err := b.storage.TransactionResultByID(txID)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound{}) {
+			return &flow.TransactionResult{
+				Status: flow.TransactionStatusUnknown,
+				Events: nil,
+			}, nil
+		}
+		return nil, &ErrStorage{err}
+	}
+
+	return &result, nil
 }
 
 // GetAccount returns the account for the given address.
