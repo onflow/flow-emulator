@@ -305,7 +305,7 @@ func (r *RuntimeContext) GetAccount(address flow.Address) *flow.Account {
 		panic(err)
 	}
 
-	accountPublicKeys := make([]flow.AccountPublicKey, len(publicKeys))
+	accountPublicKeys := make([]flow.AccountKey, len(publicKeys))
 	for i, publicKey := range publicKeys {
 		accountPublicKey, err := keys.DecodePublicKey(publicKey)
 		if err != nil {

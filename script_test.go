@@ -5,11 +5,10 @@ import (
 
 	"github.com/dapperlabs/cadence"
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/keys"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dapperlabs/flow-emulator"
+	emulator "github.com/dapperlabs/flow-emulator"
 )
 
 func TestExecuteScript(t *testing.T) {
@@ -20,19 +19,14 @@ func TestExecuteScript(t *testing.T) {
 
 	accountAddress := b.RootAccountAddress()
 
-	tx := flow.Transaction{
-		Script:             []byte(addTwoScript),
-		ReferenceBlockHash: nil,
-		Nonce:              getNonce(),
-		ComputeLimit:       10,
-		PayerAccount:       accountAddress,
-		ScriptAccounts:     []flow.Address{accountAddress},
-	}
+	tx := flow.NewTransaction().
+		SetScript([]byte(addTwoScript)).
+		SetGasLimit(10).
+		SetPayer(accountAddress, 0).
+		AddAuthorizer(accountAddress, 0)
 
-	sig, err := keys.SignTransaction(tx, b.RootKey())
+	err = tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
 	assert.NoError(t, err)
-
-	tx.AddSignature(accountAddress, sig)
 
 	callScript := generateGetCounterCountScript(counterAddress, accountAddress)
 
@@ -42,7 +36,7 @@ func TestExecuteScript(t *testing.T) {
 	assert.Equal(t, cadence.NewInt(0), scriptResult.Value)
 
 	// Submit tx (script adds 2)
-	err = b.AddTransaction(tx)
+	err = b.AddTransaction(*tx)
 	assert.NoError(t, err)
 
 	txResult, err := b.ExecuteNextTransaction()
@@ -69,7 +63,7 @@ func TestExecuteScript(t *testing.T) {
 	})
 }
 
-func TestExecuteScriptAtBlockNumber(t *testing.T) {
+func TestExecuteScriptAtBlockHeight(t *testing.T) {
 	// TODO
 	// Test that scripts can be executed at different block heights
 }

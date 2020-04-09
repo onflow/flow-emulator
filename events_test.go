@@ -36,7 +36,7 @@ func TestEventEmitted(t *testing.T) {
 
 		decodedEvent := actualEvent.Value
 
-		location := runtime.ScriptLocation(result.ScriptHash)
+		location := runtime.ScriptLocation(result.ScriptID.Bytes())
 		expectedType := fmt.Sprintf("%s.MyEvent", location.ID())
 
 		// NOTE: ID is undefined for events emitted from scripts
@@ -60,9 +60,10 @@ func TestEventEmitted(t *testing.T) {
 			}
 		`)
 
-		publicKey := b.RootKey().PublicKey(keys.PublicKeyWeightThreshold)
+		publicKey := b.RootKey().ToAccountKey()
+		publicKey.Weight = keys.PublicKeyWeightThreshold
 
-		address, err := b.CreateAccount([]flow.AccountPublicKey{publicKey}, accountScript, getNonce())
+		address, err := b.CreateAccount([]flow.AccountKey{publicKey}, accountScript, getNonce())
 		assert.NoError(t, err)
 
 		script := []byte(fmt.Sprintf(`
@@ -75,20 +76,15 @@ func TestEventEmitted(t *testing.T) {
 			}
 		`, address.Hex()))
 
-		tx := flow.Transaction{
-			Script:             script,
-			ReferenceBlockHash: nil,
-			Nonce:              getNonce(),
-			ComputeLimit:       10,
-			PayerAccount:       b.RootAccountAddress(),
-		}
+		tx := flow.NewTransaction().
+			SetScript(script).
+			SetGasLimit(10).
+			SetPayer(b.RootAccountAddress(), 0)
 
-		sig, err := keys.SignTransaction(tx, b.RootKey())
+		err = tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
 		assert.NoError(t, err)
 
-		tx.AddSignature(b.RootAccountAddress(), sig)
-
-		err = b.AddTransaction(tx)
+		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
 
 		result, err := b.ExecuteNextTransaction()
@@ -101,7 +97,7 @@ func TestEventEmitted(t *testing.T) {
 		location := runtime.AddressLocation(address.Bytes())
 		expectedType := fmt.Sprintf("%s.Test.MyEvent", location.ID())
 
-		events, err := b.GetEvents(expectedType, block.Number, block.Number)
+		events, err := b.GetEvents(expectedType, block.Height, block.Height)
 		require.NoError(t, err)
 		require.Len(t, events, 1)
 
@@ -109,7 +105,7 @@ func TestEventEmitted(t *testing.T) {
 
 		decodedEvent := actualEvent.Value
 
-		expectedID := flow.Event{TxHash: tx.Hash(), Index: 0}.ID()
+		expectedID := flow.Event{TransactionID: tx.ID(), Index: 0}.ID()
 
 		assert.Equal(t, expectedType, actualEvent.Type)
 		assert.Equal(t, expectedID, actualEvent.ID())

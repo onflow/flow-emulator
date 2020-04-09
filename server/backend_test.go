@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/dapperlabs/flow-go-sdk/client/convert"
+	"github.com/dapperlabs/flow-go-sdk/test"
 	"github.com/golang/mock/gomock"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -16,9 +18,7 @@ import (
 	"github.com/dapperlabs/cadence"
 	encoding "github.com/dapperlabs/cadence/encoding/json"
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go/crypto"
 	access "github.com/dapperlabs/flow/protobuf/go/flow/access"
-	"github.com/dapperlabs/flow/protobuf/go/flow/entities"
 
 	emulator "github.com/dapperlabs/flow-emulator"
 	"github.com/dapperlabs/flow-emulator/mocks"
@@ -39,7 +39,7 @@ func TestPing(t *testing.T) {
 
 func TestBackend(t *testing.T) {
 
-	//wrapper which manages mock lifecycle
+	// wrapper which manages mock lifecycle
 	withMocks := func(sut func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI)) func(t *testing.T) {
 		return func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
@@ -59,7 +59,7 @@ func TestBackend(t *testing.T) {
 		executionScriptRequest := access.ExecuteScriptAtLatestBlockRequest{
 			Script: sampleScriptText,
 		}
-		latestBlock := &types.Block{Number: rand.Uint64()}
+		latestBlock := &types.Block{Height: rand.Uint64()}
 
 		api.EXPECT().
 			GetLatestBlock().
@@ -67,7 +67,7 @@ func TestBackend(t *testing.T) {
 			Times(1)
 
 		api.EXPECT().
-			ExecuteScriptAtBlock(sampleScriptText, latestBlock.Number).
+			ExecuteScriptAtBlock(sampleScriptText, latestBlock.Height).
 			Return(emulator.ScriptResult{
 				Value: scriptResponse,
 				Error: nil,
@@ -111,20 +111,20 @@ func TestBackend(t *testing.T) {
 	t.Run("ExecuteScriptAtBlockID", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
 		sampleScriptText := []byte("hey I'm so totally uninterpretable script text with unicode ć, ń, ó, ś, ź")
 		scriptResponse := cadence.NewInt(rand.Int())
-		randomBlock := &types.Block{Number: rand.Uint64()}
+		randomBlock := &types.Block{Height: rand.Uint64()}
 
 		executionScriptRequest := access.ExecuteScriptAtBlockIDRequest{
 			Script:  sampleScriptText,
-			BlockId: randomBlock.Hash(),
+			BlockId: randomBlock.ID().Bytes(),
 		}
 
 		api.EXPECT().
-			GetBlockByHash(randomBlock.Hash()).
+			GetBlockByID(randomBlock.ID()).
 			Return(randomBlock, nil).
 			Times(1)
 
 		api.EXPECT().
-			ExecuteScriptAtBlock(sampleScriptText, randomBlock.Number).
+			ExecuteScriptAtBlock(sampleScriptText, randomBlock.Height).
 			Return(emulator.ScriptResult{
 				Value: scriptResponse,
 				Error: nil,
@@ -146,7 +146,7 @@ func TestBackend(t *testing.T) {
 			Address: flow.RootAddress,
 			Balance: 10,
 			Code:    []byte("pub fun main() {}"),
-			Keys:    []flow.AccountPublicKey{},
+			Keys:    []flow.AccountKey{},
 		}
 
 		api.EXPECT().
@@ -161,11 +161,11 @@ func TestBackend(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		assert.Equal(t, account.Address.Bytes(), response.Account.Address)
+		assert.Equal(t, account.Address, flow.BytesToAddress(response.Account.Address))
 		assert.Equal(t, account.Balance, response.Account.Balance)
 	}))
 
-	t.Run("GetEvents fails with wrong block numbers", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetEvents fails with wrong block heights", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
 
 		api.EXPECT().
 			GetEvents(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -234,15 +234,15 @@ func TestBackend(t *testing.T) {
 		resEvents := response.GetEvents()
 
 		assert.Len(t, resEvents, 2)
-		assert.EqualValues(t, 0, resEvents[0].GetIndex())
-		assert.EqualValues(t, 1, resEvents[1].GetIndex())
+		assert.EqualValues(t, 0, resEvents[0].GetEventIndex())
+		assert.EqualValues(t, 1, resEvents[1].GetEventIndex())
 	}))
 
 	t.Run("GetLatestBlockHeader", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
-		parentHash := types.Block{Number: rand.Uint64()}.Hash()
+		parentID := types.Block{Height: rand.Uint64()}.ID()
 		latestBlock := &types.Block{
-			Number:            rand.Uint64(),
-			PreviousBlockHash: parentHash,
+			Height:   rand.Uint64(),
+			ParentID: parentID,
 		}
 
 		api.EXPECT().
@@ -256,57 +256,57 @@ func TestBackend(t *testing.T) {
 		assert.NoError(t, err)
 
 		blockResponse := response.GetBlock()
-		assert.Equal(t, latestBlock.Number, blockResponse.GetHeight())
-		assert.Equal(t, latestBlock.Hash(), crypto.Hash(blockResponse.GetId()))
-		assert.Equal(t, latestBlock.PreviousBlockHash, crypto.Hash(blockResponse.GetParentId()))
+		assert.Equal(t, latestBlock.Height, blockResponse.GetHeight())
+		assert.Equal(t, latestBlock.ID(), flow.HashToID(blockResponse.GetId()))
+		assert.Equal(t, latestBlock.ParentID, flow.HashToID(blockResponse.GetParentId()))
 	}))
 
 	t.Run("GetBlockHeaderAtBlockHeight", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
-		parentHash := types.Block{Number: rand.Uint64()}.Hash()
+		parentID := types.Block{Height: rand.Uint64()}.ID()
 		requestedBlock := &types.Block{
-			Number:            rand.Uint64(),
-			PreviousBlockHash: parentHash,
+			Height:   rand.Uint64(),
+			ParentID: parentID,
 		}
 
 		api.EXPECT().
-			GetBlockByNumber(requestedBlock.Number).
+			GetBlockByHeight(requestedBlock.Height).
 			Return(requestedBlock, nil).
 			Times(1)
 
 		getBlockHeaderRequest := access.GetBlockHeaderByHeightRequest{
-			Height: requestedBlock.Number,
+			Height: requestedBlock.Height,
 		}
 		response, err := backend.GetBlockHeaderByHeight(context.Background(), &getBlockHeaderRequest)
 		assert.NoError(t, err)
 
 		blockResponse := response.GetBlock()
-		assert.Equal(t, requestedBlock.Number, blockResponse.GetHeight())
-		assert.Equal(t, requestedBlock.Hash(), crypto.Hash(blockResponse.GetId()))
-		assert.Equal(t, requestedBlock.PreviousBlockHash, crypto.Hash(blockResponse.GetParentId()))
+		assert.Equal(t, requestedBlock.Height, blockResponse.GetHeight())
+		assert.Equal(t, requestedBlock.ID(), flow.HashToID(blockResponse.GetId()))
+		assert.Equal(t, requestedBlock.ParentID, flow.HashToID(blockResponse.GetParentId()))
 	}))
 
 	t.Run("GetBlockHeaderAtBlockID", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
-		parentHash := types.Block{Number: rand.Uint64()}.Hash()
+		parentID := types.Block{Height: rand.Uint64()}.ID()
 		requestedBlock := &types.Block{
-			Number:            rand.Uint64(),
-			PreviousBlockHash: parentHash,
+			Height:   rand.Uint64(),
+			ParentID: parentID,
 		}
 
 		api.EXPECT().
-			GetBlockByHash(requestedBlock.Hash()).
+			GetBlockByID(requestedBlock.ID()).
 			Return(requestedBlock, nil).
 			Times(1)
 
 		getBlockHeaderRequest := access.GetBlockHeaderByIDRequest{
-			Id: requestedBlock.Hash(),
+			Id: requestedBlock.ID().Bytes(),
 		}
 		response, err := backend.GetBlockHeaderByID(context.Background(), &getBlockHeaderRequest)
 		assert.NoError(t, err)
 
 		blockResponse := response.GetBlock()
-		assert.Equal(t, requestedBlock.Number, blockResponse.GetHeight())
-		assert.Equal(t, requestedBlock.Hash(), crypto.Hash(blockResponse.GetId()))
-		assert.Equal(t, requestedBlock.PreviousBlockHash, crypto.Hash(blockResponse.GetParentId()))
+		assert.Equal(t, requestedBlock.Height, blockResponse.GetHeight())
+		assert.Equal(t, requestedBlock.ID(), flow.HashToID(blockResponse.GetId()))
+		assert.Equal(t, requestedBlock.ParentID, flow.HashToID(blockResponse.GetParentId()))
 	}))
 
 	t.Run("GetTransaction tx does not exists", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
@@ -340,7 +340,7 @@ func TestBackend(t *testing.T) {
 	// 		t.Status = flow.TransactionSealed
 	// 	})
 
-	// 	txHash := tx.Hash()
+	// 	txHash := tx.ID()
 
 	// 	txEvents := []flow.Event{
 	// 		unittest.EventFixture(func(e *flow.Event) {
@@ -411,33 +411,19 @@ func TestBackend(t *testing.T) {
 			}).
 			Times(1)
 
+		tx := test.TransactionGenerator().New()
+		txMsg := convert.TransactionToMessage(*tx)
+
 		requestTx := access.SendTransactionRequest{
-			Transaction: &entities.Transaction{
-				Script:           nil,
-				ReferenceBlockId: nil,
-				PayerAccount:     nil,
-				ScriptAccounts: [][]byte{
-					nil,
-					{1, 2, 3, 4},
-				},
-				Signatures: []*entities.AccountSignature{
-					{
-						Account:   []byte{2, 2, 2, 2},
-						Signature: []byte{4, 4, 4, 4},
-					}, nil,
-				},
-				Status: 0,
-			},
+			Transaction: txMsg,
 		}
 		response, err := backend.SendTransaction(context.Background(), &requestTx)
 
 		assert.NoError(t, err)
-		assert.NotNil(t, response)
+		require.NotNil(t, response)
 
-		assert.Len(t, capturedTx.ScriptAccounts, 2)
-		assert.Len(t, capturedTx.Signatures, 2)
-
-		assert.True(t, capturedTx.Hash().Equal(response.GetId()))
+		assert.Equal(t, capturedTx.ID(), capturedTx.ID())
+		assert.Equal(t, capturedTx.ID(), flow.HashToID(response.GetId()))
 	}))
 
 	t.Run("SendTransaction which errors while processing", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
@@ -447,15 +433,15 @@ func TestBackend(t *testing.T) {
 			Return(&emulator.ErrInvalidSignaturePublicKey{}).
 			Times(1)
 
+		tx := test.TransactionGenerator().New()
+
+		// remove payer to make transaction invalid
+		tx.Payload.Payer = nil
+
+		txMsg := convert.TransactionToMessage(*tx)
+
 		requestTx := access.SendTransactionRequest{
-			Transaction: &entities.Transaction{
-				Script:           nil,
-				ReferenceBlockId: nil,
-				PayerAccount:     nil,
-				ScriptAccounts:   nil,
-				Signatures:       nil,
-				Status:           0,
-			},
+			Transaction: txMsg,
 		}
 		response, err := backend.SendTransaction(context.Background(), &requestTx)
 
@@ -494,32 +480,18 @@ func TestBackend(t *testing.T) {
 			}).
 			Times(1)
 
+		tx := test.TransactionGenerator().New()
+		txMsg := convert.TransactionToMessage(*tx)
+
 		requestTx := access.SendTransactionRequest{
-			Transaction: &entities.Transaction{
-				Script:           nil,
-				ReferenceBlockId: nil,
-				PayerAccount:     nil,
-				ScriptAccounts: [][]byte{
-					nil,
-					{1, 2, 3, 4},
-				},
-				Signatures: []*entities.AccountSignature{
-					{
-						Account:   []byte{2, 2, 2, 2},
-						Signature: []byte{4, 4, 4, 4},
-					}, nil,
-				},
-				Status: 0,
-			},
+			Transaction: txMsg,
 		}
 		response, err := backend.SendTransaction(context.Background(), &requestTx)
 
 		assert.NoError(t, err)
-		assert.NotNil(t, response)
+		require.NotNil(t, response)
 
-		assert.Len(t, capturedTx.ScriptAccounts, 2)
-		assert.Len(t, capturedTx.Signatures, 2)
-
-		assert.True(t, capturedTx.Hash().Equal(response.GetId()))
+		assert.Equal(t, capturedTx.ID(), capturedTx.ID())
+		assert.Equal(t, capturedTx.ID(), flow.HashToID(response.GetId()))
 	}))
 }
