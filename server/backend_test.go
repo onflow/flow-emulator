@@ -38,6 +38,8 @@ func TestPing(t *testing.T) {
 }
 
 func TestBackend(t *testing.T) {
+	ids := test.IdentifierGenerator()
+	results := test.TransactionResultGenerator()
 
 	// wrapper which manages mock lifecycle
 	withMocks := func(sut func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI)) func(t *testing.T) {
@@ -330,6 +332,27 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, codes.NotFound, grpcError.Code())
 
 		assert.Nil(t, response)
+	}))
+
+	t.Run("GetTransactionResult", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+		txID := ids.New()
+		expectedResult := results.New()
+
+		api.EXPECT().
+			GetTransactionResult(txID).
+			Return(&expectedResult, nil).
+			Times(1)
+
+		response, err := backend.GetTransactionResult(context.Background(), &access.GetTransactionRequest{
+			Id: txID.Bytes(),
+		})
+
+		assert.NoError(t, err)
+
+		result, err := convert.MessageToTransactionResult(response)
+		require.NoError(t, err)
+
+		assert.Equal(t, expectedResult, result)
 	}))
 
 	// t.Run("GetTransaction", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
