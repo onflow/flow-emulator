@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/dapperlabs/cadence v0.0.0-20200401151421-7c78a2da20a6
 	github.com/dapperlabs/flow-go v0.3.2-0.20200331201607-7630da6300eb
-	github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200409001924-6de51e4ac0f8
+	github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200409032400-e7fbd942ae6c
 	github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200331201607-7630da6300eb
 	github.com/dapperlabs/flow-go/language v0.3.1 // indirect
 	github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200407055017-1aa4ec9fa16c
