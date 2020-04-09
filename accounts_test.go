@@ -37,9 +37,10 @@ func TestCreateAccount(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(createAccountScript).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
-		err = tx.SignContainer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID, b.RootKey().Signer())
+		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -47,7 +48,7 @@ func TestCreateAccount(t *testing.T) {
 
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
-		assert.True(t, result.Succeeded())
+		assertTransactionSucceeded(t, result)
 
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)
@@ -84,9 +85,10 @@ func TestCreateAccount(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(createAccountScript).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), 0)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
-		err = tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
+		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -94,7 +96,7 @@ func TestCreateAccount(t *testing.T) {
 
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
-		assert.True(t, result.Succeeded())
+		assertTransactionSucceeded(t, result)
 
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)
@@ -134,9 +136,10 @@ func TestCreateAccount(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(createAccountScript).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), 0)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
-		err = tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
+		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -144,7 +147,7 @@ func TestCreateAccount(t *testing.T) {
 
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
-		assert.True(t, result.Succeeded())
+		assertTransactionSucceeded(t, result)
 
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)
@@ -170,9 +173,10 @@ func TestCreateAccount(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(createAccountScript).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), 0)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
-		err = tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
+		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -180,7 +184,7 @@ func TestCreateAccount(t *testing.T) {
 
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
-		assert.True(t, result.Succeeded())
+		assertTransactionSucceeded(t, result)
 
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)
@@ -211,9 +215,10 @@ func TestCreateAccount(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(createAccountScript).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), 0)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
-		err = tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
+		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -221,7 +226,7 @@ func TestCreateAccount(t *testing.T) {
 
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
-		assert.True(t, result.Succeeded())
+		assertTransactionSucceeded(t, result)
 
 		block, err := b.CommitBlock()
 		require.NoError(t, err)
@@ -261,9 +266,10 @@ func TestCreateAccount(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(createAccountScript).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), 0)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
-		err = tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
+		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -292,9 +298,10 @@ func TestCreateAccount(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(createAccountScript).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), 0)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
-		err = tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
+		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -326,10 +333,11 @@ func TestAddAccountKey(t *testing.T) {
 		tx1 := flow.NewTransaction().
 			SetScript(addKeyScript).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		err = tx1.SignContainer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID, b.RootKey().Signer())
+		err = tx1.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx1)
@@ -337,7 +345,7 @@ func TestAddAccountKey(t *testing.T) {
 
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
-		assert.True(t, result.Succeeded())
+		assertTransactionSucceeded(t, result)
 
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)
@@ -347,9 +355,10 @@ func TestAddAccountKey(t *testing.T) {
 		tx2 := flow.NewTransaction().
 			SetScript(script).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), 0)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
-		err = tx2.SignContainer(b.RootAccountAddress(), 0, privateKey.Signer())
+		err = tx2.SignContainer(b.RootKey().Address, b.RootKey().ID, privateKey.Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx2)
@@ -357,7 +366,7 @@ func TestAddAccountKey(t *testing.T) {
 
 		result, err = b.ExecuteNextTransaction()
 		assert.NoError(t, err)
-		assert.True(t, result.Succeeded())
+		assertTransactionSucceeded(t, result)
 
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)
@@ -381,10 +390,11 @@ func TestAddAccountKey(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(addKeyScript).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		err = tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
+		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -412,11 +422,12 @@ func TestRemoveAccountKey(t *testing.T) {
 	tx1 := flow.NewTransaction().
 		SetScript(addKeyScript).
 		SetGasLimit(10).
-		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+		SetPayer(b.RootKey().Address, b.RootKey().ID).
+		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
 	// sign with root key
-	err = tx1.SignContainer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID, b.RootKey().Signer())
+	err = tx1.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
 	// submit tx1 (should succeed)
@@ -425,12 +436,12 @@ func TestRemoveAccountKey(t *testing.T) {
 
 	result, err := b.ExecuteNextTransaction()
 	assert.NoError(t, err)
-	assert.True(t, result.Succeeded())
+	assertTransactionSucceeded(t, result)
 
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
 
-	account, err := b.GetAccount(b.RootAccountAddress())
+	account, err := b.GetAccount(b.RootKey().Address)
 	assert.NoError(t, err)
 
 	assert.Len(t, account.Keys, 2)
@@ -439,11 +450,12 @@ func TestRemoveAccountKey(t *testing.T) {
 	tx2 := flow.NewTransaction().
 		SetScript(templates.RemoveAccountKey(0)).
 		SetGasLimit(10).
-		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+		SetPayer(b.RootKey().Address, b.RootKey().ID).
+		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
 	// sign with root key
-	err = tx2.SignContainer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID, b.RootKey().Signer())
+	err = tx2.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
 	// submit tx2 (should succeed)
@@ -452,12 +464,12 @@ func TestRemoveAccountKey(t *testing.T) {
 
 	result, err = b.ExecuteNextTransaction()
 	assert.NoError(t, err)
-	assert.True(t, result.Succeeded())
+	assertTransactionSucceeded(t, result)
 
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
 
-	account, err = b.GetAccount(b.RootAccountAddress())
+	account, err = b.GetAccount(b.RootKey().Address)
 	assert.NoError(t, err)
 
 	assert.Len(t, account.Keys, 1)
@@ -466,11 +478,12 @@ func TestRemoveAccountKey(t *testing.T) {
 	tx3 := flow.NewTransaction().
 		SetScript(templates.RemoveAccountKey(0)).
 		SetGasLimit(10).
-		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+		SetPayer(b.RootKey().Address, b.RootKey().ID).
+		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
 	// sign with root key (that has been removed)
-	err = tx3.SignContainer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID, b.RootKey().Signer())
+	err = tx3.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
 	// submit tx3 (should fail)
@@ -480,7 +493,7 @@ func TestRemoveAccountKey(t *testing.T) {
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
 
-	account, err = b.GetAccount(b.RootAccountAddress())
+	account, err = b.GetAccount(b.RootKey().Address)
 	assert.NoError(t, err)
 
 	assert.Len(t, account.Keys, 1)
@@ -489,11 +502,12 @@ func TestRemoveAccountKey(t *testing.T) {
 	tx4 := flow.NewTransaction().
 		SetScript(templates.RemoveAccountKey(0)).
 		SetGasLimit(10).
-		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+		SetPayer(b.RootKey().Address, b.RootKey().ID).
+		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
 	// sign with remaining account key
-	err = tx4.SignContainer(b.RootAccountAddress(), 0, privateKey.Signer())
+	err = tx4.SignContainer(b.RootKey().Address, b.RootKey().ID, privateKey.Signer())
 	assert.NoError(t, err)
 
 	// submit tx4 (should succeed)
@@ -502,12 +516,12 @@ func TestRemoveAccountKey(t *testing.T) {
 
 	result, err = b.ExecuteNextTransaction()
 	assert.NoError(t, err)
-	assert.True(t, result.Succeeded())
+	assertTransactionSucceeded(t, result)
 
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
 
-	account, err = b.GetAccount(b.RootAccountAddress())
+	account, err = b.GetAccount(b.RootKey().Address)
 	assert.NoError(t, err)
 
 	// no more keys left on account
@@ -539,9 +553,6 @@ func TestUpdateAccountCode(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		privateKeyA := b.RootKey()
-
-		accountAddressA := b.RootAccountAddress()
 		accountAddressB, err := b.CreateAccount([]flow.AccountKey{publicKeyB}, codeA, getNonce())
 		require.NoError(t, err)
 
@@ -553,13 +564,14 @@ func TestUpdateAccountCode(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(templates.UpdateAccountCode(codeB)).
 			SetGasLimit(10).
-			SetPayer(accountAddressA, 0).
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
 			AddAuthorizer(accountAddressB, 0)
 
 		err = tx.SignContainer(accountAddressB, 0, privateKeyB.Signer())
 		assert.NoError(t, err)
 
-		err = tx.SignContainer(accountAddressA, 0, privateKeyA.Signer())
+		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -567,7 +579,7 @@ func TestUpdateAccountCode(t *testing.T) {
 
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
-		assert.True(t, result.Succeeded())
+		assertTransactionSucceeded(t, result)
 
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)
@@ -582,9 +594,6 @@ func TestUpdateAccountCode(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		privateKeyA := b.RootKey()
-
-		accountAddressA := b.RootAccountAddress()
 		accountAddressB, err := b.CreateAccount([]flow.AccountKey{publicKeyB}, codeA, getNonce())
 		require.NoError(t, err)
 
@@ -596,10 +605,11 @@ func TestUpdateAccountCode(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(templates.UpdateAccountCode(codeB)).
 			SetGasLimit(10).
-			SetPayer(accountAddressA, 0).
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
 			AddAuthorizer(accountAddressB, 0)
 
-		err = tx.SignContainer(accountAddressA, 0, privateKeyA.Signer())
+		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -628,8 +638,7 @@ func TestImportAccountCode(t *testing.T) {
       }
 	`)
 
-	publicKey := b.RootKey().ToAccountKey()
-	publicKey.Weight = keys.PublicKeyWeightThreshold
+	publicKey := b.RootKey().AccountKey()
 
 	address, err := b.CreateAccount([]flow.AccountKey{publicKey}, accountScript, getNonce())
 	assert.NoError(t, err)
@@ -653,9 +662,10 @@ func TestImportAccountCode(t *testing.T) {
 	tx := flow.NewTransaction().
 		SetScript(script).
 		SetGasLimit(10).
-		SetPayer(b.RootAccountAddress(), 0)
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+		SetPayer(b.RootKey().Address, b.RootKey().ID)
 
-	err = tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
+	err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
 	err = b.AddTransaction(*tx)
@@ -663,6 +673,5 @@ func TestImportAccountCode(t *testing.T) {
 
 	result, err := b.ExecuteNextTransaction()
 	assert.NoError(t, err)
-	assert.True(t, result.Succeeded())
-
+	assertTransactionSucceeded(t, result)
 }

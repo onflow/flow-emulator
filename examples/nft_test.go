@@ -40,20 +40,22 @@ func TestCreateNFT(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateNFTScript(contractAddr, -7)).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, true)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, true)
 	})
 
 	t.Run("Should be able to create token", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateNFTScript(contractAddr, 1)).
 			SetGasLimit(20).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 	})
 
 	// Assert that the account's collection is correct
@@ -81,10 +83,11 @@ func TestTransferNFT(t *testing.T) {
 	tx := flow.NewTransaction().
 		SetScript(GenerateCreateNFTScript(contractAddr, 1)).
 		SetGasLimit(20).
-		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+		SetPayer(b.RootKey().Address, b.RootKey().ID).
+		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
+	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 
 	// Assert that the account's collection is correct
 	result, err := b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, b.RootAccountAddress(), 1, true))
@@ -104,20 +107,22 @@ func TestTransferNFT(t *testing.T) {
 	tx = flow.NewTransaction().
 		SetScript(GenerateCreateNFTScript(contractAddr, 2)).
 		SetGasLimit(20).
-		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-		AddAuthorizer(bastianAddress, 0)
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+		SetPayer(b.RootKey().Address, b.RootKey().ID).
+		AddAuthorizer(bastianAddress, bastianPublicKey.ID)
 
-	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
+	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
 
 	// transfer an NFT
 	t.Run("Should be able to withdraw an NFT and deposit to another accounts collection", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateDepositScript(contractAddr, bastianAddress, 1)).
 			SetGasLimit(20).
-			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 
 		// Assert that the account's collection is correct
 		result, err = b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, bastianAddress, 1, true))
