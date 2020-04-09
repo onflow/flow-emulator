@@ -19,10 +19,11 @@ func TestCommitBlock(t *testing.T) {
 	tx1 := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
 		SetGasLimit(10).
-		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+		SetPayer(b.RootKey().Address, b.RootKey().ID).
+		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-	err = tx1.SignContainer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID, b.RootKey().Signer())
+	err = tx1.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
 	// Add tx1 to pending block
@@ -37,10 +38,11 @@ func TestCommitBlock(t *testing.T) {
 	tx2 := flow.NewTransaction().
 		SetScript([]byte("invalid script")).
 		SetGasLimit(10).
-		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
-		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+		SetPayer(b.RootKey().Address, b.RootKey().ID).
+		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-	err = tx2.SignContainer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID, b.RootKey().Signer())
+	err = tx2.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
 	// Add tx2 to pending block

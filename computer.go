@@ -2,6 +2,7 @@ package emulator
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/dapperlabs/cadence"
 	"github.com/dapperlabs/cadence/runtime"
@@ -35,6 +36,35 @@ func newComputer(
 // An error is returned if the transaction script cannot be parsed or reverts during execution.
 func (c *computer) ExecuteTransaction(ledger *types.LedgerView, tx flow.Transaction) (TransactionResult, error) {
 	runtimeContext := execution.NewRuntimeContext(ledger)
+
+	proposalKey := tx.ProposalKey()
+	if proposalKey == nil {
+		// TODO: add dedicated error type
+		return TransactionResult{}, fmt.Errorf("missing sequence number")
+	}
+
+	valid, updatedSeqNum, err := runtimeContext.CheckAndIncrementSequenceNumber(
+		proposalKey.Address,
+		proposalKey.KeyID,
+		proposalKey.SequenceNumber,
+	)
+	if err != nil {
+		return TransactionResult{}, err
+	}
+
+	if !valid {
+		return TransactionResult{
+			TransactionID: tx.ID(),
+			// TODO: add dedicated error type
+			Error: fmt.Errorf(
+				"invalid sequence number: expected %d, got %d",
+				updatedSeqNum,
+				proposalKey.SequenceNumber,
+			),
+			Logs:   nil,
+			Events: nil,
+		}, nil
+	}
 
 	runtimeContext.SetChecker(func(code []byte, location runtime.Location) error {
 		return c.runtime.ParseAndCheckProgram(code, runtimeContext, location)

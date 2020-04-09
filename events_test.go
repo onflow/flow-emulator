@@ -10,7 +10,6 @@ import (
 	"github.com/dapperlabs/cadence"
 	"github.com/dapperlabs/cadence/runtime"
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/keys"
 
 	emulator "github.com/dapperlabs/flow-emulator"
 )
@@ -60,8 +59,7 @@ func TestEventEmitted(t *testing.T) {
 			}
 		`)
 
-		publicKey := b.RootKey().ToAccountKey()
-		publicKey.Weight = keys.PublicKeyWeightThreshold
+		publicKey := b.RootKey().AccountKey()
 
 		address, err := b.CreateAccount([]flow.AccountKey{publicKey}, accountScript, getNonce())
 		assert.NoError(t, err)
@@ -79,9 +77,10 @@ func TestEventEmitted(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(script).
 			SetGasLimit(10).
-			SetPayer(b.RootAccountAddress(), 0)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
-		err = tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
+		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
