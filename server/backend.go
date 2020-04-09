@@ -195,9 +195,23 @@ func (b *Backend) GetTransaction(ctx context.Context, req *access.GetTransaction
 
 // GetTransactionResult gets a transaction by ID.
 func (b *Backend) GetTransactionResult(ctx context.Context, req *access.GetTransactionRequest) (*access.TransactionResultResponse, error) {
-	panic("not implemented")
+	id := flow.HashToID(req.GetId())
 
-	return nil, nil
+	result, err := b.blockchain.GetTransactionResult(id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	b.logger.
+		WithField("txID", id.Hex()).
+		Debugf("📝  GetTransactionResult called")
+
+	res, err := convert.TransactionResultToMessage(*result)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return res, nil
 }
 
 // GetAccount returns the info associated with an address.
