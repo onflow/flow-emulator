@@ -360,7 +360,7 @@ func TestBackend(t *testing.T) {
 	// 	txEventType := "TxEvent"
 
 	// 	tx := unittest.TransactionFixture(func(t *flow.Transaction) {
-	// 		t.Status = flow.TransactionSealed
+	// 		t.Status = flow.TransactionStatusSealed
 	// 	})
 
 	// 	txHash := tx.ID()
