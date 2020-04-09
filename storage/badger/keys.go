@@ -7,13 +7,14 @@ import (
 )
 
 const (
-	blockKeyPrefix           = "block_by_height"
-	blockIDIndexKeyPrefix    = "block_id_to_height"
-	transactionKeyPrefix     = "transaction_by_id"
-	ledgerKeyPrefix          = "ledger_by_block_height" // TODO remove
-	eventsKeyPrefix          = "events_by_block_height"
-	ledgerChangelogKeyPrefix = "ledger_changelog_by_register_id"
-	ledgerValueKeyPrefix     = "ledger_value_by_block_height_register_id"
+	blockKeyPrefix             = "block_by_height"
+	blockIDIndexKeyPrefix      = "block_id_to_height"
+	transactionKeyPrefix       = "transaction_by_id"
+	transactionResultKeyPrefix = "transaction_result_by_id"
+	ledgerKeyPrefix            = "ledger_by_block_height" // TODO remove
+	eventsKeyPrefix            = "events_by_block_height"
+	ledgerChangelogKeyPrefix   = "ledger_changelog_by_register_id"
+	ledgerValueKeyPrefix       = "ledger_value_by_block_height_register_id"
 )
 
 // The following *Key functions return keys to use when reading/writing values
@@ -38,6 +39,10 @@ func latestBlockKey() []byte {
 
 func transactionKey(txID flow.Identifier) []byte {
 	return []byte(fmt.Sprintf("%s-%x", transactionKeyPrefix, txID))
+}
+
+func transactionResultKey(txID flow.Identifier) []byte {
+	return []byte(fmt.Sprintf("%s-%x", transactionResultKeyPrefix, txID))
 }
 
 func eventsKey(blockHeight uint64) []byte {

@@ -58,6 +58,7 @@ type BlockchainAPI interface {
 	GetBlockByID(id flow.Identifier) (*types.Block, error)
 	GetBlockByHeight(height uint64) (*types.Block, error)
 	GetTransaction(txID flow.Identifier) (*flow.Transaction, error)
+	GetTransactionResult(txID flow.Identifier) (*flow.TransactionResult, error)
 	GetAccount(address flow.Address) (*flow.Account, error)
 	GetAccountAtBlock(address flow.Address, blockHeight uint64) (*flow.Account, error)
 	GetEvents(eventType string, startBlock, endBlock uint64) ([]flow.Event, error)
@@ -152,7 +153,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		// commit the genesis block to storage
 		genesis := types.GenesisBlock()
 
-		err := store.CommitBlock(genesis, nil, genesisLedgerView.Delta(), nil)
+		err := store.CommitBlock(genesis, nil, nil, genesisLedgerView.Delta(), nil)
 		if err != nil {
 			return nil, err
 		}
@@ -266,6 +267,29 @@ func (b *Blockchain) GetTransaction(txID flow.Identifier) (*flow.Transaction, er
 	return &tx, nil
 }
 
+func (b *Blockchain) GetTransactionResult(txID flow.Identifier) (*flow.TransactionResult, error) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	if b.pendingBlock.ContainsTransaction(txID) {
+		return &flow.TransactionResult{
+			Status: flow.TransactionStatusPending,
+		}, nil
+	}
+
+	result, err := b.storage.TransactionResultByID(txID)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound{}) {
+			return &flow.TransactionResult{
+				Status: flow.TransactionStatusUnknown,
+			}, nil
+		}
+		return nil, &ErrStorage{err}
+	}
+
+	return &result, nil
+}
+
 // GetAccount returns the account for the given address.
 func (b *Blockchain) GetAccount(address flow.Address) (*flow.Account, error) {
 	b.mu.RLock()
@@ -337,7 +361,6 @@ func (b *Blockchain) AddTransaction(tx flow.Transaction) error {
 		return err
 	}
 
-	// TODO: set transaction status to pending
 	// add transaction to pending block
 	b.pendingBlock.AddTransaction(tx)
 
@@ -441,15 +464,22 @@ func (b *Blockchain) commitBlock() (*types.Block, error) {
 	events := b.pendingBlock.Events()
 
 	transactions := make([]flow.Transaction, b.pendingBlock.Size())
-	for i, tx := range b.pendingBlock.Transactions() {
-		// TODO: store reverted status in receipt, seal all transactions
-		// TODO: mark transaction as sealed
+	transactionResults := make([]flow.TransactionResult, b.pendingBlock.Size())
 
-		transactions[i] = tx
+	for i, execResult := range b.pendingBlock.ExecutionResults() {
+		transactions[i] = execResult.Transaction
+
+		result := execResult.Result
+
+		transactionResults[i] = flow.TransactionResult{
+			Status: flow.TransactionStatusSealed,
+			Error:  result.Error,
+			Events: result.Events,
+		}
 	}
 
 	// commit the pending block to storage
-	err := b.storage.CommitBlock(block, transactions, delta, events)
+	err := b.storage.CommitBlock(block, transactions, transactionResults, delta, events)
 	if err != nil {
 		return nil, err
 	}

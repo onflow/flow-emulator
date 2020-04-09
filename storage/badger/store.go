@@ -169,20 +169,36 @@ func insertBlock(block types.Block) func(txn *badger.Txn) error {
 	}
 }
 
-func (s Store) CommitBlock(
+func (s *Store) CommitBlock(
 	block types.Block,
 	transactions []flow.Transaction,
+	transactionResults []flow.TransactionResult,
 	delta types.LedgerDelta,
 	events []flow.Event,
 ) (err error) {
+	if len(transactions) != len(transactionResults) {
+		return fmt.Errorf(
+			"transactions count (%d) does not match result count (%d)",
+			len(transactions),
+			len(transactionResults),
+		)
+	}
+
 	err = s.db.Update(func(txn *badger.Txn) error {
 		err := insertBlock(block)(txn)
 		if err != nil {
 			return err
 		}
 
-		for _, tx := range transactions {
+		for i, tx := range transactions {
 			err := insertTransaction(tx)(txn)
+			if err != nil {
+				return err
+			}
+
+			result := transactionResults[i]
+
+			err = insertTransactionResult(tx.ID(), result)(txn)
 			if err != nil {
 				return err
 			}
@@ -229,6 +245,32 @@ func insertTransaction(tx flow.Transaction) func(txn *badger.Txn) error {
 		}
 
 		return txn.Set(transactionKey(tx.ID()), encTx)
+	}
+}
+
+func (s *Store) TransactionResultByID(txID flow.Identifier) (result flow.TransactionResult, err error) {
+	err = s.db.View(func(txn *badger.Txn) error {
+		encResult, err := getTx(txn)(transactionResultKey(txID))
+		if err != nil {
+			return err
+		}
+		return decodeTransactionResult(&result, encResult)
+	})
+	return
+}
+
+func (s *Store) InsertTransactionResult(txID flow.Identifier, result flow.TransactionResult) error {
+	return s.db.Update(insertTransactionResult(txID, result))
+}
+
+func insertTransactionResult(txID flow.Identifier, result flow.TransactionResult) func(txn *badger.Txn) error {
+	return func(txn *badger.Txn) error {
+		encResult, err := encodeTransactionResult(result)
+		if err != nil {
+			return err
+		}
+
+		return txn.Set(transactionResultKey(txID), encResult)
 	}
 }
 
