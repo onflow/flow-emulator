@@ -54,14 +54,14 @@ type BlockchainAPI interface {
 	CommitBlock() (*types.Block, error)
 	ExecuteAndCommitBlock() (*types.Block, []TransactionResult, error)
 	GetLatestBlock() (*types.Block, error)
-	GetBlockByHash(hash crypto.Hash) (*types.Block, error)
-	GetBlockByNumber(number uint64) (*types.Block, error)
-	GetTransaction(txHash crypto.Hash) (*flow.Transaction, error)
+	GetBlockByID(id flow.Identifier) (*types.Block, error)
+	GetBlockByHeight(height uint64) (*types.Block, error)
+	GetTransaction(txID flow.Identifier) (*flow.Transaction, error)
 	GetAccount(address flow.Address) (*flow.Account, error)
-	GetAccountAtBlock(address flow.Address, blockNumber uint64) (*flow.Account, error)
+	GetAccountAtBlock(address flow.Address, blockHeight uint64) (*flow.Account, error)
 	GetEvents(eventType string, startBlock, endBlock uint64) ([]flow.Event, error)
 	ExecuteScript(script []byte) (ScriptResult, error)
-	ExecuteScriptAtBlock(script []byte, blockNumber uint64) (ScriptResult, error)
+	ExecuteScriptAtBlock(script []byte, blockHeight uint64) (ScriptResult, error)
 	RootAccountAddress() flow.Address
 	RootKey() flow.AccountPrivateKey
 }
@@ -113,9 +113,9 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	store := config.Store
 
 	latestBlock, err := store.LatestBlock()
-	if err == nil && latestBlock.Number > 0 {
+	if err == nil && latestBlock.Height > 0 {
 		// storage contains data, load state from storage
-		latestLedgerView := store.LedgerViewByNumber(latestBlock.Number)
+		latestLedgerView := store.LedgerViewByHeight(latestBlock.Height)
 
 		// restore pending block header from store information
 		pendingBlock = newPendingBlock(latestBlock, latestLedgerView)
@@ -124,7 +124,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		// internal storage error, fail fast
 		return nil, err
 	} else {
-		genesisLedgerView := store.LedgerViewByNumber(0)
+		genesisLedgerView := store.LedgerViewByHeight(0)
 
 		// storage is empty, create the root account
 		createAccount(genesisLedgerView, config.RootAccountKey)
@@ -140,7 +140,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		}
 
 		// get empty ledger view
-		ledgerView := store.LedgerViewByNumber(0)
+		ledgerView := store.LedgerViewByHeight(0)
 
 		// create pending block from genesis
 		pendingBlock = newPendingBlock(genesis, ledgerView)
@@ -170,9 +170,9 @@ func (b *Blockchain) RootKey() flow.AccountPrivateKey {
 	return b.rootAccountKey
 }
 
-// PendingBlock returns the hash of the pending block.
-func (b *Blockchain) PendingBlockHash() crypto.Hash {
-	return b.pendingBlock.Hash()
+// PendingBlockID returns the ID of the pending block.
+func (b *Blockchain) PendingBlockID() flow.Identifier {
+	return b.pendingBlock.ID()
 }
 
 // GetLatestBlock gets the latest sealed block.
@@ -184,12 +184,12 @@ func (b *Blockchain) GetLatestBlock() (*types.Block, error) {
 	return &block, nil
 }
 
-// GetBlockByHash gets a block by hash.
-func (b *Blockchain) GetBlockByHash(hash crypto.Hash) (*types.Block, error) {
-	block, err := b.storage.BlockByHash(hash)
+// GetBlockByID gets a block by ID.
+func (b *Blockchain) GetBlockByID(id flow.Identifier) (*types.Block, error) {
+	block, err := b.storage.BlockByID(id)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound{}) {
-			return nil, &ErrBlockNotFound{BlockHash: hash}
+			return nil, &ErrBlockNotFound{BlockID: id}
 		}
 		return nil, &ErrStorage{err}
 	}
@@ -197,12 +197,12 @@ func (b *Blockchain) GetBlockByHash(hash crypto.Hash) (*types.Block, error) {
 	return &block, nil
 }
 
-// GetBlockByNumber gets a block by number.
-func (b *Blockchain) GetBlockByNumber(number uint64) (*types.Block, error) {
-	block, err := b.storage.BlockByNumber(number)
+// GetBlockByHeight gets a block by height.
+func (b *Blockchain) GetBlockByHeight(height uint64) (*types.Block, error) {
+	block, err := b.storage.BlockByHeight(height)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound{}) {
-			return nil, &ErrBlockNotFound{BlockNum: number}
+			return nil, &ErrBlockNotFound{BlockNum: height}
 		}
 		return nil, err
 	}
@@ -210,22 +210,22 @@ func (b *Blockchain) GetBlockByNumber(number uint64) (*types.Block, error) {
 	return &block, nil
 }
 
-// GetTransaction gets an existing transaction by hash.
+// GetTransaction gets an existing transaction by ID.
 //
 // The function first looks in the pending block, then the current blockchain state.
-func (b *Blockchain) GetTransaction(txHash crypto.Hash) (*flow.Transaction, error) {
+func (b *Blockchain) GetTransaction(txID flow.Identifier) (*flow.Transaction, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	pendingTx := b.pendingBlock.GetTransaction(txHash)
+	pendingTx := b.pendingBlock.GetTransaction(txID)
 	if pendingTx != nil {
 		return pendingTx, nil
 	}
 
-	tx, err := b.storage.TransactionByHash(txHash)
+	tx, err := b.storage.TransactionByID(txID)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound{}) {
-			return nil, &ErrTransactionNotFound{TxHash: txHash}
+			return nil, &ErrTransactionNotFound{TxID: txID}
 		}
 		return nil, &ErrStorage{err}
 	}
@@ -248,7 +248,7 @@ func (b *Blockchain) getAccount(address flow.Address) (*flow.Account, error) {
 		return nil, err
 	}
 
-	latestLedgerView := b.storage.LedgerViewByNumber(latestBlock.Number)
+	latestLedgerView := b.storage.LedgerViewByHeight(latestBlock.Height)
 
 	acct := getAccount(latestLedgerView, address)
 	if acct == nil {
@@ -259,7 +259,7 @@ func (b *Blockchain) getAccount(address flow.Address) (*flow.Account, error) {
 }
 
 // TODO: Implement
-func (b *Blockchain) GetAccountAtBlock(address flow.Address, blockNumber uint64) (*flow.Account, error) {
+func (b *Blockchain) GetAccountAtBlock(address flow.Address, blockHeight uint64) (*flow.Account, error) {
 	panic("not implemented")
 }
 
@@ -280,23 +280,17 @@ func (b *Blockchain) AddTransaction(tx flow.Transaction) error {
 
 	// If Index > 0, pending block has begun execution (cannot add anymore txs)
 	if b.pendingBlock.ExecutionStarted() {
-		return &ErrPendingBlockMidExecution{BlockHash: b.pendingBlock.Hash()}
+		return &ErrPendingBlockMidExecution{BlockID: b.pendingBlock.ID()}
 	}
 
-	// TODO: add more invalid transaction checks
-	missingFields := tx.MissingFields()
-	if len(missingFields) > 0 {
-		return &ErrInvalidTransaction{TxHash: tx.Hash(), MissingFields: missingFields}
+	if b.pendingBlock.ContainsTransaction(tx.ID()) {
+		return &ErrDuplicateTransaction{TxID: tx.ID()}
 	}
 
-	if b.pendingBlock.ContainsTransaction(tx.Hash()) {
-		return &ErrDuplicateTransaction{TxHash: tx.Hash()}
-	}
-
-	_, err := b.storage.TransactionByHash(tx.Hash())
+	_, err := b.storage.TransactionByID(tx.ID())
 	if err == nil {
 		// Found the transaction, this is a dupe
-		return &ErrDuplicateTransaction{TxHash: tx.Hash()}
+		return &ErrDuplicateTransaction{TxID: tx.ID()}
 	} else if !errors.Is(err, storage.ErrNotFound{}) {
 		// Error in the storage provider
 		return fmt.Errorf("failed to check storage for transaction %w", err)
@@ -306,8 +300,8 @@ func (b *Blockchain) AddTransaction(tx flow.Transaction) error {
 		return err
 	}
 
+	// TODO: set transaction status to pending
 	// add transaction to pending block
-	tx.Status = flow.TransactionPending
 	b.pendingBlock.AddTransaction(tx)
 
 	return nil
@@ -332,7 +326,7 @@ func (b *Blockchain) executeBlock() ([]TransactionResult, error) {
 	// cannot execute a block that has already executed
 	if b.pendingBlock.ExecutionComplete() {
 		return results, &ErrPendingBlockTransactionsExhausted{
-			BlockHash: b.pendingBlock.Hash(),
+			BlockID: b.pendingBlock.ID(),
 		}
 	}
 
@@ -363,7 +357,7 @@ func (b *Blockchain) executeNextTransaction() (TransactionResult, error) {
 	// check if there are remaining txs to be executed
 	if b.pendingBlock.ExecutionComplete() {
 		return TransactionResult{}, &ErrPendingBlockTransactionsExhausted{
-			BlockHash: b.pendingBlock.Hash(),
+			BlockID: b.pendingBlock.ID(),
 		}
 	}
 
@@ -397,12 +391,12 @@ func (b *Blockchain) CommitBlock() (*types.Block, error) {
 func (b *Blockchain) commitBlock() (*types.Block, error) {
 	// pending block cannot be committed before execution starts (unless empty)
 	if !b.pendingBlock.ExecutionStarted() && !b.pendingBlock.Empty() {
-		return nil, &ErrPendingBlockCommitBeforeExecution{BlockHash: b.pendingBlock.Hash()}
+		return nil, &ErrPendingBlockCommitBeforeExecution{BlockID: b.pendingBlock.ID()}
 	}
 
 	// pending block cannot be committed before execution completes
 	if b.pendingBlock.ExecutionStarted() && !b.pendingBlock.ExecutionComplete() {
-		return nil, &ErrPendingBlockMidExecution{BlockHash: b.pendingBlock.Hash()}
+		return nil, &ErrPendingBlockMidExecution{BlockID: b.pendingBlock.ID()}
 	}
 
 	block := b.pendingBlock.Block()
@@ -412,9 +406,7 @@ func (b *Blockchain) commitBlock() (*types.Block, error) {
 	transactions := make([]flow.Transaction, b.pendingBlock.Size())
 	for i, tx := range b.pendingBlock.Transactions() {
 		// TODO: store reverted status in receipt, seal all transactions
-		if tx.Status != flow.TransactionReverted {
-			tx.Status = flow.TransactionSealed
-		}
+		// TODO: mark transaction as sealed
 
 		transactions[i] = tx
 	}
@@ -426,9 +418,9 @@ func (b *Blockchain) commitBlock() (*types.Block, error) {
 	}
 
 	// update system state based on emitted events
-	b.handleEvents(events, block.Number)
+	b.handleEvents(events, block.Height)
 
-	ledgerView := b.storage.LedgerViewByNumber(block.Number)
+	ledgerView := b.storage.LedgerViewByHeight(block.Height)
 
 	// reset pending block using current block and ledger state
 	b.pendingBlock = newPendingBlock(block, ledgerView)
@@ -464,7 +456,7 @@ func (b *Blockchain) ResetPendingBlock() error {
 		return err
 	}
 
-	latestLedgerView := b.storage.LedgerViewByNumber(latestBlock.Number)
+	latestLedgerView := b.storage.LedgerViewByHeight(latestBlock.Height)
 
 	// reset pending block using latest committed block and ledger state
 	b.pendingBlock = newPendingBlock(*latestBlock, latestLedgerView)
@@ -482,7 +474,7 @@ func (b *Blockchain) ExecuteScript(script []byte) (ScriptResult, error) {
 		return ScriptResult{}, err
 	}
 
-	latestLedgerView := b.storage.LedgerViewByNumber(latestBlock.Number)
+	latestLedgerView := b.storage.LedgerViewByHeight(latestBlock.Height)
 
 	result, err := b.computer.ExecuteScript(latestLedgerView, script)
 	if err != nil {
@@ -493,7 +485,7 @@ func (b *Blockchain) ExecuteScript(script []byte) (ScriptResult, error) {
 }
 
 // TODO: implement
-func (b *Blockchain) ExecuteScriptAtBlock(script []byte, blockNumber uint64) (ScriptResult, error) {
+func (b *Blockchain) ExecuteScriptAtBlock(script []byte, blockHeight uint64) (ScriptResult, error) {
 	panic("not implemented")
 }
 
@@ -507,26 +499,33 @@ func (b *Blockchain) LastCreatedAccount() flow.Account {
 //
 // An error is returned if any of the expected signatures are invalid or missing.
 func (b *Blockchain) verifySignatures(tx flow.Transaction) error {
+	payer := tx.Payer()
+	if payer == nil {
+		// TODO: add error type for missing payer
+		return fmt.Errorf("missing payer signature")
+	}
+
 	accountWeights := make(map[flow.Address]int)
 
-	encodedTx := tx.Encode()
+	payloadMessage := tx.Payload.Message()
+	containerMessage := tx.Message()
 
-	for _, accountSig := range tx.Signatures {
-		accountPublicKey, err := b.verifyAccountSignature(accountSig, encodedTx)
+	for _, txSig := range tx.Signatures {
+		accountPublicKey, err := b.verifyAccountSignature(txSig, payloadMessage, containerMessage)
 		if err != nil {
 			return err
 		}
 
-		accountWeights[accountSig.Account] += accountPublicKey.Weight
+		accountWeights[txSig.Address] += accountPublicKey.Weight
 	}
 
-	if accountWeights[tx.PayerAccount] < keys.PublicKeyWeightThreshold {
-		return &ErrMissingSignature{tx.PayerAccount}
+	if accountWeights[payer.Address] < keys.PublicKeyWeightThreshold {
+		return &ErrMissingSignature{payer.Address}
 	}
 
-	for _, account := range tx.ScriptAccounts {
-		if accountWeights[account] < keys.PublicKeyWeightThreshold {
-			return &ErrMissingSignature{account}
+	for _, auth := range tx.Authorizers() {
+		if accountWeights[auth.Address] < keys.PublicKeyWeightThreshold {
+			return &ErrMissingSignature{auth.Address}
 		}
 	}
 
@@ -536,7 +535,7 @@ func (b *Blockchain) verifySignatures(tx flow.Transaction) error {
 // CreateAccount submits a transaction to create a new account with the given
 // account keys and code. The transaction is paid by the root account.
 func (b *Blockchain) CreateAccount(
-	publicKeys []flow.AccountPublicKey,
+	publicKeys []flow.AccountKey,
 	code []byte, nonce uint64,
 ) (flow.Address, error) {
 	createAccountScript, err := templates.CreateAccount(publicKeys, code)
@@ -545,22 +544,17 @@ func (b *Blockchain) CreateAccount(
 		return flow.Address{}, err
 	}
 
-	tx := flow.Transaction{
-		Script:             createAccountScript,
-		ReferenceBlockHash: nil,
-		Nonce:              nonce,
-		ComputeLimit:       10,
-		PayerAccount:       b.RootAccountAddress(),
-	}
+	tx := flow.NewTransaction().
+		SetScript(createAccountScript).
+		SetGasLimit(10).
+		SetPayer(b.RootAccountAddress(), 0)
 
-	sig, err := keys.SignTransaction(tx, b.RootKey())
+	err = tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
 	if err != nil {
 		return flow.Address{}, err
 	}
 
-	tx.AddSignature(b.RootAccountAddress(), sig)
-
-	err = b.AddTransaction(tx)
+	err = b.AddTransaction(*tx)
 	if err != nil {
 		return flow.Address{}, err
 	}
@@ -587,25 +581,20 @@ func (b *Blockchain) CreateAccount(
 func (b *Blockchain) UpdateAccountCode(
 	code []byte, nonce uint64,
 ) error {
-	createAccountScript := templates.UpdateAccountCode(code)
+	updateAccountScript := templates.UpdateAccountCode(code)
 
-	tx := flow.Transaction{
-		Script:             createAccountScript,
-		ReferenceBlockHash: nil,
-		Nonce:              nonce,
-		ComputeLimit:       10,
-		ScriptAccounts:     []flow.Address{b.RootAccountAddress()},
-		PayerAccount:       b.RootAccountAddress(),
-	}
+	tx := flow.NewTransaction().
+		SetScript(updateAccountScript).
+		SetGasLimit(10).
+		SetPayer(b.rootAccountAddress, 0).
+		AddAuthorizer(b.rootAccountAddress, 0)
 
-	sig, err := keys.SignTransaction(tx, b.RootKey())
+	err := tx.SignContainer(b.RootAccountAddress(), 0, b.RootKey().Signer())
 	if err != nil {
-		return nil
+		return err
 	}
 
-	tx.AddSignature(b.RootAccountAddress(), sig)
-
-	err = b.AddTransaction(tx)
+	err = b.AddTransaction(*tx)
 	if err != nil {
 		return err
 	}
@@ -626,15 +615,28 @@ func (b *Blockchain) UpdateAccountCode(
 // An error is returned if the account does not contain a public key that
 // correctly verifies the signature against the given message.
 func (b *Blockchain) verifyAccountSignature(
-	accountSig flow.AccountSignature,
-	message []byte,
-) (accountPublicKey flow.AccountPublicKey, err error) {
-	account, err := b.getAccount(accountSig.Account)
+	txSig flow.TransactionSignature,
+	payloadMessage []byte,
+	containerMessage []byte,
+) (accountPublicKey flow.AccountKey, err error) {
+	account, err := b.getAccount(txSig.Address)
 	if err != nil {
-		return accountPublicKey, &ErrInvalidSignatureAccount{Account: accountSig.Account}
+		return accountPublicKey, &ErrInvalidSignatureAccount{Address: txSig.Address}
 	}
 
-	signature := crypto.Signature(accountSig.Signature)
+	var message []byte
+
+	switch txSig.Kind {
+	case flow.TransactionSignatureKindPayload:
+		message = payloadMessage
+	case flow.TransactionSignatureKindContainer:
+		message = containerMessage
+	default:
+		// TODO: add proper error and test case for invalid signature kind
+		return accountPublicKey, fmt.Errorf("invalid signature kind %s", txSig.Kind)
+	}
+
+	signature := crypto.Signature(txSig.Signature)
 
 	// TODO: account signatures should specify a public key (possibly by index) to avoid this loop
 	for _, accountPublicKey := range account.Keys {
@@ -651,12 +653,12 @@ func (b *Blockchain) verifyAccountSignature(
 	}
 
 	return accountPublicKey, &ErrInvalidSignaturePublicKey{
-		Account: accountSig.Account,
+		Account: txSig.Address,
 	}
 }
 
 // handleEvents updates emulator state based on emitted system events.
-func (b *Blockchain) handleEvents(events []flow.Event, blockNumber uint64) {
+func (b *Blockchain) handleEvents(events []flow.Event, blockHeight uint64) {
 	for _, event := range events {
 		// update lastCreatedAccount if this is an AccountCreated event
 		if event.Type == flow.EventAccountCreated {
@@ -671,8 +673,10 @@ func (b *Blockchain) handleEvents(events []flow.Event, blockNumber uint64) {
 // createAccount creates an account with the given private key and injects it
 // into the given state, bypassing the need for a transaction.
 func createAccount(ledgerView *types.LedgerView, privateKey flow.AccountPrivateKey) flow.Account {
-	publicKey := privateKey.PublicKey(keys.PublicKeyWeightThreshold)
-	publicKeyBytes, err := keys.EncodePublicKey(publicKey)
+	accountKey := privateKey.ToAccountKey()
+	accountKey.Weight = keys.PublicKeyWeightThreshold
+
+	publicKeyBytes, err := keys.EncodePublicKey(accountKey)
 	if err != nil {
 		panic(err)
 	}
