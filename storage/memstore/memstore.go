@@ -37,6 +37,7 @@ func New() *Store {
 		blockIDToHeight:     make(map[flow.Identifier]uint64),
 		blocks:              make(map[uint64]types.Block),
 		transactions:        make(map[flow.Identifier]flow.Transaction),
+		transactionResults:  make(map[flow.Identifier]flow.TransactionResult),
 		ledger:              make(map[uint64]vm.MapLedger),
 		eventsByBlockHeight: make(map[uint64][]flow.Event),
 	}
