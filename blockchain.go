@@ -337,7 +337,6 @@ func (b *Blockchain) AddTransaction(tx flow.Transaction) error {
 		return err
 	}
 
-	// TODO: set transaction status to pending
 	// add transaction to pending block
 	b.pendingBlock.AddTransaction(tx)
 
@@ -441,15 +440,22 @@ func (b *Blockchain) commitBlock() (*types.Block, error) {
 	events := b.pendingBlock.Events()
 
 	transactions := make([]flow.Transaction, b.pendingBlock.Size())
-	for i, tx := range b.pendingBlock.Transactions() {
-		// TODO: store reverted status in receipt, seal all transactions
-		// TODO: mark transaction as sealed
+	transactionResults := make([]flow.TransactionResult, b.pendingBlock.Size())
 
-		transactions[i] = tx
+	for i, execResult := range b.pendingBlock.ExecutionResults() {
+		transactions[i] = execResult.Transaction
+
+		result := execResult.Result
+
+		// TODO: store reverted status in result
+		transactionResults[i] = flow.TransactionResult{
+			Status: flow.TransactionSealed,
+			Events: result.Events,
+		}
 	}
 
 	// commit the pending block to storage
-	err := b.storage.CommitBlock(block, transactions, delta, events)
+	err := b.storage.CommitBlock(block, transactions, transactionResults, delta, events)
 	if err != nil {
 		return nil, err
 	}
