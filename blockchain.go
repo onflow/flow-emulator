@@ -274,7 +274,6 @@ func (b *Blockchain) GetTransactionResult(txID flow.Identifier) (*flow.Transacti
 	if b.pendingBlock.ContainsTransaction(txID) {
 		return &flow.TransactionResult{
 			Status: flow.TransactionStatusPending,
-			Events: nil,
 		}, nil
 	}
 
@@ -283,7 +282,6 @@ func (b *Blockchain) GetTransactionResult(txID flow.Identifier) (*flow.Transacti
 		if errors.Is(err, storage.ErrNotFound{}) {
 			return &flow.TransactionResult{
 				Status: flow.TransactionStatusUnknown,
-				Events: nil,
 			}, nil
 		}
 		return nil, &ErrStorage{err}
@@ -473,9 +471,9 @@ func (b *Blockchain) commitBlock() (*types.Block, error) {
 
 		result := execResult.Result
 
-		// TODO: store reverted status in result
 		transactionResults[i] = flow.TransactionResult{
 			Status: flow.TransactionStatusSealed,
+			Error:  result.Error,
 			Events: result.Events,
 		}
 	}
