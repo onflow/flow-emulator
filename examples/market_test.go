@@ -90,7 +90,7 @@ func TestCreateSale(t *testing.T) {
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(bastianAddress, 0)
+			AddAuthorizer(bastianAddress, bastianPublicKey.ID)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
 	})
@@ -101,7 +101,7 @@ func TestCreateSale(t *testing.T) {
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(bastianAddress, 0)
+			AddAuthorizer(bastianAddress, bastianPublicKey.ID)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
 	})
@@ -112,7 +112,7 @@ func TestCreateSale(t *testing.T) {
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(joshAddress, 0)
+			AddAuthorizer(joshAddress, joshPublicKey.ID)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, true)
 	})
@@ -123,7 +123,7 @@ func TestCreateSale(t *testing.T) {
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(joshAddress, 0)
+			AddAuthorizer(joshAddress, joshPublicKey.ID)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, true)
 	})
@@ -134,7 +134,7 @@ func TestCreateSale(t *testing.T) {
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(joshAddress, 0)
+			AddAuthorizer(joshAddress, joshPublicKey.ID)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, false)
 
