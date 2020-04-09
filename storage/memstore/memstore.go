@@ -162,13 +162,6 @@ func (s *Store) LedgerViewByHeight(blockHeight uint64) *types.LedgerView {
 	})
 }
 
-func (s *Store) InsertLedgerDelta(blockHeight uint64, delta types.LedgerDelta) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	return s.insertLedgerDelta(blockHeight, delta)
-}
-
 func (s *Store) insertLedgerDelta(blockHeight uint64, delta types.LedgerDelta) error {
 	var oldLedger vm.MapLedger
 
@@ -225,13 +218,6 @@ func (s *Store) RetrieveEvents(eventType string, startBlock, endBlock uint64) ([
 	}
 
 	return events, nil
-}
-
-func (s *Store) InsertEvents(blockHeight uint64, events []flow.Event) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	return s.insertEvents(blockHeight, events)
 }
 
 func (s *Store) insertEvents(blockHeight uint64, events []flow.Event) error {
