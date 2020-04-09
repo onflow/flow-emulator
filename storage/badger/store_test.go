@@ -124,6 +124,39 @@ func TestTransactions(t *testing.T) {
 	})
 }
 
+func TestTransactionResults(t *testing.T) {
+	store, dir := setupStore(t)
+	defer func() {
+		require.Nil(t, store.Close())
+		require.Nil(t, os.RemoveAll(dir))
+	}()
+
+	ids := test.IdentifierGenerator()
+
+	t.Run("should return error for not found", func(t *testing.T) {
+		txID := ids.New()
+
+		_, err := store.TransactionResultByID(txID)
+		if assert.Error(t, err) {
+			assert.IsType(t, storage.ErrNotFound{}, err)
+		}
+	})
+
+	t.Run("should be able to insert result", func(t *testing.T) {
+		txID := ids.New()
+		result := unittest.TransactionResultFixture()
+
+		err := store.InsertTransactionResult(txID, result)
+		assert.NoError(t, err)
+
+		t.Run("should be able to get inserted result", func(t *testing.T) {
+			storedResult, err := store.TransactionResultByID(txID)
+			require.Nil(t, err)
+			assert.Equal(t, result, storedResult)
+		})
+	})
+}
+
 func TestLedger(t *testing.T) {
 	t.Run("get/set", func(t *testing.T) {
 		store, dir := setupStore(t)

@@ -25,6 +25,19 @@ func TestEncodeTransaction(t *testing.T) {
 	assert.Equal(t, tx.ID(), decodedTx.ID())
 }
 
+func TestEncodeTransactionResult(t *testing.T) {
+	result := unittest.TransactionResultFixture()
+
+	data, err := encodeTransactionResult(result)
+	require.Nil(t, err)
+
+	var decodedResult flow.TransactionResult
+	err = decodeTransactionResult(&decodedResult, data)
+	require.Nil(t, err)
+
+	assert.Equal(t, result, decodedResult)
+}
+
 func TestEncodeBlock(t *testing.T) {
 	ids := test.IdentifierGenerator()
 
