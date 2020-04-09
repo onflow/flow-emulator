@@ -72,8 +72,8 @@ func TestCommitBlock(t *testing.T) {
 	assert.Equal(t, flow.TransactionStatusSealed, tx1Result.Status)
 
 	// tx2 status also becomes TransactionStatusSealed, even though it is reverted
-	// TODO: include error code in result
 	tx2Result, err = b.GetTransactionResult(tx2.ID())
 	require.NoError(t, err)
 	assert.Equal(t, flow.TransactionStatusSealed, tx2Result.Status)
+	assert.Error(t, tx2Result.Error)
 }

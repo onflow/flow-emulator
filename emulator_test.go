@@ -62,7 +62,7 @@ func generateAddTwoToCounterScript(counterAddress flow.Address) string {
 }
 
 func deployAndGenerateAddTwoScript(t *testing.T, b *emulator.Blockchain) (string, flow.Address) {
-	counterAddress, err := b.CreateAccount(nil, []byte(counterScript), getNonce())
+	counterAddress, err := b.CreateAccount(nil, []byte(counterScript))
 	require.NoError(t, err)
 
 	return generateAddTwoToCounterScript(counterAddress), counterAddress
@@ -81,15 +81,6 @@ func generateGetCounterCountScript(counterAddress flow.Address, accountAddress f
 		accountAddress,
 	)
 }
-
-// Returns a nonce value that is guaranteed to be unique.
-var getNonce = func() func() uint64 {
-	var nonce uint64
-	return func() uint64 {
-		nonce++
-		return nonce
-	}
-}()
 
 func assertTransactionSucceeded(t *testing.T, result emulator.TransactionResult) {
 	if !assert.True(t, result.Succeeded()) {
