@@ -7,7 +7,6 @@ package mocks
 import (
 	types "github.com/dapperlabs/flow-emulator/types"
 	flow_go_sdk "github.com/dapperlabs/flow-go-sdk"
-	crypto "github.com/dapperlabs/flow-go/crypto"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )
@@ -35,34 +34,34 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 	return m.recorder
 }
 
-// BlockByHash mocks base method
-func (m *MockStore) BlockByHash(arg0 crypto.Hash) (types.Block, error) {
+// BlockByHeight mocks base method
+func (m *MockStore) BlockByHeight(arg0 uint64) (types.Block, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BlockByHash", arg0)
+	ret := m.ctrl.Call(m, "BlockByHeight", arg0)
 	ret0, _ := ret[0].(types.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// BlockByHash indicates an expected call of BlockByHash
-func (mr *MockStoreMockRecorder) BlockByHash(arg0 interface{}) *gomock.Call {
+// BlockByHeight indicates an expected call of BlockByHeight
+func (mr *MockStoreMockRecorder) BlockByHeight(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BlockByHash", reflect.TypeOf((*MockStore)(nil).BlockByHash), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BlockByHeight", reflect.TypeOf((*MockStore)(nil).BlockByHeight), arg0)
 }
 
-// BlockByNumber mocks base method
-func (m *MockStore) BlockByNumber(arg0 uint64) (types.Block, error) {
+// BlockByID mocks base method
+func (m *MockStore) BlockByID(arg0 flow_go_sdk.Identifier) (types.Block, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BlockByNumber", arg0)
+	ret := m.ctrl.Call(m, "BlockByID", arg0)
 	ret0, _ := ret[0].(types.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// BlockByNumber indicates an expected call of BlockByNumber
-func (mr *MockStoreMockRecorder) BlockByNumber(arg0 interface{}) *gomock.Call {
+// BlockByID indicates an expected call of BlockByID
+func (mr *MockStoreMockRecorder) BlockByID(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BlockByNumber", reflect.TypeOf((*MockStore)(nil).BlockByNumber), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BlockByID", reflect.TypeOf((*MockStore)(nil).BlockByID), arg0)
 }
 
 // CommitBlock mocks base method
@@ -150,18 +149,18 @@ func (mr *MockStoreMockRecorder) LatestBlock() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LatestBlock", reflect.TypeOf((*MockStore)(nil).LatestBlock))
 }
 
-// LedgerViewByNumber mocks base method
-func (m *MockStore) LedgerViewByNumber(arg0 uint64) *types.LedgerView {
+// LedgerViewByHeight mocks base method
+func (m *MockStore) LedgerViewByHeight(arg0 uint64) *types.LedgerView {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LedgerViewByNumber", arg0)
+	ret := m.ctrl.Call(m, "LedgerViewByHeight", arg0)
 	ret0, _ := ret[0].(*types.LedgerView)
 	return ret0
 }
 
-// LedgerViewByNumber indicates an expected call of LedgerViewByNumber
-func (mr *MockStoreMockRecorder) LedgerViewByNumber(arg0 interface{}) *gomock.Call {
+// LedgerViewByHeight indicates an expected call of LedgerViewByHeight
+func (mr *MockStoreMockRecorder) LedgerViewByHeight(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LedgerViewByNumber", reflect.TypeOf((*MockStore)(nil).LedgerViewByNumber), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LedgerViewByHeight", reflect.TypeOf((*MockStore)(nil).LedgerViewByHeight), arg0)
 }
 
 // RetrieveEvents mocks base method
@@ -179,17 +178,17 @@ func (mr *MockStoreMockRecorder) RetrieveEvents(arg0, arg1, arg2 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveEvents", reflect.TypeOf((*MockStore)(nil).RetrieveEvents), arg0, arg1, arg2)
 }
 
-// TransactionByHash mocks base method
-func (m *MockStore) TransactionByHash(arg0 crypto.Hash) (flow_go_sdk.Transaction, error) {
+// TransactionByID mocks base method
+func (m *MockStore) TransactionByID(arg0 flow_go_sdk.Identifier) (flow_go_sdk.Transaction, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TransactionByHash", arg0)
+	ret := m.ctrl.Call(m, "TransactionByID", arg0)
 	ret0, _ := ret[0].(flow_go_sdk.Transaction)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// TransactionByHash indicates an expected call of TransactionByHash
-func (mr *MockStoreMockRecorder) TransactionByHash(arg0 interface{}) *gomock.Call {
+// TransactionByID indicates an expected call of TransactionByID
+func (mr *MockStoreMockRecorder) TransactionByID(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TransactionByHash", reflect.TypeOf((*MockStore)(nil).TransactionByHash), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TransactionByID", reflect.TypeOf((*MockStore)(nil).TransactionByID), arg0)
 }

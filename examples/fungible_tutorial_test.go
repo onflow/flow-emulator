@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/dapperlabs/flow-go-sdk/keys"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/keys"
 )
 
 const (
@@ -35,8 +35,8 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("Set up account 1", func(t *testing.T) {
-		tx := flow.Transaction{
-			Script: []byte(
+		tx := flow.NewTransaction().
+			SetScript([]byte(
 				fmt.Sprintf(
 					`
                       import FungibleToken from 0x%s
@@ -53,12 +53,10 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 	               `,
 					b.RootAccountAddress().Short(),
 				),
-			),
-			Nonce:          GetNonce(),
-			ComputeLimit:   10,
-			PayerAccount:   b.RootAccountAddress(),
-			ScriptAccounts: []flow.Address{b.RootAccountAddress()},
-		}
+			)).
+			SetGasLimit(10).
+			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{b.RootAccountAddress()}, false)
 	})
@@ -66,16 +64,18 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 	var account2Address flow.Address
 
 	t.Run("Create account 2", func(t *testing.T) {
-
 		var err error
-		publicKeys := []flow.AccountPublicKey{b.RootKey().PublicKey(keys.PublicKeyWeightThreshold)}
+		publicKey := b.RootKey().ToAccountKey()
+		publicKey.Weight = keys.PublicKeyWeightThreshold
+
+		publicKeys := []flow.AccountKey{publicKey}
 		account2Address, err = b.CreateAccount(publicKeys, nil, GetNonce())
 		assert.NoError(t, err)
 	})
 
 	t.Run("Set up account 2", func(t *testing.T) {
-		tx := flow.Transaction{
-			Script: []byte(
+		tx := flow.NewTransaction().
+			SetScript([]byte(
 				fmt.Sprintf(
 					`
                       // NOTE: using different import address to ensure user can use different formats
@@ -102,12 +102,10 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
                     `,
 					b.RootAccountAddress().Short(),
 				),
-			),
-			Nonce:          GetNonce(),
-			ComputeLimit:   10,
-			PayerAccount:   account2Address,
-			ScriptAccounts: []flow.Address{account2Address},
-		}
+			)).
+			SetGasLimit(10).
+			SetPayer(account2Address, 0).
+			AddAuthorizer(account2Address, 0)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey()}, []flow.Address{account2Address}, false)
 	})

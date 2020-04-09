@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,7 +15,6 @@ import (
 	"github.com/dapperlabs/flow-go-sdk/client"
 	"github.com/dapperlabs/flow-go-sdk/keys"
 	"github.com/dapperlabs/flow-go-sdk/templates"
-	"github.com/dapperlabs/flow-go/crypto"
 
 	emulator "github.com/dapperlabs/flow-emulator"
 )
@@ -79,21 +77,20 @@ func RootAccount() (flow.Address, flow.AccountPrivateKey) {
 func SignAndSubmit(
 	t *testing.T,
 	b *emulator.Blockchain,
-	tx flow.Transaction,
+	tx *flow.Transaction,
 	signingKeys []flow.AccountPrivateKey,
 	signingAddresses []flow.Address,
 	shouldRevert bool,
 ) {
 	// sign transaction with each signer
-	for i := 0; i < len(signingAddresses); i++ {
-		sig, err := keys.SignTransaction(tx, signingKeys[i])
+	for i, address := range signingAddresses {
+		signingKey := signingKeys[i]
+		err := tx.SignContainer(address, signingKey.ToAccountKey().ID, signingKey.Signer())
 		assert.NoError(t, err)
-
-		tx.AddSignature(signingAddresses[i], sig)
 	}
 
 	// submit the signed transaction
-	err := b.AddTransaction(tx)
+	err := b.AddTransaction(*tx)
 	require.NoError(t, err)
 
 	result, err := b.ExecuteNextTransaction()
@@ -114,9 +111,11 @@ func SignAndSubmit(
 
 func CreateAccount() (flow.AccountPrivateKey, flow.Address) {
 	privateKey := RandomPrivateKey()
+	publicKey := privateKey.ToAccountKey()
+	publicKey.Weight = keys.PublicKeyWeightThreshold
 
 	addr := createAccount(
-		[]flow.AccountPublicKey{privateKey.PublicKey(keys.PublicKeyWeightThreshold)},
+		[]flow.AccountKey{publicKey},
 		nil,
 	)
 
@@ -127,7 +126,7 @@ func DeployContract(code []byte) flow.Address {
 	return createAccount(nil, code)
 }
 
-func createAccount(publicKeys []flow.AccountPublicKey, code []byte) flow.Address {
+func createAccount(publicKeys []flow.AccountKey, code []byte) flow.Address {
 	ctx := context.Background()
 	flowClient, err := client.New("127.0.0.1:3569")
 	Handle(err)
@@ -137,26 +136,24 @@ func createAccount(publicKeys []flow.AccountPublicKey, code []byte) flow.Address
 	createAccountScript, err := templates.CreateAccount(publicKeys, code)
 	Handle(err)
 
-	createAccountTx := flow.Transaction{
-		Script:       createAccountScript,
-		Nonce:        GetNonce(),
-		ComputeLimit: 10,
-		PayerAccount: rootAcctAddr,
-	}
+	createAccountTx := flow.NewTransaction().
+		SetScript(createAccountScript).
+		SetGasLimit(10).
+		SetPayer(rootAcctAddr, 0)
 
-	sig, err := keys.SignTransaction(createAccountTx, rootAcctKey)
+	err = createAccountTx.SignContainer(rootAcctAddr, rootAcctKey.ToAccountKey().ID, rootAcctKey.Signer())
 	Handle(err)
 
-	createAccountTx.AddSignature(rootAcctAddr, sig)
-
-	err = flowClient.SendTransaction(ctx, createAccountTx)
+	err = flowClient.SendTransaction(ctx, *createAccountTx)
 	Handle(err)
 
-	tx := WaitForSeal(ctx, flowClient, createAccountTx.Hash())
+	// TODO: replace once GetTransactionStatus is implemented
+	// tx := WaitForSeal(ctx, flowClient, createAccountTx.ID())
+	// accountCreatedEvent := flow.AccountCreatedEvent(tx.Events[0])
+	//
+	// return accountCreatedEvent.Address()
 
-	accountCreatedEvent := flow.AccountCreatedEvent(tx.Events[0])
-
-	return accountCreatedEvent.Address()
+	return flow.Address{}
 }
 
 func Handle(err error) {
@@ -166,21 +163,22 @@ func Handle(err error) {
 	}
 }
 
-func WaitForSeal(ctx context.Context, c *client.Client, hash crypto.Hash) *flow.Transaction {
-	tx, err := c.GetTransaction(ctx, hash)
+func WaitForSeal(ctx context.Context, c *client.Client, id flow.Identifier) *flow.Transaction {
+	tx, err := c.GetTransaction(ctx, id)
 	Handle(err)
 
-	fmt.Printf("Waiting for transaction %x to be sealed...\n", hash)
+	fmt.Printf("Waiting for transaction %x to be sealed...\n", id)
 
-	for tx.Status != flow.TransactionSealed {
-		time.Sleep(time.Second)
-		fmt.Print(".")
-		tx, err = c.GetTransaction(ctx, hash)
-		Handle(err)
-	}
+	// TODO: replace once GetTransactionStatus is implemented
+	// for tx.Status != flow.TransactionSealed {
+	// 	time.Sleep(time.Second)
+	// 	fmt.Print(".")
+	// 	tx, err = c.GetTransaction(ctx, hash)
+	// 	Handle(err)
+	// }
 
 	fmt.Println()
-	fmt.Printf("Transaction %x sealed\n", hash)
+	fmt.Printf("Transaction %x sealed\n", id)
 
 	return tx
 }
@@ -197,24 +195,20 @@ func setupUsersTokens(
 ) {
 	// add array of signers to transaction
 	for i := 0; i < len(signingAddresses); i++ {
-		tx := flow.Transaction{
-			Script:         GenerateCreateTokenScript(tokenAddr, 30),
-			Nonce:          GetNonce(),
-			ComputeLimit:   20,
-			PayerAccount:   b.RootAccountAddress(),
-			ScriptAccounts: []flow.Address{signingAddresses[i]},
-		}
+		tx := flow.NewTransaction().
+			SetScript(GenerateCreateTokenScript(tokenAddr, 30)).
+			SetGasLimit(20).
+			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+			AddAuthorizer(signingAddresses[i], 0)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
 
 		// then deploy a NFT to the accounts
-		tx = flow.Transaction{
-			Script:         GenerateCreateNFTScript(nftAddr, i+1),
-			Nonce:          GetNonce(),
-			ComputeLimit:   20,
-			PayerAccount:   b.RootAccountAddress(),
-			ScriptAccounts: []flow.Address{signingAddresses[i]},
-		}
+		tx = flow.NewTransaction().
+			SetScript(GenerateCreateNFTScript(nftAddr, i+1)).
+			SetGasLimit(20).
+			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+			AddAuthorizer(signingAddresses[i], 0)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey(), signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
 	}

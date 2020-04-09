@@ -15,7 +15,7 @@ import (
 // A computer uses a runtime instance to execute transactions and scripts.
 type computer struct {
 	runtime        runtime.Runtime
-	onEventEmitted func(event flow.Event, blockNumber uint64, txHash crypto.Hash)
+	onEventEmitted func(event flow.Event, blockHeight uint64, txID flow.Identifier)
 }
 
 // newComputer returns a new computer initialized with a runtime.
@@ -39,13 +39,20 @@ func (c *computer) ExecuteTransaction(ledger *types.LedgerView, tx flow.Transact
 	runtimeContext.SetChecker(func(code []byte, location runtime.Location) error {
 		return c.runtime.ParseAndCheckProgram(code, runtimeContext, location)
 	})
-	runtimeContext.SetSigningAccounts(tx.ScriptAccounts)
 
-	location := runtime.TransactionLocation(tx.Hash())
+	authorizers := tx.Authorizers()
+	signers := make([]flow.Address, len(authorizers))
+	for i, auth := range authorizers {
+		signers[i] = auth.Address
+	}
 
-	executionErr := c.runtime.ExecuteTransaction(tx.Script, runtimeContext, location)
+	runtimeContext.SetSigningAccounts(signers)
 
-	convertedEvents, err := convertEvents(runtimeContext.Events(), tx.Hash())
+	location := runtime.TransactionLocation(tx.ID().Bytes())
+
+	executionErr := c.runtime.ExecuteTransaction(tx.Script(), runtimeContext, location)
+
+	convertedEvents, err := convertEvents(runtimeContext.Events(), tx.ID())
 	if err != nil {
 		return TransactionResult{}, err
 	}
@@ -54,10 +61,10 @@ func (c *computer) ExecuteTransaction(ledger *types.LedgerView, tx flow.Transact
 		if errors.As(executionErr, &runtime.Error{}) {
 			// runtime errors occur when the execution reverts
 			return TransactionResult{
-				TransactionHash: tx.Hash(),
-				Error:           executionErr,
-				Logs:            runtimeContext.Logs(),
-				Events:          convertedEvents,
+				TransactionID: tx.ID(),
+				Error:         executionErr,
+				Logs:          runtimeContext.Logs(),
+				Events:        convertedEvents,
 			}, nil
 		}
 
@@ -66,10 +73,10 @@ func (c *computer) ExecuteTransaction(ledger *types.LedgerView, tx flow.Transact
 	}
 
 	return TransactionResult{
-		TransactionHash: tx.Hash(),
-		Error:           nil,
-		Logs:            runtimeContext.Logs(),
-		Events:          convertedEvents,
+		TransactionID: tx.ID(),
+		Error:         nil,
+		Logs:          runtimeContext.Logs(),
+		Events:        convertedEvents,
 	}, nil
 }
 
@@ -80,13 +87,13 @@ func (c *computer) ExecuteScript(view *types.LedgerView, script []byte) (ScriptR
 	runtimeContext := execution.NewRuntimeContext(view)
 
 	hasher := crypto.NewSHA3_256()
-	scriptHash := hasher.ComputeHash(script)
+	scriptID := flow.HashToID(hasher.ComputeHash(script))
 
-	location := runtime.ScriptLocation(scriptHash)
+	location := runtime.ScriptLocation(scriptID.Bytes())
 
 	value, executionErr := c.runtime.ExecuteScript(script, runtimeContext, location)
 
-	convertedEvents, err := convertEvents(runtimeContext.Events(), nil)
+	convertedEvents, err := convertEvents(runtimeContext.Events(), flow.ZeroID)
 	if err != nil {
 		return ScriptResult{}, err
 	}
@@ -95,11 +102,11 @@ func (c *computer) ExecuteScript(view *types.LedgerView, script []byte) (ScriptR
 		if errors.As(executionErr, &runtime.Error{}) {
 			// runtime errors occur when the execution reverts
 			return ScriptResult{
-				ScriptHash: scriptHash,
-				Value:      nil,
-				Error:      executionErr,
-				Logs:       runtimeContext.Logs(),
-				Events:     convertedEvents,
+				ScriptID: scriptID,
+				Value:    nil,
+				Error:    executionErr,
+				Logs:     runtimeContext.Logs(),
+				Events:   convertedEvents,
 			}, nil
 		}
 
@@ -110,23 +117,23 @@ func (c *computer) ExecuteScript(view *types.LedgerView, script []byte) (ScriptR
 	convertedValue := cadence.ConvertValue(value)
 
 	return ScriptResult{
-		ScriptHash: scriptHash,
-		Value:      convertedValue,
-		Error:      nil,
-		Logs:       runtimeContext.Logs(),
-		Events:     convertedEvents,
+		ScriptID: scriptID,
+		Value:    convertedValue,
+		Error:    nil,
+		Logs:     runtimeContext.Logs(),
+		Events:   convertedEvents,
 	}, nil
 }
 
-func convertEvents(rtEvents []runtime.Event, txHash crypto.Hash) ([]flow.Event, error) {
-	flowEvents := make([]flow.Event, len(rtEvents))
+func convertEvents(events []runtime.Event, txID flow.Identifier) ([]flow.Event, error) {
+	flowEvents := make([]flow.Event, len(events))
 
-	for i, event := range rtEvents {
+	for i, event := range events {
 		flowEvents[i] = flow.Event{
-			Type:   string(event.Type.ID()),
-			TxHash: txHash,
-			Index:  uint(i),
-			Value:  cadence.ConvertEvent(event),
+			Type:          string(event.Type.ID()),
+			TransactionID: txID,
+			Index:         uint(i),
+			Value:         cadence.ConvertEvent(event),
 		}
 	}
 

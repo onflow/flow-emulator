@@ -8,27 +8,27 @@ import (
 	"github.com/dapperlabs/flow-go/crypto"
 )
 
-// ErrBlockNotFound indicates that a block specified by hash or number cannot be found.
+// ErrBlockNotFound indicates that a block specified by ID or height cannot be found.
 type ErrBlockNotFound struct {
-	BlockHash crypto.Hash
-	BlockNum  uint64
+	BlockID  flow.Identifier
+	BlockNum uint64
 }
 
 func (e *ErrBlockNotFound) Error() string {
 	if e.BlockNum == 0 {
-		return fmt.Sprintf("Block with hash %x cannot be found", e.BlockHash)
+		return fmt.Sprintf("Block with ID %x cannot be found", e.BlockID)
 	}
 
 	return fmt.Sprintf("Block number %d cannot be found", e.BlockNum)
 }
 
-// ErrTransactionNotFound indicates that a transaction specified by hash cannot be found.
+// ErrTransactionNotFound indicates that a transaction specified by ID cannot be found.
 type ErrTransactionNotFound struct {
-	TxHash crypto.Hash
+	TxID flow.Identifier
 }
 
 func (e *ErrTransactionNotFound) Error() string {
-	return fmt.Sprintf("Transaction with hash %x cannot be found", e.TxHash)
+	return fmt.Sprintf("Transaction with ID %x cannot be found", e.TxID)
 }
 
 // ErrAccountNotFound indicates that an account specified by address cannot be found.
@@ -42,11 +42,11 @@ func (e *ErrAccountNotFound) Error() string {
 
 // ErrDuplicateTransaction indicates that a transaction has already been submitted.
 type ErrDuplicateTransaction struct {
-	TxHash crypto.Hash
+	TxID flow.Identifier
 }
 
 func (e *ErrDuplicateTransaction) Error() string {
-	return fmt.Sprintf("Transaction with hash %x has already been submitted", e.TxHash)
+	return fmt.Sprintf("Transaction with ID %x has already been submitted", e.TxID)
 }
 
 // ErrMissingSignature indicates that a transaction is missing a required signature.
@@ -69,23 +69,23 @@ func (e *ErrInvalidSignaturePublicKey) Error() string {
 
 // ErrInvalidSignatureAccount indicates that a signature references a nonexistent account.
 type ErrInvalidSignatureAccount struct {
-	Account flow.Address
+	Address flow.Address
 }
 
 func (e *ErrInvalidSignatureAccount) Error() string {
-	return fmt.Sprintf("Account with address %s does not exist", e.Account)
+	return fmt.Sprintf("Account with address %s does not exist", e.Address)
 }
 
 // ErrInvalidTransaction indicates that a submitted transaction is invalid (missing required fields).
 type ErrInvalidTransaction struct {
-	TxHash        crypto.Hash
+	TxID          flow.Identifier
 	MissingFields []string
 }
 
 func (e *ErrInvalidTransaction) Error() string {
 	return fmt.Sprintf(
-		"Transaction with hash %x is invalid (missing required fields): %s",
-		e.TxHash,
+		"Transaction with ID %x is invalid (missing required fields): %s",
+		e.TxID,
 		strings.Join(e.MissingFields, ", "),
 	)
 }
@@ -101,29 +101,29 @@ func (e *ErrInvalidStateVersion) Error() string {
 
 // ErrPendingBlockCommitBeforeExecution indicates that the current pending block has not been executed (cannot commit).
 type ErrPendingBlockCommitBeforeExecution struct {
-	BlockHash crypto.Hash
+	BlockID flow.Identifier
 }
 
 func (e *ErrPendingBlockCommitBeforeExecution) Error() string {
-	return fmt.Sprintf("Pending block with hash %x cannot be commited before execution", e.BlockHash)
+	return fmt.Sprintf("Pending block with ID %x cannot be commited before execution", e.BlockID)
 }
 
 // ErrPendingBlockMidExecution indicates that the current pending block is mid-execution.
 type ErrPendingBlockMidExecution struct {
-	BlockHash crypto.Hash
+	BlockID flow.Identifier
 }
 
 func (e *ErrPendingBlockMidExecution) Error() string {
-	return fmt.Sprintf("Pending block with hash %x is currently being executed", e.BlockHash)
+	return fmt.Sprintf("Pending block with ID %x is currently being executed", e.BlockID)
 }
 
 // ErrPendingBlockTransactionsExhausted indicates that the current pending block has finished executing (no more transactions to execute).
 type ErrPendingBlockTransactionsExhausted struct {
-	BlockHash crypto.Hash
+	BlockID flow.Identifier
 }
 
 func (e *ErrPendingBlockTransactionsExhausted) Error() string {
-	return fmt.Sprintf("Pending block with hash %x contains no more transactions to execute", e.BlockHash)
+	return fmt.Sprintf("Pending block with ID %x contains no more transactions to execute", e.BlockID)
 }
 
 // ErrStorage indicates that an error occurred in the storage provider.

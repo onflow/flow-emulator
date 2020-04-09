@@ -4,11 +4,10 @@ import (
 	"testing"
 
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/keys"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dapperlabs/flow-emulator"
+	emulator "github.com/dapperlabs/flow-emulator"
 )
 
 func TestPendingBlockBeforeExecution(t *testing.T) {
@@ -17,33 +16,14 @@ func TestPendingBlockBeforeExecution(t *testing.T) {
 
 	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
-	tx1 := flow.Transaction{
-		Script:             []byte(addTwoScript),
-		ReferenceBlockHash: nil,
-		Nonce:              getNonce(),
-		ComputeLimit:       10,
-		PayerAccount:       b.RootAccountAddress(),
-		ScriptAccounts:     []flow.Address{b.RootAccountAddress()},
-	}
+	tx := flow.NewTransaction().
+		SetScript([]byte(addTwoScript)).
+		SetGasLimit(10).
+		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
 
-	sig, err := keys.SignTransaction(tx1, b.RootKey())
+	err = tx.SignContainer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
-
-	tx1.AddSignature(b.RootAccountAddress(), sig)
-
-	tx2 := flow.Transaction{
-		Script:             []byte(addTwoScript),
-		ReferenceBlockHash: nil,
-		Nonce:              getNonce(),
-		ComputeLimit:       10,
-		PayerAccount:       b.RootAccountAddress(),
-		ScriptAccounts:     []flow.Address{b.RootAccountAddress()},
-	}
-
-	sig, err = keys.SignTransaction(tx2, b.RootKey())
-	assert.NoError(t, err)
-
-	tx2.AddSignature(b.RootAccountAddress(), sig)
 
 	t.Run("EmptyPendingBlock", func(t *testing.T) {
 		// Execute empty pending block
@@ -60,11 +40,11 @@ func TestPendingBlockBeforeExecution(t *testing.T) {
 
 	t.Run("AddDuplicateTransaction", func(t *testing.T) {
 		// Add tx1 to pending block
-		err = b.AddTransaction(tx1)
+		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
 
 		// Add tx1 again
-		err = b.AddTransaction(tx1)
+		err = b.AddTransaction(*tx)
 		assert.IsType(t, &emulator.ErrDuplicateTransaction{}, err)
 
 		err = b.ResetPendingBlock()
@@ -73,7 +53,7 @@ func TestPendingBlockBeforeExecution(t *testing.T) {
 
 	t.Run("CommitBeforeExecution", func(t *testing.T) {
 		// Add tx1 to pending block
-		err = b.AddTransaction(tx1)
+		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
 
 		// Attempt to commit block before execution begins
@@ -91,55 +71,40 @@ func TestPendingBlockDuringExecution(t *testing.T) {
 
 	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
-	tx1 := flow.Transaction{
-		Script:             []byte(addTwoScript),
-		ReferenceBlockHash: nil,
-		Nonce:              getNonce(),
-		ComputeLimit:       10,
-		PayerAccount:       b.RootAccountAddress(),
-		ScriptAccounts:     []flow.Address{b.RootAccountAddress()},
-	}
+	tx1 := flow.NewTransaction().
+		SetScript([]byte(addTwoScript)).
+		SetGasLimit(10).
+		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
 
-	sig, err := keys.SignTransaction(tx1, b.RootKey())
+	err = tx1.SignContainer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
-	tx1.AddSignature(b.RootAccountAddress(), sig)
+	tx2 := flow.NewTransaction().
+		SetScript([]byte(addTwoScript)).
+		SetGasLimit(10).
+		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
 
-	tx2 := flow.Transaction{
-		Script:             []byte(addTwoScript),
-		ReferenceBlockHash: nil,
-		Nonce:              getNonce(),
-		ComputeLimit:       10,
-		PayerAccount:       b.RootAccountAddress(),
-		ScriptAccounts:     []flow.Address{b.RootAccountAddress()},
-	}
-
-	sig, err = keys.SignTransaction(tx2, b.RootKey())
+	err = tx2.SignContainer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
-	tx2.AddSignature(b.RootAccountAddress(), sig)
+	invalid := flow.NewTransaction().
+		SetScript([]byte("invalid script")).
+		SetGasLimit(10).
+		SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+		AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
 
-	invalid := flow.Transaction{
-		Script:             []byte("invalid script"),
-		ReferenceBlockHash: nil,
-		Nonce:              getNonce(),
-		ComputeLimit:       10,
-		PayerAccount:       b.RootAccountAddress(),
-		ScriptAccounts:     []flow.Address{b.RootAccountAddress()},
-	}
-
-	sig, err = keys.SignTransaction(invalid, b.RootKey())
+	err = invalid.SignContainer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
-
-	invalid.AddSignature(b.RootAccountAddress(), sig)
 
 	t.Run("ExecuteNextTransaction", func(t *testing.T) {
 		// Add tx1 to pending block
-		err = b.AddTransaction(tx1)
+		err = b.AddTransaction(*tx1)
 		assert.NoError(t, err)
 
 		// Add invalid script tx to pending block
-		err = b.AddTransaction(invalid)
+		err = b.AddTransaction(*invalid)
 		assert.NoError(t, err)
 
 		// Execute tx1 (succeeds)
@@ -158,11 +123,11 @@ func TestPendingBlockDuringExecution(t *testing.T) {
 
 	t.Run("ExecuteBlock", func(t *testing.T) {
 		// Add tx1 to pending block
-		err = b.AddTransaction(tx1)
+		err = b.AddTransaction(*tx1)
 		assert.NoError(t, err)
 
 		// Add invalid script tx to pending block
-		err = b.AddTransaction(invalid)
+		err = b.AddTransaction(*invalid)
 		assert.NoError(t, err)
 
 		// Execute all tx in pending block (tx1, invalid)
@@ -179,15 +144,15 @@ func TestPendingBlockDuringExecution(t *testing.T) {
 
 	t.Run("ExecuteNextThenBlock", func(t *testing.T) {
 		// Add tx1 to pending block
-		err = b.AddTransaction(tx1)
+		err = b.AddTransaction(*tx1)
 		assert.NoError(t, err)
 
 		// Add tx2 to pending block
-		err = b.AddTransaction(tx2)
+		err = b.AddTransaction(*tx2)
 		assert.NoError(t, err)
 
 		// Add invalid script tx to pending block
-		err = b.AddTransaction(invalid)
+		err = b.AddTransaction(*invalid)
 		assert.NoError(t, err)
 
 		// Execute tx1 first (succeeds)
@@ -209,11 +174,11 @@ func TestPendingBlockDuringExecution(t *testing.T) {
 
 	t.Run("AddTransactionMidExecution", func(t *testing.T) {
 		// Add tx1 to pending block
-		err = b.AddTransaction(tx1)
+		err = b.AddTransaction(*tx1)
 		assert.NoError(t, err)
 
 		// Add invalid to pending block
-		err = b.AddTransaction(invalid)
+		err = b.AddTransaction(*invalid)
 		assert.NoError(t, err)
 
 		// Execute tx1 first (succeeds)
@@ -222,7 +187,7 @@ func TestPendingBlockDuringExecution(t *testing.T) {
 		assert.True(t, result.Succeeded())
 
 		// Attempt to add tx2 to pending block after execution begins
-		err = b.AddTransaction(tx2)
+		err = b.AddTransaction(*tx2)
 		assert.IsType(t, &emulator.ErrPendingBlockMidExecution{}, err)
 
 		err = b.ResetPendingBlock()
@@ -231,11 +196,11 @@ func TestPendingBlockDuringExecution(t *testing.T) {
 
 	t.Run("CommitMidExecution", func(t *testing.T) {
 		// Add tx1 to pending block
-		err = b.AddTransaction(tx1)
+		err = b.AddTransaction(*tx1)
 		assert.NoError(t, err)
 
 		// Add invalid to pending block
-		err = b.AddTransaction(invalid)
+		err = b.AddTransaction(*invalid)
 		assert.NoError(t, err)
 
 		// Execute tx1 first (succeeds)
@@ -253,7 +218,7 @@ func TestPendingBlockDuringExecution(t *testing.T) {
 
 	t.Run("TransactionsExhaustedDuringExecution", func(t *testing.T) {
 		// Add tx1 to pending block
-		err = b.AddTransaction(tx1)
+		err = b.AddTransaction(*tx1)
 		assert.NoError(t, err)
 
 		// Execute tx1 (succeeds)
@@ -281,26 +246,21 @@ func TestPendingBlockCommit(t *testing.T) {
 	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
 	t.Run("CommitBlock", func(t *testing.T) {
-		tx1 := flow.Transaction{
-			Script:             []byte(addTwoScript),
-			ReferenceBlockHash: nil,
-			Nonce:              getNonce(),
-			ComputeLimit:       10,
-			PayerAccount:       b.RootAccountAddress(),
-			ScriptAccounts:     []flow.Address{b.RootAccountAddress()},
-		}
+		tx1 := flow.NewTransaction().
+			SetScript([]byte(addTwoScript)).
+			SetGasLimit(10).
+			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
 
-		sig, err := keys.SignTransaction(tx1, b.RootKey())
+		err = tx1.SignContainer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
-		tx1.AddSignature(b.RootAccountAddress(), sig)
-
 		// Add tx1 to pending block
-		err = b.AddTransaction(tx1)
+		err = b.AddTransaction(*tx1)
 		assert.NoError(t, err)
 
 		// Enter execution mode (block hash should not change after this point)
-		blockHash := b.PendingBlockHash()
+		blockHash := b.PendingBlockID()
 
 		// Execute tx1 (succeeds)
 		result, err := b.ExecuteNextTransaction()
@@ -310,35 +270,30 @@ func TestPendingBlockCommit(t *testing.T) {
 		// Commit pending block
 		block, err := b.CommitBlock()
 		assert.NoError(t, err)
-		assert.Equal(t, blockHash, block.Hash())
+		assert.Equal(t, blockHash, block.ID())
 	})
 
 	t.Run("ExecuteAndCommitBlock", func(t *testing.T) {
-		tx1 := flow.Transaction{
-			Script:             []byte(addTwoScript),
-			ReferenceBlockHash: nil,
-			Nonce:              getNonce(),
-			ComputeLimit:       10,
-			PayerAccount:       b.RootAccountAddress(),
-			ScriptAccounts:     []flow.Address{b.RootAccountAddress()},
-		}
+		tx1 := flow.NewTransaction().
+			SetScript([]byte(addTwoScript)).
+			SetGasLimit(10).
+			SetPayer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID).
+			AddAuthorizer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID)
 
-		sig, err := keys.SignTransaction(tx1, b.RootKey())
+		err = tx1.SignContainer(b.RootAccountAddress(), b.RootKey().ToAccountKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
-		tx1.AddSignature(b.RootAccountAddress(), sig)
-
 		// Add tx1 to pending block
-		err = b.AddTransaction(tx1)
+		err = b.AddTransaction(*tx1)
 		assert.NoError(t, err)
 
 		// Enter execution mode (block hash should not change after this point)
-		blockHash := b.PendingBlockHash()
+		blockHash := b.PendingBlockID()
 
 		// Execute and commit pending block
 		block, results, err := b.ExecuteAndCommitBlock()
 		assert.NoError(t, err)
-		assert.Equal(t, blockHash, block.Hash())
+		assert.Equal(t, blockHash, block.ID())
 		assert.Len(t, results, 1)
 	})
 }
