@@ -109,7 +109,7 @@ func TestTransferNFT(t *testing.T) {
 		SetGasLimit(20).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address, b.RootKey().ID).
-		AddAuthorizer(bastianAddress, 0)
+		AddAuthorizer(bastianAddress, bastianPublicKey.ID)
 
 	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
 
