@@ -32,7 +32,7 @@ func TestCommitBlock(t *testing.T) {
 
 	tx1Result, err := b.GetTransactionResult(tx1.ID())
 	assert.NoError(t, err)
-	assert.Equal(t, flow.TransactionPending, tx1Result.Status)
+	assert.Equal(t, flow.TransactionStatusPending, tx1Result.Status)
 
 	tx2 := flow.NewTransaction().
 		SetScript([]byte("invalid script")).
@@ -50,7 +50,7 @@ func TestCommitBlock(t *testing.T) {
 
 	tx2Result, err := b.GetTransactionResult(tx2.ID())
 	assert.NoError(t, err)
-	assert.Equal(t, flow.TransactionPending, tx2Result.Status)
+	assert.Equal(t, flow.TransactionStatusPending, tx2Result.Status)
 
 	// Execute tx1
 	result, err := b.ExecuteNextTransaction()
@@ -66,14 +66,14 @@ func TestCommitBlock(t *testing.T) {
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
 
-	// tx1 status becomes TransactionSealed
+	// tx1 status becomes TransactionStatusSealed
 	tx1Result, err = b.GetTransactionResult(tx1.ID())
 	require.NoError(t, err)
-	assert.Equal(t, flow.TransactionSealed, tx1Result.Status)
+	assert.Equal(t, flow.TransactionStatusSealed, tx1Result.Status)
 
-	// tx2 status also becomes TransactionSealed, even though it is reverted
+	// tx2 status also becomes TransactionStatusSealed, even though it is reverted
 	// TODO: include error code in result
 	tx2Result, err = b.GetTransactionResult(tx2.ID())
 	require.NoError(t, err)
-	assert.Equal(t, flow.TransactionSealed, tx2Result.Status)
+	assert.Equal(t, flow.TransactionStatusSealed, tx2Result.Status)
 }

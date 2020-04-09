@@ -44,10 +44,10 @@ func TestSubmitTransaction(t *testing.T) {
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
 
-	// tx1 status becomes TransactionSealed
+	// tx1 status becomes TransactionStatusSealed
 	tx2Result, err := b.GetTransactionResult(tx1.ID())
 	assert.NoError(t, err)
-	assert.Equal(t, flow.TransactionSealed, tx2Result.Status)
+	assert.Equal(t, flow.TransactionStatusSealed, tx2Result.Status)
 }
 
 // TODO: Add test case for missing ReferenceBlockID
@@ -181,11 +181,11 @@ func TestSubmitTransactionReverted(t *testing.T) {
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
 
-	// tx1 status becomes TransactionSealed
+	// tx1 status becomes TransactionStatusSealed
 	// TODO: include error code in result
 	tx1Result, err := b.GetTransactionResult(tx.ID())
 	assert.NoError(t, err)
-	assert.Equal(t, flow.TransactionSealed, tx1Result.Status)
+	assert.Equal(t, flow.TransactionStatusSealed, tx1Result.Status)
 }
 
 func TestSubmitTransactionScriptAccounts(t *testing.T) {
@@ -529,7 +529,7 @@ func TestGetTransactionResult(t *testing.T) {
 
 	result, err = b.GetTransactionResult(tx.ID())
 	assert.NoError(t, err)
-	assert.Equal(t, flow.TransactionPending, result.Status)
+	assert.Equal(t, flow.TransactionStatusPending, result.Status)
 	require.Empty(t, result.Events)
 
 	_, err = b.ExecuteNextTransaction()
@@ -537,7 +537,7 @@ func TestGetTransactionResult(t *testing.T) {
 
 	result, err = b.GetTransactionResult(tx.ID())
 	assert.NoError(t, err)
-	assert.Equal(t, flow.TransactionPending, result.Status)
+	assert.Equal(t, flow.TransactionStatusPending, result.Status)
 	require.Empty(t, result.Events)
 
 	_, err = b.CommitBlock()
@@ -545,7 +545,7 @@ func TestGetTransactionResult(t *testing.T) {
 
 	result, err = b.GetTransactionResult(tx.ID())
 	assert.NoError(t, err)
-	assert.Equal(t, flow.TransactionSealed, result.Status)
+	assert.Equal(t, flow.TransactionStatusSealed, result.Status)
 
 	require.Len(t, result.Events, 1)
 

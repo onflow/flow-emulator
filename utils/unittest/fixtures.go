@@ -40,7 +40,7 @@ func TransactionFixture(n ...func(t *flow.Transaction)) flow.Transaction {
 
 func TransactionResultFixture() flow.TransactionResult {
 	return flow.TransactionResult{
-		Status: flow.TransactionPending,
+		Status: flow.TransactionStatusPending,
 		Events: []flow.Event{
 			EventFixture(func(e *flow.Event) {}),
 		},
