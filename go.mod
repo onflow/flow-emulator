@@ -5,10 +5,10 @@ go 1.13
 require (
 	github.com/dapperlabs/cadence v0.0.0-20200401151421-7c78a2da20a6
 	github.com/dapperlabs/flow-go v0.3.2-0.20200331201607-7630da6300eb
-	github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200409032400-e7fbd942ae6c
+	github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200409043808-6b2117849183
 	github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200331201607-7630da6300eb
 	github.com/dapperlabs/flow-go/language v0.3.1 // indirect
-	github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200407055017-1aa4ec9fa16c
+	github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200409042800-60d3bad7767d
 	github.com/dave/jennifer v1.4.0 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/dgraph-io/badger v1.6.0

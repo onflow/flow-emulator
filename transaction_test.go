@@ -182,10 +182,10 @@ func TestSubmitTransactionReverted(t *testing.T) {
 	assert.NoError(t, err)
 
 	// tx1 status becomes TransactionStatusSealed
-	// TODO: include error code in result
 	tx1Result, err := b.GetTransactionResult(tx.ID())
 	assert.NoError(t, err)
 	assert.Equal(t, flow.TransactionStatusSealed, tx1Result.Status)
+	assert.Error(t, tx1Result.Error)
 }
 
 func TestSubmitTransactionScriptAccounts(t *testing.T) {
