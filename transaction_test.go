@@ -189,7 +189,7 @@ func TestSubmitTransactionScriptAccounts(t *testing.T) {
 	publicKeyB := privateKeyB.ToAccountKey()
 	publicKeyB.Weight = keys.PublicKeyWeightThreshold
 
-	accountAddressB, err := b.CreateAccount([]flow.AccountKey{publicKeyB}, nil, getNonce())
+	accountAddressB, err := b.CreateAccount([]flow.AccountKey{publicKeyB}, nil)
 	assert.NoError(t, err)
 
 	t.Run("TooManyAccountsForScript", func(t *testing.T) {
@@ -341,7 +341,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		publicKeyB := privateKeyB.ToAccountKey()
 		publicKeyB.Weight = keys.PublicKeyWeightThreshold / 2
 
-		accountAddressA, err := b.CreateAccount([]flow.AccountKey{publicKeyA, publicKeyB}, nil, getNonce())
+		accountAddressA, err := b.CreateAccount([]flow.AccountKey{publicKeyA, publicKeyB}, nil)
 		assert.NoError(t, err)
 
 		script := []byte(`
@@ -414,7 +414,7 @@ func TestSubmitTransactionScriptSignatures(t *testing.T) {
 		publicKeyB := privateKeyB.ToAccountKey()
 		publicKeyB.Weight = keys.PublicKeyWeightThreshold
 
-		accountAddressB, err := b.CreateAccount([]flow.AccountKey{publicKeyB}, nil, getNonce())
+		accountAddressB, err := b.CreateAccount([]flow.AccountKey{publicKeyB}, nil)
 		assert.NoError(t, err)
 
 		multipleAccountScript := []byte(`
