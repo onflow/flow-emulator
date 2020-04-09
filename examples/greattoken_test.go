@@ -18,7 +18,7 @@ func TestDeployment(t *testing.T) {
 
 	// Should be able to deploy a contract as a new account with no keys.
 	nftCode := ReadFile(greatTokenContractFile)
-	_, err := b.CreateAccount(nil, nftCode, GetNonce())
+	_, err := b.CreateAccount(nil, nftCode)
 	assert.NoError(t, err)
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
@@ -29,7 +29,7 @@ func TestCreateMinter(t *testing.T) {
 
 	// First, deploy the contract
 	nftCode := ReadFile(greatTokenContractFile)
-	contractAddr, err := b.CreateAccount(nil, nftCode, GetNonce())
+	contractAddr, err := b.CreateAccount(nil, nftCode)
 	assert.NoError(t, err)
 
 	// GreatNFTMinter must be instantiated with initialID > 0 and
@@ -73,7 +73,7 @@ func TestMinting(t *testing.T) {
 
 	// First, deploy the contract
 	nftCode := ReadFile(greatTokenContractFile)
-	contractAddr, err := b.CreateAccount(nil, nftCode, GetNonce())
+	contractAddr, err := b.CreateAccount(nil, nftCode)
 	assert.NoError(t, err)
 
 	// Next, instantiate the minter
