@@ -496,3 +496,60 @@ func TestGetTransaction(t *testing.T) {
 		assert.Equal(t, tx1.ID(), tx2.ID())
 	})
 }
+
+func TestGetTransactionResult(t *testing.T) {
+	b, err := emulator.NewBlockchain()
+	require.NoError(t, err)
+
+	addTwoScript, counterAddress := deployAndGenerateAddTwoScript(t, b)
+
+	tx := flow.NewTransaction().
+		SetScript([]byte(addTwoScript)).
+		SetGasLimit(10).
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+		SetPayer(b.RootKey().Address, b.RootKey().ID).
+		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
+
+	err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	assert.NoError(t, err)
+
+	result, err := b.GetTransactionResult(tx.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, flow.TransactionStatusUnknown, result.Status)
+	require.Empty(t, result.Events)
+
+	err = b.AddTransaction(*tx)
+	assert.NoError(t, err)
+
+	result, err = b.GetTransactionResult(tx.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, flow.TransactionPending, result.Status)
+	require.Empty(t, result.Events)
+
+	_, err = b.ExecuteNextTransaction()
+	assert.NoError(t, err)
+
+	result, err = b.GetTransactionResult(tx.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, flow.TransactionPending, result.Status)
+	require.Empty(t, result.Events)
+
+	_, err = b.CommitBlock()
+	assert.NoError(t, err)
+
+	result, err = b.GetTransactionResult(tx.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, flow.TransactionSealed, result.Status)
+
+	require.Len(t, result.Events, 1)
+
+	event := result.Events[0]
+
+	location := runtime.AddressLocation(counterAddress.Bytes())
+	eventType := fmt.Sprintf("%s.Counting.CountIncremented", location.ID())
+
+	assert.Equal(t, tx.ID(), event.TransactionID)
+	assert.Equal(t, eventType, event.Type)
+	assert.Equal(t, uint(0), event.Index)
+	assert.Equal(t, cadence.NewInt(2), event.Value.Fields[0])
+}
