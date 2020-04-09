@@ -65,17 +65,17 @@ func (mr *MockStoreMockRecorder) BlockByID(arg0 interface{}) *gomock.Call {
 }
 
 // CommitBlock mocks base method
-func (m *MockStore) CommitBlock(arg0 types.Block, arg1 []flow_go_sdk.Transaction, arg2 types.LedgerDelta, arg3 []flow_go_sdk.Event) error {
+func (m *MockStore) CommitBlock(arg0 types.Block, arg1 []flow_go_sdk.Transaction, arg2 []flow_go_sdk.TransactionResult, arg3 types.LedgerDelta, arg4 []flow_go_sdk.Event) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CommitBlock", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "CommitBlock", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CommitBlock indicates an expected call of CommitBlock
-func (mr *MockStoreMockRecorder) CommitBlock(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) CommitBlock(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitBlock", reflect.TypeOf((*MockStore)(nil).CommitBlock), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitBlock", reflect.TypeOf((*MockStore)(nil).CommitBlock), arg0, arg1, arg2, arg3, arg4)
 }
 
 // InsertBlock mocks base method
@@ -90,48 +90,6 @@ func (m *MockStore) InsertBlock(arg0 types.Block) error {
 func (mr *MockStoreMockRecorder) InsertBlock(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertBlock", reflect.TypeOf((*MockStore)(nil).InsertBlock), arg0)
-}
-
-// InsertEvents mocks base method
-func (m *MockStore) InsertEvents(arg0 uint64, arg1 []flow_go_sdk.Event) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InsertEvents", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// InsertEvents indicates an expected call of InsertEvents
-func (mr *MockStoreMockRecorder) InsertEvents(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertEvents", reflect.TypeOf((*MockStore)(nil).InsertEvents), arg0, arg1)
-}
-
-// InsertLedgerDelta mocks base method
-func (m *MockStore) InsertLedgerDelta(arg0 uint64, arg1 types.LedgerDelta) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InsertLedgerDelta", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// InsertLedgerDelta indicates an expected call of InsertLedgerDelta
-func (mr *MockStoreMockRecorder) InsertLedgerDelta(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertLedgerDelta", reflect.TypeOf((*MockStore)(nil).InsertLedgerDelta), arg0, arg1)
-}
-
-// InsertTransaction mocks base method
-func (m *MockStore) InsertTransaction(arg0 flow_go_sdk.Transaction) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InsertTransaction", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// InsertTransaction indicates an expected call of InsertTransaction
-func (mr *MockStoreMockRecorder) InsertTransaction(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertTransaction", reflect.TypeOf((*MockStore)(nil).InsertTransaction), arg0)
 }
 
 // LatestBlock mocks base method
@@ -191,4 +149,19 @@ func (m *MockStore) TransactionByID(arg0 flow_go_sdk.Identifier) (flow_go_sdk.Tr
 func (mr *MockStoreMockRecorder) TransactionByID(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TransactionByID", reflect.TypeOf((*MockStore)(nil).TransactionByID), arg0)
+}
+
+// TransactionResultByID mocks base method
+func (m *MockStore) TransactionResultByID(arg0 flow_go_sdk.Identifier) (flow_go_sdk.TransactionResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TransactionResultByID", arg0)
+	ret0, _ := ret[0].(flow_go_sdk.TransactionResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TransactionResultByID indicates an expected call of TransactionResultByID
+func (mr *MockStoreMockRecorder) TransactionResultByID(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TransactionResultByID", reflect.TypeOf((*MockStore)(nil).TransactionResultByID), arg0)
 }

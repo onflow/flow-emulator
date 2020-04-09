@@ -119,6 +119,10 @@ github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200408200357-4a9513b64768 h1:xQ2nR+
 github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200408200357-4a9513b64768/go.mod h1:AuPL6FiFynDhvLtd0BLrbzFeMje4DeHZ8drNGO60ItI=
 github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200409001924-6de51e4ac0f8 h1:2Le6PAxlhPDyFTKCEDSEAayElTvDg6KDAQCYQ/fRdS4=
 github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200409001924-6de51e4ac0f8/go.mod h1:AuPL6FiFynDhvLtd0BLrbzFeMje4DeHZ8drNGO60ItI=
+github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200409032400-e7fbd942ae6c h1:mlXozRy2jBDjkdcXsDWQ06Qn+OU44Ye2DAhvmkQWXFY=
+github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200409032400-e7fbd942ae6c/go.mod h1:AuPL6FiFynDhvLtd0BLrbzFeMje4DeHZ8drNGO60ItI=
+github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200409043808-6b2117849183 h1:yEqjOQTsn2QOhi0mWOcZVVxbf4cBfOv8ZXCQ4EBKGCg=
+github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200409043808-6b2117849183/go.mod h1:w2mKA/t0BT/xzLHTwh9KuANtSrQFZX/RFmUcmw63kO8=
 github.com/dapperlabs/flow-go-sdk v0.5.3-feature-access-api h1:m0KyXmO0B0NCJhEEm3lZW23hHdZtMOMaFT6F7vYTGXU=
 github.com/dapperlabs/flow-go-sdk v0.5.3-feature-access-api/go.mod h1:cJtmHbmK9C5na/sH50GuBNYJPKTSivfWqri6Qx2+cME=
 github.com/dapperlabs/flow-go/crypto v0.3.1 h1:sct0sh5aDbyqy0v/2xCvBAY9fsxlbkfHAK3abeK163g=
@@ -144,6 +148,8 @@ github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200405035006-e82d5bf52630 h
 github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200405045545-03db81265125 h1:Zc17Y/8ycLcVd1T/tsiho0k9XVq+SxCHhYBuzkn5kkQ=
 github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200407055017-1aa4ec9fa16c h1:MfPILPGSWvIu4kVPiK1DI01G3eWHEz73UHehvzhk6Bo=
 github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200407055017-1aa4ec9fa16c/go.mod h1:ThpXZwEduNJCzmpEVEUy3Ml5dDAWttnzlBJPTOSAin0=
+github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200409042800-60d3bad7767d h1:Uc4OR+K49jlzQL6sjgGE+txRP/4cB7+eN1Ca+hsvFvM=
+github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200409042800-60d3bad7767d/go.mod h1:ThpXZwEduNJCzmpEVEUy3Ml5dDAWttnzlBJPTOSAin0=
 github.com/dave/jennifer v1.4.0/go.mod h1:fIb+770HOpJ2fmN9EPPKOqm1vMGhB+TwXKMZhrIygKg=
 github.com/davecgh/go-spew v0.0.0-20171005155431-ecdeabc65495/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

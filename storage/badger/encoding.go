@@ -104,6 +104,18 @@ func decodeTransaction(tx *flow.Transaction, from []byte) error {
 	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(tx)
 }
 
+func encodeTransactionResult(result flow.TransactionResult) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := gob.NewEncoder(&buf).Encode(&result); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func decodeTransactionResult(result *flow.TransactionResult, from []byte) error {
+	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(result)
+}
+
 func encodeBlock(block types.Block) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(&block); err != nil {
