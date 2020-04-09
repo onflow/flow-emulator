@@ -553,9 +553,23 @@ func (b *Blockchain) ExecuteScript(script []byte) (ScriptResult, error) {
 	return result, nil
 }
 
-// TODO: implement
 func (b *Blockchain) ExecuteScriptAtBlock(script []byte, blockHeight uint64) (ScriptResult, error) {
-	panic("not implemented")
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	requestedBlock, err := b.GetBlockByHeight(blockHeight)
+	if err != nil {
+		return ScriptResult{}, err
+	}
+
+	requestedLedgerView := b.storage.LedgerViewByHeight(requestedBlock.Height)
+
+	result, err := b.computer.ExecuteScript(requestedLedgerView, script)
+	if err != nil {
+		return ScriptResult{}, err
+	}
+
+	return result, nil
 }
 
 // LastCreatedAccount returns the last account that was created in the blockchain.
