@@ -74,7 +74,7 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, 0)
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
 		err := tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
@@ -91,7 +91,7 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, 0)
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
 		err := tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
@@ -184,14 +184,11 @@ func TestSubmitTransactionScriptAccounts(t *testing.T) {
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
-	privateKeyA := b.RootKey()
-
 	privateKeyB, _ := keys.GeneratePrivateKey(keys.ECDSA_P256_SHA3_256,
 		[]byte("elephant ears space cowboy octopus rodeo potato cannon pineapple"))
 	publicKeyB := privateKeyB.ToAccountKey()
 	publicKeyB.Weight = keys.PublicKeyWeightThreshold
 
-	accountAddressA := b.RootAccountAddress()
 	accountAddressB, err := b.CreateAccount([]flow.AccountKey{publicKeyB}, nil, getNonce())
 	assert.NoError(t, err)
 
@@ -207,15 +204,15 @@ func TestSubmitTransactionScriptAccounts(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(script).
 			SetGasLimit(10).
-			SetProposalKey(accountAddressA, 0, 0).
-			SetPayer(accountAddressA, 0).
-			AddAuthorizer(accountAddressA, 0).
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(b.RootKey().Address, b.RootKey().ID).
 			AddAuthorizer(accountAddressB, 0)
 
-		err = tx.SignPayload(accountAddressB, 0, privateKeyB.Signer())
+		err = tx.SignPayload(accountAddressB, publicKeyB.ID, privateKeyB.Signer())
 		assert.NoError(t, err)
 
-		err = tx.SignContainer(accountAddressA, 0, privateKeyA.Signer())
+		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -241,11 +238,11 @@ func TestSubmitTransactionScriptAccounts(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(script).
 			SetGasLimit(10).
-			SetProposalKey(accountAddressA, 0, 0).
-			SetPayer(accountAddressA, 0).
-			AddAuthorizer(accountAddressA, 0)
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address, b.RootKey().ID).
+			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		err = tx.SignContainer(accountAddressA, 0, privateKeyA.Signer())
+		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -276,7 +273,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 			SetPayer(addressA, 0).
 			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx.SignPayload(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -323,7 +320,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 			SetPayer(b.RootKey().Address, b.RootKey().ID).
 			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
-		err = tx.SignContainer(b.RootKey().Address, 0, invalidKey.Signer())
+		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, invalidKey.Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)

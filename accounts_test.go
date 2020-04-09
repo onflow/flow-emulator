@@ -86,7 +86,7 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, 0)
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
 		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
@@ -137,7 +137,7 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, 0)
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
 		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
@@ -174,7 +174,7 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, 0)
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
 		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
@@ -216,7 +216,7 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, 0)
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
 		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
@@ -267,7 +267,7 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, 0)
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
 		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
@@ -299,7 +299,7 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, 0)
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
 		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
@@ -356,9 +356,9 @@ func TestAddAccountKey(t *testing.T) {
 			SetScript(script).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, 0)
+			SetPayer(b.RootKey().Address, b.RootKey().ID)
 
-		err = tx2.SignContainer(b.RootKey().Address, 0, privateKey.Signer())
+		err = tx2.SignContainer(b.RootKey().Address, b.RootKey().ID, privateKey.Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx2)
@@ -507,7 +507,7 @@ func TestRemoveAccountKey(t *testing.T) {
 		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
 
 	// sign with remaining account key
-	err = tx4.SignContainer(b.RootKey().Address, 0, privateKey.Signer())
+	err = tx4.SignContainer(b.RootKey().Address, b.RootKey().ID, privateKey.Signer())
 	assert.NoError(t, err)
 
 	// submit tx4 (should succeed)
@@ -663,7 +663,7 @@ func TestImportAccountCode(t *testing.T) {
 		SetScript(script).
 		SetGasLimit(10).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-		SetPayer(b.RootKey().Address, 0)
+		SetPayer(b.RootKey().Address, b.RootKey().ID)
 
 	err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
