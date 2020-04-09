@@ -19,7 +19,7 @@ func TestTokenDeployment(t *testing.T) {
 
 	// Should be able to deploy a contract as a new account with no keys.
 	tokenCode := ReadFile(resourceTokenContractFile)
-	_, err := b.CreateAccount(nil, tokenCode, GetNonce())
+	_, err := b.CreateAccount(nil, tokenCode)
 	assert.NoError(t, err)
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
@@ -30,7 +30,7 @@ func TestCreateToken(t *testing.T) {
 
 	// First, deploy the contract
 	tokenCode := ReadFile(resourceTokenContractFile)
-	contractAddr, err := b.CreateAccount(nil, tokenCode, GetNonce())
+	contractAddr, err := b.CreateAccount(nil, tokenCode)
 	assert.NoError(t, err)
 
 	// Vault must be instantiated with a positive balance
@@ -79,7 +79,7 @@ func TestInAccountTransfers(t *testing.T) {
 
 	// First, deploy the contract
 	tokenCode := ReadFile(resourceTokenContractFile)
-	contractAddr, err := b.CreateAccount(nil, tokenCode, GetNonce())
+	contractAddr, err := b.CreateAccount(nil, tokenCode)
 	assert.NoError(t, err)
 
 	// then deploy the three tokens to an account
@@ -142,7 +142,7 @@ func TestExternalTransfers(t *testing.T) {
 
 	// First, deploy the token contract
 	tokenCode := ReadFile(resourceTokenContractFile)
-	contractAddr, err := b.CreateAccount(nil, tokenCode, GetNonce())
+	contractAddr, err := b.CreateAccount(nil, tokenCode)
 	assert.NoError(t, err)
 
 	// then deploy the tokens to an account
@@ -160,7 +160,7 @@ func TestExternalTransfers(t *testing.T) {
 	bastianPublicKey := bastianPrivateKey.ToAccountKey()
 	bastianPublicKey.Weight = keys.PublicKeyWeightThreshold
 
-	bastianAddress, err := b.CreateAccount([]flow.AccountKey{bastianPublicKey}, nil, GetNonce())
+	bastianAddress, err := b.CreateAccount([]flow.AccountKey{bastianPublicKey}, nil)
 
 	// then deploy the tokens to the new account
 	tx = flow.NewTransaction().

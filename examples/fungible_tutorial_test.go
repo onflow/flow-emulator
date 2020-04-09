@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/dapperlabs/flow-go-sdk/templates"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/dapperlabs/flow-go-sdk"
 )
@@ -18,7 +20,7 @@ func TestFungibleTokenTutorialContractDeployment(t *testing.T) {
 
 	// Should be able to deploy a contract as a new account with no keys.
 	tokenCode := ReadFile(fungibleTokenTutorialContractFile)
-	_, err := b.CreateAccount(nil, tokenCode, GetNonce())
+	_, err := b.CreateAccount(nil, tokenCode)
 	assert.NoError(t, err)
 
 	_, err = b.CommitBlock()
@@ -30,8 +32,24 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 
 	// First, *update* the contract
 	tokenCode := ReadFile(fungibleTokenTutorialContractFile)
-	err := b.UpdateAccountCode(tokenCode, GetNonce())
-	assert.NoError(t, err)
+
+	updateTokenScript := templates.UpdateAccountCode(tokenCode)
+
+	tx := flow.NewTransaction().
+		SetScript(updateTokenScript).
+		SetGasLimit(10).
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+		SetPayer(b.RootKey().Address, b.RootKey().ID).
+		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
+
+	err := tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	require.NoError(t, err)
+
+	err = b.AddTransaction(*tx)
+	require.NoError(t, err)
+
+	_, _, err = b.ExecuteAndCommitBlock()
+	require.NoError(t, err)
 
 	t.Run("Set up account 1", func(t *testing.T) {
 		tx := flow.NewTransaction().
@@ -67,7 +85,7 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 		var err error
 		publicKey := b.RootKey().AccountKey()
 		publicKeys := []flow.AccountKey{publicKey}
-		account2Address, err = b.CreateAccount(publicKeys, nil, GetNonce())
+		account2Address, err = b.CreateAccount(publicKeys, nil)
 		assert.NoError(t, err)
 	})
 

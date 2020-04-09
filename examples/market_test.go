@@ -19,7 +19,7 @@ func TestMarketDeployment(t *testing.T) {
 
 	// Should be able to deploy a contract as a new account with no keys.
 	tokenCode := ReadFile(resourceTokenContractFile)
-	_, err := b.CreateAccount(nil, tokenCode, GetNonce())
+	_, err := b.CreateAccount(nil, tokenCode)
 	if !assert.Nil(t, err) {
 		t.Log(err.Error())
 	}
@@ -27,7 +27,7 @@ func TestMarketDeployment(t *testing.T) {
 	require.NoError(t, err)
 
 	nftCode := ReadFile(NFTContractFile)
-	_, err = b.CreateAccount(nil, nftCode, GetNonce())
+	_, err = b.CreateAccount(nil, nftCode)
 	if !assert.Nil(t, err) {
 		t.Log(err.Error())
 	}
@@ -36,7 +36,7 @@ func TestMarketDeployment(t *testing.T) {
 
 	// Should be able to deploy a contract as a new account with no keys.
 	marketCode := ReadFile(MarketContractFile)
-	_, err = b.CreateAccount(nil, marketCode, GetNonce())
+	_, err = b.CreateAccount(nil, marketCode)
 	if !assert.Nil(t, err) {
 		t.Log(err.Error())
 	}
@@ -49,19 +49,19 @@ func TestCreateSale(t *testing.T) {
 
 	// first deploy the FT, NFT, and market code
 	tokenCode := ReadFile(resourceTokenContractFile)
-	tokenAddr, err := b.CreateAccount(nil, tokenCode, GetNonce())
+	tokenAddr, err := b.CreateAccount(nil, tokenCode)
 	assert.Nil(t, err)
 	_, err = b.CommitBlock()
 	require.NoError(t, err)
 
 	nftCode := ReadFile(NFTContractFile)
-	nftAddr, err := b.CreateAccount(nil, nftCode, GetNonce())
+	nftAddr, err := b.CreateAccount(nil, nftCode)
 	assert.Nil(t, err)
 	_, err = b.CommitBlock()
 	require.NoError(t, err)
 
 	marketCode := ReadFile(MarketContractFile)
-	marketAddr, err := b.CreateAccount(nil, marketCode, GetNonce())
+	marketAddr, err := b.CreateAccount(nil, marketCode)
 	assert.Nil(t, err)
 	_, err = b.CommitBlock()
 	require.NoError(t, err)
@@ -71,13 +71,13 @@ func TestCreateSale(t *testing.T) {
 	bastianPublicKey := bastianPrivateKey.ToAccountKey()
 	bastianPublicKey.Weight = keys.PublicKeyWeightThreshold
 
-	bastianAddress, err := b.CreateAccount([]flow.AccountKey{bastianPublicKey}, nil, GetNonce())
+	bastianAddress, err := b.CreateAccount([]flow.AccountKey{bastianPublicKey}, nil)
 
 	joshPrivateKey := RandomPrivateKey()
 	joshPublicKey := joshPrivateKey.ToAccountKey()
 	joshPublicKey.Weight = keys.PublicKeyWeightThreshold
 
-	joshAddress, err := b.CreateAccount([]flow.AccountKey{joshPublicKey}, nil, GetNonce())
+	joshAddress, err := b.CreateAccount([]flow.AccountKey{joshPublicKey}, nil)
 
 	t.Run("Should be able to create FTs and NFT collections in each accounts storage", func(t *testing.T) {
 		// create Fungible tokens and NFTs in each accounts storage and store references

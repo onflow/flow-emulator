@@ -553,7 +553,7 @@ func TestUpdateAccountCode(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		accountAddressB, err := b.CreateAccount([]flow.AccountKey{publicKeyB}, codeA, getNonce())
+		accountAddressB, err := b.CreateAccount([]flow.AccountKey{publicKeyB}, codeA)
 		require.NoError(t, err)
 
 		account, err := b.GetAccount(accountAddressB)
@@ -594,7 +594,7 @@ func TestUpdateAccountCode(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		accountAddressB, err := b.CreateAccount([]flow.AccountKey{publicKeyB}, codeA, getNonce())
+		accountAddressB, err := b.CreateAccount([]flow.AccountKey{publicKeyB}, codeA)
 		require.NoError(t, err)
 
 		account, err := b.GetAccount(accountAddressB)
@@ -640,7 +640,7 @@ func TestImportAccountCode(t *testing.T) {
 
 	publicKey := b.RootKey().AccountKey()
 
-	address, err := b.CreateAccount([]flow.AccountKey{publicKey}, accountScript, getNonce())
+	address, err := b.CreateAccount([]flow.AccountKey{publicKey}, accountScript)
 	assert.NoError(t, err)
 
 	assert.Equal(t, flow.HexToAddress("02"), address)
