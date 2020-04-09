@@ -571,10 +571,7 @@ func (b *Blockchain) verifySignatures(tx flow.Transaction) error {
 
 // CreateAccount submits a transaction to create a new account with the given
 // account keys and code. The transaction is paid by the root account.
-func (b *Blockchain) CreateAccount(
-	publicKeys []flow.AccountKey,
-	code []byte, nonce uint64,
-) (flow.Address, error) {
+func (b *Blockchain) CreateAccount(publicKeys []flow.AccountKey, code []byte) (flow.Address, error) {
 	createAccountScript, err := templates.CreateAccount(publicKeys, code)
 
 	if err != nil {
@@ -614,40 +611,6 @@ func (b *Blockchain) CreateAccount(
 	}
 
 	return b.LastCreatedAccount().Address, nil
-}
-
-// UpdateAccountCode submits a transaction to update the code of an existing account
-// with the given code. The transaction is paid by the root account.
-func (b *Blockchain) UpdateAccountCode(
-	code []byte, nonce uint64,
-) error {
-	updateAccountScript := templates.UpdateAccountCode(code)
-
-	rootKey := b.RootKey()
-
-	tx := flow.NewTransaction().
-		SetScript(updateAccountScript).
-		SetGasLimit(10).
-		SetProposalKey(rootKey.Address, rootKey.ID, rootKey.SequenceNumber).
-		SetPayer(rootKey.Address, rootKey.ID).
-		AddAuthorizer(rootKey.Address, rootKey.ID)
-
-	err := tx.SignContainer(rootKey.Address, rootKey.ID, rootKey.Signer())
-	if err != nil {
-		return err
-	}
-
-	err = b.AddTransaction(*tx)
-	if err != nil {
-		return err
-	}
-
-	_, _, err = b.ExecuteAndCommitBlock()
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // verifyAccountSignature verifies that an account signature is valid for the
