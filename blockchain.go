@@ -139,7 +139,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		// restore pending block header from store information
 		pendingBlock = newPendingBlock(latestBlock, latestLedgerView)
 		rootAccount = getAccount(latestLedgerView, flow.RootAddress)
-	} else if err != nil && !errors.Is(err, storage.ErrNotFound{}) {
+	} else if err != nil && !errors.Is(err, storage.ErrNotFound) {
 		// internal storage error, fail fast
 		return nil, err
 	} else {
@@ -222,8 +222,8 @@ func (b *Blockchain) GetLatestBlock() (*types.Block, error) {
 func (b *Blockchain) GetBlockByID(id flow.Identifier) (*types.Block, error) {
 	block, err := b.storage.BlockByID(id)
 	if err != nil {
-		if errors.Is(err, storage.ErrNotFound{}) {
-			return nil, &ErrBlockNotFound{BlockID: id}
+		if errors.Is(err, storage.ErrNotFound) {
+			return nil, ErrBlockNotFound
 		}
 		return nil, &ErrStorage{err}
 	}
@@ -235,8 +235,8 @@ func (b *Blockchain) GetBlockByID(id flow.Identifier) (*types.Block, error) {
 func (b *Blockchain) GetBlockByHeight(height uint64) (*types.Block, error) {
 	block, err := b.storage.BlockByHeight(height)
 	if err != nil {
-		if errors.Is(err, storage.ErrNotFound{}) {
-			return nil, &ErrBlockNotFound{BlockNum: height}
+		if errors.Is(err, storage.ErrNotFound) {
+			return nil, ErrBlockNotFound
 		}
 		return nil, err
 	}
@@ -258,8 +258,8 @@ func (b *Blockchain) GetTransaction(txID flow.Identifier) (*flow.Transaction, er
 
 	tx, err := b.storage.TransactionByID(txID)
 	if err != nil {
-		if errors.Is(err, storage.ErrNotFound{}) {
-			return nil, &ErrTransactionNotFound{TxID: txID}
+		if errors.Is(err, storage.ErrNotFound) {
+			return nil, ErrTransactionNotFound
 		}
 		return nil, &ErrStorage{err}
 	}
@@ -279,7 +279,7 @@ func (b *Blockchain) GetTransactionResult(txID flow.Identifier) (*flow.Transacti
 
 	result, err := b.storage.TransactionResultByID(txID)
 	if err != nil {
-		if errors.Is(err, storage.ErrNotFound{}) {
+		if errors.Is(err, storage.ErrNotFound) {
 			return &flow.TransactionResult{
 				Status: flow.TransactionStatusUnknown,
 			}, nil
@@ -309,7 +309,7 @@ func (b *Blockchain) getAccount(address flow.Address) (*flow.Account, error) {
 
 	acct := getAccount(latestLedgerView, address)
 	if acct == nil {
-		return nil, &ErrAccountNotFound{Address: address}
+		return nil, ErrAccountNotFound
 	}
 
 	return acct, nil
@@ -348,7 +348,7 @@ func (b *Blockchain) AddTransaction(tx flow.Transaction) error {
 	if err == nil {
 		// Found the transaction, this is a dupe
 		return &ErrDuplicateTransaction{TxID: tx.ID()}
-	} else if !errors.Is(err, storage.ErrNotFound{}) {
+	} else if !errors.Is(err, storage.ErrNotFound) {
 		// Error in the storage provider
 		return fmt.Errorf("failed to check storage for transaction %w", err)
 	}

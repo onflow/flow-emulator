@@ -147,7 +147,7 @@ func insertBlock(block types.Block) func(txn *badger.Txn) error {
 
 		// get latest block height
 		latestBlockHeight, err := getLatestBlockHeightTx(txn)
-		if err != nil && !errors.Is(err, storage.ErrNotFound{}) {
+		if err != nil && !errors.Is(err, storage.ErrNotFound) {
 			return err
 		}
 
@@ -291,7 +291,7 @@ func (s *Store) LedgerViewByHeight(blockHeight uint64) *types.LedgerView {
 
 		if err != nil {
 			// silence not found errors
-			if errors.Is(err, storage.ErrNotFound{}) {
+			if errors.Is(err, storage.ErrNotFound) {
 				return nil, nil
 			}
 
@@ -430,7 +430,7 @@ func getTx(txn *badger.Txn) func([]byte) ([]byte, error) {
 		item, err := txn.Get(key)
 		if err != nil {
 			if errors.Is(err, badger.ErrKeyNotFound) {
-				return nil, storage.ErrNotFound{}
+				return nil, storage.ErrNotFound
 			}
 			return nil, err
 		}

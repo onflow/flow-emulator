@@ -37,21 +37,21 @@ func TestBlocks(t *testing.T) {
 		t.Run("BlockByID", func(t *testing.T) {
 			_, err := store.BlockByID(test.IdentifierGenerator().New())
 			if assert.Error(t, err) {
-				assert.IsType(t, storage.ErrNotFound{}, err)
+				assert.Equal(t, storage.ErrNotFound, err)
 			}
 		})
 
 		t.Run("BlockByHeight", func(t *testing.T) {
 			_, err := store.BlockByHeight(block1.Height)
 			if assert.Error(t, err) {
-				assert.IsType(t, storage.ErrNotFound{}, err)
+				assert.Equal(t, storage.ErrNotFound, err)
 			}
 		})
 
 		t.Run("LatestBlock", func(t *testing.T) {
 			_, err := store.LatestBlock()
 			if assert.Error(t, err) {
-				assert.IsType(t, storage.ErrNotFound{}, err)
+				assert.Equal(t, storage.ErrNotFound, err)
 			}
 		})
 	})
@@ -108,7 +108,7 @@ func TestTransactions(t *testing.T) {
 	t.Run("should return error for not found", func(t *testing.T) {
 		_, err := store.TransactionByID(tx.ID())
 		if assert.Error(t, err) {
-			assert.IsType(t, storage.ErrNotFound{}, err)
+			assert.Equal(t, storage.ErrNotFound, err)
 		}
 	})
 
@@ -138,7 +138,7 @@ func TestTransactionResults(t *testing.T) {
 
 		_, err := store.TransactionResultByID(txID)
 		if assert.Error(t, err) {
-			assert.IsType(t, storage.ErrNotFound{}, err)
+			assert.Equal(t, storage.ErrNotFound, err)
 		}
 	})
 
