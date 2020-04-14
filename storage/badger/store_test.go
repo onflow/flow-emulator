@@ -7,11 +7,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/dapperlabs/flow-go-sdk"
 
 	"github.com/dapperlabs/flow-emulator/storage"
 	"github.com/dapperlabs/flow-emulator/storage/badger"
@@ -37,21 +36,21 @@ func TestBlocks(t *testing.T) {
 		t.Run("BlockByID", func(t *testing.T) {
 			_, err := store.BlockByID(test.IdentifierGenerator().New())
 			if assert.Error(t, err) {
-				assert.IsType(t, storage.ErrNotFound{}, err)
+				assert.Equal(t, storage.ErrNotFound, err)
 			}
 		})
 
 		t.Run("BlockByHeight", func(t *testing.T) {
 			_, err := store.BlockByHeight(block1.Height)
 			if assert.Error(t, err) {
-				assert.IsType(t, storage.ErrNotFound{}, err)
+				assert.Equal(t, storage.ErrNotFound, err)
 			}
 		})
 
 		t.Run("LatestBlock", func(t *testing.T) {
 			_, err := store.LatestBlock()
 			if assert.Error(t, err) {
-				assert.IsType(t, storage.ErrNotFound{}, err)
+				assert.Equal(t, storage.ErrNotFound, err)
 			}
 		})
 	})
@@ -108,7 +107,7 @@ func TestTransactions(t *testing.T) {
 	t.Run("should return error for not found", func(t *testing.T) {
 		_, err := store.TransactionByID(tx.ID())
 		if assert.Error(t, err) {
-			assert.IsType(t, storage.ErrNotFound{}, err)
+			assert.Equal(t, storage.ErrNotFound, err)
 		}
 	})
 
@@ -138,7 +137,7 @@ func TestTransactionResults(t *testing.T) {
 
 		_, err := store.TransactionResultByID(txID)
 		if assert.Error(t, err) {
-			assert.IsType(t, storage.ErrNotFound{}, err)
+			assert.Equal(t, storage.ErrNotFound, err)
 		}
 	})
 
@@ -246,7 +245,7 @@ func TestLedger(t *testing.T) {
 	})
 }
 
-func TestEvents(t *testing.T) {
+func TestInsertEvents(t *testing.T) {
 	store, dir := setupStore(t)
 	defer func() {
 		require.Nil(t, store.Close())
@@ -261,88 +260,85 @@ func TestEvents(t *testing.T) {
 		assert.NoError(t, err)
 
 		t.Run("should be able to get inserted events", func(t *testing.T) {
-			gotEvents, err := store.RetrieveEvents("", blockHeight, blockHeight)
+			gotEvents, err := store.EventsByHeight(blockHeight, "")
 			assert.NoError(t, err)
 			assert.Equal(t, events, gotEvents)
 		})
 	})
+}
+func TestEventsByHeight(t *testing.T) {
+	store, dir := setupStore(t)
+	defer func() {
+		require.Nil(t, store.Close())
+		require.Nil(t, os.RemoveAll(dir))
+	}()
 
-	t.Run("should be able to insert many events", func(t *testing.T) {
-		// block 1 will have 1 event type=1
-		// block 2 will have 2 events, types=1,2
-		// and so on...
-		eventsByBlock := make(map[uint64][]flow.Event)
-		for i := 1; i <= 10; i++ {
-			var events []flow.Event
-			for j := 1; j <= i; j++ {
-				event := unittest.EventFixture(func(e *flow.Event) {
-					e.Type = fmt.Sprintf("%d", j)
-				})
-				events = append(events, event)
-			}
-			eventsByBlock[uint64(i)] = events
-			err := store.InsertEvents(uint64(i), events)
-			assert.NoError(t, err)
+	var (
+		nonEmptyBlockHeight    uint64 = 1
+		emptyBlockHeight       uint64 = 2
+		nonExistentBlockHeight uint64 = 3
+
+		allEvents = make([]flow.Event, 10)
+		eventsA   = make([]flow.Event, 0, 5)
+		eventsB   = make([]flow.Event, 0, 5)
+	)
+
+	for i, _ := range allEvents {
+		event := unittest.EventFixture()
+		event.TransactionIndex = i
+		event.EventIndex = i * 2
+
+		// interleave events of both types
+		if i%2 == 0 {
+			event.Type = "A"
+			eventsA = append(eventsA, event)
+		} else {
+			event.Type = "B"
+			eventsB = append(eventsB, event)
 		}
 
-		t.Run("should be able to query by block", func(t *testing.T) {
-			t.Run("block 1", func(t *testing.T) {
-				gotEvents, err := store.RetrieveEvents("", 1, 1)
-				assert.NoError(t, err)
-				assert.Equal(t, eventsByBlock[1], gotEvents)
-			})
+		allEvents[i] = event
+	}
 
-			t.Run("block 2", func(t *testing.T) {
-				gotEvents, err := store.RetrieveEvents("", 2, 2)
-				assert.NoError(t, err)
-				assert.Equal(t, eventsByBlock[2], gotEvents)
-			})
+	err := store.InsertEvents(nonEmptyBlockHeight, allEvents)
+	assert.NoError(t, err)
+
+	err = store.InsertEvents(emptyBlockHeight, nil)
+	assert.NoError(t, err)
+
+	t.Run("should be able to query by block", func(t *testing.T) {
+		t.Run("non-empty block", func(t *testing.T) {
+			events, err := store.EventsByHeight(nonEmptyBlockHeight, "")
+			assert.NoError(t, err)
+			assert.Equal(t, allEvents, events)
 		})
 
-		t.Run("should be able to query by block interval", func(t *testing.T) {
-			t.Run("block 1->2", func(t *testing.T) {
-				gotEvents, err := store.RetrieveEvents("", 1, 2)
-				assert.NoError(t, err)
-				assert.Equal(t, append(eventsByBlock[1], eventsByBlock[2]...), gotEvents)
-			})
-
-			t.Run("block 5->10", func(t *testing.T) {
-				gotEvents, err := store.RetrieveEvents("", 5, 10)
-				assert.NoError(t, err)
-
-				var expectedEvents []flow.Event
-				for i := 5; i <= 10; i++ {
-					expectedEvents = append(expectedEvents, eventsByBlock[uint64(i)]...)
-				}
-				assert.Equal(t, expectedEvents, gotEvents)
-			})
+		t.Run("empty block", func(t *testing.T) {
+			events, err := store.EventsByHeight(emptyBlockHeight, "")
+			assert.NoError(t, err)
+			assert.Empty(t, events)
 		})
 
-		t.Run("should be able to query by event type", func(t *testing.T) {
-			t.Run("type=1, block=1", func(t *testing.T) {
-				// should be one event type=1 in block 1
-				gotEvents, err := store.RetrieveEvents("1", 1, 1)
-				assert.NoError(t, err)
-				assert.Len(t, gotEvents, 1)
-				assert.Equal(t, "1", gotEvents[0].Type)
-			})
+		t.Run("non-existent block", func(t *testing.T) {
+			events, err := store.EventsByHeight(nonExistentBlockHeight, "")
+			assert.NoError(t, err)
+			assert.Empty(t, events)
+		})
+	})
 
-			t.Run("type=1, block=1->10", func(t *testing.T) {
-				// should be 10 events type=1 in Blocks 1->10
-				gotEvents, err := store.RetrieveEvents("1", 1, 10)
-				assert.NoError(t, err)
-				assert.Len(t, gotEvents, 10)
-				for _, event := range gotEvents {
-					assert.Equal(t, "1", event.Type)
-				}
-			})
+	t.Run("should be able to query by event type", func(t *testing.T) {
+		t.Run("type=A, block=1", func(t *testing.T) {
+			// should be one event type=1 in block 1
+			events, err := store.EventsByHeight(nonEmptyBlockHeight, "A")
+			assert.NoError(t, err)
+			assert.Equal(t, eventsA, events)
+		})
 
-			t.Run("type=2, block=1", func(t *testing.T) {
-				// should be 0 type=2 events here
-				gotEvents, err := store.RetrieveEvents("2", 1, 1)
-				assert.NoError(t, err)
-				assert.Len(t, gotEvents, 0)
-			})
+		t.Run("type=B, block=1", func(t *testing.T) {
+			// should be 0 type=2 events here
+			events, err := store.EventsByHeight(nonEmptyBlockHeight, "B")
+			assert.NoError(t, err)
+			assert.Equal(t, eventsB, events)
 		})
 	})
 }
@@ -387,7 +383,7 @@ func TestPersistence(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, tx.ID(), gotTx.ID())
 
-	gotEvents, err := store.RetrieveEvents("", block.Height, block.Height)
+	gotEvents, err := store.EventsByHeight(block.Height, "")
 	assert.NoError(t, err)
 	assert.Equal(t, events, gotEvents)
 

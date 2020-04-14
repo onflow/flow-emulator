@@ -1,6 +1,7 @@
 package badger
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/dapperlabs/flow-go-sdk"
@@ -12,7 +13,7 @@ const (
 	transactionKeyPrefix       = "transaction_by_id"
 	transactionResultKeyPrefix = "transaction_result_by_id"
 	ledgerKeyPrefix            = "ledger_by_block_height" // TODO remove
-	eventsKeyPrefix            = "events_by_block_height"
+	eventKeyPrefix             = "event_by_block_height"
 	ledgerChangelogKeyPrefix   = "ledger_changelog_by_register_id"
 	ledgerValueKeyPrefix       = "ledger_value_by_block_height_register_id"
 )
@@ -45,8 +46,28 @@ func transactionResultKey(txID flow.Identifier) []byte {
 	return []byte(fmt.Sprintf("%s-%x", transactionResultKeyPrefix, txID))
 }
 
-func eventsKey(blockHeight uint64) []byte {
-	return []byte(fmt.Sprintf("%s-%032d", eventsKeyPrefix, blockHeight))
+func eventKey(blockHeight uint64, txIndex, eventIndex int, eventType string) []byte {
+	return []byte(fmt.Sprintf(
+		"%s-%032d-%032d-%032d-%s",
+		eventKeyPrefix,
+		blockHeight,
+		txIndex,
+		eventIndex,
+		eventType,
+	))
+}
+
+func eventKeyBlockPrefix(blockHeight uint64) []byte {
+	return []byte(fmt.Sprintf(
+		"%s-%032d",
+		eventKeyPrefix,
+		blockHeight,
+	))
+}
+
+func eventKeyHasType(key []byte, eventType []byte) bool {
+	// event type is at the end of the key, so we can simply compare suffixes
+	return bytes.HasSuffix(key, eventType)
 }
 
 // TODO remove this
@@ -60,13 +81,6 @@ func ledgerChangelogKey(registerID string) []byte {
 
 func ledgerValueKey(registerID string, blockHeight uint64) []byte {
 	return []byte(fmt.Sprintf("%s-%s-%032d", ledgerValueKeyPrefix, registerID, blockHeight))
-}
-
-// blockHeightFromEventsKey recovers the block height from an event key.
-func blockHeightFromEventsKey(key []byte) uint64 {
-	var blockHeight uint64
-	_, _ = fmt.Sscanf(string(key), eventsKeyPrefix+"-%032d", &blockHeight)
-	return blockHeight
 }
 
 // registerIDFromLedgerChangelogKey recovers the register ID from a ledger

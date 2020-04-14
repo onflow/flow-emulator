@@ -231,7 +231,7 @@ func TestCreateAccount(t *testing.T) {
 		block, err := b.CommitBlock()
 		require.NoError(t, err)
 
-		events, err := b.GetEvents(flow.EventAccountCreated, block.Height, block.Height)
+		events, err := b.GetEventsByHeight(block.Height, flow.EventAccountCreated)
 		require.NoError(t, err)
 		require.Len(t, events, 1)
 

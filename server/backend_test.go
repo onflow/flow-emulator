@@ -169,7 +169,7 @@ func TestBackend(t *testing.T) {
 	t.Run("GetEvents fails with wrong block heights", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
 
 		api.EXPECT().
-			GetEvents(gomock.Any(), gomock.Any(), gomock.Any()).
+			GetEventsByHeight(gomock.Any(), gomock.Any()).
 			Return([]flow.Event{}, nil).
 			Times(0)
 
@@ -188,12 +188,21 @@ func TestBackend(t *testing.T) {
 	}))
 
 	t.Run("GetEvents fails if blockchain returns error", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+		startBlock := types.Block{
+			Height: 10,
+		}
+
 		api.EXPECT().
-			GetEvents(gomock.Any(), gomock.Any(), gomock.Any()).
+			GetBlockByHeight(startBlock.Height).
+			Return(&startBlock, nil).
+			Times(1)
+
+		api.EXPECT().
+			GetEventsByHeight(startBlock.Height, gomock.Any()).
 			Return(nil, errors.New("dummy")).
 			Times(1)
 
-		_, err := backend.GetEventsForHeightRange(context.Background(), &access.GetEventsForHeightRangeRequest{})
+		_, err := backend.GetEventsForHeightRange(context.Background(), &access.GetEventsForHeightRangeRequest{StartHeight: 10, EndHeight: 11})
 
 		if assert.Error(t, err) {
 			grpcError, ok := status.FromError(err)
@@ -313,7 +322,7 @@ func TestBackend(t *testing.T) {
 
 	t.Run("GetTransaction tx does not exists", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
 
-		bytes := []byte{2, 2, 2, 2}
+		id := []byte{2, 2, 2, 2}
 
 		api.EXPECT().
 			GetTransaction(gomock.Any()).
@@ -321,7 +330,7 @@ func TestBackend(t *testing.T) {
 			Times(1)
 
 		response, err := backend.GetTransaction(context.Background(), &access.GetTransactionRequest{
-			Id: bytes,
+			Id: id,
 		})
 
 		assert.Error(t, err)

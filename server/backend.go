@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/logrusorgru/aurora"
@@ -176,12 +177,12 @@ func (b *Backend) GetTransaction(ctx context.Context, req *access.GetTransaction
 
 	tx, err := b.blockchain.GetTransaction(id)
 	if err != nil {
-		switch err.(type) {
-		case *emulator.ErrTransactionNotFound:
+		var notFoundErr emulator.ErrNotFound
+		if errors.As(err, &notFoundErr) {
 			return nil, status.Error(codes.NotFound, err.Error())
-		default:
-			return nil, status.Error(codes.Internal, err.Error())
 		}
+
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	b.logger.
@@ -219,12 +220,12 @@ func (b *Backend) GetAccount(ctx context.Context, req *access.GetAccountRequest)
 	address := flow.BytesToAddress(req.GetAddress())
 	account, err := b.blockchain.GetAccount(address)
 	if err != nil {
-		switch err.(type) {
-		case *emulator.ErrAccountNotFound:
+		var notFoundErr emulator.ErrNotFound
+		if errors.As(err, &notFoundErr) {
 			return nil, status.Error(codes.NotFound, err.Error())
-		default:
-			return nil, status.Error(codes.Internal, err.Error())
 		}
+
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	b.logger.
@@ -277,32 +278,59 @@ func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEv
 		return nil, status.Error(codes.InvalidArgument, "invalid query: start block must be <= end block")
 	}
 
-	events, err := b.blockchain.GetEvents(req.GetType(), req.GetStartHeight(), req.GetEndHeight())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+	startHeight := req.GetStartHeight()
+	endHeight := req.GetEndHeight()
+	eventType := req.GetType()
+
+	results := make([]*access.EventsResponse_Result, 0)
+	eventCount := 0
+
+	for height := startHeight; height <= endHeight; height++ {
+		block, err := b.blockchain.GetBlockByHeight(height)
+		if err != nil {
+			var notFoundErr emulator.ErrNotFound
+			if errors.As(err, &notFoundErr) {
+				break
+			}
+
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+
+		events, err := b.blockchain.GetEventsByHeight(height, eventType)
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+
+		eventMessages := make([]*entities.Event, len(events))
+		for i, event := range events {
+			eventMessages[i], err = convert.EventToMessage(event)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		result := access.EventsResponse_Result{
+			BlockId:     block.ID().Bytes(),
+			BlockHeight: block.Height,
+			Events:      eventMessages,
+		}
+
+		results = append(results, &result)
+		eventCount += len(events)
 	}
 
 	b.logger.WithFields(logrus.Fields{
 		"eventType":   req.Type,
 		"startHeight": req.StartHeight,
 		"endHeight":   req.EndHeight,
-		"results":     len(events),
+		"eventCount":  eventCount,
 	}).Debugf("🎁  GetEvents called")
 
-	eventMessages := make([]*entities.Event, len(events))
-	for i, event := range events {
-		eventMessages[i], err = convert.EventToMessage(event)
-		if err != nil {
-			return nil, err
-		}
+	res := access.EventsResponse{
+		Results: results,
 	}
 
-	// TODO: update events response
-	// res := access.EventsResponse{
-	// 	Events: eventMessages,
-	// }
-
-	return nil, nil
+	return &res, nil
 }
 
 // GetEventsForBlockIDs returns events matching a set of block IDs.
