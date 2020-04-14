@@ -556,6 +556,6 @@ func TestGetTransactionResult(t *testing.T) {
 
 	assert.Equal(t, tx.ID(), event.TransactionID)
 	assert.Equal(t, eventType, event.Type)
-	assert.Equal(t, uint(0), event.Index)
+	assert.Equal(t, 0, event.EventIndex)
 	assert.Equal(t, cadence.NewInt(2), event.Value.Fields[0])
 }
