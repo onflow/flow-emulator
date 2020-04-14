@@ -58,15 +58,15 @@ func TestEncodeBlock(t *testing.T) {
 	assert.Equal(t, block.TransactionIDs, decodedBlock.TransactionIDs)
 }
 
-func TestEncodeEventList(t *testing.T) {
-	eventList := []flow.Event{unittest.EventFixture(func(e *flow.Event) {})}
-	data, err := encodeEvents(eventList)
+func TestEncodeEvent(t *testing.T) {
+	event := unittest.EventFixture()
+	data, err := encodeEvent(event)
 	require.Nil(t, err)
 
-	var decodedEventList []flow.Event
-	err = decodeEvents(&decodedEventList, data)
+	var decodedEvent flow.Event
+	err = decodeEvent(&decodedEvent, data)
 	require.Nil(t, err)
-	assert.Equal(t, eventList, decodedEventList)
+	assert.Equal(t, event, decodedEvent)
 }
 
 func TestEncodeChangelist(t *testing.T) {

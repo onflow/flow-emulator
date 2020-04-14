@@ -11,7 +11,7 @@ require (
 	github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200414061610-169345272290
 	github.com/dave/jennifer v1.4.0 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
-	github.com/dgraph-io/badger v1.6.0
+	github.com/dgraph-io/badger/v2 v2.0.2
 	github.com/golang/mock v1.4.3
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.12.0

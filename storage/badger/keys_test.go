@@ -37,24 +37,19 @@ func TestKeyOrdering(t *testing.T) {
 		}
 	})
 
-	t.Run("events key", func(t *testing.T) {
+	t.Run("event key", func(t *testing.T) {
 		var keys [][]byte
 		for _, num := range nums {
-			keys = append(keys, eventsKey(num))
+			for i := 0; i < 3; i++ {
+				for j := 0; j < 3; j++ {
+					keys = append(keys, eventKey(num, i, j, "foo"))
+				}
+			}
 		}
+
 		for i := 0; i < len(keys)-1; i++ {
 			// lower index keys should be considered less
 			assert.Equal(t, -1, bytes.Compare(keys[i], keys[i+1]))
 		}
 	})
-}
-
-func TestBlockHeightFromEventsKey(t *testing.T) {
-	nums := []uint64{0, 1, 2, 3, 10, 29, 50, 99, 100, 1000, 1234, 100000000, 19825983621301235}
-
-	for _, num := range nums {
-		key := eventsKey(num)
-		recoveredBlockHeight := blockHeightFromEventsKey(key)
-		assert.Equal(t, num, recoveredBlockHeight)
-	}
 }

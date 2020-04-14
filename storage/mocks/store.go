@@ -78,6 +78,21 @@ func (mr *MockStoreMockRecorder) CommitBlock(arg0, arg1, arg2, arg3, arg4 interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitBlock", reflect.TypeOf((*MockStore)(nil).CommitBlock), arg0, arg1, arg2, arg3, arg4)
 }
 
+// EventsByHeight mocks base method
+func (m *MockStore) EventsByHeight(arg0 string, arg1 uint64) ([]flow_go_sdk.Event, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EventsByHeight", arg0, arg1)
+	ret0, _ := ret[0].([]flow_go_sdk.Event)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EventsByHeight indicates an expected call of EventsByHeight
+func (mr *MockStoreMockRecorder) EventsByHeight(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EventsByHeight", reflect.TypeOf((*MockStore)(nil).EventsByHeight), arg0, arg1)
+}
+
 // InsertBlock mocks base method
 func (m *MockStore) InsertBlock(arg0 types.Block) error {
 	m.ctrl.T.Helper()
@@ -119,21 +134,6 @@ func (m *MockStore) LedgerViewByHeight(arg0 uint64) *types.LedgerView {
 func (mr *MockStoreMockRecorder) LedgerViewByHeight(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LedgerViewByHeight", reflect.TypeOf((*MockStore)(nil).LedgerViewByHeight), arg0)
-}
-
-// RetrieveEvents mocks base method
-func (m *MockStore) RetrieveEvents(arg0 string, arg1, arg2 uint64) ([]flow_go_sdk.Event, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RetrieveEvents", arg0, arg1, arg2)
-	ret0, _ := ret[0].([]flow_go_sdk.Event)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// RetrieveEvents indicates an expected call of RetrieveEvents
-func (mr *MockStoreMockRecorder) RetrieveEvents(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveEvents", reflect.TypeOf((*MockStore)(nil).RetrieveEvents), arg0, arg1, arg2)
 }
 
 // TransactionByID mocks base method

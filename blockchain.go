@@ -61,7 +61,7 @@ type BlockchainAPI interface {
 	GetTransactionResult(txID flow.Identifier) (*flow.TransactionResult, error)
 	GetAccount(address flow.Address) (*flow.Account, error)
 	GetAccountAtBlock(address flow.Address, blockHeight uint64) (*flow.Account, error)
-	GetEvents(eventType string, startBlock, endBlock uint64) ([]flow.Event, error)
+	GetEventsByHeight(eventType string, blockHeight uint64) ([]flow.Event, error)
 	ExecuteScript(script []byte) (ScriptResult, error)
 	ExecuteScriptAtBlock(script []byte, blockHeight uint64) (ScriptResult, error)
 	RootAccountAddress() flow.Address
@@ -325,9 +325,9 @@ func getAccount(ledgerView *types.LedgerView, address flow.Address) *flow.Accoun
 	return runtimeCtx.GetAccount(address)
 }
 
-// GetEvents returns events matching a query.
-func (b *Blockchain) GetEvents(eventType string, startBlock, endBlock uint64) ([]flow.Event, error) {
-	return b.storage.RetrieveEvents(eventType, startBlock, endBlock)
+// GetEventsByHeight returns the events in the block at the given height, optionally filtered by type.
+func (b *Blockchain) GetEventsByHeight(eventType string, blockHeight uint64) ([]flow.Event, error) {
+	return b.storage.EventsByHeight(eventType, blockHeight)
 }
 
 // AddTransaction validates a transaction and adds it to the current pending block.
