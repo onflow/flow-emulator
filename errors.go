@@ -1,7 +1,6 @@
 package emulator
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -9,14 +8,59 @@ import (
 	"github.com/dapperlabs/flow-go/crypto"
 )
 
-// ErrBlockNotFound indicates that the block could not be found.
-var ErrBlockNotFound = errors.New("could not find block")
+type ErrNotFound interface {
+	isNotFoundError()
+}
 
-// ErrTransactionNotFound indicates that the transaction could be found.
-var ErrTransactionNotFound = errors.New("could not find transaction")
+type ErrBlockNotFound interface {
+	isBlockNotFoundError()
+}
+
+// ErrBlockNotFoundByHeight indicates that a block could not be found at the specified height.
+type ErrBlockNotFoundByHeight struct {
+	Height uint64
+}
+
+func (e *ErrBlockNotFoundByHeight) isNotFoundError()      {}
+func (e *ErrBlockNotFoundByHeight) isBlockNotFoundError() {}
+
+func (e *ErrBlockNotFoundByHeight) Error() string {
+	return fmt.Sprintf("could not find block at height %d", e.Height)
+}
+
+// ErrBlockNotFoundByID indicates that a block with the specified ID could not be found.
+type ErrBlockNotFoundByID struct {
+	ID flow.Identifier
+}
+
+func (e *ErrBlockNotFoundByID) isNotFoundError()      {}
+func (e *ErrBlockNotFoundByID) isBlockNotFoundError() {}
+
+func (e *ErrBlockNotFoundByID) Error() string {
+	return fmt.Sprintf("could not find block with ID %s", e.ID)
+}
+
+// ErrTransactionNotFound indicates that the transaction could not be found.
+type ErrTransactionNotFound struct {
+	ID flow.Identifier
+}
+
+func (e *ErrTransactionNotFound) isNotFoundError() {}
+
+func (e *ErrTransactionNotFound) Error() string {
+	return fmt.Sprintf("could not find transaction with ID %s", e.ID)
+}
 
 // ErrAccountNotFound indicates that the account could not be found.
-var ErrAccountNotFound = errors.New("could not find account")
+type ErrAccountNotFound struct {
+	Address flow.Address
+}
+
+func (e *ErrAccountNotFound) isNotFoundError() {}
+
+func (e *ErrAccountNotFound) Error() string {
+	return fmt.Sprintf("could not find account with address %s", e.Address)
+}
 
 // ErrDuplicateTransaction indicates that a transaction has already been submitted.
 type ErrDuplicateTransaction struct {
