@@ -353,7 +353,7 @@ func (b *Blockchain) AddTransaction(tx flow.Transaction) error {
 		return fmt.Errorf("failed to check storage for transaction %w", err)
 	}
 
-	if tx.ProposalKey() == nil {
+	if tx.ProposalKey == (flow.ProposalKey{}) {
 		return &ErrInvalidTransaction{TxID: tx.ID(), MissingFields: []string{"proposal_key"}}
 	}
 
@@ -580,37 +580,84 @@ func (b *Blockchain) LastCreatedAccount() flow.Account {
 //
 // An error is returned if any of the expected signatures are invalid or missing.
 func (b *Blockchain) verifySignatures(tx flow.Transaction) error {
-	payer := tx.Payer()
-	if payer == nil {
+	if tx.Payer == flow.ZeroAddress {
 		// TODO: add error type for missing payer
 		return fmt.Errorf("missing payer signature")
 	}
 
-	accountWeights := make(map[flow.Address]int)
-
-	payloadMessage := tx.Payload.Message()
-	containerMessage := tx.Message()
-
-	for _, txSig := range tx.Signatures {
-		accountPublicKey, err := b.verifyAccountSignature(txSig, payloadMessage, containerMessage)
-		if err != nil {
-			return err
-		}
-
-		accountWeights[txSig.Address] += accountPublicKey.Weight
+	payloadWeights, proposalKeyVerifiedInPayload, err := b.aggregateAccountSignatures(
+		tx.PayloadSignatures,
+		tx.PayloadMessage(),
+		tx.ProposalKey,
+	)
+	if err != nil {
+		return err
 	}
 
-	if accountWeights[payer.Address] < keys.PublicKeyWeightThreshold {
-		return &ErrMissingSignature{payer.Address}
+	envelopeWeights, proposalKeyVerifiedInEnvelope, err := b.aggregateAccountSignatures(
+		tx.EnvelopeSignatures,
+		tx.EnvelopeMessage(),
+		tx.ProposalKey,
+	)
+	if err != nil {
+		return err
 	}
 
-	for _, auth := range tx.Authorizers() {
-		if accountWeights[auth.Address] < keys.PublicKeyWeightThreshold {
-			return &ErrMissingSignature{auth.Address}
+	proposalKeyVerified := proposalKeyVerifiedInPayload || proposalKeyVerifiedInEnvelope
+
+	if !proposalKeyVerified {
+		return fmt.Errorf(
+			"missing signature for proposal key (address: %s, key: %d)",
+			tx.ProposalKey.Address,
+			tx.ProposalKey.KeyID,
+		)
+	}
+
+	for _, addr := range tx.Authorizers {
+		// Skip this authorizer if it is also the payer. In the case where an account is
+		// both a PAYER as well as an AUTHORIZER or PROPOSER, that account is required
+		// to sign only the envelope.
+		if addr == tx.Payer {
+			continue
 		}
+
+		if !hasSufficientKeyWeight(payloadWeights, addr) {
+			return &ErrMissingSignature{addr}
+		}
+	}
+
+	if !hasSufficientKeyWeight(envelopeWeights, tx.Payer) {
+		return &ErrMissingSignature{tx.Payer}
 	}
 
 	return nil
+}
+
+func (b *Blockchain) aggregateAccountSignatures(
+	signatures []flow.TransactionSignature,
+	message []byte,
+	proposalKey flow.ProposalKey,
+) (
+	weights map[flow.Address]int,
+	proposalKeyVerified bool,
+	err error,
+) {
+	weights = make(map[flow.Address]int)
+
+	for _, txSig := range signatures {
+		accountKey, err := b.verifyAccountSignature(txSig, message)
+		if err != nil {
+			return nil, false, err
+		}
+
+		if sigIsForProposalKey(txSig, proposalKey) {
+			proposalKeyVerified = true
+		}
+
+		weights[txSig.Address] += accountKey.Weight
+	}
+
+	return
 }
 
 // CreateAccount submits a transaction to create a new account with the given
@@ -628,9 +675,9 @@ func (b *Blockchain) CreateAccount(publicKeys []flow.AccountKey, code []byte) (f
 		SetScript(createAccountScript).
 		SetGasLimit(10).
 		SetProposalKey(rootKey.Address, rootKey.ID, rootKey.SequenceNumber).
-		SetPayer(rootKey.Address, rootKey.ID)
+		SetPayer(rootKey.Address)
 
-	err = tx.SignContainer(rootKey.Address, rootKey.ID, rootKey.Signer())
+	err = tx.SignEnvelope(rootKey.Address, rootKey.ID, rootKey.Signer())
 	if err != nil {
 		return flow.Address{}, err
 	}
@@ -666,45 +713,36 @@ func (b *Blockchain) CreateAccount(publicKeys []flow.AccountKey, code []byte) (f
 // correctly verifies the signature against the given message.
 func (b *Blockchain) verifyAccountSignature(
 	txSig flow.TransactionSignature,
-	payloadMessage []byte,
-	containerMessage []byte,
-) (accountPublicKey flow.AccountKey, err error) {
+	message []byte,
+) (accountKey flow.AccountKey, err error) {
 	account, err := b.getAccount(txSig.Address)
 	if err != nil {
-		return accountPublicKey, &ErrInvalidSignatureAccount{Address: txSig.Address}
-	}
-
-	var message []byte
-
-	switch txSig.Kind {
-	case flow.TransactionSignatureKindPayload:
-		message = payloadMessage
-	case flow.TransactionSignatureKindContainer:
-		message = containerMessage
-	default:
-		// TODO: add proper error and test case for invalid signature kind
-		return accountPublicKey, fmt.Errorf("invalid signature kind %s", txSig.Kind)
+		return accountKey, &ErrInvalidSignatureAccount{Address: txSig.Address}
 	}
 
 	signature := crypto.Signature(txSig.Signature)
 
-	// TODO: account signatures should specify a public key (possibly by index) to avoid this loop
-	for _, accountPublicKey := range account.Keys {
-		hasher, _ := crypto.NewHasher(accountPublicKey.HashAlgo)
-
-		valid, err := accountPublicKey.PublicKey.Verify(signature, message, hasher)
-		if err != nil {
-			continue
-		}
-
-		if valid {
-			return accountPublicKey, nil
-		}
+	if txSig.KeyID < 0 || txSig.KeyID >= len(account.Keys) {
+		return accountKey, &ErrInvalidSignatureAccount{Address: txSig.Address}
 	}
 
-	return accountPublicKey, &ErrInvalidSignaturePublicKey{
-		Account: txSig.Address,
+	accountKey = account.Keys[txSig.KeyID]
+
+	hasher, err := crypto.NewHasher(accountKey.HashAlgo)
+	if err != nil {
+		return accountKey, fmt.Errorf("public key specifies invalid hash algorithm")
 	}
+
+	valid, err := accountKey.PublicKey.Verify(signature, message, hasher)
+	if err != nil {
+		return accountKey, fmt.Errorf("cannot verify public key")
+	}
+
+	if !valid {
+		return accountKey, &ErrInvalidSignaturePublicKey{Account: txSig.Address, KeyID: txSig.KeyID}
+	}
+
+	return accountKey, nil
 }
 
 // handleEvents updates emulator state based on emitted system events.
@@ -741,6 +779,14 @@ func createAccount(ledgerView *types.LedgerView, privateKey flow.AccountPrivateK
 
 	account := runtimeContext.GetAccount(flow.Address(accountAddress))
 	return *account
+}
+
+func sigIsForProposalKey(txSig flow.TransactionSignature, proposalKey flow.ProposalKey) bool {
+	return txSig.Address == proposalKey.Address && txSig.KeyID == proposalKey.KeyID
+}
+
+func hasSufficientKeyWeight(weights map[flow.Address]int, address flow.Address) bool {
+	return weights[address] >= keys.PublicKeyWeightThreshold
 }
 
 func init() {
