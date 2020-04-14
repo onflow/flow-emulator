@@ -225,7 +225,7 @@ func (b *Blockchain) GetBlockByID(id flow.Identifier) (*types.Block, error) {
 	block, err := b.storage.BlockByID(id)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			return nil, ErrBlockNotFound
+			return nil, &ErrBlockNotFoundByID{ID: id}
 		}
 		return nil, &ErrStorage{err}
 	}
@@ -238,7 +238,7 @@ func (b *Blockchain) GetBlockByHeight(height uint64) (*types.Block, error) {
 	block, err := b.storage.BlockByHeight(height)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			return nil, ErrBlockNotFound
+			return nil, &ErrBlockNotFoundByHeight{Height: height}
 		}
 		return nil, err
 	}
@@ -261,7 +261,7 @@ func (b *Blockchain) GetTransaction(txID flow.Identifier) (*flow.Transaction, er
 	tx, err := b.storage.TransactionByID(txID)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			return nil, ErrTransactionNotFound
+			return nil, &ErrTransactionNotFound{ID: txID}
 		}
 		return nil, &ErrStorage{err}
 	}
@@ -311,7 +311,7 @@ func (b *Blockchain) getAccount(address flow.Address) (*flow.Account, error) {
 
 	acct := getAccount(latestLedgerView, address)
 	if acct == nil {
-		return nil, ErrAccountNotFound
+		return nil, &ErrAccountNotFound{Address: address}
 	}
 
 	return acct, nil
