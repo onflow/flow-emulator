@@ -223,25 +223,20 @@ func (s *Store) insertLedgerDelta(blockHeight uint64, delta types.LedgerDelta) e
 	return nil
 }
 
-func (s *Store) RetrieveEvents(eventType string, startBlock, endBlock uint64) ([]flow.Event, error) {
+func (s *Store) EventsByHeight(eventType string, blockHeight uint64) ([]flow.Event, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	var events []flow.Event
-	// Filter by block height first
-	for i := startBlock; i <= endBlock; i++ {
-		if s.eventsByBlockHeight[i] != nil {
-			// Check for empty type, which indicates no type filtering
-			if eventType == "" {
-				events = append(events, s.eventsByBlockHeight[i]...)
-				continue
-			}
+	allEvents := s.eventsByBlockHeight[blockHeight]
 
-			// Otherwise, only add events with matching type
-			for _, event := range s.eventsByBlockHeight[i] {
-				if event.Type == eventType {
-					events = append(events, event)
-				}
+	events := make([]flow.Event, 0)
+
+	for _, event := range allEvents {
+		if eventType == "" {
+			events = append(events, event)
+		} else {
+			if event.Type == eventType {
+				events = append(events, event)
 			}
 		}
 	}

@@ -152,16 +152,16 @@ func decodeLedger(ledger *vm.MapLedger, from []byte) error {
 	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(ledger)
 }
 
-func encodeEvents(events []flow.Event) ([]byte, error) {
+func encodeEvent(event flow.Event) ([]byte, error) {
 	var buf bytes.Buffer
-	if err := gob.NewEncoder(&buf).Encode(&events); err != nil {
+	if err := gob.NewEncoder(&buf).Encode(&event); err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
 }
 
-func decodeEvents(events *[]flow.Event, from []byte) error {
-	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(events)
+func decodeEvent(event *flow.Event, from []byte) error {
+	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(event)
 }
 
 func encodeChangelist(clist changelist) ([]byte, error) {
