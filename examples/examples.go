@@ -62,7 +62,7 @@ func SignAndSubmit(
 	// sign transaction with each signer
 	for i, address := range signingAddresses {
 		signingKey := signingKeys[i]
-		err := tx.SignContainer(address, signingKey.ToAccountKey().ID, signingKey.Signer())
+		err := tx.SignEnvelope(address, signingKey.ToAccountKey().ID, signingKey.Signer())
 		assert.NoError(t, err)
 	}
 
@@ -102,8 +102,8 @@ func setupUsersTokens(
 			SetScript(GenerateCreateTokenScript(tokenAddr, 30)).
 			SetGasLimit(20).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(signingAddresses[i], 0)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(signingAddresses[i])
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
 
@@ -112,8 +112,8 @@ func setupUsersTokens(
 			SetScript(GenerateCreateNFTScript(nftAddr, i+1)).
 			SetGasLimit(20).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(signingAddresses[i], 0)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(signingAddresses[i])
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
 	}
