@@ -21,10 +21,10 @@ func TestExecuteScript(t *testing.T) {
 		SetScript([]byte(addTwoScript)).
 		SetGasLimit(10).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-		SetPayer(b.RootKey().Address, b.RootKey().ID).
-		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
+		SetPayer(b.RootKey().Address).
+		AddAuthorizer(b.RootKey().Address)
 
-	err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
 	callScript := generateGetCounterCountScript(counterAddress, b.RootKey().Address)
