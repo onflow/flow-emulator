@@ -223,7 +223,7 @@ func (s *Store) insertLedgerDelta(blockHeight uint64, delta types.LedgerDelta) e
 	return nil
 }
 
-func (s *Store) EventsByHeight(eventType string, blockHeight uint64) ([]flow.Event, error) {
+func (s *Store) EventsByHeight(blockHeight uint64, eventType string) ([]flow.Event, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
