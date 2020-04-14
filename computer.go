@@ -37,16 +37,15 @@ func newComputer(
 func (c *computer) ExecuteTransaction(ledger *types.LedgerView, tx flow.Transaction) (TransactionResult, error) {
 	runtimeContext := execution.NewRuntimeContext(ledger)
 
-	proposalKey := tx.ProposalKey()
-	if proposalKey == nil {
+	if tx.ProposalKey == (flow.ProposalKey{}) {
 		// TODO: add dedicated error type
 		return TransactionResult{}, fmt.Errorf("missing sequence number")
 	}
 
 	valid, updatedSeqNum, err := runtimeContext.CheckAndIncrementSequenceNumber(
-		proposalKey.Address,
-		proposalKey.KeyID,
-		proposalKey.SequenceNumber,
+		tx.ProposalKey.Address,
+		tx.ProposalKey.KeyID,
+		tx.ProposalKey.SequenceNumber,
 	)
 	if err != nil {
 		return TransactionResult{}, err
@@ -59,7 +58,7 @@ func (c *computer) ExecuteTransaction(ledger *types.LedgerView, tx flow.Transact
 			Error: fmt.Errorf(
 				"invalid sequence number: expected %d, got %d",
 				updatedSeqNum,
-				proposalKey.SequenceNumber,
+				tx.ProposalKey.SequenceNumber,
 			),
 			Logs:   nil,
 			Events: nil,
@@ -70,17 +69,16 @@ func (c *computer) ExecuteTransaction(ledger *types.LedgerView, tx flow.Transact
 		return c.runtime.ParseAndCheckProgram(code, runtimeContext, location)
 	})
 
-	authorizers := tx.Authorizers()
-	signers := make([]flow.Address, len(authorizers))
-	for i, auth := range authorizers {
-		signers[i] = auth.Address
+	signers := make([]flow.Address, len(tx.Authorizers))
+	for i, addr := range tx.Authorizers {
+		signers[i] = addr
 	}
 
 	runtimeContext.SetSigningAccounts(signers)
 
 	location := runtime.TransactionLocation(tx.ID().Bytes())
 
-	executionErr := c.runtime.ExecuteTransaction(tx.Script(), runtimeContext, location)
+	executionErr := c.runtime.ExecuteTransaction(tx.Script, runtimeContext, location)
 
 	convertedEvents, err := convertEvents(runtimeContext.Events(), tx.ID())
 	if err != nil {
@@ -162,8 +160,10 @@ func convertEvents(events []runtime.Event, txID flow.Identifier) ([]flow.Event, 
 		flowEvents[i] = flow.Event{
 			Type:          string(event.Type.ID()),
 			TransactionID: txID,
-			Index:         uint(i),
-			Value:         cadence.ConvertEvent(event),
+			// TODO: include transaction index field
+			// TransactionIndex: txIndex,
+			EventIndex: i,
+			Value:      cadence.ConvertEvent(event),
 		}
 	}
 
