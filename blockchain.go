@@ -588,10 +588,16 @@ func (b *Blockchain) verifySignatures(tx flow.Transaction) error {
 	payloadWeights := make(map[flow.Address]int)
 	payloadMessage := tx.PayloadMessage()
 
+	proposalKeyVerified := false
+
 	for _, txSig := range tx.PayloadSignatures {
 		accountKey, err := b.verifyAccountSignature(txSig, payloadMessage)
 		if err != nil {
 			return err
+		}
+
+		if txSig.Address == tx.ProposalKey.Address && accountKey.ID == tx.ProposalKey.KeyID {
+			proposalKeyVerified = true
 		}
 
 		payloadWeights[txSig.Address] += accountKey.Weight
@@ -606,10 +612,29 @@ func (b *Blockchain) verifySignatures(tx flow.Transaction) error {
 			return err
 		}
 
+		if txSig.Address == tx.ProposalKey.Address && accountKey.ID == tx.ProposalKey.KeyID {
+			proposalKeyVerified = true
+		}
+
 		envelopeWeights[txSig.Address] += accountKey.Weight
 	}
 
+	if !proposalKeyVerified {
+		return fmt.Errorf(
+			"missing signature for proposal key (address: %s, key: %d)",
+			tx.ProposalKey.Address,
+			tx.ProposalKey.KeyID,
+		)
+	}
+
 	for _, auth := range tx.Authorizers {
+		// Skip this authorizer if it is also the payer. In the case where an account is
+		// both a PAYER as well as an AUTHORIZER or PROPOSER, that account is required
+		// to sign only the envelope.
+		if auth == tx.Payer {
+			continue
+		}
+
 		if payloadWeights[auth] < keys.PublicKeyWeightThreshold {
 			return &ErrMissingSignature{auth}
 		}
@@ -676,31 +701,35 @@ func (b *Blockchain) CreateAccount(publicKeys []flow.AccountKey, code []byte) (f
 func (b *Blockchain) verifyAccountSignature(
 	txSig flow.TransactionSignature,
 	message []byte,
-) (accountPublicKey flow.AccountKey, err error) {
+) (accountKey flow.AccountKey, err error) {
 	account, err := b.getAccount(txSig.Address)
 	if err != nil {
-		return accountPublicKey, &ErrInvalidSignatureAccount{Address: txSig.Address}
+		return accountKey, &ErrInvalidSignatureAccount{Address: txSig.Address}
 	}
 
 	signature := crypto.Signature(txSig.Signature)
 
-	// TODO: account signatures should specify a public key (possibly by index) to avoid this loop
-	for _, accountPublicKey := range account.Keys {
-		hasher, _ := crypto.NewHasher(accountPublicKey.HashAlgo)
-
-		valid, err := accountPublicKey.PublicKey.Verify(signature, message, hasher)
-		if err != nil {
-			continue
-		}
-
-		if valid {
-			return accountPublicKey, nil
-		}
+	if txSig.KeyID < 0 || txSig.KeyID >= len(account.Keys) {
+		return accountKey, &ErrInvalidSignatureAccount{Address: txSig.Address}
 	}
 
-	return accountPublicKey, &ErrInvalidSignaturePublicKey{
-		Account: txSig.Address,
+	accountKey = account.Keys[txSig.KeyID]
+
+	hasher, err := crypto.NewHasher(accountKey.HashAlgo)
+	if err != nil {
+		return accountKey, fmt.Errorf("public key specifies invalid hash algorithm")
 	}
+
+	valid, err := accountKey.PublicKey.Verify(signature, message, hasher)
+	if err != nil {
+		return accountKey, fmt.Errorf("cannot verify public key")
+	}
+
+	if !valid {
+		return accountKey, &ErrInvalidSignaturePublicKey{Account: txSig.Address}
+	}
+
+	return accountKey, nil
 }
 
 // handleEvents updates emulator state based on emitted system events.
