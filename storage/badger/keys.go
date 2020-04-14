@@ -1,6 +1,7 @@
 package badger
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/dapperlabs/flow-go-sdk"
@@ -62,6 +63,11 @@ func eventKeyBlockPrefix(blockHeight uint64) []byte {
 		eventKeyPrefix,
 		blockHeight,
 	))
+}
+
+func eventKeyHasType(key []byte, eventType []byte) bool {
+	// event type is at the end of the key, so we can simply compare suffixes
+	return bytes.HasSuffix(key, eventType)
 }
 
 // TODO remove this

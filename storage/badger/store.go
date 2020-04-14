@@ -1,7 +1,6 @@
 package badger
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 
@@ -339,8 +338,6 @@ func (s *Store) insertLedgerDelta(blockHeight uint64, delta types.LedgerDelta) f
 		}
 		return nil
 	}
-
-	return nil
 }
 
 func (s *Store) EventsByHeight(blockHeight uint64, eventType string) (events []flow.Event, err error) {
@@ -348,21 +345,22 @@ func (s *Store) EventsByHeight(blockHeight uint64, eventType string) (events []f
 	iterOpts := badger.DefaultIteratorOptions
 	iterOpts.Prefix = eventKeyBlockPrefix(blockHeight)
 
-	eventTypeSuffix := []byte(eventType)
+	eventTypeBytes := []byte(eventType)
 
 	err = s.db.View(func(txn *badger.Txn) error {
 		iter := txn.NewIterator(iterOpts)
 		defer iter.Close()
 
+		// start from lowest possible event key for this block
 		startKey := eventKey(blockHeight, 0, 0, "")
 
-		// seek the iterator to the start block before the loop
+		// iteration happens in byte-wise lexicographical sorting order
 		for iter.Seek(startKey); iter.Valid(); iter.Next() {
 			item := iter.Item()
 
 			// filter by event type if specified
 			if eventType != "" {
-				if !bytes.HasSuffix(item.Key(), eventTypeSuffix) {
+				if !eventKeyHasType(item.Key(), eventTypeBytes) {
 					continue
 				}
 			}
@@ -386,6 +384,7 @@ func (s *Store) EventsByHeight(blockHeight uint64, eventType string) (events []f
 
 		return nil
 	})
+
 	return
 }
 
