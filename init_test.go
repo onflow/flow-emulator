@@ -68,10 +68,10 @@ func TestInitialization(t *testing.T) {
 			SetScript([]byte(script)).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(b.RootKey().Address)
 
-		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
