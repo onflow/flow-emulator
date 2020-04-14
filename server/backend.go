@@ -281,7 +281,7 @@ func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEv
 	eventType := req.GetType()
 
 	results := make([]*access.EventsResponse_Result, 0)
-	eventsCount := 0
+	eventCount := 0
 
 	for height := startHeight; height <= endHeight; height++ {
 		block, err := b.blockchain.GetBlockByHeight(height)
@@ -293,7 +293,6 @@ func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEv
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 
-		// TODO: update GetEvents to accept single height argument
 		events, err := b.blockchain.GetEventsByHeight(height, eventType)
 		if err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
@@ -314,14 +313,14 @@ func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEv
 		}
 
 		results = append(results, &result)
-		eventsCount += len(events)
+		eventCount += len(events)
 	}
 
 	b.logger.WithFields(logrus.Fields{
 		"eventType":   req.Type,
 		"startHeight": req.StartHeight,
 		"endHeight":   req.EndHeight,
-		"eventsCount": eventsCount,
+		"eventCount":  eventCount,
 	}).Debugf("🎁  GetEvents called")
 
 	res := access.EventsResponse{
