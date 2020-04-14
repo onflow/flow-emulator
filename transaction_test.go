@@ -361,7 +361,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(script).
 			SetGasLimit(10).
-			SetProposalKey(accountAddressA, 0, 0).
+			SetProposalKey(accountAddressA, 1, 0).
 			SetPayer(accountAddressA).
 			AddAuthorizer(accountAddressA)
 
@@ -370,7 +370,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 			assert.NoError(t, err)
 
 			err = b.AddTransaction(*tx)
-			assert.IsType(t, err, &emulator.ErrMissingSignature{})
+			assert.IsType(t, &emulator.ErrMissingSignature{}, err)
 		})
 
 		t.Run("SufficientKeyWeight", func(t *testing.T) {
