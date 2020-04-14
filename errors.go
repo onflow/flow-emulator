@@ -61,10 +61,11 @@ func (e *ErrMissingSignature) Error() string {
 // ErrInvalidSignaturePublicKey indicates that signature uses an invalid public key.
 type ErrInvalidSignaturePublicKey struct {
 	Account flow.Address
+	KeyID   int
 }
 
 func (e *ErrInvalidSignaturePublicKey) Error() string {
-	return fmt.Sprintf("Public key used for signing does not exist on account %s", e.Account)
+	return fmt.Sprintf("invalid signature for key %d on account %s", e.KeyID, e.Account)
 }
 
 // ErrInvalidSignatureAccount indicates that a signature references a nonexistent account.

@@ -78,9 +78,9 @@ func TestEventEmitted(t *testing.T) {
 			SetScript(script).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID)
+			SetPayer(b.RootKey().Address)
 
-		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -104,7 +104,7 @@ func TestEventEmitted(t *testing.T) {
 
 		decodedEvent := actualEvent.Value
 
-		expectedID := flow.Event{TransactionID: tx.ID(), Index: 0}.ID()
+		expectedID := flow.Event{TransactionID: tx.ID(), EventIndex: 0}.ID()
 
 		assert.Equal(t, expectedType, actualEvent.Type)
 		assert.Equal(t, expectedID, actualEvent.ID())

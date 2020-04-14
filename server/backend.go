@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	encoding "github.com/dapperlabs/cadence/encoding/json"
+	jsoncdc "github.com/dapperlabs/cadence/encoding/json"
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go-sdk/client/convert"
 	"github.com/dapperlabs/flow/protobuf/go/flow/access"
@@ -297,11 +297,12 @@ func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEv
 		}
 	}
 
-	res := access.EventsResponse{
-		Events: eventMessages,
-	}
+	// TODO: update events response
+	// res := access.EventsResponse{
+	// 	Events: eventMessages,
+	// }
 
-	return &res, nil
+	return nil, nil
 }
 
 // GetEventsForBlockIDs returns events matching a set of block IDs.
@@ -342,7 +343,7 @@ func (b *Backend) executeScriptAtBlock(script []byte, blockHeight uint64) (*acce
 		return nil, status.Error(codes.InvalidArgument, "invalid script")
 	}
 
-	valueBytes, err := encoding.Encode(result.Value)
+	valueBytes, err := jsoncdc.Encode(result.Value)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
