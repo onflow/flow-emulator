@@ -8,7 +8,7 @@ require (
 	github.com/dapperlabs/flow-go-sdk v1.0.0-alpha.1.0.20200414023813-690d1e1b3908
 	github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200331201607-7630da6300eb
 	github.com/dapperlabs/flow-go/language v0.3.1 // indirect
-	github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200413194623-ccc4f4197409
+	github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200414061610-169345272290
 	github.com/dave/jennifer v1.4.0 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/dgraph-io/badger v1.6.0
