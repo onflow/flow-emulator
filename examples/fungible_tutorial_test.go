@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go-sdk/templates"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	"github.com/dapperlabs/flow-go-sdk"
 )
 
 const (
@@ -42,14 +40,7 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
 
-	err := tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
-	require.NoError(t, err)
-
-	err = b.AddTransaction(*tx)
-	require.NoError(t, err)
-
-	_, _, err = b.ExecuteAndCommitBlock()
-	require.NoError(t, err)
+	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 
 	t.Run("Set up account 1", func(t *testing.T) {
 		tx := flow.NewTransaction().

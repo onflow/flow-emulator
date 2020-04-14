@@ -161,6 +161,7 @@ func TestExternalTransfers(t *testing.T) {
 	bastianPublicKey.Weight = keys.PublicKeyWeightThreshold
 
 	bastianAddress, err := b.CreateAccount([]flow.AccountKey{bastianPublicKey}, nil)
+	require.NoError(t, err)
 
 	// then deploy the tokens to the new account
 	tx = flow.NewTransaction().
@@ -170,7 +171,12 @@ func TestExternalTransfers(t *testing.T) {
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(bastianAddress)
 
-	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
+	SignAndSubmit(
+		t, b, tx,
+		[]flow.AccountPrivateKey{b.RootKey().PrivateKey, bastianPrivateKey},
+		[]flow.Address{b.RootAccountAddress(), bastianAddress},
+		false,
+	)
 
 	t.Run("Should be able to withdraw and deposit tokens from a vault", func(t *testing.T) {
 		tx := flow.NewTransaction().
