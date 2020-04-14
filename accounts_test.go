@@ -568,7 +568,7 @@ func TestUpdateAccountCode(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(accountAddressB)
 
-		err = tx.SignEnvelope(accountAddressB, 0, privateKeyB.Signer())
+		err = tx.SignPayload(accountAddressB, 0, privateKeyB.Signer())
 		assert.NoError(t, err)
 
 		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
