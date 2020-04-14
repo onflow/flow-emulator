@@ -1,6 +1,7 @@
 package emulator
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -8,37 +9,14 @@ import (
 	"github.com/dapperlabs/flow-go/crypto"
 )
 
-// ErrBlockNotFound indicates that a block specified by ID or height cannot be found.
-type ErrBlockNotFound struct {
-	BlockID  flow.Identifier
-	BlockNum uint64
-}
+// ErrBlockNotFound indicates that the block could not be found.
+var ErrBlockNotFound = errors.New("could not find block")
 
-func (e *ErrBlockNotFound) Error() string {
-	if e.BlockNum == 0 {
-		return fmt.Sprintf("Block with ID %s cannot be found", e.BlockID)
-	}
+// ErrTransactionNotFound indicates that the transaction could be found.
+var ErrTransactionNotFound = errors.New("could not find transaction")
 
-	return fmt.Sprintf("Block number %d cannot be found", e.BlockNum)
-}
-
-// ErrTransactionNotFound indicates that a transaction specified by ID cannot be found.
-type ErrTransactionNotFound struct {
-	TxID flow.Identifier
-}
-
-func (e *ErrTransactionNotFound) Error() string {
-	return fmt.Sprintf("Transaction with ID %s cannot be found", e.TxID)
-}
-
-// ErrAccountNotFound indicates that an account specified by address cannot be found.
-type ErrAccountNotFound struct {
-	Address flow.Address
-}
-
-func (e *ErrAccountNotFound) Error() string {
-	return fmt.Sprintf("Account with address %s cannot be found", e.Address)
-}
+// ErrAccountNotFound indicates that the account could not be found.
+var ErrAccountNotFound = errors.New("could not find account")
 
 // ErrDuplicateTransaction indicates that a transaction has already been submitted.
 type ErrDuplicateTransaction struct {
