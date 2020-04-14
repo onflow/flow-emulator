@@ -41,8 +41,8 @@ func TestCreateNFT(t *testing.T) {
 			SetScript(GenerateCreateNFTScript(contractAddr, -7)).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(b.RootKey().Address)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, true)
 	})
@@ -52,8 +52,8 @@ func TestCreateNFT(t *testing.T) {
 			SetScript(GenerateCreateNFTScript(contractAddr, 1)).
 			SetGasLimit(20).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(b.RootKey().Address)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 	})
@@ -84,8 +84,8 @@ func TestTransferNFT(t *testing.T) {
 		SetScript(GenerateCreateNFTScript(contractAddr, 1)).
 		SetGasLimit(20).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-		SetPayer(b.RootKey().Address, b.RootKey().ID).
-		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
+		SetPayer(b.RootKey().Address).
+		AddAuthorizer(b.RootKey().Address)
 
 	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 
@@ -108,8 +108,8 @@ func TestTransferNFT(t *testing.T) {
 		SetScript(GenerateCreateNFTScript(contractAddr, 2)).
 		SetGasLimit(20).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-		SetPayer(b.RootKey().Address, b.RootKey().ID).
-		AddAuthorizer(bastianAddress, bastianPublicKey.ID)
+		SetPayer(b.RootKey().Address).
+		AddAuthorizer(bastianAddress)
 
 	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
 
@@ -119,8 +119,8 @@ func TestTransferNFT(t *testing.T) {
 			SetScript(GenerateDepositScript(contractAddr, bastianAddress, 1)).
 			SetGasLimit(20).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(b.RootKey().Address)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 

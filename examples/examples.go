@@ -60,12 +60,28 @@ func SignAndSubmit(
 	shouldRevert bool,
 ) {
 	// sign transaction with each signer
-	for i, address := range signingAddresses {
+	for i := len(signingAddresses) - 1; i >= 0; i-- {
 		signingKey := signingKeys[i]
-		err := tx.SignContainer(address, signingKey.ToAccountKey().ID, signingKey.Signer())
+		signingAddress := signingAddresses[i]
+
+		err := tx.SignPayload(signingAddress, signingKey.ToAccountKey().ID, signingKey.Signer())
 		assert.NoError(t, err)
+
+		if i == 0 {
+			err = tx.SignEnvelope(signingAddress, signingKey.ToAccountKey().ID, signingKey.Signer())
+			assert.NoError(t, err)
+		}
 	}
 
+	Submit(t, b, tx, shouldRevert)
+}
+
+func Submit(
+	t *testing.T,
+	b *emulator.Blockchain,
+	tx *flow.Transaction,
+	shouldRevert bool,
+) {
 	// submit the signed transaction
 	err := b.AddTransaction(*tx)
 	require.NoError(t, err)
@@ -102,8 +118,8 @@ func setupUsersTokens(
 			SetScript(GenerateCreateTokenScript(tokenAddr, 30)).
 			SetGasLimit(20).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(signingAddresses[i], 0)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(signingAddresses[i])
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
 
@@ -112,8 +128,8 @@ func setupUsersTokens(
 			SetScript(GenerateCreateNFTScript(nftAddr, i+1)).
 			SetGasLimit(20).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(signingAddresses[i], 0)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(signingAddresses[i])
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
 	}

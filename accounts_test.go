@@ -38,9 +38,9 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID)
+			SetPayer(b.RootKey().Address)
 
-		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -86,9 +86,9 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID)
+			SetPayer(b.RootKey().Address)
 
-		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -137,9 +137,9 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID)
+			SetPayer(b.RootKey().Address)
 
-		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -174,9 +174,9 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID)
+			SetPayer(b.RootKey().Address)
 
-		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -216,9 +216,9 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID)
+			SetPayer(b.RootKey().Address)
 
-		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -267,9 +267,9 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID)
+			SetPayer(b.RootKey().Address)
 
-		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -299,9 +299,9 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID)
+			SetPayer(b.RootKey().Address)
 
-		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -334,10 +334,10 @@ func TestAddAccountKey(t *testing.T) {
 			SetScript(addKeyScript).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(b.RootKey().Address)
 
-		err = tx1.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx1.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx1)
@@ -356,9 +356,9 @@ func TestAddAccountKey(t *testing.T) {
 			SetScript(script).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID)
+			SetPayer(b.RootKey().Address)
 
-		err = tx2.SignContainer(b.RootKey().Address, b.RootKey().ID, privateKey.Signer())
+		err = tx2.SignEnvelope(b.RootKey().Address, b.RootKey().ID, privateKey.Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx2)
@@ -391,10 +391,10 @@ func TestAddAccountKey(t *testing.T) {
 			SetScript(addKeyScript).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(b.RootKey().Address)
 
-		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -423,11 +423,11 @@ func TestRemoveAccountKey(t *testing.T) {
 		SetScript(addKeyScript).
 		SetGasLimit(10).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-		SetPayer(b.RootKey().Address, b.RootKey().ID).
-		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
+		SetPayer(b.RootKey().Address).
+		AddAuthorizer(b.RootKey().Address)
 
 	// sign with root key
-	err = tx1.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	err = tx1.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
 	// submit tx1 (should succeed)
@@ -451,11 +451,11 @@ func TestRemoveAccountKey(t *testing.T) {
 		SetScript(templates.RemoveAccountKey(0)).
 		SetGasLimit(10).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-		SetPayer(b.RootKey().Address, b.RootKey().ID).
-		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
+		SetPayer(b.RootKey().Address).
+		AddAuthorizer(b.RootKey().Address)
 
 	// sign with root key
-	err = tx2.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	err = tx2.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
 	// submit tx2 (should succeed)
@@ -479,11 +479,11 @@ func TestRemoveAccountKey(t *testing.T) {
 		SetScript(templates.RemoveAccountKey(0)).
 		SetGasLimit(10).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-		SetPayer(b.RootKey().Address, b.RootKey().ID).
-		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
+		SetPayer(b.RootKey().Address).
+		AddAuthorizer(b.RootKey().Address)
 
 	// sign with root key (that has been removed)
-	err = tx3.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	err = tx3.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
 	// submit tx3 (should fail)
@@ -503,11 +503,11 @@ func TestRemoveAccountKey(t *testing.T) {
 		SetScript(templates.RemoveAccountKey(0)).
 		SetGasLimit(10).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-		SetPayer(b.RootKey().Address, b.RootKey().ID).
-		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
+		SetPayer(b.RootKey().Address).
+		AddAuthorizer(b.RootKey().Address)
 
 	// sign with remaining account key
-	err = tx4.SignContainer(b.RootKey().Address, b.RootKey().ID, privateKey.Signer())
+	err = tx4.SignEnvelope(b.RootKey().Address, b.RootKey().ID, privateKey.Signer())
 	assert.NoError(t, err)
 
 	// submit tx4 (should succeed)
@@ -565,13 +565,13 @@ func TestUpdateAccountCode(t *testing.T) {
 			SetScript(templates.UpdateAccountCode(codeB)).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(accountAddressB, 0)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(accountAddressB)
 
-		err = tx.SignContainer(accountAddressB, 0, privateKeyB.Signer())
+		err = tx.SignPayload(accountAddressB, 0, privateKeyB.Signer())
 		assert.NoError(t, err)
 
-		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -606,10 +606,10 @@ func TestUpdateAccountCode(t *testing.T) {
 			SetScript(templates.UpdateAccountCode(codeB)).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(accountAddressB, 0)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(accountAddressB)
 
-		err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -663,9 +663,9 @@ func TestImportAccountCode(t *testing.T) {
 		SetScript(script).
 		SetGasLimit(10).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-		SetPayer(b.RootKey().Address, b.RootKey().ID)
+		SetPayer(b.RootKey().Address)
 
-	err = tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
 	err = b.AddTransaction(*tx)
