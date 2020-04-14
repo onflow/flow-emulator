@@ -317,7 +317,7 @@ func TestBackend(t *testing.T) {
 
 		api.EXPECT().
 			GetTransaction(gomock.Any()).
-			Return(nil, &emulator.ErrTransactionNotFound{}).
+			Return(nil, emulator.ErrTransactionNotFound).
 			Times(1)
 
 		response, err := backend.GetTransaction(context.Background(), &access.GetTransactionRequest{
