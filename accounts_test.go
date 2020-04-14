@@ -337,6 +337,9 @@ func TestAddAccountKey(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
 
+		err = tx1.SignPayload(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		assert.NoError(t, err)
+
 		err = tx1.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
@@ -394,6 +397,9 @@ func TestAddAccountKey(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
 
+		err = tx.SignPayload(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		assert.NoError(t, err)
+
 		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
@@ -427,6 +433,10 @@ func TestRemoveAccountKey(t *testing.T) {
 		AddAuthorizer(b.RootKey().Address)
 
 	// sign with root key
+	err = tx1.SignPayload(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	assert.NoError(t, err)
+
+	// sign with root key
 	err = tx1.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
@@ -455,6 +465,9 @@ func TestRemoveAccountKey(t *testing.T) {
 		AddAuthorizer(b.RootKey().Address)
 
 	// sign with root key
+	err = tx2.SignPayload(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	assert.NoError(t, err)
+
 	err = tx2.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
@@ -507,6 +520,9 @@ func TestRemoveAccountKey(t *testing.T) {
 		AddAuthorizer(b.RootKey().Address)
 
 	// sign with remaining account key
+	err = tx4.SignPayload(b.RootKey().Address, b.RootKey().ID, privateKey.Signer())
+	assert.NoError(t, err)
+
 	err = tx4.SignEnvelope(b.RootKey().Address, b.RootKey().ID, privateKey.Signer())
 	assert.NoError(t, err)
 
@@ -568,7 +584,10 @@ func TestUpdateAccountCode(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(accountAddressB)
 
-		err = tx.SignEnvelope(accountAddressB, 0, privateKeyB.Signer())
+		err = tx.SignPayload(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		assert.NoError(t, err)
+
+		err = tx.SignPayload(accountAddressB, 0, privateKeyB.Signer())
 		assert.NoError(t, err)
 
 		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
