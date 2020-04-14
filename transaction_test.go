@@ -292,7 +292,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetGasLimit(10).
-			SetProposalKey(addressA, 0, 0).
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(addressA).
 			AddAuthorizer(b.RootKey().Address)
 
@@ -300,7 +300,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, err, &emulator.ErrMissingSignature{})
+		assert.IsType(t, &emulator.ErrMissingSignature{}, err)
 	})
 
 	t.Run("InvalidAccount", func(t *testing.T) {
