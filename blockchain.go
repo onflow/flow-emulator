@@ -353,7 +353,7 @@ func (b *Blockchain) AddTransaction(tx flow.Transaction) error {
 		return fmt.Errorf("failed to check storage for transaction %w", err)
 	}
 
-	if tx.ProposalKey.Address == flow.ZeroAddress {
+	if tx.ProposalKey == (flow.ProposalKey{}) {
 		return &ErrInvalidTransaction{TxID: tx.ID(), MissingFields: []string{"proposal_key"}}
 	}
 
