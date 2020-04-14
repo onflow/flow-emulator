@@ -125,6 +125,8 @@ github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200409045606-1be5077881a8 h1:3a6i9o
 github.com/dapperlabs/flow-go-sdk v0.5.3-0.20200409045606-1be5077881a8/go.mod h1:w2mKA/t0BT/xzLHTwh9KuANtSrQFZX/RFmUcmw63kO8=
 github.com/dapperlabs/flow-go-sdk v0.5.3-feature-access-api h1:m0KyXmO0B0NCJhEEm3lZW23hHdZtMOMaFT6F7vYTGXU=
 github.com/dapperlabs/flow-go-sdk v0.5.3-feature-access-api/go.mod h1:cJtmHbmK9C5na/sH50GuBNYJPKTSivfWqri6Qx2+cME=
+github.com/dapperlabs/flow-go-sdk v1.0.0-alpha.1.0.20200414023813-690d1e1b3908 h1:qf/cTFQRZHNqFgTSK59rbC0yJnHfPFjstFNqAZujmbE=
+github.com/dapperlabs/flow-go-sdk v1.0.0-alpha.1.0.20200414023813-690d1e1b3908/go.mod h1:IlBvpwldr/6KI6Ba41cnES4YbcSCAQjLjtFSRQzYYtk=
 github.com/dapperlabs/flow-go/crypto v0.3.1 h1:sct0sh5aDbyqy0v/2xCvBAY9fsxlbkfHAK3abeK163g=
 github.com/dapperlabs/flow-go/crypto v0.3.1/go.mod h1:39e5FqQZ5x0BsezUUC1uATH58hzSDfB+LLi0Gm6wfU8=
 github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200225001519-9a07bfb642cb h1:zjK0C/oGQouPY0YeQ2/4cNqOd9PPQDIKSnHE1EyXtdo=
@@ -150,6 +152,8 @@ github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200407055017-1aa4ec9fa16c h
 github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200407055017-1aa4ec9fa16c/go.mod h1:ThpXZwEduNJCzmpEVEUy3Ml5dDAWttnzlBJPTOSAin0=
 github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200409042800-60d3bad7767d h1:Uc4OR+K49jlzQL6sjgGE+txRP/4cB7+eN1Ca+hsvFvM=
 github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200409042800-60d3bad7767d/go.mod h1:ThpXZwEduNJCzmpEVEUy3Ml5dDAWttnzlBJPTOSAin0=
+github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200413194623-ccc4f4197409 h1:uIEMlKgzBYcg322RbNeL4YNGC2ZBLLVWqDXNzIJTwAs=
+github.com/dapperlabs/flow/protobuf/go/flow v0.0.0-20200413194623-ccc4f4197409/go.mod h1:ThpXZwEduNJCzmpEVEUy3Ml5dDAWttnzlBJPTOSAin0=
 github.com/dave/jennifer v1.4.0/go.mod h1:fIb+770HOpJ2fmN9EPPKOqm1vMGhB+TwXKMZhrIygKg=
 github.com/davecgh/go-spew v0.0.0-20171005155431-ecdeabc65495/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
