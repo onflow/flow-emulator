@@ -177,7 +177,8 @@ func (b *Backend) GetTransaction(ctx context.Context, req *access.GetTransaction
 
 	tx, err := b.blockchain.GetTransaction(id)
 	if err != nil {
-		if errors.Is(err, emulator.ErrTransactionNotFound) {
+		var notFoundErr emulator.ErrNotFound
+		if errors.As(err, &notFoundErr) {
 			return nil, status.Error(codes.NotFound, err.Error())
 		}
 
@@ -219,7 +220,8 @@ func (b *Backend) GetAccount(ctx context.Context, req *access.GetAccountRequest)
 	address := flow.BytesToAddress(req.GetAddress())
 	account, err := b.blockchain.GetAccount(address)
 	if err != nil {
-		if errors.Is(err, emulator.ErrAccountNotFound) {
+		var notFoundErr emulator.ErrNotFound
+		if errors.As(err, &notFoundErr) {
 			return nil, status.Error(codes.NotFound, err.Error())
 		}
 
@@ -286,7 +288,8 @@ func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEv
 	for height := startHeight; height <= endHeight; height++ {
 		block, err := b.blockchain.GetBlockByHeight(height)
 		if err != nil {
-			if errors.Is(err, emulator.ErrBlockNotFound) {
+			var notFoundErr emulator.ErrNotFound
+			if errors.As(err, &notFoundErr) {
 				break
 			}
 

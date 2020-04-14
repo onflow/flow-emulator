@@ -322,15 +322,15 @@ func TestBackend(t *testing.T) {
 
 	t.Run("GetTransaction tx does not exists", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
 
-		bytes := []byte{2, 2, 2, 2}
+		id := []byte{2, 2, 2, 2}
 
 		api.EXPECT().
 			GetTransaction(gomock.Any()).
-			Return(nil, emulator.ErrTransactionNotFound).
+			Return(nil, &emulator.ErrTransactionNotFound{}).
 			Times(1)
 
 		response, err := backend.GetTransaction(context.Background(), &access.GetTransactionRequest{
-			Id: bytes,
+			Id: id,
 		})
 
 		assert.Error(t, err)
