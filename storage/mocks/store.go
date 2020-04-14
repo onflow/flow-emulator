@@ -79,7 +79,7 @@ func (mr *MockStoreMockRecorder) CommitBlock(arg0, arg1, arg2, arg3, arg4 interf
 }
 
 // EventsByHeight mocks base method
-func (m *MockStore) EventsByHeight(arg0 string, arg1 uint64) ([]flow_go_sdk.Event, error) {
+func (m *MockStore) EventsByHeight(arg0 uint64, arg1 string) ([]flow_go_sdk.Event, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "EventsByHeight", arg0, arg1)
 	ret0, _ := ret[0].([]flow_go_sdk.Event)

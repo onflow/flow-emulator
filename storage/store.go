@@ -52,5 +52,5 @@ type Store interface {
 	LedgerViewByHeight(blockHeight uint64) *types.LedgerView
 
 	// EventsByHeight returns the events in the block at the given height, optionally filtered by type.
-	EventsByHeight(eventType string, blockHeight uint64) ([]flow.Event, error)
+	EventsByHeight(blockHeight uint64, eventType string) ([]flow.Event, error)
 }

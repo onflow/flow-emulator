@@ -260,7 +260,7 @@ func TestInsertEvents(t *testing.T) {
 		assert.NoError(t, err)
 
 		t.Run("should be able to get inserted events", func(t *testing.T) {
-			gotEvents, err := store.EventsByHeight("", blockHeight)
+			gotEvents, err := store.EventsByHeight(blockHeight, "")
 			assert.NoError(t, err)
 			assert.Equal(t, events, gotEvents)
 		})
@@ -308,19 +308,19 @@ func TestEventsByHeight(t *testing.T) {
 
 	t.Run("should be able to query by block", func(t *testing.T) {
 		t.Run("non-empty block", func(t *testing.T) {
-			events, err := store.EventsByHeight("", nonEmptyBlockHeight)
+			events, err := store.EventsByHeight(nonEmptyBlockHeight, "")
 			assert.NoError(t, err)
 			assert.Equal(t, allEvents, events)
 		})
 
 		t.Run("empty block", func(t *testing.T) {
-			events, err := store.EventsByHeight("", emptyBlockHeight)
+			events, err := store.EventsByHeight(emptyBlockHeight, "")
 			assert.NoError(t, err)
 			assert.Empty(t, events)
 		})
 
 		t.Run("non-existent block", func(t *testing.T) {
-			events, err := store.EventsByHeight("", nonExistentBlockHeight)
+			events, err := store.EventsByHeight(nonExistentBlockHeight, "")
 			assert.NoError(t, err)
 			assert.Empty(t, events)
 		})
@@ -329,14 +329,14 @@ func TestEventsByHeight(t *testing.T) {
 	t.Run("should be able to query by event type", func(t *testing.T) {
 		t.Run("type=A, block=1", func(t *testing.T) {
 			// should be one event type=1 in block 1
-			events, err := store.EventsByHeight("A", nonEmptyBlockHeight)
+			events, err := store.EventsByHeight(nonEmptyBlockHeight, "A")
 			assert.NoError(t, err)
 			assert.Equal(t, eventsA, events)
 		})
 
 		t.Run("type=B, block=1", func(t *testing.T) {
 			// should be 0 type=2 events here
-			events, err := store.EventsByHeight("B", nonEmptyBlockHeight)
+			events, err := store.EventsByHeight(nonEmptyBlockHeight, "B")
 			assert.NoError(t, err)
 			assert.Equal(t, eventsB, events)
 		})
@@ -383,7 +383,7 @@ func TestPersistence(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, tx.ID(), gotTx.ID())
 
-	gotEvents, err := store.EventsByHeight("", block.Height)
+	gotEvents, err := store.EventsByHeight(block.Height, "")
 	assert.NoError(t, err)
 	assert.Equal(t, events, gotEvents)
 
