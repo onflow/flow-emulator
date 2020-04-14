@@ -23,6 +23,9 @@ func TestCommitBlock(t *testing.T) {
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
 
+	err = tx1.SignPayload(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	assert.NoError(t, err)
+
 	err = tx1.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
 
@@ -40,6 +43,9 @@ func TestCommitBlock(t *testing.T) {
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
+
+	err = tx2.SignPayload(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	assert.NoError(t, err)
 
 	err = tx2.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
