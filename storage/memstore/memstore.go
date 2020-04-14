@@ -50,7 +50,7 @@ func (s *Store) BlockByID(id flow.Identifier) (types.Block, error) {
 	blockHeight := s.blockIDToHeight[id]
 	block, ok := s.blocks[blockHeight]
 	if !ok {
-		return types.Block{}, storage.ErrNotFound{}
+		return types.Block{}, storage.ErrNotFound
 	}
 
 	return block, nil
@@ -62,7 +62,7 @@ func (s *Store) BlockByHeight(blockHeight uint64) (types.Block, error) {
 
 	block, ok := s.blocks[blockHeight]
 	if !ok {
-		return types.Block{}, storage.ErrNotFound{}
+		return types.Block{}, storage.ErrNotFound
 	}
 
 	return block, nil
@@ -74,7 +74,7 @@ func (s *Store) LatestBlock() (types.Block, error) {
 
 	latestBlock, ok := s.blocks[s.blockHeight]
 	if !ok {
-		return types.Block{}, storage.ErrNotFound{}
+		return types.Block{}, storage.ErrNotFound
 	}
 	return latestBlock, nil
 }
@@ -151,7 +151,7 @@ func (s *Store) TransactionByID(txID flow.Identifier) (flow.Transaction, error) 
 
 	tx, ok := s.transactions[txID]
 	if !ok {
-		return flow.Transaction{}, storage.ErrNotFound{}
+		return flow.Transaction{}, storage.ErrNotFound
 	}
 	return tx, nil
 }
@@ -167,7 +167,7 @@ func (s *Store) TransactionResultByID(txID flow.Identifier) (flow.TransactionRes
 
 	result, ok := s.transactionResults[txID]
 	if !ok {
-		return flow.TransactionResult{}, storage.ErrNotFound{}
+		return flow.TransactionResult{}, storage.ErrNotFound
 	}
 	return result, nil
 }
@@ -223,25 +223,20 @@ func (s *Store) insertLedgerDelta(blockHeight uint64, delta types.LedgerDelta) e
 	return nil
 }
 
-func (s *Store) RetrieveEvents(eventType string, startBlock, endBlock uint64) ([]flow.Event, error) {
+func (s *Store) EventsByHeight(blockHeight uint64, eventType string) ([]flow.Event, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	var events []flow.Event
-	// Filter by block height first
-	for i := startBlock; i <= endBlock; i++ {
-		if s.eventsByBlockHeight[i] != nil {
-			// Check for empty type, which indicates no type filtering
-			if eventType == "" {
-				events = append(events, s.eventsByBlockHeight[i]...)
-				continue
-			}
+	allEvents := s.eventsByBlockHeight[blockHeight]
 
-			// Otherwise, only add events with matching type
-			for _, event := range s.eventsByBlockHeight[i] {
-				if event.Type == eventType {
-					events = append(events, event)
-				}
+	events := make([]flow.Event, 0)
+
+	for _, event := range allEvents {
+		if eventType == "" {
+			events = append(events, event)
+		} else {
+			if event.Type == eventType {
+				events = append(events, event)
 			}
 		}
 	}

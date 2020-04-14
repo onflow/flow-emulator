@@ -8,36 +8,58 @@ import (
 	"github.com/dapperlabs/flow-go/crypto"
 )
 
-// ErrBlockNotFound indicates that a block specified by ID or height cannot be found.
-type ErrBlockNotFound struct {
-	BlockID  flow.Identifier
-	BlockNum uint64
+type ErrNotFound interface {
+	isNotFoundError()
 }
 
-func (e *ErrBlockNotFound) Error() string {
-	if e.BlockNum == 0 {
-		return fmt.Sprintf("Block with ID %s cannot be found", e.BlockID)
-	}
-
-	return fmt.Sprintf("Block number %d cannot be found", e.BlockNum)
+type ErrBlockNotFound interface {
+	isBlockNotFoundError()
 }
 
-// ErrTransactionNotFound indicates that a transaction specified by ID cannot be found.
+// ErrBlockNotFoundByHeight indicates that a block could not be found at the specified height.
+type ErrBlockNotFoundByHeight struct {
+	Height uint64
+}
+
+func (e *ErrBlockNotFoundByHeight) isNotFoundError()      {}
+func (e *ErrBlockNotFoundByHeight) isBlockNotFoundError() {}
+
+func (e *ErrBlockNotFoundByHeight) Error() string {
+	return fmt.Sprintf("could not find block at height %d", e.Height)
+}
+
+// ErrBlockNotFoundByID indicates that a block with the specified ID could not be found.
+type ErrBlockNotFoundByID struct {
+	ID flow.Identifier
+}
+
+func (e *ErrBlockNotFoundByID) isNotFoundError()      {}
+func (e *ErrBlockNotFoundByID) isBlockNotFoundError() {}
+
+func (e *ErrBlockNotFoundByID) Error() string {
+	return fmt.Sprintf("could not find block with ID %s", e.ID)
+}
+
+// ErrTransactionNotFound indicates that the transaction could not be found.
 type ErrTransactionNotFound struct {
-	TxID flow.Identifier
+	ID flow.Identifier
 }
+
+func (e *ErrTransactionNotFound) isNotFoundError() {}
 
 func (e *ErrTransactionNotFound) Error() string {
-	return fmt.Sprintf("Transaction with ID %s cannot be found", e.TxID)
+	return fmt.Sprintf("could not find transaction with ID %s", e.ID)
 }
 
-// ErrAccountNotFound indicates that an account specified by address cannot be found.
+// ErrAccountNotFound indicates that the account could not be found.
 type ErrAccountNotFound struct {
 	Address flow.Address
 }
 
+func (e *ErrAccountNotFound) isNotFoundError() {}
+
 func (e *ErrAccountNotFound) Error() string {
-	return fmt.Sprintf("Account with address %s cannot be found", e.Address)
+	return fmt.Sprintf("could not find account with address %s", e.Address)
 }
 
 // ErrDuplicateTransaction indicates that a transaction has already been submitted.
