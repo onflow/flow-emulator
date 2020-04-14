@@ -39,10 +39,10 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 		SetScript(updateTokenScript).
 		SetGasLimit(10).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-		SetPayer(b.RootKey().Address, b.RootKey().ID).
-		AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
+		SetPayer(b.RootKey().Address).
+		AddAuthorizer(b.RootKey().Address)
 
-	err := tx.SignContainer(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	err := tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	require.NoError(t, err)
 
 	err = b.AddTransaction(*tx)
@@ -73,8 +73,8 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 			)).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address, b.RootKey().ID).
-			AddAuthorizer(b.RootKey().Address, b.RootKey().ID)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(b.RootKey().Address)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
 	})
@@ -121,8 +121,8 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 			)).
 			SetGasLimit(10).
 			SetProposalKey(account2Address, 0, 0).
-			SetPayer(account2Address, 0).
-			AddAuthorizer(account2Address, 0)
+			SetPayer(account2Address).
+			AddAuthorizer(account2Address)
 
 		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{account2Address}, false)
 	})
