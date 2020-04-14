@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/logrusorgru/aurora"
@@ -176,12 +177,11 @@ func (b *Backend) GetTransaction(ctx context.Context, req *access.GetTransaction
 
 	tx, err := b.blockchain.GetTransaction(id)
 	if err != nil {
-		switch err.(type) {
-		case *emulator.ErrTransactionNotFound:
+		if errors.Is(err, emulator.ErrTransactionNotFound) {
 			return nil, status.Error(codes.NotFound, err.Error())
-		default:
-			return nil, status.Error(codes.Internal, err.Error())
 		}
+
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	b.logger.
@@ -219,12 +219,11 @@ func (b *Backend) GetAccount(ctx context.Context, req *access.GetAccountRequest)
 	address := flow.BytesToAddress(req.GetAddress())
 	account, err := b.blockchain.GetAccount(address)
 	if err != nil {
-		switch err.(type) {
-		case *emulator.ErrAccountNotFound:
+		if errors.Is(err, emulator.ErrAccountNotFound) {
 			return nil, status.Error(codes.NotFound, err.Error())
-		default:
-			return nil, status.Error(codes.Internal, err.Error())
 		}
+
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	b.logger.
@@ -287,8 +286,7 @@ func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEv
 	for height := startHeight; height <= endHeight; height++ {
 		block, err := b.blockchain.GetBlockByHeight(height)
 		if err != nil {
-			if _, ok := err.(*emulator.ErrBlockNotFound); ok {
-				// return early if we reach end of sealed chain
+			if errors.Is(err, emulator.ErrBlockNotFound) {
 				break
 			}
 
