@@ -51,8 +51,6 @@ type Store interface {
 	// LedgerViewByHeight returns a view into the ledger state at a given block.
 	LedgerViewByHeight(blockHeight uint64) *types.LedgerView
 
-	// RetrieveEvents returns all events with the given type between startBlock and
-	// endBlock (inclusive). If eventType is empty, returns all events in the
-	// range, regardless of type.
-	RetrieveEvents(eventType string, startBlock, endBlock uint64) ([]flow.Event, error)
+	// EventsByHeight returns the events in the block at the given height, optionally filtered by type.
+	EventsByHeight(eventType string, blockHeight uint64) ([]flow.Event, error)
 }

@@ -200,19 +200,19 @@ func (mr *MockBlockchainAPIMockRecorder) GetBlockByID(arg0 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockByID", reflect.TypeOf((*MockBlockchainAPI)(nil).GetBlockByID), arg0)
 }
 
-// GetEvents mocks base method
-func (m *MockBlockchainAPI) GetEvents(arg0 string, arg1, arg2 uint64) ([]flow_go_sdk.Event, error) {
+// GetEventsByHeight mocks base method
+func (m *MockBlockchainAPI) GetEventsByHeight(arg0 string, arg1 uint64) ([]flow_go_sdk.Event, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEvents", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetEventsByHeight", arg0, arg1)
 	ret0, _ := ret[0].([]flow_go_sdk.Event)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetEvents indicates an expected call of GetEvents
-func (mr *MockBlockchainAPIMockRecorder) GetEvents(arg0, arg1, arg2 interface{}) *gomock.Call {
+// GetEventsByHeight indicates an expected call of GetEventsByHeight
+func (mr *MockBlockchainAPIMockRecorder) GetEventsByHeight(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvents", reflect.TypeOf((*MockBlockchainAPI)(nil).GetEvents), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventsByHeight", reflect.TypeOf((*MockBlockchainAPI)(nil).GetEventsByHeight), arg0, arg1)
 }
 
 // GetLatestBlock mocks base method

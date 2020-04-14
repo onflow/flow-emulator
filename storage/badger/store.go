@@ -1,10 +1,11 @@
 package badger
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 
-	"github.com/dgraph-io/badger"
+	"github.com/dgraph-io/badger/v2"
 
 	"github.com/dapperlabs/flow-go-sdk"
 
@@ -342,49 +343,47 @@ func (s *Store) insertLedgerDelta(blockHeight uint64, delta types.LedgerDelta) f
 	return nil
 }
 
-func (s *Store) RetrieveEvents(eventType string, startBlock, endBlock uint64) (events []flow.Event, err error) {
-	// set up an iterator over all events
+func (s *Store) EventsByHeight(eventType string, blockHeight uint64) (events []flow.Event, err error) {
+	// set up an iterator over all events in the block
 	iterOpts := badger.DefaultIteratorOptions
-	iterOpts.Prefix = []byte(eventsKeyPrefix)
+	iterOpts.Prefix = eventKeyBlockPrefix(blockHeight)
+
+	eventTypeSuffix := []byte(eventType)
 
 	err = s.db.View(func(txn *badger.Txn) error {
 		iter := txn.NewIterator(iterOpts)
 		defer iter.Close()
-		// create a buffer for copying events, this is reused for each block
-		eventBuf := make([]byte, 256)
+
+		startKey := eventKey(blockHeight, 0, 0, "")
 
 		// seek the iterator to the start block before the loop
-		iter.Seek(eventsKey(startBlock))
-		for ; iter.Valid(); iter.Next() {
+		for iter.Seek(startKey); iter.Valid(); iter.Next() {
 			item := iter.Item()
-			// ensure the events are within the block height range
-			blockHeight := blockHeightFromEventsKey(item.Key())
-			if blockHeight < startBlock || blockHeight > endBlock {
-				break
+
+			// filter by event type if specified
+			if eventType != "" {
+				if !bytes.HasSuffix(item.Key(), eventTypeSuffix) {
+					continue
+				}
 			}
 
-			// decode the events from this block
-			encEvents, err := item.ValueCopy(eventBuf)
+			err = item.Value(func(b []byte) error {
+				var event flow.Event
+
+				err := decodeEvent(&event, b)
+				if err != nil {
+					return err
+				}
+
+				events = append(events, event)
+
+				return nil
+			})
 			if err != nil {
 				return err
 			}
-			var blockEvents []flow.Event
-			if err := decodeEvents(&blockEvents, encEvents); err != nil {
-				return err
-			}
-
-			if eventType == "" {
-				// if no type filter specified, add all block events
-				events = append(events, blockEvents...)
-			} else {
-				// otherwise filter by event type
-				for _, event := range blockEvents {
-					if event.Type == eventType {
-						events = append(events, event)
-					}
-				}
-			}
 		}
+
 		return nil
 	})
 	return
@@ -396,12 +395,21 @@ func (s *Store) InsertEvents(blockHeight uint64, events []flow.Event) error {
 
 func insertEvents(blockHeight uint64, events []flow.Event) func(txn *badger.Txn) error {
 	return func(txn *badger.Txn) error {
-		encEvents, err := encodeEvents(events)
-		if err != nil {
-			return err
+		for _, event := range events {
+			b, err := encodeEvent(event)
+			if err != nil {
+				return err
+			}
+
+			key := eventKey(blockHeight, event.TransactionIndex, event.EventIndex, event.Type)
+
+			err = txn.Set(key, b)
+			if err != nil {
+				return err
+			}
 		}
 
-		return txn.Set(eventsKey(blockHeight), encEvents)
+		return nil
 	}
 }
 

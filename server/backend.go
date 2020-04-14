@@ -294,7 +294,7 @@ func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEv
 		}
 
 		// TODO: update GetEvents to accept single height argument
-		events, err := b.blockchain.GetEvents(eventType, height, height)
+		events, err := b.blockchain.GetEventsByHeight(eventType, height)
 		if err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
