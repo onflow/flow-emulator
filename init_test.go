@@ -88,7 +88,7 @@ func TestInitialization(t *testing.T) {
 		minedTx, err := b.GetTransaction(tx.ID())
 		assert.NoError(t, err)
 
-		minedEvents, err := b.GetEvents("", block.Height, block.Height)
+		minedEvents, err := b.GetEventsByHeight(block.Height, "")
 
 		// Create a new blockchain with the same store
 		b, _ = emulator.NewBlockchain(emulator.WithStore(store))
@@ -114,7 +114,7 @@ func TestInitialization(t *testing.T) {
 		})
 
 		t.Run("should be able to read events", func(t *testing.T) {
-			gotEvents, err := b.GetEvents("", block.Height, block.Height)
+			gotEvents, err := b.GetEventsByHeight(block.Height, "")
 			assert.NoError(t, err)
 			assert.Equal(t, minedEvents, gotEvents)
 		})
