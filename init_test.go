@@ -71,9 +71,6 @@ func TestInitialization(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
 
-		err = tx.SignPayload(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
-		assert.NoError(t, err)
-
 		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
