@@ -201,7 +201,7 @@ func (mr *MockBlockchainAPIMockRecorder) GetBlockByID(arg0 interface{}) *gomock.
 }
 
 // GetEventsByHeight mocks base method
-func (m *MockBlockchainAPI) GetEventsByHeight(arg0 string, arg1 uint64) ([]flow_go_sdk.Event, error) {
+func (m *MockBlockchainAPI) GetEventsByHeight(arg0 uint64, arg1 string) ([]flow_go_sdk.Event, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEventsByHeight", arg0, arg1)
 	ret0, _ := ret[0].([]flow_go_sdk.Event)

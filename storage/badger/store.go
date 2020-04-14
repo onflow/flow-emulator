@@ -343,7 +343,7 @@ func (s *Store) insertLedgerDelta(blockHeight uint64, delta types.LedgerDelta) f
 	return nil
 }
 
-func (s *Store) EventsByHeight(eventType string, blockHeight uint64) (events []flow.Event, err error) {
+func (s *Store) EventsByHeight(blockHeight uint64, eventType string) (events []flow.Event, err error) {
 	// set up an iterator over all events in the block
 	iterOpts := badger.DefaultIteratorOptions
 	iterOpts.Prefix = eventKeyBlockPrefix(blockHeight)
