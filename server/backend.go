@@ -277,28 +277,57 @@ func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEv
 		return nil, status.Error(codes.InvalidArgument, "invalid query: start block must be <= end block")
 	}
 
-	events, err := b.blockchain.GetEvents(req.GetType(), req.GetStartHeight(), req.GetEndHeight())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+	startHeight := req.GetStartHeight()
+	endHeight := req.GetEndHeight()
+	eventType := req.GetType()
+
+	results := make([]*access.EventsResponse_Result, 0)
+	eventsCount := 0
+
+	for height := startHeight; height <= endHeight; height++ {
+		block, err := b.blockchain.GetBlockByHeight(height)
+		if err != nil {
+			if _, ok := err.(*emulator.ErrBlockNotFound); ok {
+				// return early if we reach end of sealed chain
+				break
+			}
+
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+
+		// TODO: update GetEvents to accept single height argument
+		events, err := b.blockchain.GetEvents(eventType, height, height)
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+
+		eventMessages := make([]*entities.Event, len(events))
+		for i, event := range events {
+			eventMessages[i], err = convert.EventToMessage(event)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		result := access.EventsResponse_Result{
+			BlockId:     block.ID().Bytes(),
+			BlockHeight: block.Height,
+			Events:      eventMessages,
+		}
+
+		results = append(results, &result)
+		eventsCount += len(events)
 	}
 
 	b.logger.WithFields(logrus.Fields{
 		"eventType":   req.Type,
 		"startHeight": req.StartHeight,
 		"endHeight":   req.EndHeight,
-		"results":     len(events),
+		"eventsCount": eventsCount,
 	}).Debugf("🎁  GetEvents called")
 
-	eventMessages := make([]*entities.Event, len(events))
-	for i, event := range events {
-		eventMessages[i], err = convert.EventToMessage(event)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	res := access.EventsResponse{
-		Events: eventMessages,
+		Results: results,
 	}
 
 	return &res, nil
