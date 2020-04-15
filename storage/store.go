@@ -3,9 +3,8 @@
 package storage
 
 import (
-	model "github.com/dapperlabs/flow-go/model/flow"
-
 	"github.com/dapperlabs/flow-go-sdk"
+	model "github.com/dapperlabs/flow-go/model/flow"
 
 	"github.com/dapperlabs/flow-emulator/types"
 )
