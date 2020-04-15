@@ -170,7 +170,7 @@ func (b *Backend) GetBlockByID(ctx context.Context, req *access.GetBlockByIDRequ
 	b.logger.WithFields(logrus.Fields{
 		"blockHeight": block.Height,
 		"blockID":     block.ID().Hex(),
-	}).Debug("🎁  GetBlockHeaderByID called")
+	}).Debug("🎁  GetBlockByID called")
 
 	return b.blockResponse(block), nil
 }
