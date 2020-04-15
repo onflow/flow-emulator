@@ -82,7 +82,7 @@ func generateGetCounterCountScript(counterAddress flow.Address, accountAddress f
 	)
 }
 
-func assertTransactionSucceeded(t *testing.T, result emulator.TransactionResult) {
+func assertTransactionSucceeded(t *testing.T, result *emulator.TransactionResult) {
 	if !assert.True(t, result.Succeeded()) {
 		t.Error(result.Error)
 	}
