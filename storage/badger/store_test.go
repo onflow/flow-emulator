@@ -10,6 +10,7 @@ import (
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go-sdk/test"
 	model "github.com/dapperlabs/flow-go/model/flow"
+	fixtures "github.com/dapperlabs/flow-go/utils/unittest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -93,6 +94,35 @@ func TestBlocks(t *testing.T) {
 		block, err := store.LatestBlock()
 		assert.NoError(t, err)
 		assert.Equal(t, block2, block)
+	})
+}
+
+func TestCollections(t *testing.T) {
+	store, dir := setupStore(t)
+	defer func() {
+		require.Nil(t, store.Close())
+		require.Nil(t, os.RemoveAll(dir))
+	}()
+
+	// collection with 3 transactions
+	col := fixtures.CollectionFixture(3).Light()
+
+	t.Run("should return error for not found", func(t *testing.T) {
+		_, err := store.CollectionByID(flow.Identifier(col.ID()))
+		if assert.Error(t, err) {
+			assert.Equal(t, storage.ErrNotFound, err)
+		}
+	})
+
+	t.Run("should be able to insert collection", func(t *testing.T) {
+		err := store.InsertCollection(col)
+		assert.NoError(t, err)
+
+		t.Run("should be able to get inserted collection", func(t *testing.T) {
+			storedCol, err := store.CollectionByID(flow.Identifier(col.ID()))
+			require.Nil(t, err)
+			assert.Equal(t, col, storedCol)
+		})
 	})
 }
 
