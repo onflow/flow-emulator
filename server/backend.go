@@ -81,7 +81,7 @@ func (b *Backend) SendTransaction(ctx context.Context, req *access.SendTransacti
 	return response, nil
 }
 
-// GetLatestBlockHeader gets the latest sealed block.
+// GetLatestBlockHeader gets the latest sealed block header.
 func (b *Backend) GetLatestBlockHeader(ctx context.Context, req *access.GetLatestBlockHeaderRequest) (*access.BlockHeaderResponse, error) {
 	block, err := b.blockchain.GetLatestBlock()
 	if err != nil {
@@ -91,12 +91,12 @@ func (b *Backend) GetLatestBlockHeader(ctx context.Context, req *access.GetLates
 	b.logger.WithFields(logrus.Fields{
 		"blockHeight": block.Height,
 		"blockID":     block.ID().Hex(),
-	}).Debug("🎁  GetLatestBlock called")
+	}).Debug("🎁  GetLatestBlockHeader called")
 
 	return b.blockToHeaderResponse(block), nil
 }
 
-// GetBlockHeaderByHeight gets a block header by it's height
+// GetBlockHeaderByHeight gets a block header by height.
 func (b *Backend) GetBlockHeaderByHeight(ctx context.Context, req *access.GetBlockHeaderByHeightRequest) (*access.BlockHeaderResponse, error) {
 	block, err := b.blockchain.GetBlockByHeight(req.GetHeight())
 	if err != nil {
@@ -111,7 +111,7 @@ func (b *Backend) GetBlockHeaderByHeight(ctx context.Context, req *access.GetBlo
 	return b.blockToHeaderResponse(block), nil
 }
 
-// GetBlockHeaderByID gets a block header by it's ID
+// GetBlockHeaderByID gets a block header by ID.
 func (b *Backend) GetBlockHeaderByID(ctx context.Context, req *access.GetBlockHeaderByIDRequest) (*access.BlockHeaderResponse, error) {
 	blockID := flow.HashToID(req.GetId())
 
@@ -130,20 +130,49 @@ func (b *Backend) GetBlockHeaderByID(ctx context.Context, req *access.GetBlockHe
 
 // GetLatestBlock gets the latest sealed block.
 func (b *Backend) GetLatestBlock(ctx context.Context, req *access.GetLatestBlockRequest) (*access.BlockResponse, error) {
-	panic("not implemented")
-	return nil, nil
+	block, err := b.blockchain.GetLatestBlock()
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	b.logger.WithFields(logrus.Fields{
+		"blockHeight": block.Height,
+		"blockID":     block.ID().Hex(),
+	}).Debug("🎁  GetLatestBlock called")
+
+	return b.blockResponse(block), nil
 }
 
-// GetBlockByHeight gets the latest sealed block.
+// GetBlockByHeight gets a block by height.
 func (b *Backend) GetBlockByHeight(ctx context.Context, req *access.GetBlockByHeightRequest) (*access.BlockResponse, error) {
-	panic("not implemented")
-	return nil, nil
+	block, err := b.blockchain.GetBlockByHeight(req.GetHeight())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	b.logger.WithFields(logrus.Fields{
+		"blockHeight": block.Height,
+		"blockID":     block.ID().Hex(),
+	}).Debug("🎁  GetBlockByHeight called")
+
+	return b.blockResponse(block), nil
 }
 
-// GetBlockByID gets the latest sealed block.
+// GetBlockByHeight gets a block by ID.
 func (b *Backend) GetBlockByID(ctx context.Context, req *access.GetBlockByIDRequest) (*access.BlockResponse, error) {
-	panic("not implemented")
-	return nil, nil
+	blockID := flow.HashToID(req.GetId())
+
+	block, err := b.blockchain.GetBlockByID(blockID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	b.logger.WithFields(logrus.Fields{
+		"blockHeight": block.Height,
+		"blockID":     block.ID().Hex(),
+	}).Debug("🎁  GetBlockHeaderByID called")
+
+	return b.blockResponse(block), nil
 }
 
 // GetCollectionByID gets a collection by ID.
@@ -380,10 +409,17 @@ func (b *Backend) executeScriptAtBlock(script []byte, blockHeight uint64) (*acce
 	return response, nil
 }
 
-// blockToHeaderResponse is a helper for getting the block header for a specific block
+// blockToHeaderResponse constructs a block header response from a block.
 func (b *Backend) blockToHeaderResponse(block *types.Block) *access.BlockHeaderResponse {
 	return &access.BlockHeaderResponse{
 		Block: convert.BlockHeaderToMessage(block.Header()),
+	}
+}
+
+// blockResponse constructs a block response from a block.
+func (b *Backend) blockResponse(block *types.Block) *access.BlockResponse {
+	return &access.BlockResponse{
+		Block: emuconvert.BlockToMessage(*block),
 	}
 }
 
