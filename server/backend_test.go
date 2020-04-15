@@ -69,7 +69,7 @@ func TestBackend(t *testing.T) {
 
 		api.EXPECT().
 			ExecuteScriptAtBlock(sampleScriptText, latestBlock.Height).
-			Return(emulator.ScriptResult{
+			Return(&emulator.ScriptResult{
 				Value: scriptResponse,
 				Error: nil,
 			}, nil).
@@ -94,7 +94,7 @@ func TestBackend(t *testing.T) {
 
 		api.EXPECT().
 			ExecuteScriptAtBlock(sampleScriptText, executionScriptRequest.BlockHeight).
-			Return(emulator.ScriptResult{
+			Return(&emulator.ScriptResult{
 				Value: scriptResponse,
 				Error: nil,
 			}, nil).
@@ -126,7 +126,7 @@ func TestBackend(t *testing.T) {
 
 		api.EXPECT().
 			ExecuteScriptAtBlock(sampleScriptText, randomBlock.Height).
-			Return(emulator.ScriptResult{
+			Return(&emulator.ScriptResult{
 				Value: scriptResponse,
 				Error: nil,
 			}, nil).
@@ -507,8 +507,8 @@ func TestBackend(t *testing.T) {
 		// expect transaction to be executed immediately
 		api.EXPECT().
 			ExecuteAndCommitBlock().
-			DoAndReturn(func() (*types.Block, []emulator.TransactionResult, error) {
-				return &types.Block{}, make([]emulator.TransactionResult, 0), nil
+			DoAndReturn(func() (*types.Block, []*emulator.TransactionResult, error) {
+				return &types.Block{}, make([]*emulator.TransactionResult, 0), nil
 			}).
 			Times(1)
 
