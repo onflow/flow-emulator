@@ -21,6 +21,7 @@ import (
 	"github.com/dapperlabs/flow-go-sdk/keys"
 	"github.com/dapperlabs/flow-go-sdk/templates"
 	"github.com/dapperlabs/flow-go/crypto"
+	model "github.com/dapperlabs/flow-go/model/flow"
 
 	"github.com/dapperlabs/flow-emulator/execution"
 	"github.com/dapperlabs/flow-emulator/storage"
@@ -50,10 +51,10 @@ type Blockchain struct {
 // BlockchainAPI defines the method set of an emulated blockchain.
 type BlockchainAPI interface {
 	AddTransaction(tx flow.Transaction) error
-	ExecuteNextTransaction() (TransactionResult, error)
-	ExecuteBlock() ([]TransactionResult, error)
+	ExecuteNextTransaction() (*TransactionResult, error)
+	ExecuteBlock() ([]*TransactionResult, error)
 	CommitBlock() (*types.Block, error)
-	ExecuteAndCommitBlock() (*types.Block, []TransactionResult, error)
+	ExecuteAndCommitBlock() (*types.Block, []*TransactionResult, error)
 	GetLatestBlock() (*types.Block, error)
 	GetBlockByID(id flow.Identifier) (*types.Block, error)
 	GetBlockByHeight(height uint64) (*types.Block, error)
@@ -62,8 +63,8 @@ type BlockchainAPI interface {
 	GetAccount(address flow.Address) (*flow.Account, error)
 	GetAccountAtBlock(address flow.Address, blockHeight uint64) (*flow.Account, error)
 	GetEventsByHeight(blockHeight uint64, eventType string) ([]flow.Event, error)
-	ExecuteScript(script []byte) (ScriptResult, error)
-	ExecuteScriptAtBlock(script []byte, blockHeight uint64) (ScriptResult, error)
+	ExecuteScript(script []byte) (*ScriptResult, error)
+	ExecuteScriptAtBlock(script []byte, blockHeight uint64) (*ScriptResult, error)
 	RootAccountAddress() flow.Address
 	RootKey() RootKey
 }
@@ -139,7 +140,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		latestLedgerView := store.LedgerViewByHeight(latestBlock.Height)
 
 		// restore pending block header from store information
-		pendingBlock = newPendingBlock(latestBlock, latestLedgerView)
+		pendingBlock = newPendingBlock(&latestBlock, latestLedgerView)
 		rootAccount = getAccount(latestLedgerView, flow.RootAddress)
 	} else if err != nil && !errors.Is(err, storage.ErrNotFound) {
 		// internal storage error, fail fast
@@ -155,7 +156,14 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		// commit the genesis block to storage
 		genesis := types.GenesisBlock()
 
-		err := store.CommitBlock(genesis, nil, nil, genesisLedgerView.Delta(), nil)
+		err := store.CommitBlock(
+			&genesis,
+			nil,
+			nil,
+			nil,
+			genesisLedgerView.Delta(),
+			nil,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -164,7 +172,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		ledgerView := store.LedgerViewByHeight(0)
 
 		// create pending block from genesis
-		pendingBlock = newPendingBlock(genesis, ledgerView)
+		pendingBlock = newPendingBlock(&genesis, ledgerView)
 	}
 
 	b := &Blockchain{
@@ -370,15 +378,15 @@ func (b *Blockchain) AddTransaction(tx flow.Transaction) error {
 }
 
 // ExecuteBlock executes the remaining transactions in pending block.
-func (b *Blockchain) ExecuteBlock() ([]TransactionResult, error) {
+func (b *Blockchain) ExecuteBlock() ([]*TransactionResult, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	return b.executeBlock()
 }
 
-func (b *Blockchain) executeBlock() ([]TransactionResult, error) {
-	results := make([]TransactionResult, 0)
+func (b *Blockchain) executeBlock() ([]*TransactionResult, error) {
+	results := make([]*TransactionResult, 0)
 
 	// empty blocks do not require execution, treat as a no-op
 	if b.pendingBlock.Empty() {
@@ -406,7 +414,7 @@ func (b *Blockchain) executeBlock() ([]TransactionResult, error) {
 }
 
 // ExecuteNextTransaction executes the next indexed transaction in pending block.
-func (b *Blockchain) ExecuteNextTransaction() (TransactionResult, error) {
+func (b *Blockchain) ExecuteNextTransaction() (*TransactionResult, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -415,10 +423,10 @@ func (b *Blockchain) ExecuteNextTransaction() (TransactionResult, error) {
 
 // executeNextTransaction is a helper function for ExecuteBlock and ExecuteNextTransaction that
 // executes the next transaction in the pending block.
-func (b *Blockchain) executeNextTransaction() (TransactionResult, error) {
+func (b *Blockchain) executeNextTransaction() (*TransactionResult, error) {
 	// check if there are remaining txs to be executed
 	if b.pendingBlock.ExecutionComplete() {
-		return TransactionResult{}, &ErrPendingBlockTransactionsExhausted{
+		return nil, &ErrPendingBlockTransactionsExhausted{
 			BlockID: b.pendingBlock.ID(),
 		}
 	}
@@ -428,16 +436,16 @@ func (b *Blockchain) executeNextTransaction() (TransactionResult, error) {
 		func(
 			ledgerView *types.LedgerView,
 			tx flow.Transaction,
-		) (TransactionResult, error) {
+		) (*TransactionResult, error) {
 			return b.computer.ExecuteTransaction(ledgerView, tx)
 		},
 	)
 	if err != nil {
 		// fail fast if fatal error occurs
-		return TransactionResult{}, err
+		return nil, err
 	}
 
-	return receipt, nil
+	return result, nil
 }
 
 // CommitBlock seals the current pending block and saves it to storage.
@@ -462,26 +470,14 @@ func (b *Blockchain) commitBlock() (*types.Block, error) {
 	}
 
 	block := b.pendingBlock.Block()
+	collections := b.pendingBlock.Collections()
+	transactions := b.pendingBlock.Transactions()
+	transactionResults := convertToSealedResults(b.pendingBlock.TransactionResults())
 	delta := b.pendingBlock.LedgerDelta()
 	events := b.pendingBlock.Events()
 
-	transactions := make([]flow.Transaction, b.pendingBlock.Size())
-	transactionResults := make([]flow.TransactionResult, b.pendingBlock.Size())
-
-	for i, execResult := range b.pendingBlock.ExecutionResults() {
-		transactions[i] = execResult.Transaction
-
-		result := execResult.Result
-
-		transactionResults[i] = flow.TransactionResult{
-			Status: flow.TransactionStatusSealed,
-			Error:  result.Error,
-			Events: result.Events,
-		}
-	}
-
 	// commit the pending block to storage
-	err := b.storage.CommitBlock(block, transactions, transactionResults, delta, events)
+	err := b.storage.CommitBlock(block, collections, transactions, transactionResults, delta, events)
 	if err != nil {
 		return nil, err
 	}
@@ -494,11 +490,11 @@ func (b *Blockchain) commitBlock() (*types.Block, error) {
 	// reset pending block using current block and ledger state
 	b.pendingBlock = newPendingBlock(block, ledgerView)
 
-	return &block, nil
+	return block, nil
 }
 
 // ExecuteAndCommitBlock is a utility that combines ExecuteBlock with CommitBlock.
-func (b *Blockchain) ExecuteAndCommitBlock() (*types.Block, []TransactionResult, error) {
+func (b *Blockchain) ExecuteAndCommitBlock() (*types.Block, []*TransactionResult, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -528,45 +524,45 @@ func (b *Blockchain) ResetPendingBlock() error {
 	latestLedgerView := b.storage.LedgerViewByHeight(latestBlock.Height)
 
 	// reset pending block using latest committed block and ledger state
-	b.pendingBlock = newPendingBlock(*latestBlock, latestLedgerView)
+	b.pendingBlock = newPendingBlock(latestBlock, latestLedgerView)
 
 	return nil
 }
 
 // ExecuteScript executes a read-only script against the world state and returns the result.
-func (b *Blockchain) ExecuteScript(script []byte) (ScriptResult, error) {
+func (b *Blockchain) ExecuteScript(script []byte) (*ScriptResult, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
 	latestBlock, err := b.GetLatestBlock()
 	if err != nil {
-		return ScriptResult{}, err
+		return nil, err
 	}
 
 	latestLedgerView := b.storage.LedgerViewByHeight(latestBlock.Height)
 
 	result, err := b.computer.ExecuteScript(latestLedgerView, script)
 	if err != nil {
-		return ScriptResult{}, err
+		return nil, err
 	}
 
 	return result, nil
 }
 
-func (b *Blockchain) ExecuteScriptAtBlock(script []byte, blockHeight uint64) (ScriptResult, error) {
+func (b *Blockchain) ExecuteScriptAtBlock(script []byte, blockHeight uint64) (*ScriptResult, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
 	requestedBlock, err := b.GetBlockByHeight(blockHeight)
 	if err != nil {
-		return ScriptResult{}, err
+		return nil, err
 	}
 
 	requestedLedgerView := b.storage.LedgerViewByHeight(requestedBlock.Height)
 
 	result, err := b.computer.ExecuteScript(requestedLedgerView, script)
 	if err != nil {
-		return ScriptResult{}, err
+		return nil, err
 	}
 
 	return result, nil
@@ -789,6 +785,23 @@ func sigIsForProposalKey(txSig flow.TransactionSignature, proposalKey flow.Propo
 
 func hasSufficientKeyWeight(weights map[flow.Address]int, address flow.Address) bool {
 	return weights[address] >= keys.PublicKeyWeightThreshold
+}
+
+func convertToSealedResults(
+	results map[flow.Identifier]*TransactionResult,
+) map[flow.Identifier]*flow.TransactionResult {
+
+	output := make(map[flow.Identifier]*flow.TransactionResult)
+
+	for id, result := range results {
+		output[id] = &flow.TransactionResult{
+			Status: flow.TransactionStatusSealed,
+			Error:  result.Error,
+			Events: result.Events,
+		}
+	}
+
+	return output
 }
 
 func init() {

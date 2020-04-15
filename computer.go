@@ -34,12 +34,12 @@ func newComputer(
 // the accounts that authorized the transaction.
 //
 // An error is returned if the transaction script cannot be parsed or reverts during execution.
-func (c *computer) ExecuteTransaction(ledger *types.LedgerView, tx flow.Transaction) (TransactionResult, error) {
+func (c *computer) ExecuteTransaction(ledger *types.LedgerView, tx flow.Transaction) (*TransactionResult, error) {
 	runtimeContext := execution.NewRuntimeContext(ledger)
 
 	if tx.ProposalKey == (flow.ProposalKey{}) {
 		// TODO: add dedicated error type
-		return TransactionResult{}, fmt.Errorf("missing sequence number")
+		return nil, fmt.Errorf("missing sequence number")
 	}
 
 	valid, updatedSeqNum, err := runtimeContext.CheckAndIncrementSequenceNumber(
@@ -48,11 +48,11 @@ func (c *computer) ExecuteTransaction(ledger *types.LedgerView, tx flow.Transact
 		tx.ProposalKey.SequenceNumber,
 	)
 	if err != nil {
-		return TransactionResult{}, err
+		return nil, err
 	}
 
 	if !valid {
-		return TransactionResult{
+		return &TransactionResult{
 			TransactionID: tx.ID(),
 			// TODO: add dedicated error type
 			Error: fmt.Errorf(
@@ -82,13 +82,13 @@ func (c *computer) ExecuteTransaction(ledger *types.LedgerView, tx flow.Transact
 
 	convertedEvents, err := convertEvents(runtimeContext.Events(), tx.ID())
 	if err != nil {
-		return TransactionResult{}, err
+		return nil, err
 	}
 
 	if executionErr != nil {
 		if errors.As(executionErr, &runtime.Error{}) {
 			// runtime errors occur when the execution reverts
-			return TransactionResult{
+			return &TransactionResult{
 				TransactionID: tx.ID(),
 				Error:         executionErr,
 				Logs:          runtimeContext.Logs(),
@@ -97,10 +97,10 @@ func (c *computer) ExecuteTransaction(ledger *types.LedgerView, tx flow.Transact
 		}
 
 		// other errors are unexpected and should be treated as fatal
-		return TransactionResult{}, executionErr
+		return nil, executionErr
 	}
 
-	return TransactionResult{
+	return &TransactionResult{
 		TransactionID: tx.ID(),
 		Error:         nil,
 		Logs:          runtimeContext.Logs(),
@@ -111,7 +111,7 @@ func (c *computer) ExecuteTransaction(ledger *types.LedgerView, tx flow.Transact
 // ExecuteScript executes a plain script in the runtime.
 //
 // This function initializes a new runtime context using the provided registers view.
-func (c *computer) ExecuteScript(view *types.LedgerView, script []byte) (ScriptResult, error) {
+func (c *computer) ExecuteScript(view *types.LedgerView, script []byte) (*ScriptResult, error) {
 	runtimeContext := execution.NewRuntimeContext(view)
 
 	hasher := crypto.NewSHA3_256()
@@ -123,13 +123,13 @@ func (c *computer) ExecuteScript(view *types.LedgerView, script []byte) (ScriptR
 
 	convertedEvents, err := convertEvents(runtimeContext.Events(), flow.ZeroID)
 	if err != nil {
-		return ScriptResult{}, err
+		return nil, err
 	}
 
 	if executionErr != nil {
 		if errors.As(executionErr, &runtime.Error{}) {
 			// runtime errors occur when the execution reverts
-			return ScriptResult{
+			return &ScriptResult{
 				ScriptID: scriptID,
 				Value:    nil,
 				Error:    executionErr,
@@ -139,12 +139,12 @@ func (c *computer) ExecuteScript(view *types.LedgerView, script []byte) (ScriptR
 		}
 
 		// other errors are unexpected and should be treated as fatal
-		return ScriptResult{}, executionErr
+		return nil, executionErr
 	}
 
 	convertedValue := cadence.ConvertValue(value)
 
-	return ScriptResult{
+	return &ScriptResult{
 		ScriptID: scriptID,
 		Value:    convertedValue,
 		Error:    nil,
