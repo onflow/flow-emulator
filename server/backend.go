@@ -129,26 +129,6 @@ func (b *Backend) GetBlockHeaderByID(ctx context.Context, req *access.GetBlockHe
 
 // GetLatestBlock gets the latest sealed block.
 func (b *Backend) GetLatestBlock(ctx context.Context, req *access.GetLatestBlockRequest) (*access.BlockResponse, error) {
-	// block, err := b.blockchain.GetLatestBlock()
-	// if err != nil {
-	// 	return nil, status.Error(codes.Internal, err.Error())
-	// }
-
-	// // create block header for block
-	// block := flow.Block{
-	// 	ID:       flow.HashToID(block.ID()),
-	// 	ParentID: flow.HashToID(block.PreviousBlockHash),
-	// 	Height:   block.Number,
-	// }
-
-	// b.logger.WithFields(logrus.Fields{
-	// 	"blockHeight":  blockHeader.Height,
-	// 	"blockHash": blockHeader.ID,
-	// }).Debug("🎁  GetLatestBlock called")
-
-	// response := &access.BlockHeaderResponse{
-	// 	Block: convert.BlockHeaderToMessage(blockHeader),
-	// }
 	panic("not implemented")
 	return nil, nil
 }
