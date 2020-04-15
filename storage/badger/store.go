@@ -242,6 +242,10 @@ func (s *Store) CollectionByID(colID flow.Identifier) (col model.LightCollection
 	return
 }
 
+func (s *Store) InsertCollection(col model.LightCollection) error {
+	return s.db.Update(insertCollection(col))
+}
+
 func insertCollection(col model.LightCollection) func(txn *badger.Txn) error {
 	return func(txn *badger.Txn) error {
 		encCol, err := encodeCollection(col)
