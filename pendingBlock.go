@@ -15,8 +15,8 @@ type pendingBlock struct {
 	transactions map[flow.Identifier]*flow.Transaction
 	// list of transaction IDs in the block
 	transactionIDs []flow.Identifier
-	// mapping from transaction ID to transaction receipt
-	transactionReceipts map[flow.Identifier]*TransactionReceipt
+	// mapping from transaction ID to transaction result
+	transactionResults map[flow.Identifier]*TransactionResult
 	// current working ledger, updated after each transaction execution
 	ledgerView *types.LedgerView
 	// events emitted during execution
@@ -28,14 +28,14 @@ type pendingBlock struct {
 // newPendingBlock creates a new pending block using the specified block as its parent.
 func newPendingBlock(prevBlock *types.Block, ledgerView *types.LedgerView) *pendingBlock {
 	return &pendingBlock{
-		height:              prevBlock.Height + 1,
-		parentID:            prevBlock.ID(),
-		transactions:        make(map[flow.Identifier]*flow.Transaction),
-		transactionIDs:      make([]flow.Identifier, 0),
-		transactionReceipts: make(map[flow.Identifier]*TransactionReceipt),
-		ledgerView:          ledgerView,
-		events:              make([]flow.Event, 0),
-		index:               0,
+		height:             prevBlock.Height + 1,
+		parentID:           prevBlock.ID(),
+		transactions:       make(map[flow.Identifier]*flow.Transaction),
+		transactionIDs:     make([]flow.Identifier, 0),
+		transactionResults: make(map[flow.Identifier]*TransactionResult),
+		ledgerView:         ledgerView,
+		events:             make([]flow.Event, 0),
+		index:              0,
 	}
 }
 
@@ -84,8 +84,8 @@ func (b *pendingBlock) Transactions() map[flow.Identifier]*flow.Transaction {
 	return b.transactions
 }
 
-func (b *pendingBlock) TransactionReceipts() map[flow.Identifier]*TransactionReceipt {
-	return b.transactionReceipts
+func (b *pendingBlock) TransactionResults() map[flow.Identifier]*TransactionResult {
+	return b.transactionResults
 }
 
 // LedgerDelta returns the ledger delta for the pending block.
@@ -121,11 +121,11 @@ func (b *pendingBlock) nextTransaction() *flow.Transaction {
 // This function uses the provided execute function to perform the actual
 // execution, then updates the pending block with the output.
 func (b *pendingBlock) ExecuteNextTransaction(
-	execute func(ledgerView *types.LedgerView, tx flow.Transaction) (*TransactionReceipt, error),
-) (*TransactionReceipt, error) {
+	execute func(ledgerView *types.LedgerView, tx flow.Transaction) (*TransactionResult, error),
+) (*TransactionResult, error) {
 	tx := b.nextTransaction()
 
-	receipt, err := execute(b.ledgerView, *tx)
+	result, err := execute(b.ledgerView, *tx)
 	if err != nil {
 		// fail fast if fatal error occurs
 		return nil, err
@@ -134,13 +134,13 @@ func (b *pendingBlock) ExecuteNextTransaction(
 	// increment transaction index even if transaction reverts
 	b.index++
 
-	if receipt.Error == nil {
-		b.events = append(b.events, receipt.Events...)
+	if result.Error == nil {
+		b.events = append(b.events, result.Events...)
 	}
 
-	b.transactionReceipts[tx.ID()] = receipt
+	b.transactionResults[tx.ID()] = result
 
-	return receipt, nil
+	return result, nil
 }
 
 // Events returns all events captured during the execution of the pending block.
