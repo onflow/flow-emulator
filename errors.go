@@ -40,7 +40,7 @@ func (e *ErrBlockNotFoundByID) Error() string {
 	return fmt.Sprintf("could not find block with ID %s", e.ID)
 }
 
-// ErrCollectionNotFound indicates that the collection could not be found.
+// ErrCollectionNotFound indicates that a collection could not be found.
 type ErrCollectionNotFound struct {
 	ID flow.Identifier
 }
@@ -51,7 +51,7 @@ func (e *ErrCollectionNotFound) Error() string {
 	return fmt.Sprintf("could not find collection with ID %s", e.ID)
 }
 
-// ErrTransactionNotFound indicates that the transaction could not be found.
+// ErrTransactionNotFound indicates that a transaction could not be found.
 type ErrTransactionNotFound struct {
 	ID flow.Identifier
 }
@@ -62,7 +62,7 @@ func (e *ErrTransactionNotFound) Error() string {
 	return fmt.Sprintf("could not find transaction with ID %s", e.ID)
 }
 
-// ErrAccountNotFound indicates that the account could not be found.
+// ErrAccountNotFound indicates that an account could not be found.
 type ErrAccountNotFound struct {
 	Address flow.Address
 }
