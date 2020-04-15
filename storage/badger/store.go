@@ -78,6 +78,24 @@ func (s *Store) setup() error {
 	})
 }
 
+func (s *Store) LatestBlock() (block types.Block, err error) {
+	err = s.db.View(func(txn *badger.Txn) error {
+		// get latest block height
+		latestBlockHeight, err := getLatestBlockHeightTx(txn)
+		if err != nil {
+			return err
+		}
+
+		// get corresponding block
+		encBlock, err := getTx(txn)(blockKey(latestBlockHeight))
+		if err != nil {
+			return err
+		}
+		return decodeBlock(&block, encBlock)
+	})
+	return
+}
+
 func (s *Store) BlockByID(blockID flow.Identifier) (block types.Block, err error) {
 	err = s.db.View(func(txn *badger.Txn) error {
 		// get block height by block ID
@@ -105,24 +123,6 @@ func (s *Store) BlockByID(blockID flow.Identifier) (block types.Block, err error
 func (s *Store) BlockByHeight(blockHeight uint64) (block types.Block, err error) {
 	err = s.db.View(func(txn *badger.Txn) error {
 		encBlock, err := getTx(txn)(blockKey(blockHeight))
-		if err != nil {
-			return err
-		}
-		return decodeBlock(&block, encBlock)
-	})
-	return
-}
-
-func (s *Store) LatestBlock() (block types.Block, err error) {
-	err = s.db.View(func(txn *badger.Txn) error {
-		// get latest block height
-		latestBlockHeight, err := getLatestBlockHeightTx(txn)
-		if err != nil {
-			return err
-		}
-
-		// get corresponding block
-		encBlock, err := getTx(txn)(blockKey(latestBlockHeight))
 		if err != nil {
 			return err
 		}

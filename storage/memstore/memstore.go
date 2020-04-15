@@ -47,6 +47,17 @@ func New() *Store {
 	}
 }
 
+func (s *Store) LatestBlock() (types.Block, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	latestBlock, ok := s.blocks[s.blockHeight]
+	if !ok {
+		return types.Block{}, storage.ErrNotFound
+	}
+	return latestBlock, nil
+}
+
 func (s *Store) BlockByID(id flow.Identifier) (types.Block, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -70,24 +81,6 @@ func (s *Store) BlockByHeight(blockHeight uint64) (types.Block, error) {
 	}
 
 	return block, nil
-}
-
-func (s *Store) LatestBlock() (types.Block, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	latestBlock, ok := s.blocks[s.blockHeight]
-	if !ok {
-		return types.Block{}, storage.ErrNotFound
-	}
-	return latestBlock, nil
-}
-
-func (s *Store) InsertBlock(block types.Block) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	return s.insertBlock(block)
 }
 
 func (s *Store) insertBlock(block types.Block) error {
