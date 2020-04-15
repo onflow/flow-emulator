@@ -58,6 +58,7 @@ type BlockchainAPI interface {
 	GetLatestBlock() (*types.Block, error)
 	GetBlockByID(id flow.Identifier) (*types.Block, error)
 	GetBlockByHeight(height uint64) (*types.Block, error)
+	GetCollection(colID flow.Identifier) (*model.LightCollection, error)
 	GetTransaction(txID flow.Identifier) (*flow.Transaction, error)
 	GetTransactionResult(txID flow.Identifier) (*flow.TransactionResult, error)
 	GetAccount(address flow.Address) (*flow.Account, error)
@@ -254,6 +255,21 @@ func (b *Blockchain) GetBlockByHeight(height uint64) (*types.Block, error) {
 	return &block, nil
 }
 
+func (b *Blockchain) GetCollection(colID flow.Identifier) (*model.LightCollection, error) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	col, err := b.storage.CollectionByID(colID)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return nil, &ErrCollectionNotFound{ID: colID}
+		}
+		return nil, &ErrStorage{err}
+	}
+
+	return &col, nil
+}
+
 // GetTransaction gets an existing transaction by ID.
 //
 // The function first looks in the pending block, then the current blockchain state.
@@ -432,7 +448,7 @@ func (b *Blockchain) executeNextTransaction() (*TransactionResult, error) {
 	}
 
 	// use the computer to execute the next transaction
-	receipt, err := b.pendingBlock.ExecuteNextTransaction(
+	result, err := b.pendingBlock.ExecuteNextTransaction(
 		func(
 			ledgerView *types.LedgerView,
 			tx flow.Transaction,
