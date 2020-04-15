@@ -7,6 +7,7 @@ import (
 	"github.com/dapperlabs/cadence"
 	"github.com/dapperlabs/flow-go-sdk"
 	vm "github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
+	model "github.com/dapperlabs/flow-go/model/flow"
 
 	"github.com/dapperlabs/flow-emulator/types"
 )
@@ -92,6 +93,30 @@ func init() {
 	gob.Register(cadence.Event{})
 }
 
+func encodeBlock(block types.Block) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := gob.NewEncoder(&buf).Encode(&block); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func decodeBlock(block *types.Block, from []byte) error {
+	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(block)
+}
+
+func encodeCollection(col model.LightCollection) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := gob.NewEncoder(&buf).Encode(&col); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func decodeCollection(col *model.LightCollection, from []byte) error {
+	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(col)
+}
+
 func encodeTransaction(tx flow.Transaction) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(&tx); err != nil {
@@ -114,18 +139,6 @@ func encodeTransactionResult(result flow.TransactionResult) ([]byte, error) {
 
 func decodeTransactionResult(result *flow.TransactionResult, from []byte) error {
 	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(result)
-}
-
-func encodeBlock(block types.Block) ([]byte, error) {
-	var buf bytes.Buffer
-	if err := gob.NewEncoder(&buf).Encode(&block); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-func decodeBlock(block *types.Block, from []byte) error {
-	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(block)
 }
 
 func encodeUint64(v uint64) ([]byte, error) {

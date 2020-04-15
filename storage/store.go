@@ -3,6 +3,8 @@
 package storage
 
 import (
+	model "github.com/dapperlabs/flow-go/model/flow"
+
 	"github.com/dapperlabs/flow-go-sdk"
 
 	"github.com/dapperlabs/flow-emulator/types"
@@ -21,26 +23,27 @@ import (
 // Implementations must be safe for use by multiple goroutines.
 type Store interface {
 
+	// LatestBlock returns the block with the highest block height.
+	LatestBlock() (types.Block, error)
+
 	// BlockByID returns the block with the given ID.
 	BlockByID(flow.Identifier) (types.Block, error)
 
 	// BlockByHeight returns the block with the given height.
 	BlockByHeight(blockHeight uint64) (types.Block, error)
 
-	// LatestBlock returns the block with the highest block height.
-	LatestBlock() (types.Block, error)
-
-	// InsertBlock inserts a block.
-	InsertBlock(types.Block) error
-
 	// CommitBlock atomically saves the execution results for a block.
 	CommitBlock(
-		block types.Block,
-		transactions []flow.Transaction,
-		transactionResults []flow.TransactionResult,
+		block *types.Block,
+		collections []*model.LightCollection,
+		transactions map[flow.Identifier]*flow.Transaction,
+		transactionResults map[flow.Identifier]*flow.TransactionResult,
 		delta types.LedgerDelta,
 		events []flow.Event,
 	) error
+
+	// CollectionByID gets the collection (transaction IDs only) with the given ID.
+	CollectionByID(flow.Identifier) (model.LightCollection, error)
 
 	// TransactionByID gets the transaction with the given ID.
 	TransactionByID(flow.Identifier) (flow.Transaction, error)
