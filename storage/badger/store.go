@@ -177,7 +177,7 @@ func (s *Store) CommitBlock(
 	transactionResults map[flow.Identifier]*flow.TransactionResult,
 	delta types.LedgerDelta,
 	events []flow.Event,
-) error {
+) (err error) {
 	if len(transactions) != len(transactionResults) {
 		return fmt.Errorf(
 			"transactions count (%d) does not match result count (%d)",
@@ -186,7 +186,7 @@ func (s *Store) CommitBlock(
 		)
 	}
 
-	err := s.db.Update(func(txn *badger.Txn) error {
+	err = s.db.Update(func(txn *badger.Txn) error {
 		err := insertBlock(*block)(txn)
 		if err != nil {
 			return err
