@@ -10,6 +10,7 @@ import (
 const (
 	blockKeyPrefix             = "block_by_height"
 	blockIDIndexKeyPrefix      = "block_id_to_height"
+	collectionKeyPrefix        = "collection_by_id"
 	transactionKeyPrefix       = "transaction_by_id"
 	transactionResultKeyPrefix = "transaction_result_by_id"
 	ledgerKeyPrefix            = "ledger_by_block_height" // TODO remove
@@ -26,6 +27,10 @@ const (
 // numeric component of the key left-padded with zeros (%032d) so that
 // lexicographic ordering matches numeric ordering.
 
+func latestBlockKey() []byte {
+	return []byte("latest_block_height")
+}
+
 func blockKey(blockHeight uint64) []byte {
 	return []byte(fmt.Sprintf("%s-%032d", blockKeyPrefix, blockHeight))
 }
@@ -34,8 +39,8 @@ func blockIDIndexKey(blockID flow.Identifier) []byte {
 	return []byte(fmt.Sprintf("%s-%x", blockIDIndexKeyPrefix, blockID))
 }
 
-func latestBlockKey() []byte {
-	return []byte("latest_block_height")
+func collectionKey(colID flow.Identifier) []byte {
+	return []byte(fmt.Sprintf("%s-%x", collectionKeyPrefix, colID))
 }
 
 func transactionKey(txID flow.Identifier) []byte {

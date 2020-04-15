@@ -7,6 +7,7 @@ package mocks
 import (
 	types "github.com/dapperlabs/flow-emulator/types"
 	flow_go_sdk "github.com/dapperlabs/flow-go-sdk"
+	flow "github.com/dapperlabs/flow-go/model/flow"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )
@@ -64,18 +65,33 @@ func (mr *MockStoreMockRecorder) BlockByID(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BlockByID", reflect.TypeOf((*MockStore)(nil).BlockByID), arg0)
 }
 
-// CommitBlock mocks base method
-func (m *MockStore) CommitBlock(arg0 types.Block, arg1 []flow_go_sdk.Transaction, arg2 []flow_go_sdk.TransactionResult, arg3 types.LedgerDelta, arg4 []flow_go_sdk.Event) error {
+// CollectionByID mocks base method
+func (m *MockStore) CollectionByID(arg0 flow_go_sdk.Identifier) (flow.LightCollection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CommitBlock", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "CollectionByID", arg0)
+	ret0, _ := ret[0].(flow.LightCollection)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CollectionByID indicates an expected call of CollectionByID
+func (mr *MockStoreMockRecorder) CollectionByID(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CollectionByID", reflect.TypeOf((*MockStore)(nil).CollectionByID), arg0)
+}
+
+// CommitBlock mocks base method
+func (m *MockStore) CommitBlock(arg0 *types.Block, arg1 []*flow.LightCollection, arg2 map[flow_go_sdk.Identifier]*flow_go_sdk.Transaction, arg3 map[flow_go_sdk.Identifier]*flow_go_sdk.TransactionResult, arg4 types.LedgerDelta, arg5 []flow_go_sdk.Event) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CommitBlock", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CommitBlock indicates an expected call of CommitBlock
-func (mr *MockStoreMockRecorder) CommitBlock(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) CommitBlock(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitBlock", reflect.TypeOf((*MockStore)(nil).CommitBlock), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitBlock", reflect.TypeOf((*MockStore)(nil).CommitBlock), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // EventsByHeight mocks base method
@@ -91,20 +107,6 @@ func (m *MockStore) EventsByHeight(arg0 uint64, arg1 string) ([]flow_go_sdk.Even
 func (mr *MockStoreMockRecorder) EventsByHeight(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EventsByHeight", reflect.TypeOf((*MockStore)(nil).EventsByHeight), arg0, arg1)
-}
-
-// InsertBlock mocks base method
-func (m *MockStore) InsertBlock(arg0 types.Block) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InsertBlock", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// InsertBlock indicates an expected call of InsertBlock
-func (mr *MockStoreMockRecorder) InsertBlock(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertBlock", reflect.TypeOf((*MockStore)(nil).InsertBlock), arg0)
 }
 
 // LatestBlock mocks base method

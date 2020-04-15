@@ -6,6 +6,7 @@ import (
 
 	"github.com/dapperlabs/flow-go-sdk"
 	vm "github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
+	model "github.com/dapperlabs/flow-go/model/flow"
 
 	"github.com/dapperlabs/flow-emulator/storage"
 	"github.com/dapperlabs/flow-emulator/types"
@@ -14,19 +15,21 @@ import (
 // Store implements the Store interface with an in-memory store.
 type Store struct {
 	mu sync.RWMutex
-	// Maps block IDs to block heights
+	// block ID to block height
 	blockIDToHeight map[flow.Identifier]uint64
-	// Finalized blocks indexed by block height
+	// blocks by height
 	blocks map[uint64]types.Block
-	// Transactions by ID
+	// collections by ID
+	collections map[model.Identifier]model.LightCollection
+	// transactions by ID
 	transactions map[flow.Identifier]flow.Transaction
-	// Transaction results by ID
+	// transaction results by ID
 	transactionResults map[flow.Identifier]flow.TransactionResult
-	// Ledger states by block height
+	// ledger states by block height
 	ledger map[uint64]vm.MapLedger
-	// Stores events by block height
+	// events by block height
 	eventsByBlockHeight map[uint64][]flow.Event
-	// Tracks the highest block height
+	// highest block height
 	blockHeight uint64
 }
 
@@ -36,6 +39,7 @@ func New() *Store {
 		mu:                  sync.RWMutex{},
 		blockIDToHeight:     make(map[flow.Identifier]uint64),
 		blocks:              make(map[uint64]types.Block),
+		collections:         make(map[model.Identifier]model.LightCollection),
 		transactions:        make(map[flow.Identifier]flow.Transaction),
 		transactionResults:  make(map[flow.Identifier]flow.TransactionResult),
 		ledger:              make(map[uint64]vm.MapLedger),
@@ -96,19 +100,15 @@ func (s *Store) insertBlock(block types.Block) error {
 }
 
 func (s *Store) CommitBlock(
-	block types.Block,
-	transactions []flow.Transaction,
-	transactionResults []flow.TransactionResult,
+	block *types.Block,
+	collections []*model.LightCollection,
+	transactions map[flow.Identifier]*flow.Transaction,
+	transactionResults map[flow.Identifier]*flow.TransactionResult,
 	delta types.LedgerDelta,
 	events []flow.Event,
 ) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
-	err := s.insertBlock(block)
-	if err != nil {
-		return err
-	}
 
 	if len(transactions) != len(transactionResults) {
 		return fmt.Errorf(
@@ -118,15 +118,27 @@ func (s *Store) CommitBlock(
 		)
 	}
 
-	for i, tx := range transactions {
-		err := s.insertTransaction(tx)
+	err := s.insertBlock(*block)
+	if err != nil {
+		return err
+	}
+
+	for _, col := range collections {
+		err := s.insertCollection(*col)
 		if err != nil {
 			return err
 		}
+	}
 
-		result := transactionResults[i]
+	for txID, tx := range transactions {
+		err := s.insertTransaction(txID, *tx)
+		if err != nil {
+			return err
+		}
+	}
 
-		err = s.insertTransactionResult(tx.ID(), result)
+	for txID, result := range transactionResults {
+		err := s.insertTransactionResult(txID, *result)
 		if err != nil {
 			return err
 		}
@@ -145,6 +157,22 @@ func (s *Store) CommitBlock(
 	return nil
 }
 
+func (s *Store) CollectionByID(colID flow.Identifier) (model.LightCollection, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	tx, ok := s.collections[model.Identifier(colID)]
+	if !ok {
+		return model.LightCollection{}, storage.ErrNotFound
+	}
+	return tx, nil
+}
+
+func (s *Store) insertCollection(col model.LightCollection) error {
+	s.collections[col.ID()] = col
+	return nil
+}
+
 func (s *Store) TransactionByID(txID flow.Identifier) (flow.Transaction, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -156,8 +184,8 @@ func (s *Store) TransactionByID(txID flow.Identifier) (flow.Transaction, error) 
 	return tx, nil
 }
 
-func (s *Store) insertTransaction(tx flow.Transaction) error {
-	s.transactions[tx.ID()] = tx
+func (s *Store) insertTransaction(txId flow.Identifier, tx flow.Transaction) error {
+	s.transactions[txId] = tx
 	return nil
 }
 

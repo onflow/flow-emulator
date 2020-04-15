@@ -9,6 +9,7 @@ import (
 
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go-sdk/test"
+	model "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -443,13 +444,18 @@ func BenchmarkBlockDiskUsage(b *testing.B) {
 	var lastDBSize int64
 	for i := 0; i < b.N; i++ {
 		block := types.Block{
-			Height:         uint64(i),
-			ParentID:       ids.New(),
-			TransactionIDs: []flow.Identifier{ids.New()},
+			Height:   uint64(i),
+			ParentID: ids.New(),
+			Guarantees: []*model.CollectionGuarantee{
+				{
+					CollectionID: model.Identifier(ids.New()),
+				},
+			},
 		}
 		if err := store.InsertBlock(block); err != nil {
 			b.Fatal(err)
 		}
+
 		if err := store.Sync(); err != nil {
 			b.Fatal(err)
 		}
