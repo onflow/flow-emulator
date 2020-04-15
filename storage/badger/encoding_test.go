@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/dapperlabs/flow-go-sdk/test"
+	model "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -42,10 +43,15 @@ func TestEncodeBlock(t *testing.T) {
 	ids := test.IdentifierGenerator()
 
 	block := types.Block{
-		Height:         1234,
-		ParentID:       ids.New(),
-		TransactionIDs: []flow.Identifier{ids.New()},
+		Height:   1234,
+		ParentID: ids.New(),
+		Guarantees: []*model.CollectionGuarantee{
+			{
+				CollectionID: model.Identifier(ids.New()),
+			},
+		},
 	}
+
 	data, err := encodeBlock(block)
 	require.Nil(t, err)
 
@@ -55,7 +61,7 @@ func TestEncodeBlock(t *testing.T) {
 
 	assert.Equal(t, block.Height, decodedBlock.Height)
 	assert.Equal(t, block.ParentID, decodedBlock.ParentID)
-	assert.Equal(t, block.TransactionIDs, decodedBlock.TransactionIDs)
+	assert.Equal(t, block.Guarantees, decodedBlock.Guarantees)
 }
 
 func TestEncodeEvent(t *testing.T) {

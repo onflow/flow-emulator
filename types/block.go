@@ -1,15 +1,17 @@
 package types
 
 import (
+	model "github.com/dapperlabs/flow-go/model/flow"
+
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go/crypto"
 )
 
 // Block is a naive data structure used to represent blocks in the emulator.
 type Block struct {
-	Height         uint64
-	ParentID       flow.Identifier
-	TransactionIDs []flow.Identifier
+	Height     uint64
+	ParentID   flow.Identifier
+	Guarantees []*model.CollectionGuarantee
 }
 
 // ID returns the hash of this block.
@@ -20,13 +22,13 @@ func (b Block) ID() flow.Identifier {
 
 func (b Block) Encode() []byte {
 	temp := struct {
-		Height         uint64
-		ParentID       flow.Identifier
-		TransactionIDs []flow.Identifier
+		Height        uint64
+		ParentID      flow.Identifier
+		CollectionIDs []model.Identifier
 	}{
 		b.Height,
 		b.ParentID,
-		b.TransactionIDs,
+		model.GetIDs(b.Guarantees),
 	}
 
 	return flow.DefaultEncoder.MustEncode(&temp)
@@ -43,8 +45,8 @@ func (b Block) Header() flow.BlockHeader {
 // GenesisBlock returns the genesis block for an emulated blockchain.
 func GenesisBlock() Block {
 	return Block{
-		Height:         0,
-		ParentID:       flow.ZeroID,
-		TransactionIDs: []flow.Identifier{},
+		Height:     0,
+		ParentID:   flow.ZeroID,
+		Guarantees: []*model.CollectionGuarantee{},
 	}
 }

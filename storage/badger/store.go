@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	model "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/dgraph-io/badger/v2"
 
 	"github.com/dapperlabs/flow-go-sdk"
@@ -170,12 +171,13 @@ func insertBlock(block types.Block) func(txn *badger.Txn) error {
 }
 
 func (s *Store) CommitBlock(
-	block types.Block,
-	transactions []flow.Transaction,
-	transactionResults []flow.TransactionResult,
+	block *types.Block,
+	collections []*model.LightCollection,
+	transactions map[flow.Identifier]*flow.Transaction,
+	transactionResults map[flow.Identifier]*flow.TransactionResult,
 	delta types.LedgerDelta,
 	events []flow.Event,
-) (err error) {
+) error {
 	if len(transactions) != len(transactionResults) {
 		return fmt.Errorf(
 			"transactions count (%d) does not match result count (%d)",
@@ -184,21 +186,28 @@ func (s *Store) CommitBlock(
 		)
 	}
 
-	err = s.db.Update(func(txn *badger.Txn) error {
-		err := insertBlock(block)(txn)
+	err := s.db.Update(func(txn *badger.Txn) error {
+		err := insertBlock(*block)(txn)
 		if err != nil {
 			return err
 		}
 
-		for i, tx := range transactions {
-			err := insertTransaction(tx)(txn)
+		for _, col := range collections {
+			err := insertCollection(*col)(txn)
 			if err != nil {
 				return err
 			}
+		}
 
-			result := transactionResults[i]
+		for txID, tx := range transactions {
+			err := insertTransaction(txID, *tx)(txn)
+			if err != nil {
+				return err
+			}
+		}
 
-			err = insertTransactionResult(tx.ID(), result)(txn)
+		for txID, result := range transactionResults {
+			err := insertTransactionResult(txID, *result)(txn)
 			if err != nil {
 				return err
 			}
@@ -222,6 +231,28 @@ func (s *Store) CommitBlock(
 	return err
 }
 
+func (s *Store) CollectionByID(colID flow.Identifier) (col model.LightCollection, err error) {
+	err = s.db.View(func(txn *badger.Txn) error {
+		encCol, err := getTx(txn)(collectionKey(colID))
+		if err != nil {
+			return err
+		}
+		return decodeCollection(&col, encCol)
+	})
+	return
+}
+
+func insertCollection(col model.LightCollection) func(txn *badger.Txn) error {
+	return func(txn *badger.Txn) error {
+		encCol, err := encodeCollection(col)
+		if err != nil {
+			return err
+		}
+
+		return txn.Set(collectionKey(flow.Identifier(col.ID())), encCol)
+	}
+}
+
 func (s *Store) TransactionByID(txID flow.Identifier) (tx flow.Transaction, err error) {
 	err = s.db.View(func(txn *badger.Txn) error {
 		encTx, err := getTx(txn)(transactionKey(txID))
@@ -234,17 +265,17 @@ func (s *Store) TransactionByID(txID flow.Identifier) (tx flow.Transaction, err 
 }
 
 func (s *Store) InsertTransaction(tx flow.Transaction) error {
-	return s.db.Update(insertTransaction(tx))
+	return s.db.Update(insertTransaction(tx.ID(), tx))
 }
 
-func insertTransaction(tx flow.Transaction) func(txn *badger.Txn) error {
+func insertTransaction(txID flow.Identifier, tx flow.Transaction) func(txn *badger.Txn) error {
 	return func(txn *badger.Txn) error {
 		encTx, err := encodeTransaction(tx)
 		if err != nil {
 			return err
 		}
 
-		return txn.Set(transactionKey(tx.ID()), encTx)
+		return txn.Set(transactionKey(txID), encTx)
 	}
 }
 
