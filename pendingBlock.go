@@ -68,6 +68,10 @@ func (b *pendingBlock) Block() *types.Block {
 }
 
 func (b *pendingBlock) Collections() []*model.LightCollection {
+	if len(b.transactionIDs) == 0 {
+		return []*model.LightCollection{}
+	}
+
 	transactionIDs := make([]model.Identifier, len(b.transactionIDs))
 
 	// TODO: remove once SDK models are removed
