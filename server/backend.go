@@ -17,6 +17,7 @@ import (
 	"github.com/dapperlabs/flow/protobuf/go/flow/entities"
 
 	emulator "github.com/dapperlabs/flow-emulator"
+	emuconvert "github.com/dapperlabs/flow-emulator/server/convert"
 	"github.com/dapperlabs/flow-emulator/types"
 )
 
@@ -147,8 +148,25 @@ func (b *Backend) GetBlockByID(ctx context.Context, req *access.GetBlockByIDRequ
 
 // GetCollectionByID gets a collection by ID.
 func (b *Backend) GetCollectionByID(ctx context.Context, req *access.GetCollectionByIDRequest) (*access.CollectionResponse, error) {
-	panic("not implemented")
-	return nil, nil
+	id := flow.HashToID(req.GetId())
+
+	col, err := b.blockchain.GetCollection(id)
+	if err != nil {
+		var notFoundErr emulator.ErrNotFound
+		if errors.As(err, &notFoundErr) {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	b.logger.
+		WithField("colID", id.Hex()).
+		Debugf("📚  GetCollectionByID called")
+
+	return &access.CollectionResponse{
+		Collection: emuconvert.CollectionToMessage(*col),
+	}, nil
 }
 
 // GetTransaction gets a transaction by ID.
