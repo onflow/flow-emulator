@@ -354,7 +354,6 @@ func (b *Backend) commitBlock() {
 	b.logger.WithFields(logrus.Fields{
 		"blockHeight": block.Height,
 		"blockID":     block.ID().Hex(),
-		"blockSize":   len(block.TransactionIDs),
 	}).Debugf("📦  Block #%d committed", block.Height)
 }
 
@@ -400,7 +399,7 @@ func (b *Backend) DisableAutoMine() {
 	b.automine = false
 }
 
-func printTransactionResult(logger *logrus.Logger, result emulator.TransactionResult) {
+func printTransactionResult(logger *logrus.Logger, result *emulator.TransactionResult) {
 	if result.Succeeded() {
 		logger.
 			WithField("txID", result.TransactionID.Hex()).
@@ -436,7 +435,7 @@ func printTransactionResult(logger *logrus.Logger, result emulator.TransactionRe
 	}
 }
 
-func printScriptResult(logger *logrus.Logger, result emulator.ScriptResult) {
+func printScriptResult(logger *logrus.Logger, result *emulator.ScriptResult) {
 	if result.Succeeded() {
 		logger.
 			WithField("scriptID", result.ScriptID.Hex()).
