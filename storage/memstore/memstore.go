@@ -177,8 +177,8 @@ func (s *Store) TransactionByID(txID flow.Identifier) (flow.Transaction, error) 
 	return tx, nil
 }
 
-func (s *Store) insertTransaction(txId flow.Identifier, tx flow.Transaction) error {
-	s.transactions[txId] = tx
+func (s *Store) insertTransaction(txID flow.Identifier, tx flow.Transaction) error {
+	s.transactions[txID] = tx
 	return nil
 }
 
