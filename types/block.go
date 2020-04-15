@@ -1,10 +1,9 @@
 package types
 
 import (
-	model "github.com/dapperlabs/flow-go/model/flow"
-
 	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go/crypto"
+	model "github.com/dapperlabs/flow-go/model/flow"
 )
 
 // Block is a naive data structure used to represent blocks in the emulator.
