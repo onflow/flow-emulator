@@ -17,17 +17,11 @@ func GenerateCreateTokenScript(tokenAddr flow.Address, initialBalance int) []byt
       transaction {
 
           prepare(acct: AuthAccount) {
-              let oldVault <- acct.storage[FlowToken.Vault] <- FlowToken.createVault(initialBalance: %d)
-              destroy oldVault
+              let vault <- FlowToken.createVault(initialBalance: %d)
+              acct.save(<-vault, to: /storage/vault)
 
-              acct.published[&AnyResource{FungibleToken.Receiver}] =
-                  &acct.storage[FlowToken.Vault] as &AnyResource{FungibleToken.Receiver}
-
-              acct.published[&AnyResource{FungibleToken.Provider}] =
-                  &acct.storage[FlowToken.Vault] as &AnyResource{FungibleToken.Provider}
-
-              acct.published[&AnyResource{FungibleToken.Balance}] =
-                  &acct.storage[FlowToken.Vault] as &AnyResource{FungibleToken.Balance}
+              acct.link<&{FungibleToken.Receiver}>(/public/receiver, target: /storage/vault)
+              acct.link<&{FungibleToken.Balance}>(/public/balance, target: /storage/vault)
           }
       }
     `
@@ -49,14 +43,13 @@ func GenerateCreateThreeTokensArrayScript(tokenAddr flow.Address, initialBalance
     		let vaultB <- FlowToken.createVault(initialBalance: %d)
 			let vaultC <- FlowToken.createVault(initialBalance: %d)
 			
-			var vaultArray <- [<-vaultA, <-vaultB]
+			var vaults <- [<-vaultA, <-vaultB]
 
-			vaultArray.append(<-vaultC)
+			vaults.append(<-vaultC)
 
-			let storedVaults <- acct.storage[[FlowToken.Vault]] <- vaultArray
-			destroy storedVaults
+            acct.save(<-vaults, to: /storage/vaults) 
 
-            acct.published[&[FlowToken.Vault]] = &acct.storage[[FlowToken.Vault]] as &[FlowToken.Vault]
+            acct.link<&[FlowToken.Vault]>(/public/vaults, target: /storage/vaults)
 		  }
 		}
 	`
@@ -71,15 +64,13 @@ func GenerateWithdrawScript(tokenCodeAddr flow.Address, vaultNumber int, withdra
 
 		transaction {
 		  prepare(acct: AuthAccount) {
-			var vaultArray <- acct.storage[[FlowToken.Vault]]!
+			let vaults <- acct.load<@[FlowToken.Vault]>(from: /storage/vaults)!
 			
-			let withdrawVault <- vaultArray[%d].withdraw(amount: %d)
+			let withdrawVault <- vaults[%d].withdraw(amount: %d)
 
-			var storedVaults: @[FlowToken.Vault]? <- vaultArray
-			acct.storage[[FlowToken.Vault]] <-> storedVaults
+			acct.save(<-vaults, to: /storage/vaults) 
 
 			destroy withdrawVault
-			destroy storedVaults
 		  }
 		}
 	`
@@ -96,16 +87,13 @@ func GenerateWithdrawDepositScript(tokenCodeAddr flow.Address, withdrawVaultNumb
 
 		transaction {
 		  prepare(acct: AuthAccount) {
-			var vaultArray <- acct.storage[[FlowToken.Vault]]!
+			let vaults <- acct.load<@[FlowToken.Vault]>(from: /storage/vaults)!
 			
-			let withdrawVault <- vaultArray[%d].withdraw(amount: %d)
+			let withdrawVault <- vaults[%d].withdraw(amount: %d)
 
-			vaultArray[%d].deposit(from: <-withdrawVault)
+			vaults[%d].deposit(from: <-withdrawVault)
 
-			var storedVaults: @[FlowToken.Vault]? <- vaultArray
-			acct.storage[[FlowToken.Vault]] <-> storedVaults
-
-			destroy storedVaults
+			acct.save(<-vaults, to: /storage/vaults)
 		  }
 		}
 	`
@@ -123,8 +111,8 @@ func GenerateDepositVaultScript(tokenCodeAddr flow.Address, receiverAddr flow.Ad
 		  prepare(acct: AuthAccount) {
 			let recipient = getAccount(0x%s)
 
-			let providerRef = acct.published[&AnyResource{FungibleToken.Provider}] ?? panic("missing Provider reference")
-			let receiverRef = recipient.published[&AnyResource{FungibleToken.Receiver}] ?? panic("missing Receiver reference")
+			let providerRef = acct.borrow<&{FungibleToken.Provider}>(from: /storage/vault)!
+			let receiverRef = recipient.getCapability(/public/receiver)!.borrow<&{FungibleToken.Receiver}>()! 
 
 			let tokens <- providerRef.withdraw(amount: %d)
 
@@ -145,10 +133,10 @@ func GenerateInspectVaultScript(tokenCodeAddr, userAddr flow.Address, expectedBa
 
 		pub fun main() {
 			let acct = getAccount(0x%s)
-			let vaultRef = acct.published[&AnyResource{FungibleToken.Balance}] ?? panic("missing Receiver reference")
+			let vaultRef = acct.getCapability(/public/balance)!.borrow<&{FungibleToken.Balance}>()!
 			assert(
                 vaultRef.balance == UInt64(%d),
-                message: "incorrect Balance!"
+                message: "incorrect balance!"
             )
 		}
     `
@@ -165,9 +153,9 @@ func GenerateInspectVaultArrayScript(tokenCodeAddr, userAddr flow.Address, vault
 
 		pub fun main() {
 			let acct = getAccount(0x%s)
-			let vaultArray = acct.published[&[FlowToken.Vault]] ?? panic("missing vault")
+			let vaults = acct.getCapability(/public/vaults)!.borrow<&[FlowToken.Vault]>()!
 			assert(
-                vaultArray[%d].balance == UInt64(%d),
+                vaults[%d].balance == UInt64(%d),
                 message: "incorrect Balance!"
             )
         }

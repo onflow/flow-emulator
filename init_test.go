@@ -28,11 +28,13 @@ func TestInitialization(t *testing.T) {
 		b, _ := emulator.NewBlockchain(emulator.WithStore(store))
 
 		rootAcct, err := b.GetAccount(flow.RootAddress)
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		assert.NotNil(t, rootAcct)
 
 		latestBlock, err := b.GetLatestBlock()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		assert.EqualValues(t, 0, latestBlock.Height)
 		assert.Equal(t, types.GenesisBlock().ID(), latestBlock.ID())
 	})
@@ -55,9 +57,9 @@ func TestInitialization(t *testing.T) {
                     let counter <- Counting.createCounter()
                     counter.add(1)
 
-                    let existing <- acct.storage[Counting.Counter] <- counter
-                    destroy existing
-                    acct.published[&Counting.Counter] = &acct.storage[Counting.Counter] as &Counting.Counter
+                    acct.save(<-counter, to: /storage/counter)
+
+                    acct.link<&Counting.Counter>(/public/counter, target: /storage/counter)
                   }
                 }
             `,
@@ -72,10 +74,10 @@ func TestInitialization(t *testing.T) {
 			AddAuthorizer(b.RootKey().Address)
 
 		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
@@ -86,7 +88,7 @@ func TestInitialization(t *testing.T) {
 		require.NotNil(t, block)
 
 		minedTx, err := b.GetTransaction(tx.ID())
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		minedEvents, err := b.GetEventsByHeight(block.Height, "")
 
@@ -95,27 +97,32 @@ func TestInitialization(t *testing.T) {
 
 		t.Run("should be able to read blocks", func(t *testing.T) {
 			latestBlock, err := b.GetLatestBlock()
-			assert.NoError(t, err)
+			require.NoError(t, err)
+
 			assert.Equal(t, block.ID(), latestBlock.ID())
 
 			blockByHeight, err := b.GetBlockByHeight(block.Height)
-			assert.NoError(t, err)
+			require.NoError(t, err)
+
 			assert.Equal(t, block.ID(), blockByHeight.ID())
 
 			blockByHash, err := b.GetBlockByID(block.ID())
-			assert.NoError(t, err)
+			require.NoError(t, err)
+
 			assert.Equal(t, block.ID(), blockByHash.ID())
 		})
 
 		t.Run("should be able to read transactions", func(t *testing.T) {
 			txByHash, err := b.GetTransaction(tx.ID())
-			assert.NoError(t, err)
+			require.NoError(t, err)
+
 			assert.Equal(t, minedTx, txByHash)
 		})
 
 		t.Run("should be able to read events", func(t *testing.T) {
 			gotEvents, err := b.GetEventsByHeight(block.Height, "")
-			assert.NoError(t, err)
+			require.NoError(t, err)
+
 			assert.Equal(t, minedEvents, gotEvents)
 		})
 
@@ -125,7 +132,7 @@ func TestInitialization(t *testing.T) {
                   import 0x%s
 
                   pub fun main(): Int {
-                      return getAccount(0x%s).published[&Counting.Counter]?.count ?? 0
+                      return getAccount(0x%s).getCapability(/public/counter)!.borrow<&Counting.Counter>()?.count ?? 0
                   }
                 `,
 				counterAddress,
@@ -133,7 +140,7 @@ func TestInitialization(t *testing.T) {
 			)
 
 			result, err := b.ExecuteScript([]byte(readScript))
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			assert.Equal(t, cadence.NewInt(1), result.Value)
 		})
