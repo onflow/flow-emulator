@@ -300,13 +300,23 @@ func (b *Backend) ExecuteScriptAtBlockID(ctx context.Context, req *access.Execut
 
 // GetEventsForHeightRange returns events matching a query.
 func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEventsForHeightRangeRequest) (*access.EventsResponse, error) {
-	// Check for invalid queries
-	if req.StartHeight > req.EndHeight {
+	startHeight := req.GetStartHeight()
+	endHeight := req.GetEndHeight()
+
+	if endHeight == 0 {
+		latestBlock, err := b.blockchain.GetLatestBlock()
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+
+		endHeight = latestBlock.Height
+	}
+
+	// check for invalid queries
+	if startHeight > endHeight {
 		return nil, status.Error(codes.InvalidArgument, "invalid query: start block must be <= end block")
 	}
 
-	startHeight := req.GetStartHeight()
-	endHeight := req.GetEndHeight()
 	eventType := req.GetType()
 
 	results := make([]*access.EventsResponse_Result, 0)
@@ -328,21 +338,12 @@ func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEv
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 
-		eventMessages := make([]*entities.Event, len(events))
-		for i, event := range events {
-			eventMessages[i], err = convert.EventToMessage(event)
-			if err != nil {
-				return nil, err
-			}
+		result, err := b.eventsBlockResult(block, events)
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
 		}
 
-		result := access.EventsResponse_Result{
-			BlockId:     block.ID().Bytes(),
-			BlockHeight: block.Height,
-			Events:      eventMessages,
-		}
-
-		results = append(results, &result)
+		results = append(results, result)
 		eventCount += len(events)
 	}
 
@@ -351,7 +352,7 @@ func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEv
 		"startHeight": req.StartHeight,
 		"endHeight":   req.EndHeight,
 		"eventCount":  eventCount,
-	}).Debugf("🎁  GetEvents called")
+	}).Debugf("🎁  GetEventsForHeightRange called")
 
 	res := access.EventsResponse{
 		Results: results,
@@ -362,8 +363,46 @@ func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEv
 
 // GetEventsForBlockIDs returns events matching a set of block IDs.
 func (b *Backend) GetEventsForBlockIDs(ctx context.Context, req *access.GetEventsForBlockIDsRequest) (*access.EventsResponse, error) {
-	panic("not implemented")
-	return nil, nil
+	eventType := req.GetType()
+
+	results := make([]*access.EventsResponse_Result, 0)
+	eventCount := 0
+
+	for _, blockID := range req.GetBlockIds() {
+		block, err := b.blockchain.GetBlockByID(flow.HashToID(blockID))
+		if err != nil {
+			var notFoundErr emulator.ErrNotFound
+			if errors.As(err, &notFoundErr) {
+				break
+			}
+
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+
+		events, err := b.blockchain.GetEventsByHeight(block.Height, eventType)
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+
+		result, err := b.eventsBlockResult(block, events)
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+
+		results = append(results, result)
+		eventCount += len(events)
+	}
+
+	b.logger.WithFields(logrus.Fields{
+		"eventType":  req.Type,
+		"eventCount": eventCount,
+	}).Debugf("🎁  GetEventsForBlockIDs called")
+
+	res := access.EventsResponse{
+		Results: results,
+	}
+
+	return &res, nil
 }
 
 // commitBlock executes the current pending transactions and commits the results in a new block.
@@ -421,6 +460,25 @@ func (b *Backend) blockResponse(block *types.Block) *access.BlockResponse {
 	return &access.BlockResponse{
 		Block: emuconvert.BlockToMessage(*block),
 	}
+}
+
+func (b *Backend) eventsBlockResult(
+	block *types.Block,
+	events []flow.Event,
+) (result *access.EventsResponse_Result, err error) {
+	eventMessages := make([]*entities.Event, len(events))
+	for i, event := range events {
+		eventMessages[i], err = convert.EventToMessage(event)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &access.EventsResponse_Result{
+		BlockId:     block.ID().Bytes(),
+		BlockHeight: block.Height,
+		Events:      eventMessages,
+	}, nil
 }
 
 // EnableAutoMine enables the automine flag.
