@@ -51,11 +51,8 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 
                       transaction {
                           prepare(acct: AuthAccount) {
-                              acct.published[&AnyResource{FungibleToken.Receiver}] =
-                                   &acct.storage[FungibleToken.Vault] as &AnyResource{FungibleToken.Receiver}
-
-                              acct.storage[&FungibleToken.Vault] =
-                                   &acct.storage[FungibleToken.Vault] as &FungibleToken.Vault
+                              // create a public capability to access the vault as a receiver
+                              acct.link<&{FungibleToken.Receiver}>(/public/receiver, target: /storage/vault)
                           }
                       }
 	               `,
@@ -92,18 +89,13 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 
                           prepare(acct: AuthAccount) {
                               // create a new vault instance
-                              let vaultA <- FungibleToken.createEmptyVault()
+                              let vault <- FungibleToken.createEmptyVault()
 
                               // store it in the account storage
-                              // and destroy whatever was there previously
-                              let oldVault <- acct.storage[FungibleToken.Vault] <- vaultA
-                              destroy oldVault
+                              acct.save(<-vault, to: /storage/vault)
 
-                              acct.published[&AnyResource{FungibleToken.Receiver}] =
-                                  &acct.storage[FungibleToken.Vault] as &AnyResource{FungibleToken.Receiver}
-
-                              acct.storage[&FungibleToken.Vault] =
-                                  &acct.storage[FungibleToken.Vault] as &FungibleToken.Vault
+                              // create a public capability to access the vault as a receiver
+                              acct.link<&{FungibleToken.Receiver}>(/public/receiver, target: /storage/vault)
                           }
                       }
                     `,

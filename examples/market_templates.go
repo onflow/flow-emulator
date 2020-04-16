@@ -9,20 +9,21 @@ import (
 // GenerateCreateSaleScript creates a cadence transaction that creates a Sale collection
 // and stores in in the callers account published
 func GenerateCreateSaleScript(tokenAddr flow.Address, marketAddr flow.Address) []byte {
+	// TODO: store capability instead of reference in market sale collection!
+
 	template := `
 		import FungibleToken from 0x%s
 		import Market from 0x%s
 
 		transaction {
 			prepare(acct: AuthAccount) {
-				let ownerVault = acct.published[&AnyResource{FungibleToken.Receiver}] ?? panic("No receiver reference!")
+				let ownerVault = acct.getCapability(/public/receiver)!.borrow<&{FungibleToken.Receiver}>() !
 
 				let collection <- Market.createSaleCollection(ownerVault: ownerVault)
 				
-				let oldCollection <- acct.storage[Market.SaleCollection] <- collection
-				destroy oldCollection
-
-				acct.published[&Market.SaleCollection] = &acct.storage[Market.SaleCollection] as &Market.SaleCollection
+				acct.save(<-collection, to: /storage/saleCollection)
+				
+				acct.link<&Market.SaleCollection>(/public/saleCollection, target: /storage/saleCollection)
 			}
 		}`
 	return []byte(fmt.Sprintf(template, tokenAddr, marketAddr))
@@ -37,12 +38,11 @@ func GenerateStartSaleScript(nftAddr flow.Address, marketAddr flow.Address, id, 
 
 		transaction {
 			prepare(acct: AuthAccount) {
-				let token <- acct.published[&NonFungibleToken.Collection]?.withdraw(withdrawID: %d) ?? panic("missing token!")
+				let nftCollection = acct.borrow<&NonFungibleToken.Collection>(from: /storage/collection)!
+                let token <- nftCollection.withdraw(withdrawID: %d)
 
-				let saleRef = acct.published[&Market.SaleCollection] ?? panic("no sale collection reference!")
-			
-				saleRef.listForSale(token: <-token, price: %d)
-
+				let saleCollection = acct.getCapability(/public/saleCollection)!.borrow<&Market.SaleCollection>()!
+				saleCollection.listForSale(token: <-token, price: %d)
 			}
 		}`
 	return []byte(fmt.Sprintf(template, nftAddr, marketAddr, id, price))
@@ -60,14 +60,14 @@ func GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, userAddr flow.Address
 			prepare(acct: AuthAccount) {
 				let seller = getAccount(0x%s)
 
-				let collectionRef = acct.published[&NonFungibleToken.Collection] ?? panic("missing collection!")
-				let providerRef = acct.published[&AnyResource{FungibleToken.Provider}] ?? panic("missing Provider!")
+				let collection = acct.getCapability(/public/collection)!.borrow<&NonFungibleToken.Collection>()!
+				let provider = acct.borrow<&{FungibleToken.Provider}>(from: /storage/vault)!
 				
-				let tokens <- providerRef.withdraw(amount: %d)
+				let tokens <- provider.withdraw(amount: %d)
 
-				let saleRef = seller.published[&Market.SaleCollection] ?? panic("no sale collection reference!")
+				let saleCollection = seller.getCapability(/public/saleCollection)!.borrow<&Market.SaleCollection>()!
 			
-				saleRef.purchase(tokenID: %d, recipient: collectionRef, buyTokens: <-tokens)
+				saleCollection.purchase(tokenID: %d, recipient: collection, buyTokens: <-tokens)
 
 			}
 		}`

@@ -17,11 +17,8 @@ func GenerateCreateMinterScript(nftAddr flow.Address, initialID, specialMod int)
 		transaction {
 
 		  prepare(acct: AuthAccount) {
-			let existing <- acct.storage[GreatToken.GreatNFTMinter] <- GreatToken.createGreatNFTMinter(firstID: %d, specialMod: %d)
-			assert(existing == nil, message: "existed")
-			destroy existing
-
-			acct.storage[&GreatToken.GreatNFTMinter] = &acct.storage[GreatToken.GreatNFTMinter] as &GreatToken.GreatNFTMinter
+			let minter <- GreatToken.createGreatNFTMinter(firstID: %d, specialMod: %d)
+			acct.save(<-minter, to: /storage/GreatNFTMinter)
 		  }
 		}
 	`
@@ -38,10 +35,14 @@ func GenerateMintScript(nftCodeAddr flow.Address) []byte {
 		transaction {
 
 		  prepare(acct: AuthAccount) {
-			let minter = acct.storage[&GreatToken.GreatNFTMinter] ?? panic("missing minter")
-			let existing <- acct.storage[GreatToken.GreatNFT] <- minter.mint()
-			destroy existing
-            acct.published[&GreatToken.GreatNFT] = &acct.storage[GreatToken.GreatNFT] as &GreatToken.GreatNFT
+			let minter = acct.borrow<&GreatToken.GreatNFTMinter>(from: /storage/GreatNFTMinter)!
+
+            if let nft <- acct.load<@GreatToken.GreatNFT>(from: /storage/GreatNFT) {
+                destroy nft
+            }
+
+            acct.save(<-minter.mint(), to: /storage/GreatNFT)
+			acct.link<&GreatToken.GreatNFT>(/public/GreatNFT, target: /storage/GreatNFT)
 		  }
 		}
 	`
@@ -58,7 +59,7 @@ func GenerateInspectNFTScript(nftCodeAddr, userAddr flow.Address, expectedID int
 
 		pub fun main() {
 		  let acct = getAccount(0x%s)
-		  let nft = acct.published[&GreatToken.GreatNFT] ?? panic("missing nft")
+		  let nft = acct.getCapability(/public/GreatNFT)!.borrow<&GreatToken.GreatNFT>()!
 		  assert(
               nft.id() == %d,
               message: "incorrect id"
