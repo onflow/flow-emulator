@@ -1,7 +1,7 @@
 
 access(all) contract interface NonFungibleToken {
 
-    // The total number of tokens of this type in existance
+    // The total number of tokens of this type in existence
     pub var totalSupply: UInt64
 
     access(all) event ContractInitialized()
@@ -186,7 +186,7 @@ access(all) contract Tokens: NonFungibleToken {
 		}
 
 		// mintNFT mints a new NFT with a new ID
-		// and deposit it in the recipients colelction using their collection reference
+		// and deposit it in the recipients collection using their collection reference
 		access(all) fun mintNFT(recipient: &Collection) {
 
 			// create a new NFT
@@ -203,18 +203,10 @@ access(all) contract Tokens: NonFungibleToken {
 	init() {
         self.totalSupply = 0
         
-		let oldCollection <- self.account.storage[Collection] <- create Collection()
-		destroy oldCollection
+	    self.account.save(<-create Collection(), to: /storage/nftCollection)
+        self.account.link<&{NonFungibleToken.Receiver}>(/public/nftReceiver, target: /storage/nftCollection)
 
-		self.account.storage[&Collection] = &self.account.storage[Collection] as &Collection
-
-        self.account.published[&AnyResource{NonFungibleToken.Receiver}] =
-             &self.account.storage[Collection] as &AnyResource{NonFungibleToken.Receiver}
-
-		let oldFactory <- self.account.storage[NFTFactory] <- create NFTFactory()
-		destroy oldFactory
-
-		self.account.storage[&NFTFactory] = &self.account.storage[NFTFactory] as &NFTFactory
+	    self.account.save(<- create NFTFactory(), to: /storage/nftFactory)
 
         emit ContractInitialized()
 	}
