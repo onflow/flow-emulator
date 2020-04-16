@@ -373,7 +373,8 @@ func (b *Backend) GetEventsForBlockIDs(ctx context.Context, req *access.GetEvent
 		if err != nil {
 			var notFoundErr emulator.ErrNotFound
 			if errors.As(err, &notFoundErr) {
-				break
+				// break out early if block cannot be found
+				return nil, status.Error(codes.NotFound, err.Error())
 			}
 
 			return nil, status.Error(codes.Internal, err.Error())
