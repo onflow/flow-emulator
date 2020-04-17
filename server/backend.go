@@ -302,12 +302,14 @@ func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEv
 	startHeight := req.GetStartHeight()
 	endHeight := req.GetEndHeight()
 
-	if endHeight == 0 {
-		latestBlock, err := b.blockchain.GetLatestBlock()
-		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
+	latestBlock, err := b.blockchain.GetLatestBlock()
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
 
+	// if end height is not set, use latest block height
+	// if end height is higher than latest, use latest
+	if endHeight == 0 || endHeight > latestBlock.Height {
 		endHeight = latestBlock.Height
 	}
 
