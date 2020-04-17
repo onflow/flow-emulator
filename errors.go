@@ -81,26 +81,26 @@ type DuplicateTransactionError struct {
 }
 
 func (e *DuplicateTransactionError) Error() string {
-	return fmt.Sprintf("Transaction with ID %s has already been submitted", e.TxID)
+	return fmt.Sprintf("transaction with ID %s has already been submitted", e.TxID)
 }
 
 // A MissingSignatureError indicates that a transaction is missing a required signature.
 type MissingSignatureError struct {
-	Account flow.Address
+	Address flow.Address
 }
 
 func (e *MissingSignatureError) Error() string {
-	return fmt.Sprintf("Account %s does not have sufficient signatures", e.Account)
+	return fmt.Sprintf("account %s does not have sufficient signatures", e.Address)
 }
 
 // An InvalidSignaturePublicKeyError indicates that signature uses an invalid public key.
 type InvalidSignaturePublicKeyError struct {
-	Account flow.Address
+	Address flow.Address
 	KeyID   int
 }
 
 func (e *InvalidSignaturePublicKeyError) Error() string {
-	return fmt.Sprintf("invalid signature for key %d on account %s", e.KeyID, e.Account)
+	return fmt.Sprintf("invalid signature for key %d on account %s", e.KeyID, e.Address)
 }
 
 // An InvalidSignatureAccountError indicates that a signature references a nonexistent account.
@@ -109,7 +109,7 @@ type InvalidSignatureAccountError struct {
 }
 
 func (e *InvalidSignatureAccountError) Error() string {
-	return fmt.Sprintf("Account with address %s does not exist", e.Address)
+	return fmt.Sprintf("account with address %s does not exist", e.Address)
 }
 
 // An InvalidTransactionError indicates that a submitted transaction is invalid (missing required fields).
@@ -119,8 +119,7 @@ type InvalidTransactionError struct {
 }
 
 func (e *InvalidTransactionError) Error() string {
-	return fmt.Sprintf(
-		"Transaction with ID %s is invalid (missing required fields): %s",
+	return fmt.Sprintf("transaction with ID %s is invalid (missing required fields): %s",
 		e.TxID,
 		strings.Join(e.MissingFields, ", "),
 	)
@@ -132,7 +131,7 @@ type InvalidStateVersionError struct {
 }
 
 func (e *InvalidStateVersionError) Error() string {
-	return fmt.Sprintf("Execution state with version hash %x is invalid", e.Version)
+	return fmt.Sprintf("execution state with version hash %x is invalid", e.Version)
 }
 
 // A PendingBlockCommitBeforeExecutionError indicates that the current pending block has not been executed (cannot commit).
@@ -141,7 +140,7 @@ type PendingBlockCommitBeforeExecutionError struct {
 }
 
 func (e *PendingBlockCommitBeforeExecutionError) Error() string {
-	return fmt.Sprintf("Pending block with ID %s cannot be commited before execution", e.BlockID)
+	return fmt.Sprintf("pending block with ID %s cannot be commited before execution", e.BlockID)
 }
 
 // A PendingBlockMidExecutionError indicates that the current pending block is mid-execution.
@@ -150,7 +149,7 @@ type PendingBlockMidExecutionError struct {
 }
 
 func (e *PendingBlockMidExecutionError) Error() string {
-	return fmt.Sprintf("Pending block with ID %s is currently being executed", e.BlockID)
+	return fmt.Sprintf("pending block with ID %s is currently being executed", e.BlockID)
 }
 
 // A PendingBlockTransactionsExhaustedError indicates that the current pending block has finished executing (no more transactions to execute).
@@ -159,7 +158,7 @@ type PendingBlockTransactionsExhaustedError struct {
 }
 
 func (e *PendingBlockTransactionsExhaustedError) Error() string {
-	return fmt.Sprintf("Pending block with ID %s contains no more transactions to execute", e.BlockID)
+	return fmt.Sprintf("pending block with ID %s contains no more transactions to execute", e.BlockID)
 }
 
 // A StorageError indicates that an error occurred in the storage provider.
