@@ -173,3 +173,13 @@ func (e *StorageError) Error() string {
 func (e *StorageError) Unwrap() error {
 	return e.inner
 }
+
+// An ExecutionError occurs when a transaction fails to execute.
+type ExecutionError struct {
+	Code    int
+	Message string
+}
+
+func (e *ExecutionError) Error() string {
+	return fmt.Sprintf("execution error code %d: %s", e.Code, e.Message)
+}
