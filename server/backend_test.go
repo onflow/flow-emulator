@@ -166,7 +166,14 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, account.Balance, response.Account.Balance)
 	}))
 
-	t.Run("GetEvents fails with wrong block heights", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetEventsForHeightRange fails with invalid block heights", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+		latestBlock := types.Block{
+			Height: 21,
+		}
+
+		api.EXPECT().
+			GetLatestBlock().
+			Return(&latestBlock, nil)
 
 		api.EXPECT().
 			GetEventsByHeight(gomock.Any(), gomock.Any()).
@@ -187,10 +194,18 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, grpcError.Code(), codes.InvalidArgument)
 	}))
 
-	t.Run("GetEvents fails if blockchain returns error", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetEventsForHeightRange fails if blockchain returns error", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
 		startBlock := types.Block{
 			Height: 10,
 		}
+
+		latestBlock := types.Block{
+			Height: 11,
+		}
+
+		api.EXPECT().
+			GetLatestBlock().
+			Return(&latestBlock, nil)
 
 		api.EXPECT().
 			GetBlockByHeight(startBlock.Height).
@@ -202,7 +217,10 @@ func TestBackend(t *testing.T) {
 			Return(nil, errors.New("dummy")).
 			Times(1)
 
-		_, err := backend.GetEventsForHeightRange(context.Background(), &access.GetEventsForHeightRangeRequest{StartHeight: 10, EndHeight: 11})
+		_, err := backend.GetEventsForHeightRange(
+			context.Background(),
+			&access.GetEventsForHeightRangeRequest{StartHeight: 10, EndHeight: 11},
+		)
 
 		if assert.Error(t, err) {
 			grpcError, ok := status.FromError(err)
@@ -211,42 +229,135 @@ func TestBackend(t *testing.T) {
 		}
 	}))
 
-	t.Run("GetEvents", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
-		// TODO: fix event tests
+	t.Run("GetEventsForHeightRange", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+		events := test.EventGenerator()
 
-		// eventType := "SomeEvents"
-		//
-		// eventsToReturn := []flow.Event{
-		// 	unittest.EventFixture(func(e *flow.Event) {
-		// 		e.EventIndex = 0
-		// 	}),
-		// 	unittest.EventFixture(func(e *flow.Event) {
-		// 		e.EventIndex = 1
-		// 	}),
-		// }
-		//
-		// api.EXPECT().
-		// 	GetEvents(gomock.Any(), gomock.Any(), gomock.Any()).
-		// 	Return(eventsToReturn, nil).
-		// 	Times(1)
-		//
-		// var startBlock uint64 = 21
-		// var endBlock uint64 = 37
-		//
-		// response, err := backend.GetEventsForHeightRange(context.Background(), &access.GetEventsForHeightRangeRequest{
-		// 	Type:        eventType,
-		// 	StartHeight: startBlock,
-		// 	EndHeight:   endBlock,
-		// })
-		//
-		// assert.NoError(t, err)
-		// assert.NotNil(t, response)
-		//
-		// resEvents := response.GetEvents()
-		//
-		// assert.Len(t, resEvents, 2)
-		// assert.EqualValues(t, 0, resEvents[0].GetEventIndex())
-		// assert.EqualValues(t, 1, resEvents[1].GetEventIndex())
+		eventsToReturn := []flow.Event{
+			events.New(),
+			events.New(),
+		}
+
+		eventType := "SomeEvents"
+
+		blocks := []types.Block{
+			{
+				Height: 1,
+			},
+			{
+				Height: 2,
+			},
+		}
+
+		var (
+			latestBlock = blocks[1]
+			startHeight = blocks[0].Height
+			endHeight   = blocks[1].Height
+		)
+
+		api.EXPECT().
+			GetLatestBlock().
+			Return(&latestBlock, nil)
+
+		api.EXPECT().
+			GetBlockByHeight(blocks[0].Height).
+			Return(&blocks[0], nil)
+
+		api.EXPECT().
+			GetBlockByHeight(blocks[1].Height).
+			Return(&blocks[1], nil)
+
+		api.EXPECT().
+			GetEventsByHeight(blocks[0].Height, eventType).
+			Return(eventsToReturn, nil)
+
+		api.EXPECT().
+			GetEventsByHeight(blocks[1].Height, eventType).
+			Return(eventsToReturn, nil)
+
+		response, err := backend.GetEventsForHeightRange(context.Background(), &access.GetEventsForHeightRangeRequest{
+			Type:        eventType,
+			StartHeight: startHeight,
+			EndHeight:   endHeight,
+		})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, response)
+
+		blockResults := response.GetResults()
+
+		require.Len(t, blocks, 2)
+
+		for i, block := range blockResults {
+			assert.Len(t, block.GetEvents(), 2)
+			assert.Equal(t, block.GetBlockId(), blocks[i].ID().Bytes())
+			assert.Equal(t, block.GetBlockHeight(), blocks[i].Height)
+		}
+	}))
+
+	t.Run("GetEventsForHeightRange succeeds if end height is higher than latest", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+		events := test.EventGenerator()
+
+		eventsToReturn := []flow.Event{
+			events.New(),
+			events.New(),
+		}
+
+		eventType := "SomeEvents"
+
+		blocks := []types.Block{
+			{
+				Height: 1,
+			},
+			{
+				Height: 2,
+			},
+		}
+
+		var (
+			latestBlock = blocks[1]
+			startHeight = blocks[0].Height
+			// end height is higher than latest block height
+			endHeight uint64 = 10
+		)
+
+		api.EXPECT().
+			GetLatestBlock().
+			Return(&latestBlock, nil)
+
+		api.EXPECT().
+			GetBlockByHeight(blocks[0].Height).
+			Return(&blocks[0], nil)
+
+		api.EXPECT().
+			GetBlockByHeight(blocks[1].Height).
+			Return(&blocks[1], nil)
+
+		api.EXPECT().
+			GetEventsByHeight(blocks[0].Height, eventType).
+			Return(eventsToReturn, nil)
+
+		api.EXPECT().
+			GetEventsByHeight(blocks[1].Height, eventType).
+			Return(eventsToReturn, nil)
+
+		response, err := backend.GetEventsForHeightRange(context.Background(), &access.GetEventsForHeightRangeRequest{
+			Type:        eventType,
+			StartHeight: startHeight,
+			EndHeight:   endHeight,
+		})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, response)
+
+		blockResults := response.GetResults()
+
+		require.Len(t, blocks, 2)
+
+		for i, block := range blockResults {
+			assert.Len(t, block.GetEvents(), 2)
+			assert.Equal(t, block.GetBlockId(), blocks[i].ID().Bytes())
+			assert.Equal(t, block.GetBlockHeight(), blocks[i].Height)
+		}
 	}))
 
 	t.Run("GetLatestBlockHeader", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
