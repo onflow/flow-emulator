@@ -285,7 +285,7 @@ func TestInsertEvents(t *testing.T) {
 	}()
 
 	t.Run("should be able to insert events", func(t *testing.T) {
-		events := []flow.Event{unittest.EventFixture(func(e *flow.Event) {})}
+		events := []flow.Event{test.EventGenerator().New()}
 		var blockHeight uint64 = 1
 
 		err := store.InsertEvents(blockHeight, events)
@@ -316,7 +316,7 @@ func TestEventsByHeight(t *testing.T) {
 	)
 
 	for i, _ := range allEvents {
-		event := unittest.EventFixture()
+		event := test.EventGenerator().New()
 		event.TransactionIndex = i
 		event.EventIndex = i * 2
 
@@ -384,7 +384,7 @@ func TestPersistence(t *testing.T) {
 
 	block := types.Block{Height: 1}
 	tx := unittest.TransactionFixture()
-	events := []flow.Event{unittest.EventFixture(func(e *flow.Event) {})}
+	events := []flow.Event{test.EventGenerator().New()}
 
 	ledger := make(types.LedgerDelta)
 	ledger["foo"] = []byte("bar")

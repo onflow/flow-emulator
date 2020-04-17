@@ -3,10 +3,9 @@ package unittest
 import (
 	"encoding/hex"
 
+	"github.com/dapperlabs/flow-go-sdk"
 	"github.com/dapperlabs/flow-go-sdk/test"
 	"github.com/dapperlabs/flow-go/crypto"
-
-	"github.com/dapperlabs/flow-go-sdk"
 
 	"github.com/dapperlabs/flow-emulator/types"
 )
@@ -49,22 +48,4 @@ func StorableTransactionResultFixture() types.StorableTransactionResult {
 		Logs:         []string{"a", "b", "c"},
 		Events:       []flow.Event{events.New(), events.New()},
 	}
-}
-
-func EventFixture(n ...func(e *flow.Event)) flow.Event {
-	event := flow.Event{
-		Type: "Transfer",
-		// TODO: create proper fixture
-		// Values: map[string]interface{}{
-		// 	"to":   flow.ZeroAddress,
-		// 	"from": flow.ZeroAddress,
-		// 	"id":   1,
-		// },
-	}
-
-	if len(n) >= 1 {
-		n[0](&event)
-	}
-
-	return event
 }

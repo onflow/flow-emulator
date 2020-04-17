@@ -65,7 +65,7 @@ func TestEncodeBlock(t *testing.T) {
 }
 
 func TestEncodeEvent(t *testing.T) {
-	event := unittest.EventFixture()
+	event := test.EventGenerator().New()
 	data, err := encodeEvent(event)
 	require.Nil(t, err)
 
