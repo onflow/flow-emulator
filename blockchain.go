@@ -753,7 +753,7 @@ func (b *Blockchain) verifyAccountSignature(
 	}
 
 	if !valid {
-		return accountKey, &InvalidSignaturePublicKeyError{Account: txSig.Address, KeyID: txSig.KeyID}
+		return accountKey, &InvalidSignaturePublicKeyError{Address: txSig.Address, KeyID: txSig.KeyID}
 	}
 
 	return accountKey, nil
