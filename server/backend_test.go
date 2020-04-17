@@ -326,7 +326,7 @@ func TestBackend(t *testing.T) {
 
 		api.EXPECT().
 			GetTransaction(gomock.Any()).
-			Return(nil, &emulator.ErrTransactionNotFound{}).
+			Return(nil, &emulator.TransactionNotFoundError{}).
 			Times(1)
 
 		response, err := backend.GetTransaction(context.Background(), &access.GetTransactionRequest{
@@ -462,7 +462,7 @@ func TestBackend(t *testing.T) {
 
 		api.EXPECT().
 			AddTransaction(gomock.Any()).
-			Return(&emulator.ErrInvalidSignaturePublicKey{}).
+			Return(&emulator.InvalidSignaturePublicKeyError{}).
 			Times(1)
 
 		tx := test.TransactionGenerator().New()
