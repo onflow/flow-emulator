@@ -27,12 +27,12 @@ func TestEncodeTransaction(t *testing.T) {
 }
 
 func TestEncodeTransactionResult(t *testing.T) {
-	result := unittest.TransactionResultFixture()
+	result := unittest.StorableTransactionResultFixture()
 
 	data, err := encodeTransactionResult(result)
 	require.Nil(t, err)
 
-	var decodedResult flow.TransactionResult
+	var decodedResult types.StorableTransactionResult
 	err = decodeTransactionResult(&decodedResult, data)
 	require.Nil(t, err)
 
