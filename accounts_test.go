@@ -488,7 +488,7 @@ func TestRemoveAccountKey(t *testing.T) {
 
 	// submit tx3 (should fail)
 	err = b.AddTransaction(*tx3)
-	assert.IsType(t, &emulator.ErrInvalidSignaturePublicKey{}, err)
+	assert.IsType(t, &emulator.InvalidSignaturePublicKeyError{}, err)
 
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
@@ -613,7 +613,7 @@ func TestUpdateAccountCode(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, &emulator.ErrMissingSignature{}, err)
+		assert.IsType(t, &emulator.MissingSignatureError{}, err)
 
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)

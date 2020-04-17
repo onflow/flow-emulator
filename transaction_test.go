@@ -69,7 +69,7 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 
 		// Submit tx
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, err, &emulator.ErrInvalidTransaction{})
+		assert.IsType(t, err, &emulator.InvalidTransactionError{})
 	})
 
 	t.Run("MissingScript", func(t *testing.T) {
@@ -86,7 +86,7 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 
 		// Submit tx
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, err, &emulator.ErrInvalidTransaction{})
+		assert.IsType(t, err, &emulator.InvalidTransactionError{})
 	})
 
 	t.Run("MissingGasLimit", func(t *testing.T) {
@@ -103,7 +103,7 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 
 		// Submit tx
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, err, &emulator.ErrInvalidTransaction{})
+		assert.IsType(t, err, &emulator.InvalidTransactionError{})
 	})
 
 	t.Run("MissingPayerAccount", func(t *testing.T) {
@@ -120,7 +120,7 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 
 		// Submit tx
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, err, &emulator.ErrInvalidTransaction{})
+		assert.IsType(t, err, &emulator.InvalidTransactionError{})
 	})
 }
 
@@ -153,7 +153,7 @@ func TestSubmitDuplicateTransaction(t *testing.T) {
 
 	// Submit same tx again (errors)
 	err = b.AddTransaction(*tx)
-	assert.IsType(t, err, &emulator.ErrDuplicateTransaction{})
+	assert.IsType(t, err, &emulator.DuplicateTransactionError{})
 }
 
 func TestSubmitTransactionReverted(t *testing.T) {
@@ -285,7 +285,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, &emulator.ErrMissingSignature{}, err)
+		assert.IsType(t, &emulator.MissingSignatureError{}, err)
 	})
 
 	t.Run("InvalidAccount", func(t *testing.T) {
@@ -308,7 +308,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, err, &emulator.ErrInvalidSignatureAccount{})
+		assert.IsType(t, err, &emulator.InvalidSignatureAccountError{})
 	})
 
 	t.Run("InvalidKeyPair", func(t *testing.T) {
@@ -332,7 +332,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, err, &emulator.ErrInvalidSignaturePublicKey{})
+		assert.IsType(t, err, &emulator.InvalidSignaturePublicKeyError{})
 	})
 
 	t.Run("KeyWeights", func(t *testing.T) {
@@ -370,7 +370,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 			assert.NoError(t, err)
 
 			err = b.AddTransaction(*tx)
-			assert.IsType(t, &emulator.ErrMissingSignature{}, err)
+			assert.IsType(t, &emulator.MissingSignatureError{}, err)
 		})
 
 		t.Run("SufficientKeyWeight", func(t *testing.T) {
@@ -410,7 +410,7 @@ func TestSubmitTransactionScriptSignatures(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, err, &emulator.ErrMissingSignature{})
+		assert.IsType(t, err, &emulator.MissingSignatureError{})
 	})
 
 	t.Run("MultipleAccounts", func(t *testing.T) {
@@ -493,7 +493,7 @@ func TestGetTransaction(t *testing.T) {
 	t.Run("Non-existent", func(t *testing.T) {
 		_, err := b.GetTransaction(flow.ZeroID)
 		if assert.Error(t, err) {
-			assert.IsType(t, &emulator.ErrTransactionNotFound{}, err)
+			assert.IsType(t, &emulator.TransactionNotFoundError{}, err)
 		}
 	})
 

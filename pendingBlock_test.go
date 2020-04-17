@@ -79,7 +79,7 @@ func TestPendingBlockBeforeExecution(t *testing.T) {
 
 		// Add tx1 again
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, &emulator.ErrDuplicateTransaction{}, err)
+		assert.IsType(t, &emulator.DuplicateTransactionError{}, err)
 
 		err = b.ResetPendingBlock()
 		assert.NoError(t, err)
@@ -94,7 +94,7 @@ func TestPendingBlockBeforeExecution(t *testing.T) {
 
 		// Attempt to commit block before execution begins
 		_, err = b.CommitBlock()
-		assert.IsType(t, &emulator.ErrPendingBlockCommitBeforeExecution{}, err)
+		assert.IsType(t, &emulator.PendingBlockCommitBeforeExecutionError{}, err)
 
 		err = b.ResetPendingBlock()
 		assert.NoError(t, err)
@@ -201,7 +201,7 @@ func TestPendingBlockDuringExecution(t *testing.T) {
 
 		// Attempt to add tx2 to pending block after execution begins
 		err = b.AddTransaction(*tx2)
-		assert.IsType(t, &emulator.ErrPendingBlockMidExecution{}, err)
+		assert.IsType(t, &emulator.PendingBlockMidExecutionError{}, err)
 
 		err = b.ResetPendingBlock()
 		assert.NoError(t, err)
@@ -225,7 +225,7 @@ func TestPendingBlockDuringExecution(t *testing.T) {
 
 		// Attempt to commit block before execution finishes
 		_, err = b.CommitBlock()
-		assert.IsType(t, &emulator.ErrPendingBlockMidExecution{}, err)
+		assert.IsType(t, &emulator.PendingBlockMidExecutionError{}, err)
 
 		err = b.ResetPendingBlock()
 		assert.NoError(t, err)
@@ -245,11 +245,11 @@ func TestPendingBlockDuringExecution(t *testing.T) {
 
 		// Attempt to execute nonexistent next tx (fails)
 		_, err = b.ExecuteNextTransaction()
-		assert.IsType(t, &emulator.ErrPendingBlockTransactionsExhausted{}, err)
+		assert.IsType(t, &emulator.PendingBlockTransactionsExhaustedError{}, err)
 
 		// Attempt to execute rest of block tx (fails)
 		_, err = b.ExecuteBlock()
-		assert.IsType(t, &emulator.ErrPendingBlockTransactionsExhausted{}, err)
+		assert.IsType(t, &emulator.PendingBlockTransactionsExhaustedError{}, err)
 
 		err = b.ResetPendingBlock()
 		assert.NoError(t, err)
