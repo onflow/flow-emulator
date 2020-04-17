@@ -163,6 +163,8 @@ func TestTransactionResults(t *testing.T) {
 
 	ids := test.IdentifierGenerator()
 
+	result := unittest.StorableTransactionResultFixture()
+
 	t.Run("should return error for not found", func(t *testing.T) {
 		txID := ids.New()
 
@@ -174,7 +176,6 @@ func TestTransactionResults(t *testing.T) {
 
 	t.Run("should be able to insert result", func(t *testing.T) {
 		txID := ids.New()
-		result := unittest.TransactionResultFixture()
 
 		err := store.InsertTransactionResult(txID, result)
 		assert.NoError(t, err)
