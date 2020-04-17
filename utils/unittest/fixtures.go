@@ -7,6 +7,8 @@ import (
 	"github.com/dapperlabs/flow-go/crypto"
 
 	"github.com/dapperlabs/flow-go-sdk"
+
+	"github.com/dapperlabs/flow-emulator/types"
 )
 
 const PublicKeyFixtureCount = 2
@@ -38,12 +40,14 @@ func TransactionFixture(n ...func(t *flow.Transaction)) flow.Transaction {
 	return *tx
 }
 
-func TransactionResultFixture() flow.TransactionResult {
-	return flow.TransactionResult{
-		Status: flow.TransactionStatusPending,
-		Events: []flow.Event{
-			EventFixture(func(e *flow.Event) {}),
-		},
+func StorableTransactionResultFixture() types.StorableTransactionResult {
+	events := test.EventGenerator()
+
+	return types.StorableTransactionResult{
+		ErrorCode:    42,
+		ErrorMessage: "foo",
+		Logs:         []string{"a", "b", "c"},
+		Events:       []flow.Event{events.New(), events.New()},
 	}
 }
 
