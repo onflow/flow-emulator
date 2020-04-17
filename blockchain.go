@@ -303,7 +303,7 @@ func (b *Blockchain) GetTransactionResult(txID flow.Identifier) (*flow.Transacti
 		}, nil
 	}
 
-	result, err := b.storage.TransactionResultByID(txID)
+	storedResult, err := b.storage.TransactionResultByID(txID)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return &flow.TransactionResult{
@@ -311,6 +311,21 @@ func (b *Blockchain) GetTransactionResult(txID flow.Identifier) (*flow.Transacti
 			}, nil
 		}
 		return nil, &StorageError{err}
+	}
+
+	var errResult error
+
+	if storedResult.ErrorCode != 0 {
+		errResult = &ExecutionError{
+			Code:    storedResult.ErrorCode,
+			Message: storedResult.ErrorMessage,
+		}
+	}
+
+	result := flow.TransactionResult{
+		Status: flow.TransactionStatusSealed,
+		Error:  errResult,
+		Events: storedResult.Events,
 	}
 
 	return &result, nil
@@ -805,16 +820,13 @@ func hasSufficientKeyWeight(weights map[flow.Address]int, address flow.Address) 
 
 func convertToSealedResults(
 	results map[flow.Identifier]*TransactionResult,
-) map[flow.Identifier]*flow.TransactionResult {
+) map[flow.Identifier]*types.StorableTransactionResult {
 
-	output := make(map[flow.Identifier]*flow.TransactionResult)
+	output := make(map[flow.Identifier]*types.StorableTransactionResult)
 
 	for id, result := range results {
-		output[id] = &flow.TransactionResult{
-			Status: flow.TransactionStatusSealed,
-			Error:  result.Error,
-			Events: result.Events,
-		}
+		temp := result.ToStorableResult()
+		output[id] = &temp
 	}
 
 	return output
