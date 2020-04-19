@@ -8,12 +8,10 @@ transaction {
     prepare(acct: AuthAccount) {
 
         // Move the Kitty out of storage, which also moves its hat along with it
-        let kittyOpt <- acct.storage[KittyVerse.Kitty] <- nil
-        let kitty <- kittyOpt ?? panic("Kitty doesn't exist!")
+        let kitty <- acct.load<@KittyVerse.Kitty>(from: /storage/Kitty)!
 
         // Take the cowboy hat off the Kitty
-        let cowboyHatOpt <- kitty.items.remove(key: "Cowboy Hat")
-        let cowboyHat <- cowboyHatOpt ?? panic("cowboy hat doesn't exist!")
+        let cowboyHat <- kitty.items.remove(key: "Cowboy Hat")!
 
         // Tip the cowboy hat
         log(cowboyHat.tipHat())
@@ -24,7 +22,6 @@ transaction {
 
         // Move the Kitty to storage, which
         // also moves its hat along with it.
-        let oldKitty <- acct.storage[KittyVerse.Kitty] <- kitty
-        destroy oldKitty
+        acct.save(<-kitty, to: /storage/Kitty)
     }
 }

@@ -6,12 +6,12 @@
 //
 // Follow the "Hello, World!" tutorial to learn more: https://docs.onflow.org/docs/hello-world
 
-access(all) contract HelloWorld {
+pub contract HelloWorld {
 
     // Declare a public field of type String.
     //
     // All fields must be initialized in the init() function.
-    access(all) let greeting: String
+    pub let greeting: String
 
     // The init() function is required if the contract contains any fields.
     init() {
@@ -19,7 +19,7 @@ access(all) contract HelloWorld {
     }
 
     // Public function that returns our friendly greeting!
-    access(all) fun hello(): String {
+    pub fun hello(): String {
         return self.greeting
     }
 }

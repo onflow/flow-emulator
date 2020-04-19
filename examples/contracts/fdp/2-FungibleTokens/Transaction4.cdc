@@ -9,8 +9,11 @@ transaction {
     var temporaryVault: @FungibleToken.Vault
 
     prepare(acct: AuthAccount) {
-        // withdraw tokens from your vault
-        self.temporaryVault <- acct.storage[FungibleToken.Vault]?.withdraw(amount: 10) ?? panic("No Vault!")
+        // withdraw tokens from your vault by borrowing a reference to it
+        // and calling the withdraw function with that reference
+        let vaultRef = acct.borrow<&FungibleToken.Vault>(from: /storage/MainVault)!
+      
+        self.temporaryVault <- vaultRef.withdraw(amount: 10.0)
     }
 
     execute {
@@ -18,7 +21,9 @@ transaction {
         let recipient = getAccount(0x01)
 
         // get the recipient's Receiver reference to their Vault
-        let receiverRef = recipient.published[&AnyResource{FungibleToken.Receiver}] ?? panic("No receiver!")
+        // by borrowing the reference from the public capability
+        let receiverRef = recipient.getCapability(/public/MainReceiver)!
+                          .borrow<&FungibleToken.Vault{FungibleToken.Receiver}>()!
 
         // deposit your tokens to their Vault
         receiverRef.deposit(from: <-self.temporaryVault)

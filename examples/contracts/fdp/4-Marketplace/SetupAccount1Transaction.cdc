@@ -7,21 +7,17 @@ import NonFungibleToken from 0x02
 // by publishing a Vault reference and creating an empty NFT Collection.
 transaction {
     prepare(acct: AuthAccount) {
-        // Create a public Receiver reference to the Vault
-        let receiverRef = &acct.storage[FungibleToken.Vault] as &AnyResource{FungibleToken.Receiver}
-        acct.published[&AnyResource{FungibleToken.Receiver}] = receiverRef
+        // Create a public Receiver capability to the Vault
+        acct.link<&FungibleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>
+                 (/public/MainReceiver, target: /storage/MainVault)
 
         log("Created Vault references")
 
-        // Create a new empty NFT Collection
-        let collection <- NonFungibleToken.createEmptyCollection()
+        // store an empty NFT Collection in account storage
+        acct.save(<-NonFungibleToken.createEmptyCollection(), to: /storage/NFTCollection)
 
-        // Put the NFT Collection in storage
-        let oldCollection <- acct.storage[NonFungibleToken.Collection] <- collection
-        destroy oldCollection
-
-        // Publish a public interface to the Collection
-        acct.published[&AnyResource{NonFungibleToken.NFTReceiver}] = &acct.storage[NonFungibleToken.Collection] as &AnyResource{NonFungibleToken.NFTReceiver}
+        // publish a capability to the Collection in storage
+        acct.link<&{NonFungibleToken.NFTReceiver}>(/public/NFTReceiver, target: /storage/NFTCollection)
 
         log("Created a new empty collection and published a reference")
     }
