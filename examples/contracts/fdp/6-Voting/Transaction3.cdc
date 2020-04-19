@@ -10,7 +10,7 @@ transaction {
     prepare(voter: AuthAccount) {
         
         // take the voter's ballot our of storage
-        let ballot <- voter.storage[ApprovalVoting.Ballot]!
+        let ballot <- voter.load<@ApprovalVoting.Ballot>(from: /storage/Ballot)!
 
         // Vote on the proposal 
         ballot.vote(proposal: 1)

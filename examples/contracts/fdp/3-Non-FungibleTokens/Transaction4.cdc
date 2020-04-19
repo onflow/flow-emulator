@@ -2,25 +2,37 @@
 
 import NonFungibleToken from 0x02
 
-// This transaction configures a user's account
-// to use the NFT contract by creating a new empty collection,
-// storing it in their account storage, and publishing a reference.
+// This transaction transfers an NFT from one user's collection
+// to another user's collection.
 transaction {
+
+    // The field that will hold the NFT as it is being
+    // transferred to the other account
+    let transferToken: @NonFungibleToken.NFT
+	
     prepare(acct: AuthAccount) {
 
-        // Create a new empty collection
-        let collection <- NonFungibleToken.createEmptyCollection()
-    
-        // Put it in storage
-        let oldCollection <- acct.storage[NonFungibleToken.Collection] <- collection
-        destroy oldCollection
+        // Borrow a reference from the stored collection
+        let collectionRef = acct.borrow<&NonFungibleToken.Collection>(from: /storage/NFTCollection)!
 
-        log("Collection created for account 1")
+        // Call the withdraw function on the sender's Collection
+        // to move the NFT out of the collection
+        self.transferToken <- collectionRef.withdraw(withdrawID: 1)
+    }
 
-        // Publish a public reference
-        acct.published[&AnyResource{NonFungibleToken.NFTReceiver}] = &acct.storage[NonFungibleToken.Collection] as &AnyResource{NonFungibleToken.NFTReceiver}
+    execute {
+        // Get the recipient's public account object
+        let recipient = getAccount(0x01)
 
-        log("Reference published")
+        // Get the Collection reference for the receiver
+        // getting the public capability and borrowing a reference from it
+        let receiverRef = recipient.getCapability(/public/NFTReceiver)!
+                                   .borrow<&{NonFungibleToken.NFTReceiver}>()!
+
+        // Deposit the NFT in the receivers collection
+        receiverRef.deposit(token: <-self.transferToken)
+
+        log("NFT ID 1 transferred from account 2 to account 1")
     }
 }
  

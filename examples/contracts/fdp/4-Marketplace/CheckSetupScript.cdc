@@ -7,43 +7,50 @@ import NonFungibleToken from 0x02
 //
 // Account 0x01: Vault Balance = 40, NFT.id = 1
 // Account 0x02: Vault Balance = 20, No NFTs
-access(all) fun main() {
-    // Get both public account objects
-    let account1 = getAccount(0x01)
-	let account2 = getAccount(0x02)
+pub fun main() {
+    // Get the accounts' public account objects
+    let acct1 = getAccount(0x01)
+    let acct2 = getAccount(0x02)
 
-    // Get published Vault Receiver references from both accounts
-    let acct1ftRef = account1.published[&AnyResource{FungibleToken.Receiver}] ?? panic("missing account 1 vault reference")
-    let acct2ftRef = account2.published[&AnyResource{FungibleToken.Receiver}] ?? panic("missing account 2 vault reference")
+    // Get references to the account's receivers
+    // by getting their public capability
+    // and borrowing a reference from the capability
+    let acct1ReceiverRef = acct1.getCapability(/public/MainReceiver)!
+                            .borrow<&FungibleToken.Vault{FungibleToken.Balance}>()!
+    let acct2ReceiverRef = acct2.getCapability(/public/MainReceiver)!
+                            .borrow<&FungibleToken.Vault{FungibleToken.Balance}>()!
 
     // Log the Vault balance of both accounts and ensure they are
     // the correct numbers.
     // Account 0x01 should have 40.
     // Account 0x02 should have 20.
+    log("Account 1 Balance")
+	log(acct1ReceiverRef.balance)
+    log("Account 2 Balance")
+    log(acct2ReceiverRef.balance)
 
-    log("Account 1 Vault Balance")
-    log(acct1ftRef.balance)
-
-    log("Account 2 Vault Balance")
-    log(acct2ftRef.balance)
-
-    if acct1ftRef.balance != UInt64(40) || acct2ftRef.balance != UInt64(20) {
+    // verify that the balances are correct
+    if acct1ReceiverRef.balance != UFix64(40) || acct2ReceiverRef.balance != UFix64(20) {
         panic("Wrong balances!")
     }
 
-    // Get published NFT Collection Receiver references from both accounts
-    let acct1nftRef = account1.published[&AnyResource{NonFungibleToken.NFTReceiver}] ?? panic("missing account 1 nft reference!")
-	let acct2nftRef = account2.published[&AnyResource{NonFungibleToken.NFTReceiver}] ?? panic("missing account 2 nft reference!")
+    // Find the public Receiver capability for their Collections
+    let acct1Capability = acct1.getCapability(/public/NFTReceiver)!
+    let acct2Capability = acct2.getCapability(/public/NFTReceiver)!
 
-    // Log the NFT IDs that owned by both accounts.
-    // Account 0x01 should have NFT 1
-    // Account 0x02 should have none
+    // borrow references from the capabilities
+    let nft1Ref = acct1Capability.borrow<&{NonFungibleToken.NFTReceiver}>()!
+    let nft2Ref = acct2Capability.borrow<&{NonFungibleToken.NFTReceiver}>()!
+
+    // Print both collections as arrays of IDs
     log("Account 1 NFTs")
-    log(acct1nftRef.getIDs())
-	log("Account 2 NFTs")
-    log(acct2nftRef.getIDs())
+    log(nft1Ref.getIDs())
 
-    if acct1nftRef.getIDs()[0] != UInt64(1) || acct2nftRef.getIDs().length != 0 {
-        panic("Wrong Balances!")
+    log("Account 2 NFTs")
+    log(nft2Ref.getIDs())
+
+    // verify that the collections are correct
+    if nft1Ref.getIDs()[0] != UInt64(1) || nft2Ref.getIDs().length != 0 {
+        panic("Wrong Collections!")
     }
 }

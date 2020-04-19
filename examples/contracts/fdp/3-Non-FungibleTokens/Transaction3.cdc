@@ -2,29 +2,24 @@
 
 import NonFungibleToken from 0x02
 
-// This transaction allows the Minter account to mint an NFT
-// and deposit it into its collection.
+// This transaction configures a user's account
+// to use the NFT contract by creating a new empty collection,
+// storing it in their account storage, and publishing a capability
 transaction {
-
-    // The reference to the collection that will be receiving the NFT
-    let receiverRef: &AnyResource{NonFungibleToken.NFTReceiver}
-
-    // The reference to the Minter resource stored in account storage
-    let minterRef: &NonFungibleToken.NFTMinter
-
     prepare(acct: AuthAccount) {
-        // Get the owner's collection reference
-        self.receiverRef = acct.published[&AnyResource{NonFungibleToken.NFTReceiver}] ?? panic("No receiver")
-        
-        // Create a Reference to the minter resource
-        self.minterRef = &acct.storage[NonFungibleToken.NFTMinter] as &NonFungibleToken.NFTMinter
-    }
 
-    execute {
-        // Use the minter reference to mint an NFT, which deposits
-        // the NFT into the collection that is sent as a parameter.
-        self.minterRef.mintNFT(recipient: self.receiverRef)
+        // Create a new empty collection
+        let collection <- NonFungibleToken.createEmptyCollection()
+    
+        // store the empty NFT Collection in account storage
+        acct.save(<-collection, to: /storage/NFTCollection)
 
-        log("NFT Minted and deposited to Account 2's Collection")
+        log("Collection created for account 1")
+
+        // create a public capability for the Collection
+        acct.link<&{NonFungibleToken.NFTReceiver}>(/public/NFTReceiver, target: /storage/NFTCollection)
+
+        log("Capability created")
     }
 }
+ 
