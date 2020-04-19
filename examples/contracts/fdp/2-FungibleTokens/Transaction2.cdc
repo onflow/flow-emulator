@@ -10,21 +10,24 @@ transaction {
 		let vaultA <- FungibleToken.createEmptyVault()
 			
 		// Store the vault in the account storage
-		// and destroy whatever was there previously
-		let oldVault <- acct.storage[FungibleToken.Vault] <- vaultA
-		destroy oldVault
+		acct.save(<-vaultA, to: /storage/MainVault)
 
         log("Empty Vault stored")
 
-		// Publish a new Receiver reference to the Vault
-		acct.published[&AnyResource{FungibleToken.Receiver}] = &acct.storage[FungibleToken.Vault] as &AnyResource{FungibleToken.Receiver}
+        // Create a public Receiver capability to the Vault
+        acct.link<&FungibleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>(
+            /public/MainReceiver, 
+            target: /storage/MainVault
+        )
 
-        log("Reference created")
+        log("References created")
 	}
 
     post {
-        // Check that the reference was created correctly
-        getAccount(0x02).published[&AnyResource{FungibleToken.Receiver}] != nil:  "Vault Receiver Reference was not created correctly"
+        // Check that the capabilities were created correctly
+        getAccount(0x01).getCapability(/public/MainReceiver)!
+                        .check<&FungibleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>():  
+                        "Vault Receiver Reference was not created correctly"
     }
 }
  

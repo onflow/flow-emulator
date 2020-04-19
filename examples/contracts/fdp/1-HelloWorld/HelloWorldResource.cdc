@@ -6,32 +6,29 @@
 //
 // Learn more about resources in this tutorial: https://docs.onflow.org/docs/hello-world
 
-access(all) contract HelloWorld {
+pub contract HelloWorld {
 
     // Declare a resource that only includes one function.
-	access(all) resource HelloAsset {
+	pub resource HelloAsset {
         // A transaction can call this function to get the "Hello, World!"
         // message from the resource.
-		access(all) fun hello(): String {
+		pub fun hello(): String {
 			return "Hello, World!"
 		}
 	}
 
 	init() {
+        // Use the create built-in function to create a new instance
+        // of the HelloAsset resource
+        let newHello <- create HelloAsset()
+
         // We can do anything in the init function, including accessing
         // the storage of the account that this contract is deployed to.
         //
         // Here we are storing the newly created HelloAsset resource
-        // in the private account.storage.
-		let oldHello <- self.account.storage[HelloAsset] <- create HelloAsset()
-
-        // We have to move the old value out of storage to ensure that
-        // it doesn't get accidentally lost or deleted.
-        //
-        // We can delete it here because we know that it's empty, but in
-        // a real smart contract we might do something else with it
-        // if it has a value.
-		destroy oldHello
+        // in the private account storage 
+        // by specifying a custom path to the resource
+		self.account.save(<-newHello, to: /storage/Hello)
 
         log("HelloAsset created and stored")
 	}

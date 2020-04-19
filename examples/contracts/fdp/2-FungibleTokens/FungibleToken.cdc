@@ -7,10 +7,10 @@
 //
 // Follow the fungible tokens tutorial to learn more: https://docs.onflow.org/docs/fungible-tokens
 
-access(all) contract FungibleToken {
+pub contract FungibleToken {
 
     // Total supply of all tokens in existence.
-    access(all) var totalSupply: UInt64
+    pub var totalSupply: UFix64
 
     // Provider
     // 
@@ -21,7 +21,7 @@ access(all) contract FungibleToken {
     // it leaves open the possibility of creating custom providers
     // that don't necessarily need their own balance.
     //
-    access(all) resource interface Provider {
+    pub resource interface Provider {
 
         // withdraw
         //
@@ -34,10 +34,10 @@ access(all) contract FungibleToken {
         // them access by publishing a resource that exposes the withdraw
         // function.
         //
-        access(all) fun withdraw(amount: UInt64): @Vault {
+        pub fun withdraw(amount: UFix64): @Vault {
             post {
                 // `result` refers to the return value of the function
-                result.balance == amount:
+                result.balance == UFix64(amount):
                     "Withdrawal amount must be the same as the balance of the withdrawn Vault"
             }
         }
@@ -53,20 +53,26 @@ access(all) contract FungibleToken {
     // can do custom things with the tokens, like split them up and
     // send them to different places.
     //
-	access(all) resource interface Receiver {
-		access(all) var balance: UInt64
-
+	pub resource interface Receiver {
         // deposit
         //
         // Function that can be called to deposit tokens 
         // into the implementing resource type
         //
-        access(all) fun deposit(from: @Vault) {
+        pub fun deposit(from: @Vault) {
             pre {
-                from.balance > UInt64(0):
+                from.balance > UFix64(0):
                     "Deposit balance must be positive"
             }
         }
+    }
+
+    // Balance
+    //
+    // Interface that specifies a public `balance` field for the vault
+    //
+    pub resource interface Balance {
+        pub var balance: UFix64
     }
 
     // Vault
@@ -81,13 +87,13 @@ access(all) contract FungibleToken {
     // out of thin air. A special Minter resource needs to be defined to mint
     // new tokens.
     // 
-    access(all) resource Vault: Receiver {
+    pub resource Vault: Provider, Receiver, Balance {
         
 		// keeps track of the total balance of the account's tokens
-        access(all) var balance: UInt64
+        pub var balance: UFix64
 
         // initialize the balance at resource creation time
-        init(balance: UInt64) {
+        init(balance: UFix64) {
             self.balance = balance
         }
 
@@ -101,7 +107,7 @@ access(all) contract FungibleToken {
         // created Vault to the context that called so it can be deposited
         // elsewhere.
         //
-        access(all) fun withdraw(amount: UInt64): @Vault {
+        pub fun withdraw(amount: UFix64): @Vault {
             self.balance = self.balance - amount
             return <-create Vault(balance: amount)
         }
@@ -114,7 +120,7 @@ access(all) contract FungibleToken {
         // It is allowed to destroy the sent Vault because the Vault
         // was a temporary holder of the tokens. The Vault's balance has
         // been consumed and therefore can be destroyed.
-        access(all) fun deposit(from: @Vault) {
+        pub fun deposit(from: @Vault) {
             self.balance = self.balance + from.balance
             destroy from
         }
@@ -127,21 +133,21 @@ access(all) contract FungibleToken {
     // and store the returned Vault in their storage in order to allow their
     // account to be able to receive deposits of this token type.
     //
-    access(all) fun createEmptyVault(): @Vault {
-        return <-create Vault(balance: 0)
+    pub fun createEmptyVault(): @Vault {
+        return <-create Vault(balance: 0.0)
     }
 
 	// VaultMinter
     //
     // Resource object that an admin can control to mint new tokens
-    access(all) resource VaultMinter {
+    pub resource VaultMinter {
 
 		// Function that mints new tokens and deposits into an account's vault
 		// using their `Receiver` reference.
         // We say `&AnyResource{Receiver}` to say that the recipient can be any resource
-        // as long as it implements and is cast as the Receiver interface
-        access(all) fun mintTokens(amount: UInt64, recipient: &AnyResource{Receiver}) {
-			FungibleToken.totalSupply = FungibleToken.totalSupply + UInt64(amount)
+        // as long as it implements the Receiver interface
+        pub fun mintTokens(amount: UFix64, recipient: &AnyResource{Receiver}) {
+			FungibleToken.totalSupply = FungibleToken.totalSupply + amount
             recipient.deposit(from: <-create Vault(balance: amount))
         }
     }
@@ -150,15 +156,27 @@ access(all) contract FungibleToken {
     // be initialized at deployment. This is just an example of what
     // an implementation could do in the init function. The numbers are arbitrary.
     init() {
-        self.totalSupply = 30
+        self.totalSupply = 30.0
 
-        // Create the Vault with the initial balance and put it into storage.
-        let oldVault <- self.account.storage[Vault] <- create Vault(balance: 30)
-        destroy oldVault
+        // create the Vault with the initial balance and put it in storage
+        // account.save saves an object to the specified `to` path
+        // The path is a literal path that consists of a domain and identifier
+        // The domain must be `storage`, `private`, or `public`
+        // the identifier can be any name
+        let vault <- create Vault(balance: self.totalSupply)
+        self.account.save(<-vault, to: /storage/MainVault)
 
-        // Create a VaultMinter resource object and put it into storage.
-		let oldMinter <- self.account.storage[VaultMinter] <- create VaultMinter()
-        destroy oldMinter
+        // Create a new MintAndBurn resource and store it in account storage
+        self.account.save(<-create VaultMinter(), to: /storage/MainMinter)
+
+        // Create a private capability link for the Minter
+        // Capabilities can be used to create temporary references to an object
+        // so that callers can use the reference to access fields and functions
+        // of the objet.
+        // 
+        // The capability is stored in the /private/ domain, which is only
+        // accesible by the owner of the account
+        self.account.link<&VaultMinter>(/private/Minter, target: /storage/MainMinter)
     }
 }
  

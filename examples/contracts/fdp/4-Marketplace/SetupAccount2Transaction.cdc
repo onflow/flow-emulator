@@ -8,9 +8,6 @@ import NonFungibleToken from 0x02
 // the NFT collection on account 0x01.
 transaction {
 
-    // public receiver for account 1's NFT Collection
-    let acct1nftReceiver: &AnyResource{NonFungibleToken.NFTReceiver}
-
     // Private reference to this account's minter resource
     let minterRef: &NonFungibleToken.NFTMinter
 
@@ -18,31 +15,29 @@ transaction {
         // create a new vault instance with an initial balance of 30
         let vaultA <- FungibleToken.createEmptyVault()
 
-        // store it in the account storage
-        // and destroy whatever was there previously
-        let oldVault <- acct.storage[FungibleToken.Vault] <- vaultA
-        destroy oldVault
-        // publish a receiver reference to the stored Vault
-        acct.published[&AnyResource{FungibleToken.Receiver}] = &acct.storage[FungibleToken.Vault] as &AnyResource{FungibleToken.Receiver}
+		// Store the vault in the account storage
+		acct.save(<-vaultA, to: /storage/MainVault)
+
+        // Create a public Receiver capability to the Vault
+		let ReceiverRef = acct.link<&FungibleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>
+                                    (/public/MainReceiver, target: /storage/MainVault)
 
         log("Created a Vault and published a reference")
 
-        // publish a public interface that only exposes ownedNFTs and deposit
-        acct.published[&AnyResource{NonFungibleToken.NFTReceiver}] = &acct.storage[NonFungibleToken.Collection] as &AnyResource{NonFungibleToken.NFTReceiver}
-
-        // get account 1's public account object
-        let account1 = getAccount(0x01)
-
-        // Get the NFT receiver public reference from account 1
-        self.acct1nftReceiver = account1.published[&AnyResource{NonFungibleToken.NFTReceiver}] ?? panic("no receiver found")
-
-        // Get the Minter reference from account storage for account 2
-        self.minterRef = &acct.storage[NonFungibleToken.NFTMinter] as &NonFungibleToken.NFTMinter
+        // Borrow a reference for the NFTMinter in storage
+        self.minterRef = acct.borrow<&NonFungibleToken.NFTMinter>(from: /storage/NFTMinter)!
     }
     execute {
+        // Get the recipient's public account object
+        let recipient = getAccount(0x01)
+
+        // Get the Collection reference for the receiver
+        // getting the public capability and borrowing a reference from it
+        let receiverRef = recipient.getCapability(/public/NFTReceiver)!
+                                   .borrow<&{NonFungibleToken.NFTReceiver}>()!
 
         // Mint an NFT and deposit it into account 0x01's collection
-        self.minterRef.mintNFT(recipient: self.acct1nftReceiver)
+        self.minterRef.mintNFT(recipient: receiverRef)
 
         log("New NFT minted for account 1")
     }

@@ -23,7 +23,6 @@ transaction {
         log("The cat has the hats")
 
         // Store the Kitty in storage
-        let oldKitty <- acct.storage[KittyVerse.Kitty] <- kitty
-        destroy oldKitty
+        acct.save(<-kitty, to: /storage/Kitty)
     }
 }

@@ -13,12 +13,12 @@
 //
 // Learn more about composable resources in this tutorial: https://docs.onflow.org/docs/composable-resources-kitty-hats
 
-access(all) contract KittyVerse {
+pub contract KittyVerse {
 
     // KittyHat is a special resource type that represents a hat
-    access(all) resource KittyHat {
-        access(all) let id: Int
-        access(all) let name: String
+    pub resource KittyHat {
+        pub let id: Int
+        pub let name: String
 
         init(id: Int, name: String) {
             self.id = id
@@ -26,7 +26,7 @@ access(all) contract KittyVerse {
         }
 
         // An example of a function someone might put in their hat resource
-        access(all) fun tipHat(): String {
+        pub fun tipHat(): String {
             if self.name == "Cowboy Hat" {
                 return "Howdy Y'all"
             } else if self.name == "Top Hat" {
@@ -38,16 +38,16 @@ access(all) contract KittyVerse {
     }
 
     // Create a new hat
-    access(all) fun createHat(id: Int, name: String): @KittyHat {
+    pub fun createHat(id: Int, name: String): @KittyHat {
         return <-create KittyHat(id: id, name: name)
     }
 
-    access(all) resource Kitty {
+    pub resource Kitty {
 
-        access(all) let id: Int
+        pub let id: Int
 
         // place where the Kitty hats are stored
-        access(all) let items: @{String: KittyHat}
+        pub let items: @{String: KittyHat}
 
         init(newID: Int) {
             self.id = newID
@@ -59,7 +59,7 @@ access(all) contract KittyVerse {
         }
     }
 
-    access(all) fun createKitty(): @Kitty {
+    pub fun createKitty(): @Kitty {
         return <-create Kitty(newID: 1)
     }
 }

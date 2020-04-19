@@ -109,6 +109,6 @@ pub contract ApprovalVoting {
         self.proposals = []
         self.votes = {}
 
-        self.account.storage[Administrator] <-! create Administrator()
+        self.account.save(<-create Administrator(), to: /storage/VotingAdmin)
     }
 }

@@ -7,15 +7,15 @@
 // 
 // Learn more about non-fungible tokens in this tutorial: https://docs.onflow.org/docs/non-fungible-tokens
 
-access(all) contract NonFungibleToken {
+pub contract NonFungibleToken {
 
     // Declare the NFT resource type
-    access(all) resource NFT {
+    pub resource NFT {
         // The unique ID that differentiates each NFT
-        access(all) let id: UInt64
+        pub let id: UInt64
 
         // String mapping to hold metadata
-        access(all) var metadata: {String: String}
+        pub var metadata: {String: String}
 
         // Initialize both fields in the init function
         init(initID: UInt64) {
@@ -24,9 +24,8 @@ access(all) contract NonFungibleToken {
         }
     }
 
-    // Create a single new NFT and put it into account storage
+    // Create a single new NFT and save it to account storage
 	init() {
-		let oldNFT <- self.account.storage[NFT] <- create NFT(initID: 1)
-		destroy oldNFT
+		self.account.save<@NFT>(<-create NFT(initID: 1), to: /storage/NFT1)
 	}
 }

@@ -19,17 +19,19 @@ transaction {
         let account2 = getAccount(0x02)
         
         // Retrieve public Vault Receiver references for both accounts
-        self.acct1Ref = acct.published[&AnyResource{FungibleToken.Receiver}] ?? panic("no receiver 1 Ref")
-        self.acct2Ref = account2.published[&AnyResource{FungibleToken.Receiver}] ?? panic("no receiver 2 Ref")
+        self.acct1Ref = acct.getCapability(/public/MainReceiver)!
+                        .borrow<&FungibleToken.Vault{FungibleToken.Receiver}>()!
+        self.acct2Ref = account2.getCapability(/public/MainReceiver)!
+                        .borrow<&FungibleToken.Vault{FungibleToken.Receiver}>()!
 
         // Get the stored Minter reference for account 0x01
-        self.minterRef = &acct.storage[FungibleToken.VaultMinter] as &FungibleToken.VaultMinter
+        self.minterRef = acct.borrow<&FungibleToken.VaultMinter>(from: /storage/MainMinter)!
     }
 
     execute {
         // Mint tokens for both accounts
-        self.minterRef.mintTokens(amount: 20, recipient: self.acct2Ref)
-        self.minterRef.mintTokens(amount: 10, recipient: self.acct1Ref)
+        self.minterRef.mintTokens(amount: 20.0, recipient: self.acct2Ref)
+        self.minterRef.mintTokens(amount: 10.0, recipient: self.acct1Ref)
 
         log("Minted new fungible tokens for account 1 and 2")
     }

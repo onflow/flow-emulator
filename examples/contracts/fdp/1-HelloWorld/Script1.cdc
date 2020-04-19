@@ -7,17 +7,23 @@ import HelloWorld from 0x02
 // and cannot modify state. Any state changes that it would
 // do are reverted after execution.
 //
-// Scripts must have the following signature: access(all) fun main()
-access(all) fun main() {
+// Scripts must have the following signature: pub fun main()
+pub fun main() {
 
     // Cadence code can get an account's public account object
     // by using the getAccount() built-in function.
 	let helloAccount = getAccount(0x02)
+
+    // Get the public capability from the public path of the owner's account
+    let helloCapability = helloAccount.getCapability(/public/Hello)
+
+    // borrow a reference for the capability
+    let helloReference = helloCapability!.borrow<&HelloWorld.HelloAsset>()
 
     // The log built-in function logs its argument to stdout.
     //
     // Here we are using optional chaining to call the "hello"
     // method on the HelloAsset resource that is referenced
     // in the published area of the account.
-	log(helloAccount.published[&HelloWorld.HelloAsset]?.hello())
+	log(helloReference?.hello())
 }
