@@ -61,7 +61,7 @@ func TestEventEmitted(t *testing.T) {
 
 		publicKey := b.RootKey().AccountKey()
 
-		address, err := b.CreateAccount([]flow.AccountKey{publicKey}, accountScript)
+		address, err := b.CreateAccount([]*flow.AccountKey{publicKey}, accountScript)
 		assert.NoError(t, err)
 
 		script := []byte(fmt.Sprintf(`
