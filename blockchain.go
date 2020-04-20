@@ -857,11 +857,11 @@ func convertToSealedResults(
 	return output
 }
 
+const DefaultRootPrivateKeySeed = "elephant ears space cowboy octopus rodeo potato cannon pineapple"
+
 func init() {
 	// Initialize default emulator options
-	privateKey, err := sdkcrypto.GeneratePrivateKey(
-		sdkcrypto.ECDSA_P256,
-		[]byte("elephant ears space cowboy octopus rodeo potato cannon pineapple"))
+	privateKey, err := sdkcrypto.GeneratePrivateKey(sdkcrypto.ECDSA_P256, []byte(DefaultRootPrivateKeySeed))
 	if err != nil {
 		panic("Failed to generate default root key: " + err.Error())
 	}
