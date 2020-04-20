@@ -211,7 +211,7 @@ func TestCreateAccount(t *testing.T) {
 
 		assert.Equal(t, uint64(0), account.Balance)
 		require.Len(t, account.Keys, 1)
-		assert.Equal(t, accountKey, account.Keys[0])
+		assert.Equal(t, accountKey.PublicKey, account.Keys[0].PublicKey)
 		assert.Equal(t, code, account.Code)
 	})
 
@@ -527,17 +527,17 @@ func TestUpdateAccountCode(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(accountAddressB)
 
-		err = tx.SignPayload(accountAddressB, accountKeyB.ID, signerB)
+		err = tx.SignPayload(accountAddressB, 0, signerB)
 		assert.NoError(t, err)
 
 		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		result, err := b.ExecuteNextTransaction()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assertTransactionSucceeded(t, result)
 
 		_, err = b.CommitBlock()
