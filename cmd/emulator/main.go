@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	emulator "github.com/dapperlabs/flow-emulator"
 	"github.com/dapperlabs/flow-emulator/server"
 )
 
@@ -31,8 +32,8 @@ type Config struct {
 }
 
 const (
-	EnvPrefix          = "FLOW"
-	DefaultRootKeySeed = "c9ec2e748979be18d84c98f9835df044965eaa371621a34271f807163aa76d696a8975afe049f61b"
+	EnvPrefix                 = "FLOW"
+	DefaultRootPrivateKeySeed = emulator.DefaultRootPrivateKeySeed
 )
 
 var (
@@ -61,8 +62,7 @@ var Cmd = &cobra.Command{
 				exit(1, err.Error())
 			}
 		} else {
-			rootKeySeed, _ := hex.DecodeString(DefaultRootKeySeed)
-			rootPrivateKey, _ = crypto.GeneratePrivateKey(crypto.ECDSA_P256, rootKeySeed)
+			rootPrivateKey, _ = crypto.GeneratePrivateKey(crypto.ECDSA_P256, []byte(DefaultRootPrivateKeySeed))
 
 			rootPublicKey = rootPrivateKey.PublicKey()
 			rootKeySigAlgo = rootPrivateKey.Algorithm()
