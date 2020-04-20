@@ -3,8 +3,8 @@ package examples
 import (
 	"testing"
 
-	"github.com/dapperlabs/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

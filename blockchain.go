@@ -15,11 +15,10 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/dapperlabs/cadence/runtime"
-	"github.com/dapperlabs/flow-go/crypto"
 	model "github.com/dapperlabs/flow-go/model/flow"
+	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/flow-go-sdk"
-	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
+	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
 
 	"github.com/dapperlabs/flow-emulator/execution"
@@ -71,24 +70,24 @@ var _ BlockchainAPI = &Blockchain{}
 
 type RootKey struct {
 	Address        flow.Address
-	PrivateKey     *sdkcrypto.PrivateKey
-	PublicKey      *sdkcrypto.PublicKey
+	PrivateKey     *crypto.PrivateKey
+	PublicKey      *crypto.PublicKey
 	ID             int
-	SigAlgo        sdkcrypto.SignatureAlgorithm
-	HashAlgo       sdkcrypto.HashAlgorithm
+	SigAlgo        crypto.SignatureAlgorithm
+	HashAlgo       crypto.HashAlgorithm
 	Weight         int
 	SequenceNumber uint64
 }
 
-func (r RootKey) Signer() sdkcrypto.Signer {
+func (r RootKey) Signer() crypto.Signer {
 	if r.PrivateKey == nil {
 		return nil
 	}
-	return sdkcrypto.NewNaiveSigner(*r.PrivateKey, r.HashAlgo)
+	return crypto.NewNaiveSigner(*r.PrivateKey, r.HashAlgo)
 }
 
 func (r RootKey) AccountKey() *flow.AccountKey {
-	var publicKey sdkcrypto.PublicKey
+	var publicKey crypto.PublicKey
 	if r.PublicKey != nil {
 		publicKey = *r.PublicKey
 	}
@@ -121,9 +120,9 @@ type Option func(*config)
 
 // WithRootPrivateKey sets the root key from a private key.
 func WithRootPrivateKey(
-	rootPrivateKey sdkcrypto.PrivateKey,
-	sigAlgo sdkcrypto.SignatureAlgorithm,
-	hashAlgo sdkcrypto.HashAlgorithm,
+	rootPrivateKey crypto.PrivateKey,
+	sigAlgo crypto.SignatureAlgorithm,
+	hashAlgo crypto.HashAlgorithm,
 ) Option {
 	return func(c *config) {
 		c.RootKey = RootKey{
@@ -136,9 +135,9 @@ func WithRootPrivateKey(
 
 // WithRootPublicKey sets the root key from a public key.
 func WithRootPublicKey(
-	rootPublicKey sdkcrypto.PublicKey,
-	sigAlgo sdkcrypto.SignatureAlgorithm,
-	hashAlgo sdkcrypto.HashAlgorithm,
+	rootPublicKey crypto.PublicKey,
+	sigAlgo crypto.SignatureAlgorithm,
+	hashAlgo crypto.HashAlgorithm,
 ) Option {
 	return func(c *config) {
 		c.RootKey = RootKey{
@@ -780,20 +779,18 @@ func (b *Blockchain) verifyAccountSignature(
 		return accountKey, &InvalidSignatureAccountError{Address: txSig.Address}
 	}
 
-	signature := crypto.Signature(txSig.Signature)
-
 	if txSig.KeyID < 0 || txSig.KeyID >= len(account.Keys) {
 		return accountKey, &InvalidSignatureAccountError{Address: txSig.Address}
 	}
 
 	accountKey = account.Keys[txSig.KeyID]
 
-	hasher, err := sdkcrypto.NewHasher(accountKey.HashAlgo)
+	hasher, err := crypto.NewHasher(accountKey.HashAlgo)
 	if err != nil {
 		return accountKey, fmt.Errorf("public key specifies invalid hash algorithm")
 	}
 
-	valid, err := accountKey.PublicKey.Verify(signature, message, hasher)
+	valid, err := accountKey.PublicKey.Verify(txSig.Signature, message, hasher)
 	if err != nil {
 		return accountKey, fmt.Errorf("cannot verify public key")
 	}
@@ -861,7 +858,7 @@ const DefaultRootPrivateKeySeed = "elephant ears space cowboy octopus rodeo pota
 
 func init() {
 	// Initialize default emulator options
-	privateKey, err := sdkcrypto.GeneratePrivateKey(sdkcrypto.ECDSA_P256, []byte(DefaultRootPrivateKeySeed))
+	privateKey, err := crypto.GeneratePrivateKey(crypto.ECDSA_P256, []byte(DefaultRootPrivateKeySeed))
 	if err != nil {
 		panic("Failed to generate default root key: " + err.Error())
 	}
@@ -869,6 +866,6 @@ func init() {
 	defaultConfig.RootKey = RootKey{
 		PrivateKey: &privateKey,
 		SigAlgo:    privateKey.Algorithm(),
-		HashAlgo:   sdkcrypto.SHA3_256,
+		HashAlgo:   crypto.SHA3_256,
 	}
 }

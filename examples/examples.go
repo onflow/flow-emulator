@@ -4,11 +4,11 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/dapperlabs/flow-go-sdk/crypto"
+	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dapperlabs/cadence/runtime/cmd"
+	"github.com/onflow/cadence/runtime/cmd"
 	"github.com/onflow/flow-go-sdk"
 
 	emulator "github.com/dapperlabs/flow-emulator"
