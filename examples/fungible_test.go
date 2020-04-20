@@ -3,11 +3,12 @@ package examples
 import (
 	"testing"
 
+	"github.com/dapperlabs/flow-go-sdk/crypto"
+	"github.com/onflow/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/onflow/flow-go-sdk"
-	"github.com/onflow/flow-go-sdk/keys"
 )
 
 const (
@@ -42,7 +43,12 @@ func TestCreateToken(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, true)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address},
+			[]crypto.Signer{b.RootKey().Signer()},
+			true,
+		)
 	})
 
 	t.Run("Should be able to create token", func(t *testing.T) {
@@ -53,9 +59,14 @@ func TestCreateToken(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address},
+			[]crypto.Signer{b.RootKey().Signer()},
+			false,
+		)
 
-		result, err := b.ExecuteScript(GenerateInspectVaultScript(contractAddr, b.RootAccountAddress(), 10))
+		result, err := b.ExecuteScript(GenerateInspectVaultScript(contractAddr, b.RootKey().Address, 10))
 		require.NoError(t, err)
 		if !assert.True(t, result.Succeeded()) {
 			t.Log(result.Error.Error())
@@ -70,7 +81,12 @@ func TestCreateToken(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address},
+			[]crypto.Signer{b.RootKey().Signer()},
+			false,
+		)
 	})
 }
 
@@ -90,7 +106,12 @@ func TestInAccountTransfers(t *testing.T) {
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
 
-	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
+	SignAndSubmit(
+		t, b, tx,
+		[]flow.Address{b.RootKey().Address},
+		[]crypto.Signer{b.RootKey().Signer()},
+		false,
+	)
 
 	t.Run("Should be able to withdraw tokens from a vault", func(t *testing.T) {
 		tx := flow.NewTransaction().
@@ -100,10 +121,15 @@ func TestInAccountTransfers(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address},
+			[]crypto.Signer{b.RootKey().Signer()},
+			false,
+		)
 
 		// Assert that the vaults balance is correct
-		result, err := b.ExecuteScript(GenerateInspectVaultArrayScript(contractAddr, b.RootAccountAddress(), 0, 7))
+		result, err := b.ExecuteScript(GenerateInspectVaultArrayScript(contractAddr, b.RootKey().Address, 0, 7))
 		require.NoError(t, err)
 		if !assert.True(t, result.Succeeded()) {
 			t.Log(result.Error.Error())
@@ -111,7 +137,6 @@ func TestInAccountTransfers(t *testing.T) {
 	})
 
 	t.Run("Should be able to withdraw and deposit tokens from one vault to another in an account", func(t *testing.T) {
-
 		tx = flow.NewTransaction().
 			SetScript(GenerateWithdrawDepositScript(contractAddr, 1, 2, 8)).
 			SetGasLimit(20).
@@ -119,17 +144,22 @@ func TestInAccountTransfers(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address},
+			[]crypto.Signer{b.RootKey().Signer()},
+			false,
+		)
 
 		// Assert that the vault's balance is correct
-		result, err := b.ExecuteScript(GenerateInspectVaultArrayScript(contractAddr, b.RootAccountAddress(), 1, 12))
+		result, err := b.ExecuteScript(GenerateInspectVaultArrayScript(contractAddr, b.RootKey().Address, 1, 12))
 		require.NoError(t, err)
 		if !assert.True(t, result.Succeeded()) {
 			t.Log(result.Error.Error())
 		}
 
 		// Assert that the vault's balance is correct
-		result, err = b.ExecuteScript(GenerateInspectVaultArrayScript(contractAddr, b.RootAccountAddress(), 2, 13))
+		result, err = b.ExecuteScript(GenerateInspectVaultArrayScript(contractAddr, b.RootKey().Address, 2, 13))
 		require.NoError(t, err)
 		if !assert.True(t, result.Succeeded()) {
 			t.Log(result.Error.Error())
@@ -139,6 +169,8 @@ func TestInAccountTransfers(t *testing.T) {
 
 func TestExternalTransfers(t *testing.T) {
 	b := NewEmulator()
+
+	accountKeys := test.AccountKeyGenerator()
 
 	// First, deploy the token contract
 	tokenCode := ReadFile(resourceTokenContractFile)
@@ -153,14 +185,17 @@ func TestExternalTransfers(t *testing.T) {
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
 
-	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
+	SignAndSubmit(
+		t, b, tx,
+		[]flow.Address{b.RootKey().Address},
+		[]crypto.Signer{b.RootKey().Signer()},
+		false,
+	)
 
 	// create a new account
-	bastianPrivateKey := RandomPrivateKey()
-	bastianPublicKey := bastianPrivateKey.ToAccountKey()
-	bastianPublicKey.Weight = keys.PublicKeyWeightThreshold
+	bastianAccountKey, bastianSigner := accountKeys.NewWithSigner()
 
-	bastianAddress, err := b.CreateAccount([]flow.AccountKey{bastianPublicKey}, nil)
+	bastianAddress, err := b.CreateAccount([]*flow.AccountKey{bastianAccountKey}, nil)
 	require.NoError(t, err)
 
 	// then deploy the tokens to the new account
@@ -173,8 +208,8 @@ func TestExternalTransfers(t *testing.T) {
 
 	SignAndSubmit(
 		t, b, tx,
-		[]flow.AccountPrivateKey{b.RootKey().PrivateKey, bastianPrivateKey},
-		[]flow.Address{b.RootAccountAddress(), bastianAddress},
+		[]flow.Address{b.RootKey().Address, bastianAddress},
+		[]crypto.Signer{b.RootKey().Signer(), bastianSigner},
 		false,
 	)
 
@@ -186,10 +221,15 @@ func TestExternalTransfers(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address},
+			[]crypto.Signer{b.RootKey().Signer()},
+			false,
+		)
 
 		// Assert that the vaults' balances are correct
-		result, err := b.ExecuteScript(GenerateInspectVaultScript(contractAddr, b.RootAccountAddress(), 7))
+		result, err := b.ExecuteScript(GenerateInspectVaultScript(contractAddr, b.RootKey().Address, 7))
 		require.NoError(t, err)
 		if !assert.True(t, result.Succeeded()) {
 			t.Log(result.Error.Error())
