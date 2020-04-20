@@ -1,16 +1,15 @@
 package examples
 
 import (
-	"crypto/rand"
 	"io/ioutil"
 	"testing"
 
+	"github.com/dapperlabs/flow-go-sdk/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dapperlabs/cadence/runtime/cmd"
 	"github.com/onflow/flow-go-sdk"
-	"github.com/onflow/flow-go-sdk/keys"
 
 	emulator "github.com/dapperlabs/flow-emulator"
 )
@@ -22,19 +21,6 @@ func ReadFile(path string) []byte {
 		panic(err)
 	}
 	return contents
-}
-
-// RandomPrivateKey returns a randomly generated private key
-func RandomPrivateKey() flow.AccountPrivateKey {
-	seed := make([]byte, 40)
-	rand.Read(seed)
-
-	privateKey, err := keys.GeneratePrivateKey(keys.ECDSA_P256_SHA3_256, seed)
-	if err != nil {
-		panic(err)
-	}
-
-	return privateKey
 }
 
 // NewEmulator returns a emulator object for testing
@@ -55,20 +41,20 @@ func SignAndSubmit(
 	t *testing.T,
 	b *emulator.Blockchain,
 	tx *flow.Transaction,
-	signingKeys []flow.AccountPrivateKey,
-	signingAddresses []flow.Address,
+	signerAddresses []flow.Address,
+	signers []crypto.Signer,
 	shouldRevert bool,
 ) {
 	// sign transaction with each signer
-	for i := len(signingAddresses) - 1; i >= 0; i-- {
-		signingKey := signingKeys[i]
-		signingAddress := signingAddresses[i]
-
-		err := tx.SignPayload(signingAddress, signingKey.ToAccountKey().ID, signingKey.Signer())
-		assert.NoError(t, err)
+	for i := len(signerAddresses) - 1; i >= 0; i-- {
+		signerAddress := signerAddresses[i]
+		signer := signers[i]
 
 		if i == 0 {
-			err = tx.SignEnvelope(signingAddress, signingKey.ToAccountKey().ID, signingKey.Signer())
+			err := tx.SignEnvelope(signerAddress, 0, signer)
+			assert.NoError(t, err)
+		} else {
+			err := tx.SignPayload(signerAddress, 0, signer)
 			assert.NoError(t, err)
 		}
 	}
@@ -109,19 +95,25 @@ func setupUsersTokens(
 	b *emulator.Blockchain,
 	tokenAddr flow.Address,
 	nftAddr flow.Address,
-	signingKeys []flow.AccountPrivateKey,
-	signingAddresses []flow.Address,
+	signerAddresses []flow.Address,
+	signerKeys []*flow.AccountKey,
+	signers []crypto.Signer,
 ) {
 	// add array of signers to transaction
-	for i := 0; i < len(signingAddresses); i++ {
+	for i := 0; i < len(signerAddresses); i++ {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateTokenScript(tokenAddr, 30)).
 			SetGasLimit(20).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
-			AddAuthorizer(signingAddresses[i])
+			AddAuthorizer(signerAddresses[i])
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address, signerAddresses[i]},
+			[]crypto.Signer{b.RootKey().Signer(), signers[i]},
+			false,
+		)
 
 		// then deploy a NFT to the accounts
 		tx = flow.NewTransaction().
@@ -129,8 +121,13 @@ func setupUsersTokens(
 			SetGasLimit(20).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
-			AddAuthorizer(signingAddresses[i])
+			AddAuthorizer(signerAddresses[i])
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, signingKeys[i]}, []flow.Address{b.RootAccountAddress(), signingAddresses[i]}, false)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address, signerAddresses[i]},
+			[]crypto.Signer{b.RootKey().Signer(), signers[i]},
+			false,
+		)
 	}
 }

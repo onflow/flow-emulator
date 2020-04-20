@@ -3,6 +3,7 @@ package examples
 import (
 	"testing"
 
+	"github.com/dapperlabs/flow-go-sdk/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -42,7 +43,12 @@ func TestCreateMinter(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, true)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address},
+			[]crypto.Signer{b.RootKey().Signer()},
+			true,
+		)
 	})
 
 	t.Run("Cannot create minter with special mod < 2", func(t *testing.T) {
@@ -53,7 +59,12 @@ func TestCreateMinter(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, true)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address},
+			[]crypto.Signer{b.RootKey().Signer()},
+			true,
+		)
 	})
 
 	t.Run("Should be able to create minter", func(t *testing.T) {
@@ -64,7 +75,12 @@ func TestCreateMinter(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address},
+			[]crypto.Signer{b.RootKey().Signer()},
+			false,
+		)
 	})
 }
 
@@ -84,20 +100,30 @@ func TestMinting(t *testing.T) {
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
 
-	SignAndSubmit(t, b, createMinterTx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
+	SignAndSubmit(
+		t, b, createMinterTx,
+		[]flow.Address{b.RootKey().Address},
+		[]crypto.Signer{b.RootKey().Signer()},
+		false,
+	)
 
 	// Mint the first NFT
-	mintTx := flow.NewTransaction().
+	mintTx1 := flow.NewTransaction().
 		SetScript(GenerateMintScript(contractAddr)).
 		SetGasLimit(10).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
 
-	SignAndSubmit(t, b, mintTx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
+	SignAndSubmit(
+		t, b, mintTx1,
+		[]flow.Address{b.RootKey().Address},
+		[]crypto.Signer{b.RootKey().Signer()},
+		false,
+	)
 
 	// Assert that ID/specialness are correct
-	result, err := b.ExecuteScript(GenerateInspectNFTScript(contractAddr, b.RootAccountAddress(), 1, false))
+	result, err := b.ExecuteScript(GenerateInspectNFTScript(contractAddr, b.RootKey().Address, 1, false))
 	require.NoError(t, err)
 	if !assert.True(t, result.Succeeded()) {
 		t.Log(result.Error.Error())
@@ -111,10 +137,15 @@ func TestMinting(t *testing.T) {
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
 
-	SignAndSubmit(t, b, mintTx2, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
+	SignAndSubmit(
+		t, b, mintTx2,
+		[]flow.Address{b.RootKey().Address},
+		[]crypto.Signer{b.RootKey().Signer()},
+		false,
+	)
 
 	// Assert that ID/specialness are correct
-	result, err = b.ExecuteScript(GenerateInspectNFTScript(contractAddr, b.RootAccountAddress(), 2, true))
+	result, err = b.ExecuteScript(GenerateInspectNFTScript(contractAddr, b.RootKey().Address, 2, true))
 	require.NoError(t, err)
 	if !assert.True(t, result.Succeeded()) {
 		t.Log(result.Error.Error())
