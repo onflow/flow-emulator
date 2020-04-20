@@ -3,11 +3,11 @@ package examples
 import (
 	"testing"
 
+	"github.com/dapperlabs/flow-go-sdk/crypto"
+	"github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/onflow/flow-go-sdk"
-	"github.com/onflow/flow-go-sdk/keys"
 )
 
 const (
@@ -47,6 +47,8 @@ func TestMarketDeployment(t *testing.T) {
 func TestCreateSale(t *testing.T) {
 	b := NewEmulator()
 
+	accountKeys := test.AccountKeyGenerator()
+
 	// first deploy the FT, NFT, and market code
 	tokenCode := ReadFile(resourceTokenContractFile)
 	tokenAddr, err := b.CreateAccount(nil, tokenCode)
@@ -67,21 +69,20 @@ func TestCreateSale(t *testing.T) {
 	require.NoError(t, err)
 
 	// create two new accounts
-	bastianPrivateKey := RandomPrivateKey()
-	bastianPublicKey := bastianPrivateKey.ToAccountKey()
-	bastianPublicKey.Weight = keys.PublicKeyWeightThreshold
+	bastianAccountKey, bastianSigner := accountKeys.NewWithSigner()
+	bastianAddress, err := b.CreateAccount([]*flow.AccountKey{bastianAccountKey}, nil)
 
-	bastianAddress, err := b.CreateAccount([]flow.AccountKey{bastianPublicKey}, nil)
-
-	joshPrivateKey := RandomPrivateKey()
-	joshPublicKey := joshPrivateKey.ToAccountKey()
-	joshPublicKey.Weight = keys.PublicKeyWeightThreshold
-
-	joshAddress, err := b.CreateAccount([]flow.AccountKey{joshPublicKey}, nil)
+	joshAccountKey, joshSigner := accountKeys.NewWithSigner()
+	joshAddress, err := b.CreateAccount([]*flow.AccountKey{joshAccountKey}, nil)
 
 	t.Run("Should be able to create FTs and NFT collections in each accounts storage", func(t *testing.T) {
 		// create Fungible tokens and NFTs in each accounts storage and store references
-		setupUsersTokens(t, b, tokenAddr, nftAddr, []flow.AccountPrivateKey{bastianPrivateKey, joshPrivateKey}, []flow.Address{bastianAddress, joshAddress})
+		setupUsersTokens(
+			t, b, tokenAddr, nftAddr,
+			[]flow.Address{bastianAddress, joshAddress},
+			[]*flow.AccountKey{bastianAccountKey, joshAccountKey},
+			[]crypto.Signer{bastianSigner, joshSigner},
+		)
 	})
 
 	t.Run("Can create sale collection", func(t *testing.T) {
@@ -92,7 +93,12 @@ func TestCreateSale(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(bastianAddress)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address, bastianAddress},
+			[]crypto.Signer{b.RootKey().Signer(), bastianSigner},
+			false,
+		)
 	})
 
 	t.Run("Can put an NFT up for sale", func(t *testing.T) {
@@ -103,7 +109,12 @@ func TestCreateSale(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(bastianAddress)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address, bastianAddress},
+			[]crypto.Signer{b.RootKey().Signer(), bastianSigner},
+			false,
+		)
 	})
 
 	t.Run("Cannot buy an NFT for less than the sale price", func(t *testing.T) {
@@ -114,7 +125,12 @@ func TestCreateSale(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(joshAddress)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, true)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address, joshAddress},
+			[]crypto.Signer{b.RootKey().Signer(), joshSigner},
+			true,
+		)
 	})
 
 	t.Run("Cannot buy an NFT that is not for sale", func(t *testing.T) {
@@ -125,7 +141,12 @@ func TestCreateSale(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(joshAddress)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, true)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address, joshAddress},
+			[]crypto.Signer{b.RootKey().Signer(), joshSigner},
+			true,
+		)
 	})
 
 	t.Run("Can buy an NFT that is for sale", func(t *testing.T) {
@@ -136,7 +157,12 @@ func TestCreateSale(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(joshAddress)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, joshPrivateKey}, []flow.Address{b.RootAccountAddress(), joshAddress}, false)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address, joshAddress},
+			[]crypto.Signer{b.RootKey().Signer(), joshSigner},
+			false,
+		)
 
 		result, err := b.ExecuteScript(GenerateInspectVaultScript(tokenAddr, bastianAddress, 40))
 		require.NoError(t, err)

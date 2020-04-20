@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/dapperlabs/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/stretchr/testify/assert"
@@ -40,7 +41,12 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
 
-	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
+	SignAndSubmit(
+		t, b, tx,
+		[]flow.Address{b.RootKey().Address},
+		[]crypto.Signer{b.RootKey().Signer()},
+		false,
+	)
 
 	t.Run("Set up account 1", func(t *testing.T) {
 		tx := flow.NewTransaction().
@@ -56,7 +62,7 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
                           }
                       }
 	               `,
-					b.RootAccountAddress().Short(),
+					b.RootKey().Address.Short(),
 				),
 			)).
 			SetGasLimit(10).
@@ -64,16 +70,20 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address},
+			[]crypto.Signer{b.RootKey().Signer()},
+			false,
+		)
 	})
 
 	var account2Address flow.Address
 
 	t.Run("Create account 2", func(t *testing.T) {
 		var err error
-		publicKey := b.RootKey().AccountKey()
-		publicKeys := []flow.AccountKey{publicKey}
-		account2Address, err = b.CreateAccount(publicKeys, nil)
+		accountKey := b.RootKey().AccountKey()
+		account2Address, err = b.CreateAccount([]*flow.AccountKey{accountKey}, nil)
 		assert.NoError(t, err)
 	})
 
@@ -99,7 +109,7 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
                           }
                       }
                     `,
-					b.RootAccountAddress().Short(),
+					b.RootKey().Address.Short(),
 				),
 			)).
 			SetGasLimit(10).
@@ -107,6 +117,11 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 			SetPayer(account2Address).
 			AddAuthorizer(account2Address)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{account2Address}, false)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{account2Address},
+			[]crypto.Signer{b.RootKey().Signer()},
+			false,
+		)
 	})
 }

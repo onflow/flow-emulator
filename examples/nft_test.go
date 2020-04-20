@@ -3,7 +3,8 @@ package examples
 import (
 	"testing"
 
-	"github.com/onflow/flow-go-sdk/keys"
+	"github.com/dapperlabs/flow-go-sdk/crypto"
+	"github.com/onflow/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -44,7 +45,12 @@ func TestCreateNFT(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, true)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address},
+			[]crypto.Signer{b.RootKey().Signer()},
+			true,
+		)
 	})
 
 	t.Run("Should be able to create token", func(t *testing.T) {
@@ -55,24 +61,31 @@ func TestCreateNFT(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address},
+			[]crypto.Signer{b.RootKey().Signer()},
+			false,
+		)
 	})
 
 	// Assert that the account's collection is correct
-	result, err := b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, b.RootAccountAddress(), 1, true))
+	result, err := b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, b.RootKey().Address, 1, true))
 	require.NoError(t, err)
 	if !assert.True(t, result.Succeeded()) {
 		t.Log(result.Error.Error())
 	}
 
 	// Assert that the account's collection doesn't contain ID 3
-	result, err = b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, b.RootAccountAddress(), 3, true))
+	result, err = b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, b.RootKey().Address, 3, true))
 	require.NoError(t, err)
 	assert.True(t, result.Reverted())
 }
 
 func TestTransferNFT(t *testing.T) {
 	b := NewEmulator()
+
+	accountKeys := test.AccountKeyGenerator()
 
 	// First, deploy the contract
 	tokenCode := ReadFile(NFTContractFile)
@@ -87,21 +100,23 @@ func TestTransferNFT(t *testing.T) {
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
 
-	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
+	SignAndSubmit(
+		t, b, tx,
+		[]flow.Address{b.RootKey().Address},
+		[]crypto.Signer{b.RootKey().Signer()},
+		false,
+	)
 
 	// Assert that the account's collection is correct
-	result, err := b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, b.RootAccountAddress(), 1, true))
+	result, err := b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, b.RootKey().Address, 1, true))
 	require.NoError(t, err)
 	if !assert.True(t, result.Succeeded()) {
 		t.Log(result.Error.Error())
 	}
 
 	// create a new account
-	bastianPrivateKey := RandomPrivateKey()
-	bastianPublicKey := bastianPrivateKey.ToAccountKey()
-	bastianPublicKey.Weight = keys.PublicKeyWeightThreshold
-
-	bastianAddress, err := b.CreateAccount([]flow.AccountKey{bastianPublicKey}, nil)
+	bastianAccountKey, bastianSigner := accountKeys.NewWithSigner()
+	bastianAddress, err := b.CreateAccount([]*flow.AccountKey{bastianAccountKey}, nil)
 
 	// then deploy an NFT to another account
 	tx = flow.NewTransaction().
@@ -111,7 +126,12 @@ func TestTransferNFT(t *testing.T) {
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(bastianAddress)
 
-	SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey, bastianPrivateKey}, []flow.Address{b.RootAccountAddress(), bastianAddress}, false)
+	SignAndSubmit(
+		t, b, tx,
+		[]flow.Address{b.RootKey().Address, bastianAddress},
+		[]crypto.Signer{b.RootKey().Signer(), bastianSigner},
+		false,
+	)
 
 	// transfer an NFT
 	t.Run("Should be able to withdraw an NFT and deposit to another accounts collection", func(t *testing.T) {
@@ -122,7 +142,12 @@ func TestTransferNFT(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
 
-		SignAndSubmit(t, b, tx, []flow.AccountPrivateKey{b.RootKey().PrivateKey}, []flow.Address{b.RootAccountAddress()}, false)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address},
+			[]crypto.Signer{b.RootKey().Signer()},
+			false,
+		)
 
 		// Assert that the account's collection is correct
 		result, err = b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, bastianAddress, 1, true))
@@ -146,14 +171,14 @@ func TestTransferNFT(t *testing.T) {
 		}
 
 		// Assert that the account's collection is correct
-		result, err = b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, b.RootAccountAddress(), 1, false))
+		result, err = b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, b.RootKey().Address, 1, false))
 		require.NoError(t, err)
 		if !assert.True(t, result.Succeeded()) {
 			t.Log(result.Error.Error())
 		}
 
 		// Assert that the account's collection is correct
-		result, err = b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, b.RootAccountAddress(), 2, false))
+		result, err = b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, b.RootKey().Address, 2, false))
 		require.NoError(t, err)
 		if !assert.True(t, result.Succeeded()) {
 			t.Log(result.Error.Error())
