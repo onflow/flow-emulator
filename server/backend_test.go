@@ -17,8 +17,8 @@ import (
 
 	"github.com/dapperlabs/cadence"
 	encoding "github.com/dapperlabs/cadence/encoding/json"
-	access "github.com/dapperlabs/flow/protobuf/go/flow/access"
 	"github.com/onflow/flow-go-sdk"
+	access "github.com/onflow/flow/protobuf/go/flow/access"
 
 	emulator "github.com/dapperlabs/flow-emulator"
 	"github.com/dapperlabs/flow-emulator/mocks"
