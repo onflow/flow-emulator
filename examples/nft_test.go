@@ -3,11 +3,11 @@ package examples
 import (
 	"testing"
 
-	"github.com/dapperlabs/flow-go-sdk/keys"
+	"github.com/onflow/flow-go-sdk/keys"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk"
 )
 
 const (

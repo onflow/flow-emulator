@@ -3,7 +3,7 @@ package examples
 import (
 	"fmt"
 
-	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk"
 )
 
 // GenerateCreateSaleScript creates a cadence transaction that creates a Sale collection

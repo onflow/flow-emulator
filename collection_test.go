@@ -3,8 +3,8 @@ package emulator_test
 import (
 	"testing"
 
-	"github.com/dapperlabs/flow-go-sdk"
 	model "github.com/dapperlabs/flow-go/model/flow"
+	"github.com/onflow/flow-go-sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
