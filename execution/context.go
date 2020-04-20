@@ -351,7 +351,7 @@ func (r *RuntimeContext) GetAccount(address flow.Address) *flow.Account {
 		panic(err)
 	}
 
-	accountPublicKeys := make([]flow.AccountKey, len(accountKeys))
+	accountPublicKeys := make([]*flow.AccountKey, len(accountKeys))
 	for i, accountKey := range accountKeys {
 		accountPublicKey, err := flow.DecodeAccountKey(accountKey.publicKey)
 		if err != nil {
@@ -360,6 +360,7 @@ func (r *RuntimeContext) GetAccount(address flow.Address) *flow.Account {
 
 		// include sequence number
 		accountPublicKey.SequenceNumber = accountKey.sequenceNumber
+		accountPublicKey.ID = i
 
 		accountPublicKeys[i] = accountPublicKey
 	}
