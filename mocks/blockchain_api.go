@@ -9,9 +9,9 @@ import (
 
 	flow_emulator "github.com/dapperlabs/flow-emulator"
 	types "github.com/dapperlabs/flow-emulator/types"
-	flow_go_sdk "github.com/dapperlabs/flow-go-sdk"
 	flow "github.com/dapperlabs/flow-go/model/flow"
 	gomock "github.com/golang/mock/gomock"
+	flow_go_sdk "github.com/onflow/flow-go-sdk"
 )
 
 // MockBlockchainAPI is a mock of BlockchainAPI interface

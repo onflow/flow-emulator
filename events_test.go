@@ -9,7 +9,7 @@ import (
 
 	"github.com/dapperlabs/cadence"
 	"github.com/dapperlabs/cadence/runtime"
-	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk"
 
 	emulator "github.com/dapperlabs/flow-emulator"
 )

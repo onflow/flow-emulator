@@ -5,11 +5,12 @@
 package mocks
 
 import (
+	reflect "reflect"
+
 	types "github.com/dapperlabs/flow-emulator/types"
-	flow_go_sdk "github.com/dapperlabs/flow-go-sdk"
 	flow "github.com/dapperlabs/flow-go/model/flow"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
+	flow_go_sdk "github.com/onflow/flow-go-sdk"
 )
 
 // MockStore is a mock of Store interface

@@ -2,7 +2,7 @@ package emulator
 
 import (
 	"github.com/dapperlabs/cadence"
-	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk"
 
 	"github.com/dapperlabs/flow-emulator/types"
 )

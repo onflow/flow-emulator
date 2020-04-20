@@ -3,9 +3,9 @@ package unittest
 import (
 	"encoding/hex"
 
-	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/test"
 	"github.com/dapperlabs/flow-go/crypto"
+	"github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk/test"
 
 	"github.com/dapperlabs/flow-emulator/types"
 )
