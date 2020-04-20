@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	jsoncdc "github.com/dapperlabs/cadence/encoding/json"
+	jsoncdc "github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/client/convert"
 	"github.com/onflow/flow/protobuf/go/flow/access"

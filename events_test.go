@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dapperlabs/cadence"
-	"github.com/dapperlabs/cadence/runtime"
+	"github.com/onflow/cadence"
+	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/flow-go-sdk"
 
 	emulator "github.com/dapperlabs/flow-emulator"
