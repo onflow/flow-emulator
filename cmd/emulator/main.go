@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/prometheus/common/log"
 	"github.com/psiemens/sconfig"

@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/dapperlabs/cadence"
+	"github.com/onflow/cadence"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
