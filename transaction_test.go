@@ -217,17 +217,17 @@ func TestSubmitTransactionScriptAccounts(t *testing.T) {
 			AddAuthorizer(b.RootKey().Address).
 			AddAuthorizer(accountAddressB)
 
-		err = tx.SignPayload(accountAddressB, accountKeyB.ID, signerB)
+		err = tx.SignPayload(accountAddressB, 0, signerB)
 		assert.NoError(t, err)
 
 		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		result, err := b.ExecuteNextTransaction()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.True(t, result.Reverted())
 
 		_, err = b.CommitBlock()
