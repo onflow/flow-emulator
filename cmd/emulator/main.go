@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/keys"
+	"github.com/onflow/flow-go-sdk/crypto"
+	"github.com/prometheus/common/log"
 	"github.com/psiemens/sconfig"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -16,15 +17,17 @@ import (
 )
 
 type Config struct {
-	Port      int           `default:"3569" flag:"port,p" info:"port to run RPC server"`
-	HTTPPort  int           `default:"8080" flag:"http-port" info:"port to run HTTP server"`
-	Verbose   bool          `default:"false" flag:"verbose,v" info:"enable verbose logging"`
-	BlockTime time.Duration `flag:"block-time,b" info:"time between sealed blocks"`
-	RootKey   string        `flag:"root-key,k" info:"root account key"`
-	Init      bool          `default:"false" flag:"init" info:"whether to initialize a new account profile"`
-	GRPCDebug bool          `default:"false" flag:"grpc-debug" info:"enable gRPC server reflection for debugging with grpc_cli"`
-	Persist   bool          `default:"false" flag:"persist" info:"enable persistent storage"`
-	DBPath    string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
+	Port            int           `default:"3569" flag:"port,p" info:"port to run RPC server"`
+	HTTPPort        int           `default:"8080" flag:"http-port" info:"port to run HTTP server"`
+	Verbose         bool          `default:"false" flag:"verbose,v" info:"enable verbose logging"`
+	BlockTime       time.Duration `flag:"block-time,b" info:"time between sealed blocks"`
+	RootKey         string        `flag:"root-key,k" info:"root account public key"`
+	RootKeySigAlgo  string        `default:"ECDSA_P256" flag:"root-key-sig-algo" info:"root account key signature algorithm"`
+	RootKeyHashAlgo string        `default:"SHA3_256" flag:"root-key-hash-algo" info:"root account key hash algorithm"`
+	Init            bool          `default:"false" flag:"init" info:"whether to initialize a new account profile"`
+	GRPCDebug       bool          `default:"false" flag:"grpc-debug" info:"enable gRPC server reflection for debugging with grpc_cli"`
+	Persist         bool          `default:"false" flag:"persist" info:"enable persistent storage"`
+	DBPath          string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
 }
 
 const (
@@ -33,40 +36,72 @@ const (
 )
 
 var (
-	log  *logrus.Logger
-	conf Config
+	logger *logrus.Logger
+	conf   Config
 )
 
 var Cmd = &cobra.Command{
 	Use:   "start",
 	Short: "Starts the Flow emulator server",
 	Run: func(cmd *cobra.Command, args []string) {
-		var rootKey flow.AccountPrivateKey
+		var (
+			rootPrivateKey  crypto.PrivateKey
+			rootPublicKey   crypto.PublicKey
+			rootKeySigAlgo  crypto.SignatureAlgorithm
+			rootKeyHashAlgo crypto.HashAlgorithm
+			err             error
+		)
 
 		if len(conf.RootKey) > 0 {
-			rootKey = keys.MustDecodePrivateKeyHex(conf.RootKey)
+			rootKeySigAlgo = crypto.StringToSignatureAlgorithm(conf.RootKeySigAlgo)
+			rootKeyHashAlgo = crypto.StringToHashAlgorithm(conf.RootKeyHashAlgo)
+
+			rootPublicKey, err = crypto.DecodePublicKeyHex(rootKeySigAlgo, conf.RootKey)
+			if err != nil {
+				exit(1, err.Error())
+			}
 		} else {
 			rootKeySeed, _ := hex.DecodeString(DefaultRootKeySeed)
-			rootKey, _ = keys.GeneratePrivateKey(keys.ECDSA_P256_SHA3_256, rootKeySeed)
+			rootPrivateKey, _ = crypto.GeneratePrivateKey(crypto.ECDSA_P256, rootKeySeed)
+
+			rootPublicKey = rootPrivateKey.PublicKey()
+			rootKeySigAlgo = rootPrivateKey.Algorithm()
+			rootKeyHashAlgo = crypto.SHA3_256
 		}
 
 		if conf.Verbose {
-			log.SetLevel(logrus.DebugLevel)
+			logger.SetLevel(logrus.DebugLevel)
 		}
+
+		rootAddress := flow.HexToAddress("01")
+		rootFields := logrus.Fields{
+			"rootAddress":  rootAddress.Hex(),
+			"rootPubKey":   hex.EncodeToString(rootPublicKey.Encode()),
+			"rootSigAlgo":  rootKeySigAlgo,
+			"rootHashAlgo": rootKeyHashAlgo,
+		}
+
+		if rootPrivateKey != (crypto.PrivateKey{}) {
+			rootFields["rootPrivKey"] = hex.EncodeToString(rootPrivateKey.Encode())
+		}
+
+		logger.WithFields(rootFields).Infof("⚙️   Using root account 0x%s", rootAddress.Hex())
 
 		serverConf := &server.Config{
 			GRPCPort:  conf.Port,
 			GRPCDebug: conf.GRPCDebug,
 			HTTPPort:  conf.HTTPPort,
 			// TODO: allow headers to be parsed from environment
-			HTTPHeaders:    nil,
-			BlockTime:      conf.BlockTime,
-			RootAccountKey: &rootKey,
-			Persist:        conf.Persist,
-			DBPath:         conf.DBPath,
+			HTTPHeaders:     nil,
+			BlockTime:       conf.BlockTime,
+			RootPublicKey:   rootPublicKey,
+			RootKeySigAlgo:  rootKeySigAlgo,
+			RootKeyHashAlgo: rootKeyHashAlgo,
+			Persist:         conf.Persist,
+			DBPath:          conf.DBPath,
 		}
 
-		emu := server.NewEmulatorServer(log, serverConf)
+		emu := server.NewEmulatorServer(logger, serverConf)
 		emu.Start()
 	},
 }
@@ -77,9 +112,9 @@ func init() {
 }
 
 func initLogger() {
-	log = logrus.New()
-	log.Formatter = new(logrus.TextFormatter)
-	log.Out = os.Stdout
+	logger = logrus.New()
+	logger.Formatter = new(logrus.TextFormatter)
+	logger.Out = os.Stdout
 }
 
 func initConfig() {

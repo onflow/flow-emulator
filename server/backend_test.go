@@ -6,9 +6,9 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/dapperlabs/flow-go-sdk/client/convert"
-	"github.com/dapperlabs/flow-go-sdk/test"
 	"github.com/golang/mock/gomock"
+	"github.com/onflow/flow-go-sdk/client/convert"
+	"github.com/onflow/flow-go-sdk/test"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,8 +17,8 @@ import (
 
 	"github.com/dapperlabs/cadence"
 	encoding "github.com/dapperlabs/cadence/encoding/json"
-	"github.com/dapperlabs/flow-go-sdk"
 	access "github.com/dapperlabs/flow/protobuf/go/flow/access"
+	"github.com/onflow/flow-go-sdk"
 
 	emulator "github.com/dapperlabs/flow-emulator"
 	"github.com/dapperlabs/flow-emulator/mocks"

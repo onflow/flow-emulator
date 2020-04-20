@@ -10,8 +10,8 @@ import (
 
 	"github.com/dapperlabs/cadence/runtime"
 	"github.com/dapperlabs/cadence/runtime/interpreter"
-	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/keys"
+	"github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk/keys"
 
 	emulator "github.com/dapperlabs/flow-emulator"
 )

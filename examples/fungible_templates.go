@@ -3,7 +3,7 @@ package examples
 import (
 	"fmt"
 
-	"github.com/dapperlabs/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk"
 )
 
 // GenerateCreateTokenScript creates a script that instantiates

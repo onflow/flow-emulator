@@ -8,8 +8,7 @@ import (
 
 	"github.com/dapperlabs/cadence"
 	"github.com/dapperlabs/cadence/runtime"
-	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/keys"
+	"github.com/onflow/flow-go-sdk"
 
 	"github.com/dapperlabs/flow-emulator/types"
 )
@@ -271,7 +270,13 @@ func (r *RuntimeContext) setAccountKeys(accountID []byte, accountKeys []accountK
 	)
 
 	for i, accountKey := range accountKeys {
-		if err := keys.ValidateEncodedPublicKey(accountKey.publicKey); err != nil {
+		accountPublicKey, err := flow.DecodeAccountKey(accountKey.publicKey)
+		if err != nil {
+			return err
+		}
+
+		err = accountPublicKey.Validate()
+		if err != nil {
 			return err
 		}
 
@@ -348,7 +353,7 @@ func (r *RuntimeContext) GetAccount(address flow.Address) *flow.Account {
 
 	accountPublicKeys := make([]flow.AccountKey, len(accountKeys))
 	for i, accountKey := range accountKeys {
-		accountPublicKey, err := keys.DecodePublicKey(accountKey.publicKey)
+		accountPublicKey, err := flow.DecodeAccountKey(accountKey.publicKey)
 		if err != nil {
 			panic(err)
 		}

@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/dapperlabs/flow-go-sdk"
-	"github.com/dapperlabs/flow-go-sdk/test"
 	model "github.com/dapperlabs/flow-go/model/flow"
 	fixtures "github.com/dapperlabs/flow-go/utils/unittest"
+	"github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
