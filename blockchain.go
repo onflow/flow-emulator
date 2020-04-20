@@ -64,7 +64,6 @@ type BlockchainAPI interface {
 	GetEventsByHeight(blockHeight uint64, eventType string) ([]flow.Event, error)
 	ExecuteScript(script []byte) (*ScriptResult, error)
 	ExecuteScriptAtBlock(script []byte, blockHeight uint64) (*ScriptResult, error)
-	RootAccountAddress() flow.Address
 	RootKey() RootKey
 }
 
@@ -88,7 +87,7 @@ func (r RootKey) Signer() sdkcrypto.Signer {
 	return sdkcrypto.NewNaiveSigner(*r.PrivateKey, r.HashAlgo)
 }
 
-func (r RootKey) AccountKey() flow.AccountKey {
+func (r RootKey) AccountKey() *flow.AccountKey {
 	var publicKey sdkcrypto.PublicKey
 	if r.PublicKey != nil {
 		publicKey = *r.PublicKey
@@ -97,7 +96,7 @@ func (r RootKey) AccountKey() flow.AccountKey {
 		publicKey = r.PrivateKey.PublicKey()
 	}
 
-	return flow.AccountKey{
+	return &flow.AccountKey{
 		ID:             r.ID,
 		PublicKey:      publicKey,
 		SigAlgo:        r.SigAlgo,
@@ -160,7 +159,6 @@ func WithStore(store storage.Store) Option {
 // NewBlockchain instantiates a new emulated blockchain with the provided options.
 func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	var pendingBlock *pendingBlock
-	var rootAccount *flow.Account
 
 	// apply options to the default config
 	config := defaultConfig
@@ -176,6 +174,11 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	}
 	store := config.Store
 
+	// set up root key
+	rootKey := config.RootKey
+	rootKey.Address = flow.RootAddress
+	rootKey.Weight = flow.AccountKeyWeightThreshold
+
 	latestBlock, err := store.LatestBlock()
 	if err == nil && latestBlock.Height > 0 {
 		// storage contains data, load state from storage
@@ -183,7 +186,6 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 
 		// restore pending block header from store information
 		pendingBlock = newPendingBlock(&latestBlock, latestLedgerView)
-		rootAccount = getAccount(latestLedgerView, flow.RootAddress)
 	} else if err != nil && !errors.Is(err, storage.ErrNotFound) {
 		// internal storage error, fail fast
 		return nil, err
@@ -191,9 +193,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		genesisLedgerView := store.LedgerViewByHeight(0)
 
 		// storage is empty, create the root account
-		createAccount(genesisLedgerView, config.RootKey.AccountKey())
-
-		rootAccount = getAccount(genesisLedgerView, flow.RootAddress)
+		createAccount(genesisLedgerView, rootKey.AccountKey())
 
 		// commit the genesis block to storage
 		genesis := types.GenesisBlock()
@@ -220,19 +220,14 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	b := &Blockchain{
 		storage:            config.Store,
 		pendingBlock:       pendingBlock,
-		rootKey:            config.RootKey,
-		lastCreatedAddress: rootAccount.Address,
+		rootKey:            rootKey,
+		lastCreatedAddress: rootKey.Address,
 	}
 
 	interpreterRuntime := runtime.NewInterpreterRuntime()
 	b.computer = newComputer(interpreterRuntime)
 
 	return b, nil
-}
-
-// RootAccountAddress returns the root account address for this blockchain.
-func (b *Blockchain) RootAccountAddress() flow.Address {
-	return b.rootKey.Address
 }
 
 // RootKey returns the root private key for this blockchain.
@@ -727,7 +722,7 @@ func (b *Blockchain) aggregateAccountSignatures(
 
 // CreateAccount submits a transaction to create a new account with the given
 // account keys and code. The transaction is paid by the root account.
-func (b *Blockchain) CreateAccount(publicKeys []flow.AccountKey, code []byte) (flow.Address, error) {
+func (b *Blockchain) CreateAccount(publicKeys []*flow.AccountKey, code []byte) (flow.Address, error) {
 	createAccountScript, err := templates.CreateAccount(publicKeys, code)
 
 	if err != nil {
@@ -779,7 +774,7 @@ func (b *Blockchain) CreateAccount(publicKeys []flow.AccountKey, code []byte) (f
 func (b *Blockchain) verifyAccountSignature(
 	txSig flow.TransactionSignature,
 	message []byte,
-) (accountKey flow.AccountKey, err error) {
+) (accountKey *flow.AccountKey, err error) {
 	account, err := b.getAccount(txSig.Address)
 	if err != nil {
 		return accountKey, &InvalidSignatureAccountError{Address: txSig.Address}
@@ -825,7 +820,7 @@ func (b *Blockchain) handleEvents(events []flow.Event, blockHeight uint64) {
 
 // createAccount creates an account with the given private key and injects it
 // into the given state, bypassing the need for a transaction.
-func createAccount(ledgerView *types.LedgerView, accountKey flow.AccountKey) flow.Account {
+func createAccount(ledgerView *types.LedgerView, accountKey *flow.AccountKey) flow.Account {
 	accountKeyBytes := accountKey.Encode()
 
 	runtimeContext := execution.NewRuntimeContext(ledgerView)
