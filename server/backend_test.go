@@ -147,7 +147,7 @@ func TestBackend(t *testing.T) {
 			Address: flow.RootAddress,
 			Balance: 10,
 			Code:    []byte("pub fun main() {}"),
-			Keys:    []flow.AccountKey{},
+			Keys:    []*flow.AccountKey{},
 		}
 
 		api.EXPECT().

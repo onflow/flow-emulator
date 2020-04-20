@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/dapperlabs/cadence"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/dapperlabs/cadence/runtime"
 	"github.com/dapperlabs/cadence/runtime/interpreter"
 	"github.com/onflow/flow-go-sdk"
-	"github.com/onflow/flow-go-sdk/keys"
+	"github.com/onflow/flow-go-sdk/crypto"
+	"github.com/onflow/flow-go-sdk/test"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	emulator "github.com/dapperlabs/flow-emulator"
 )
@@ -192,12 +192,12 @@ func TestSubmitTransactionScriptAccounts(t *testing.T) {
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
-	privateKeyB, _ := keys.GeneratePrivateKey(keys.ECDSA_P256_SHA3_256,
-		[]byte("elephant ears space cowboy octopus rodeo potato cannon pineapple"))
-	publicKeyB := privateKeyB.ToAccountKey()
-	publicKeyB.Weight = keys.PublicKeyWeightThreshold
+	accountKeys := test.AccountKeyGenerator()
 
-	accountAddressB, err := b.CreateAccount([]flow.AccountKey{publicKeyB}, nil)
+	accountKeyB, signerB := accountKeys.NewWithSigner()
+	accountKeyB.SetWeight(flow.AccountKeyWeightThreshold)
+
+	accountAddressB, err := b.CreateAccount([]*flow.AccountKey{accountKeyB}, nil)
 	assert.NoError(t, err)
 
 	t.Run("TooManyAccountsForScript", func(t *testing.T) {
@@ -217,7 +217,7 @@ func TestSubmitTransactionScriptAccounts(t *testing.T) {
 			AddAuthorizer(b.RootKey().Address).
 			AddAuthorizer(accountAddressB)
 
-		err = tx.SignPayload(accountAddressB, publicKeyB.ID, privateKeyB.Signer())
+		err = tx.SignPayload(accountAddressB, accountKeyB.ID, signerB)
 		assert.NoError(t, err)
 
 		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
@@ -266,6 +266,8 @@ func TestSubmitTransactionScriptAccounts(t *testing.T) {
 }
 
 func TestSubmitTransactionPayerSignature(t *testing.T) {
+	accountKeys := test.AccountKeyGenerator()
+
 	t.Run("MissingPayerSignature", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
@@ -318,8 +320,9 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
 		// use key-pair that does not exist on root account
-		invalidKey, _ := keys.GeneratePrivateKey(keys.ECDSA_P256_SHA3_256,
-			[]byte("invalid key elephant ears space cowboy octopus rodeo potato cannon"))
+		invalidKey, _ := crypto.GeneratePrivateKey(crypto.ECDSA_P256,
+			[]byte("invalid key invalid key invalid key invalid key invalid key invalid key"))
+		invalidSigner := crypto.NewNaiveSigner(invalidKey, crypto.SHA3_256)
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
@@ -328,7 +331,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
 
-		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, invalidKey.Signer())
+		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, invalidSigner)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -339,17 +342,13 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		privateKeyA, _ := keys.GeneratePrivateKey(keys.ECDSA_P256_SHA3_256,
-			[]byte("elephant ears space cowboy octopus rodeo potato cannon pineapple"))
-		publicKeyA := privateKeyA.ToAccountKey()
-		publicKeyA.Weight = keys.PublicKeyWeightThreshold / 2
+		accountKeyA, signerA := accountKeys.NewWithSigner()
+		accountKeyA.SetWeight(flow.AccountKeyWeightThreshold / 2)
 
-		privateKeyB, _ := keys.GeneratePrivateKey(keys.ECDSA_P256_SHA3_256,
-			[]byte("space cowboy elephant ears octopus rodeo potato cannon pineapple"))
-		publicKeyB := privateKeyB.ToAccountKey()
-		publicKeyB.Weight = keys.PublicKeyWeightThreshold / 2
+		accountKeyB, signerB := accountKeys.NewWithSigner()
+		accountKeyB.SetWeight(flow.AccountKeyWeightThreshold / 2)
 
-		accountAddressA, err := b.CreateAccount([]flow.AccountKey{publicKeyA, publicKeyB}, nil)
+		accountAddressA, err := b.CreateAccount([]*flow.AccountKey{accountKeyA, accountKeyB}, nil)
 		assert.NoError(t, err)
 
 		script := []byte(`
@@ -366,7 +365,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 			AddAuthorizer(accountAddressA)
 
 		t.Run("InsufficientKeyWeight", func(t *testing.T) {
-			err = tx.SignEnvelope(accountAddressA, 1, privateKeyB.Signer())
+			err = tx.SignEnvelope(accountAddressA, 1, signerB)
 			assert.NoError(t, err)
 
 			err = b.AddTransaction(*tx)
@@ -374,10 +373,10 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		})
 
 		t.Run("SufficientKeyWeight", func(t *testing.T) {
-			err = tx.SignEnvelope(accountAddressA, 0, privateKeyA.Signer())
+			err = tx.SignEnvelope(accountAddressA, 0, signerA)
 			assert.NoError(t, err)
 
-			err = tx.SignEnvelope(accountAddressA, 1, privateKeyB.Signer())
+			err = tx.SignEnvelope(accountAddressA, 1, signerB)
 			assert.NoError(t, err)
 
 			err = b.AddTransaction(*tx)
@@ -391,6 +390,8 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 }
 
 func TestSubmitTransactionScriptSignatures(t *testing.T) {
+	accountKeys := test.AccountKeyGenerator()
+
 	t.Run("MissingScriptSignature", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
@@ -417,12 +418,10 @@ func TestSubmitTransactionScriptSignatures(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		privateKeyB, _ := keys.GeneratePrivateKey(keys.ECDSA_P256_SHA3_256,
-			[]byte("elephant ears space cowboy octopus rodeo potato cannon pineapple"))
-		publicKeyB := privateKeyB.ToAccountKey()
-		publicKeyB.Weight = keys.PublicKeyWeightThreshold
+		accountKeyB, signerB := accountKeys.NewWithSigner()
+		accountKeyB.SetWeight(flow.AccountKeyWeightThreshold)
 
-		accountAddressB, err := b.CreateAccount([]flow.AccountKey{publicKeyB}, nil)
+		accountAddressB, err := b.CreateAccount([]*flow.AccountKey{accountKeyB}, nil)
 		assert.NoError(t, err)
 
 		multipleAccountScript := []byte(`
@@ -442,17 +441,17 @@ func TestSubmitTransactionScriptSignatures(t *testing.T) {
 			AddAuthorizer(b.RootKey().Address).
 			AddAuthorizer(accountAddressB)
 
-		err = tx.SignPayload(accountAddressB, 0, privateKeyB.Signer())
+		err = tx.SignPayload(accountAddressB, 0, signerB)
 		assert.NoError(t, err)
 
 		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		result, err := b.ExecuteNextTransaction()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assertTransactionSucceeded(t, result)
 
 		assert.Contains(t,

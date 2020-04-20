@@ -1,37 +1,31 @@
 package emulator_test
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk/crypto"
+	"github.com/onflow/flow-go-sdk/templates"
+	"github.com/onflow/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dapperlabs/flow-go/crypto"
-	"github.com/onflow/flow-go-sdk"
-	"github.com/onflow/flow-go-sdk/keys"
-	"github.com/onflow/flow-go-sdk/templates"
-
 	emulator "github.com/dapperlabs/flow-emulator"
-	"github.com/dapperlabs/flow-emulator/utils/unittest"
 )
 
 const testContract = "pub contract Test {}"
 
 func TestCreateAccount(t *testing.T) {
-	publicKeys := unittest.PublicKeyFixtures()
+	accountKeys := test.AccountKeyGenerator()
 
 	t.Run("SingleKey", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		publicKey := flow.AccountKey{
-			PublicKey: publicKeys[0],
-			SignAlgo:  crypto.ECDSA_P256,
-			HashAlgo:  crypto.SHA3_256,
-			Weight:    keys.PublicKeyWeightThreshold,
-		}
+		accountKey := accountKeys.New()
 
-		createAccountScript, err := templates.CreateAccount([]flow.AccountKey{publicKey}, nil)
+		createAccountScript, err := templates.CreateAccount([]*flow.AccountKey{accountKey}, nil)
 		require.NoError(t, err)
 
 		tx := flow.NewTransaction().
@@ -57,7 +51,7 @@ func TestCreateAccount(t *testing.T) {
 
 		assert.Equal(t, uint64(0), account.Balance)
 		require.Len(t, account.Keys, 1)
-		assert.Equal(t, publicKey, account.Keys[0])
+		assert.Equal(t, accountKey.PublicKey, account.Keys[0].PublicKey)
 		assert.Empty(t, account.Code)
 	})
 
@@ -65,21 +59,10 @@ func TestCreateAccount(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		publicKeyA := flow.AccountKey{
-			PublicKey: publicKeys[0],
-			SignAlgo:  crypto.ECDSA_P256,
-			HashAlgo:  crypto.SHA3_256,
-			Weight:    keys.PublicKeyWeightThreshold,
-		}
+		accountKeyA := accountKeys.New()
+		accountKeyB := accountKeys.New()
 
-		publicKeyB := flow.AccountKey{
-			PublicKey: publicKeys[1],
-			SignAlgo:  crypto.ECDSA_P256,
-			HashAlgo:  crypto.SHA3_256,
-			Weight:    keys.PublicKeyWeightThreshold,
-		}
-
-		createAccountScript, err := templates.CreateAccount([]flow.AccountKey{publicKeyA, publicKeyB}, nil)
+		createAccountScript, err := templates.CreateAccount([]*flow.AccountKey{accountKeyA, accountKeyB}, nil)
 		assert.NoError(t, err)
 
 		tx := flow.NewTransaction().
@@ -92,10 +75,10 @@ func TestCreateAccount(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		result, err := b.ExecuteNextTransaction()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assertTransactionSucceeded(t, result)
 
 		_, err = b.CommitBlock()
@@ -105,8 +88,8 @@ func TestCreateAccount(t *testing.T) {
 
 		assert.Equal(t, uint64(0), account.Balance)
 		require.Len(t, account.Keys, 2)
-		assert.Equal(t, publicKeyA, account.Keys[0])
-		assert.Equal(t, publicKeyB, account.Keys[1])
+		assert.Equal(t, accountKeyA.PublicKey, account.Keys[0].PublicKey)
+		assert.Equal(t, accountKeyB.PublicKey, account.Keys[1].PublicKey)
 		assert.Empty(t, account.Code)
 	})
 
@@ -114,23 +97,12 @@ func TestCreateAccount(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		publicKeyA := flow.AccountKey{
-			PublicKey: publicKeys[0],
-			SignAlgo:  crypto.ECDSA_P256,
-			HashAlgo:  crypto.SHA3_256,
-			Weight:    keys.PublicKeyWeightThreshold,
-		}
-
-		publicKeyB := flow.AccountKey{
-			PublicKey: publicKeys[1],
-			SignAlgo:  crypto.ECDSA_P256,
-			HashAlgo:  crypto.SHA3_256,
-			Weight:    keys.PublicKeyWeightThreshold,
-		}
+		accountKeyA := accountKeys.New()
+		accountKeyB := accountKeys.New()
 
 		code := []byte(testContract)
 
-		createAccountScript, err := templates.CreateAccount([]flow.AccountKey{publicKeyA, publicKeyB}, code)
+		createAccountScript, err := templates.CreateAccount([]*flow.AccountKey{accountKeyA, accountKeyB}, code)
 		assert.NoError(t, err)
 
 		tx := flow.NewTransaction().
@@ -139,14 +111,16 @@ func TestCreateAccount(t *testing.T) {
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address)
 
+		fmt.Println("ROOT KEY", b.RootKey())
+
 		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		result, err := b.ExecuteNextTransaction()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assertTransactionSucceeded(t, result)
 
 		_, err = b.CommitBlock()
@@ -156,8 +130,8 @@ func TestCreateAccount(t *testing.T) {
 
 		assert.Equal(t, uint64(0), account.Balance)
 		require.Len(t, account.Keys, 2)
-		assert.Equal(t, publicKeyA, account.Keys[0])
-		assert.Equal(t, publicKeyB, account.Keys[1])
+		assert.Equal(t, accountKeyA.PublicKey, account.Keys[0].PublicKey)
+		assert.Equal(t, accountKeyB.PublicKey, account.Keys[1].PublicKey)
 		assert.Equal(t, code, account.Code)
 	})
 
@@ -200,16 +174,11 @@ func TestCreateAccount(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		publicKey := flow.AccountKey{
-			PublicKey: publicKeys[0],
-			SignAlgo:  crypto.ECDSA_P256,
-			HashAlgo:  crypto.SHA3_256,
-			Weight:    keys.PublicKeyWeightThreshold,
-		}
+		accountKey := accountKeys.New()
 
 		code := []byte(testContract)
 
-		createAccountScript, err := templates.CreateAccount([]flow.AccountKey{publicKey}, code)
+		createAccountScript, err := templates.CreateAccount([]*flow.AccountKey{accountKey}, code)
 		assert.NoError(t, err)
 
 		tx := flow.NewTransaction().
@@ -242,7 +211,7 @@ func TestCreateAccount(t *testing.T) {
 
 		assert.Equal(t, uint64(0), account.Balance)
 		require.Len(t, account.Keys, 1)
-		assert.Equal(t, publicKey, account.Keys[0])
+		assert.Equal(t, accountKey, account.Keys[0])
 		assert.Equal(t, code, account.Code)
 	})
 
@@ -252,15 +221,10 @@ func TestCreateAccount(t *testing.T) {
 
 		lastAccount := b.LastCreatedAccount()
 
-		publicKey := flow.AccountKey{
-			PublicKey: unittest.PublicKeyFixtures()[0],
-			SignAlgo:  crypto.ECDSA_P256,
-			// SHA2_384 is not compatible with ECDSA_P256
-			HashAlgo: crypto.SHA2_384,
-			Weight:   keys.PublicKeyWeightThreshold,
-		}
+		accountKey := accountKeys.New()
+		accountKey.SetHashAlgo(crypto.SHA3_384) // SHA3_384 is invalid for ECDSA_P256
 
-		createAccountScript, err := templates.CreateAccount([]flow.AccountKey{publicKey}, nil)
+		createAccountScript, err := templates.CreateAccount([]*flow.AccountKey{accountKey}, nil)
 		require.NoError(t, err)
 
 		tx := flow.NewTransaction().
@@ -318,16 +282,15 @@ func TestCreateAccount(t *testing.T) {
 }
 
 func TestAddAccountKey(t *testing.T) {
+	accountKeys := test.AccountKeyGenerator()
+
 	t.Run("ValidKey", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		privateKey, _ := keys.GeneratePrivateKey(keys.ECDSA_P256_SHA3_256,
-			[]byte("elephant ears space cowboy octopus rodeo potato cannon pineapple"))
-		publicKey := privateKey.ToAccountKey()
-		publicKey.Weight = keys.PublicKeyWeightThreshold
+		newAccountKey, newSigner := accountKeys.NewWithSigner()
 
-		addKeyScript, err := templates.AddAccountKey(publicKey)
+		addKeyScript, err := templates.AddAccountKey(newAccountKey)
 		assert.NoError(t, err)
 
 		tx1 := flow.NewTransaction().
@@ -352,20 +315,23 @@ func TestAddAccountKey(t *testing.T) {
 
 		script := []byte("transaction { execute {} }")
 
+		var newKeyID = 1 // new key with have ID 1
+		var newKeySequenceNum uint64 = 0
+
 		tx2 := flow.NewTransaction().
 			SetScript(script).
 			SetGasLimit(10).
-			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetProposalKey(b.RootKey().Address, newKeyID, newKeySequenceNum).
 			SetPayer(b.RootKey().Address)
 
-		err = tx2.SignEnvelope(b.RootKey().Address, b.RootKey().ID, privateKey.Signer())
+		err = tx2.SignEnvelope(b.RootKey().Address, newKeyID, newSigner)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx2)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		result, err = b.ExecuteNextTransaction()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assertTransactionSucceeded(t, result)
 
 		_, err = b.CommitBlock()
@@ -376,15 +342,10 @@ func TestAddAccountKey(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		publicKey := flow.AccountKey{
-			PublicKey: unittest.PublicKeyFixtures()[0],
-			SignAlgo:  crypto.ECDSA_P256,
-			// SHA2_384 is not compatible with ECDSA_P256
-			HashAlgo: crypto.SHA2_384,
-			Weight:   keys.PublicKeyWeightThreshold,
-		}
+		accountKey := accountKeys.New()
+		accountKey.SetHashAlgo(crypto.SHA3_384) // SHA3_384 is invalid for ECDSA_P256
 
-		addKeyScript, err := templates.AddAccountKey(publicKey)
+		addKeyScript, err := templates.AddAccountKey(accountKey)
 		assert.NoError(t, err)
 
 		tx := flow.NewTransaction().
@@ -410,15 +371,14 @@ func TestRemoveAccountKey(t *testing.T) {
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
-	privateKey, _ := keys.GeneratePrivateKey(keys.ECDSA_P256_SHA3_256,
-		[]byte("pineapple elephant ears space cowboy octopus rodeo potato cannon"))
-	publicKey := privateKey.ToAccountKey()
-	publicKey.Weight = keys.PublicKeyWeightThreshold
+	accountKeys := test.AccountKeyGenerator()
 
-	addKeyScript, err := templates.AddAccountKey(publicKey)
+	newAccountKey, newSigner := accountKeys.NewWithSigner()
+
+	addKeyScript, err := templates.AddAccountKey(newAccountKey)
 	assert.NoError(t, err)
 
-	// create transaction that adds publicKey to account keys
+	// create transaction that adds public key to account keys
 	tx1 := flow.NewTransaction().
 		SetScript(addKeyScript).
 		SetGasLimit(10).
@@ -507,7 +467,7 @@ func TestRemoveAccountKey(t *testing.T) {
 		AddAuthorizer(b.RootKey().Address)
 
 	// sign with remaining account key
-	err = tx4.SignEnvelope(b.RootKey().Address, b.RootKey().ID, privateKey.Signer())
+	err = tx4.SignEnvelope(b.RootKey().Address, 0, newSigner)
 	assert.NoError(t, err)
 
 	// submit tx4 (should succeed)
@@ -544,16 +504,15 @@ func TestUpdateAccountCode(t *testing.T) {
       }
     `)
 
-	privateKeyB, _ := keys.GeneratePrivateKey(keys.ECDSA_P256_SHA3_256,
-		[]byte("elephant ears space cowboy octopus rodeo potato cannon pineapple"))
-	publicKeyB := privateKeyB.ToAccountKey()
-	publicKeyB.Weight = keys.PublicKeyWeightThreshold
+	accountKeys := test.AccountKeyGenerator()
+
+	accountKeyB, signerB := accountKeys.NewWithSigner()
 
 	t.Run("ValidSignature", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		accountAddressB, err := b.CreateAccount([]flow.AccountKey{publicKeyB}, codeA)
+		accountAddressB, err := b.CreateAccount([]*flow.AccountKey{accountKeyB}, codeA)
 		require.NoError(t, err)
 
 		account, err := b.GetAccount(accountAddressB)
@@ -568,7 +527,7 @@ func TestUpdateAccountCode(t *testing.T) {
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(accountAddressB)
 
-		err = tx.SignPayload(accountAddressB, 0, privateKeyB.Signer())
+		err = tx.SignPayload(accountAddressB, accountKeyB.ID, signerB)
 		assert.NoError(t, err)
 
 		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
@@ -594,7 +553,7 @@ func TestUpdateAccountCode(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		accountAddressB, err := b.CreateAccount([]flow.AccountKey{publicKeyB}, codeA)
+		accountAddressB, err := b.CreateAccount([]*flow.AccountKey{accountKeyB}, codeA)
 		require.NoError(t, err)
 
 		account, err := b.GetAccount(accountAddressB)
@@ -638,9 +597,7 @@ func TestImportAccountCode(t *testing.T) {
       }
 	`)
 
-	publicKey := b.RootKey().AccountKey()
-
-	address, err := b.CreateAccount([]flow.AccountKey{publicKey}, accountScript)
+	address, err := b.CreateAccount(nil, accountScript)
 	assert.NoError(t, err)
 
 	assert.Equal(t, flow.HexToAddress("02"), address)

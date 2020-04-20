@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -84,4 +85,11 @@ func assertTransactionSucceeded(t *testing.T, result *emulator.TransactionResult
 	if !assert.True(t, result.Succeeded()) {
 		t.Error(result.Error)
 	}
+}
+
+const privateKeySeed = "elephant ears space cowboy octopus rodeo potato cannon pineapple"
+
+func generatePrivateKey() crypto.PrivateKey {
+	privateKey, _ := crypto.GeneratePrivateKey(crypto.ECDSA_P256, []byte(privateKeySeed))
+	return privateKey
 }

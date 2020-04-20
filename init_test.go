@@ -136,7 +136,7 @@ func TestInitialization(t *testing.T) {
                   }
                 `,
 				counterAddress,
-				b.RootAccountAddress(),
+				b.RootKey().Address,
 			)
 
 			result, err := b.ExecuteScript([]byte(readScript))
