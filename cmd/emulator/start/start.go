@@ -22,6 +22,7 @@ type Config struct {
 	HTTPPort        int           `default:"8080" flag:"http-port" info:"port to run HTTP server"`
 	Verbose         bool          `default:"false" flag:"verbose,v" info:"enable verbose logging"`
 	BlockTime       time.Duration `flag:"block-time,b" info:"time between sealed blocks"`
+	RootPrivateKey  string        `flag:"root-priv-key" info:"root account private key"`
 	RootPublicKey   string        `flag:"root-pub-key" info:"root account public key"`
 	RootKeySigAlgo  string        `default:"ECDSA_P256" flag:"root-sig-algo" info:"root account key signature algorithm"`
 	RootKeyHashAlgo string        `default:"SHA3_256" flag:"root-hash-algo" info:"root account key hash algorithm"`
@@ -53,14 +54,21 @@ var Cmd = &cobra.Command{
 			err             error
 		)
 
-		if len(conf.RootPublicKey) > 0 {
-			rootKeySigAlgo = crypto.StringToSignatureAlgorithm(conf.RootKeySigAlgo)
-			rootKeyHashAlgo = crypto.StringToHashAlgorithm(conf.RootKeyHashAlgo)
+		rootKeySigAlgo = crypto.StringToSignatureAlgorithm(conf.RootKeySigAlgo)
+		rootKeyHashAlgo = crypto.StringToHashAlgorithm(conf.RootKeyHashAlgo)
 
+		if len(conf.RootPublicKey) > 0 {
 			rootPublicKey, err = crypto.DecodePublicKeyHex(rootKeySigAlgo, conf.RootPublicKey)
 			if err != nil {
 				Exit(1, err.Error())
 			}
+		} else if len(conf.RootPrivateKey) > 0 {
+			rootPrivateKey, err = crypto.DecodePrivateKeyHex(rootKeySigAlgo, conf.RootPrivateKey)
+			if err != nil {
+				Exit(1, err.Error())
+			}
+
+			rootPublicKey = rootPrivateKey.PublicKey()
 		} else {
 			rootPrivateKey, _ = crypto.GeneratePrivateKey(crypto.ECDSA_P256, []byte(DefaultRootPrivateKeySeed))
 
