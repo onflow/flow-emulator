@@ -9,7 +9,7 @@ import (
 
 const DefaultRootPrivateKeySeed = emulator.DefaultRootPrivateKeySeed
 
-func defaultRootKey() (crypto.PrivateKey, crypto.SignatureAlgorithm, crypto.HashAlgorithm) {
+func defaultRootKey(init bool) (crypto.PrivateKey, crypto.SignatureAlgorithm, crypto.HashAlgorithm) {
 	rootPrivateKey, _ := crypto.GeneratePrivateKey(crypto.ECDSA_P256, []byte(DefaultRootPrivateKeySeed))
 
 	rootKeySigAlgo := rootPrivateKey.Algorithm()
