@@ -1,0 +1,39 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: emulator-user
+  namespace: flow
+rules:
+  - apiGroups:
+    - ""
+    resources:
+    - pods
+    - services
+    verbs:
+    - get
+    - list
+    resourceNames:
+    - "*"
+  - apiGroups:
+    - ""
+    resources:
+    - pods/portforward
+    verbs:
+    - create
+    resourceNames:
+    - flow-emulator-v1-0
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dev-access
+  namespace: flow
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: emulator-user
+subjects:
+  - kind: Group
+    name: nba-dev@dapperlabs.com
+  - kind: Group
+    name: dapper-dev@dapperlabs.com
