@@ -39,7 +39,7 @@ deploy-production: update-deployment-image apply-prod-files monitor-rollout
 .PHONY: apply-staging-files
 apply-staging-files:
 	echo "$$KUBECONFIG_STAGING_2" > ${KUBECONFIG}; \
-	files=$$(find ${K8S_YAMLS_LOCATION} -type f \( -name "*.yml" -or -name "*.yaml" \) | grep staging); \
+	files=$$(find ${K8S_YAMLS_LOCATION} -type f \( -name "*.yml" -or -name "*.yaml" \) | grep v2-staging); \
 	echo "$$files" | xargs -I {} kubectl --kubeconfig=${KUBECONFIG} apply -f {}
 
 # Production YAMLs must have 'production' in their name.
