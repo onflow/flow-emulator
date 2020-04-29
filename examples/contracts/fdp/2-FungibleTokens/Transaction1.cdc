@@ -11,10 +11,10 @@ transaction {
 
         // Create a link to the Vault in storage that is restricted to the
         // fields and functions in `Receiver` and `Balance` interfaces, 
-        // this only exposes the balance field and deposit function of the underlying vault.
+        // this only exposes the balance field 
+        // and deposit function of the underlying vault.
         //
-        acct.link<&FungibleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>
-                 (/public/MainReceiver, target: /storage/MainVault)
+        acct.link<&FungibleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>(/public/MainReceiver, target: /storage/MainVault)
 
         log("Public Receiver reference created!")
     }
@@ -25,7 +25,7 @@ transaction {
         // that it points to a valid `Vault` object 
         // that implements the `Receiver` interface
         getAccount(0x01).getCapability(/public/MainReceiver)!
-                        .check<&FungibleToken.Vault{FungibleToken.Receiver}>():  
+                        .check<&FungibleToken.Vault{FungibleToken.Receiver}>():
                         "Vault Receiver Reference was not created correctly"
     }
 }

@@ -15,12 +15,11 @@ transaction {
         // create a new vault instance with an initial balance of 30
         let vaultA <- FungibleToken.createEmptyVault()
 
-		// Store the vault in the account storage
-		acct.save(<-vaultA, to: /storage/MainVault)
+        // Store the vault in the account storage
+        acct.save(<-vaultA, to: /storage/MainVault)
 
         // Create a public Receiver capability to the Vault
-		let ReceiverRef = acct.link<&FungibleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>
-                                    (/public/MainReceiver, target: /storage/MainVault)
+        let ReceiverRef = acct.link<&FungibleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>(/public/MainReceiver, target: /storage/MainVault)
 
         log("Created a Vault and published a reference")
 
@@ -34,7 +33,7 @@ transaction {
         // Get the Collection reference for the receiver
         // getting the public capability and borrowing a reference from it
         let receiverRef = recipient.getCapability(/public/NFTReceiver)!
-                                   .borrow<&{NonFungibleToken.NFTReceiver}>()!
+                                .borrow<&{NonFungibleToken.NFTReceiver}>()!
 
         // Mint an NFT and deposit it into account 0x01's collection
         self.minterRef.mintNFT(recipient: receiverRef)
