@@ -10,7 +10,7 @@ transaction {
 
         // Create a new empty collection
         let collection <- NonFungibleToken.createEmptyCollection()
-    
+
         // store the empty NFT Collection in account storage
         acct.save(<-collection, to: /storage/NFTCollection)
 

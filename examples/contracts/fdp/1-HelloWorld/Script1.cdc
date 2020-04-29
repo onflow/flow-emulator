@@ -8,11 +8,12 @@ import HelloWorld from 0x02
 // do are reverted after execution.
 //
 // Scripts must have the following signature: pub fun main()
+    
 pub fun main() {
 
     // Cadence code can get an account's public account object
     // by using the getAccount() built-in function.
-	let helloAccount = getAccount(0x02)
+    let helloAccount = getAccount(0x02)
 
     // Get the public capability from the public path of the owner's account
     let helloCapability = helloAccount.getCapability(/public/Hello)
@@ -25,5 +26,5 @@ pub fun main() {
     // Here we are using optional chaining to call the "hello"
     // method on the HelloAsset resource that is referenced
     // in the published area of the account.
-	log(helloReference?.hello())
+    log(helloReference?.hello())
 }
