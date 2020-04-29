@@ -12,21 +12,18 @@ transaction {
 		// Store the vault in the account storage
 		acct.save(<-vaultA, to: /storage/MainVault)
 
-        log("Empty Vault stored")
+    log("Empty Vault stored")
 
-        // Create a public Receiver capability to the Vault
-        acct.link<&FungibleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>(
-            /public/MainReceiver, 
-            target: /storage/MainVault
-        )
+    // Create a public Receiver capability to the Vault
+		let ReceiverRef = acct.link<&FungibleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>(/public/MainReceiver, target: /storage/MainVault)
 
-        log("References created")
+    log("References created")
 	}
 
     post {
         // Check that the capabilities were created correctly
         getAccount(0x01).getCapability(/public/MainReceiver)!
-                        .check<&FungibleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>():  
+                        .check<&FungibleToken.Vault{FungibleToken.Receiver}>():  
                         "Vault Receiver Reference was not created correctly"
     }
 }

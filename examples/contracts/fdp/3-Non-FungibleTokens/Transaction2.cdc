@@ -1,4 +1,4 @@
-// Transaction3.cdc
+// Transaction2.cdc
 
 import NonFungibleToken from 0x02
 

@@ -9,7 +9,7 @@ transaction {
     prepare(acct: AuthAccount) {
         // Create a public Receiver capability to the Vault
         acct.link<&FungibleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>
-                 (/public/MainReceiver, target: /storage/MainVault)
+                (/public/MainReceiver, target: /storage/MainVault)
 
         log("Created Vault references")
 
