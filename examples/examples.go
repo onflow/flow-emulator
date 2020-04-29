@@ -88,8 +88,8 @@ func Submit(
 	assert.NoError(t, err)
 }
 
-// setupUsersTokens sets up two accounts with 30 Fungible Tokens each
-// and a NFT collection with 1 NFT each
+// setupUsersTokens sets up two accounts with an empty Vault
+// and a NFT collection
 func setupUsersTokens(
 	t *testing.T,
 	b *emulator.Blockchain,
@@ -102,7 +102,7 @@ func setupUsersTokens(
 	// add array of signers to transaction
 	for i := 0; i < len(signerAddresses); i++ {
 		tx := flow.NewTransaction().
-			SetScript(GenerateCreateTokenScript(tokenAddr, 30)).
+			SetScript(GenerateCreateTokenScript(tokenAddr)).
 			SetGasLimit(20).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
@@ -115,9 +115,8 @@ func setupUsersTokens(
 			false,
 		)
 
-		// then deploy a NFT to the accounts
 		tx = flow.NewTransaction().
-			SetScript(GenerateCreateNFTScript(nftAddr, i+1)).
+			SetScript(GenerateCreateCollectionScript(nftAddr)).
 			SetGasLimit(20).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
