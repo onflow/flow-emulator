@@ -31,55 +31,68 @@ func TestNFTDeployment(t *testing.T) {
 func TestCreateNFT(t *testing.T) {
 	b := NewEmulator()
 
+	accountKeys := test.AccountKeyGenerator()
+
 	// First, deploy the contract
 	tokenCode := ReadFile(NFTContractFile)
-	contractAddr, err := b.CreateAccount(nil, tokenCode)
+	contractAccountKey, contractSigner := accountKeys.NewWithSigner()
+	contractAddr, err := b.CreateAccount([]*flow.AccountKey{contractAccountKey}, tokenCode)
 	assert.NoError(t, err)
 
-	// Vault must be instantiated with a positive ID
-	t.Run("Cannot create token with negative ID", func(t *testing.T) {
-		tx := flow.NewTransaction().
-			SetScript(GenerateCreateNFTScript(contractAddr, -7)).
-			SetGasLimit(10).
-			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address).
-			AddAuthorizer(b.RootKey().Address)
-
-		SignAndSubmit(
-			t, b, tx,
-			[]flow.Address{b.RootKey().Address},
-			[]crypto.Signer{b.RootKey().Signer()},
-			true,
-		)
-	})
-
-	t.Run("Should be able to create token", func(t *testing.T) {
-		tx := flow.NewTransaction().
-			SetScript(GenerateCreateNFTScript(contractAddr, 1)).
-			SetGasLimit(20).
-			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address).
-			AddAuthorizer(b.RootKey().Address)
-
-		SignAndSubmit(
-			t, b, tx,
-			[]flow.Address{b.RootKey().Address},
-			[]crypto.Signer{b.RootKey().Signer()},
-			false,
-		)
-	})
-
-	// Assert that the account's collection is correct
-	result, err := b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, b.RootKey().Address, 1, true))
+	result, err := b.ExecuteScript(GenerateInspectNFTSupplyScript(contractAddr, 0))
 	require.NoError(t, err)
 	if !assert.True(t, result.Succeeded()) {
 		t.Log(result.Error.Error())
 	}
 
-	// Assert that the account's collection doesn't contain ID 3
-	result, err = b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, b.RootKey().Address, 3, true))
+	result, err = b.ExecuteScript(GenerateInspectCollectionLenScript(contractAddr, contractAddr, 0))
 	require.NoError(t, err)
-	assert.True(t, result.Reverted())
+	if !assert.True(t, result.Succeeded()) {
+		t.Log(result.Error.Error())
+	}
+
+	t.Run("Should be able to mint a token", func(t *testing.T) {
+		tx := flow.NewTransaction().
+			SetScript(GenerateMintNFTScript(contractAddr, contractAddr)).
+			SetGasLimit(20).
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(contractAddr)
+
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address, contractAddr},
+			[]crypto.Signer{b.RootKey().Signer(), contractSigner},
+			false,
+		)
+
+		// Assert that the account's collection is correct
+		result, err = b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, contractAddr, 0))
+		require.NoError(t, err)
+		if !assert.True(t, result.Succeeded()) {
+			t.Log(result.Error.Error())
+		}
+
+		result, err = b.ExecuteScript(GenerateInspectCollectionLenScript(contractAddr, contractAddr, 1))
+		require.NoError(t, err)
+		if !assert.True(t, result.Succeeded()) {
+			t.Log(result.Error.Error())
+		}
+
+		result, err = b.ExecuteScript(GenerateInspectNFTSupplyScript(contractAddr, 1))
+		require.NoError(t, err)
+		if !assert.True(t, result.Succeeded()) {
+			t.Log(result.Error.Error())
+		}
+	})
+
+	t.Run("Shouldn't be able to borrow a reference to an NFT that doesn't exist", func(t *testing.T) {
+		// Assert that the account's collection is correct
+		result, err = b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, contractAddr, 5))
+		require.NoError(t, err)
+		assert.True(t, result.Reverted())
+	})
+
 }
 
 func TestTransferNFT(t *testing.T) {
@@ -89,96 +102,146 @@ func TestTransferNFT(t *testing.T) {
 
 	// First, deploy the contract
 	tokenCode := ReadFile(NFTContractFile)
-	contractAddr, err := b.CreateAccount(nil, tokenCode)
+	contractAccountKey, contractSigner := accountKeys.NewWithSigner()
+	contractAddr, err := b.CreateAccount([]*flow.AccountKey{contractAccountKey}, tokenCode)
 	assert.NoError(t, err)
 
-	// then deploy a NFT to the root account
+	joshAccountKey, joshSigner := accountKeys.NewWithSigner()
+	joshAddress, err := b.CreateAccount([]*flow.AccountKey{joshAccountKey}, nil)
+
 	tx := flow.NewTransaction().
-		SetScript(GenerateCreateNFTScript(contractAddr, 1)).
+		SetScript(GenerateMintNFTScript(contractAddr, contractAddr)).
 		SetGasLimit(20).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
-		AddAuthorizer(b.RootKey().Address)
+		AddAuthorizer(contractAddr)
 
 	SignAndSubmit(
 		t, b, tx,
-		[]flow.Address{b.RootKey().Address},
-		[]crypto.Signer{b.RootKey().Signer()},
+		[]flow.Address{b.RootKey().Address, contractAddr},
+		[]crypto.Signer{b.RootKey().Signer(), contractSigner},
 		false,
 	)
 
-	// Assert that the account's collection is correct
-	result, err := b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, b.RootKey().Address, 1, true))
-	require.NoError(t, err)
-	if !assert.True(t, result.Succeeded()) {
-		t.Log(result.Error.Error())
-	}
+	// create a new Collection
+	t.Run("Should be able to create a new empty NFT Collection", func(t *testing.T) {
+		tx := flow.NewTransaction().
+			SetScript(GenerateCreateCollectionScript(contractAddr)).
+			SetGasLimit(20).
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(joshAddress)
 
-	// create a new account
-	bastianAccountKey, bastianSigner := accountKeys.NewWithSigner()
-	bastianAddress, err := b.CreateAccount([]*flow.AccountKey{bastianAccountKey}, nil)
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address, joshAddress},
+			[]crypto.Signer{b.RootKey().Signer(), joshSigner},
+			false,
+		)
 
-	// then deploy an NFT to another account
-	tx = flow.NewTransaction().
-		SetScript(GenerateCreateNFTScript(contractAddr, 2)).
-		SetGasLimit(20).
-		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-		SetPayer(b.RootKey().Address).
-		AddAuthorizer(bastianAddress)
+		result, err := b.ExecuteScript(GenerateInspectCollectionLenScript(contractAddr, joshAddress, 0))
+		require.NoError(t, err)
+		if !assert.True(t, result.Succeeded()) {
+			t.Log(result.Error.Error())
+		}
+	})
 
-	SignAndSubmit(
-		t, b, tx,
-		[]flow.Address{b.RootKey().Address, bastianAddress},
-		[]crypto.Signer{b.RootKey().Signer(), bastianSigner},
-		false,
-	)
+	t.Run("Shouldn't be able to withdraw an NFT that doesn't exist in a collection", func(t *testing.T) {
+		tx := flow.NewTransaction().
+			SetScript(GenerateTransferScript(contractAddr, joshAddress, 3)).
+			SetGasLimit(20).
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(contractAddr)
+
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address, contractAddr},
+			[]crypto.Signer{b.RootKey().Signer(), contractSigner},
+			true,
+		)
+
+		result, err := b.ExecuteScript(GenerateInspectCollectionLenScript(contractAddr, joshAddress, 0))
+		require.NoError(t, err)
+		if !assert.True(t, result.Succeeded()) {
+			t.Log(result.Error.Error())
+		}
+
+		// Assert that the account's collection is correct
+		result, err = b.ExecuteScript(GenerateInspectCollectionLenScript(contractAddr, contractAddr, 1))
+		require.NoError(t, err)
+		if !assert.True(t, result.Succeeded()) {
+			t.Log(result.Error.Error())
+		}
+	})
 
 	// transfer an NFT
 	t.Run("Should be able to withdraw an NFT and deposit to another accounts collection", func(t *testing.T) {
 		tx := flow.NewTransaction().
-			SetScript(GenerateDepositScript(contractAddr, bastianAddress, 1)).
+			SetScript(GenerateTransferScript(contractAddr, joshAddress, 0)).
 			SetGasLimit(20).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
-			AddAuthorizer(b.RootKey().Address)
+			AddAuthorizer(contractAddr)
 
 		SignAndSubmit(
 			t, b, tx,
-			[]flow.Address{b.RootKey().Address},
-			[]crypto.Signer{b.RootKey().Signer()},
+			[]flow.Address{b.RootKey().Address, contractAddr},
+			[]crypto.Signer{b.RootKey().Signer(), contractSigner},
 			false,
 		)
 
 		// Assert that the account's collection is correct
-		result, err = b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, bastianAddress, 1, true))
+		result, err := b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, joshAddress, 0))
+		require.NoError(t, err)
+		if !assert.True(t, result.Succeeded()) {
+			t.Log(result.Error.Error())
+		}
+
+		result, err = b.ExecuteScript(GenerateInspectCollectionLenScript(contractAddr, joshAddress, 1))
 		require.NoError(t, err)
 		if !assert.True(t, result.Succeeded()) {
 			t.Log(result.Error.Error())
 		}
 
 		// Assert that the account's collection is correct
-		result, err = b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, bastianAddress, 2, true))
+		result, err = b.ExecuteScript(GenerateInspectCollectionLenScript(contractAddr, contractAddr, 0))
 		require.NoError(t, err)
 		if !assert.True(t, result.Succeeded()) {
 			t.Log(result.Error.Error())
 		}
+	})
 
-		// Assert that the account's id keys are correct
-		result, err = b.ExecuteScript(GenerateInspectKeysScript(contractAddr, bastianAddress, 2, 1))
+	// transfer an NFT
+	t.Run("Should be able to withdraw an NFT and destroy it, reducing the supply", func(t *testing.T) {
+		tx := flow.NewTransaction().
+			SetScript(GenerateDestroyScript(contractAddr, 0)).
+			SetGasLimit(20).
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(joshAddress)
+
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address, joshAddress},
+			[]crypto.Signer{b.RootKey().Signer(), joshSigner},
+			false,
+		)
+
+		result, err := b.ExecuteScript(GenerateInspectCollectionLenScript(contractAddr, joshAddress, 0))
 		require.NoError(t, err)
 		if !assert.True(t, result.Succeeded()) {
 			t.Log(result.Error.Error())
 		}
 
 		// Assert that the account's collection is correct
-		result, err = b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, b.RootKey().Address, 1, false))
+		result, err = b.ExecuteScript(GenerateInspectCollectionLenScript(contractAddr, contractAddr, 0))
 		require.NoError(t, err)
 		if !assert.True(t, result.Succeeded()) {
 			t.Log(result.Error.Error())
 		}
 
-		// Assert that the account's collection is correct
-		result, err = b.ExecuteScript(GenerateInspectCollectionScript(contractAddr, b.RootKey().Address, 2, false))
+		result, err = b.ExecuteScript(GenerateInspectNFTSupplyScript(contractAddr, 0))
 		require.NoError(t, err)
 		if !assert.True(t, result.Succeeded()) {
 			t.Log(result.Error.Error())
