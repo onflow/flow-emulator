@@ -51,13 +51,15 @@ func TestCreateSale(t *testing.T) {
 
 	// first deploy the FT, NFT, and market code
 	tokenCode := ReadFile(resourceTokenContractFile)
-	tokenAddr, err := b.CreateAccount(nil, tokenCode)
+	tokenAccountKey, tokenSigner := accountKeys.NewWithSigner()
+	tokenAddr, err := b.CreateAccount([]*flow.AccountKey{tokenAccountKey}, tokenCode)
 	assert.Nil(t, err)
 	_, err = b.CommitBlock()
 	require.NoError(t, err)
 
 	nftCode := ReadFile(NFTContractFile)
-	nftAddr, err := b.CreateAccount(nil, nftCode)
+	nftAccountKey, nftSigner := accountKeys.NewWithSigner()
+	nftAddr, err := b.CreateAccount([]*flow.AccountKey{nftAccountKey}, nftCode)
 	assert.Nil(t, err)
 	_, err = b.CommitBlock()
 	require.NoError(t, err)
@@ -83,11 +85,39 @@ func TestCreateSale(t *testing.T) {
 			[]*flow.AccountKey{bastianAccountKey, joshAccountKey},
 			[]crypto.Signer{bastianSigner, joshSigner},
 		)
+
+		tx := flow.NewTransaction().
+			SetScript(GenerateMintTokensScript(tokenAddr, joshAddress, 30)).
+			SetGasLimit(20).
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(tokenAddr)
+
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address, tokenAddr},
+			[]crypto.Signer{b.RootKey().Signer(), tokenSigner},
+			false,
+		)
+
+		tx = flow.NewTransaction().
+			SetScript(GenerateMintNFTScript(nftAddr, bastianAddress)).
+			SetGasLimit(20).
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(nftAddr)
+
+		SignAndSubmit(
+			t, b, tx,
+			[]flow.Address{b.RootKey().Address, nftAddr},
+			[]crypto.Signer{b.RootKey().Signer(), nftSigner},
+			false,
+		)
 	})
 
 	t.Run("Can create sale collection", func(t *testing.T) {
 		tx := flow.NewTransaction().
-			SetScript(GenerateCreateSaleScript(tokenAddr, marketAddr)).
+			SetScript(GenerateCreateSaleScript(tokenAddr, marketAddr, 0.15)).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
@@ -99,11 +129,18 @@ func TestCreateSale(t *testing.T) {
 			[]crypto.Signer{b.RootKey().Signer(), bastianSigner},
 			false,
 		)
+
+		result, err := b.ExecuteScript(GenerateInspectSaleLenScript(marketAddr, bastianAddress, 0))
+		require.NoError(t, err)
+		if !assert.True(t, result.Succeeded()) {
+			t.Log(result.Error.Error())
+		}
+
 	})
 
 	t.Run("Can put an NFT up for sale", func(t *testing.T) {
 		tx := flow.NewTransaction().
-			SetScript(GenerateStartSaleScript(nftAddr, marketAddr, 1, 10)).
+			SetScript(GenerateStartSaleScript(nftAddr, marketAddr, 0, 10)).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
@@ -115,11 +152,24 @@ func TestCreateSale(t *testing.T) {
 			[]crypto.Signer{b.RootKey().Signer(), bastianSigner},
 			false,
 		)
+
+		// Assert that the account's collection is correct
+		result, err := b.ExecuteScript(GenerateInspectSaleScript(marketAddr, bastianAddress, 0, 10))
+		require.NoError(t, err)
+		if !assert.True(t, result.Succeeded()) {
+			t.Log(result.Error.Error())
+		}
+
+		result, err = b.ExecuteScript(GenerateInspectSaleLenScript(marketAddr, bastianAddress, 1))
+		require.NoError(t, err)
+		if !assert.True(t, result.Succeeded()) {
+			t.Log(result.Error.Error())
+		}
 	})
 
 	t.Run("Cannot buy an NFT for less than the sale price", func(t *testing.T) {
 		tx := flow.NewTransaction().
-			SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 1, 9)).
+			SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 0, 9)).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
@@ -151,7 +201,7 @@ func TestCreateSale(t *testing.T) {
 
 	t.Run("Can buy an NFT that is for sale", func(t *testing.T) {
 		tx := flow.NewTransaction().
-			SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 1, 10)).
+			SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 0, 10)).
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
@@ -164,7 +214,7 @@ func TestCreateSale(t *testing.T) {
 			false,
 		)
 
-		result, err := b.ExecuteScript(GenerateInspectVaultScript(tokenAddr, bastianAddress, 40))
+		result, err := b.ExecuteScript(GenerateInspectVaultScript(tokenAddr, bastianAddress, 8.5))
 		require.NoError(t, err)
 		if !assert.True(t, result.Succeeded()) {
 			t.Log(result.Error.Error())
@@ -176,26 +226,20 @@ func TestCreateSale(t *testing.T) {
 			t.Log(result.Error.Error())
 		}
 
+		result, err = b.ExecuteScript(GenerateInspectVaultScript(tokenAddr, marketAddr, 1.5))
+		require.NoError(t, err)
+		if !assert.True(t, result.Succeeded()) {
+			t.Log(result.Error.Error())
+		}
+
 		// Assert that the accounts' collections are correct
-		result, err = b.ExecuteScript(GenerateInspectCollectionScript(nftAddr, bastianAddress, 1, false))
+		result, err = b.ExecuteScript(GenerateInspectCollectionLenScript(nftAddr, bastianAddress, 0))
 		require.NoError(t, err)
 		if !assert.True(t, result.Succeeded()) {
 			t.Log(result.Error.Error())
 		}
 
-		result, err = b.ExecuteScript(GenerateInspectCollectionScript(nftAddr, bastianAddress, 2, false))
-		require.NoError(t, err)
-		if !assert.True(t, result.Succeeded()) {
-			t.Log(result.Error.Error())
-		}
-
-		result, err = b.ExecuteScript(GenerateInspectCollectionScript(nftAddr, joshAddress, 1, true))
-		require.NoError(t, err)
-		if !assert.True(t, result.Succeeded()) {
-			t.Log(result.Error.Error())
-		}
-
-		result, err = b.ExecuteScript(GenerateInspectCollectionScript(nftAddr, joshAddress, 2, true))
+		result, err = b.ExecuteScript(GenerateInspectCollectionScript(nftAddr, joshAddress, 0))
 		require.NoError(t, err)
 		if !assert.True(t, result.Succeeded()) {
 			t.Log(result.Error.Error())
