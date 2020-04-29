@@ -6,50 +6,70 @@ import (
 	"github.com/onflow/flow-go-sdk"
 )
 
-// GenerateCreateNFTScript Creates a script that instantiates a new
-// NFT instance, then creates an NFT collection instance, stores the
-// NFT in the collection, stores the collection in memory, then stores a
-// reference to the collection. It also makes sure that the token exists
-// in the collection after it has been added to.
-// The id must be greater than zero
-func GenerateCreateNFTScript(tokenAddr flow.Address, id int) []byte {
+// GenerateCreateCollectionScript Creates a script that instantiates a new
+// NFT collection instance, stores the collection in memory, then stores a
+// reference to the collection.
+func GenerateCreateCollectionScript(tokenAddr flow.Address) []byte {
 	template := `
-		import NonFungibleToken, Tokens from 0x%s
+		import NonFungibleToken, ExampleNFT from 0x%s
 
 		transaction {
 		  prepare(acct: AuthAccount) {
-			let tokenA <- Tokens.createNFT(id: UInt64(%d))
 
-			let collection <- Tokens.createEmptyCollection()
-
-			collection.deposit(token: <-tokenA)
-
-			if collection.idExists(id: %d) == false {
-				panic("Token ID doesn't exist!")
-			}
+			let collection <- ExampleNFT.createEmptyCollection()
 			
-			acct.save(<-collection, to: /storage/collection)
+			acct.save(<-collection, to: /storage/NFTCollection)
 
-			acct.link<&NonFungibleToken.Collection>(/public/collection, target: /storage/collection)
+			acct.link<&{NonFungibleToken.CollectionPublic}>(/public/NFTCollection, target: /storage/NFTCollection)
 		  }
 		}
 	`
 
-	return []byte(fmt.Sprintf(template, tokenAddr, id, id))
+	return []byte(fmt.Sprintf(template, tokenAddr))
 }
 
-// GenerateDepositScript creates a script that withdraws an NFT token
-// from a collection and deposits it to another collection
-func GenerateDepositScript(tokenCodeAddr flow.Address, receiverAddr flow.Address, transferNFTID int) []byte {
+// GenerateMintNFTScript Creates a script that uses the admin resource
+// to mint a new NFT and deposit it into a user's collection
+func GenerateMintNFTScript(tokenAddr, receiverAddr flow.Address) []byte {
 	template := `
-		import NonFungibleToken, Tokens from 0x%s
+		import NonFungibleToken, ExampleNFT from 0x%s
+
+		transaction {
+			let minter: &ExampleNFT.NFTMinter
+		
+			prepare(signer: AuthAccount) {
+		
+				self.minter = signer.borrow<&ExampleNFT.NFTMinter>(from: /storage/NFTMinter)!
+			}
+		
+			execute {
+				let recipient = getAccount(0x%s)
+		
+				let receiver = recipient
+					.getCapability(/public/NFTCollection)!
+					.borrow<&{NonFungibleToken.CollectionPublic}>()
+					?? panic("Could not get receiver reference to the NFT Collection")
+		
+				self.minter.mintNFT(recipient: receiver)
+			}
+		}
+	`
+
+	return []byte(fmt.Sprintf(template, tokenAddr, receiverAddr))
+}
+
+// GenerateTransferScript creates a script that withdraws an NFT token
+// from a collection and deposits it to another collection
+func GenerateTransferScript(tokenCodeAddr flow.Address, receiverAddr flow.Address, transferNFTID int) []byte {
+	template := `
+		import NonFungibleToken, ExampleNFT from 0x%s
 
 		transaction {
 		  prepare(acct: AuthAccount) {
 			let recipient = getAccount(0x%s)
 
-			let collectionRef = acct.borrow<&NonFungibleToken.Collection>(from: /storage/collection)!
-			let depositRef = recipient.getCapability(/public/collection)!.borrow<&NonFungibleToken.Collection>()!
+			let collectionRef = acct.borrow<&NonFungibleToken.Collection>(from: /storage/NFTCollection)!
+			let depositRef = recipient.getCapability(/public/NFTCollection)!.borrow<&{NonFungibleToken.CollectionPublic}>()!
 
 			let nft <- collectionRef.withdraw(withdrawID: %d)
 
@@ -61,50 +81,81 @@ func GenerateDepositScript(tokenCodeAddr flow.Address, receiverAddr flow.Address
 	return []byte(fmt.Sprintf(template, tokenCodeAddr.String(), receiverAddr.String(), transferNFTID))
 }
 
-// GenerateInspectCollectionScript creates a script that retrieves an NFT collection
-// from storage and makes assertions about an NFT ID that it contains with the idExists
-// function, which uses an array of IDs
-func GenerateInspectCollectionScript(nftCodeAddr, userAddr flow.Address, nftID int, shouldExist bool) []byte {
+// GenerateDestroyScript creates a script that withdraws an NFT token
+// from a collection and destroys it
+func GenerateDestroyScript(tokenCodeAddr flow.Address, destroyNFTID int) []byte {
 	template := `
-		import NonFungibleToken, Tokens from 0x%s
+		import NonFungibleToken, ExampleNFT from 0x%s
 
-		pub fun main() {
-		  let acct = getAccount(0x%s)
-		  let collectionRef = acct.getCapability(/public/collection)!.borrow<&NonFungibleToken.Collection>()!
-		
-		  if %v {
-		    if collectionRef.ownedNFTs[UInt64(%d)] == nil {
-			  panic("Token ID doesn't exist!")
-			}
-		  } else {
-			  if collectionRef.ownedNFTs[UInt64(%d)] != nil {
-				panic("Token ID shouldn't exist!")
-			  }
+		transaction {
+		  prepare(acct: AuthAccount) {
+
+			let collectionRef = acct.borrow<&NonFungibleToken.Collection>(from: /storage/NFTCollection)!
+
+			let nft <- collectionRef.withdraw(withdrawID: %d)
+
+			destroy nft
 		  }
 		}
 	`
 
-	return []byte(fmt.Sprintf(template, nftCodeAddr, userAddr, shouldExist, nftID, nftID))
+	return []byte(fmt.Sprintf(template, tokenCodeAddr.String(), destroyNFTID))
 }
 
-// GenerateInspectKeysScript creates a script that retrieves an NFT collection
-// from storage and reads the array of keys in the dictionary
-// arrays can't be compared for equality right now so the first two elements are compared
-func GenerateInspectKeysScript(nftCodeAddr, userAddr flow.Address, id1, id2 int) []byte {
+// GenerateInspectCollectionScript creates a script that retrieves an NFT collection
+// from storage and tries to borrow a reference for an NFT that it owns.
+// If it owns it, it will not fail.
+func GenerateInspectCollectionScript(nftCodeAddr, userAddr flow.Address, nftID int) []byte {
 	template := `
-		import NonFungibleToken, Tokens from 0x%s
+		import NonFungibleToken, ExampleNFT from 0x%s
 
 		pub fun main() {
-		  let acct = getAccount(0x%s)
-		  let collectionRef = acct.getCapability(/public/collection)!.borrow<&NonFungibleToken.Collection>()!
-		
-		  let array = collectionRef.getIDs()
-
-		  if array[0] != UInt64(%d) || array[1] != UInt64(%d) {
-			panic("Keys array is incorrect!")
-		  }
+			let acct = getAccount(0x%s)
+			let collectionRef = acct.getCapability(/public/NFTCollection)!.borrow<&{NonFungibleToken.CollectionPublic}>()
+				?? panic("Could not borrow capability from public collection")
+			
+			let tokenRef = collectionRef.borrowNFT(id: UInt64(%d))
 		}
 	`
 
-	return []byte(fmt.Sprintf(template, nftCodeAddr, userAddr, id1, id2))
+	return []byte(fmt.Sprintf(template, nftCodeAddr, userAddr, nftID))
+}
+
+// GenerateInspectCollectionLenScript creates a script that retrieves an NFT collection
+// from storage and tries to borrow a reference for an NFT that it owns.
+// If it owns it, it will not fail.
+func GenerateInspectCollectionLenScript(nftCodeAddr, userAddr flow.Address, length int) []byte {
+	template := `
+		import NonFungibleToken, ExampleNFT from 0x%s
+
+		pub fun main() {
+			let acct = getAccount(0x%s)
+			let collectionRef = acct.getCapability(/public/NFTCollection)!.borrow<&{NonFungibleToken.CollectionPublic}>()
+				?? panic("Could not borrow capability from public collection")
+			
+			if %d != collectionRef.getIDs().length {
+				panic("Collection Length is not correct")
+			}
+		}
+	`
+
+	return []byte(fmt.Sprintf(template, nftCodeAddr, userAddr, length))
+}
+
+// GenerateInspectNFTSupplyScript creates a script that reads
+// the total supply of tokens in existence
+// and makes assertions about the number
+func GenerateInspectNFTSupplyScript(tokenCodeAddr flow.Address, expectedSupply int) []byte {
+	template := `
+		import NonFungibleToken, ExampleNFT from 0x%s
+
+		pub fun main() {
+			assert(
+                ExampleNFT.totalSupply == UInt64(%d),
+                message: "incorrect totalSupply!"
+            )
+		}
+	`
+
+	return []byte(fmt.Sprintf(template, tokenCodeAddr, expectedSupply))
 }
