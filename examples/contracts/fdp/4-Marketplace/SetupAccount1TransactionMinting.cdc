@@ -13,11 +13,11 @@ transaction {
 
     // Private minter references for this account to mint tokens
     let minterRef: &FungibleToken.VaultMinter     
-    
+
     prepare(acct: AuthAccount) {
         // Get the public object for account 0x02
         let account2 = getAccount(0x02)
-        
+
         // Retrieve public Vault Receiver references for both accounts
         self.acct1Ref = acct.getCapability(/public/MainReceiver)!
                         .borrow<&FungibleToken.Vault{FungibleToken.Receiver}>()!

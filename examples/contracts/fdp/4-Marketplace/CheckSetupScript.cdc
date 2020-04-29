@@ -16,16 +16,16 @@ pub fun main() {
     // by getting their public capability
     // and borrowing a reference from the capability
     let acct1ReceiverRef = acct1.getCapability(/public/MainReceiver)!
-                            .borrow<&FungibleToken.Vault{FungibleToken.Balance}>()!
+                          .borrow<&FungibleToken.Vault{FungibleToken.Balance}>()!
     let acct2ReceiverRef = acct2.getCapability(/public/MainReceiver)!
-                            .borrow<&FungibleToken.Vault{FungibleToken.Balance}>()!
+                          .borrow<&FungibleToken.Vault{FungibleToken.Balance}>()!
 
     // Log the Vault balance of both accounts and ensure they are
     // the correct numbers.
     // Account 0x01 should have 40.
     // Account 0x02 should have 20.
     log("Account 1 Balance")
-	log(acct1ReceiverRef.balance)
+    log(acct1ReceiverRef.balance)
     log("Account 2 Balance")
     log(acct2ReceiverRef.balance)
 
