@@ -58,50 +58,6 @@ func GenerateMintNFTScript(tokenAddr, receiverAddr flow.Address) []byte {
 	return []byte(fmt.Sprintf(template, tokenAddr, receiverAddr))
 }
 
-// GenerateTransferScript creates a script that withdraws an NFT token
-// from a collection and deposits it to another collection
-func GenerateTransferScript(tokenCodeAddr flow.Address, receiverAddr flow.Address, transferNFTID int) []byte {
-	template := `
-		import NonFungibleToken, ExampleNFT from 0x%s
-
-		transaction {
-		  prepare(acct: AuthAccount) {
-			let recipient = getAccount(0x%s)
-
-			let collectionRef = acct.borrow<&NonFungibleToken.Collection>(from: /storage/NFTCollection)!
-			let depositRef = recipient.getCapability(/public/NFTCollection)!.borrow<&{NonFungibleToken.CollectionPublic}>()!
-
-			let nft <- collectionRef.withdraw(withdrawID: %d)
-
-			depositRef.deposit(token: <-nft)
-		  }
-		}
-	`
-
-	return []byte(fmt.Sprintf(template, tokenCodeAddr.String(), receiverAddr.String(), transferNFTID))
-}
-
-// GenerateDestroyScript creates a script that withdraws an NFT token
-// from a collection and destroys it
-func GenerateDestroyScript(tokenCodeAddr flow.Address, destroyNFTID int) []byte {
-	template := `
-		import NonFungibleToken, ExampleNFT from 0x%s
-
-		transaction {
-		  prepare(acct: AuthAccount) {
-
-			let collectionRef = acct.borrow<&NonFungibleToken.Collection>(from: /storage/NFTCollection)!
-
-			let nft <- collectionRef.withdraw(withdrawID: %d)
-
-			destroy nft
-		  }
-		}
-	`
-
-	return []byte(fmt.Sprintf(template, tokenCodeAddr.String(), destroyNFTID))
-}
-
 // GenerateInspectCollectionScript creates a script that retrieves an NFT collection
 // from storage and tries to borrow a reference for an NFT that it owns.
 // If it owns it, it will not fail.
@@ -140,22 +96,4 @@ func GenerateInspectCollectionLenScript(nftCodeAddr, userAddr flow.Address, leng
 	`
 
 	return []byte(fmt.Sprintf(template, nftCodeAddr, userAddr, length))
-}
-
-// GenerateInspectNFTSupplyScript creates a script that reads
-// the total supply of tokens in existence
-// and makes assertions about the number
-func GenerateInspectNFTSupplyScript(tokenCodeAddr flow.Address, expectedSupply int) []byte {
-	template := `
-		import NonFungibleToken, ExampleNFT from 0x%s
-
-		pub fun main() {
-			assert(
-                ExampleNFT.totalSupply == UInt64(%d),
-                message: "incorrect totalSupply!"
-            )
-		}
-	`
-
-	return []byte(fmt.Sprintf(template, tokenCodeAddr, expectedSupply))
 }
