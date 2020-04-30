@@ -11,7 +11,9 @@ import (
 )
 
 const (
-	MarketContractFile = "./contracts/market.cdc"
+	MarketContractFile        = "./contracts/market.cdc"
+	resourceTokenContractFile = "./contracts/fungible-token.cdc"
+	NFTContractFile           = "./contracts/nft.cdc"
 )
 
 func TestMarketDeployment(t *testing.T) {

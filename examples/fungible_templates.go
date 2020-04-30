@@ -28,55 +28,6 @@ func GenerateCreateTokenScript(tokenAddr flow.Address) []byte {
 	return []byte(fmt.Sprintf(template, tokenAddr))
 }
 
-// GenerateDestroyVaultScript creates a script that withdraws
-// tokens from a vault and destroys the tokens
-func GenerateDestroyVaultScript(tokenCodeAddr flow.Address, withdrawAmount int) []byte {
-	template := `
-		import FungibleToken, FlowToken from 0x%s
-
-		transaction {
-		  prepare(acct: AuthAccount) {
-			let vault <- acct.load<@FlowToken.Vault>(from: /storage/flowTokenVault)
-				?? panic("Couldn't load Vault from storage")
-			
-			let withdrawVault <- vault.withdraw(amount: %d.0)
-
-			acct.save(<-vault, to: /storage/flowTokenVault) 
-
-			destroy withdrawVault
-		  }
-		}
-	`
-
-	return []byte(fmt.Sprintf(template, tokenCodeAddr, withdrawAmount))
-}
-
-// GenerateTransferVaultScript creates a script that withdraws an tokens from an account
-// and deposits it to another account's vault
-func GenerateTransferVaultScript(tokenCodeAddr flow.Address, receiverAddr flow.Address, amount int) []byte {
-	template := `
-		import FungibleToken, FlowToken from 0x%s
-
-		transaction {
-		  prepare(acct: AuthAccount) {
-			let recipient = getAccount(0x%s)
-
-			let providerRef = acct.borrow<&{FungibleToken.Provider}>(from: /storage/flowTokenVault)
-				?? panic("Could not borrow Provider reference to the Vault!")
-
-			let receiverRef = recipient.getCapability(/public/flowTokenReceiver)!.borrow<&{FungibleToken.Receiver}>()
-				?? panic("Could not borrow receiver reference to the recipient's Vault")
-
-			let tokens <- providerRef.withdraw(amount: %d.0)
-
-			receiverRef.deposit(from: <-tokens)
-		  }
-		}
-	`
-
-	return []byte(fmt.Sprintf(template, tokenCodeAddr, receiverAddr, amount))
-}
-
 // GenerateMintTokensScript creates a script that uses the admin resource
 // to mint new tokens and deposit them in a Vault
 func GenerateMintTokensScript(tokenCodeAddr flow.Address, receiverAddr flow.Address, amount int) []byte {
@@ -116,41 +67,6 @@ func GenerateMintTokensScript(tokenCodeAddr flow.Address, receiverAddr flow.Addr
 	return []byte(fmt.Sprintf(template, tokenCodeAddr, amount, receiverAddr))
 }
 
-// GenerateBurnTokensScript creates a script that uses the admin resource
-// to destroy tokens and deposit them in a Vault
-func GenerateBurnTokensScript(tokenCodeAddr flow.Address, amount int) []byte {
-	template := `
-	import FungibleToken, FlowToken from 0x%s
-	
-	transaction {
-	
-		// Vault resource that holds the tokens that are being burned
-		let vault: @FlowToken.Vault
-	
-		let mintAndBurn: &FlowToken.MintAndBurn
-	
-		prepare(signer: AuthAccount) {
-	
-			// Withdraw 10 tokens from the admin vault in storage
-			self.vault <- signer.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)!
-				.withdraw(amount: UFix64(%d))
-	
-			// Create a reference to the admin MintAndBurn resource in storage
-			self.mintAndBurn = signer.borrow<&FlowToken.MintAndBurn>(from: /storage/flowTokenMintAndBurn)
-				?? panic("Could not borrow a reference to the Burn resource")
-		}
-	
-		execute {
-			// burn the withdrawn tokens
-			self.mintAndBurn.burnTokens(from: <-self.vault)
-		}
-	}
-	
-	`
-
-	return []byte(fmt.Sprintf(template, tokenCodeAddr, amount))
-}
-
 // GenerateInspectVaultScript creates a script that retrieves a
 // Vault from the array in storage and makes assertions about
 // its balance. If these assertions fail, the script panics.
@@ -170,22 +86,4 @@ func GenerateInspectVaultScript(tokenCodeAddr, userAddr flow.Address, expectedBa
     `
 
 	return []byte(fmt.Sprintf(template, tokenCodeAddr, userAddr, expectedBalance))
-}
-
-// GenerateInspectSupplyScript creates a script that reads
-// the total supply of tokens in existence
-// and makes assertions about the number
-func GenerateInspectSupplyScript(tokenCodeAddr flow.Address, expectedSupply int) []byte {
-	template := `
-		import FungibleToken, FlowToken from 0x%s
-
-		pub fun main() {
-			assert(
-                FlowToken.totalSupply == UFix64(%d),
-                message: "incorrect totalSupply!"
-            )
-		}
-	`
-
-	return []byte(fmt.Sprintf(template, tokenCodeAddr, expectedSupply))
 }
