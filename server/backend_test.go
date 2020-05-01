@@ -142,12 +142,16 @@ func TestBackend(t *testing.T) {
 	}))
 
 	t.Run("GetAccount", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+		keys := test.AccountKeyGenerator()
 
 		account := flow.Account{
 			Address: flow.RootAddress,
 			Balance: 10,
 			Code:    []byte("pub fun main() {}"),
-			Keys:    []*flow.AccountKey{},
+			Keys: []*flow.AccountKey{
+				keys.New(),
+				keys.New(),
+			},
 		}
 
 		api.EXPECT().
@@ -158,12 +162,18 @@ func TestBackend(t *testing.T) {
 		request := access.GetAccountRequest{
 			Address: account.Address.Bytes(),
 		}
+
 		response, err := backend.GetAccount(context.Background(), &request)
 
 		assert.NoError(t, err)
 
 		assert.Equal(t, account.Address, flow.BytesToAddress(response.Account.Address))
 		assert.Equal(t, account.Balance, response.Account.Balance)
+
+		assert.Len(t, response.Account.Keys, len(account.Keys))
+		for i, key := range response.Account.Keys {
+			assert.EqualValues(t, account.Keys[i].ID, key.Index)
+		}
 	}))
 
 	t.Run("GetEventsForHeightRange fails with invalid block heights", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
