@@ -5,13 +5,11 @@
 package mocks
 
 import (
-	reflect "reflect"
-
 	flow_emulator "github.com/dapperlabs/flow-emulator"
 	types "github.com/dapperlabs/flow-emulator/types"
-	flow "github.com/dapperlabs/flow-go/model/flow"
 	gomock "github.com/golang/mock/gomock"
 	flow_go_sdk "github.com/onflow/flow-go-sdk"
+	reflect "reflect"
 )
 
 // MockBlockchainAPI is a mock of BlockchainAPI interface
@@ -52,10 +50,10 @@ func (mr *MockBlockchainAPIMockRecorder) AddTransaction(arg0 interface{}) *gomoc
 }
 
 // CommitBlock mocks base method
-func (m *MockBlockchainAPI) CommitBlock() (*types.Block, error) {
+func (m *MockBlockchainAPI) CommitBlock() (*flow_go_sdk.Block, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CommitBlock")
-	ret0, _ := ret[0].(*types.Block)
+	ret0, _ := ret[0].(*flow_go_sdk.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -67,11 +65,11 @@ func (mr *MockBlockchainAPIMockRecorder) CommitBlock() *gomock.Call {
 }
 
 // ExecuteAndCommitBlock mocks base method
-func (m *MockBlockchainAPI) ExecuteAndCommitBlock() (*types.Block, []*flow_emulator.TransactionResult, error) {
+func (m *MockBlockchainAPI) ExecuteAndCommitBlock() (*flow_go_sdk.Block, []*types.TransactionResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ExecuteAndCommitBlock")
-	ret0, _ := ret[0].(*types.Block)
-	ret1, _ := ret[1].([]*flow_emulator.TransactionResult)
+	ret0, _ := ret[0].(*flow_go_sdk.Block)
+	ret1, _ := ret[1].([]*types.TransactionResult)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
@@ -83,10 +81,10 @@ func (mr *MockBlockchainAPIMockRecorder) ExecuteAndCommitBlock() *gomock.Call {
 }
 
 // ExecuteBlock mocks base method
-func (m *MockBlockchainAPI) ExecuteBlock() ([]*flow_emulator.TransactionResult, error) {
+func (m *MockBlockchainAPI) ExecuteBlock() ([]*types.TransactionResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ExecuteBlock")
-	ret0, _ := ret[0].([]*flow_emulator.TransactionResult)
+	ret0, _ := ret[0].([]*types.TransactionResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -98,10 +96,10 @@ func (mr *MockBlockchainAPIMockRecorder) ExecuteBlock() *gomock.Call {
 }
 
 // ExecuteNextTransaction mocks base method
-func (m *MockBlockchainAPI) ExecuteNextTransaction() (*flow_emulator.TransactionResult, error) {
+func (m *MockBlockchainAPI) ExecuteNextTransaction() (*types.TransactionResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ExecuteNextTransaction")
-	ret0, _ := ret[0].(*flow_emulator.TransactionResult)
+	ret0, _ := ret[0].(*types.TransactionResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -113,10 +111,10 @@ func (mr *MockBlockchainAPIMockRecorder) ExecuteNextTransaction() *gomock.Call {
 }
 
 // ExecuteScript mocks base method
-func (m *MockBlockchainAPI) ExecuteScript(arg0 []byte) (*flow_emulator.ScriptResult, error) {
+func (m *MockBlockchainAPI) ExecuteScript(arg0 []byte) (*types.ScriptResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ExecuteScript", arg0)
-	ret0, _ := ret[0].(*flow_emulator.ScriptResult)
+	ret0, _ := ret[0].(*types.ScriptResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -128,10 +126,10 @@ func (mr *MockBlockchainAPIMockRecorder) ExecuteScript(arg0 interface{}) *gomock
 }
 
 // ExecuteScriptAtBlock mocks base method
-func (m *MockBlockchainAPI) ExecuteScriptAtBlock(arg0 []byte, arg1 uint64) (*flow_emulator.ScriptResult, error) {
+func (m *MockBlockchainAPI) ExecuteScriptAtBlock(arg0 []byte, arg1 uint64) (*types.ScriptResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ExecuteScriptAtBlock", arg0, arg1)
-	ret0, _ := ret[0].(*flow_emulator.ScriptResult)
+	ret0, _ := ret[0].(*types.ScriptResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -173,10 +171,10 @@ func (mr *MockBlockchainAPIMockRecorder) GetAccountAtBlock(arg0, arg1 interface{
 }
 
 // GetBlockByHeight mocks base method
-func (m *MockBlockchainAPI) GetBlockByHeight(arg0 uint64) (*types.Block, error) {
+func (m *MockBlockchainAPI) GetBlockByHeight(arg0 uint64) (*flow_go_sdk.Block, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBlockByHeight", arg0)
-	ret0, _ := ret[0].(*types.Block)
+	ret0, _ := ret[0].(*flow_go_sdk.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -188,10 +186,10 @@ func (mr *MockBlockchainAPIMockRecorder) GetBlockByHeight(arg0 interface{}) *gom
 }
 
 // GetBlockByID mocks base method
-func (m *MockBlockchainAPI) GetBlockByID(arg0 flow_go_sdk.Identifier) (*types.Block, error) {
+func (m *MockBlockchainAPI) GetBlockByID(arg0 flow_go_sdk.Identifier) (*flow_go_sdk.Block, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBlockByID", arg0)
-	ret0, _ := ret[0].(*types.Block)
+	ret0, _ := ret[0].(*flow_go_sdk.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -203,10 +201,10 @@ func (mr *MockBlockchainAPIMockRecorder) GetBlockByID(arg0 interface{}) *gomock.
 }
 
 // GetCollection mocks base method
-func (m *MockBlockchainAPI) GetCollection(arg0 flow_go_sdk.Identifier) (*flow.LightCollection, error) {
+func (m *MockBlockchainAPI) GetCollection(arg0 flow_go_sdk.Identifier) (*flow_go_sdk.Collection, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCollection", arg0)
-	ret0, _ := ret[0].(*flow.LightCollection)
+	ret0, _ := ret[0].(*flow_go_sdk.Collection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -233,10 +231,10 @@ func (mr *MockBlockchainAPIMockRecorder) GetEventsByHeight(arg0, arg1 interface{
 }
 
 // GetLatestBlock mocks base method
-func (m *MockBlockchainAPI) GetLatestBlock() (*types.Block, error) {
+func (m *MockBlockchainAPI) GetLatestBlock() (*flow_go_sdk.Block, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLatestBlock")
-	ret0, _ := ret[0].(*types.Block)
+	ret0, _ := ret[0].(*flow_go_sdk.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

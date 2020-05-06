@@ -42,7 +42,7 @@ func TestKeyOrdering(t *testing.T) {
 		for _, num := range nums {
 			for i := 0; i < 3; i++ {
 				for j := 0; j < 3; j++ {
-					keys = append(keys, eventKey(num, i, j, "foo"))
+					keys = append(keys, eventKey(num, uint32(i), uint32(j), "foo"))
 				}
 			}
 		}

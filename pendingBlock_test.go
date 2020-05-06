@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	emulator "github.com/dapperlabs/flow-emulator"
+	sdkConvert "github.com/dapperlabs/flow-emulator/convert/sdk"
 )
 
 func setupPendingBlockTests(t *testing.T) (
@@ -288,7 +289,7 @@ func TestPendingBlockCommit(t *testing.T) {
 		// Commit pending block
 		block, err := b.CommitBlock()
 		assert.NoError(t, err)
-		assert.Equal(t, blockHash, block.ID())
+		assert.Equal(t, sdkConvert.FlowIdentifierToSDK(blockHash), block.ID)
 	})
 
 	t.Run("ExecuteAndCommitBlock", func(t *testing.T) {
@@ -312,7 +313,7 @@ func TestPendingBlockCommit(t *testing.T) {
 		// Execute and commit pending block
 		block, results, err := b.ExecuteAndCommitBlock()
 		assert.NoError(t, err)
-		assert.Equal(t, blockHash, block.ID())
+		assert.Equal(t, sdkConvert.FlowIdentifierToSDK(blockHash), block.ID)
 		assert.Len(t, results, 1)
 	})
 }

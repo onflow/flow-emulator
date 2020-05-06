@@ -6,7 +6,6 @@ import (
 
 	model "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/onflow/cadence"
-	"github.com/onflow/flow-go-sdk"
 
 	"github.com/dapperlabs/flow-emulator/types"
 )
@@ -92,7 +91,7 @@ func init() {
 	gob.Register(cadence.Event{})
 }
 
-func encodeBlock(block types.Block) ([]byte, error) {
+func encodeBlock(block model.Block) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(&block); err != nil {
 		return nil, err
@@ -100,7 +99,7 @@ func encodeBlock(block types.Block) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func decodeBlock(block *types.Block, from []byte) error {
+func decodeBlock(block *model.Block, from []byte) error {
 	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(block)
 }
 
@@ -116,7 +115,7 @@ func decodeCollection(col *model.LightCollection, from []byte) error {
 	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(col)
 }
 
-func encodeTransaction(tx flow.Transaction) ([]byte, error) {
+func encodeTransaction(tx model.TransactionBody) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(&tx); err != nil {
 		return nil, err
@@ -124,7 +123,7 @@ func encodeTransaction(tx flow.Transaction) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func decodeTransaction(tx *flow.Transaction, from []byte) error {
+func decodeTransaction(tx *model.TransactionBody, from []byte) error {
 	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(tx)
 }
 
@@ -152,7 +151,7 @@ func decodeUint64(v *uint64, from []byte) error {
 	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(v)
 }
 
-func encodeEvent(event flow.Event) ([]byte, error) {
+func encodeEvent(event model.Event) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(&event); err != nil {
 		return nil, err
@@ -160,7 +159,7 @@ func encodeEvent(event flow.Event) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func decodeEvent(event *flow.Event, from []byte) error {
+func decodeEvent(event *model.Event, from []byte) error {
 	return gob.NewDecoder(bytes.NewBuffer(from)).Decode(event)
 }
 
