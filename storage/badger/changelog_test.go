@@ -5,6 +5,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/dapperlabs/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -86,8 +87,8 @@ func TestChangelist(t *testing.T) {
 
 func TestChangelog(t *testing.T) {
 	var (
-		key1 = "key1"
-		key2 = "key2"
+		key1 = flow.RegisterID("key1")
+		key2 = flow.RegisterID("key2")
 	)
 
 	t.Run("should return notFound", func(t *testing.T) {

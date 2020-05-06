@@ -7,16 +7,18 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
 	model "github.com/dapperlabs/flow-go/model/flow"
 	fixtures "github.com/dapperlabs/flow-go/utils/unittest"
-	"github.com/onflow/flow-go-sdk"
+	flowGenerator "github.com/dapperlabs/flow-go/utils/unittest/generator"
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	flowUnitest "github.com/dapperlabs/flow-go/utils/unittest"
+
 	"github.com/dapperlabs/flow-emulator/storage"
 	"github.com/dapperlabs/flow-emulator/storage/badger"
-	"github.com/dapperlabs/flow-emulator/types"
 	"github.com/dapperlabs/flow-emulator/utils/unittest"
 )
 
@@ -27,23 +29,28 @@ func TestBlocks(t *testing.T) {
 		require.Nil(t, os.RemoveAll(dir))
 	}()
 
-	block1 := types.Block{
-		Height: 1,
+	block1 := model.Block{
+		Header: &model.Header{
+			Height: 1,
+		},
 	}
-	block2 := types.Block{
-		Height: 2,
+	block2 := model.Block{
+		Header: &model.Header{
+			Height: 2,
+		},
 	}
 
 	t.Run("should return error for not found", func(t *testing.T) {
 		t.Run("BlockByID", func(t *testing.T) {
-			_, err := store.BlockByID(test.IdentifierGenerator().New())
+			freshId := flowUnitest.IdentifierFixture()
+			_, err := store.BlockByID(freshId)
 			if assert.Error(t, err) {
 				assert.Equal(t, storage.ErrNotFound, err)
 			}
 		})
 
 		t.Run("BlockByHeight", func(t *testing.T) {
-			_, err := store.BlockByHeight(block1.Height)
+			_, err := store.BlockByHeight(block1.Header.Height)
 			if assert.Error(t, err) {
 				assert.Equal(t, storage.ErrNotFound, err)
 			}
@@ -68,7 +75,7 @@ func TestBlocks(t *testing.T) {
 
 	t.Run("should be able to get inserted block", func(t *testing.T) {
 		t.Run("BlockByHeight", func(t *testing.T) {
-			block, err := store.BlockByHeight(block1.Height)
+			block, err := store.BlockByHeight(block1.Header.Height)
 			assert.NoError(t, err)
 			assert.Equal(t, block1, block)
 		})
@@ -108,7 +115,7 @@ func TestCollections(t *testing.T) {
 	col := fixtures.CollectionFixture(3).Light()
 
 	t.Run("should return error for not found", func(t *testing.T) {
-		_, err := store.CollectionByID(flow.Identifier(col.ID()))
+		_, err := store.CollectionByID(col.ID())
 		if assert.Error(t, err) {
 			assert.Equal(t, storage.ErrNotFound, err)
 		}
@@ -119,7 +126,7 @@ func TestCollections(t *testing.T) {
 		assert.NoError(t, err)
 
 		t.Run("should be able to get inserted collection", func(t *testing.T) {
-			storedCol, err := store.CollectionByID(flow.Identifier(col.ID()))
+			storedCol, err := store.CollectionByID(col.ID())
 			require.Nil(t, err)
 			assert.Equal(t, col, storedCol)
 		})
@@ -161,12 +168,10 @@ func TestTransactionResults(t *testing.T) {
 		require.Nil(t, os.RemoveAll(dir))
 	}()
 
-	ids := test.IdentifierGenerator()
-
 	result := unittest.StorableTransactionResultFixture()
 
 	t.Run("should return error for not found", func(t *testing.T) {
-		txID := ids.New()
+		txID := flowUnitest.IdentifierFixture()
 
 		_, err := store.TransactionResultByID(txID)
 		if assert.Error(t, err) {
@@ -175,14 +180,14 @@ func TestTransactionResults(t *testing.T) {
 	})
 
 	t.Run("should be able to insert result", func(t *testing.T) {
-		txID := ids.New()
+		txID := flowUnitest.IdentifierFixture()
 
 		err := store.InsertTransactionResult(txID, result)
 		assert.NoError(t, err)
 
 		t.Run("should be able to get inserted result", func(t *testing.T) {
 			storedResult, err := store.TransactionResultByID(txID)
-			require.Nil(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, result, storedResult)
 		})
 	})
@@ -198,7 +203,7 @@ func TestLedger(t *testing.T) {
 
 		var blockHeight uint64 = 1
 
-		ledger := make(types.LedgerDelta)
+		ledger := make(delta.Delta)
 		ledger["foo"] = []byte("bar")
 
 		t.Run("should get able to set ledger", func(t *testing.T) {
@@ -208,7 +213,7 @@ func TestLedger(t *testing.T) {
 
 		t.Run("should be to get set ledger", func(t *testing.T) {
 			gotLedger := store.LedgerViewByHeight(blockHeight)
-			gotRegister, err := gotLedger.Get("foo")
+			gotRegister, err := gotLedger.Get(model.RegisterID("foo"))
 			assert.NoError(t, err)
 			assert.Equal(t, ledger["foo"], gotRegister)
 		})
@@ -224,9 +229,9 @@ func TestLedger(t *testing.T) {
 		// Create a list of ledgers, where the ledger at index i has
 		// keys (i+2)-1->(i+2)+1 set to value i-1.
 		totalBlocks := 10
-		var ledgers []types.LedgerDelta
+		var ledgers []delta.Delta
 		for i := 2; i < totalBlocks+2; i++ {
-			ledger := make(types.LedgerDelta)
+			ledger := make(delta.Delta)
 			for j := i - 1; j <= i+1; j++ {
 				ledger[fmt.Sprintf("%d", j)] = []byte{byte(i - 1)}
 			}
@@ -250,7 +255,7 @@ func TestLedger(t *testing.T) {
 		t.Run("should version the first written block", func(t *testing.T) {
 			gotLedger := store.LedgerViewByHeight(1)
 			for i := 1; i <= 3; i++ {
-				val, err := gotLedger.Get(fmt.Sprintf("%d", i))
+				val, err := gotLedger.Get(model.RegisterID(fmt.Sprintf("%d", i)))
 				assert.NoError(t, err)
 				assert.Equal(t, []byte{byte(1)}, val)
 			}
@@ -262,13 +267,13 @@ func TestLedger(t *testing.T) {
 				gotLedger := store.LedgerViewByHeight(uint64(block))
 				// The keys 1->N-1 are defined in previous blocks
 				for i := 1; i < block; i++ {
-					val, err := gotLedger.Get(fmt.Sprintf("%d", i))
+					val, err := gotLedger.Get(model.RegisterID(fmt.Sprintf("%d", i)))
 					assert.NoError(t, err)
 					assert.Equal(t, []byte{byte(i)}, val)
 				}
 				// The keys N->N+2 are defined in the queried block
 				for i := block; i <= block+2; i++ {
-					val, err := gotLedger.Get(fmt.Sprintf("%d", i))
+					val, err := gotLedger.Get(model.RegisterID(fmt.Sprintf("%d", i)))
 					assert.NoError(t, err)
 					assert.Equal(t, []byte{byte(block)}, val)
 				}
@@ -285,7 +290,7 @@ func TestInsertEvents(t *testing.T) {
 	}()
 
 	t.Run("should be able to insert events", func(t *testing.T) {
-		events := []flow.Event{test.EventGenerator().New()}
+		events := []model.Event{flowGenerator.EventGenerator().New()}
 		var blockHeight uint64 = 1
 
 		err := store.InsertEvents(blockHeight, events)
@@ -310,15 +315,15 @@ func TestEventsByHeight(t *testing.T) {
 		emptyBlockHeight       uint64 = 2
 		nonExistentBlockHeight uint64 = 3
 
-		allEvents = make([]flow.Event, 10)
-		eventsA   = make([]flow.Event, 0, 5)
-		eventsB   = make([]flow.Event, 0, 5)
+		allEvents = make([]model.Event, 10)
+		eventsA   = make([]model.Event, 0, 5)
+		eventsB   = make([]model.Event, 0, 5)
 	)
 
 	for i, _ := range allEvents {
-		event := test.EventGenerator().New()
-		event.TransactionIndex = i
-		event.EventIndex = i * 2
+		event := flowGenerator.EventGenerator().New()
+		event.TransactionIndex = uint32(i)
+		event.EventIndex = uint32(i * 2)
 
 		// interleave events of both types
 		if i%2 == 0 {
@@ -382,11 +387,11 @@ func TestPersistence(t *testing.T) {
 		require.Nil(t, os.RemoveAll(dir))
 	}()
 
-	block := types.Block{Height: 1}
+	block := model.Block{Header: &model.Header{Height: 1}}
 	tx := unittest.TransactionFixture()
-	events := []flow.Event{test.EventGenerator().New()}
+	events := []model.Event{flowGenerator.EventGenerator().New()}
 
-	ledger := make(types.LedgerDelta)
+	ledger := make(delta.Delta)
 	ledger["foo"] = []byte("bar")
 
 	// insert some stuff to to the store
@@ -394,9 +399,9 @@ func TestPersistence(t *testing.T) {
 	assert.NoError(t, err)
 	err = store.InsertTransaction(tx)
 	assert.NoError(t, err)
-	err = store.InsertEvents(block.Height, events)
+	err = store.InsertEvents(block.Header.Height, events)
 	assert.NoError(t, err)
-	err = store.InsertLedgerDelta(block.Height, ledger)
+	err = store.InsertLedgerDelta(block.Header.Height, ledger)
 
 	// close the store
 	err = store.Close()
@@ -415,12 +420,12 @@ func TestPersistence(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, tx.ID(), gotTx.ID())
 
-	gotEvents, err := store.EventsByHeight(block.Height, "")
+	gotEvents, err := store.EventsByHeight(block.Header.Height, "")
 	assert.NoError(t, err)
 	assert.Equal(t, events, gotEvents)
 
-	gotLedger := store.LedgerViewByHeight(block.Height)
-	gotRegister, err := gotLedger.Get("foo")
+	gotLedger := store.LedgerViewByHeight(block.Header.Height)
+	gotRegister, err := gotLedger.Get(model.RegisterID("foo"))
 	assert.NoError(t, err)
 	assert.Equal(t, ledger["foo"], gotRegister)
 }
@@ -438,7 +443,7 @@ func benchmarkInsertLedgerDelta(b *testing.B, nKeys int) {
 	}
 	defer store.Close()
 
-	ledger := make(types.LedgerDelta)
+	ledger := make(delta.Delta)
 	for i := 0; i < nKeys; i++ {
 		ledger[fmt.Sprintf("%d", i)] = []byte{byte(i)}
 	}
@@ -474,12 +479,16 @@ func BenchmarkBlockDiskUsage(b *testing.B) {
 	b.StartTimer()
 	var lastDBSize int64
 	for i := 0; i < b.N; i++ {
-		block := types.Block{
-			Height:   uint64(i),
-			ParentID: ids.New(),
-			Guarantees: []*model.CollectionGuarantee{
-				{
-					CollectionID: model.Identifier(ids.New()),
+		block := model.Block{
+			Header: &model.Header{
+				Height:   uint64(i),
+				ParentID: flowUnitest.IdentifierFixture(),
+			},
+			Payload: &model.Payload{
+				Guarantees: []*model.CollectionGuarantee{
+					{
+						CollectionID: model.Identifier(ids.New()),
+					},
 				},
 			},
 		}
@@ -518,7 +527,7 @@ func BenchmarkLedgerDiskUsage(b *testing.B) {
 	b.StartTimer()
 	var lastDBSize int64
 	for i := 0; i < b.N; i++ {
-		ledger := make(types.LedgerDelta)
+		ledger := make(delta.Delta)
 		for j := 0; j < 100; j++ {
 			ledger[fmt.Sprintf("%d-%d", i, j)] = []byte{byte(i), byte(j)}
 		}

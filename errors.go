@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	model "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 )
@@ -55,7 +56,7 @@ func (e *CollectionNotFoundError) Error() string {
 
 // A TransactionNotFoundError indicates that a transaction could not be found.
 type TransactionNotFoundError struct {
-	ID flow.Identifier
+	ID model.Identifier
 }
 
 func (e *TransactionNotFoundError) isNotFoundError() {}
@@ -66,7 +67,7 @@ func (e *TransactionNotFoundError) Error() string {
 
 // An AccountNotFoundError indicates that an account could not be found.
 type AccountNotFoundError struct {
-	Address flow.Address
+	Address model.Address
 }
 
 func (e *AccountNotFoundError) isNotFoundError() {}
@@ -77,44 +78,44 @@ func (e *AccountNotFoundError) Error() string {
 
 // A DuplicateTransactionError indicates that a transaction has already been submitted.
 type DuplicateTransactionError struct {
-	TxID flow.Identifier
+	TxID model.Identifier
 }
 
 func (e *DuplicateTransactionError) Error() string {
 	return fmt.Sprintf("transaction with ID %s has already been submitted", e.TxID)
 }
 
-// A MissingSignatureError indicates that a transaction is missing a required signature.
-type MissingSignatureError struct {
-	Address flow.Address
-}
+//// A MissingSignatureError indicates that a transaction is missing a required signature.
+//type MissingSignatureError struct {
+//	Address model.Address
+//}
+//
+//func (e *MissingSignatureError) Error() string {
+//	return fmt.Sprintf("account %s does not have sufficient signatures", e.Address)
+//}
 
-func (e *MissingSignatureError) Error() string {
-	return fmt.Sprintf("account %s does not have sufficient signatures", e.Address)
-}
+//// An InvalidSignaturePublicKeyError indicates that signature uses an invalid public key.
+//type InvalidSignaturePublicKeyError struct {
+//	Address model.Address
+//	KeyID   int
+//}
+//
+//func (e *InvalidSignaturePublicKeyError) Error() string {
+//	return fmt.Sprintf("invalid signature for key %d on account %s", e.KeyID, e.Address)
+//}
 
-// An InvalidSignaturePublicKeyError indicates that signature uses an invalid public key.
-type InvalidSignaturePublicKeyError struct {
-	Address flow.Address
-	KeyID   int
-}
-
-func (e *InvalidSignaturePublicKeyError) Error() string {
-	return fmt.Sprintf("invalid signature for key %d on account %s", e.KeyID, e.Address)
-}
-
-// An InvalidSignatureAccountError indicates that a signature references a nonexistent account.
-type InvalidSignatureAccountError struct {
-	Address flow.Address
-}
-
-func (e *InvalidSignatureAccountError) Error() string {
-	return fmt.Sprintf("account with address %s does not exist", e.Address)
-}
+//// An InvalidSignatureAccountError indicates that a signature references a nonexistent account.
+//type InvalidSignatureAccountError struct {
+//	Address model.Address
+//}
+//
+//func (e *InvalidSignatureAccountError) Error() string {
+//	return fmt.Sprintf("account with address %s does not exist", e.Address)
+//}
 
 // An InvalidTransactionError indicates that a submitted transaction is invalid (missing required fields).
 type InvalidTransactionError struct {
-	TxID          flow.Identifier
+	TxID          model.Identifier
 	MissingFields []string
 }
 
@@ -136,7 +137,7 @@ func (e *InvalidStateVersionError) Error() string {
 
 // A PendingBlockCommitBeforeExecutionError indicates that the current pending block has not been executed (cannot commit).
 type PendingBlockCommitBeforeExecutionError struct {
-	BlockID flow.Identifier
+	BlockID model.Identifier
 }
 
 func (e *PendingBlockCommitBeforeExecutionError) Error() string {
@@ -145,7 +146,7 @@ func (e *PendingBlockCommitBeforeExecutionError) Error() string {
 
 // A PendingBlockMidExecutionError indicates that the current pending block is mid-execution.
 type PendingBlockMidExecutionError struct {
-	BlockID flow.Identifier
+	BlockID model.Identifier
 }
 
 func (e *PendingBlockMidExecutionError) Error() string {
@@ -154,7 +155,7 @@ func (e *PendingBlockMidExecutionError) Error() string {
 
 // A PendingBlockTransactionsExhaustedError indicates that the current pending block has finished executing (no more transactions to execute).
 type PendingBlockTransactionsExhaustedError struct {
-	BlockID flow.Identifier
+	BlockID model.Identifier
 }
 
 func (e *PendingBlockTransactionsExhaustedError) Error() string {

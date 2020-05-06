@@ -4,11 +4,11 @@ import (
 	"testing"
 
 	model "github.com/dapperlabs/flow-go/model/flow"
+	flowUnittest "github.com/dapperlabs/flow-go/utils/unittest"
+	flowGenerator "github.com/dapperlabs/flow-go/utils/unittest/generator"
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/onflow/flow-go-sdk"
 
 	"github.com/dapperlabs/flow-emulator/types"
 	"github.com/dapperlabs/flow-emulator/utils/unittest"
@@ -19,7 +19,7 @@ func TestEncodeTransaction(t *testing.T) {
 	data, err := encodeTransaction(tx)
 	require.Nil(t, err)
 
-	var decodedTx flow.Transaction
+	var decodedTx model.TransactionBody
 	err = decodeTransaction(&decodedTx, data)
 	require.Nil(t, err)
 
@@ -42,12 +42,18 @@ func TestEncodeTransactionResult(t *testing.T) {
 func TestEncodeBlock(t *testing.T) {
 	ids := test.IdentifierGenerator()
 
-	block := types.Block{
-		Height:   1234,
-		ParentID: ids.New(),
-		Guarantees: []*model.CollectionGuarantee{
-			{
-				CollectionID: model.Identifier(ids.New()),
+	id := flowUnittest.IdentifierFixture()
+
+	block := model.Block{
+		Header: &model.Header{
+			Height:   1234,
+			ParentID: id,
+		},
+		Payload: &model.Payload{
+			Guarantees: []*model.CollectionGuarantee{
+				{
+					CollectionID: model.Identifier(ids.New()),
+				},
 			},
 		},
 	}
@@ -55,21 +61,21 @@ func TestEncodeBlock(t *testing.T) {
 	data, err := encodeBlock(block)
 	require.Nil(t, err)
 
-	var decodedBlock types.Block
+	var decodedBlock model.Block
 	err = decodeBlock(&decodedBlock, data)
 	require.Nil(t, err)
 
-	assert.Equal(t, block.Height, decodedBlock.Height)
-	assert.Equal(t, block.ParentID, decodedBlock.ParentID)
-	assert.Equal(t, block.Guarantees, decodedBlock.Guarantees)
+	assert.Equal(t, block.Header.Height, decodedBlock.Header.Height)
+	assert.Equal(t, block.Header.ParentID, decodedBlock.Header.ParentID)
+	assert.Equal(t, block.Payload.Guarantees, decodedBlock.Payload.Guarantees)
 }
 
 func TestEncodeEvent(t *testing.T) {
-	event := test.EventGenerator().New()
+	event := flowGenerator.EventGenerator().New()
 	data, err := encodeEvent(event)
 	require.Nil(t, err)
 
-	var decodedEvent flow.Event
+	var decodedEvent model.Event
 	err = decodeEvent(&decodedEvent, data)
 	require.Nil(t, err)
 	assert.Equal(t, event, decodedEvent)
