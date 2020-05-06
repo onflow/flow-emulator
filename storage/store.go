@@ -3,8 +3,8 @@
 package storage
 
 import (
+	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
 	model "github.com/dapperlabs/flow-go/model/flow"
-	"github.com/onflow/flow-go-sdk"
 
 	"github.com/dapperlabs/flow-emulator/types"
 )
@@ -23,36 +23,36 @@ import (
 type Store interface {
 
 	// LatestBlock returns the block with the highest block height.
-	LatestBlock() (types.Block, error)
+	LatestBlock() (model.Block, error)
 
 	// BlockByID returns the block with the given ID.
-	BlockByID(flow.Identifier) (types.Block, error)
+	BlockByID(model.Identifier) (model.Block, error)
 
 	// BlockByHeight returns the block with the given height.
-	BlockByHeight(blockHeight uint64) (types.Block, error)
+	BlockByHeight(blockHeight uint64) (model.Block, error)
 
 	// CommitBlock atomically saves the execution results for a block.
 	CommitBlock(
-		block *types.Block,
+		block model.Block,
 		collections []*model.LightCollection,
-		transactions map[flow.Identifier]*flow.Transaction,
-		transactionResults map[flow.Identifier]*types.StorableTransactionResult,
-		delta types.LedgerDelta,
-		events []flow.Event,
+		transactions map[model.Identifier]*model.TransactionBody,
+		transactionResults map[model.Identifier]*types.StorableTransactionResult,
+		delta delta.Delta,
+		events []model.Event,
 	) error
 
 	// CollectionByID gets the collection (transaction IDs only) with the given ID.
-	CollectionByID(flow.Identifier) (model.LightCollection, error)
+	CollectionByID(model.Identifier) (model.LightCollection, error)
 
 	// TransactionByID gets the transaction with the given ID.
-	TransactionByID(flow.Identifier) (flow.Transaction, error)
+	TransactionByID(model.Identifier) (model.TransactionBody, error)
 
 	// TransactionResultByID gets the transaction result with the given ID.
-	TransactionResultByID(flow.Identifier) (types.StorableTransactionResult, error)
+	TransactionResultByID(model.Identifier) (types.StorableTransactionResult, error)
 
 	// LedgerViewByHeight returns a view into the ledger state at a given block.
-	LedgerViewByHeight(blockHeight uint64) *types.LedgerView
+	LedgerViewByHeight(blockHeight uint64) *delta.View
 
 	// EventsByHeight returns the events in the block at the given height, optionally filtered by type.
-	EventsByHeight(blockHeight uint64, eventType string) ([]flow.Event, error)
+	EventsByHeight(blockHeight uint64, eventType string) ([]model.Event, error)
 }

@@ -3,7 +3,6 @@ package emulator_test
 import (
 	"testing"
 
-	model "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,7 +19,7 @@ func TestCollections(t *testing.T) {
 		require.NoError(t, err)
 
 		// block should not contain any collections
-		assert.Empty(t, block.Guarantees)
+		assert.Empty(t, block.CollectionGuarantees)
 	})
 
 	t.Run("Non-empty block", func(t *testing.T) {
@@ -62,15 +61,15 @@ func TestCollections(t *testing.T) {
 		require.NoError(t, err)
 
 		// block should contain at least one collection
-		assert.NotEmpty(t, block.Guarantees)
+		assert.NotEmpty(t, block.CollectionGuarantees)
 
 		i := 0
-		for _, guarantee := range block.Guarantees {
-			collection, err := b.GetCollection(flow.Identifier(guarantee.ID()))
+		for _, guarantee := range block.CollectionGuarantees {
+			collection, err := b.GetCollection(guarantee.CollectionID)
 			require.NoError(t, err)
 
-			for _, txID := range collection.Transactions {
-				assert.Equal(t, model.Identifier(transactions[i].ID()), txID)
+			for _, txID := range collection.TransactionIDs {
+				assert.Equal(t, transactions[i].ID(), txID)
 				i++
 			}
 		}

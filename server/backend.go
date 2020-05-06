@@ -4,19 +4,20 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
 	"github.com/logrusorgru/aurora"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	jsoncdc "github.com/onflow/cadence/encoding/json"
-	"github.com/onflow/flow-go-sdk"
-	"github.com/onflow/flow-go-sdk/client/convert"
+	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow/protobuf/go/flow/access"
 	"github.com/onflow/flow/protobuf/go/flow/entities"
 
+	sdkConvert "github.com/onflow/flow-go-sdk/client/convert"
+
 	emulator "github.com/dapperlabs/flow-emulator"
-	emuconvert "github.com/dapperlabs/flow-emulator/server/convert"
 	"github.com/dapperlabs/flow-emulator/types"
 )
 
@@ -46,7 +47,7 @@ func (b *Backend) Ping(ctx context.Context, req *access.PingRequest) (*access.Pi
 func (b *Backend) SendTransaction(ctx context.Context, req *access.SendTransactionRequest) (*access.SendTransactionResponse, error) {
 	txMsg := req.GetTransaction()
 
-	tx, err := convert.MessageToTransaction(txMsg)
+	tx, err := sdkConvert.MessageToTransaction(txMsg)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -56,16 +57,16 @@ func (b *Backend) SendTransaction(ctx context.Context, req *access.SendTransacti
 		switch err.(type) {
 		case *emulator.DuplicateTransactionError:
 			return nil, status.Error(codes.InvalidArgument, err.Error())
-		case *emulator.InvalidSignaturePublicKeyError:
+		case *virtualmachine.InvalidSignaturePublicKeyError:
 			return nil, status.Error(codes.InvalidArgument, err.Error())
-		case *emulator.InvalidSignatureAccountError:
+		case *virtualmachine.InvalidSignatureAccountError:
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		default:
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 	} else {
 		b.logger.
-			WithField("txID", tx.ID().Hex()).
+			WithField("txID", tx.ID().String()).
 			Debug("️✉️   Transaction submitted")
 	}
 
@@ -89,7 +90,7 @@ func (b *Backend) GetLatestBlockHeader(ctx context.Context, req *access.GetLates
 
 	b.logger.WithFields(logrus.Fields{
 		"blockHeight": block.Height,
-		"blockID":     block.ID().Hex(),
+		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetLatestBlockHeader called")
 
 	return b.blockToHeaderResponse(block), nil
@@ -104,7 +105,7 @@ func (b *Backend) GetBlockHeaderByHeight(ctx context.Context, req *access.GetBlo
 
 	b.logger.WithFields(logrus.Fields{
 		"blockHeight": block.Height,
-		"blockID":     block.ID().Hex(),
+		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetBlockHeaderByHeight called")
 
 	return b.blockToHeaderResponse(block), nil
@@ -112,7 +113,7 @@ func (b *Backend) GetBlockHeaderByHeight(ctx context.Context, req *access.GetBlo
 
 // GetBlockHeaderByID gets a block header by ID.
 func (b *Backend) GetBlockHeaderByID(ctx context.Context, req *access.GetBlockHeaderByIDRequest) (*access.BlockHeaderResponse, error) {
-	blockID := flow.HashToID(req.GetId())
+	blockID := sdk.HashToID(req.GetId())
 
 	block, err := b.blockchain.GetBlockByID(blockID)
 	if err != nil {
@@ -121,7 +122,7 @@ func (b *Backend) GetBlockHeaderByID(ctx context.Context, req *access.GetBlockHe
 
 	b.logger.WithFields(logrus.Fields{
 		"blockHeight": block.Height,
-		"blockID":     block.ID().Hex(),
+		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetBlockHeaderByID called")
 
 	return b.blockToHeaderResponse(block), nil
@@ -136,7 +137,7 @@ func (b *Backend) GetLatestBlock(ctx context.Context, req *access.GetLatestBlock
 
 	b.logger.WithFields(logrus.Fields{
 		"blockHeight": block.Height,
-		"blockID":     block.ID().Hex(),
+		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetLatestBlock called")
 
 	return b.blockResponse(block), nil
@@ -151,7 +152,7 @@ func (b *Backend) GetBlockByHeight(ctx context.Context, req *access.GetBlockByHe
 
 	b.logger.WithFields(logrus.Fields{
 		"blockHeight": block.Height,
-		"blockID":     block.ID().Hex(),
+		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetBlockByHeight called")
 
 	return b.blockResponse(block), nil
@@ -159,7 +160,7 @@ func (b *Backend) GetBlockByHeight(ctx context.Context, req *access.GetBlockByHe
 
 // GetBlockByHeight gets a block by ID.
 func (b *Backend) GetBlockByID(ctx context.Context, req *access.GetBlockByIDRequest) (*access.BlockResponse, error) {
-	blockID := flow.HashToID(req.GetId())
+	blockID := sdk.HashToID(req.GetId())
 
 	block, err := b.blockchain.GetBlockByID(blockID)
 	if err != nil {
@@ -168,7 +169,7 @@ func (b *Backend) GetBlockByID(ctx context.Context, req *access.GetBlockByIDRequ
 
 	b.logger.WithFields(logrus.Fields{
 		"blockHeight": block.Height,
-		"blockID":     block.ID().Hex(),
+		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetBlockByID called")
 
 	return b.blockResponse(block), nil
@@ -176,7 +177,7 @@ func (b *Backend) GetBlockByID(ctx context.Context, req *access.GetBlockByIDRequ
 
 // GetCollectionByID gets a collection by ID.
 func (b *Backend) GetCollectionByID(ctx context.Context, req *access.GetCollectionByIDRequest) (*access.CollectionResponse, error) {
-	id := flow.HashToID(req.GetId())
+	id := sdk.HashToID(req.GetId())
 
 	col, err := b.blockchain.GetCollection(id)
 	if err != nil {
@@ -193,13 +194,13 @@ func (b *Backend) GetCollectionByID(ctx context.Context, req *access.GetCollecti
 		Debugf("📚  GetCollectionByID called")
 
 	return &access.CollectionResponse{
-		Collection: emuconvert.CollectionToMessage(*col),
+		Collection: sdkConvert.CollectionToMessage(*col),
 	}, nil
 }
 
 // GetTransaction gets a transaction by ID.
 func (b *Backend) GetTransaction(ctx context.Context, req *access.GetTransactionRequest) (*access.TransactionResponse, error) {
-	id := flow.HashToID(req.GetId())
+	id := sdk.HashToID(req.GetId())
 
 	tx, err := b.blockchain.GetTransaction(id)
 	if err != nil {
@@ -212,17 +213,17 @@ func (b *Backend) GetTransaction(ctx context.Context, req *access.GetTransaction
 	}
 
 	b.logger.
-		WithField("txID", id.Hex()).
+		WithField("txID", id.String()).
 		Debugf("💵  GetTransaction called")
 
 	return &access.TransactionResponse{
-		Transaction: convert.TransactionToMessage(*tx),
+		Transaction: sdkConvert.TransactionToMessage(*tx),
 	}, nil
 }
 
 // GetTransactionResult gets a transaction by ID.
 func (b *Backend) GetTransactionResult(ctx context.Context, req *access.GetTransactionRequest) (*access.TransactionResultResponse, error) {
-	id := flow.HashToID(req.GetId())
+	id := sdk.HashToID(req.GetId())
 
 	result, err := b.blockchain.GetTransactionResult(id)
 	if err != nil {
@@ -230,10 +231,10 @@ func (b *Backend) GetTransactionResult(ctx context.Context, req *access.GetTrans
 	}
 
 	b.logger.
-		WithField("txID", id.Hex()).
+		WithField("txID", id.String()).
 		Debugf("📝  GetTransactionResult called")
 
-	res, err := convert.TransactionResultToMessage(*result)
+	res, err := sdkConvert.TransactionResultToMessage(*result)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -243,7 +244,7 @@ func (b *Backend) GetTransactionResult(ctx context.Context, req *access.GetTrans
 
 // GetAccount returns the info associated with an address.
 func (b *Backend) GetAccount(ctx context.Context, req *access.GetAccountRequest) (*access.GetAccountResponse, error) {
-	address := flow.BytesToAddress(req.GetAddress())
+	address := sdk.BytesToAddress(req.GetAddress())
 	account, err := b.blockchain.GetAccount(address)
 	if err != nil {
 		switch err.(type) {
@@ -258,7 +259,7 @@ func (b *Backend) GetAccount(ctx context.Context, req *access.GetAccountRequest)
 		WithField("address", address).
 		Debugf("👤  GetAccount called")
 
-	accMsg, err := convert.AccountToMessage(*account)
+	accMsg, err := sdkConvert.AccountToMessage(*account)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -288,7 +289,7 @@ func (b *Backend) ExecuteScriptAtBlockHeight(ctx context.Context, req *access.Ex
 // ExecuteScriptAtBlockID executes a script at a specific block ID
 func (b *Backend) ExecuteScriptAtBlockID(ctx context.Context, req *access.ExecuteScriptAtBlockIDRequest) (*access.ExecuteScriptResponse, error) {
 	script := req.GetScript()
-	blockID := flow.HashToID(req.GetBlockId())
+	blockID := sdk.HashToID(req.GetBlockId())
 
 	block, err := b.blockchain.GetBlockByID(blockID)
 	if err != nil {
@@ -370,7 +371,7 @@ func (b *Backend) GetEventsForBlockIDs(ctx context.Context, req *access.GetEvent
 	eventCount := 0
 
 	for _, blockID := range req.GetBlockIds() {
-		block, err := b.blockchain.GetBlockByID(flow.HashToID(blockID))
+		block, err := b.blockchain.GetBlockByID(sdk.HashToID(blockID))
 		if err != nil {
 			switch err.(type) {
 			case emulator.NotFoundError:
@@ -420,7 +421,7 @@ func (b *Backend) commitBlock() {
 
 	b.logger.WithFields(logrus.Fields{
 		"blockHeight": block.Height,
-		"blockID":     block.ID().Hex(),
+		"blockID":     block.ID.Hex(),
 	}).Debugf("📦  Block #%d committed", block.Height)
 }
 
@@ -432,10 +433,6 @@ func (b *Backend) executeScriptAtBlock(script []byte, blockHeight uint64) (*acce
 	}
 
 	printScriptResult(b.logger, result)
-
-	if result.Value == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid script")
-	}
 
 	valueBytes, err := jsoncdc.Encode(result.Value)
 	if err != nil {
@@ -450,33 +447,34 @@ func (b *Backend) executeScriptAtBlock(script []byte, blockHeight uint64) (*acce
 }
 
 // blockToHeaderResponse constructs a block header response from a block.
-func (b *Backend) blockToHeaderResponse(block *types.Block) *access.BlockHeaderResponse {
+func (b *Backend) blockToHeaderResponse(block *sdk.Block) *access.BlockHeaderResponse {
 	return &access.BlockHeaderResponse{
-		Block: convert.BlockHeaderToMessage(block.Header()),
+		Block: sdkConvert.BlockHeaderToMessage(block.BlockHeader),
 	}
 }
 
 // blockResponse constructs a block response from a block.
-func (b *Backend) blockResponse(block *types.Block) *access.BlockResponse {
+func (b *Backend) blockResponse(block *sdk.Block) *access.BlockResponse {
 	return &access.BlockResponse{
-		Block: emuconvert.BlockToMessage(*block),
+		Block: sdkConvert.BlockToMessage(*block),
 	}
 }
 
 func (b *Backend) eventsBlockResult(
-	block *types.Block,
-	events []flow.Event,
+	block *sdk.Block,
+	events []sdk.Event,
 ) (result *access.EventsResponse_Result, err error) {
 	eventMessages := make([]*entities.Event, len(events))
 	for i, event := range events {
-		eventMessages[i], err = convert.EventToMessage(event)
+		eventMessages[i], err = sdkConvert.EventToMessage(event)
 		if err != nil {
 			return nil, err
 		}
 	}
 
+	blockID := block.ID
 	return &access.EventsResponse_Result{
-		BlockId:     block.ID().Bytes(),
+		BlockId:     blockID[:],
 		BlockHeight: block.Height,
 		Events:      eventMessages,
 	}, nil
@@ -492,14 +490,14 @@ func (b *Backend) DisableAutoMine() {
 	b.automine = false
 }
 
-func printTransactionResult(logger *logrus.Logger, result *emulator.TransactionResult) {
+func printTransactionResult(logger *logrus.Logger, result *types.TransactionResult) {
 	if result.Succeeded() {
 		logger.
-			WithField("txID", result.TransactionID.Hex()).
+			WithField("txID", result.TransactionID.String()).
 			Info("⭐  Transaction executed")
 	} else {
 		logger.
-			WithField("txID", result.TransactionID.Hex()).
+			WithField("txID", result.TransactionID.String()).
 			Warn("❗  Transaction reverted")
 	}
 
@@ -515,11 +513,11 @@ func printTransactionResult(logger *logrus.Logger, result *emulator.TransactionR
 		logger.Debugf(
 			"%s %s",
 			logPrefix("EVT", result.TransactionID, aurora.GreenFg),
-			event.String(),
+			event,
 		)
 	}
 
-	if result.Reverted() {
+	if !result.Succeeded() {
 		logger.Warnf(
 			"%s %s",
 			logPrefix("ERR", result.TransactionID, aurora.RedFg),
@@ -528,14 +526,14 @@ func printTransactionResult(logger *logrus.Logger, result *emulator.TransactionR
 	}
 }
 
-func printScriptResult(logger *logrus.Logger, result *emulator.ScriptResult) {
+func printScriptResult(logger *logrus.Logger, result *types.ScriptResult) {
 	if result.Succeeded() {
 		logger.
-			WithField("scriptID", result.ScriptID.Hex()).
+			WithField("scriptID", result.ScriptID.String()).
 			Info("⭐  Script executed")
 	} else {
 		logger.
-			WithField("scriptID", result.ScriptID.Hex()).
+			WithField("scriptID", result.ScriptID.String()).
 			Warn("❗  Script reverted")
 	}
 
@@ -547,15 +545,7 @@ func printScriptResult(logger *logrus.Logger, result *emulator.ScriptResult) {
 		)
 	}
 
-	for _, event := range result.Events {
-		logger.Debugf(
-			"%s %s",
-			logPrefix("EVT", result.ScriptID, aurora.GreenFg),
-			event.String(),
-		)
-	}
-
-	if result.Reverted() {
+	if !result.Succeeded() {
 		logger.Warnf(
 			"%s %s",
 			logPrefix("ERR", result.ScriptID, aurora.RedFg),
@@ -564,9 +554,9 @@ func printScriptResult(logger *logrus.Logger, result *emulator.ScriptResult) {
 	}
 }
 
-func logPrefix(prefix string, id flow.Identifier, color aurora.Color) string {
+func logPrefix(prefix string, id sdk.Identifier, color aurora.Color) string {
 	prefix = aurora.Colorize(prefix, color|aurora.BoldFm).String()
-	shortID := fmt.Sprintf("[%s]", id.Hex()[:6])
+	shortID := fmt.Sprintf("[%s]", id.String()[:6])
 	shortID = aurora.Colorize(shortID, aurora.FaintFm).String()
 	return fmt.Sprintf("%s %s", prefix, shortID)
 }

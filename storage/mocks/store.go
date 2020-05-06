@@ -5,12 +5,11 @@
 package mocks
 
 import (
-	reflect "reflect"
-
 	types "github.com/dapperlabs/flow-emulator/types"
+	delta "github.com/dapperlabs/flow-go/engine/execution/state/delta"
 	flow "github.com/dapperlabs/flow-go/model/flow"
 	gomock "github.com/golang/mock/gomock"
-	flow_go_sdk "github.com/onflow/flow-go-sdk"
+	reflect "reflect"
 )
 
 // MockStore is a mock of Store interface
@@ -37,10 +36,10 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 }
 
 // BlockByHeight mocks base method
-func (m *MockStore) BlockByHeight(arg0 uint64) (types.Block, error) {
+func (m *MockStore) BlockByHeight(arg0 uint64) (flow.Block, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BlockByHeight", arg0)
-	ret0, _ := ret[0].(types.Block)
+	ret0, _ := ret[0].(flow.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -52,10 +51,10 @@ func (mr *MockStoreMockRecorder) BlockByHeight(arg0 interface{}) *gomock.Call {
 }
 
 // BlockByID mocks base method
-func (m *MockStore) BlockByID(arg0 flow_go_sdk.Identifier) (types.Block, error) {
+func (m *MockStore) BlockByID(arg0 flow.Identifier) (flow.Block, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BlockByID", arg0)
-	ret0, _ := ret[0].(types.Block)
+	ret0, _ := ret[0].(flow.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -67,7 +66,7 @@ func (mr *MockStoreMockRecorder) BlockByID(arg0 interface{}) *gomock.Call {
 }
 
 // CollectionByID mocks base method
-func (m *MockStore) CollectionByID(arg0 flow_go_sdk.Identifier) (flow.LightCollection, error) {
+func (m *MockStore) CollectionByID(arg0 flow.Identifier) (flow.LightCollection, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CollectionByID", arg0)
 	ret0, _ := ret[0].(flow.LightCollection)
@@ -82,7 +81,7 @@ func (mr *MockStoreMockRecorder) CollectionByID(arg0 interface{}) *gomock.Call {
 }
 
 // CommitBlock mocks base method
-func (m *MockStore) CommitBlock(arg0 *types.Block, arg1 []*flow.LightCollection, arg2 map[flow_go_sdk.Identifier]*flow_go_sdk.Transaction, arg3 map[flow_go_sdk.Identifier]*flow_go_sdk.TransactionResult, arg4 types.LedgerDelta, arg5 []flow_go_sdk.Event) error {
+func (m *MockStore) CommitBlock(arg0 flow.Block, arg1 []*flow.LightCollection, arg2 map[flow.Identifier]*flow.TransactionBody, arg3 map[flow.Identifier]*types.StorableTransactionResult, arg4 delta.Delta, arg5 []flow.Event) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CommitBlock", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(error)
@@ -96,10 +95,10 @@ func (mr *MockStoreMockRecorder) CommitBlock(arg0, arg1, arg2, arg3, arg4, arg5 
 }
 
 // EventsByHeight mocks base method
-func (m *MockStore) EventsByHeight(arg0 uint64, arg1 string) ([]flow_go_sdk.Event, error) {
+func (m *MockStore) EventsByHeight(arg0 uint64, arg1 string) ([]flow.Event, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "EventsByHeight", arg0, arg1)
-	ret0, _ := ret[0].([]flow_go_sdk.Event)
+	ret0, _ := ret[0].([]flow.Event)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -111,10 +110,10 @@ func (mr *MockStoreMockRecorder) EventsByHeight(arg0, arg1 interface{}) *gomock.
 }
 
 // LatestBlock mocks base method
-func (m *MockStore) LatestBlock() (types.Block, error) {
+func (m *MockStore) LatestBlock() (flow.Block, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LatestBlock")
-	ret0, _ := ret[0].(types.Block)
+	ret0, _ := ret[0].(flow.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -126,10 +125,10 @@ func (mr *MockStoreMockRecorder) LatestBlock() *gomock.Call {
 }
 
 // LedgerViewByHeight mocks base method
-func (m *MockStore) LedgerViewByHeight(arg0 uint64) *types.LedgerView {
+func (m *MockStore) LedgerViewByHeight(arg0 uint64) *delta.View {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LedgerViewByHeight", arg0)
-	ret0, _ := ret[0].(*types.LedgerView)
+	ret0, _ := ret[0].(*delta.View)
 	return ret0
 }
 
@@ -140,10 +139,10 @@ func (mr *MockStoreMockRecorder) LedgerViewByHeight(arg0 interface{}) *gomock.Ca
 }
 
 // TransactionByID mocks base method
-func (m *MockStore) TransactionByID(arg0 flow_go_sdk.Identifier) (flow_go_sdk.Transaction, error) {
+func (m *MockStore) TransactionByID(arg0 flow.Identifier) (flow.TransactionBody, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "TransactionByID", arg0)
-	ret0, _ := ret[0].(flow_go_sdk.Transaction)
+	ret0, _ := ret[0].(flow.TransactionBody)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -155,10 +154,10 @@ func (mr *MockStoreMockRecorder) TransactionByID(arg0 interface{}) *gomock.Call 
 }
 
 // TransactionResultByID mocks base method
-func (m *MockStore) TransactionResultByID(arg0 flow_go_sdk.Identifier) (flow_go_sdk.TransactionResult, error) {
+func (m *MockStore) TransactionResultByID(arg0 flow.Identifier) (types.StorableTransactionResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "TransactionResultByID", arg0)
-	ret0, _ := ret[0].(flow_go_sdk.TransactionResult)
+	ret0, _ := ret[0].(types.StorableTransactionResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

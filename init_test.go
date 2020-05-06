@@ -6,14 +6,15 @@ import (
 	"os"
 	"testing"
 
+	model "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	emulator "github.com/dapperlabs/flow-emulator"
+	sdkConvert "github.com/dapperlabs/flow-emulator/convert/sdk"
 	"github.com/dapperlabs/flow-emulator/storage/badger"
-	"github.com/dapperlabs/flow-emulator/types"
 )
 
 func TestInitialization(t *testing.T) {
@@ -36,7 +37,7 @@ func TestInitialization(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.EqualValues(t, 0, latestBlock.Height)
-		assert.Equal(t, types.GenesisBlock().ID(), latestBlock.ID())
+		assert.Equal(t, sdkConvert.FlowIdentifierToSDK(model.Genesis(nil).ID()), latestBlock.ID)
 	})
 
 	t.Run("should restore state when initialized with non-empty store", func(t *testing.T) {
@@ -99,17 +100,17 @@ func TestInitialization(t *testing.T) {
 			latestBlock, err := b.GetLatestBlock()
 			require.NoError(t, err)
 
-			assert.Equal(t, block.ID(), latestBlock.ID())
+			assert.Equal(t, block.ID, latestBlock.ID)
 
 			blockByHeight, err := b.GetBlockByHeight(block.Height)
 			require.NoError(t, err)
 
-			assert.Equal(t, block.ID(), blockByHeight.ID())
+			assert.Equal(t, block.ID, blockByHeight.ID)
 
-			blockByHash, err := b.GetBlockByID(block.ID())
+			blockByHash, err := b.GetBlockByID(block.ID)
 			require.NoError(t, err)
 
-			assert.Equal(t, block.ID(), blockByHash.ID())
+			assert.Equal(t, block.ID, blockByHash.ID)
 		})
 
 		t.Run("should be able to read transactions", func(t *testing.T) {
