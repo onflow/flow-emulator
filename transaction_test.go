@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/interpreter"
@@ -121,6 +123,50 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 		// Submit tx
 		err = b.AddTransaction(*tx)
 		assert.IsType(t, err, &emulator.InvalidTransactionError{})
+	})
+
+	t.Run("MissingProposalKey", func(t *testing.T) {
+
+		// Create transaction with no PayerAccount field
+		tx := flow.NewTransaction().
+			SetScript([]byte(addTwoScript)).
+			SetGasLimit(10)
+
+		tx.ProposalKey = flow.ProposalKey{}
+
+		err := tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		assert.NoError(t, err)
+
+		// Submit tx
+		err = b.AddTransaction(*tx)
+		assert.IsType(t, err, &emulator.InvalidTransactionError{})
+	})
+
+	t.Run("WrongSequenceKey", func(t *testing.T) {
+
+		invalidSequenceNumber := b.RootKey().SequenceNumber + 2137
+		tx := flow.NewTransaction().
+			SetScript([]byte(addTwoScript)).
+			SetPayer(b.RootKey().Address).
+			SetProposalKey(b.RootKey().Address, b.RootKey().ID, invalidSequenceNumber).
+			SetGasLimit(10).
+			AddAuthorizer(b.RootKey().Address)
+
+		err := tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		assert.NoError(t, err)
+
+		// Submit tx
+		err = b.AddTransaction(*tx)
+		require.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		require.NoError(t, err)
+		spew.Dump(result)
+
+		require.Error(t, result.Error)
+
+		assert.IsType(t, &virtualmachine.InvalidProposalSequenceNumberError{}, result.Error)
+		assert.Equal(t, invalidSequenceNumber, result.Error.(*virtualmachine.InvalidProposalSequenceNumberError).ProvidedSeqNumber)
 	})
 }
 
@@ -287,7 +333,12 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, &emulator.MissingSignatureError{}, err)
+		assert.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+
+		assert.IsType(t, result.Error, &virtualmachine.MissingSignatureError{})
 	})
 
 	t.Run("InvalidAccount", func(t *testing.T) {
@@ -310,7 +361,12 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, err, &emulator.InvalidSignatureAccountError{})
+		assert.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+
+		assert.IsType(t, result.Error, &virtualmachine.InvalidSignatureAccountError{})
 	})
 
 	t.Run("InvalidKeyPair", func(t *testing.T) {
@@ -335,7 +391,12 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, err, &emulator.InvalidSignaturePublicKeyError{})
+		assert.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+
+		assert.IsType(t, result.Error, &virtualmachine.InvalidSignaturePublicKeyError{})
 	})
 
 	t.Run("KeyWeights", func(t *testing.T) {
@@ -364,26 +425,34 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 			SetPayer(accountAddressA).
 			AddAuthorizer(accountAddressA)
 
+		// Insufficient keys
+		err = tx.SignEnvelope(accountAddressA, 1, signerB)
+		assert.NoError(t, err)
+
+		err = b.AddTransaction(*tx)
+		assert.NoError(t, err)
+
+		// Sufficient keys
+		err = tx.SignEnvelope(accountAddressA, 0, signerA)
+		assert.NoError(t, err)
+
+		err = tx.SignEnvelope(accountAddressA, 1, signerB)
+		assert.NoError(t, err)
+
+		err = b.AddTransaction(*tx)
+		assert.NoError(t, err)
+
 		t.Run("InsufficientKeyWeight", func(t *testing.T) {
-			err = tx.SignEnvelope(accountAddressA, 1, signerB)
+			result, err := b.ExecuteNextTransaction()
 			assert.NoError(t, err)
 
-			err = b.AddTransaction(*tx)
-			assert.IsType(t, &emulator.MissingSignatureError{}, err)
+			assert.IsType(t, &virtualmachine.MissingSignatureError{}, result.Error)
 		})
 
 		t.Run("SufficientKeyWeight", func(t *testing.T) {
-			err = tx.SignEnvelope(accountAddressA, 0, signerA)
-			assert.NoError(t, err)
-
-			err = tx.SignEnvelope(accountAddressA, 1, signerB)
-			assert.NoError(t, err)
-
-			err = b.AddTransaction(*tx)
-			assert.NoError(t, err)
-
 			result, err := b.ExecuteNextTransaction()
 			assert.NoError(t, err)
+
 			assertTransactionSucceeded(t, result)
 		})
 	})
@@ -411,7 +480,12 @@ func TestSubmitTransactionScriptSignatures(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, err, &emulator.MissingSignatureError{})
+		assert.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+
+		assert.IsType(t, result.Error, &virtualmachine.MissingSignatureError{})
 	})
 
 	t.Run("MultipleAccounts", func(t *testing.T) {

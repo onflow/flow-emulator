@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
 	"github.com/golang/mock/gomock"
 	"github.com/onflow/flow-go-sdk/client/convert"
 	"github.com/onflow/flow-go-sdk/test"
@@ -60,7 +61,7 @@ func TestBackend(t *testing.T) {
 		executionScriptRequest := access.ExecuteScriptAtLatestBlockRequest{
 			Script: sampleScriptText,
 		}
-		latestBlock := &types.Block{Height: rand.Uint64()}
+		latestBlock := &flow.Block{BlockHeader: flow.BlockHeader{Height: rand.Uint64()}}
 
 		api.EXPECT().
 			GetLatestBlock().
@@ -69,7 +70,7 @@ func TestBackend(t *testing.T) {
 
 		api.EXPECT().
 			ExecuteScriptAtBlock(sampleScriptText, latestBlock.Height).
-			Return(&emulator.ScriptResult{
+			Return(&types.ScriptResult{
 				Value: scriptResponse,
 				Error: nil,
 			}, nil).
@@ -94,7 +95,7 @@ func TestBackend(t *testing.T) {
 
 		api.EXPECT().
 			ExecuteScriptAtBlock(sampleScriptText, executionScriptRequest.BlockHeight).
-			Return(&emulator.ScriptResult{
+			Return(&types.ScriptResult{
 				Value: scriptResponse,
 				Error: nil,
 			}, nil).
@@ -112,21 +113,21 @@ func TestBackend(t *testing.T) {
 	t.Run("ExecuteScriptAtBlockID", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
 		sampleScriptText := []byte("hey I'm so totally uninterpretable script text with unicode ć, ń, ó, ś, ź")
 		scriptResponse := cadence.NewInt(rand.Int())
-		randomBlock := &types.Block{Height: rand.Uint64()}
+		randomBlock := &flow.Block{BlockHeader: flow.BlockHeader{Height: rand.Uint64()}}
 
 		executionScriptRequest := access.ExecuteScriptAtBlockIDRequest{
 			Script:  sampleScriptText,
-			BlockId: randomBlock.ID().Bytes(),
+			BlockId: randomBlock.ID.Bytes(),
 		}
 
 		api.EXPECT().
-			GetBlockByID(randomBlock.ID()).
+			GetBlockByID(randomBlock.ID).
 			Return(randomBlock, nil).
 			Times(1)
 
 		api.EXPECT().
 			ExecuteScriptAtBlock(sampleScriptText, randomBlock.Height).
-			Return(&emulator.ScriptResult{
+			Return(&types.ScriptResult{
 				Value: scriptResponse,
 				Error: nil,
 			}, nil).
@@ -177,9 +178,7 @@ func TestBackend(t *testing.T) {
 	}))
 
 	t.Run("GetEventsForHeightRange fails with invalid block heights", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
-		latestBlock := types.Block{
-			Height: 21,
-		}
+		latestBlock := flow.Block{BlockHeader: flow.BlockHeader{Height: 21}}
 
 		api.EXPECT().
 			GetLatestBlock().
@@ -205,21 +204,17 @@ func TestBackend(t *testing.T) {
 	}))
 
 	t.Run("GetEventsForHeightRange fails if blockchain returns error", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
-		startBlock := types.Block{
-			Height: 10,
-		}
+		startBlock := &flow.Block{BlockHeader: flow.BlockHeader{Height: 10}}
 
-		latestBlock := types.Block{
-			Height: 11,
-		}
+		latestBlock := &flow.Block{BlockHeader: flow.BlockHeader{Height: 11}}
 
 		api.EXPECT().
 			GetLatestBlock().
-			Return(&latestBlock, nil)
+			Return(latestBlock, nil)
 
 		api.EXPECT().
 			GetBlockByHeight(startBlock.Height).
-			Return(&startBlock, nil).
+			Return(startBlock, nil).
 			Times(1)
 
 		api.EXPECT().
@@ -249,13 +244,9 @@ func TestBackend(t *testing.T) {
 
 		eventType := "SomeEvents"
 
-		blocks := []types.Block{
-			{
-				Height: 1,
-			},
-			{
-				Height: 2,
-			},
+		blocks := []flow.Block{
+			flow.Block{BlockHeader: flow.BlockHeader{Height: 1}},
+			flow.Block{BlockHeader: flow.BlockHeader{Height: 2}},
 		}
 
 		var (
@@ -299,7 +290,7 @@ func TestBackend(t *testing.T) {
 
 		for i, block := range blockResults {
 			assert.Len(t, block.GetEvents(), 2)
-			assert.Equal(t, block.GetBlockId(), blocks[i].ID().Bytes())
+			assert.Equal(t, block.GetBlockId(), blocks[i].ID.Bytes())
 			assert.Equal(t, block.GetBlockHeight(), blocks[i].Height)
 		}
 	}))
@@ -314,13 +305,9 @@ func TestBackend(t *testing.T) {
 
 		eventType := "SomeEvents"
 
-		blocks := []types.Block{
-			{
-				Height: 1,
-			},
-			{
-				Height: 2,
-			},
+		blocks := []flow.Block{
+			flow.Block{BlockHeader: flow.BlockHeader{Height: 1}},
+			flow.Block{BlockHeader: flow.BlockHeader{Height: 2}},
 		}
 
 		var (
@@ -365,17 +352,14 @@ func TestBackend(t *testing.T) {
 
 		for i, block := range blockResults {
 			assert.Len(t, block.GetEvents(), 2)
-			assert.Equal(t, block.GetBlockId(), blocks[i].ID().Bytes())
+			assert.Equal(t, block.GetBlockId(), blocks[i].ID.Bytes())
 			assert.Equal(t, block.GetBlockHeight(), blocks[i].Height)
 		}
 	}))
 
 	t.Run("GetLatestBlockHeader", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
-		parentID := types.Block{Height: rand.Uint64()}.ID()
-		latestBlock := &types.Block{
-			Height:   rand.Uint64(),
-			ParentID: parentID,
-		}
+		parentID := flow.Block{BlockHeader: flow.BlockHeader{Height: rand.Uint64()}}.ID
+		latestBlock := &flow.Block{BlockHeader: flow.BlockHeader{Height: rand.Uint64(), ParentID: parentID}}
 
 		api.EXPECT().
 			GetLatestBlock().
@@ -389,16 +373,13 @@ func TestBackend(t *testing.T) {
 
 		blockResponse := response.GetBlock()
 		assert.Equal(t, latestBlock.Height, blockResponse.GetHeight())
-		assert.Equal(t, latestBlock.ID(), flow.HashToID(blockResponse.GetId()))
+		assert.Equal(t, latestBlock.ID, flow.HashToID(blockResponse.GetId()))
 		assert.Equal(t, latestBlock.ParentID, flow.HashToID(blockResponse.GetParentId()))
 	}))
 
 	t.Run("GetBlockHeaderAtBlockHeight", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
-		parentID := types.Block{Height: rand.Uint64()}.ID()
-		requestedBlock := &types.Block{
-			Height:   rand.Uint64(),
-			ParentID: parentID,
-		}
+		parentID := flow.Block{BlockHeader: flow.BlockHeader{Height: rand.Uint64()}}.ID
+		requestedBlock := &flow.Block{BlockHeader: flow.BlockHeader{Height: rand.Uint64(), ParentID: parentID}}
 
 		api.EXPECT().
 			GetBlockByHeight(requestedBlock.Height).
@@ -413,31 +394,28 @@ func TestBackend(t *testing.T) {
 
 		blockResponse := response.GetBlock()
 		assert.Equal(t, requestedBlock.Height, blockResponse.GetHeight())
-		assert.Equal(t, requestedBlock.ID(), flow.HashToID(blockResponse.GetId()))
+		assert.Equal(t, requestedBlock.ID, flow.HashToID(blockResponse.GetId()))
 		assert.Equal(t, requestedBlock.ParentID, flow.HashToID(blockResponse.GetParentId()))
 	}))
 
 	t.Run("GetBlockHeaderAtBlockID", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
-		parentID := types.Block{Height: rand.Uint64()}.ID()
-		requestedBlock := &types.Block{
-			Height:   rand.Uint64(),
-			ParentID: parentID,
-		}
+		parentID := flow.Block{BlockHeader: flow.BlockHeader{Height: rand.Uint64()}}.ID
+		requestedBlock := &flow.Block{BlockHeader: flow.BlockHeader{Height: rand.Uint64(), ParentID: parentID}}
 
 		api.EXPECT().
-			GetBlockByID(requestedBlock.ID()).
+			GetBlockByID(requestedBlock.ID).
 			Return(requestedBlock, nil).
 			Times(1)
 
 		getBlockHeaderRequest := access.GetBlockHeaderByIDRequest{
-			Id: requestedBlock.ID().Bytes(),
+			Id: requestedBlock.ID.Bytes(),
 		}
 		response, err := backend.GetBlockHeaderByID(context.Background(), &getBlockHeaderRequest)
 		assert.NoError(t, err)
 
 		blockResponse := response.GetBlock()
 		assert.Equal(t, requestedBlock.Height, blockResponse.GetHeight())
-		assert.Equal(t, requestedBlock.ID(), flow.HashToID(blockResponse.GetId()))
+		assert.Equal(t, requestedBlock.ID, flow.HashToID(blockResponse.GetId()))
 		assert.Equal(t, requestedBlock.ParentID, flow.HashToID(blockResponse.GetParentId()))
 	}))
 
@@ -583,7 +561,7 @@ func TestBackend(t *testing.T) {
 
 		api.EXPECT().
 			AddTransaction(gomock.Any()).
-			Return(&emulator.InvalidSignaturePublicKeyError{}).
+			Return(&virtualmachine.InvalidSignaturePublicKeyError{}).
 			Times(1)
 
 		tx := test.TransactionGenerator().New()
@@ -628,8 +606,8 @@ func TestBackend(t *testing.T) {
 		// expect transaction to be executed immediately
 		api.EXPECT().
 			ExecuteAndCommitBlock().
-			DoAndReturn(func() (*types.Block, []*emulator.TransactionResult, error) {
-				return &types.Block{}, make([]*emulator.TransactionResult, 0), nil
+			DoAndReturn(func() (*flow.Block, []*types.TransactionResult, error) {
+				return &flow.Block{}, make([]*types.TransactionResult, 0), nil
 			}).
 			Times(1)
 

@@ -77,7 +77,7 @@ func Submit(
 	require.NoError(t, err)
 
 	if shouldRevert {
-		assert.True(t, result.Reverted())
+		assert.False(t, result.Succeeded())
 	} else {
 		if !assert.True(t, result.Succeeded()) {
 			t.Log(result.Error.Error())

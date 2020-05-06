@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	emulator "github.com/dapperlabs/flow-emulator"
+	"github.com/dapperlabs/flow-emulator/types"
 )
 
 const counterScript = `
@@ -81,7 +82,7 @@ func generateGetCounterCountScript(counterAddress flow.Address, accountAddress f
 	)
 }
 
-func assertTransactionSucceeded(t *testing.T, result *emulator.TransactionResult) {
+func assertTransactionSucceeded(t *testing.T, result *types.TransactionResult) {
 	if !assert.True(t, result.Succeeded()) {
 		t.Error(result.Error)
 	}

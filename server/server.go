@@ -1,9 +1,10 @@
 package server
 
 import (
+	"encoding/hex"
 	"time"
 
-	"github.com/onflow/flow-go-sdk/crypto"
+	sdkCrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/pkg/errors"
 	"github.com/psiemens/graceland"
 	"github.com/sirupsen/logrus"
@@ -59,9 +60,9 @@ type Config struct {
 	HTTPPort        int
 	HTTPHeaders     []HTTPHeader
 	BlockTime       time.Duration
-	RootPublicKey   crypto.PublicKey
-	RootKeySigAlgo  crypto.SignatureAlgorithm
-	RootKeyHashAlgo crypto.HashAlgorithm
+	RootPublicKey   sdkCrypto.PublicKey
+	RootKeySigAlgo  sdkCrypto.SignatureAlgorithm
+	RootKeyHashAlgo sdkCrypto.HashAlgorithm
 	Persist         bool
 	// DBPath is the path to the Badger database on disk
 	DBPath string
@@ -111,6 +112,17 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	if conf.BlockTime > 0 {
 		server.blocksTicker = NewBlocksTicker(backend, conf.BlockTime)
 	}
+
+	address := blockchain.RootAccountAddress()
+	prKey := blockchain.RootKey()
+	prKeyBytes := prKey.PrivateKey.Encode()
+
+	logger.WithFields(logrus.Fields{
+		"address":       address.String(),
+		"prKey":         hex.EncodeToString(prKeyBytes),
+		"prKeySigAlgo":  prKey.AccountKey().SigAlgo.String(),
+		"prKeyHashAlgo": prKey.AccountKey().HashAlgo.String(),
+	}).Infof("⚙️   Using root account 0x%s", address.Hex())
 
 	return server
 }
@@ -198,11 +210,8 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithStore(store),
 	}
 
-	if conf.RootPublicKey != (crypto.PublicKey{}) {
-		options = append(
-			options,
-			emulator.WithRootPublicKey(conf.RootPublicKey, conf.RootKeySigAlgo, conf.RootKeyHashAlgo),
-		)
+	if conf.RootPublicKey != (sdkCrypto.PublicKey{}) {
+		options = append(options, emulator.WithRootPublicKey(conf.RootPublicKey, conf.RootKeySigAlgo, conf.RootKeyHashAlgo))
 	}
 
 	blockchain, err := emulator.NewBlockchain(options...)

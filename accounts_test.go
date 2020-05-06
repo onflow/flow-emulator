@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
@@ -51,7 +52,7 @@ func TestCreateAccount(t *testing.T) {
 
 		assert.Equal(t, uint64(0), account.Balance)
 		require.Len(t, account.Keys, 1)
-		assert.Equal(t, accountKey.PublicKey, account.Keys[0].PublicKey)
+		assert.Equal(t, accountKey.PublicKey.Encode(), account.Keys[0].PublicKey.Encode())
 		assert.Empty(t, account.Code)
 	})
 
@@ -88,8 +89,8 @@ func TestCreateAccount(t *testing.T) {
 
 		assert.Equal(t, uint64(0), account.Balance)
 		require.Len(t, account.Keys, 2)
-		assert.Equal(t, accountKeyA.PublicKey, account.Keys[0].PublicKey)
-		assert.Equal(t, accountKeyB.PublicKey, account.Keys[1].PublicKey)
+		assert.Equal(t, accountKeyA.PublicKey.Encode(), account.Keys[0].PublicKey.Encode())
+		assert.Equal(t, accountKeyB.PublicKey.Encode(), account.Keys[1].PublicKey.Encode())
 		assert.Empty(t, account.Code)
 	})
 
@@ -130,8 +131,8 @@ func TestCreateAccount(t *testing.T) {
 
 		assert.Equal(t, uint64(0), account.Balance)
 		require.Len(t, account.Keys, 2)
-		assert.Equal(t, accountKeyA.PublicKey, account.Keys[0].PublicKey)
-		assert.Equal(t, accountKeyB.PublicKey, account.Keys[1].PublicKey)
+		assert.Equal(t, accountKeyA.PublicKey.Encode(), account.Keys[0].PublicKey.Encode())
+		assert.Equal(t, accountKeyB.PublicKey.Encode(), account.Keys[1].PublicKey.Encode())
 		assert.Equal(t, code, account.Code)
 	})
 
@@ -448,7 +449,12 @@ func TestRemoveAccountKey(t *testing.T) {
 
 	// submit tx3 (should fail)
 	err = b.AddTransaction(*tx3)
-	assert.IsType(t, &emulator.InvalidSignaturePublicKeyError{}, err)
+	assert.NoError(t, err)
+
+	result, err = b.ExecuteNextTransaction()
+	assert.NoError(t, err)
+
+	assert.IsType(t, result.Error, &virtualmachine.InvalidSignaturePublicKeyError{})
 
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
@@ -572,7 +578,12 @@ func TestUpdateAccountCode(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, &emulator.MissingSignatureError{}, err)
+		assert.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+
+		assert.IsType(t, result.Error, &virtualmachine.MissingSignatureError{})
 
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)
