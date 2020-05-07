@@ -218,7 +218,11 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 
 	interpreterRuntime := runtime.NewInterpreterRuntime()
 
-	b.virtualMachine = virtualmachine.New(interpreterRuntime)
+	b.virtualMachine, err = virtualmachine.New(interpreterRuntime)
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot create virual machine: %w", err)
+	}
 
 	return b, nil
 }
@@ -715,7 +719,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, blockHeight uint64) (*t
 	if result.Error == nil {
 		convertedValue = result.Value
 	} else {
-		scriptError = result.Error
+		scriptError = convert.VMErrorToEmulator(result.Error)
 	}
 
 	return &types.ScriptResult{

@@ -54,13 +54,18 @@ func (b *Backend) SendTransaction(ctx context.Context, req *access.SendTransacti
 
 	err = b.blockchain.AddTransaction(tx)
 	if err != nil {
-		switch err.(type) {
+		switch t := err.(type) {
 		case *emulator.DuplicateTransactionError:
 			return nil, status.Error(codes.InvalidArgument, err.Error())
-		case *virtualmachine.InvalidSignaturePublicKeyError:
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		case *virtualmachine.InvalidSignatureAccountError:
-			return nil, status.Error(codes.InvalidArgument, err.Error())
+		case *types.FlowError:
+			switch t.FlowError.(type) {
+			case *virtualmachine.InvalidSignaturePublicKeyError:
+				return nil, status.Error(codes.InvalidArgument, err.Error())
+			case *virtualmachine.InvalidSignatureAccountError:
+				return nil, status.Error(codes.InvalidArgument, err.Error())
+			default:
+				return nil, status.Error(codes.Internal, err.Error())
+			}
 		default:
 			return nil, status.Error(codes.Internal, err.Error())
 		}
@@ -259,10 +264,7 @@ func (b *Backend) GetAccount(ctx context.Context, req *access.GetAccountRequest)
 		WithField("address", address).
 		Debugf("👤  GetAccount called")
 
-	accMsg, err := sdkConvert.AccountToMessage(*account)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
+	accMsg := sdkConvert.AccountToMessage(*account)
 
 	return &access.GetAccountResponse{
 		Account: accMsg,
