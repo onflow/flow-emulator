@@ -15,8 +15,15 @@ func VMTransactionResultToEmulator(vmTxResult virtualmachine.TransactionResult, 
 
 	return types.TransactionResult{
 		TransactionID: txID,
-		Error:         vmTxResult.Error,
+		Error:         VMErrorToEmulator(vmTxResult.Error),
 		Logs:          vmTxResult.Logs,
 		Events:        sdkEvents,
 	}
+}
+
+func VMErrorToEmulator(vmError virtualmachine.FlowError) error {
+	if vmError == nil {
+		return nil
+	}
+	return &types.FlowError{FlowError: vmError}
 }

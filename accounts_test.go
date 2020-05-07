@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	emulator "github.com/dapperlabs/flow-emulator"
+	"github.com/dapperlabs/flow-emulator/utils/unittest"
 )
 
 const testContract = "pub contract Test {}"
@@ -454,7 +455,7 @@ func TestRemoveAccountKey(t *testing.T) {
 	result, err = b.ExecuteNextTransaction()
 	assert.NoError(t, err)
 
-	assert.IsType(t, result.Error, &virtualmachine.InvalidSignaturePublicKeyError{})
+	unittest.AssertFlowVMErrorType(t, result.Error, &virtualmachine.InvalidSignaturePublicKeyError{})
 
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
@@ -583,7 +584,7 @@ func TestUpdateAccountCode(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		assert.IsType(t, result.Error, &virtualmachine.MissingSignatureError{})
+		unittest.AssertFlowVMErrorType(t, result.Error, &virtualmachine.MissingSignatureError{})
 
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)

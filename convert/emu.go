@@ -11,8 +11,8 @@ func ToStorableResult(tr *virtualmachine.TransactionResult, txIndex uint32) (typ
 	var errorMessage string
 
 	if tr.Error != nil {
-		errorCode = 1
-		errorMessage = tr.Error.Error()
+		errorCode = int(tr.Error.StatusCode())
+		errorMessage = tr.Error.ErrorMessage()
 	}
 
 	events, err := virtualmachine.ConvertEvents(txIndex, tr)

@@ -561,7 +561,7 @@ func TestBackend(t *testing.T) {
 
 		api.EXPECT().
 			AddTransaction(gomock.Any()).
-			Return(&virtualmachine.InvalidSignaturePublicKeyError{}).
+			Return(&types.FlowError{FlowError: &virtualmachine.InvalidSignaturePublicKeyError{}}).
 			Times(1)
 
 		tx := test.TransactionGenerator().New()

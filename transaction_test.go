@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	emulator "github.com/dapperlabs/flow-emulator"
+	"github.com/dapperlabs/flow-emulator/types"
+	"github.com/dapperlabs/flow-emulator/utils/unittest"
 )
 
 func TestSubmitTransaction(t *testing.T) {
@@ -165,8 +167,9 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 
 		require.Error(t, result.Error)
 
-		assert.IsType(t, &virtualmachine.InvalidProposalSequenceNumberError{}, result.Error)
-		assert.Equal(t, invalidSequenceNumber, result.Error.(*virtualmachine.InvalidProposalSequenceNumberError).ProvidedSeqNumber)
+		assert.IsType(t, &types.FlowError{}, result.Error)
+		assert.IsType(t, &virtualmachine.InvalidProposalSequenceNumberError{}, result.Error.(*types.FlowError).FlowError)
+		assert.Equal(t, invalidSequenceNumber, result.Error.(*types.FlowError).FlowError.(*virtualmachine.InvalidProposalSequenceNumberError).ProvidedSeqNumber)
 	})
 }
 
@@ -338,7 +341,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		assert.IsType(t, result.Error, &virtualmachine.MissingSignatureError{})
+		unittest.AssertFlowVMErrorType(t, result.Error, &virtualmachine.MissingSignatureError{})
 	})
 
 	t.Run("InvalidAccount", func(t *testing.T) {
@@ -366,7 +369,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		assert.IsType(t, result.Error, &virtualmachine.InvalidSignatureAccountError{})
+		unittest.AssertFlowVMErrorType(t, result.Error, &virtualmachine.InvalidSignatureAccountError{})
 	})
 
 	t.Run("InvalidKeyPair", func(t *testing.T) {
@@ -396,7 +399,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		assert.IsType(t, result.Error, &virtualmachine.InvalidSignaturePublicKeyError{})
+		unittest.AssertFlowVMErrorType(t, result.Error, &virtualmachine.InvalidSignaturePublicKeyError{})
 	})
 
 	t.Run("KeyWeights", func(t *testing.T) {
@@ -446,7 +449,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 			result, err := b.ExecuteNextTransaction()
 			assert.NoError(t, err)
 
-			assert.IsType(t, &virtualmachine.MissingSignatureError{}, result.Error)
+			unittest.AssertFlowVMErrorType(t, result.Error, &virtualmachine.MissingSignatureError{})
 		})
 
 		t.Run("SufficientKeyWeight", func(t *testing.T) {
@@ -485,7 +488,7 @@ func TestSubmitTransactionScriptSignatures(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		assert.IsType(t, result.Error, &virtualmachine.MissingSignatureError{})
+		unittest.AssertFlowVMErrorType(t, result.Error, &virtualmachine.MissingSignatureError{})
 	})
 
 	t.Run("MultipleAccounts", func(t *testing.T) {
