@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
-  name: flow-emulator-v1
+  name: flow-emulator-v2
   namespace: flow
   labels:
     app: flow-emulator
@@ -17,36 +17,36 @@ spec:
     http:
       paths:
         - backend:
-            serviceName: flow-emulator-v1
+            serviceName: flow-emulator-v2
             servicePort: grpc
               rules:
   - host: emulator-http.onflow.org
     http:
       paths:
         - backend:
-            serviceName: flow-emulator-v1
+            serviceName: flow-emulator-v2
             servicePort: http
 ---
 
-apiVersion: v1
+apiversion: v2
 kind: Service
 
 metadata:
-  name: flow-emulator-v1
+  name: flow-emulator-v2
   namespace: flow
 
   labels:
     app: flow-emulator
     env: production
     owner: Kan
-    version: v1
+    version: v2
 
 spec:
   type: ClusterIP
   selector:
     app: flow-emulator
     env: production
-    version: v1
+    version: v2
 
   ports:
     - name: http
