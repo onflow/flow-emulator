@@ -19,7 +19,6 @@ spec:
         - backend:
             serviceName: flow-emulator-v1
             servicePort: grpc
-              rules:
   - host: emulator-http.onflow.org
     http:
       paths:
