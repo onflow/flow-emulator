@@ -1,33 +1,3 @@
-apiVersion: networking.k8s.io/v1beta1
-kind: Ingress
-metadata:
-  name: flow-emulator-v2
-  namespace: flow
-  labels:
-    app: flow-emulator
-    env: production
-    owner: Kan
-  annotations:
-    kubernetes.io/ingress.class: "nginx"
-    nginx.ingress.kubernetes.io/affinity: "cookie"
-    nginx.ingress.kubernetes.io/session-cookie-name: "autoincrement"
-spec:
-  rules:
-  - host: emulator-grpc.onflow.org
-    http:
-      paths:
-        - backend:
-            serviceName: flow-emulator-v2
-            servicePort: grpc
-              rules:
-  - host: emulator-http.onflow.org
-    http:
-      paths:
-        - backend:
-            serviceName: flow-emulator-v2
-            servicePort: http
----
-
 apiversion: v2
 kind: Service
 
