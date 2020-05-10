@@ -69,7 +69,7 @@ spec:
             - name: FLOW_ROOTPRIVATEKEY
               valueFrom:
                 secretKeyRef:
-                  name: emulator-flow-json
+                  name: emulator-flow-json-v2
                   key: root-key
             - name: FLOW_DBPATH
               value: '/flowdb'
