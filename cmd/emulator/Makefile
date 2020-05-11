@@ -30,7 +30,7 @@ KUBECONFIG := $(shell uuidgen)
 #----------------------------------------------------------------------
 
 .PHONY: deploy-staging
-deploy-staging: update-deployment-image apply-staging-files monitor-rollout
+deploy-staging: apply-staging-files monitor-rollout
 
 .PHONY: deploy-production
 deploy-production: update-deployment-image apply-prod-files monitor-rollout
