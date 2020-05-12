@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/hex"
 	"time"
 
 	sdkCrypto "github.com/onflow/flow-go-sdk/crypto"
@@ -112,17 +111,6 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	if conf.BlockTime > 0 {
 		server.blocksTicker = NewBlocksTicker(backend, conf.BlockTime)
 	}
-
-	address := blockchain.RootAccountAddress()
-	prKey := blockchain.RootKey()
-	prKeyBytes := prKey.PrivateKey.Encode()
-
-	logger.WithFields(logrus.Fields{
-		"address":       address.String(),
-		"prKey":         hex.EncodeToString(prKeyBytes),
-		"prKeySigAlgo":  prKey.AccountKey().SigAlgo.String(),
-		"prKeyHashAlgo": prKey.AccountKey().HashAlgo.String(),
-	}).Infof("⚙️   Using root account 0x%s", address.Hex())
 
 	return server
 }
