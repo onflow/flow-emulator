@@ -33,7 +33,7 @@ KUBECONFIG := $(shell uuidgen)
 deploy-staging: apply-staging-files monitor-rollout
 
 .PHONY: deploy-production
-deploy-production: update-deployment-image apply-prod-files monitor-rollout
+deploy-production: apply-prod-files monitor-rollout
 
 # Staging YAMLs must have 'staging' in their name.
 .PHONY: apply-staging-files
