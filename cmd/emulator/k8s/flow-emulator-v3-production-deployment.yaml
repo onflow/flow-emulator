@@ -102,13 +102,6 @@ spec:
             periodSeconds: 30
             successThreshold: 1
 
-          # Startup Probe
-          startupProbe:
-            httpGet:
-              path: /live
-              port: http
-            failureThreshold: 30
-            periodSeconds: 10
       volumes:
         - name: badger-volume
           persistentVolumeClaim:
