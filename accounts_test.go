@@ -1,7 +1,6 @@
 package emulator_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
@@ -112,8 +111,6 @@ func TestCreateAccount(t *testing.T) {
 			SetGasLimit(10).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address)
-
-		fmt.Println("ROOT KEY", b.RootKey())
 
 		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
