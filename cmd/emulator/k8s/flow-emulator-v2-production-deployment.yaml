@@ -84,7 +84,7 @@ spec:
           volumeMounts:
             - name: badger-volume
               mountPath: /flowdb
-            
+
           # Readiness Probe
           readinessProbe:
             httpGet:
