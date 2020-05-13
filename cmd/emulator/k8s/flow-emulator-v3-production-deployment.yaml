@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   # This is the full name of your deployment. It must be unique
-  name: flow-emulator-v1
+  name: flow-emulator-v3
   namespace: flow
 
   # Best practice labels:
@@ -10,22 +10,22 @@ metadata:
   #   kind: [web|worker]
   #   env: [staging|production|canary|test|dev]
   #   owner: who to ask about this service
-  #   version: the major version of this service (v1/v2/v1beta1)
+  #   version: the major version of this service (v1/v3/v1beta1)
   labels:
     app: flow-emulator
     kind: web
-    env: staging
+    env: production
     owner: Kan
-    version: v1
+    version: v3
 
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: flow-emulator
-      env: staging
-      version: v1
-  serviceName: flow-emulator-v1
+      env: production
+      version: v3
+  serviceName: flow-emulator-v3
   template:
     metadata:
       annotations:
@@ -38,9 +38,9 @@ spec:
 
       labels:
         app: flow-emulator
-        env: staging
+        env: production
         owner: Kan
-        version: v1
+        version: v3
         kind: web
 
     spec:
@@ -48,8 +48,8 @@ spec:
         - name: gcr
       containers:
         - name: flow-emulator
-          image: gcr.io/dl-flow/emulator:37277992 # freeze version for v1
-          args: ["emulator", "start", "-v", "--persist"]
+          image: gcr.io/dl-flow/emulator:baa8778
+          args: ["-v", "--persist"]
 
           # Ports exposed can be named so other resources can reference
           # them by name and not have to hard code numbers
@@ -65,15 +65,15 @@ spec:
 
           # Environment variables
           env:
-            - name: FLOW_ROOTKEY
+            - name: FLOW_ROOTPRIVATEKEY
               valueFrom:
                 secretKeyRef:
-                  name: emulator-flow-json
+                  name: emulator-flow-json-v2
                   key: root-key
             - name: FLOW_DBPATH
               value: '/flowdb'
 
-          # Resource requests and contraints
+          # Resource requests and constraints
           resources:
             requests:
               cpu: '250m'
@@ -105,12 +105,13 @@ spec:
           persistentVolumeClaim:
             claimName: emulator-storage-claim
 
+
   volumeClaimTemplates:
     - metadata:
         name: badger-volume
         labels:
           app: flow-emulator
-          env: staging
+          env: production
           owner: Kan
       spec:
         accessModes:

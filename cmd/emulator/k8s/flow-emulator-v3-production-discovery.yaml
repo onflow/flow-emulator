@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: flow-emulator-v3
+  namespace: flow
+
+  labels:
+    app: flow-emulator
+    env: production
+    owner: Kan
+    version: v3
+
+spec:
+  type: ClusterIP
+  selector:
+    app: flow-emulator
+    env: production
+    version: v3
+
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: http # reference to the name of the port in your container config
+    - name: grpc
+      protocol: TCP
+      port: 3569
+      targetPort: grpc # reference to the name of the port in your container config

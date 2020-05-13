@@ -48,8 +48,7 @@ spec:
         - name: gcr
       containers:
         - name: flow-emulator
-          # No tag, will be attached by teamcity
-          image: gcr.io/dl-flow/emulator
+          image: gcr.io/dl-flow/emulator:37277992
           args: ["emulator", "start", "-v", "--persist"]
 
           # Ports exposed can be named so other resources can reference

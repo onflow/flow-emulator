@@ -48,7 +48,6 @@ spec:
         - name: gcr
       containers:
         - name: flow-emulator
-          # No tag, will be attached by teamcity
           image: gcr.io/dl-flow/emulator:v0.1.1
           args: ["-v", "--persist"]
 

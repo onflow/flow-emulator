@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   # This is the full name of your deployment. It must be unique
-  name: flow-emulator-v1
+  name: flow-emulator-v3
   namespace: flow
 
   # Best practice labels:
@@ -16,7 +16,7 @@ metadata:
     kind: web
     env: staging
     owner: Kan
-    version: v1
+    version: v3
 
 spec:
   replicas: 1
@@ -24,8 +24,8 @@ spec:
     matchLabels:
       app: flow-emulator
       env: staging
-      version: v1
-  serviceName: flow-emulator-v1
+      version: v3
+  serviceName: flow-emulator-v3
   template:
     metadata:
       annotations:
@@ -40,7 +40,7 @@ spec:
         app: flow-emulator
         env: staging
         owner: Kan
-        version: v1
+        version: v3
         kind: web
 
     spec:
@@ -48,8 +48,8 @@ spec:
         - name: gcr
       containers:
         - name: flow-emulator
-          image: gcr.io/dl-flow/emulator:37277992 # freeze version for v1
-          args: ["emulator", "start", "-v", "--persist"]
+          image: gcr.io/dl-flow/emulator:baa8778
+          args: ["-v", "--persist"]
 
           # Ports exposed can be named so other resources can reference
           # them by name and not have to hard code numbers
@@ -65,25 +65,26 @@ spec:
 
           # Environment variables
           env:
-            - name: FLOW_ROOTKEY
+            - name: FLOW_ROOTPRIVATEKEY
               valueFrom:
                 secretKeyRef:
-                  name: emulator-flow-json
+                  name: emulator-flow-json-v2
                   key: root-key
             - name: FLOW_DBPATH
               value: '/flowdb'
 
-          # Resource requests and contraints
+          # Resource requests and constraints
           resources:
             requests:
               cpu: '250m'
               memory: '256Mi'
             limits:
               cpu: '500m'
-              memory: '2048Mi'
+              memory: '4096Mi'
           volumeMounts:
             - name: badger-volume
               mountPath: /flowdb
+
           # Readiness Probe
           readinessProbe:
             httpGet:
@@ -100,6 +101,14 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 30
             successThreshold: 1
+
+          # Startup Probe
+          startupProbe:
+            httpGet:
+              path: /live
+              port: http
+            failureThreshold: 30
+            periodSeconds: 10
       volumes:
         - name: badger-volume
           persistentVolumeClaim:
