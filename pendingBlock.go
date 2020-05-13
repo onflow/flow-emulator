@@ -1,8 +1,6 @@
 package emulator
 
 import (
-	"fmt"
-
 	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
 	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
 	model "github.com/dapperlabs/flow-go/model/flow"
@@ -116,9 +114,6 @@ func (b *pendingBlock) LedgerDelta() delta.Delta {
 
 // AddTransaction adds a transaction to the pending block.
 func (b *pendingBlock) AddTransaction(tx model.TransactionBody) {
-
-	fmt.Printf("adding pending block tx %s\n", tx.ID())
-
 	b.transactionIDs = append(b.transactionIDs, tx.ID())
 	b.transactions[tx.ID()] = &tx
 }
