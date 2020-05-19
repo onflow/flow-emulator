@@ -12,7 +12,7 @@ endif
 #----------------------------------------------------------------------
 SERVICE_SHORT_NAME=emulator
 SERVICE_LONG_NAME=dl-flow/${SERVICE_SHORT_NAME}
-DEPLOYMENT_NAME=flow-emulator-v1
+DEPLOYMENT_NAME=flow-emulator-v2
 
 # Build information
 #----------------------------------------------------------------------

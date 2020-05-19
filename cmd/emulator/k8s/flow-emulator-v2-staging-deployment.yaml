@@ -48,7 +48,7 @@ spec:
         - name: gcr
       containers:
         - name: flow-emulator
-          image: gcr.io/dl-flow/emulator:nba-v2
+          image: gcr.io/dl-flow/emulator:nba-v3
           args: ["-v", "--persist"]
 
           # Ports exposed can be named so other resources can reference
