@@ -126,7 +126,7 @@ func TestCreateSale(t *testing.T) {
 	t.Run("Can create sale collection", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateSaleScript(tokenAddr, marketAddr, 0.15)).
-			SetGasLimit(10).
+			SetGasLimit(DefaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(bastianAddress)
@@ -149,7 +149,7 @@ func TestCreateSale(t *testing.T) {
 	t.Run("Can put an NFT up for sale", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateStartSaleScript(nftAddr, marketAddr, 0, 10)).
-			SetGasLimit(10).
+			SetGasLimit(DefaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(bastianAddress)
@@ -178,7 +178,7 @@ func TestCreateSale(t *testing.T) {
 	t.Run("Cannot buy an NFT for less than the sale price", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 0, 9)).
-			SetGasLimit(10).
+			SetGasLimit(DefaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(joshAddress)
@@ -194,7 +194,7 @@ func TestCreateSale(t *testing.T) {
 	t.Run("Cannot buy an NFT that is not for sale", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 2, 10)).
-			SetGasLimit(10).
+			SetGasLimit(DefaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(joshAddress)
@@ -210,7 +210,7 @@ func TestCreateSale(t *testing.T) {
 	t.Run("Can buy an NFT that is for sale", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateBuySaleScript(tokenAddr, nftAddr, marketAddr, bastianAddress, 0, 10)).
-			SetGasLimit(10).
+			SetGasLimit(DefaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(joshAddress)

@@ -69,7 +69,7 @@ func TestInitialization(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(script)).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)

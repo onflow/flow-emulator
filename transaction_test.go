@@ -28,7 +28,7 @@ func TestSubmitTransaction(t *testing.T) {
 
 	tx1 := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
-		SetGasLimit(10).
+		SetGasLimit(defaultGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
@@ -81,7 +81,7 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 
 		// Create transaction with no Script field
 		tx := flow.NewTransaction().
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address)
 
@@ -117,7 +117,7 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetGasLimit(10)
+			SetGasLimit(defaultGasLimit)
 
 		err := tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
@@ -132,7 +132,7 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 		// Create transaction with no PayerAccount field
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
-			SetGasLimit(10)
+			SetGasLimit(defaultGasLimit)
 
 		tx.ProposalKey = flow.ProposalKey{}
 
@@ -151,7 +151,7 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 			SetScript([]byte(addTwoScript)).
 			SetPayer(b.RootKey().Address).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, invalidSequenceNumber).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			AddAuthorizer(b.RootKey().Address)
 
 		err := tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
@@ -181,7 +181,7 @@ func TestSubmitDuplicateTransaction(t *testing.T) {
 
 	tx := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
-		SetGasLimit(10).
+		SetGasLimit(defaultGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
@@ -211,7 +211,7 @@ func TestSubmitTransactionReverted(t *testing.T) {
 
 	tx := flow.NewTransaction().
 		SetScript([]byte("invalid script")).
-		SetGasLimit(10).
+		SetGasLimit(defaultGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
@@ -260,7 +260,7 @@ func TestSubmitTransactionScriptAccounts(t *testing.T) {
 		// create transaction with two authorizing accounts
 		tx := flow.NewTransaction().
 			SetScript(script).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address).
@@ -294,7 +294,7 @@ func TestSubmitTransactionScriptAccounts(t *testing.T) {
 		// create transaction with two accounts
 		tx := flow.NewTransaction().
 			SetScript(script).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
@@ -327,7 +327,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(addressA).
 			AddAuthorizer(b.RootKey().Address)
@@ -352,7 +352,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(`transaction { execute { } }`)).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(invalidAddress)
@@ -385,7 +385,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
@@ -423,7 +423,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(script).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(accountAddressA, 1, 0).
 			SetPayer(accountAddressA).
 			AddAuthorizer(accountAddressA)
@@ -474,7 +474,7 @@ func TestSubmitTransactionScriptSignatures(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(addressA)
@@ -512,7 +512,7 @@ func TestSubmitTransactionScriptSignatures(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(multipleAccountScript).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address).
@@ -551,7 +551,7 @@ func TestGetTransaction(t *testing.T) {
 
 	tx1 := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
-		SetGasLimit(10).
+		SetGasLimit(defaultGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
@@ -589,7 +589,7 @@ func TestGetTransactionResult(t *testing.T) {
 
 	tx := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
-		SetGasLimit(10).
+		SetGasLimit(defaultGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
