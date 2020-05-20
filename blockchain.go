@@ -759,7 +759,7 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, code []byte) (s
 
 	tx := sdk.NewTransaction().
 		SetScript(createAccountScript).
-		SetGasLimit(10).
+		SetGasLimit(100).
 		SetProposalKey(rootKeyAddress, rootKey.ID, rootKey.SequenceNumber).
 		SetPayer(rootKeyAddress)
 

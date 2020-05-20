@@ -3,7 +3,7 @@ module github.com/dapperlabs/flow-emulator
 go 1.13
 
 require (
-	github.com/dapperlabs/flow-go v0.3.2-0.20200520025804-833d4413e3d3
+	github.com/dapperlabs/flow-go v0.3.2-0.20200520200337-3476e94b144b
 	github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200505040645-6043e0fe5246
 	github.com/davecgh/go-spew v1.1.1
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
