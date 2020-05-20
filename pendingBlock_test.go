@@ -24,7 +24,7 @@ func setupPendingBlockTests(t *testing.T) (
 
 	tx1 := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
-		SetGasLimit(10).
+		SetGasLimit(defaultGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
@@ -34,7 +34,7 @@ func setupPendingBlockTests(t *testing.T) (
 
 	tx2 := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
-		SetGasLimit(10).
+		SetGasLimit(defaultGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber+1).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
@@ -44,7 +44,7 @@ func setupPendingBlockTests(t *testing.T) (
 
 	invalid := flow.NewTransaction().
 		SetScript([]byte("invalid script")).
-		SetGasLimit(10).
+		SetGasLimit(defaultGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
@@ -266,7 +266,7 @@ func TestPendingBlockCommit(t *testing.T) {
 	t.Run("CommitBlock", func(t *testing.T) {
 		tx1 := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
@@ -295,7 +295,7 @@ func TestPendingBlockCommit(t *testing.T) {
 	t.Run("ExecuteAndCommitBlock", func(t *testing.T) {
 		tx1 := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)

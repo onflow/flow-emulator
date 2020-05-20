@@ -31,7 +31,7 @@ func TestCreateAccount(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(createAccountScript).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address)
 
@@ -68,7 +68,7 @@ func TestCreateAccount(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(createAccountScript).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address)
 
@@ -108,7 +108,7 @@ func TestCreateAccount(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(createAccountScript).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address)
 
@@ -145,7 +145,7 @@ func TestCreateAccount(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(createAccountScript).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address)
 
@@ -182,7 +182,7 @@ func TestCreateAccount(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(createAccountScript).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address)
 
@@ -228,7 +228,7 @@ func TestCreateAccount(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(createAccountScript).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address)
 
@@ -260,7 +260,7 @@ func TestCreateAccount(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(createAccountScript).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address)
 
@@ -294,7 +294,7 @@ func TestAddAccountKey(t *testing.T) {
 
 		tx1 := flow.NewTransaction().
 			SetScript(addKeyScript).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
@@ -319,7 +319,7 @@ func TestAddAccountKey(t *testing.T) {
 
 		tx2 := flow.NewTransaction().
 			SetScript(script).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, newKeyID, newKeySequenceNum).
 			SetPayer(b.RootKey().Address)
 
@@ -349,7 +349,7 @@ func TestAddAccountKey(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(addKeyScript).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
@@ -380,7 +380,7 @@ func TestRemoveAccountKey(t *testing.T) {
 	// create transaction that adds public key to account keys
 	tx1 := flow.NewTransaction().
 		SetScript(addKeyScript).
-		SetGasLimit(10).
+		SetGasLimit(defaultGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
@@ -408,7 +408,7 @@ func TestRemoveAccountKey(t *testing.T) {
 	// create transaction that removes root key
 	tx2 := flow.NewTransaction().
 		SetScript(templates.RemoveAccountKey(0)).
-		SetGasLimit(10).
+		SetGasLimit(defaultGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
@@ -436,7 +436,7 @@ func TestRemoveAccountKey(t *testing.T) {
 	// create transaction that removes remaining account key
 	tx3 := flow.NewTransaction().
 		SetScript(templates.RemoveAccountKey(0)).
-		SetGasLimit(10).
+		SetGasLimit(defaultGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
@@ -465,7 +465,7 @@ func TestRemoveAccountKey(t *testing.T) {
 	// create transaction that removes remaining account key
 	tx4 := flow.NewTransaction().
 		SetScript(templates.RemoveAccountKey(0)).
-		SetGasLimit(10).
+		SetGasLimit(defaultGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
@@ -526,7 +526,7 @@ func TestUpdateAccountCode(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(templates.UpdateAccountCode(codeB)).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(accountAddressB)
@@ -567,7 +567,7 @@ func TestUpdateAccountCode(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(templates.UpdateAccountCode(codeB)).
-			SetGasLimit(10).
+			SetGasLimit(defaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(accountAddressB)
@@ -627,7 +627,7 @@ func TestImportAccountCode(t *testing.T) {
 
 	tx := flow.NewTransaction().
 		SetScript(script).
-		SetGasLimit(10).
+		SetGasLimit(defaultGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address)
 
