@@ -36,7 +36,7 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 
 	tx := flow.NewTransaction().
 		SetScript(updateTokenScript).
-		SetGasLimit(10).
+		SetGasLimit(DefaultGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
@@ -65,7 +65,7 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 					b.RootKey().Address.Short(),
 				),
 			)).
-			SetGasLimit(10).
+			SetGasLimit(DefaultGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
@@ -112,7 +112,7 @@ func TestFungibleTokenTutorialContractCreation(t *testing.T) {
 					b.RootKey().Address.Short(),
 				),
 			)).
-			SetGasLimit(10).
+			SetGasLimit(DefaultGasLimit).
 			SetProposalKey(account2Address, 0, 0).
 			SetPayer(account2Address).
 			AddAuthorizer(account2Address)
