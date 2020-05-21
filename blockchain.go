@@ -15,7 +15,7 @@ import (
 	"fmt"
 	"sync"
 
-	hasing "github.com/dapperlabs/flow-go/crypto/hash"
+	"github.com/dapperlabs/flow-go/crypto/hash"
 	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
 	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
 	model "github.com/dapperlabs/flow-go/model/flow"
@@ -24,7 +24,6 @@ import (
 	sdk "github.com/onflow/flow-go-sdk"
 	sdkCrypto "github.com/onflow/flow-go-sdk/crypto"
 
-	//"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
 
 	"github.com/dapperlabs/flow-emulator/convert"
@@ -708,7 +707,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, blockHeight uint64) (*t
 		return nil, err
 	}
 
-	hasher := hasing.NewSHA3_256()
+	hasher := hash.NewSHA3_256()
 	scriptID := sdk.HashToID(hasher.ComputeHash(script))
 
 	events := sdkConvert.RuntimeEventsToSDK(result.Events, scriptID, 0)
