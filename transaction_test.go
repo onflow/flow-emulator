@@ -726,9 +726,7 @@ func TestHelloWorldNewAccount(t *testing.T) {
 
 	// call hello world code
 
-	// TODO: accountKey.SequenceNumber is 42?!
 	const sequenceNumber = 0
-	// TODO: accountKey.ID is 1, AccountKeyGenerator starts at 1?
 	const keyID = 0
 
 	callHelloCode := []byte(fmt.Sprintf(callHelloTxTemplate, newAccountAddress.Hex()))
@@ -804,9 +802,7 @@ func TestHelloWorldUpdateAccount(t *testing.T) {
 
 	t.Logf("new account address: 0x%s", newAccountAddress.Hex())
 
-	// TODO: accountKey.SequenceNumber is 42?!
 	var sequenceNumber uint64 = 0
-	// TODO: accountKey.ID is 1, AccountKeyGenerator starts at 1?
 	const keyID = 0
 
 	updateAccountScript := templates.UpdateAccountCode([]byte(helloWorldContract))
@@ -830,7 +826,6 @@ func TestHelloWorldUpdateAccount(t *testing.T) {
 
 	// call hello world code
 
-	// TODO: accountKey.SequenceNumber is 42?!
 	sequenceNumber++
 
 	callHelloCode := []byte(fmt.Sprintf(callHelloTxTemplate, newAccountAddress.Hex()))
