@@ -11,6 +11,7 @@ import (
 	"github.com/onflow/cadence/runtime/interpreter"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
+	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -636,4 +637,115 @@ func TestGetTransactionResult(t *testing.T) {
 	assert.Equal(t, eventType, event.Type)
 	assert.Equal(t, 0, event.EventIndex)
 	assert.Equal(t, cadence.NewInt(2), event.Value.Fields[0])
+}
+
+const helloWorldContract = `
+    pub contract HelloWorld {
+
+        pub let greeting: String
+
+        init() {
+            self.greeting = "Hello, World!"
+        }
+
+        pub fun hello(): String {
+            return self.greeting
+        }
+    }
+`
+
+const callHelloTxTemplate = `
+    import HelloWorld from 0x%s
+    transaction {
+        prepare() {
+            assert(HelloWorld.hello() == "Hello, World!")
+        }
+    }
+`
+
+func TestHelloWorldNewAccount(t *testing.T) {
+	accountKeys := test.AccountKeyGenerator()
+
+	b, err := emulator.NewBlockchain()
+	require.NoError(t, err)
+
+	accountKey, accountSigner := accountKeys.NewWithSigner()
+	_ = accountSigner
+
+	script, err := templates.CreateAccount(
+		[]*flow.AccountKey{
+			accountKey,
+		},
+		[]byte(helloWorldContract),
+	)
+	require.NoError(t, err)
+
+	createAccountTx := flow.NewTransaction().
+		SetScript(script).
+		SetGasLimit(defaultGasLimit).
+		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+		SetPayer(b.RootKey().Address)
+
+	err = createAccountTx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	assert.NoError(t, err)
+
+	err = b.AddTransaction(*createAccountTx)
+	assert.NoError(t, err)
+
+	result, err := b.ExecuteNextTransaction()
+	assert.NoError(t, err)
+	assertTransactionSucceeded(t, result)
+
+	_, err = b.CommitBlock()
+	assert.NoError(t, err)
+
+	// createAccountTx status becomes TransactionStatusSealed
+	createAccountTxResult, err := b.GetTransactionResult(createAccountTx.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, flow.TransactionStatusSealed, createAccountTxResult.Status)
+
+
+	var newAccountAddress flow.Address
+	for _, event := range createAccountTxResult.Events {
+		if event.Type == flow.EventAccountCreated {
+			accountCreatedEvent := flow.AccountCreatedEvent(event)
+			newAccountAddress = accountCreatedEvent.Address()
+			break
+		}
+
+		assert.Fail(t, "missing account created event")
+	}
+
+	t.Logf("new account address: 0x%s", newAccountAddress.Hex())
+
+	account, err := b.GetAccount(newAccountAddress)
+	assert.NoError(t, err)
+
+	assert.Equal(t, newAccountAddress, account.Address)
+
+	// call hello world code
+	callHelloCode := []byte(fmt.Sprintf(callHelloTxTemplate, newAccountAddress.Hex()))
+	callHelloTx := flow.NewTransaction().
+		SetScript(callHelloCode).
+
+	// TODO: fails with account does not exist
+		SetProposalKey(newAccountAddress, accountKey.ID, accountKey.SequenceNumber).
+		SetPayer(newAccountAddress)
+	err = callHelloTx.SignEnvelope(newAccountAddress, accountKey.ID, accountSigner)
+
+	//	SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
+	//	SetPayer(b.RootKey().Address)
+	//err = callHelloTx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+
+	assert.NoError(t, err)
+
+	err = b.AddTransaction(*callHelloTx)
+	assert.NoError(t, err)
+
+	result, err = b.ExecuteNextTransaction()
+	assert.NoError(t, err)
+	assertTransactionSucceeded(t, result)
+
+	_, err = b.CommitBlock()
+	assert.NoError(t, err)
 }
