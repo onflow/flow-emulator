@@ -110,6 +110,11 @@ func (r RootKey) AccountKey() *sdk.AccountKey {
 	}
 }
 
+// MaxGasLimit is the maximum gas limit supported by the emulated blockchain.
+//
+// TODO: replace with safe limit
+const MaxGasLimit = 999999999
+
 // config is a set of configuration options for an emulated blockchain.
 type config struct {
 	RootKey RootKey
@@ -758,7 +763,7 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, code []byte) (s
 
 	tx := sdk.NewTransaction().
 		SetScript(createAccountScript).
-		SetGasLimit(100).
+		SetGasLimit(MaxGasLimit).
 		SetProposalKey(rootKeyAddress, rootKey.ID, rootKey.SequenceNumber).
 		SetPayer(rootKeyAddress)
 

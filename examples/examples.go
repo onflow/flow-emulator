@@ -14,8 +14,6 @@ import (
 	emulator "github.com/dapperlabs/flow-emulator"
 )
 
-const DefaultGasLimit = 100
-
 // ReadFile reads a file from the file system
 func ReadFile(path string) []byte {
 	contents, err := ioutil.ReadFile(path)

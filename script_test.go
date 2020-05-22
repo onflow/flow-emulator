@@ -19,7 +19,7 @@ func TestExecuteScript(t *testing.T) {
 
 	tx := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
-		SetGasLimit(defaultGasLimit).
+		SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)

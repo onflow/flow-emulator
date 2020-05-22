@@ -30,7 +30,7 @@ func TestCollections(t *testing.T) {
 
 		tx1 := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
-			SetGasLimit(defaultGasLimit).
+			SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
@@ -40,7 +40,7 @@ func TestCollections(t *testing.T) {
 
 		tx2 := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
-			SetGasLimit(defaultGasLimit).
+			SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)

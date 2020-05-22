@@ -3,6 +3,7 @@ package examples
 import (
 	"testing"
 
+	emulator "github.com/dapperlabs/flow-emulator"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,7 +39,7 @@ func TestCreateMinter(t *testing.T) {
 	t.Run("Cannot create minter with negative initial ID", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateMinterScript(contractAddr, -1, 2)).
-			SetGasLimit(DefaultGasLimit).
+			SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
@@ -54,7 +55,7 @@ func TestCreateMinter(t *testing.T) {
 	t.Run("Cannot create minter with special mod < 2", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateMinterScript(contractAddr, 1, 1)).
-			SetGasLimit(DefaultGasLimit).
+			SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
@@ -70,7 +71,7 @@ func TestCreateMinter(t *testing.T) {
 	t.Run("Should be able to create minter", func(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(GenerateCreateMinterScript(contractAddr, 1, 2)).
-			SetGasLimit(DefaultGasLimit).
+			SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address).
 			AddAuthorizer(b.RootKey().Address)
@@ -95,7 +96,7 @@ func TestMinting(t *testing.T) {
 	// Next, instantiate the minter
 	createMinterTx := flow.NewTransaction().
 		SetScript(GenerateCreateMinterScript(contractAddr, 1, 2)).
-		SetGasLimit(DefaultGasLimit).
+		SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
@@ -110,7 +111,7 @@ func TestMinting(t *testing.T) {
 	// Mint the first NFT
 	mintTx1 := flow.NewTransaction().
 		SetScript(GenerateMintScript(contractAddr)).
-		SetGasLimit(DefaultGasLimit).
+		SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
@@ -132,7 +133,7 @@ func TestMinting(t *testing.T) {
 	// Mint a second NF
 	mintTx2 := flow.NewTransaction().
 		SetScript(GenerateMintScript(contractAddr)).
-		SetGasLimit(DefaultGasLimit).
+		SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 		SetPayer(b.RootKey().Address).
 		AddAuthorizer(b.RootKey().Address)
