@@ -15,8 +15,10 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/dapperlabs/flow-go/crypto"
 	"github.com/dapperlabs/flow-go/crypto/hash"
 	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
+	"github.com/dapperlabs/flow-go/engine/execution/state/bootstrap"
 	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
 	model "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/onflow/cadence"
@@ -68,7 +70,6 @@ type BlockchainAPI interface {
 	GetEventsByHeight(blockHeight uint64, eventType string) ([]sdk.Event, error)
 	ExecuteScript(script []byte) (*types.ScriptResult, error)
 	ExecuteScriptAtBlock(script []byte, blockHeight uint64) (*types.ScriptResult, error)
-	RootAccountAddress() sdk.Address
 	RootKey() RootKey
 }
 
@@ -81,7 +82,7 @@ type RootKey struct {
 	PrivateKey     *sdkCrypto.PrivateKey
 	PublicKey      *sdkCrypto.PublicKey
 	HashAlgo       sdkCrypto.HashAlgorithm
-	SignAlgo       sdkCrypto.SignatureAlgorithm
+	SigAlgo        sdkCrypto.SignatureAlgorithm
 	Weight         int
 }
 
@@ -103,7 +104,7 @@ func (r RootKey) AccountKey() *sdk.AccountKey {
 	return &sdk.AccountKey{
 		ID:             r.ID,
 		PublicKey:      publicKey,
-		SigAlgo:        r.SignAlgo,
+		SigAlgo:        r.SigAlgo,
 		HashAlgo:       r.HashAlgo,
 		Weight:         r.Weight,
 		SequenceNumber: r.SequenceNumber,
@@ -137,7 +138,7 @@ func WithRootPublicKey(
 	return func(c *config) {
 		c.RootKey = RootKey{
 			PublicKey: &rootPublicKey,
-			SignAlgo:  sigAlgo,
+			SigAlgo:   sigAlgo,
 			HashAlgo:  hashAlgo,
 		}
 	}
@@ -186,11 +187,8 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	} else {
 		genesisLedgerView := store.LedgerViewByHeight(0)
 
-		// storage is empty, create the root account
-		_, err := createAccount(genesisLedgerView, rootKey.AccountKey())
-		if err != nil {
-			return nil, fmt.Errorf("error while creating root account: %w", err)
-		}
+		// storage is empty, bootstrap new execution state
+		bootstrapLedger(genesisLedgerView, rootKey.AccountKey())
 
 		// commit the genesis block to storage
 		genesis := model.Genesis(nil)
@@ -229,11 +227,6 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	}
 
 	return b, nil
-}
-
-// RootAccountAddress returns the root account address for this blockchain.
-func (b *Blockchain) RootAccountAddress() sdk.Address {
-	return b.rootKey.Address
 }
 
 // RootKey returns the root private key for this blockchain.
@@ -765,7 +758,8 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, code []byte) (s
 		SetScript(createAccountScript).
 		SetGasLimit(MaxGasLimit).
 		SetProposalKey(rootKeyAddress, rootKey.ID, rootKey.SequenceNumber).
-		SetPayer(rootKeyAddress)
+		SetPayer(rootKeyAddress).
+		AddAuthorizer(rootKeyAddress)
 
 	err = tx.SignEnvelope(rootKeyAddress, rootKey.ID, rootKey.Signer())
 	if err != nil {
@@ -796,31 +790,6 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, code []byte) (s
 	return sdkConvert.FlowAddressToSDK(b.LastCreatedAccount().Address), nil
 }
 
-// createAccount creates an account with the given private key and injects it
-// into the given state, bypassing the need for a transaction.
-func createAccount(ledgerView *delta.View, accountKey *sdk.AccountKey) (sdk.Account, error) {
-	flowAccountKey, err := sdkConvert.SDKAccountPublicKeyToFlow(*accountKey)
-	if err != nil {
-		return sdk.Account{}, err
-	}
-
-	ledgerAccess := virtualmachine.LedgerDAL{Ledger: ledgerView}
-	accountAddress, err := ledgerAccess.CreateAccountInLedger([]model.AccountPublicKey{flowAccountKey})
-
-	if err != nil {
-		return sdk.Account{}, err
-	}
-
-	account := ledgerAccess.GetAccount(accountAddress)
-
-	sdkAccount, err := sdkConvert.FlowAccountToSDK(*account)
-	if err != nil {
-		return sdk.Account{}, err
-	}
-
-	return sdkAccount, nil
-}
-
 func convertToSealedResults(
 	results map[model.Identifier]IndexedTransactionResult,
 ) (map[model.Identifier]*types.StorableTransactionResult, error) {
@@ -838,6 +807,22 @@ func convertToSealedResults(
 	return output, nil
 }
 
+func bootstrapLedger(ledger virtualmachine.Ledger, accountKey *sdk.AccountKey) {
+	publicKey, _ := crypto.DecodePublicKey(
+		crypto.SigningAlgorithm(accountKey.SigAlgo),
+		accountKey.PublicKey.Encode(),
+	)
+
+	flowAccountKey := model.AccountPublicKey{
+		PublicKey: publicKey,
+		SignAlgo:  crypto.SigningAlgorithm(accountKey.SigAlgo),
+		HashAlgo:  hash.HashingAlgorithm(accountKey.HashAlgo),
+		Weight:    virtualmachine.AccountKeyWeightThreshold,
+	}
+
+	bootstrap.BootstrapView(ledger, flowAccountKey)
+}
+
 const DefaultRootPrivateKeySeed = "elephant ears space cowboy octopus rodeo potato cannon pineapple"
 
 func init() {
@@ -849,7 +834,7 @@ func init() {
 
 	defaultConfig.RootKey = RootKey{
 		PrivateKey: &privateKey,
-		SignAlgo:   privateKey.Algorithm(),
+		SigAlgo:    privateKey.Algorithm(),
 		HashAlgo:   sdkCrypto.SHA3_256,
 	}
 }
