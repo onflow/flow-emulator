@@ -342,7 +342,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFlowVMErrorType(t, result.Error, &virtualmachine.MissingSignatureError{})
+		unittest.AssertFlowVMErrorType(t, &virtualmachine.MissingSignatureError{}, result.Error)
 	})
 
 	t.Run("InvalidAccount", func(t *testing.T) {
@@ -370,7 +370,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFlowVMErrorType(t, result.Error, &virtualmachine.InvalidSignatureAccountError{})
+		unittest.AssertFlowVMErrorType(t, &virtualmachine.InvalidSignatureAccountError{}, result.Error)
 	})
 
 	t.Run("InvalidKeyPair", func(t *testing.T) {
@@ -400,7 +400,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFlowVMErrorType(t, result.Error, &virtualmachine.InvalidSignaturePublicKeyError{})
+		unittest.AssertFlowVMErrorType(t, &virtualmachine.InvalidSignaturePublicKeyError{}, result.Error)
 	})
 
 	t.Run("KeyWeights", func(t *testing.T) {
@@ -450,7 +450,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 			result, err := b.ExecuteNextTransaction()
 			assert.NoError(t, err)
 
-			unittest.AssertFlowVMErrorType(t, result.Error, &virtualmachine.MissingSignatureError{})
+			unittest.AssertFlowVMErrorType(t, &virtualmachine.MissingSignatureError{}, result.Error)
 		})
 
 		t.Run("SufficientKeyWeight", func(t *testing.T) {
@@ -489,7 +489,7 @@ func TestSubmitTransactionScriptSignatures(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFlowVMErrorType(t, result.Error, &virtualmachine.MissingSignatureError{})
+		unittest.AssertFlowVMErrorType(t, &virtualmachine.MissingSignatureError{}, result.Error)
 	})
 
 	t.Run("MultipleAccounts", func(t *testing.T) {
@@ -671,7 +671,7 @@ func TestHelloWorldNewAccount(t *testing.T) {
 
 	accountKey, accountSigner := accountKeys.NewWithSigner()
 
-	script, err := templates.CreateAccount(
+	createAccountScript, err := templates.CreateAccount(
 		[]*flow.AccountKey{
 			accountKey,
 		},
@@ -680,10 +680,11 @@ func TestHelloWorldNewAccount(t *testing.T) {
 	require.NoError(t, err)
 
 	createAccountTx := flow.NewTransaction().
-		SetScript(script).
+		SetScript(createAccountScript).
 		SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-		SetPayer(b.RootKey().Address)
+		SetPayer(b.RootKey().Address).
+		AddAuthorizer(b.RootKey().Address)
 
 	err = createAccountTx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
@@ -730,6 +731,7 @@ func TestHelloWorldNewAccount(t *testing.T) {
 		SetScript(callHelloCode).
 		SetProposalKey(newAccountAddress, accountKey.ID, accountKey.SequenceNumber).
 		SetPayer(newAccountAddress)
+
 	err = callHelloTx.SignEnvelope(newAccountAddress, accountKey.ID, accountSigner)
 	assert.NoError(t, err)
 
@@ -765,7 +767,8 @@ func TestHelloWorldUpdateAccount(t *testing.T) {
 		SetScript(createAccountScript).
 		SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-		SetPayer(b.RootKey().Address)
+		SetPayer(b.RootKey().Address).
+		AddAuthorizer(b.RootKey().Address)
 
 	err = createAccountTx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 	assert.NoError(t, err)
@@ -807,8 +810,9 @@ func TestHelloWorldUpdateAccount(t *testing.T) {
 	updateAccountCodeTx := flow.NewTransaction().
 		SetScript(updateAccountScript).
 		SetProposalKey(newAccountAddress, accountKey.ID, accountKey.SequenceNumber).
-		AddAuthorizer(newAccountAddress).
-		SetPayer(newAccountAddress)
+		SetPayer(newAccountAddress).
+		AddAuthorizer(newAccountAddress)
+
 	err = updateAccountCodeTx.SignEnvelope(newAccountAddress, accountKey.ID, accountSigner)
 	assert.NoError(t, err)
 
@@ -831,6 +835,7 @@ func TestHelloWorldUpdateAccount(t *testing.T) {
 		SetScript(callHelloCode).
 		SetProposalKey(newAccountAddress, accountKey.ID, accountKey.SequenceNumber).
 		SetPayer(newAccountAddress)
+
 	err = callHelloTx.SignEnvelope(newAccountAddress, accountKey.ID, accountSigner)
 	assert.NoError(t, err)
 

@@ -1,6 +1,7 @@
 package emulator_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
@@ -33,7 +34,8 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(b.RootKey().Address)
 
 		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
@@ -70,7 +72,8 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(b.RootKey().Address)
 
 		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
@@ -110,7 +113,8 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(b.RootKey().Address)
 
 		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
@@ -147,7 +151,8 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(b.RootKey().Address)
 
 		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
@@ -184,7 +189,8 @@ func TestCreateAccount(t *testing.T) {
 			SetScript(createAccountScript).
 			SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address)
+			SetPayer(b.RootKey().Address).
+			AddAuthorizer(b.RootKey().Address)
 
 		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
 		assert.NoError(t, err)
@@ -452,7 +458,7 @@ func TestRemoveAccountKey(t *testing.T) {
 	result, err = b.ExecuteNextTransaction()
 	assert.NoError(t, err)
 
-	unittest.AssertFlowVMErrorType(t, result.Error, &virtualmachine.InvalidSignaturePublicKeyError{})
+	unittest.AssertFlowVMErrorType(t, &virtualmachine.InvalidSignaturePublicKeyError{}, result.Error)
 
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
@@ -581,7 +587,7 @@ func TestUpdateAccountCode(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFlowVMErrorType(t, result.Error, &virtualmachine.MissingSignatureError{})
+		unittest.AssertFlowVMErrorType(t, &virtualmachine.MissingSignatureError{}, result.Error)
 
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)
@@ -609,11 +615,9 @@ func TestImportAccountCode(t *testing.T) {
 	address, err := b.CreateAccount(nil, accountScript)
 	assert.NoError(t, err)
 
-	assert.Equal(t, flow.HexToAddress("02"), address)
-
-	script := []byte(`
+	script := []byte(fmt.Sprintf(`
 		// address imports can omit leading zeros
-		import 0x02
+		import 0x%s
 
 		transaction {
 		  execute {
@@ -623,7 +627,7 @@ func TestImportAccountCode(t *testing.T) {
 			}
 		  }
 		}
-	`)
+	`, address))
 
 	tx := flow.NewTransaction().
 		SetScript(script).
