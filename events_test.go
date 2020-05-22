@@ -76,7 +76,7 @@ func TestEventEmitted(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(script).
-			SetGasLimit(defaultGasLimit).
+			SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
 			SetPayer(b.RootKey().Address)
 
