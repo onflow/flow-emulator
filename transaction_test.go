@@ -671,8 +671,6 @@ func TestHelloWorldNewAccount(t *testing.T) {
 
 	accountKey, accountSigner := accountKeys.NewWithSigner()
 
-	t.Logf("account key ID: %d", accountKey.ID)
-
 	script, err := templates.CreateAccount(
 		[]*flow.AccountKey{
 			accountKey,
@@ -726,15 +724,14 @@ func TestHelloWorldNewAccount(t *testing.T) {
 
 	// call hello world code
 
-	const sequenceNumber = 0
-	const keyID = 0
+	accountKey = account.Keys[0]
 
 	callHelloCode := []byte(fmt.Sprintf(callHelloTxTemplate, newAccountAddress.Hex()))
 	callHelloTx := flow.NewTransaction().
 		SetScript(callHelloCode).
-		SetProposalKey(newAccountAddress, keyID, sequenceNumber).
+		SetProposalKey(newAccountAddress, accountKey.ID, accountKey.SequenceNumber).
 		SetPayer(newAccountAddress)
-	err = callHelloTx.SignEnvelope(newAccountAddress, keyID, accountSigner)
+	err = callHelloTx.SignEnvelope(newAccountAddress, accountKey.ID, accountSigner)
 	assert.NoError(t, err)
 
 	err = b.AddTransaction(*callHelloTx)
@@ -802,16 +799,18 @@ func TestHelloWorldUpdateAccount(t *testing.T) {
 
 	t.Logf("new account address: 0x%s", newAccountAddress.Hex())
 
-	var sequenceNumber uint64 = 0
-	const keyID = 0
+	account, err := b.GetAccount(newAccountAddress)
+	assert.NoError(t, err)
+
+	accountKey = account.Keys[0]
 
 	updateAccountScript := templates.UpdateAccountCode([]byte(helloWorldContract))
 	updateAccountCodeTx := flow.NewTransaction().
 		SetScript(updateAccountScript).
-		SetProposalKey(newAccountAddress, keyID, sequenceNumber).
+		SetProposalKey(newAccountAddress, accountKey.ID, accountKey.SequenceNumber).
 		AddAuthorizer(newAccountAddress).
 		SetPayer(newAccountAddress)
-	err = updateAccountCodeTx.SignEnvelope(newAccountAddress, keyID, accountSigner)
+	err = updateAccountCodeTx.SignEnvelope(newAccountAddress, accountKey.ID, accountSigner)
 	assert.NoError(t, err)
 
 	err = b.AddTransaction(*updateAccountCodeTx)
@@ -826,14 +825,14 @@ func TestHelloWorldUpdateAccount(t *testing.T) {
 
 	// call hello world code
 
-	sequenceNumber++
+	accountKey.SequenceNumber++
 
 	callHelloCode := []byte(fmt.Sprintf(callHelloTxTemplate, newAccountAddress.Hex()))
 	callHelloTx := flow.NewTransaction().
 		SetScript(callHelloCode).
-		SetProposalKey(newAccountAddress, keyID, sequenceNumber).
+		SetProposalKey(newAccountAddress, accountKey.ID, accountKey.SequenceNumber).
 		SetPayer(newAccountAddress)
-	err = callHelloTx.SignEnvelope(newAccountAddress, keyID, accountSigner)
+	err = callHelloTx.SignEnvelope(newAccountAddress, accountKey.ID, accountSigner)
 	assert.NoError(t, err)
 
 	err = b.AddTransaction(*callHelloTx)
