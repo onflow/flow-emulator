@@ -13,8 +13,6 @@ import (
 	"github.com/dapperlabs/flow-emulator/types"
 )
 
-const defaultGasLimit = 100
-
 const counterScript = `
 
   pub contract Counting {
