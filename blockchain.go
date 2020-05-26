@@ -808,6 +808,8 @@ func convertToSealedResults(
 	return output, nil
 }
 
+const genesisTokenSupply = 1_000_000_000_000_000
+
 func bootstrapLedger(ledger virtualmachine.Ledger, accountKey *sdk.AccountKey) {
 	publicKey, _ := crypto.DecodePublicKey(
 		crypto.SigningAlgorithm(accountKey.SigAlgo),
@@ -821,7 +823,7 @@ func bootstrapLedger(ledger virtualmachine.Ledger, accountKey *sdk.AccountKey) {
 		Weight:    virtualmachine.AccountKeyWeightThreshold,
 	}
 
-	bootstrap.BootstrapView(ledger, flowAccountKey)
+	bootstrap.BootstrapView(ledger, flowAccountKey, genesisTokenSupply)
 }
 
 const DefaultRootPrivateKeySeed = "elephant ears space cowboy octopus rodeo potato cannon pineapple"
