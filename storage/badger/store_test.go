@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
-	model "github.com/dapperlabs/flow-go/model/flow"
+	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	fixtures "github.com/dapperlabs/flow-go/utils/unittest"
 	flowGenerator "github.com/dapperlabs/flow-go/utils/unittest/generator"
 	"github.com/onflow/flow-go-sdk/test"
@@ -29,13 +29,13 @@ func TestBlocks(t *testing.T) {
 		require.Nil(t, os.RemoveAll(dir))
 	}()
 
-	block1 := model.Block{
-		Header: &model.Header{
+	block1 := flowgo.Block{
+		Header: &flowgo.Header{
 			Height: 1,
 		},
 	}
-	block2 := model.Block{
-		Header: &model.Header{
+	block2 := flowgo.Block{
+		Header: &flowgo.Header{
 			Height: 2,
 		},
 	}
@@ -213,7 +213,7 @@ func TestLedger(t *testing.T) {
 
 		t.Run("should be to get set ledger", func(t *testing.T) {
 			gotLedger := store.LedgerViewByHeight(blockHeight)
-			gotRegister, err := gotLedger.Get(model.RegisterID("foo"))
+			gotRegister, err := gotLedger.Get(flowgo.RegisterID("foo"))
 			assert.NoError(t, err)
 			assert.Equal(t, ledger["foo"], gotRegister)
 		})
@@ -255,7 +255,7 @@ func TestLedger(t *testing.T) {
 		t.Run("should version the first written block", func(t *testing.T) {
 			gotLedger := store.LedgerViewByHeight(1)
 			for i := 1; i <= 3; i++ {
-				val, err := gotLedger.Get(model.RegisterID(fmt.Sprintf("%d", i)))
+				val, err := gotLedger.Get(flowgo.RegisterID(fmt.Sprintf("%d", i)))
 				assert.NoError(t, err)
 				assert.Equal(t, []byte{byte(1)}, val)
 			}
@@ -267,13 +267,13 @@ func TestLedger(t *testing.T) {
 				gotLedger := store.LedgerViewByHeight(uint64(block))
 				// The keys 1->N-1 are defined in previous blocks
 				for i := 1; i < block; i++ {
-					val, err := gotLedger.Get(model.RegisterID(fmt.Sprintf("%d", i)))
+					val, err := gotLedger.Get(flowgo.RegisterID(fmt.Sprintf("%d", i)))
 					assert.NoError(t, err)
 					assert.Equal(t, []byte{byte(i)}, val)
 				}
 				// The keys N->N+2 are defined in the queried block
 				for i := block; i <= block+2; i++ {
-					val, err := gotLedger.Get(model.RegisterID(fmt.Sprintf("%d", i)))
+					val, err := gotLedger.Get(flowgo.RegisterID(fmt.Sprintf("%d", i)))
 					assert.NoError(t, err)
 					assert.Equal(t, []byte{byte(block)}, val)
 				}
@@ -290,7 +290,7 @@ func TestInsertEvents(t *testing.T) {
 	}()
 
 	t.Run("should be able to insert events", func(t *testing.T) {
-		events := []model.Event{flowGenerator.EventGenerator().New()}
+		events := []flowgo.Event{flowGenerator.EventGenerator().New()}
 		var blockHeight uint64 = 1
 
 		err := store.InsertEvents(blockHeight, events)
@@ -315,9 +315,9 @@ func TestEventsByHeight(t *testing.T) {
 		emptyBlockHeight       uint64 = 2
 		nonExistentBlockHeight uint64 = 3
 
-		allEvents = make([]model.Event, 10)
-		eventsA   = make([]model.Event, 0, 5)
-		eventsB   = make([]model.Event, 0, 5)
+		allEvents = make([]flowgo.Event, 10)
+		eventsA   = make([]flowgo.Event, 0, 5)
+		eventsB   = make([]flowgo.Event, 0, 5)
 	)
 
 	for i, _ := range allEvents {
@@ -387,9 +387,9 @@ func TestPersistence(t *testing.T) {
 		require.Nil(t, os.RemoveAll(dir))
 	}()
 
-	block := model.Block{Header: &model.Header{Height: 1}}
+	block := flowgo.Block{Header: &flowgo.Header{Height: 1}}
 	tx := unittest.TransactionFixture()
-	events := []model.Event{flowGenerator.EventGenerator().New()}
+	events := []flowgo.Event{flowGenerator.EventGenerator().New()}
 
 	ledger := make(delta.Delta)
 	ledger["foo"] = []byte("bar")
@@ -425,7 +425,7 @@ func TestPersistence(t *testing.T) {
 	assert.Equal(t, events, gotEvents)
 
 	gotLedger := store.LedgerViewByHeight(block.Header.Height)
-	gotRegister, err := gotLedger.Get(model.RegisterID("foo"))
+	gotRegister, err := gotLedger.Get(flowgo.RegisterID("foo"))
 	assert.NoError(t, err)
 	assert.Equal(t, ledger["foo"], gotRegister)
 }
@@ -479,15 +479,15 @@ func BenchmarkBlockDiskUsage(b *testing.B) {
 	b.StartTimer()
 	var lastDBSize int64
 	for i := 0; i < b.N; i++ {
-		block := model.Block{
-			Header: &model.Header{
+		block := flowgo.Block{
+			Header: &flowgo.Header{
 				Height:   uint64(i),
 				ParentID: flowUnitest.IdentifierFixture(),
 			},
-			Payload: &model.Payload{
-				Guarantees: []*model.CollectionGuarantee{
+			Payload: &flowgo.Payload{
+				Guarantees: []*flowgo.CollectionGuarantee{
 					{
-						CollectionID: model.Identifier(ids.New()),
+						CollectionID: flowgo.Identifier(ids.New()),
 					},
 				},
 			},

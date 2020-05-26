@@ -8,7 +8,7 @@ import (
 	realFlow "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/dgraph-io/badger/v2"
 
-	model "github.com/dapperlabs/flow-go/model/flow"
+	flowgo "github.com/dapperlabs/flow-go/model/flow"
 
 	"github.com/dapperlabs/flow-emulator/storage"
 	"github.com/dapperlabs/flow-emulator/types"
@@ -99,7 +99,7 @@ func (s *Store) LatestBlock() (block realFlow.Block, err error) {
 	return
 }
 
-func (s *Store) BlockByID(blockID model.Identifier) (block realFlow.Block, err error) {
+func (s *Store) BlockByID(blockID flowgo.Identifier) (block realFlow.Block, err error) {
 	err = s.db.View(func(txn *badger.Txn) error {
 		// get block height by block ID
 		encBlockHeight, err := getTx(txn)(blockIDIndexKey(blockID))
@@ -174,12 +174,12 @@ func insertBlock(block realFlow.Block) func(txn *badger.Txn) error {
 }
 
 func (s *Store) CommitBlock(
-	block model.Block,
-	collections []*model.LightCollection,
-	transactions map[model.Identifier]*model.TransactionBody,
-	transactionResults map[model.Identifier]*types.StorableTransactionResult,
+	block flowgo.Block,
+	collections []*flowgo.LightCollection,
+	transactions map[flowgo.Identifier]*flowgo.TransactionBody,
+	transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
 	delta delta.Delta,
-	events []model.Event,
+	events []flowgo.Event,
 ) error {
 	if len(transactions) != len(transactionResults) {
 		return fmt.Errorf(
@@ -234,7 +234,7 @@ func (s *Store) CommitBlock(
 	return err
 }
 
-func (s *Store) CollectionByID(colID model.Identifier) (col model.LightCollection, err error) {
+func (s *Store) CollectionByID(colID flowgo.Identifier) (col flowgo.LightCollection, err error) {
 	err = s.db.View(func(txn *badger.Txn) error {
 		encCol, err := getTx(txn)(collectionKey(colID))
 		if err != nil {
@@ -245,11 +245,11 @@ func (s *Store) CollectionByID(colID model.Identifier) (col model.LightCollectio
 	return
 }
 
-func (s *Store) InsertCollection(col model.LightCollection) error {
+func (s *Store) InsertCollection(col flowgo.LightCollection) error {
 	return s.db.Update(insertCollection(col))
 }
 
-func insertCollection(col model.LightCollection) func(txn *badger.Txn) error {
+func insertCollection(col flowgo.LightCollection) func(txn *badger.Txn) error {
 	return func(txn *badger.Txn) error {
 		encCol, err := encodeCollection(col)
 		if err != nil {
@@ -260,7 +260,7 @@ func insertCollection(col model.LightCollection) func(txn *badger.Txn) error {
 	}
 }
 
-func (s *Store) TransactionByID(txID model.Identifier) (tx model.TransactionBody, err error) {
+func (s *Store) TransactionByID(txID flowgo.Identifier) (tx flowgo.TransactionBody, err error) {
 	err = s.db.View(func(txn *badger.Txn) error {
 		encTx, err := getTx(txn)(transactionKey(txID))
 		if err != nil {
@@ -271,11 +271,11 @@ func (s *Store) TransactionByID(txID model.Identifier) (tx model.TransactionBody
 	return
 }
 
-func (s *Store) InsertTransaction(tx model.TransactionBody) error {
+func (s *Store) InsertTransaction(tx flowgo.TransactionBody) error {
 	return s.db.Update(insertTransaction(tx.ID(), tx))
 }
 
-func insertTransaction(txID model.Identifier, tx model.TransactionBody) func(txn *badger.Txn) error {
+func insertTransaction(txID flowgo.Identifier, tx flowgo.TransactionBody) func(txn *badger.Txn) error {
 	return func(txn *badger.Txn) error {
 		encTx, err := encodeTransaction(tx)
 		if err != nil {
@@ -286,7 +286,7 @@ func insertTransaction(txID model.Identifier, tx model.TransactionBody) func(txn
 	}
 }
 
-func (s *Store) TransactionResultByID(txID model.Identifier) (result types.StorableTransactionResult, err error) {
+func (s *Store) TransactionResultByID(txID flowgo.Identifier) (result types.StorableTransactionResult, err error) {
 	err = s.db.View(func(txn *badger.Txn) error {
 		encResult, err := getTx(txn)(transactionResultKey(txID))
 		if err != nil {
@@ -297,11 +297,11 @@ func (s *Store) TransactionResultByID(txID model.Identifier) (result types.Stora
 	return
 }
 
-func (s *Store) InsertTransactionResult(txID model.Identifier, result types.StorableTransactionResult) error {
+func (s *Store) InsertTransactionResult(txID flowgo.Identifier, result types.StorableTransactionResult) error {
 	return s.db.Update(insertTransactionResult(txID, result))
 }
 
-func insertTransactionResult(txID model.Identifier, result types.StorableTransactionResult) func(txn *badger.Txn) error {
+func insertTransactionResult(txID flowgo.Identifier, result types.StorableTransactionResult) func(txn *badger.Txn) error {
 	return func(txn *badger.Txn) error {
 		encResult, err := encodeTransactionResult(result)
 		if err != nil {
@@ -382,7 +382,7 @@ func (s *Store) insertLedgerDelta(blockHeight uint64, delta delta.Delta) func(tx
 	}
 }
 
-func (s *Store) EventsByHeight(blockHeight uint64, eventType string) (events []model.Event, err error) {
+func (s *Store) EventsByHeight(blockHeight uint64, eventType string) (events []flowgo.Event, err error) {
 	// set up an iterator over all events in the block
 	iterOpts := badger.DefaultIteratorOptions
 	iterOpts.Prefix = eventKeyBlockPrefix(blockHeight)
@@ -408,7 +408,7 @@ func (s *Store) EventsByHeight(blockHeight uint64, eventType string) (events []m
 			}
 
 			err = item.Value(func(b []byte) error {
-				var event model.Event
+				var event flowgo.Event
 
 				err := decodeEvent(&event, b)
 				if err != nil {
@@ -430,11 +430,11 @@ func (s *Store) EventsByHeight(blockHeight uint64, eventType string) (events []m
 	return
 }
 
-func (s *Store) InsertEvents(blockHeight uint64, events []model.Event) error {
+func (s *Store) InsertEvents(blockHeight uint64, events []flowgo.Event) error {
 	return s.db.Update(insertEvents(blockHeight, events))
 }
 
-func insertEvents(blockHeight uint64, events []model.Event) func(txn *badger.Txn) error {
+func insertEvents(blockHeight uint64, events []flowgo.Event) func(txn *badger.Txn) error {
 	return func(txn *badger.Txn) error {
 		for _, event := range events {
 			b, err := encodeEvent(event)

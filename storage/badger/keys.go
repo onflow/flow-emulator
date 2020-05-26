@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	model "github.com/dapperlabs/flow-go/model/flow"
+	flowgo "github.com/dapperlabs/flow-go/model/flow"
 )
 
 const (
@@ -36,23 +36,23 @@ func blockKey(blockHeight uint64) []byte {
 	return []byte(fmt.Sprintf("%s-%032d", blockKeyPrefix, blockHeight))
 }
 
-func blockIDIndexKey(blockID model.Identifier) []byte {
+func blockIDIndexKey(blockID flowgo.Identifier) []byte {
 	return []byte(fmt.Sprintf("%s-%x", blockIDIndexKeyPrefix, blockID))
 }
 
-func collectionKey(colID model.Identifier) []byte {
+func collectionKey(colID flowgo.Identifier) []byte {
 	return []byte(fmt.Sprintf("%s-%x", collectionKeyPrefix, colID))
 }
 
-func transactionKey(txID model.Identifier) []byte {
+func transactionKey(txID flowgo.Identifier) []byte {
 	return []byte(fmt.Sprintf("%s-%x", transactionKeyPrefix, txID))
 }
 
-func transactionResultKey(txID model.Identifier) []byte {
+func transactionResultKey(txID flowgo.Identifier) []byte {
 	return []byte(fmt.Sprintf("%s-%x", transactionResultKeyPrefix, txID))
 }
 
-func eventKey(blockHeight uint64, txIndex, eventIndex uint32, eventType model.EventType) []byte {
+func eventKey(blockHeight uint64, txIndex, eventIndex uint32, eventType flowgo.EventType) []byte {
 	return []byte(fmt.Sprintf(
 		"%s-%032d-%032d-%032d-%s",
 		eventKeyPrefix,
@@ -81,11 +81,11 @@ func ledgerKey(blockHeight uint64) []byte {
 	return []byte(fmt.Sprintf("%s-%032d", ledgerKeyPrefix, blockHeight))
 }
 
-func ledgerChangelogKey(registerID model.RegisterID) []byte {
+func ledgerChangelogKey(registerID flowgo.RegisterID) []byte {
 	return []byte(fmt.Sprintf("%s-%s", ledgerChangelogKeyPrefix, registerID))
 }
 
-func ledgerValueKey(registerID model.RegisterID, blockHeight uint64) []byte {
+func ledgerValueKey(registerID flowgo.RegisterID, blockHeight uint64) []byte {
 	return []byte(fmt.Sprintf("%s-%s-%032d", ledgerValueKeyPrefix, string(registerID), blockHeight))
 }
 

@@ -1,7 +1,7 @@
 package types
 
 import (
-	model "github.com/dapperlabs/flow-go/model/flow"
+	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-go-sdk"
 )
@@ -10,7 +10,7 @@ type StorableTransactionResult struct {
 	ErrorCode    int
 	ErrorMessage string
 	Logs         []string
-	Events       []model.Event
+	Events       []flowgo.Event
 }
 
 // A TransactionResult is the result of executing a transaction.
