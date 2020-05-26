@@ -28,7 +28,7 @@ func TestInitialization(t *testing.T) {
 
 		b, _ := emulator.NewBlockchain(emulator.WithStore(store))
 
-		serviceAcct, err := b.GetAccount(flow.ServiceAddress(flow.Mainnet))
+		serviceAcct, err := b.GetAccount(flow.ServiceAddress(flow.Emulator))
 		require.NoError(t, err)
 
 		assert.NotNil(t, serviceAcct)
