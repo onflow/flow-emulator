@@ -146,7 +146,7 @@ func TestBackend(t *testing.T) {
 		keys := test.AccountKeyGenerator()
 
 		account := flow.Account{
-			Address: flow.ServiceAddress(flow.Mainnet),
+			Address: flow.ServiceAddress(flow.Emulator),
 			Balance: 10,
 			Code:    []byte("pub fun main() {}"),
 			Keys: []*flow.AccountKey{

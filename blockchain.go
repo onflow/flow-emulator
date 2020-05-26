@@ -20,7 +20,7 @@ import (
 	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
 	"github.com/dapperlabs/flow-go/engine/execution/state/bootstrap"
 	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
-	model "github.com/dapperlabs/flow-go/model/flow"
+	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
 	sdk "github.com/onflow/flow-go-sdk"
@@ -154,8 +154,6 @@ func WithStore(store storage.Store) Option {
 // NewBlockchain instantiates a new emulated blockchain with the provided options.
 func NewBlockchain(opts ...Option) (*Blockchain, error) {
 
-	model.SetChainID(model.Mainnet)
-
 	var pendingBlock *pendingBlock
 
 	// apply options to the default config
@@ -174,7 +172,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 
 	// set up service key
 	serviceKey := config.ServiceKey
-	serviceKey.Address = sdk.ServiceAddress(sdk.Mainnet)
+	serviceKey.Address = sdk.ServiceAddress(sdk.Emulator)
 	serviceKey.Weight = sdk.AccountKeyWeightThreshold
 
 	latestBlock, err := store.LatestBlock()
@@ -194,7 +192,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		bootstrapLedger(genesisLedgerView, serviceKey.AccountKey())
 
 		// commit the genesis block to storage
-		genesis := model.Genesis(nil)
+		genesis := flowgo.Genesis(nil)
 
 		err = store.CommitBlock(
 			*genesis,
@@ -249,14 +247,14 @@ func (b *Blockchain) ServiceKey() ServiceKey {
 }
 
 // PendingBlockID returns the ID of the pending block.
-func (b *Blockchain) PendingBlockID() model.Identifier {
+func (b *Blockchain) PendingBlockID() flowgo.Identifier {
 	return b.pendingBlock.ID()
 }
 
-func (b *Blockchain) getLatestBlock() (model.Block, error) {
+func (b *Blockchain) getLatestBlock() (flowgo.Block, error) {
 	block, err := b.storage.LatestBlock()
 	if err != nil {
-		return model.Block{}, &StorageError{err}
+		return flowgo.Block{}, &StorageError{err}
 	}
 
 	return block, nil
@@ -301,13 +299,13 @@ func (b *Blockchain) GetBlockByHeight(height uint64) (*sdk.Block, error) {
 	return &sdkBlock, nil
 }
 
-func (b *Blockchain) getBlockByHeight(height uint64) (model.Block, error) {
+func (b *Blockchain) getBlockByHeight(height uint64) (flowgo.Block, error) {
 	block, err := b.storage.BlockByHeight(height)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			return model.Block{}, &BlockNotFoundByHeightError{Height: height}
+			return flowgo.Block{}, &BlockNotFoundByHeightError{Height: height}
 		}
-		return model.Block{}, err
+		return flowgo.Block{}, err
 	}
 
 	return block, nil
@@ -424,7 +422,7 @@ func (b *Blockchain) GetAccount(address sdk.Address) (*sdk.Account, error) {
 }
 
 // getAccount returns the account for the given address.
-func (b *Blockchain) getAccount(address model.Address) (*model.Account, error) {
+func (b *Blockchain) getAccount(address flowgo.Address) (*flowgo.Account, error) {
 	latestBlock, err := b.GetLatestBlock()
 	if err != nil {
 		return nil, err
@@ -492,7 +490,7 @@ func (b *Blockchain) addTransaction(sdkTx sdk.Transaction) error {
 		return fmt.Errorf("failed to check storage for transaction %w", err)
 	}
 
-	if tx.ProposalKey == (model.ProposalKey{}) {
+	if tx.ProposalKey == (flowgo.ProposalKey{}) {
 		return &InvalidTransactionError{TxID: tx.ID(), MissingFields: []string{"proposal_key"}}
 	}
 
@@ -566,7 +564,7 @@ func (b *Blockchain) executeNextTransaction(blockContext virtualmachine.BlockCon
 	result, err := b.pendingBlock.ExecuteNextTransaction(
 		func(
 			ledgerView *delta.View,
-			tx *model.TransactionBody,
+			tx *flowgo.TransactionBody,
 		) (*virtualmachine.TransactionResult, error) {
 			return blockContext.ExecuteTransaction(ledgerView, tx, virtualmachine.SkipDeploymentRestriction)
 		},
@@ -598,7 +596,7 @@ func (b *Blockchain) CommitBlock() (*sdk.Block, error) {
 	return &sdkBlock, err
 }
 
-func (b *Blockchain) commitBlock() (*model.Block, error) {
+func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	// pending block cannot be committed before execution starts (unless empty)
 	if !b.pendingBlock.ExecutionStarted() && !b.pendingBlock.Empty() {
 		return nil, &PendingBlockCommitBeforeExecutionError{BlockID: b.pendingBlock.ID()}
@@ -732,12 +730,12 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, blockHeight uint64) (*t
 }
 
 // LastCreatedAccount returns the last account that was created in the blockchain.
-func (b *Blockchain) LastCreatedAccount() *model.Account {
+func (b *Blockchain) LastCreatedAccount() *flowgo.Account {
 	ledgerAccess := virtualmachine.LedgerDAL{Ledger: b.pendingBlock.ledgerView}
 
 	// last created account
 	addressState, _ := ledgerAccess.GetAddressState()
-	address, _, _ := model.AccountAddress(addressState - 1)
+	address, _, _ := flowgo.AccountAddress(addressState - 1)
 
 	account := ledgerAccess.GetAccount(address)
 	return account
@@ -795,10 +793,10 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, code []byte) (s
 }
 
 func convertToSealedResults(
-	results map[model.Identifier]IndexedTransactionResult,
-) (map[model.Identifier]*types.StorableTransactionResult, error) {
+	results map[flowgo.Identifier]IndexedTransactionResult,
+) (map[flowgo.Identifier]*types.StorableTransactionResult, error) {
 
-	output := make(map[model.Identifier]*types.StorableTransactionResult)
+	output := make(map[flowgo.Identifier]*types.StorableTransactionResult)
 
 	for id, result := range results {
 		temp, err := convert.ToStorableResult(result.TransactionResult, result.Index)
@@ -819,7 +817,7 @@ func bootstrapLedger(ledger virtualmachine.Ledger, accountKey *sdk.AccountKey) {
 		accountKey.PublicKey.Encode(),
 	)
 
-	flowAccountKey := model.AccountPublicKey{
+	flowAccountKey := flowgo.AccountPublicKey{
 		PublicKey: publicKey,
 		SignAlgo:  crypto.SigningAlgorithm(accountKey.SigAlgo),
 		HashAlgo:  hash.HashingAlgorithm(accountKey.HashAlgo),
@@ -832,6 +830,8 @@ func bootstrapLedger(ledger virtualmachine.Ledger, accountKey *sdk.AccountKey) {
 const DefaultServicePrivateKeySeed = "elephant ears space cowboy octopus rodeo potato cannon pineapple"
 
 func init() {
+	flowgo.SetChainID(flowgo.Emulator)
+
 	// Initialize default emulator options
 	privateKey, err := sdkCrypto.GeneratePrivateKey(sdkCrypto.ECDSA_P256, []byte(DefaultServicePrivateKeySeed))
 	if err != nil {
