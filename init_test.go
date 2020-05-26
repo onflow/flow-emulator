@@ -28,10 +28,10 @@ func TestInitialization(t *testing.T) {
 
 		b, _ := emulator.NewBlockchain(emulator.WithStore(store))
 
-		rootAcct, err := b.GetAccount(flow.ServiceAddress(flow.Mainnet))
+		serviceAcct, err := b.GetAccount(flow.ServiceAddress(flow.Mainnet))
 		require.NoError(t, err)
 
-		assert.NotNil(t, rootAcct)
+		assert.NotNil(t, serviceAcct)
 
 		latestBlock, err := b.GetLatestBlock()
 		require.NoError(t, err)
@@ -77,11 +77,11 @@ func TestInitialization(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript([]byte(script)).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address).
-			AddAuthorizer(b.RootKey().Address)
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address).
+			AddAuthorizer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -144,7 +144,7 @@ func TestInitialization(t *testing.T) {
                   }
                 `,
 				counterAddress,
-				b.RootKey().Address,
+				b.ServiceKey().Address,
 			)
 
 			result, err := b.ExecuteScript([]byte(readScript))

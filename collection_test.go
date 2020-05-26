@@ -31,21 +31,21 @@ func TestCollections(t *testing.T) {
 		tx1 := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address).
-			AddAuthorizer(b.RootKey().Address)
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address).
+			AddAuthorizer(b.ServiceKey().Address)
 
-		err = tx1.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		tx2 := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address).
-			AddAuthorizer(b.RootKey().Address)
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address).
+			AddAuthorizer(b.ServiceKey().Address)
 
-		err = tx2.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx2.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		// generate a list of transactions
