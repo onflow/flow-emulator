@@ -24,12 +24,11 @@ import (
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
 	sdk "github.com/onflow/flow-go-sdk"
-	sdkCrypto "github.com/onflow/flow-go-sdk/crypto"
-
+	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
 
 	"github.com/dapperlabs/flow-emulator/convert"
-	sdkConvert "github.com/dapperlabs/flow-emulator/convert/sdk"
+	sdkconvert "github.com/dapperlabs/flow-emulator/convert/sdk"
 	"github.com/dapperlabs/flow-emulator/storage"
 	"github.com/dapperlabs/flow-emulator/storage/memstore"
 	"github.com/dapperlabs/flow-emulator/types"
@@ -79,20 +78,20 @@ type ServiceKey struct {
 	ID             int
 	Address        sdk.Address
 	SequenceNumber uint64
-	PrivateKey     *sdkCrypto.PrivateKey
-	PublicKey      *sdkCrypto.PublicKey
-	HashAlgo       sdkCrypto.HashAlgorithm
-	SigAlgo        sdkCrypto.SignatureAlgorithm
+	PrivateKey     *sdkcrypto.PrivateKey
+	PublicKey      *sdkcrypto.PublicKey
+	HashAlgo       sdkcrypto.HashAlgorithm
+	SigAlgo        sdkcrypto.SignatureAlgorithm
 	Weight         int
 }
 
-func (r ServiceKey) Signer() sdkCrypto.Signer {
-	return sdkCrypto.NewInMemorySigner(*r.PrivateKey, r.HashAlgo)
+func (r ServiceKey) Signer() sdkcrypto.Signer {
+	return sdkcrypto.NewInMemorySigner(*r.PrivateKey, r.HashAlgo)
 }
 
 func (r ServiceKey) AccountKey() *sdk.AccountKey {
 
-	var publicKey sdkCrypto.PublicKey
+	var publicKey sdkcrypto.PublicKey
 	if r.PublicKey != nil {
 		publicKey = *r.PublicKey
 	}
@@ -131,9 +130,9 @@ type Option func(*config)
 
 // WithServicePublicKey sets the service key from a public key.
 func WithServicePublicKey(
-	servicePublicKey sdkCrypto.PublicKey,
-	sigAlgo sdkCrypto.SignatureAlgorithm,
-	hashAlgo sdkCrypto.HashAlgorithm,
+	servicePublicKey sdkcrypto.PublicKey,
+	sigAlgo sdkcrypto.SignatureAlgorithm,
+	hashAlgo sdkcrypto.HashAlgorithm,
 ) Option {
 	return func(c *config) {
 		c.ServiceKey = ServiceKey{
@@ -232,7 +231,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 
 // ServiceKey returns the service private key for this blockchain.
 func (b *Blockchain) ServiceKey() ServiceKey {
-	serviceAccount, err := b.getAccount(sdkConvert.SDKAddressToFlow(b.serviceKey.Address))
+	serviceAccount, err := b.getAccount(sdkconvert.SDKAddressToFlow(b.serviceKey.Address))
 	if err != nil {
 		return b.serviceKey
 	}
@@ -267,14 +266,14 @@ func (b *Blockchain) GetLatestBlock() (*sdk.Block, error) {
 		return nil, err
 	}
 
-	sdkBlock := sdkConvert.FlowBlockToSDK(block)
+	sdkBlock := sdkconvert.FlowBlockToSDK(block)
 
 	return &sdkBlock, nil
 }
 
 // GetBlockByID gets a block by ID.
 func (b *Blockchain) GetBlockByID(id sdk.Identifier) (*sdk.Block, error) {
-	block, err := b.storage.BlockByID(sdkConvert.SDKIdentifierToFlow(id))
+	block, err := b.storage.BlockByID(sdkconvert.SDKIdentifierToFlow(id))
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return nil, &BlockNotFoundByIDError{ID: id}
@@ -282,7 +281,7 @@ func (b *Blockchain) GetBlockByID(id sdk.Identifier) (*sdk.Block, error) {
 		return nil, &StorageError{err}
 	}
 
-	sdkBlock := sdkConvert.FlowBlockToSDK(block)
+	sdkBlock := sdkconvert.FlowBlockToSDK(block)
 
 	return &sdkBlock, nil
 }
@@ -294,7 +293,7 @@ func (b *Blockchain) GetBlockByHeight(height uint64) (*sdk.Block, error) {
 		return nil, err
 	}
 
-	sdkBlock := sdkConvert.FlowBlockToSDK(block)
+	sdkBlock := sdkconvert.FlowBlockToSDK(block)
 
 	return &sdkBlock, nil
 }
@@ -315,7 +314,7 @@ func (b *Blockchain) GetCollection(colID sdk.Identifier) (*sdk.Collection, error
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	col, err := b.storage.CollectionByID(sdkConvert.SDKIdentifierToFlow(colID))
+	col, err := b.storage.CollectionByID(sdkconvert.SDKIdentifierToFlow(colID))
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return nil, &CollectionNotFoundError{ID: colID}
@@ -323,7 +322,7 @@ func (b *Blockchain) GetCollection(colID sdk.Identifier) (*sdk.Collection, error
 		return nil, &StorageError{err}
 	}
 
-	sdkCol := sdkConvert.FlowLightCollectionToSDK(col)
+	sdkCol := sdkconvert.FlowLightCollectionToSDK(col)
 
 	return &sdkCol, nil
 }
@@ -335,11 +334,11 @@ func (b *Blockchain) GetTransaction(ID sdk.Identifier) (*sdk.Transaction, error)
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	txID := sdkConvert.SDKIdentifierToFlow(ID)
+	txID := sdkconvert.SDKIdentifierToFlow(ID)
 
 	pendingTx := b.pendingBlock.GetTransaction(txID)
 	if pendingTx != nil {
-		pendingSDKTx := sdkConvert.FlowTransactionToSDK(*pendingTx)
+		pendingSDKTx := sdkconvert.FlowTransactionToSDK(*pendingTx)
 		return &pendingSDKTx, nil
 	}
 
@@ -351,7 +350,7 @@ func (b *Blockchain) GetTransaction(ID sdk.Identifier) (*sdk.Transaction, error)
 		return nil, &StorageError{err}
 	}
 
-	sdkTx := sdkConvert.FlowTransactionToSDK(tx)
+	sdkTx := sdkconvert.FlowTransactionToSDK(tx)
 
 	return &sdkTx, nil
 }
@@ -360,7 +359,7 @@ func (b *Blockchain) GetTransactionResult(ID sdk.Identifier) (*sdk.TransactionRe
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	txID := sdkConvert.SDKIdentifierToFlow(ID)
+	txID := sdkconvert.SDKIdentifierToFlow(ID)
 
 	if b.pendingBlock.ContainsTransaction(txID) {
 		return &sdk.TransactionResult{
@@ -387,7 +386,7 @@ func (b *Blockchain) GetTransactionResult(ID sdk.Identifier) (*sdk.TransactionRe
 		}
 	}
 
-	sdkEvents, err := sdkConvert.FlowEventsToSDK(storedResult.Events)
+	sdkEvents, err := sdkconvert.FlowEventsToSDK(storedResult.Events)
 	if err != nil {
 		return nil, err
 	}
@@ -406,14 +405,14 @@ func (b *Blockchain) GetAccount(address sdk.Address) (*sdk.Account, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	flowAddress := sdkConvert.SDKAddressToFlow(address)
+	flowAddress := sdkconvert.SDKAddressToFlow(address)
 
 	account, err := b.getAccount(flowAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	sdkAccount, err := sdkConvert.FlowAccountToSDK(*account)
+	sdkAccount, err := sdkconvert.FlowAccountToSDK(*account)
 	if err != nil {
 		return nil, err
 	}
@@ -451,7 +450,7 @@ func (b *Blockchain) GetEventsByHeight(blockHeight uint64, eventType string) ([]
 		return nil, err
 	}
 
-	sdkEvents, err := sdkConvert.FlowEventsToSDK(flowEvents)
+	sdkEvents, err := sdkconvert.FlowEventsToSDK(flowEvents)
 	if err != nil {
 		return nil, fmt.Errorf("could not convert events: %w", err)
 	}
@@ -470,7 +469,7 @@ func (b *Blockchain) AddTransaction(sdkTx sdk.Transaction) error {
 // AddTransaction validates a transaction and adds it to the current pending block.
 func (b *Blockchain) addTransaction(sdkTx sdk.Transaction) error {
 
-	tx := sdkConvert.SDKTransactionToFlow(sdkTx)
+	tx := sdkconvert.SDKTransactionToFlow(sdkTx)
 
 	// If Index > 0, pending block has begun execution (cannot add anymore txs)
 	if b.pendingBlock.ExecutionStarted() {
@@ -591,7 +590,7 @@ func (b *Blockchain) CommitBlock() (*sdk.Block, error) {
 		return nil, err
 	}
 
-	sdkBlock := sdkConvert.FlowBlockToSDK(*flowBlock)
+	sdkBlock := sdkconvert.FlowBlockToSDK(*flowBlock)
 
 	return &sdkBlock, err
 }
@@ -652,7 +651,7 @@ func (b *Blockchain) executeAndCommitBlock() (*sdk.Block, []*types.TransactionRe
 		return nil, results, err
 	}
 
-	sdkBlock := sdkConvert.FlowBlockToSDK(*block)
+	sdkBlock := sdkconvert.FlowBlockToSDK(*block)
 	return &sdkBlock, results, nil
 }
 
@@ -709,7 +708,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, blockHeight uint64) (*t
 	hasher := hash.NewSHA3_256()
 	scriptID := sdk.HashToID(hasher.ComputeHash(script))
 
-	events := sdkConvert.RuntimeEventsToSDK(result.Events, scriptID, 0)
+	events := sdkconvert.RuntimeEventsToSDK(result.Events, scriptID, 0)
 
 	var scriptError error = nil
 	var convertedValue cadence.Value = nil
@@ -789,7 +788,7 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, code []byte) (s
 		return sdk.Address{}, lastResult.Error
 	}
 
-	return sdkConvert.FlowAddressToSDK(b.LastCreatedAccount().Address), nil
+	return sdkconvert.FlowAddressToSDK(b.LastCreatedAccount().Address), nil
 }
 
 func convertToSealedResults(
@@ -833,7 +832,7 @@ func init() {
 	flowgo.SetChainID(flowgo.Emulator)
 
 	// Initialize default emulator options
-	privateKey, err := sdkCrypto.GeneratePrivateKey(sdkCrypto.ECDSA_P256, []byte(DefaultServicePrivateKeySeed))
+	privateKey, err := sdkcrypto.GeneratePrivateKey(sdkcrypto.ECDSA_P256, []byte(DefaultServicePrivateKeySeed))
 	if err != nil {
 		panic("Failed to generate default service key: " + err.Error())
 	}
@@ -841,6 +840,6 @@ func init() {
 	defaultConfig.ServiceKey = ServiceKey{
 		PrivateKey: &privateKey,
 		SigAlgo:    privateKey.Algorithm(),
-		HashAlgo:   sdkCrypto.SHA3_256,
+		HashAlgo:   sdkcrypto.SHA3_256,
 	}
 }

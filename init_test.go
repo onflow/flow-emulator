@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	model "github.com/dapperlabs/flow-go/model/flow"
+	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/stretchr/testify/assert"
@@ -37,7 +37,7 @@ func TestInitialization(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.EqualValues(t, 0, latestBlock.Height)
-		assert.Equal(t, sdkConvert.FlowIdentifierToSDK(model.Genesis(nil).ID()), latestBlock.ID)
+		assert.Equal(t, sdkConvert.FlowIdentifierToSDK(flowgo.Genesis(nil).ID()), latestBlock.ID)
 	})
 
 	t.Run("should restore state when initialized with non-empty store", func(t *testing.T) {
