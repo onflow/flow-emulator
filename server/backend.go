@@ -43,6 +43,10 @@ func (b *Backend) Ping(ctx context.Context, req *access.PingRequest) (*access.Pi
 	return &access.PingResponse{}, nil
 }
 
+func (b *Backend) GetNetworkParameters(context.Context, *access.GetNetworkParametersRequest) (*access.GetNetworkParametersResponse, error) {
+	panic("implement me")
+}
+
 // SendTransaction submits a transaction to the network.
 func (b *Backend) SendTransaction(ctx context.Context, req *access.SendTransactionRequest) (*access.SendTransactionResponse, error) {
 	txMsg := req.GetTransaction()
