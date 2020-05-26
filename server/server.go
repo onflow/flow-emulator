@@ -3,7 +3,7 @@ package server
 import (
 	"time"
 
-	sdkCrypto "github.com/onflow/flow-go-sdk/crypto"
+	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/pkg/errors"
 	"github.com/psiemens/graceland"
 	"github.com/sirupsen/logrus"
@@ -59,9 +59,9 @@ type Config struct {
 	HTTPPort           int
 	HTTPHeaders        []HTTPHeader
 	BlockTime          time.Duration
-	ServicePublicKey   sdkCrypto.PublicKey
-	ServiceKeySigAlgo  sdkCrypto.SignatureAlgorithm
-	ServiceKeyHashAlgo sdkCrypto.HashAlgorithm
+	ServicePublicKey   crypto.PublicKey
+	ServiceKeySigAlgo  crypto.SignatureAlgorithm
+	ServiceKeyHashAlgo crypto.HashAlgorithm
 	Persist            bool
 	// DBPath is the path to the Badger database on disk
 	DBPath string
@@ -198,7 +198,7 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithStore(store),
 	}
 
-	if conf.ServicePublicKey != (sdkCrypto.PublicKey{}) {
+	if conf.ServicePublicKey != (crypto.PublicKey{}) {
 		options = append(options, emulator.WithServicePublicKey(conf.ServicePublicKey, conf.ServiceKeySigAlgo, conf.ServiceKeyHashAlgo))
 	}
 

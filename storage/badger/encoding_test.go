@@ -3,7 +3,7 @@ package badger
 import (
 	"testing"
 
-	model "github.com/dapperlabs/flow-go/model/flow"
+	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	flowUnittest "github.com/dapperlabs/flow-go/utils/unittest"
 	flowGenerator "github.com/dapperlabs/flow-go/utils/unittest/generator"
 	"github.com/onflow/flow-go-sdk/test"
@@ -19,7 +19,7 @@ func TestEncodeTransaction(t *testing.T) {
 	data, err := encodeTransaction(tx)
 	require.Nil(t, err)
 
-	var decodedTx model.TransactionBody
+	var decodedTx flowgo.TransactionBody
 	err = decodeTransaction(&decodedTx, data)
 	require.Nil(t, err)
 
@@ -44,15 +44,15 @@ func TestEncodeBlock(t *testing.T) {
 
 	id := flowUnittest.IdentifierFixture()
 
-	block := model.Block{
-		Header: &model.Header{
+	block := flowgo.Block{
+		Header: &flowgo.Header{
 			Height:   1234,
 			ParentID: id,
 		},
-		Payload: &model.Payload{
-			Guarantees: []*model.CollectionGuarantee{
+		Payload: &flowgo.Payload{
+			Guarantees: []*flowgo.CollectionGuarantee{
 				{
-					CollectionID: model.Identifier(ids.New()),
+					CollectionID: flowgo.Identifier(ids.New()),
 				},
 			},
 		},
@@ -61,7 +61,7 @@ func TestEncodeBlock(t *testing.T) {
 	data, err := encodeBlock(block)
 	require.Nil(t, err)
 
-	var decodedBlock model.Block
+	var decodedBlock flowgo.Block
 	err = decodeBlock(&decodedBlock, data)
 	require.Nil(t, err)
 
@@ -75,7 +75,7 @@ func TestEncodeEvent(t *testing.T) {
 	data, err := encodeEvent(event)
 	require.Nil(t, err)
 
-	var decodedEvent model.Event
+	var decodedEvent flowgo.Event
 	err = decodeEvent(&decodedEvent, data)
 	require.Nil(t, err)
 	assert.Equal(t, event, decodedEvent)
