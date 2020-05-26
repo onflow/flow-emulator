@@ -77,7 +77,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				logger.SetLevel(logrus.DebugLevel)
 			}
 
-			serviceAddress := sdk.ServiceAddress(sdk.Mainnet)
+			serviceAddress := sdk.ServiceAddress(sdk.Emulator)
 			serviceFields := logrus.Fields{
 				"serviceAddress":  serviceAddress.Hex(),
 				"servicePubKey":   hex.EncodeToString(servicePublicKey.Encode()),

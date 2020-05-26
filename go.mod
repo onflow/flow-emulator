@@ -3,7 +3,7 @@ module github.com/dapperlabs/flow-emulator
 go 1.13
 
 require (
-	github.com/dapperlabs/flow-go v0.3.2-0.20200520200337-3476e94b144b
+	github.com/dapperlabs/flow-go v0.3.2-0.20200526102422-fe5015174952
 	github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200505040645-6043e0fe5246
 	github.com/davecgh/go-spew v1.1.1
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
@@ -13,9 +13,9 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
-	github.com/onflow/cadence v0.3.0-beta3
-	github.com/onflow/flow-go-sdk v0.3.0-beta1
-	github.com/onflow/flow/protobuf/go/flow v0.1.4
+	github.com/onflow/cadence v0.3.0-beta4.0.20200524043105-6b94cabe6a65
+	github.com/onflow/flow-go-sdk v0.3.0-beta1.0.20200526084845-613dcdfbf48b
+	github.com/onflow/flow/protobuf/go/flow v0.1.5-0.20200526000504-c8bea9c16771
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.5.1
 	github.com/prometheus/common v0.9.1
