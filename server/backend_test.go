@@ -146,7 +146,7 @@ func TestBackend(t *testing.T) {
 		keys := test.AccountKeyGenerator()
 
 		account := flow.Account{
-			Address: flow.RootAddress,
+			Address: flow.ServiceAddress(flow.Mainnet),
 			Balance: 10,
 			Code:    []byte("pub fun main() {}"),
 			Keys: []*flow.AccountKey{
@@ -567,7 +567,7 @@ func TestBackend(t *testing.T) {
 		tx := test.TransactionGenerator().New()
 
 		// remove payer to make transaction invalid
-		tx.Payer = flow.ZeroAddress
+		tx.Payer = flow.Address{}
 
 		txMsg := convert.TransactionToMessage(*tx)
 
