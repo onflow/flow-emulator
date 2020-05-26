@@ -25,31 +25,31 @@ func setupPendingBlockTests(t *testing.T) (
 	tx1 := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
 		SetGasLimit(emulator.MaxGasLimit).
-		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-		SetPayer(b.RootKey().Address).
-		AddAuthorizer(b.RootKey().Address)
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+		SetPayer(b.ServiceKey().Address).
+		AddAuthorizer(b.ServiceKey().Address)
 
-	err = tx1.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 	require.NoError(t, err)
 
 	tx2 := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
 		SetGasLimit(emulator.MaxGasLimit).
-		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber+1).
-		SetPayer(b.RootKey().Address).
-		AddAuthorizer(b.RootKey().Address)
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber+1).
+		SetPayer(b.ServiceKey().Address).
+		AddAuthorizer(b.ServiceKey().Address)
 
-	err = tx2.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	err = tx2.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 	require.NoError(t, err)
 
 	invalid := flow.NewTransaction().
 		SetScript([]byte("invalid script")).
 		SetGasLimit(emulator.MaxGasLimit).
-		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-		SetPayer(b.RootKey().Address).
-		AddAuthorizer(b.RootKey().Address)
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+		SetPayer(b.ServiceKey().Address).
+		AddAuthorizer(b.ServiceKey().Address)
 
-	err = invalid.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	err = invalid.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 	require.NoError(t, err)
 
 	return b, tx1, tx2, invalid
@@ -267,11 +267,11 @@ func TestPendingBlockCommit(t *testing.T) {
 		tx1 := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address).
-			AddAuthorizer(b.RootKey().Address)
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address).
+			AddAuthorizer(b.ServiceKey().Address)
 
-		err = tx1.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		// Add tx1 to pending block
@@ -296,11 +296,11 @@ func TestPendingBlockCommit(t *testing.T) {
 		tx1 := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address).
-			AddAuthorizer(b.RootKey().Address)
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address).
+			AddAuthorizer(b.ServiceKey().Address)
 
-		err = tx1.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		// Add tx1 to pending block

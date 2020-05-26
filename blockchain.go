@@ -49,7 +49,7 @@ type Blockchain struct {
 	// used to execute transactions and scripts
 	virtualMachine virtualmachine.VirtualMachine
 
-	rootKey RootKey
+	serviceKey ServiceKey
 }
 
 // BlockchainAPI defines the method set of an emulated blockchain.
@@ -70,12 +70,12 @@ type BlockchainAPI interface {
 	GetEventsByHeight(blockHeight uint64, eventType string) ([]sdk.Event, error)
 	ExecuteScript(script []byte) (*types.ScriptResult, error)
 	ExecuteScriptAtBlock(script []byte, blockHeight uint64) (*types.ScriptResult, error)
-	RootKey() RootKey
+	ServiceKey() ServiceKey
 }
 
 var _ BlockchainAPI = &Blockchain{}
 
-type RootKey struct {
+type ServiceKey struct {
 	ID             int
 	Address        sdk.Address
 	SequenceNumber uint64
@@ -86,11 +86,11 @@ type RootKey struct {
 	Weight         int
 }
 
-func (r RootKey) Signer() sdkCrypto.Signer {
+func (r ServiceKey) Signer() sdkCrypto.Signer {
 	return sdkCrypto.NewInMemorySigner(*r.PrivateKey, r.HashAlgo)
 }
 
-func (r RootKey) AccountKey() *sdk.AccountKey {
+func (r ServiceKey) AccountKey() *sdk.AccountKey {
 
 	var publicKey sdkCrypto.PublicKey
 	if r.PublicKey != nil {
@@ -118,8 +118,8 @@ const MaxGasLimit = 999999999
 
 // config is a set of configuration options for an emulated blockchain.
 type config struct {
-	RootKey RootKey
-	Store   storage.Store
+	ServiceKey ServiceKey
+	Store      storage.Store
 }
 
 // defaultConfig is the default configuration for an emulated blockchain.
@@ -129,15 +129,15 @@ var defaultConfig config
 // Option is a function applying a change to the emulator config.
 type Option func(*config)
 
-// WithRootPublicKey sets the root key from a public key.
-func WithRootPublicKey(
-	rootPublicKey sdkCrypto.PublicKey,
+// WithServicePublicKey sets the service key from a public key.
+func WithServicePublicKey(
+	servicePublicKey sdkCrypto.PublicKey,
 	sigAlgo sdkCrypto.SignatureAlgorithm,
 	hashAlgo sdkCrypto.HashAlgorithm,
 ) Option {
 	return func(c *config) {
-		c.RootKey = RootKey{
-			PublicKey: &rootPublicKey,
+		c.ServiceKey = ServiceKey{
+			PublicKey: &servicePublicKey,
 			SigAlgo:   sigAlgo,
 			HashAlgo:  hashAlgo,
 		}
@@ -172,10 +172,10 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	}
 	store := config.Store
 
-	// set up root key
-	rootKey := config.RootKey
-	rootKey.Address = sdk.ServiceAddress(sdk.Mainnet)
-	rootKey.Weight = sdk.AccountKeyWeightThreshold
+	// set up service key
+	serviceKey := config.ServiceKey
+	serviceKey.Address = sdk.ServiceAddress(sdk.Mainnet)
+	serviceKey.Weight = sdk.AccountKeyWeightThreshold
 
 	latestBlock, err := store.LatestBlock()
 	if err == nil && latestBlock.Header.Height > 0 {
@@ -191,7 +191,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		genesisLedgerView := store.LedgerViewByHeight(0)
 
 		// storage is empty, bootstrap new execution state
-		bootstrapLedger(genesisLedgerView, rootKey.AccountKey())
+		bootstrapLedger(genesisLedgerView, serviceKey.AccountKey())
 
 		// commit the genesis block to storage
 		genesis := model.Genesis(nil)
@@ -218,7 +218,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	b := &Blockchain{
 		storage:      config.Store,
 		pendingBlock: pendingBlock,
-		rootKey:      rootKey,
+		serviceKey:   serviceKey,
 	}
 
 	interpreterRuntime := runtime.NewInterpreterRuntime()
@@ -232,20 +232,20 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	return b, nil
 }
 
-// RootKey returns the root private key for this blockchain.
-func (b *Blockchain) RootKey() RootKey {
-	rootAccount, err := b.getAccount(sdkConvert.SDKAddressToFlow(b.rootKey.Address))
+// ServiceKey returns the service private key for this blockchain.
+func (b *Blockchain) ServiceKey() ServiceKey {
+	serviceAccount, err := b.getAccount(sdkConvert.SDKAddressToFlow(b.serviceKey.Address))
 	if err != nil {
-		return b.rootKey
+		return b.serviceKey
 	}
 
-	if len(rootAccount.Keys) > 0 {
-		b.rootKey.ID = 0
-		b.rootKey.SequenceNumber = rootAccount.Keys[0].SeqNumber
-		b.rootKey.Weight = rootAccount.Keys[0].Weight
+	if len(serviceAccount.Keys) > 0 {
+		b.serviceKey.ID = 0
+		b.serviceKey.SequenceNumber = serviceAccount.Keys[0].SeqNumber
+		b.serviceKey.Weight = serviceAccount.Keys[0].Weight
 	}
 
-	return b.rootKey
+	return b.serviceKey
 }
 
 // PendingBlockID returns the ID of the pending block.
@@ -744,7 +744,7 @@ func (b *Blockchain) LastCreatedAccount() *model.Account {
 }
 
 // CreateAccount submits a transaction to create a new account with the given
-// account keys and code. The transaction is paid by the root account.
+// account keys and code. The transaction is paid by the service account.
 func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, code []byte) (sdk.Address, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -755,17 +755,17 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, code []byte) (s
 		return sdk.Address{}, err
 	}
 
-	rootKey := b.RootKey()
-	rootKeyAddress := rootKey.Address
+	serviceKey := b.ServiceKey()
+	serviceKeyAddress := serviceKey.Address
 
 	tx := sdk.NewTransaction().
 		SetScript(createAccountScript).
 		SetGasLimit(MaxGasLimit).
-		SetProposalKey(rootKeyAddress, rootKey.ID, rootKey.SequenceNumber).
-		SetPayer(rootKeyAddress).
-		AddAuthorizer(rootKeyAddress)
+		SetProposalKey(serviceKeyAddress, serviceKey.ID, serviceKey.SequenceNumber).
+		SetPayer(serviceKeyAddress).
+		AddAuthorizer(serviceKeyAddress)
 
-	err = tx.SignEnvelope(rootKeyAddress, rootKey.ID, rootKey.Signer())
+	err = tx.SignEnvelope(serviceKeyAddress, serviceKey.ID, serviceKey.Signer())
 	if err != nil {
 		return sdk.Address{}, err
 	}
@@ -829,16 +829,16 @@ func bootstrapLedger(ledger virtualmachine.Ledger, accountKey *sdk.AccountKey) {
 	bootstrap.BootstrapView(ledger, flowAccountKey, genesisTokenSupply)
 }
 
-const DefaultRootPrivateKeySeed = "elephant ears space cowboy octopus rodeo potato cannon pineapple"
+const DefaultServicePrivateKeySeed = "elephant ears space cowboy octopus rodeo potato cannon pineapple"
 
 func init() {
 	// Initialize default emulator options
-	privateKey, err := sdkCrypto.GeneratePrivateKey(sdkCrypto.ECDSA_P256, []byte(DefaultRootPrivateKeySeed))
+	privateKey, err := sdkCrypto.GeneratePrivateKey(sdkCrypto.ECDSA_P256, []byte(DefaultServicePrivateKeySeed))
 	if err != nil {
-		panic("Failed to generate default root key: " + err.Error())
+		panic("Failed to generate default service key: " + err.Error())
 	}
 
-	defaultConfig.RootKey = RootKey{
+	defaultConfig.ServiceKey = ServiceKey{
 		PrivateKey: &privateKey,
 		SigAlgo:    privateKey.Algorithm(),
 		HashAlgo:   sdkCrypto.SHA3_256,

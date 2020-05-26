@@ -65,7 +65,7 @@ spec:
 
           # Environment variables
           env:
-            - name: FLOW_ROOTPRIVATEKEY
+            - name: FLOW_SERVICEPRIVATEKEY
               valueFrom:
                 secretKeyRef:
                   name: emulator-flow-json-v2

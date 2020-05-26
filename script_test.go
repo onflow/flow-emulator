@@ -20,14 +20,14 @@ func TestExecuteScript(t *testing.T) {
 	tx := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
 		SetGasLimit(emulator.MaxGasLimit).
-		SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-		SetPayer(b.RootKey().Address).
-		AddAuthorizer(b.RootKey().Address)
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+		SetPayer(b.ServiceKey().Address).
+		AddAuthorizer(b.ServiceKey().Address)
 
-	err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 	assert.NoError(t, err)
 
-	callScript := generateGetCounterCountScript(counterAddress, b.RootKey().Address)
+	callScript := generateGetCounterCountScript(counterAddress, b.ServiceKey().Address)
 
 	// Sample call (value is 0)
 	scriptResult, err := b.ExecuteScript([]byte(callScript))
