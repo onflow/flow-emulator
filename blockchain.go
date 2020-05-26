@@ -153,6 +153,9 @@ func WithStore(store storage.Store) Option {
 
 // NewBlockchain instantiates a new emulated blockchain with the provided options.
 func NewBlockchain(opts ...Option) (*Blockchain, error) {
+
+	model.SetChainID(model.Mainnet)
+
 	var pendingBlock *pendingBlock
 
 	// apply options to the default config
