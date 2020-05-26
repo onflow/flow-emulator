@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/onflow/flow-go-sdk"
+	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/prometheus/common/log"
 	"github.com/psiemens/sconfig"
@@ -77,7 +77,7 @@ func Cmd(getRootKey rootKeyFunc) *cobra.Command {
 				logger.SetLevel(logrus.DebugLevel)
 			}
 
-			rootAddress := flow.HexToAddress("01")
+			rootAddress := sdk.ServiceAddress(sdk.Mainnet)
 			rootFields := logrus.Fields{
 				"rootAddress":  rootAddress.Hex(),
 				"rootPubKey":   hex.EncodeToString(rootPublicKey.Encode()),
