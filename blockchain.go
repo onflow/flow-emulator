@@ -565,7 +565,7 @@ func (b *Blockchain) executeNextTransaction(blockContext virtualmachine.BlockCon
 			ledgerView *delta.View,
 			tx *model.TransactionBody,
 		) (*virtualmachine.TransactionResult, error) {
-			return blockContext.ExecuteTransaction(ledgerView, tx)
+			return blockContext.ExecuteTransaction(ledgerView, tx, virtualmachine.SkipDeploymentRestriction)
 		},
 	)
 	if err != nil {
