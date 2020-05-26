@@ -171,7 +171,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 
 	// set up root key
 	rootKey := config.RootKey
-	rootKey.Address = sdk.RootAddress
+	rootKey.Address = sdk.ServiceAddress(sdk.Mainnet)
 	rootKey.Weight = sdk.AccountKeyWeightThreshold
 
 	latestBlock, err := store.LatestBlock()
@@ -730,10 +730,13 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, blockHeight uint64) (*t
 
 // LastCreatedAccount returns the last account that was created in the blockchain.
 func (b *Blockchain) LastCreatedAccount() *model.Account {
-
 	ledgerAccess := virtualmachine.LedgerDAL{Ledger: b.pendingBlock.ledgerView}
 
-	account := ledgerAccess.GetAccount(ledgerAccess.GetLatestAccount())
+	// last created account
+	addressState, _ := ledgerAccess.GetAddressState()
+	address, _, _ := model.AccountAddress(addressState - 1)
+
+	account := ledgerAccess.GetAccount(address)
 	return account
 }
 
@@ -751,8 +754,6 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, code []byte) (s
 
 	rootKey := b.RootKey()
 	rootKeyAddress := rootKey.Address
-
-	fmt.Printf("rootKey = %x\n", rootKey.PrivateKey.Encode())
 
 	tx := sdk.NewTransaction().
 		SetScript(createAccountScript).
