@@ -275,30 +275,16 @@ func (mr *MockBlockchainAPIMockRecorder) GetTransactionResult(arg0 interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionResult", reflect.TypeOf((*MockBlockchainAPI)(nil).GetTransactionResult), arg0)
 }
 
-// RootAccountAddress mocks base method
-func (m *MockBlockchainAPI) RootAccountAddress() flow_go_sdk.Address {
+// ServiceKey mocks base method
+func (m *MockBlockchainAPI) ServiceKey() flow_emulator.ServiceKey {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RootAccountAddress")
-	ret0, _ := ret[0].(flow_go_sdk.Address)
+	ret := m.ctrl.Call(m, "ServiceKey")
+	ret0, _ := ret[0].(flow_emulator.ServiceKey)
 	return ret0
 }
 
-// RootAccountAddress indicates an expected call of RootAccountAddress
-func (mr *MockBlockchainAPIMockRecorder) RootAccountAddress() *gomock.Call {
+// ServiceKey indicates an expected call of ServiceKey
+func (mr *MockBlockchainAPIMockRecorder) ServiceKey() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RootAccountAddress", reflect.TypeOf((*MockBlockchainAPI)(nil).RootAccountAddress))
-}
-
-// RootKey mocks base method
-func (m *MockBlockchainAPI) RootKey() flow_emulator.RootKey {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RootKey")
-	ret0, _ := ret[0].(flow_emulator.RootKey)
-	return ret0
-}
-
-// RootKey indicates an expected call of RootKey
-func (mr *MockBlockchainAPIMockRecorder) RootKey() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RootKey", reflect.TypeOf((*MockBlockchainAPI)(nil).RootKey))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceKey", reflect.TypeOf((*MockBlockchainAPI)(nil).ServiceKey))
 }
