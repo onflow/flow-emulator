@@ -59,7 +59,7 @@ func TestEventEmitted(t *testing.T) {
 			}
 		`)
 
-		publicKey := b.RootKey().AccountKey()
+		publicKey := b.ServiceKey().AccountKey()
 
 		address, err := b.CreateAccount([]*flow.AccountKey{publicKey}, accountScript)
 		assert.NoError(t, err)
@@ -77,10 +77,10 @@ func TestEventEmitted(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(script).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.RootKey().Address, b.RootKey().ID, b.RootKey().SequenceNumber).
-			SetPayer(b.RootKey().Address)
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.RootKey().Address, b.RootKey().ID, b.RootKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)

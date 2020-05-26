@@ -54,15 +54,15 @@ var (
 
 // Config is the configuration for an emulator server.
 type Config struct {
-	GRPCPort        int
-	GRPCDebug       bool
-	HTTPPort        int
-	HTTPHeaders     []HTTPHeader
-	BlockTime       time.Duration
-	RootPublicKey   sdkCrypto.PublicKey
-	RootKeySigAlgo  sdkCrypto.SignatureAlgorithm
-	RootKeyHashAlgo sdkCrypto.HashAlgorithm
-	Persist         bool
+	GRPCPort           int
+	GRPCDebug          bool
+	HTTPPort           int
+	HTTPHeaders        []HTTPHeader
+	BlockTime          time.Duration
+	ServicePublicKey   sdkCrypto.PublicKey
+	ServiceKeySigAlgo  sdkCrypto.SignatureAlgorithm
+	ServiceKeyHashAlgo sdkCrypto.HashAlgorithm
+	Persist            bool
 	// DBPath is the path to the Badger database on disk
 	DBPath string
 	// LivenessCheckTolerance is the tolerance level of the liveness check
@@ -198,8 +198,8 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithStore(store),
 	}
 
-	if conf.RootPublicKey != (sdkCrypto.PublicKey{}) {
-		options = append(options, emulator.WithRootPublicKey(conf.RootPublicKey, conf.RootKeySigAlgo, conf.RootKeyHashAlgo))
+	if conf.ServicePublicKey != (sdkCrypto.PublicKey{}) {
+		options = append(options, emulator.WithServicePublicKey(conf.ServicePublicKey, conf.ServiceKeySigAlgo, conf.ServiceKeyHashAlgo))
 	}
 
 	blockchain, err := emulator.NewBlockchain(options...)
