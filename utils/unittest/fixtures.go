@@ -1,14 +1,14 @@
 package unittest
 
 import (
-	model "github.com/dapperlabs/flow-go/model/flow"
+	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	flowUnittest "github.com/dapperlabs/flow-go/utils/unittest"
 	"github.com/dapperlabs/flow-go/utils/unittest/generator"
 
 	"github.com/dapperlabs/flow-emulator/types"
 )
 
-func TransactionFixture(n ...func(t *model.TransactionBody)) model.TransactionBody {
+func TransactionFixture(n ...func(t *flowgo.TransactionBody)) flowgo.TransactionBody {
 
 	tx := flowUnittest.TransactionBodyFixture()
 
@@ -26,6 +26,6 @@ func StorableTransactionResultFixture() types.StorableTransactionResult {
 		ErrorCode:    42,
 		ErrorMessage: "foo",
 		Logs:         []string{"a", "b", "c"},
-		Events:       []model.Event{events.New(), events.New()},
+		Events:       []flowgo.Event{events.New(), events.New()},
 	}
 }

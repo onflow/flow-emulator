@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	model "github.com/dapperlabs/flow-go/model/flow"
+	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 )
@@ -56,7 +56,7 @@ func (e *CollectionNotFoundError) Error() string {
 
 // A TransactionNotFoundError indicates that a transaction could not be found.
 type TransactionNotFoundError struct {
-	ID model.Identifier
+	ID flowgo.Identifier
 }
 
 func (e *TransactionNotFoundError) isNotFoundError() {}
@@ -67,7 +67,7 @@ func (e *TransactionNotFoundError) Error() string {
 
 // An AccountNotFoundError indicates that an account could not be found.
 type AccountNotFoundError struct {
-	Address model.Address
+	Address flowgo.Address
 }
 
 func (e *AccountNotFoundError) isNotFoundError() {}
@@ -78,7 +78,7 @@ func (e *AccountNotFoundError) Error() string {
 
 // A DuplicateTransactionError indicates that a transaction has already been submitted.
 type DuplicateTransactionError struct {
-	TxID model.Identifier
+	TxID flowgo.Identifier
 }
 
 func (e *DuplicateTransactionError) Error() string {
@@ -87,7 +87,7 @@ func (e *DuplicateTransactionError) Error() string {
 
 //// A MissingSignatureError indicates that a transaction is missing a required signature.
 //type MissingSignatureError struct {
-//	Address model.Address
+//	Address flowgo.Address
 //}
 //
 //func (e *MissingSignatureError) Error() string {
@@ -96,7 +96,7 @@ func (e *DuplicateTransactionError) Error() string {
 
 //// An InvalidSignaturePublicKeyError indicates that signature uses an invalid public key.
 //type InvalidSignaturePublicKeyError struct {
-//	Address model.Address
+//	Address flowgo.Address
 //	KeyID   int
 //}
 //
@@ -106,7 +106,7 @@ func (e *DuplicateTransactionError) Error() string {
 
 //// An InvalidSignatureAccountError indicates that a signature references a nonexistent account.
 //type InvalidSignatureAccountError struct {
-//	Address model.Address
+//	Address flowgo.Address
 //}
 //
 //func (e *InvalidSignatureAccountError) Error() string {
@@ -115,7 +115,7 @@ func (e *DuplicateTransactionError) Error() string {
 
 // An InvalidTransactionError indicates that a submitted transaction is invalid (missing required fields).
 type InvalidTransactionError struct {
-	TxID          model.Identifier
+	TxID          flowgo.Identifier
 	MissingFields []string
 }
 
@@ -137,7 +137,7 @@ func (e *InvalidStateVersionError) Error() string {
 
 // A PendingBlockCommitBeforeExecutionError indicates that the current pending block has not been executed (cannot commit).
 type PendingBlockCommitBeforeExecutionError struct {
-	BlockID model.Identifier
+	BlockID flowgo.Identifier
 }
 
 func (e *PendingBlockCommitBeforeExecutionError) Error() string {
@@ -146,7 +146,7 @@ func (e *PendingBlockCommitBeforeExecutionError) Error() string {
 
 // A PendingBlockMidExecutionError indicates that the current pending block is mid-execution.
 type PendingBlockMidExecutionError struct {
-	BlockID model.Identifier
+	BlockID flowgo.Identifier
 }
 
 func (e *PendingBlockMidExecutionError) Error() string {
@@ -155,7 +155,7 @@ func (e *PendingBlockMidExecutionError) Error() string {
 
 // A PendingBlockTransactionsExhaustedError indicates that the current pending block has finished executing (no more transactions to execute).
 type PendingBlockTransactionsExhaustedError struct {
-	BlockID model.Identifier
+	BlockID flowgo.Identifier
 }
 
 func (e *PendingBlockTransactionsExhaustedError) Error() string {
