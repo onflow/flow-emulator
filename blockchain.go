@@ -565,7 +565,12 @@ func (b *Blockchain) executeNextTransaction(blockContext virtualmachine.BlockCon
 			ledgerView *delta.View,
 			tx *flowgo.TransactionBody,
 		) (*virtualmachine.TransactionResult, error) {
-			return blockContext.ExecuteTransaction(ledgerView, tx, virtualmachine.SkipDeploymentRestriction)
+			return blockContext.ExecuteTransaction(
+				ledgerView,
+				tx,
+				virtualmachine.WithRestrictedAccountCreation(false),
+				virtualmachine.WithRestrictedDeployment(false),
+			)
 		},
 	)
 	if err != nil {
