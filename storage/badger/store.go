@@ -99,7 +99,7 @@ func (s *Store) LatestBlock() (block realFlow.Block, err error) {
 	return
 }
 
-func (s *Store) BlockByID(blockID flowgo.Identifier) (block realFlow.Block, err error) {
+func (s *Store) BlockByID(blockID flowgo.Identifier) (block *realFlow.Block, err error) {
 	err = s.db.View(func(txn *badger.Txn) error {
 		// get block height by block ID
 		encBlockHeight, err := getTx(txn)(blockIDIndexKey(blockID))
@@ -118,29 +118,31 @@ func (s *Store) BlockByID(blockID flowgo.Identifier) (block realFlow.Block, err 
 		if err != nil {
 			return err
 		}
-		return decodeBlock(&block, encBlock)
+		block = &realFlow.Block{}
+		return decodeBlock(block, encBlock)
 	})
 	return
 }
 
-func (s *Store) BlockByHeight(blockHeight uint64) (block realFlow.Block, err error) {
+func (s *Store) BlockByHeight(blockHeight uint64) (block *realFlow.Block, err error) {
 	err = s.db.View(func(txn *badger.Txn) error {
 		encBlock, err := getTx(txn)(blockKey(blockHeight))
 		if err != nil {
 			return err
 		}
-		return decodeBlock(&block, encBlock)
+		block = &realFlow.Block{}
+		return decodeBlock(block, encBlock)
 	})
 	return
 }
 
-func (s *Store) InsertBlock(block realFlow.Block) error {
-	return s.db.Update(insertBlock(block))
+func (s *Store) StoreBlock(block *realFlow.Block) error {
+	return s.db.Update(store(block))
 }
 
-func insertBlock(block realFlow.Block) func(txn *badger.Txn) error {
+func store(block *realFlow.Block) func(txn *badger.Txn) error {
 	return func(txn *badger.Txn) error {
-		encBlock, err := encodeBlock(block)
+		encBlock, err := encodeBlock(*block)
 		if err != nil {
 			return err
 		}
@@ -190,7 +192,7 @@ func (s *Store) CommitBlock(
 	}
 
 	err := s.db.Update(func(txn *badger.Txn) error {
-		err := insertBlock(block)(txn)
+		err := store(&block)(txn)
 		if err != nil {
 			return err
 		}

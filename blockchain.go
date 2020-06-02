@@ -14,12 +14,14 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/dapperlabs/flow-go/crypto"
 	"github.com/dapperlabs/flow-go/crypto/hash"
 	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
 	"github.com/dapperlabs/flow-go/engine/execution/state/bootstrap"
 	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
+	"github.com/dapperlabs/flow-go/model/flow"
 	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
@@ -188,7 +190,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		genesisLedgerView := store.LedgerViewByHeight(0)
 
 		// storage is empty, bootstrap new execution state
-		bootstrapLedger(genesisLedgerView, serviceKey.AccountKey())
+		bootstrapLedger(genesisLedgerView, store, serviceKey.AccountKey())
 
 		// commit the genesis block to storage
 		genesis := flowgo.Genesis(nil)
@@ -250,6 +252,11 @@ func (b *Blockchain) PendingBlockID() flowgo.Identifier {
 	return b.pendingBlock.ID()
 }
 
+// PendingBlockTimestamp returns the Timestamp of the pending block.
+func (b *Blockchain) PendingBlockTimestamp() time.Time {
+	return b.pendingBlock.Block().Header.Timestamp
+}
+
 func (b *Blockchain) getLatestBlock() (flowgo.Block, error) {
 	block, err := b.storage.LatestBlock()
 	if err != nil {
@@ -281,7 +288,7 @@ func (b *Blockchain) GetBlockByID(id sdk.Identifier) (*sdk.Block, error) {
 		return nil, &StorageError{err}
 	}
 
-	sdkBlock := sdkconvert.FlowBlockToSDK(block)
+	sdkBlock := sdkconvert.FlowBlockToSDK(*block)
 
 	return &sdkBlock, nil
 }
@@ -293,18 +300,18 @@ func (b *Blockchain) GetBlockByHeight(height uint64) (*sdk.Block, error) {
 		return nil, err
 	}
 
-	sdkBlock := sdkconvert.FlowBlockToSDK(block)
+	sdkBlock := sdkconvert.FlowBlockToSDK(*block)
 
 	return &sdkBlock, nil
 }
 
-func (b *Blockchain) getBlockByHeight(height uint64) (flowgo.Block, error) {
+func (b *Blockchain) getBlockByHeight(height uint64) (*flowgo.Block, error) {
 	block, err := b.storage.BlockByHeight(height)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			return flowgo.Block{}, &BlockNotFoundByHeightError{Height: height}
+			return nil, &BlockNotFoundByHeightError{Height: height}
 		}
-		return flowgo.Block{}, err
+		return nil, err
 	}
 
 	return block, nil
@@ -516,7 +523,7 @@ func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 	}
 
 	header := b.pendingBlock.Block().Header
-	blockContext := b.virtualMachine.NewBlockContext(header)
+	blockContext := b.virtualMachine.NewBlockContext(header, newBlocks(b))
 
 	// cannot execute a block that has already executed
 	if b.pendingBlock.ExecutionComplete() {
@@ -544,7 +551,7 @@ func (b *Blockchain) ExecuteNextTransaction() (*types.TransactionResult, error) 
 	defer b.mu.Unlock()
 
 	header := b.pendingBlock.Block().Header
-	blockContext := b.virtualMachine.NewBlockContext(header)
+	blockContext := b.virtualMachine.NewBlockContext(header, newBlocks(b))
 
 	return b.executeNextTransaction(blockContext)
 }
@@ -568,8 +575,7 @@ func (b *Blockchain) executeNextTransaction(blockContext virtualmachine.BlockCon
 			return blockContext.ExecuteTransaction(
 				ledgerView,
 				tx,
-				virtualmachine.WithRestrictedAccountCreation(false),
-				virtualmachine.WithRestrictedDeployment(false),
+				virtualmachine.SkipDeploymentRestriction,
 			)
 		},
 	)
@@ -704,7 +710,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, blockHeight uint64) (*t
 
 	header := requestedBlock.Header
 
-	result, err := b.virtualMachine.NewBlockContext(header).ExecuteScript(requestedLedgerView, script)
+	result, err := b.virtualMachine.NewBlockContext(header, newBlocks(b)).ExecuteScript(requestedLedgerView, script)
 
 	if err != nil {
 		return nil, err
@@ -736,11 +742,8 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, blockHeight uint64) (*t
 // LastCreatedAccount returns the last account that was created in the blockchain.
 func (b *Blockchain) LastCreatedAccount() *flowgo.Account {
 	ledgerAccess := virtualmachine.LedgerDAL{Ledger: b.pendingBlock.ledgerView}
-
-	// last created account
 	addressState, _ := ledgerAccess.GetAddressState()
-	address, _, _ := flowgo.AccountAddress(addressState - 1)
-
+	address := addressState.CurrentAddress()
 	account := ledgerAccess.GetAccount(address)
 	return account
 }
@@ -815,7 +818,7 @@ func convertToSealedResults(
 
 const genesisTokenSupply = 1_000_000_000_000_000
 
-func bootstrapLedger(ledger virtualmachine.Ledger, accountKey *sdk.AccountKey) {
+func bootstrapLedger(ledger virtualmachine.Ledger, storage storage.Store, accountKey *sdk.AccountKey) {
 	publicKey, _ := crypto.DecodePublicKey(
 		crypto.SigningAlgorithm(accountKey.SigAlgo),
 		accountKey.PublicKey.Encode(),
@@ -848,3 +851,21 @@ func init() {
 		HashAlgo:   sdkcrypto.SHA3_256,
 	}
 }
+
+type blocks struct {
+	blockchain *Blockchain
+}
+
+func newBlocks(b *Blockchain) blocks {
+	return blocks{b}
+}
+
+func (b blocks) ByHeight(height uint64) (*flow.Block, error) {
+	if height == b.blockchain.pendingBlock.Height() {
+		return b.blockchain.pendingBlock.Block(), nil
+	}
+
+	return b.blockchain.storage.BlockByHeight(height)
+}
+
+var _ virtualmachine.Blocks = &blocks{}

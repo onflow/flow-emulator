@@ -21,7 +21,7 @@ func TestEventEmitted(t *testing.T) {
 
 		script := []byte(`
 			pub event MyEvent(x: Int, y: Int)
-			
+
 			pub fun main() {
 			  emit MyEvent(x: 1, y: 2)
 			}
@@ -66,7 +66,7 @@ func TestEventEmitted(t *testing.T) {
 
 		script := []byte(fmt.Sprintf(`
 			import 0x%s
-			
+
 			transaction {
 				execute {
 					Test.emitMyEvent(x: 1, y: 2)

@@ -49,29 +49,29 @@ func New() *Store {
 
 var _ storage.Store = &Store{}
 
-func (s *Store) BlockByID(id flowgo.Identifier) (flowgo.Block, error) {
+func (s *Store) BlockByID(id flowgo.Identifier) (*flowgo.Block, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	blockHeight := s.blockIDToHeight[id]
 	block, ok := s.blocks[blockHeight]
 	if !ok {
-		return flowgo.Block{}, storage.ErrNotFound
+		return nil, storage.ErrNotFound
 	}
 
-	return block, nil
+	return &block, nil
 }
 
-func (s *Store) BlockByHeight(blockHeight uint64) (flowgo.Block, error) {
+func (s *Store) BlockByHeight(blockHeight uint64) (*flowgo.Block, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	block, ok := s.blocks[blockHeight]
 	if !ok {
-		return flowgo.Block{}, storage.ErrNotFound
+		return nil, storage.ErrNotFound
 	}
 
-	return block, nil
+	return &block, nil
 }
 
 func (s *Store) LatestBlock() (flowgo.Block, error) {
@@ -85,15 +85,15 @@ func (s *Store) LatestBlock() (flowgo.Block, error) {
 	return latestBlock, nil
 }
 
-func (s *Store) InsertBlock(block flowgo.Block) error {
+func (s *Store) StoreBlock(block *flowgo.Block) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.insertBlock(block)
+	return s.store(block)
 }
 
-func (s *Store) insertBlock(block flowgo.Block) error {
-	s.blocks[block.Header.Height] = block
+func (s *Store) store(block *flowgo.Block) error {
+	s.blocks[block.Header.Height] = *block
 	if block.Header.Height > s.blockHeight {
 		s.blockHeight = block.Header.Height
 	}
@@ -120,7 +120,7 @@ func (s *Store) CommitBlock(
 		)
 	}
 
-	err := s.insertBlock(block)
+	err := s.store(&block)
 	if err != nil {
 		return err
 	}
