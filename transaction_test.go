@@ -57,13 +57,13 @@ func TestSubmitTransaction(t *testing.T) {
 
 // TODO: Add test case for missing ReferenceBlockID
 // TODO: Add test case for missing ProposalKey
-func TestSubmitInvalidTransaction(t *testing.T) {
+func TestSubmitTransaction_Invalid(t *testing.T) {
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
 	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
-	t.Run("EmptyTransaction", func(t *testing.T) {
+	t.Run("Empty transaction", func(t *testing.T) {
 		t.Skip("TODO: transaction validation")
 
 		// Create empty transaction (no required fields)
@@ -77,7 +77,7 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 		assert.IsType(t, err, &emulator.InvalidTransactionError{})
 	})
 
-	t.Run("MissingScript", func(t *testing.T) {
+	t.Run("Missing script", func(t *testing.T) {
 		t.Skip("TODO: transaction validation")
 
 		// Create transaction with no Script field
@@ -94,7 +94,7 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 		assert.IsType(t, err, &emulator.InvalidTransactionError{})
 	})
 
-	t.Run("MissingGasLimit", func(t *testing.T) {
+	t.Run("Missing gas limit", func(t *testing.T) {
 		t.Skip("TODO: transaction validation")
 
 		// Create transaction with no GasLimit field
@@ -111,7 +111,7 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 		assert.IsType(t, err, &emulator.InvalidTransactionError{})
 	})
 
-	t.Run("MissingPayerAccount", func(t *testing.T) {
+	t.Run("Missing payer account", func(t *testing.T) {
 		t.Skip("TODO: transaction validation")
 
 		// Create transaction with no PayerAccount field
@@ -128,7 +128,7 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 		assert.IsType(t, err, &emulator.InvalidTransactionError{})
 	})
 
-	t.Run("MissingProposalKey", func(t *testing.T) {
+	t.Run("Missing proposal key", func(t *testing.T) {
 
 		// Create transaction with no PayerAccount field
 		tx := flow.NewTransaction().
@@ -145,7 +145,7 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 		assert.IsType(t, err, &emulator.InvalidTransactionError{})
 	})
 
-	t.Run("WrongSequenceKey", func(t *testing.T) {
+	t.Run("Invalid sequence number", func(t *testing.T) {
 
 		invalidSequenceNumber := b.ServiceKey().SequenceNumber + 2137
 		tx := flow.NewTransaction().
@@ -174,7 +174,7 @@ func TestSubmitInvalidTransaction(t *testing.T) {
 	})
 }
 
-func TestSubmitDuplicateTransaction(t *testing.T) {
+func TestSubmitTransaction_Duplicate(t *testing.T) {
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
@@ -206,7 +206,7 @@ func TestSubmitDuplicateTransaction(t *testing.T) {
 	assert.IsType(t, err, &emulator.DuplicateTransactionError{})
 }
 
-func TestSubmitTransactionReverted(t *testing.T) {
+func TestSubmitTransaction_Reverted(t *testing.T) {
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
@@ -238,7 +238,7 @@ func TestSubmitTransactionReverted(t *testing.T) {
 	assert.Error(t, tx1Result.Error)
 }
 
-func TestSubmitTransactionScriptAccounts(t *testing.T) {
+func TestSubmitTransaction_Authorizers(t *testing.T) {
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
@@ -250,7 +250,7 @@ func TestSubmitTransactionScriptAccounts(t *testing.T) {
 	accountAddressB, err := b.CreateAccount([]*flow.AccountKey{accountKeyB}, nil)
 	assert.NoError(t, err)
 
-	t.Run("TooManyAccountsForScript", func(t *testing.T) {
+	t.Run("Extra authorizers", func(t *testing.T) {
 		// script only supports one account
 		script := []byte(`
 		  transaction {
@@ -284,7 +284,7 @@ func TestSubmitTransactionScriptAccounts(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("NotEnoughAccountsForScript", func(t *testing.T) {
+	t.Run("Insufficient authorizers", func(t *testing.T) {
 		// script requires two accounts
 		script := []byte(`
 		  transaction {
@@ -315,10 +315,10 @@ func TestSubmitTransactionScriptAccounts(t *testing.T) {
 	})
 }
 
-func TestSubmitTransactionPayerSignature(t *testing.T) {
+func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 
-	t.Run("MissingPayerSignature", func(t *testing.T) {
+	t.Run("Missing envelope signature", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -345,7 +345,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		unittest.AssertFlowVMErrorType(t, &virtualmachine.MissingSignatureError{}, result.Error)
 	})
 
-	t.Run("InvalidAccount", func(t *testing.T) {
+	t.Run("Invalid account", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -373,13 +373,13 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		unittest.AssertFlowVMErrorType(t, &virtualmachine.InvalidSignatureAccountError{}, result.Error)
 	})
 
-	t.Run("InvalidKeyPair", func(t *testing.T) {
+	t.Run("Invalid key", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
-		// use key-pair that does not exist on service account
+		// use key that does not exist on service account
 		invalidKey, _ := crypto.GeneratePrivateKey(crypto.ECDSA_P256,
 			[]byte("invalid key invalid key invalid key invalid key invalid key invalid key"))
 		invalidSigner := crypto.NewNaiveSigner(invalidKey, crypto.SHA3_256)
@@ -403,7 +403,7 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		unittest.AssertFlowVMErrorType(t, &virtualmachine.InvalidSignaturePublicKeyError{}, result.Error)
 	})
 
-	t.Run("KeyWeights", func(t *testing.T) {
+	t.Run("Key weights", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -446,14 +446,14 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
 
-		t.Run("InsufficientKeyWeight", func(t *testing.T) {
+		t.Run("Insufficient key weight", func(t *testing.T) {
 			result, err := b.ExecuteNextTransaction()
 			assert.NoError(t, err)
 
 			unittest.AssertFlowVMErrorType(t, &virtualmachine.MissingSignatureError{}, result.Error)
 		})
 
-		t.Run("SufficientKeyWeight", func(t *testing.T) {
+		t.Run("Sufficient key weight", func(t *testing.T) {
 			result, err := b.ExecuteNextTransaction()
 			assert.NoError(t, err)
 
@@ -462,10 +462,10 @@ func TestSubmitTransactionPayerSignature(t *testing.T) {
 	})
 }
 
-func TestSubmitTransactionScriptSignatures(t *testing.T) {
+func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 
-	t.Run("MissingScriptSignature", func(t *testing.T) {
+	t.Run("Missing payload signature", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -492,7 +492,7 @@ func TestSubmitTransactionScriptSignatures(t *testing.T) {
 		unittest.AssertFlowVMErrorType(t, &virtualmachine.MissingSignatureError{}, result.Error)
 	})
 
-	t.Run("MultipleAccounts", func(t *testing.T) {
+	t.Run("Multiple payload signers", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -567,14 +567,14 @@ func TestGetTransaction(t *testing.T) {
 	assert.NoError(t, err)
 	assertTransactionSucceeded(t, result)
 
-	t.Run("Non-existent", func(t *testing.T) {
+	t.Run("Nonexistent", func(t *testing.T) {
 		_, err := b.GetTransaction(flow.EmptyID)
 		if assert.Error(t, err) {
 			assert.IsType(t, &emulator.TransactionNotFoundError{}, err)
 		}
 	})
 
-	t.Run("Exists", func(t *testing.T) {
+	t.Run("Existent", func(t *testing.T) {
 		tx2, err := b.GetTransaction(tx1.ID())
 		require.NoError(t, err)
 
@@ -663,7 +663,7 @@ const callHelloTxTemplate = `
     }
 `
 
-func TestHelloWorldNewAccount(t *testing.T) {
+func TestHelloWorld_NewAccount(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 
 	b, err := emulator.NewBlockchain()
@@ -746,7 +746,7 @@ func TestHelloWorldNewAccount(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestHelloWorldUpdateAccount(t *testing.T) {
+func TestHelloWorld_UpdateAccount(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 
 	b, err := emulator.NewBlockchain()
