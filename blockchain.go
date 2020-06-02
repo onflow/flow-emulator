@@ -21,7 +21,6 @@ import (
 	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
 	"github.com/dapperlabs/flow-go/engine/execution/state/bootstrap"
 	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
-	"github.com/dapperlabs/flow-go/model/flow"
 	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
@@ -860,7 +859,6 @@ func newBlocks(b *Blockchain) blocks {
 	return blocks{b}
 }
 
-func (b blocks) ByHeight(height uint64) (*flow.Block, error) {
 	if height == b.blockchain.pendingBlock.Height() {
 		return b.blockchain.pendingBlock.Block(), nil
 	}
