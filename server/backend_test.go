@@ -607,7 +607,8 @@ func TestBackend(t *testing.T) {
 		api.EXPECT().
 			ExecuteAndCommitBlock().
 			DoAndReturn(func() (*flow.Block, []*types.TransactionResult, error) {
-				return &flow.Block{}, make([]*types.TransactionResult, 0), nil
+				return &flow.Block{BlockHeader: flow.BlockHeader{}, BlockPayload: flow.BlockPayload{}},
+					make([]*types.TransactionResult, 0), nil
 			}).
 			Times(1)
 

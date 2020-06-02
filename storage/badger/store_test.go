@@ -29,12 +29,12 @@ func TestBlocks(t *testing.T) {
 		require.Nil(t, os.RemoveAll(dir))
 	}()
 
-	block1 := flowgo.Block{
+	block1 := &flowgo.Block{
 		Header: &flowgo.Header{
 			Height: 1,
 		},
 	}
-	block2 := flowgo.Block{
+	block2 := &flowgo.Block{
 		Header: &flowgo.Header{
 			Height: 2,
 		},
@@ -65,12 +65,12 @@ func TestBlocks(t *testing.T) {
 	})
 
 	t.Run("should be able to insert block", func(t *testing.T) {
-		err := store.InsertBlock(block1)
+		err := store.StoreBlock(block1)
 		assert.NoError(t, err)
 	})
 
 	// insert block 1
-	err := store.InsertBlock(block1)
+	err := store.StoreBlock(block1)
 	assert.NoError(t, err)
 
 	t.Run("should be able to get inserted block", func(t *testing.T) {
@@ -89,18 +89,18 @@ func TestBlocks(t *testing.T) {
 		t.Run("LatestBlock", func(t *testing.T) {
 			block, err := store.LatestBlock()
 			assert.NoError(t, err)
-			assert.Equal(t, block1, block)
+			assert.Equal(t, *block1, block)
 		})
 	})
 
 	// insert block 2
-	err = store.InsertBlock(block2)
+	err = store.StoreBlock(block2)
 	assert.NoError(t, err)
 
 	t.Run("Latest block should update", func(t *testing.T) {
 		block, err := store.LatestBlock()
 		assert.NoError(t, err)
-		assert.Equal(t, block2, block)
+		assert.Equal(t, *block2, block)
 	})
 }
 
@@ -320,7 +320,7 @@ func TestEventsByHeight(t *testing.T) {
 		eventsB   = make([]flowgo.Event, 0, 5)
 	)
 
-	for i, _ := range allEvents {
+	for i := range allEvents {
 		event := flowGenerator.EventGenerator().New()
 		event.TransactionIndex = uint32(i)
 		event.EventIndex = uint32(i * 2)
@@ -387,7 +387,7 @@ func TestPersistence(t *testing.T) {
 		require.Nil(t, os.RemoveAll(dir))
 	}()
 
-	block := flowgo.Block{Header: &flowgo.Header{Height: 1}}
+	block := &flowgo.Block{Header: &flowgo.Header{Height: 1}}
 	tx := unittest.TransactionFixture()
 	events := []flowgo.Event{flowGenerator.EventGenerator().New()}
 
@@ -395,13 +395,14 @@ func TestPersistence(t *testing.T) {
 	ledger["foo"] = []byte("bar")
 
 	// insert some stuff to to the store
-	err := store.InsertBlock(block)
+	err := store.StoreBlock(block)
 	assert.NoError(t, err)
 	err = store.InsertTransaction(tx)
 	assert.NoError(t, err)
 	err = store.InsertEvents(block.Header.Height, events)
 	assert.NoError(t, err)
 	err = store.InsertLedgerDelta(block.Header.Height, ledger)
+	assert.NoError(t, err)
 
 	// close the store
 	err = store.Close()
@@ -414,7 +415,7 @@ func TestPersistence(t *testing.T) {
 	// should be able to retrieve what we stored
 	gotBlock, err := store.LatestBlock()
 	assert.NoError(t, err)
-	assert.Equal(t, block, gotBlock)
+	assert.Equal(t, *block, gotBlock)
 
 	gotTx, err := store.TransactionByID(tx.ID())
 	assert.NoError(t, err)
@@ -479,7 +480,7 @@ func BenchmarkBlockDiskUsage(b *testing.B) {
 	b.StartTimer()
 	var lastDBSize int64
 	for i := 0; i < b.N; i++ {
-		block := flowgo.Block{
+		block := &flowgo.Block{
 			Header: &flowgo.Header{
 				Height:   uint64(i),
 				ParentID: flowUnitest.IdentifierFixture(),
@@ -492,7 +493,7 @@ func BenchmarkBlockDiskUsage(b *testing.B) {
 				},
 			},
 		}
-		if err := store.InsertBlock(block); err != nil {
+		if err := store.StoreBlock(block); err != nil {
 			b.Fatal(err)
 		}
 

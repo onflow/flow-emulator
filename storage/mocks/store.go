@@ -36,10 +36,10 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 }
 
 // BlockByHeight mocks base method
-func (m *MockStore) BlockByHeight(arg0 uint64) (flow.Block, error) {
+func (m *MockStore) BlockByHeight(arg0 uint64) (*flow.Block, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BlockByHeight", arg0)
-	ret0, _ := ret[0].(flow.Block)
+	ret0, _ := ret[0].(*flow.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -51,10 +51,10 @@ func (mr *MockStoreMockRecorder) BlockByHeight(arg0 interface{}) *gomock.Call {
 }
 
 // BlockByID mocks base method
-func (m *MockStore) BlockByID(arg0 flow.Identifier) (flow.Block, error) {
+func (m *MockStore) BlockByID(arg0 flow.Identifier) (*flow.Block, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BlockByID", arg0)
-	ret0, _ := ret[0].(flow.Block)
+	ret0, _ := ret[0].(*flow.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -136,6 +136,20 @@ func (m *MockStore) LedgerViewByHeight(arg0 uint64) *delta.View {
 func (mr *MockStoreMockRecorder) LedgerViewByHeight(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LedgerViewByHeight", reflect.TypeOf((*MockStore)(nil).LedgerViewByHeight), arg0)
+}
+
+// StoreBlock mocks base method
+func (m *MockStore) StoreBlock(arg0 *flow.Block) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StoreBlock", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// StoreBlock indicates an expected call of StoreBlock
+func (mr *MockStoreMockRecorder) StoreBlock(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreBlock", reflect.TypeOf((*MockStore)(nil).StoreBlock), arg0)
 }
 
 // TransactionByID mocks base method
