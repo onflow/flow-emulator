@@ -5,10 +5,8 @@ import (
 	"fmt"
 
 	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
-	realFlow "github.com/dapperlabs/flow-go/model/flow"
-	"github.com/dgraph-io/badger/v2"
-
 	flowgo "github.com/dapperlabs/flow-go/model/flow"
+	"github.com/dgraph-io/badger/v2"
 
 	"github.com/dapperlabs/flow-emulator/storage"
 	"github.com/dapperlabs/flow-emulator/types"
@@ -81,7 +79,7 @@ func (s *Store) setup() error {
 	})
 }
 
-func (s *Store) LatestBlock() (block realFlow.Block, err error) {
+func (s *Store) LatestBlock() (block flowgo.Block, err error) {
 	err = s.db.View(func(txn *badger.Txn) error {
 		// get latest block height
 		latestBlockHeight, err := getLatestBlockHeightTx(txn)
@@ -99,7 +97,7 @@ func (s *Store) LatestBlock() (block realFlow.Block, err error) {
 	return
 }
 
-func (s *Store) BlockByID(blockID flowgo.Identifier) (block *realFlow.Block, err error) {
+func (s *Store) BlockByID(blockID flowgo.Identifier) (block *flowgo.Block, err error) {
 	err = s.db.View(func(txn *badger.Txn) error {
 		// get block height by block ID
 		encBlockHeight, err := getTx(txn)(blockIDIndexKey(blockID))
@@ -118,29 +116,29 @@ func (s *Store) BlockByID(blockID flowgo.Identifier) (block *realFlow.Block, err
 		if err != nil {
 			return err
 		}
-		block = &realFlow.Block{}
+		block = &flowgo.Block{}
 		return decodeBlock(block, encBlock)
 	})
 	return
 }
 
-func (s *Store) BlockByHeight(blockHeight uint64) (block *realFlow.Block, err error) {
+func (s *Store) BlockByHeight(blockHeight uint64) (block *flowgo.Block, err error) {
 	err = s.db.View(func(txn *badger.Txn) error {
 		encBlock, err := getTx(txn)(blockKey(blockHeight))
 		if err != nil {
 			return err
 		}
-		block = &realFlow.Block{}
+		block = &flowgo.Block{}
 		return decodeBlock(block, encBlock)
 	})
 	return
 }
 
-func (s *Store) StoreBlock(block *realFlow.Block) error {
+func (s *Store) StoreBlock(block *flowgo.Block) error {
 	return s.db.Update(store(block))
 }
 
-func store(block *realFlow.Block) func(txn *badger.Txn) error {
+func store(block *flowgo.Block) func(txn *badger.Txn) error {
 	return func(txn *badger.Txn) error {
 		encBlock, err := encodeBlock(*block)
 		if err != nil {
@@ -315,7 +313,7 @@ func insertTransactionResult(txID flowgo.Identifier, result types.StorableTransa
 }
 
 func (s *Store) LedgerViewByHeight(blockHeight uint64) *delta.View {
-	return delta.NewView(func(key realFlow.RegisterID) (value realFlow.RegisterValue, err error) {
+	return delta.NewView(func(key flowgo.RegisterID) (value flowgo.RegisterValue, err error) {
 
 		//return types.NewLedgerView(func(key string) (value []byte, err error) {
 		s.ledgerChangeLog.RLock()

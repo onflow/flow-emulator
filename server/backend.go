@@ -12,10 +12,9 @@ import (
 
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	sdk "github.com/onflow/flow-go-sdk"
+	sdkconvert "github.com/onflow/flow-go-sdk/client/convert"
 	"github.com/onflow/flow/protobuf/go/flow/access"
 	"github.com/onflow/flow/protobuf/go/flow/entities"
-
-	sdkConvert "github.com/onflow/flow-go-sdk/client/convert"
 
 	emulator "github.com/dapperlabs/flow-emulator"
 	"github.com/dapperlabs/flow-emulator/types"
@@ -51,7 +50,7 @@ func (b *Backend) GetNetworkParameters(context.Context, *access.GetNetworkParame
 func (b *Backend) SendTransaction(ctx context.Context, req *access.SendTransactionRequest) (*access.SendTransactionResponse, error) {
 	txMsg := req.GetTransaction()
 
-	tx, err := sdkConvert.MessageToTransaction(txMsg)
+	tx, err := sdkconvert.MessageToTransaction(txMsg)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -203,7 +202,7 @@ func (b *Backend) GetCollectionByID(ctx context.Context, req *access.GetCollecti
 		Debugf("📚  GetCollectionByID called")
 
 	return &access.CollectionResponse{
-		Collection: sdkConvert.CollectionToMessage(*col),
+		Collection: sdkconvert.CollectionToMessage(*col),
 	}, nil
 }
 
@@ -225,8 +224,13 @@ func (b *Backend) GetTransaction(ctx context.Context, req *access.GetTransaction
 		WithField("txID", id.String()).
 		Debugf("💵  GetTransaction called")
 
+	txMsg, err := sdkconvert.TransactionToMessage(*tx)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
 	return &access.TransactionResponse{
-		Transaction: sdkConvert.TransactionToMessage(*tx),
+		Transaction: txMsg,
 	}, nil
 }
 
@@ -243,7 +247,7 @@ func (b *Backend) GetTransactionResult(ctx context.Context, req *access.GetTrans
 		WithField("txID", id.String()).
 		Debugf("📝  GetTransactionResult called")
 
-	res, err := sdkConvert.TransactionResultToMessage(*result)
+	res, err := sdkconvert.TransactionResultToMessage(*result)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -268,7 +272,7 @@ func (b *Backend) GetAccount(ctx context.Context, req *access.GetAccountRequest)
 		WithField("address", address).
 		Debugf("👤  GetAccount called")
 
-	accMsg := sdkConvert.AccountToMessage(*account)
+	accMsg := sdkconvert.AccountToMessage(*account)
 
 	return &access.GetAccountResponse{
 		Account: accMsg,
@@ -454,7 +458,7 @@ func (b *Backend) executeScriptAtBlock(script []byte, blockHeight uint64) (*acce
 
 // blockToHeaderResponse constructs a block header response from a block.
 func (b *Backend) blockToHeaderResponse(block *sdk.Block) (*access.BlockHeaderResponse, error) {
-	msg, err := sdkConvert.BlockHeaderToMessage(*&block.BlockHeader)
+	msg, err := sdkconvert.BlockHeaderToMessage(*&block.BlockHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -466,7 +470,7 @@ func (b *Backend) blockToHeaderResponse(block *sdk.Block) (*access.BlockHeaderRe
 
 // blockResponse constructs a block response from a block.
 func (b *Backend) blockResponse(block *sdk.Block) (*access.BlockResponse, error) {
-	msg, err := sdkConvert.BlockToMessage(*block)
+	msg, err := sdkconvert.BlockToMessage(*block)
 	if err != nil {
 		return nil, err
 	}
@@ -482,7 +486,7 @@ func (b *Backend) eventsBlockResult(
 ) (result *access.EventsResponse_Result, err error) {
 	eventMessages := make([]*entities.Event, len(events))
 	for i, event := range events {
-		eventMessages[i], err = sdkConvert.EventToMessage(event)
+		eventMessages[i], err = sdkconvert.EventToMessage(event)
 		if err != nil {
 			return nil, err
 		}

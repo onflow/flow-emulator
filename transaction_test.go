@@ -568,7 +568,7 @@ func TestGetTransaction(t *testing.T) {
 	assertTransactionSucceeded(t, result)
 
 	t.Run("Non-existent", func(t *testing.T) {
-		_, err := b.GetTransaction(flow.ZeroID)
+		_, err := b.GetTransaction(flow.EmptyID)
 		if assert.Error(t, err) {
 			assert.IsType(t, &emulator.TransactionNotFoundError{}, err)
 		}
