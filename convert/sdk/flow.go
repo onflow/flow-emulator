@@ -102,34 +102,55 @@ func FlowTransactionSignaturesToSDK(flowTransactionSignatures []flowgo.Transacti
 	return ret
 }
 
-func SDKTransactionToFlow(sdkTx sdk.Transaction) flowgo.TransactionBody {
+func SDKTransactionToFlow(sdkTx sdk.Transaction) (flowgo.TransactionBody, error) {
+	var err error
+
+	arguments := make([][]byte, len(sdkTx.Arguments))
+	for i, arg := range sdkTx.Arguments {
+		arguments[i], err = jsoncdc.Encode(arg)
+		if err != nil {
+			return flowgo.TransactionBody{}, err
+		}
+	}
+
 	return flowgo.TransactionBody{
 		ReferenceBlockID:   SDKIdentifierToFlow(sdkTx.ReferenceBlockID),
 		Script:             sdkTx.Script,
+		Arguments:          arguments,
 		GasLimit:           sdkTx.GasLimit,
 		ProposalKey:        SDKProposalKeyToFlow(sdkTx.ProposalKey),
 		Payer:              SDKAddressToFlow(sdkTx.Payer),
 		Authorizers:        SDKAddressesToFlow(sdkTx.Authorizers),
 		PayloadSignatures:  SDKTransactionSignaturesToFlow(sdkTx.PayloadSignatures),
 		EnvelopeSignatures: SDKTransactionSignaturesToFlow(sdkTx.EnvelopeSignatures),
-	}
+	}, nil
 }
 
-func FlowTransactionToSDK(flowTx flowgo.TransactionBody) sdk.Transaction {
+func FlowTransactionToSDK(flowTx flowgo.TransactionBody) (sdk.Transaction, error) {
+	var err error
+
+	arguments := make([]cadence.Value, len(flowTx.Arguments))
+	for i, arg := range flowTx.Arguments {
+		arguments[i], err = jsoncdc.Decode(arg)
+		if err != nil {
+			return sdk.Transaction{}, err
+		}
+	}
+
 	return sdk.Transaction{
 		ReferenceBlockID:   FlowIdentifierToSDK(flowTx.ReferenceBlockID),
 		Script:             flowTx.Script,
+		Arguments:          arguments,
 		GasLimit:           flowTx.GasLimit,
 		ProposalKey:        FlowProposalKeyToSDK(flowTx.ProposalKey),
 		Payer:              FlowAddressToSDK(flowTx.Payer),
 		Authorizers:        FlowAddressesToSDK(flowTx.Authorizers),
 		PayloadSignatures:  FlowTransactionSignaturesToSDK(flowTx.PayloadSignatures),
 		EnvelopeSignatures: FlowTransactionSignaturesToSDK(flowTx.EnvelopeSignatures),
-	}
+	}, nil
 }
 
 func FlowEventToSDK(flowEvent flowgo.Event) (sdk.Event, error) {
-
 	cadenceValue, err := jsoncdc.Decode(flowEvent.Payload)
 	if err != nil {
 		return sdk.Event{}, err
