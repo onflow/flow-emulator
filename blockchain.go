@@ -574,7 +574,8 @@ func (b *Blockchain) executeNextTransaction(blockContext virtualmachine.BlockCon
 			return blockContext.ExecuteTransaction(
 				ledgerView,
 				tx,
-				virtualmachine.SkipDeploymentRestriction,
+				virtualmachine.WithRestrictedDeployment(false),
+				virtualmachine.WithRestrictedAccountCreation(false),
 			)
 		},
 	)
@@ -859,6 +860,7 @@ func newBlocks(b *Blockchain) blocks {
 	return blocks{b}
 }
 
+func (b blocks) ByHeight(height uint64) (*flowgo.Block, error) {
 	if height == b.blockchain.pendingBlock.Height() {
 		return b.blockchain.pendingBlock.Block(), nil
 	}
