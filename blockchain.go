@@ -344,7 +344,11 @@ func (b *Blockchain) GetTransaction(ID sdk.Identifier) (*sdk.Transaction, error)
 
 	pendingTx := b.pendingBlock.GetTransaction(txID)
 	if pendingTx != nil {
-		pendingSDKTx := sdkconvert.FlowTransactionToSDK(*pendingTx)
+		pendingSDKTx, err := sdkconvert.FlowTransactionToSDK(*pendingTx)
+		if err != nil {
+			return nil, err
+		}
+
 		return &pendingSDKTx, nil
 	}
 
@@ -356,7 +360,12 @@ func (b *Blockchain) GetTransaction(ID sdk.Identifier) (*sdk.Transaction, error)
 		return nil, &StorageError{err}
 	}
 
-	sdkTx := sdkconvert.FlowTransactionToSDK(tx)
+	var sdkTx sdk.Transaction
+
+	sdkTx, err = sdkconvert.FlowTransactionToSDK(tx)
+	if err != nil {
+		return nil, err
+	}
 
 	return &sdkTx, nil
 }
@@ -475,7 +484,10 @@ func (b *Blockchain) AddTransaction(sdkTx sdk.Transaction) error {
 // AddTransaction validates a transaction and adds it to the current pending block.
 func (b *Blockchain) addTransaction(sdkTx sdk.Transaction) error {
 
-	tx := sdkconvert.SDKTransactionToFlow(sdkTx)
+	tx, err := sdkconvert.SDKTransactionToFlow(sdkTx)
+	if err != nil {
+		return err
+	}
 
 	// If Index > 0, pending block has begun execution (cannot add anymore txs)
 	if b.pendingBlock.ExecutionStarted() {
@@ -486,7 +498,7 @@ func (b *Blockchain) addTransaction(sdkTx sdk.Transaction) error {
 		return &DuplicateTransactionError{TxID: tx.ID()}
 	}
 
-	_, err := b.storage.TransactionByID(tx.ID())
+	_, err = b.storage.TransactionByID(tx.ID())
 	if err == nil {
 		// Found the transaction, this is a dupe
 		return &DuplicateTransactionError{TxID: tx.ID()}
