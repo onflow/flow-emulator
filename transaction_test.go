@@ -544,6 +544,212 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 	})
 }
 
+func TestSubmitTransaction_Arguments(t *testing.T) {
+	addresses := test.AddressGenerator()
+
+	var tests = []struct {
+		argType cadence.Type
+		arg     cadence.Value
+	}{
+		{
+			cadence.BoolType{},
+			cadence.NewBool(true),
+		},
+		{
+			cadence.StringType{},
+			cadence.NewString("foo"),
+		},
+		{
+			cadence.AddressType{},
+			cadence.NewAddress(addresses.New()),
+		},
+		{
+			cadence.IntType{},
+			cadence.NewInt(42),
+		},
+		{
+			cadence.Int8Type{},
+			cadence.NewInt8(42),
+		},
+		{
+			cadence.Int16Type{},
+			cadence.NewInt16(42),
+		},
+		{
+			cadence.Int32Type{},
+			cadence.NewInt32(42),
+		},
+		{
+			cadence.Int64Type{},
+			cadence.NewInt64(42),
+		},
+		{
+			cadence.Int128Type{},
+			cadence.NewInt128(42),
+		},
+		{
+			cadence.Int256Type{},
+			cadence.NewInt256(42),
+		},
+		{
+			cadence.UIntType{},
+			cadence.NewUInt(42),
+		},
+		{
+			cadence.UInt8Type{},
+			cadence.NewUInt8(42),
+		},
+		{
+			cadence.UInt16Type{},
+			cadence.NewUInt16(42),
+		},
+		{
+			cadence.UInt32Type{},
+			cadence.NewUInt32(42),
+		},
+		{
+			cadence.UInt64Type{},
+			cadence.NewUInt64(42),
+		},
+		{
+			cadence.UInt128Type{},
+			cadence.NewUInt128(42),
+		},
+		{
+			cadence.UInt256Type{},
+			cadence.NewUInt256(42),
+		},
+		{
+			cadence.Word8Type{},
+			cadence.NewWord8(42),
+		},
+		{
+			cadence.Word16Type{},
+			cadence.NewWord16(42),
+		},
+		{
+			cadence.Word32Type{},
+			cadence.NewWord32(42),
+		},
+		{
+			cadence.Word64Type{},
+			cadence.NewWord64(42),
+		},
+		{
+			cadence.Fix64Type{},
+			cadence.NewFix64(123_405_600_000),
+		},
+		{
+			cadence.UFix64Type{},
+			cadence.NewUFix64(123_405_600_000),
+		},
+		{
+			cadence.ConstantSizedArrayType{
+				Size:        3,
+				ElementType: cadence.IntType{},
+			},
+			cadence.NewArray([]cadence.Value{
+				cadence.NewInt(1),
+				cadence.NewInt(2),
+				cadence.NewInt(3),
+			}),
+		},
+		{
+			cadence.DictionaryType{
+				KeyType:     cadence.StringType{},
+				ElementType: cadence.IntType{},
+			},
+			cadence.NewDictionary([]cadence.KeyValuePair{
+				{
+					Key:   cadence.NewString("a"),
+					Value: cadence.NewInt(1),
+				},
+				{
+					Key:   cadence.NewString("b"),
+					Value: cadence.NewInt(2),
+				},
+				{
+					Key:   cadence.NewString("c"),
+					Value: cadence.NewInt(3),
+				},
+			}),
+		},
+	}
+
+	var script = func(argType cadence.Type) []byte {
+		return []byte(fmt.Sprintf(`
+			transaction(x: %s) {
+			  execute {
+				log(x)
+			  }
+			}
+		`, argType.ID()))
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.argType.ID(), func(t *testing.T) {
+			t.Parallel()
+
+			b, err := emulator.NewBlockchain()
+			require.NoError(t, err)
+
+			tx := flow.NewTransaction().
+				SetScript(script(tt.argType)).
+				AddArgument(tt.arg).
+				SetGasLimit(emulator.MaxGasLimit).
+				SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+				SetPayer(b.ServiceKey().Address)
+
+			err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+			assert.NoError(t, err)
+
+			err = b.AddTransaction(*tx)
+			assert.NoError(t, err)
+
+			result, err := b.ExecuteNextTransaction()
+			require.NoError(t, err)
+			assertTransactionSucceeded(t, result)
+
+			assert.Len(t, result.Logs, 1)
+		})
+	}
+
+	t.Run("Log", func(t *testing.T) {
+		b, err := emulator.NewBlockchain()
+		require.NoError(t, err)
+
+		script := []byte(`
+		  transaction(x: Int) {
+			execute {
+			  log(x * 6)
+			}
+		  }
+		`)
+
+		x := 7
+
+		tx := flow.NewTransaction().
+			SetScript(script).
+			AddArgument(cadence.NewInt(x)).
+			SetGasLimit(emulator.MaxGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		assert.NoError(t, err)
+
+		err = b.AddTransaction(*tx)
+		assert.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		require.NoError(t, err)
+		assertTransactionSucceeded(t, result)
+
+		require.Len(t, result.Logs, 1)
+		assert.Equal(t, "42", result.Logs[0])
+	})
+}
+
 func TestGetTransaction(t *testing.T) {
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
