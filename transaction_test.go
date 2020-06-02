@@ -678,11 +678,11 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 
 	var script = func(argType cadence.Type) []byte {
 		return []byte(fmt.Sprintf(`
-			transaction(x: %s) {
-			  execute {
-				log(x)
-			  }
-			}
+            transaction(x: %s) {
+              execute {
+                log(x)
+              }
+            }
 		`, argType.ID()))
 	}
 
@@ -719,11 +719,11 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 		require.NoError(t, err)
 
 		script := []byte(`
-		  transaction(x: Int) {
-			execute {
-			  log(x * 6)
-			}
-		  }
+          transaction(x: Int) {
+            execute {
+              log(x * 6)
+            }
+          }
 		`)
 
 		x := 7
