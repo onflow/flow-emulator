@@ -8,7 +8,6 @@ import (
 )
 
 func VMTransactionResultToEmulator(vmTxResult virtualmachine.TransactionResult, txIndex int) types.TransactionResult {
-
 	txID := sdkConvert.FlowIdentifierToSDK(vmTxResult.TransactionID)
 
 	sdkEvents := sdkConvert.RuntimeEventsToSDK(vmTxResult.Events, txID, txIndex)
