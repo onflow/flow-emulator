@@ -1,6 +1,8 @@
 package emulator
 
 import (
+	"time"
+
 	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
 	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
 	flowgo "github.com/dapperlabs/flow-go/model/flow"
@@ -14,8 +16,9 @@ type IndexedTransactionResult struct {
 
 // A pendingBlock contains the pending state required to form a new block.
 type pendingBlock struct {
-	height   uint64
-	parentID flowgo.Identifier
+	height    uint64
+	parentID  flowgo.Identifier
+	timestamp time.Time
 	// mapping from transaction ID to transaction
 	transactions map[flowgo.Identifier]*flowgo.TransactionBody
 	// list of transaction IDs in the block
@@ -41,6 +44,7 @@ func newPendingBlock(prevBlock *flowgo.Block, ledgerView *delta.View) *pendingBl
 	return &pendingBlock{
 		height:             prevBlock.Header.Height + 1,
 		parentID:           prevBlock.ID(),
+		timestamp:          time.Now().UTC(),
 		transactions:       make(map[flowgo.Identifier]*flowgo.TransactionBody),
 		transactionIDs:     make([]flowgo.Identifier, 0),
 		transactionResults: make(map[flowgo.Identifier]IndexedTransactionResult),
@@ -73,8 +77,9 @@ func (b *pendingBlock) Block() *flowgo.Block {
 
 	return &flowgo.Block{
 		Header: &flowgo.Header{
-			Height:   b.height,
-			ParentID: b.parentID,
+			Height:    b.height,
+			ParentID:  b.parentID,
+			Timestamp: b.timestamp,
 		},
 		Payload: &flowgo.Payload{
 			Guarantees: guarantees,
