@@ -109,7 +109,7 @@ func SDKTransactionToFlow(sdkTx sdk.Transaction) (flowgo.TransactionBody, error)
 	for i, arg := range sdkTx.Arguments {
 		arguments[i], err = jsoncdc.Encode(arg)
 		if err != nil {
-			return flowgo.TransactionBody{}, err
+			return flowgo.TransactionBody{}, fmt.Errorf("failed to encode argument at index %d: %w", i, err)
 		}
 	}
 
@@ -133,7 +133,7 @@ func FlowTransactionToSDK(flowTx flowgo.TransactionBody) (sdk.Transaction, error
 	for i, arg := range flowTx.Arguments {
 		arguments[i], err = jsoncdc.Decode(arg)
 		if err != nil {
-			return sdk.Transaction{}, err
+			return sdk.Transaction{}, fmt.Errorf("failed to decode argument at index %d: %w", i, err)
 		}
 	}
 
