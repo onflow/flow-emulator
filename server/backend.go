@@ -102,7 +102,7 @@ func (b *Backend) GetLatestBlockHeader(ctx context.Context, req *access.GetLates
 		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetLatestBlockHeader called")
 
-	return b.blockToHeaderResponse(block), nil
+	return b.blockToHeaderResponse(block)
 }
 
 // GetBlockHeaderByHeight gets a block header by height.
@@ -117,7 +117,7 @@ func (b *Backend) GetBlockHeaderByHeight(ctx context.Context, req *access.GetBlo
 		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetBlockHeaderByHeight called")
 
-	return b.blockToHeaderResponse(block), nil
+	return b.blockToHeaderResponse(block)
 }
 
 // GetBlockHeaderByID gets a block header by ID.
@@ -134,7 +134,7 @@ func (b *Backend) GetBlockHeaderByID(ctx context.Context, req *access.GetBlockHe
 		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetBlockHeaderByID called")
 
-	return b.blockToHeaderResponse(block), nil
+	return b.blockToHeaderResponse(block)
 }
 
 // GetLatestBlock gets the latest sealed block.
@@ -149,7 +149,7 @@ func (b *Backend) GetLatestBlock(ctx context.Context, req *access.GetLatestBlock
 		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetLatestBlock called")
 
-	return b.blockResponse(block), nil
+	return b.blockResponse(block)
 }
 
 // GetBlockByHeight gets a block by height.
@@ -164,7 +164,7 @@ func (b *Backend) GetBlockByHeight(ctx context.Context, req *access.GetBlockByHe
 		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetBlockByHeight called")
 
-	return b.blockResponse(block), nil
+	return b.blockResponse(block)
 }
 
 // GetBlockByHeight gets a block by ID.
@@ -181,7 +181,7 @@ func (b *Backend) GetBlockByID(ctx context.Context, req *access.GetBlockByIDRequ
 		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetBlockByID called")
 
-	return b.blockResponse(block), nil
+	return b.blockResponse(block)
 }
 
 // GetCollectionByID gets a collection by ID.
@@ -453,17 +453,27 @@ func (b *Backend) executeScriptAtBlock(script []byte, blockHeight uint64) (*acce
 }
 
 // blockToHeaderResponse constructs a block header response from a block.
-func (b *Backend) blockToHeaderResponse(block *sdk.Block) *access.BlockHeaderResponse {
-	return &access.BlockHeaderResponse{
-		Block: sdkConvert.BlockHeaderToMessage(block.BlockHeader),
+func (b *Backend) blockToHeaderResponse(block *sdk.Block) (*access.BlockHeaderResponse, error) {
+	msg, err := sdkConvert.BlockHeaderToMessage(*&block.BlockHeader)
+	if err != nil {
+		return nil, err
 	}
+
+	return &access.BlockHeaderResponse{
+		Block: msg,
+	}, nil
 }
 
 // blockResponse constructs a block response from a block.
-func (b *Backend) blockResponse(block *sdk.Block) *access.BlockResponse {
-	return &access.BlockResponse{
-		Block: sdkConvert.BlockToMessage(*block),
+func (b *Backend) blockResponse(block *sdk.Block) (*access.BlockResponse, error) {
+	msg, err := sdkConvert.BlockToMessage(*block)
+	if err != nil {
+		return nil, err
 	}
+
+	return &access.BlockResponse{
+		Block: msg,
+	}, nil
 }
 
 func (b *Backend) eventsBlockResult(

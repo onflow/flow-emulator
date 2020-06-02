@@ -249,9 +249,10 @@ func FlowAccountToSDK(flowAccount flow.Account) (sdk.Account, error) {
 
 func FlowHeaderToSDK(flowHeader *flow.Header) sdk.BlockHeader {
 	return sdk.BlockHeader{
-		ID:       FlowIdentifierToSDK(flowHeader.ID()),
-		ParentID: FlowIdentifierToSDK(flowHeader.ParentID),
-		Height:   flowHeader.Height,
+		ID:        FlowIdentifierToSDK(flowHeader.ID()),
+		ParentID:  FlowIdentifierToSDK(flowHeader.ParentID),
+		Height:    flowHeader.Height,
+		Timestamp: flowHeader.Timestamp,
 	}
 }
 
@@ -293,9 +294,12 @@ func FlowPayloadToSDK(flowPayload *flow.Payload) sdk.BlockPayload {
 }
 
 func FlowBlockToSDK(flowBlock flow.Block) sdk.Block {
+	h := FlowHeaderToSDK(flowBlock.Header)
+	p := FlowPayloadToSDK(flowBlock.Payload)
+
 	return sdk.Block{
-		BlockHeader:  FlowHeaderToSDK(flowBlock.Header),
-		BlockPayload: FlowPayloadToSDK(flowBlock.Payload),
+		BlockHeader:  h,
+		BlockPayload: p,
 	}
 }
 

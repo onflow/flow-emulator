@@ -25,11 +25,16 @@ type Store interface {
 	// LatestBlock returns the block with the highest block height.
 	LatestBlock() (flowgo.Block, error)
 
-	// BlockByID returns the block with the given ID.
-	BlockByID(flowgo.Identifier) (flowgo.Block, error)
+	// Store stores the block. If the exactly same block is already in a storage, return successfully
+	StoreBlock(block *flowgo.Block) error
 
-	// BlockByHeight returns the block with the given height.
-	BlockByHeight(blockHeight uint64) (flowgo.Block, error)
+	// BlockByID returns the block with the given hash. It is available for
+	// finalized and ambiguous blocks.
+	BlockByID(blockID flowgo.Identifier) (*flowgo.Block, error)
+
+	// BlockByHeight returns the block at the given height. It is only available
+	// for finalized blocks.
+	BlockByHeight(height uint64) (*flowgo.Block, error)
 
 	// CommitBlock atomically saves the execution results for a block.
 	CommitBlock(
