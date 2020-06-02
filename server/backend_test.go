@@ -8,18 +8,17 @@ import (
 
 	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
 	"github.com/golang/mock/gomock"
+	"github.com/onflow/cadence"
+	jsoncdc "github.com/onflow/cadence/encoding/json"
+	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/client/convert"
 	"github.com/onflow/flow-go-sdk/test"
+	"github.com/onflow/flow/protobuf/go/flow/access"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/onflow/cadence"
-	encoding "github.com/onflow/cadence/encoding/json"
-	"github.com/onflow/flow-go-sdk"
-	access "github.com/onflow/flow/protobuf/go/flow/access"
 
 	emulator "github.com/dapperlabs/flow-emulator"
 	"github.com/dapperlabs/flow-emulator/mocks"
@@ -79,7 +78,7 @@ func TestBackend(t *testing.T) {
 		response, err := backend.ExecuteScriptAtLatestBlock(context.Background(), &executionScriptRequest)
 		assert.NoError(t, err)
 
-		value, err := encoding.Decode(response.GetValue())
+		value, err := jsoncdc.Decode(response.GetValue())
 		assert.NoError(t, err)
 
 		assert.Equal(t, scriptResponse, value)
@@ -104,7 +103,7 @@ func TestBackend(t *testing.T) {
 		response, err := backend.ExecuteScriptAtBlockHeight(context.Background(), &executionScriptRequest)
 		assert.NoError(t, err)
 
-		value, err := encoding.Decode(response.GetValue())
+		value, err := jsoncdc.Decode(response.GetValue())
 		assert.NoError(t, err)
 
 		assert.Equal(t, scriptResponse, value)
@@ -136,7 +135,7 @@ func TestBackend(t *testing.T) {
 		response, err := backend.ExecuteScriptAtBlockID(context.Background(), &executionScriptRequest)
 		assert.NoError(t, err)
 
-		value, err := encoding.Decode(response.GetValue())
+		value, err := jsoncdc.Decode(response.GetValue())
 		assert.NoError(t, err)
 
 		assert.Equal(t, scriptResponse, value)
@@ -543,14 +542,15 @@ func TestBackend(t *testing.T) {
 			Times(1)
 
 		tx := test.TransactionGenerator().New()
-		txMsg := convert.TransactionToMessage(*tx)
+		txMsg, err := convert.TransactionToMessage(*tx)
+		require.NoError(t, err)
 
 		requestTx := access.SendTransactionRequest{
 			Transaction: txMsg,
 		}
-		response, err := backend.SendTransaction(context.Background(), &requestTx)
 
-		assert.NoError(t, err)
+		response, err := backend.SendTransaction(context.Background(), &requestTx)
+		require.NoError(t, err)
 		require.NotNil(t, response)
 
 		assert.Equal(t, capturedTx.ID(), capturedTx.ID())
@@ -569,7 +569,8 @@ func TestBackend(t *testing.T) {
 		// remove payer to make transaction invalid
 		tx.Payer = flow.Address{}
 
-		txMsg := convert.TransactionToMessage(*tx)
+		txMsg, err := convert.TransactionToMessage(*tx)
+		require.NoError(t, err)
 
 		requestTx := access.SendTransactionRequest{
 			Transaction: txMsg,
@@ -613,7 +614,9 @@ func TestBackend(t *testing.T) {
 			Times(1)
 
 		tx := test.TransactionGenerator().New()
-		txMsg := convert.TransactionToMessage(*tx)
+
+		txMsg, err := convert.TransactionToMessage(*tx)
+		require.NoError(t, err)
 
 		requestTx := access.SendTransactionRequest{
 			Transaction: txMsg,

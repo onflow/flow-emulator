@@ -3,24 +3,24 @@ package sdk
 import (
 	"fmt"
 
-	flowCrypto "github.com/dapperlabs/flow-go/crypto"
-	flowHash "github.com/dapperlabs/flow-go/crypto/hash"
-	"github.com/dapperlabs/flow-go/model/flow"
+	flowcrypto "github.com/dapperlabs/flow-go/crypto"
+	flowhash "github.com/dapperlabs/flow-go/crypto/hash"
+	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/onflow/cadence"
-	"github.com/onflow/cadence/encoding/json"
+	jsoncdc "github.com/onflow/cadence/encoding/json"
 	sdk "github.com/onflow/flow-go-sdk"
-	sdkCryptio "github.com/onflow/flow-go-sdk/crypto"
+	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 )
 
-func SDKIdentifierToFlow(sdkIdentifier sdk.Identifier) flow.Identifier {
-	return flow.Identifier(sdkIdentifier)
+func SDKIdentifierToFlow(sdkIdentifier sdk.Identifier) flowgo.Identifier {
+	return flowgo.Identifier(sdkIdentifier)
 }
 
-func FlowIdentifierToSDK(flowIdentifier flow.Identifier) sdk.Identifier {
+func FlowIdentifierToSDK(flowIdentifier flowgo.Identifier) sdk.Identifier {
 	return sdk.Identifier(flowIdentifier)
 }
 
-func FlowIdentifiersToSDK(flowIdentifiers []flow.Identifier) []sdk.Identifier {
+func FlowIdentifiersToSDK(flowIdentifiers []flowgo.Identifier) []sdk.Identifier {
 	ret := make([]sdk.Identifier, len(flowIdentifiers))
 	for i, flowIdentifier := range flowIdentifiers {
 		ret[i] = FlowIdentifierToSDK(flowIdentifier)
@@ -28,15 +28,15 @@ func FlowIdentifiersToSDK(flowIdentifiers []flow.Identifier) []sdk.Identifier {
 	return ret
 }
 
-func SDKProposalKeyToFlow(sdkProposalKey sdk.ProposalKey) flow.ProposalKey {
-	return flow.ProposalKey{
+func SDKProposalKeyToFlow(sdkProposalKey sdk.ProposalKey) flowgo.ProposalKey {
+	return flowgo.ProposalKey{
 		Address:        SDKAddressToFlow(sdkProposalKey.Address),
 		KeyID:          uint64(sdkProposalKey.KeyID),
 		SequenceNumber: sdkProposalKey.SequenceNumber,
 	}
 }
 
-func FlowProposalKeyToSDK(flowProposalKey flow.ProposalKey) sdk.ProposalKey {
+func FlowProposalKeyToSDK(flowProposalKey flowgo.ProposalKey) sdk.ProposalKey {
 	return sdk.ProposalKey{
 		Address:        FlowAddressToSDK(flowProposalKey.Address),
 		KeyID:          int(flowProposalKey.KeyID),
@@ -44,23 +44,23 @@ func FlowProposalKeyToSDK(flowProposalKey flow.ProposalKey) sdk.ProposalKey {
 	}
 }
 
-func SDKAddressToFlow(sdkAddress sdk.Address) flow.Address {
-	return flow.Address(sdkAddress)
+func SDKAddressToFlow(sdkAddress sdk.Address) flowgo.Address {
+	return flowgo.Address(sdkAddress)
 }
 
-func FlowAddressToSDK(flowAddress flow.Address) sdk.Address {
+func FlowAddressToSDK(flowAddress flowgo.Address) sdk.Address {
 	return sdk.Address(flowAddress)
 }
 
-func SDKAddressesToFlow(sdkAddresses []sdk.Address) []flow.Address {
-	ret := make([]flow.Address, len(sdkAddresses))
+func SDKAddressesToFlow(sdkAddresses []sdk.Address) []flowgo.Address {
+	ret := make([]flowgo.Address, len(sdkAddresses))
 	for i, sdkAddress := range sdkAddresses {
 		ret[i] = SDKAddressToFlow(sdkAddress)
 	}
 	return ret
 }
 
-func FlowAddressesToSDK(flowAddresses []flow.Address) []sdk.Address {
+func FlowAddressesToSDK(flowAddresses []flowgo.Address) []sdk.Address {
 	ret := make([]sdk.Address, len(flowAddresses))
 	for i, flowAddress := range flowAddresses {
 		ret[i] = FlowAddressToSDK(flowAddress)
@@ -68,8 +68,8 @@ func FlowAddressesToSDK(flowAddresses []flow.Address) []sdk.Address {
 	return ret
 }
 
-func SDKTransactionSignatureToFlow(sdkTransactionSignature sdk.TransactionSignature) flow.TransactionSignature {
-	return flow.TransactionSignature{
+func SDKTransactionSignatureToFlow(sdkTransactionSignature sdk.TransactionSignature) flowgo.TransactionSignature {
+	return flowgo.TransactionSignature{
 		Address:     SDKAddressToFlow(sdkTransactionSignature.Address),
 		SignerIndex: sdkTransactionSignature.SignerIndex,
 		KeyID:       uint64(sdkTransactionSignature.KeyID),
@@ -77,7 +77,7 @@ func SDKTransactionSignatureToFlow(sdkTransactionSignature sdk.TransactionSignat
 	}
 }
 
-func FlowTransactionSignatureToSDK(flowTransactionSignature flow.TransactionSignature) sdk.TransactionSignature {
+func FlowTransactionSignatureToSDK(flowTransactionSignature flowgo.TransactionSignature) sdk.TransactionSignature {
 	return sdk.TransactionSignature{
 		Address:     FlowAddressToSDK(flowTransactionSignature.Address),
 		SignerIndex: flowTransactionSignature.SignerIndex,
@@ -86,15 +86,15 @@ func FlowTransactionSignatureToSDK(flowTransactionSignature flow.TransactionSign
 	}
 }
 
-func SDKTransactionSignaturesToFlow(sdkTransactionSignatures []sdk.TransactionSignature) []flow.TransactionSignature {
-	ret := make([]flow.TransactionSignature, len(sdkTransactionSignatures))
+func SDKTransactionSignaturesToFlow(sdkTransactionSignatures []sdk.TransactionSignature) []flowgo.TransactionSignature {
+	ret := make([]flowgo.TransactionSignature, len(sdkTransactionSignatures))
 	for i, sdkTransactionSignature := range sdkTransactionSignatures {
 		ret[i] = SDKTransactionSignatureToFlow(sdkTransactionSignature)
 	}
 	return ret
 }
 
-func FlowTransactionSignaturesToSDK(flowTransactionSignatures []flow.TransactionSignature) []sdk.TransactionSignature {
+func FlowTransactionSignaturesToSDK(flowTransactionSignatures []flowgo.TransactionSignature) []sdk.TransactionSignature {
 	ret := make([]sdk.TransactionSignature, len(flowTransactionSignatures))
 	for i, flowTransactionSignature := range flowTransactionSignatures {
 		ret[i] = FlowTransactionSignatureToSDK(flowTransactionSignature)
@@ -102,8 +102,8 @@ func FlowTransactionSignaturesToSDK(flowTransactionSignatures []flow.Transaction
 	return ret
 }
 
-func SDKTransactionToFlow(sdkTx sdk.Transaction) flow.TransactionBody {
-	return flow.TransactionBody{
+func SDKTransactionToFlow(sdkTx sdk.Transaction) flowgo.TransactionBody {
+	return flowgo.TransactionBody{
 		ReferenceBlockID:   SDKIdentifierToFlow(sdkTx.ReferenceBlockID),
 		Script:             sdkTx.Script,
 		GasLimit:           sdkTx.GasLimit,
@@ -115,7 +115,7 @@ func SDKTransactionToFlow(sdkTx sdk.Transaction) flow.TransactionBody {
 	}
 }
 
-func FlowTransactionToSDK(flowTx flow.TransactionBody) sdk.Transaction {
+func FlowTransactionToSDK(flowTx flowgo.TransactionBody) sdk.Transaction {
 	return sdk.Transaction{
 		ReferenceBlockID:   FlowIdentifierToSDK(flowTx.ReferenceBlockID),
 		Script:             flowTx.Script,
@@ -128,9 +128,9 @@ func FlowTransactionToSDK(flowTx flow.TransactionBody) sdk.Transaction {
 	}
 }
 
-func FlowEventToSDK(flowEvent flow.Event) (sdk.Event, error) {
+func FlowEventToSDK(flowEvent flowgo.Event) (sdk.Event, error) {
 
-	cadenceValue, err := json.Decode(flowEvent.Payload)
+	cadenceValue, err := jsoncdc.Decode(flowEvent.Payload)
 	if err != nil {
 		return sdk.Event{}, err
 	}
@@ -149,7 +149,7 @@ func FlowEventToSDK(flowEvent flow.Event) (sdk.Event, error) {
 	}, nil
 }
 
-func FlowEventsToSDK(flowEvents []flow.Event) ([]sdk.Event, error) {
+func FlowEventsToSDK(flowEvents []flowgo.Event) ([]sdk.Event, error) {
 	ret := make([]sdk.Event, len(flowEvents))
 	var err error
 	for i, flowEvent := range flowEvents {
@@ -161,35 +161,35 @@ func FlowEventsToSDK(flowEvents []flow.Event) ([]sdk.Event, error) {
 	return ret, nil
 }
 
-func FlowSignAlgoToSDK(signAlgo flowCrypto.SigningAlgorithm) sdkCryptio.SignatureAlgorithm {
-	return sdkCryptio.StringToSignatureAlgorithm(signAlgo.String())
+func FlowSignAlgoToSDK(signAlgo flowcrypto.SigningAlgorithm) sdkcrypto.SignatureAlgorithm {
+	return sdkcrypto.StringToSignatureAlgorithm(signAlgo.String())
 }
 
-func SDKSignAlgoToFlow(signAlgo sdkCryptio.SignatureAlgorithm) flowCrypto.SigningAlgorithm {
-	return flowCrypto.StringToSignatureAlgorithm(signAlgo.String())
+func SDKSignAlgoToFlow(signAlgo sdkcrypto.SignatureAlgorithm) flowcrypto.SigningAlgorithm {
+	return flowcrypto.StringToSignatureAlgorithm(signAlgo.String())
 }
 
-func FlowHashAlgoToSDK(hashAlgo flowHash.HashingAlgorithm) sdkCryptio.HashAlgorithm {
-	return sdkCryptio.StringToHashAlgorithm(hashAlgo.String())
+func flowhashAlgoToSDK(hashAlgo flowhash.HashingAlgorithm) sdkcrypto.HashAlgorithm {
+	return sdkcrypto.StringToHashAlgorithm(hashAlgo.String())
 }
 
-func SDKHashAlgoToFlow(hashAlgo sdkCryptio.HashAlgorithm) flowHash.HashingAlgorithm {
-	return flowHash.StringToHashAlgorithm(hashAlgo.String())
+func SDKHashAlgoToFlow(hashAlgo sdkcrypto.HashAlgorithm) flowhash.HashingAlgorithm {
+	return flowhash.StringToHashAlgorithm(hashAlgo.String())
 }
 
-func FlowAccountPublicKeyToSDK(flowPublicKey flow.AccountPublicKey, id int) (sdk.AccountKey, error) {
+func FlowAccountPublicKeyToSDK(flowPublicKey flowgo.AccountPublicKey, id int) (sdk.AccountKey, error) {
 	// TODO - Looks like SDK contains copy-paste of code from flow-go
 	// Once crypto become its own separate library, this can possibly be simplified or not needed
 	encodedPublicKey := flowPublicKey.PublicKey.Encode()
 
 	sdkSignAlgo := FlowSignAlgoToSDK(flowPublicKey.SignAlgo)
 
-	sdkPublicKey, err := sdkCryptio.DecodePublicKey(sdkSignAlgo, encodedPublicKey)
+	sdkPublicKey, err := sdkcrypto.DecodePublicKey(sdkSignAlgo, encodedPublicKey)
 	if err != nil {
 		return sdk.AccountKey{}, err
 	}
 
-	sdkHashAlgo := FlowHashAlgoToSDK(flowPublicKey.HashAlgo)
+	sdkHashAlgo := flowhashAlgoToSDK(flowPublicKey.HashAlgo)
 
 	return sdk.AccountKey{
 		ID:             id,
@@ -201,28 +201,28 @@ func FlowAccountPublicKeyToSDK(flowPublicKey flow.AccountPublicKey, id int) (sdk
 	}, nil
 }
 
-func SDKAccountPublicKeyToFlow(sdkPublicKey sdk.AccountKey) (flow.AccountPublicKey, error) {
+func SDKAccountPublicKeyToFlow(sdkPublicKey sdk.AccountKey) (flowgo.AccountPublicKey, error) {
 	encodedPublicKey := sdkPublicKey.PublicKey.Encode()
 
 	flowSignAlgo := SDKSignAlgoToFlow(sdkPublicKey.SigAlgo)
 
-	flowPublicKey, err := flowCrypto.DecodePublicKey(flowSignAlgo, encodedPublicKey)
+	flowPublicKey, err := flowcrypto.DecodePublicKey(flowSignAlgo, encodedPublicKey)
 	if err != nil {
-		return flow.AccountPublicKey{}, err
+		return flowgo.AccountPublicKey{}, err
 	}
 
-	flowHashAlgo := SDKHashAlgoToFlow(sdkPublicKey.HashAlgo)
+	flowhashAlgo := SDKHashAlgoToFlow(sdkPublicKey.HashAlgo)
 
-	return flow.AccountPublicKey{
+	return flowgo.AccountPublicKey{
 		PublicKey: flowPublicKey,
 		SignAlgo:  flowSignAlgo,
-		HashAlgo:  flowHashAlgo,
+		HashAlgo:  flowhashAlgo,
 		Weight:    sdkPublicKey.Weight,
 		SeqNumber: sdkPublicKey.SequenceNumber,
 	}, nil
 }
 
-func FlowAccountPublicKeysToSDK(flowPublicKeys []flow.AccountPublicKey) ([]*sdk.AccountKey, error) {
+func FlowAccountPublicKeysToSDK(flowPublicKeys []flowgo.AccountPublicKey) ([]*sdk.AccountKey, error) {
 	ret := make([]*sdk.AccountKey, len(flowPublicKeys))
 	for i, flowPublicKey := range flowPublicKeys {
 		v, err := FlowAccountPublicKeyToSDK(flowPublicKey, i)
@@ -234,7 +234,7 @@ func FlowAccountPublicKeysToSDK(flowPublicKeys []flow.AccountPublicKey) ([]*sdk.
 	return ret, nil
 }
 
-func FlowAccountToSDK(flowAccount flow.Account) (sdk.Account, error) {
+func FlowAccountToSDK(flowAccount flowgo.Account) (sdk.Account, error) {
 	sdkPublicKeys, err := FlowAccountPublicKeysToSDK(flowAccount.Keys)
 	if err != nil {
 		return sdk.Account{}, err
@@ -247,7 +247,7 @@ func FlowAccountToSDK(flowAccount flow.Account) (sdk.Account, error) {
 	}, nil
 }
 
-func FlowHeaderToSDK(flowHeader *flow.Header) sdk.BlockHeader {
+func FlowHeaderToSDK(flowHeader *flowgo.Header) sdk.BlockHeader {
 	return sdk.BlockHeader{
 		ID:        FlowIdentifierToSDK(flowHeader.ID()),
 		ParentID:  FlowIdentifierToSDK(flowHeader.ParentID),
@@ -256,13 +256,13 @@ func FlowHeaderToSDK(flowHeader *flow.Header) sdk.BlockHeader {
 	}
 }
 
-func FlowCollectionGuaranteeToSDK(flowGuarantee flow.CollectionGuarantee) sdk.CollectionGuarantee {
+func FlowCollectionGuaranteeToSDK(flowGuarantee flowgo.CollectionGuarantee) sdk.CollectionGuarantee {
 	return sdk.CollectionGuarantee{
 		CollectionID: FlowIdentifierToSDK(flowGuarantee.CollectionID),
 	}
 }
 
-func FlowCollectionGuaranteesToSDK(flowGuarantees []*flow.CollectionGuarantee) []*sdk.CollectionGuarantee {
+func FlowCollectionGuaranteesToSDK(flowGuarantees []*flowgo.CollectionGuarantee) []*sdk.CollectionGuarantee {
 	ret := make([]*sdk.CollectionGuarantee, len(flowGuarantees))
 	for i, flowGuarantee := range flowGuarantees {
 		sdkGuarantee := FlowCollectionGuaranteeToSDK(*flowGuarantee)
@@ -271,13 +271,13 @@ func FlowCollectionGuaranteesToSDK(flowGuarantees []*flow.CollectionGuarantee) [
 	return ret
 }
 
-func FlowSealToSDK(flowSeal flow.Seal) sdk.BlockSeal {
+func FlowSealToSDK(flowSeal flowgo.Seal) sdk.BlockSeal {
 	return sdk.BlockSeal{
 		//TODO
 	}
 }
 
-func FlowSealsToSDK(flowSeals []*flow.Seal) []*sdk.BlockSeal {
+func FlowSealsToSDK(flowSeals []*flowgo.Seal) []*sdk.BlockSeal {
 	ret := make([]*sdk.BlockSeal, len(flowSeals))
 	for i, flowSeal := range flowSeals {
 		sdkSeal := FlowSealToSDK(*flowSeal)
@@ -286,14 +286,14 @@ func FlowSealsToSDK(flowSeals []*flow.Seal) []*sdk.BlockSeal {
 	return ret
 }
 
-func FlowPayloadToSDK(flowPayload *flow.Payload) sdk.BlockPayload {
+func FlowPayloadToSDK(flowPayload *flowgo.Payload) sdk.BlockPayload {
 	return sdk.BlockPayload{
 		CollectionGuarantees: FlowCollectionGuaranteesToSDK(flowPayload.Guarantees),
 		Seals:                FlowSealsToSDK(flowPayload.Seals),
 	}
 }
 
-func FlowBlockToSDK(flowBlock flow.Block) sdk.Block {
+func FlowBlockToSDK(flowBlock flowgo.Block) sdk.Block {
 	h := FlowHeaderToSDK(flowBlock.Header)
 	p := FlowPayloadToSDK(flowBlock.Payload)
 
@@ -303,7 +303,7 @@ func FlowBlockToSDK(flowBlock flow.Block) sdk.Block {
 	}
 }
 
-func FlowLightCollectionToSDK(flowCollection flow.LightCollection) sdk.Collection {
+func FlowLightCollectionToSDK(flowCollection flowgo.LightCollection) sdk.Collection {
 	return sdk.Collection{
 		TransactionIDs: FlowIdentifiersToSDK(flowCollection.Transactions),
 	}
