@@ -113,6 +113,8 @@ github.com/dapperlabs/flow-core-contracts/contracts v0.0.0-20200526041238-ad2360
 github.com/dapperlabs/flow-core-contracts/contracts v0.0.0-20200526041238-ad2360621a1a/go.mod h1:6SQ2GUde3Wj3EIRFq9Vu12IhSx3PiY3nVxLOEVehlmY=
 github.com/dapperlabs/flow-go v0.4.1-0.20200602194037-af8844481849 h1:WbSR+IkqAS8mzjiDMkPgYZXNw2wkN+A1M9qOKdzzxl4=
 github.com/dapperlabs/flow-go v0.4.1-0.20200602194037-af8844481849/go.mod h1:1jjmYcE2rbUTQywrv/tCm0V2EzeKVrNbMmiq71hejBA=
+github.com/dapperlabs/flow-go v0.4.1-0.20200602235543-7c086e054cc3 h1:+UKAlUn9FfYp/MFV6ff5EcQAk68DuIusbVPMfOTTto8=
+github.com/dapperlabs/flow-go v0.4.1-0.20200602235543-7c086e054cc3/go.mod h1:/BdLWfMxQzG/RX+OhdkgmolAMkVnT2tO92VVevlSS6U=
 github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200312195452-df4550a863b7/go.mod h1:6UyHoekg86OJnzTz9hp3Ubzp2ZkrDMFg2krGbVEiloU=
 github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200602194037-af8844481849 h1:2KFSBau3NqjwKA5kJ8uzlV0Ma0B0NAnW3tlAoeBtTNI=
 github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200602194037-af8844481849/go.mod h1:9RLfdwwRI3FVD/tm4Y8E9aqViRnCiXTcGgcmB8CsEVQ=
@@ -527,6 +529,10 @@ github.com/onflow/cadence v0.3.0-beta1/go.mod h1:GaLQ7IsJi5bqpH66GprNs8uoQtperK/
 github.com/onflow/cadence v0.4.0-beta1/go.mod h1:gaPtSctdMzT5NAoJgzsRuwUkdgRswVHsRXFNNmCTn3I=
 github.com/onflow/cadence v0.4.0-beta1.0.20200528102553-06110caee6bf h1:0svethhZuKVJMk5B9uFCynzgU8YhTijKkYALHZOx5WI=
 github.com/onflow/cadence v0.4.0-beta1.0.20200528102553-06110caee6bf/go.mod h1:gaPtSctdMzT5NAoJgzsRuwUkdgRswVHsRXFNNmCTn3I=
+github.com/onflow/cadence v0.4.0-beta2 h1:8I3ieiBiPZM59W5TVvrn4z051SEh+7OWuz4qfVTevak=
+github.com/onflow/cadence v0.4.0-beta2/go.mod h1:gaPtSctdMzT5NAoJgzsRuwUkdgRswVHsRXFNNmCTn3I=
+github.com/onflow/cadence v0.4.0 h1:oAKY/HclZZhc5wJgJwdPjWXJuC5IjuuHHVAAq3S7AHI=
+github.com/onflow/cadence v0.4.0/go.mod h1:gaPtSctdMzT5NAoJgzsRuwUkdgRswVHsRXFNNmCTn3I=
 github.com/onflow/flow v0.1.4-0.20200601215056-34a11def1d6b h1:wG1lmGfSIJW4L0ObdHNWHdk2LLXUoHrOU68krvtB//0=
 github.com/onflow/flow v0.1.4-0.20200601215056-34a11def1d6b/go.mod h1:lzyAYmbu1HfkZ9cfnL5/sjrrsnJiUU8fRL26CqLP7+c=
 github.com/onflow/flow-ft/contracts v0.0.0-20200525235630-0e8024a483ce h1:I8SaLOFlQN7Jr+aU1mZB0mnsq2qlaaJPeji4PmkTWfA=
