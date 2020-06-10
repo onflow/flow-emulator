@@ -147,7 +147,7 @@ func TestInitialization(t *testing.T) {
 				b.ServiceKey().Address,
 			)
 
-			result, err := b.ExecuteScript([]byte(readScript))
+			result, err := b.ExecuteScript([]byte(readScript), nil)
 			require.NoError(t, err)
 
 			assert.Equal(t, cadence.NewInt(1), result.Value)
