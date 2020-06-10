@@ -282,30 +282,33 @@ func (b *Backend) GetAccount(ctx context.Context, req *access.GetAccountRequest)
 // ExecuteScriptAtLatestBlock executes a script at a the latest block
 func (b *Backend) ExecuteScriptAtLatestBlock(ctx context.Context, req *access.ExecuteScriptAtLatestBlockRequest) (*access.ExecuteScriptResponse, error) {
 	script := req.GetScript()
+	arguments := req.GetArguments()
 	block, err := b.blockchain.GetLatestBlock()
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	return b.executeScriptAtBlock(script, block.Height)
+	return b.executeScriptAtBlock(script, arguments, block.Height)
 }
 
 // ExecuteScriptAtBlockHeight executes a script at a specific block height
 func (b *Backend) ExecuteScriptAtBlockHeight(ctx context.Context, req *access.ExecuteScriptAtBlockHeightRequest) (*access.ExecuteScriptResponse, error) {
 	script := req.GetScript()
 	blockHeight := req.GetBlockHeight()
-	return b.executeScriptAtBlock(script, blockHeight)
+	arguments := req.GetArguments()
+	return b.executeScriptAtBlock(script, arguments, blockHeight)
 }
 
 // ExecuteScriptAtBlockID executes a script at a specific block ID
 func (b *Backend) ExecuteScriptAtBlockID(ctx context.Context, req *access.ExecuteScriptAtBlockIDRequest) (*access.ExecuteScriptResponse, error) {
 	script := req.GetScript()
+	arguments := req.GetArguments()
 	blockID := sdk.HashToID(req.GetBlockId())
 
 	block, err := b.blockchain.GetBlockByID(blockID)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	return b.executeScriptAtBlock(script, block.Height)
+	return b.executeScriptAtBlock(script, arguments, block.Height)
 }
 
 // GetEventsForHeightRange returns events matching a query.
@@ -436,8 +439,8 @@ func (b *Backend) commitBlock() {
 }
 
 // executeScriptAtBlock is a helper for executing a script at a specific block
-func (b *Backend) executeScriptAtBlock(script []byte, blockHeight uint64) (*access.ExecuteScriptResponse, error) {
-	result, err := b.blockchain.ExecuteScriptAtBlock(script, blockHeight)
+func (b *Backend) executeScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) (*access.ExecuteScriptResponse, error) {
+	result, err := b.blockchain.ExecuteScriptAtBlock(script, arguments, blockHeight)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}

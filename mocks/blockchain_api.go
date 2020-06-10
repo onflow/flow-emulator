@@ -111,33 +111,33 @@ func (mr *MockBlockchainAPIMockRecorder) ExecuteNextTransaction() *gomock.Call {
 }
 
 // ExecuteScript mocks base method
-func (m *MockBlockchainAPI) ExecuteScript(arg0 []byte) (*types.ScriptResult, error) {
+func (m *MockBlockchainAPI) ExecuteScript(arg0 []byte, arg1 [][]byte) (*types.ScriptResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExecuteScript", arg0)
+	ret := m.ctrl.Call(m, "ExecuteScript", arg0, arg1)
 	ret0, _ := ret[0].(*types.ScriptResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ExecuteScript indicates an expected call of ExecuteScript
-func (mr *MockBlockchainAPIMockRecorder) ExecuteScript(arg0 interface{}) *gomock.Call {
+func (mr *MockBlockchainAPIMockRecorder) ExecuteScript(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteScript", reflect.TypeOf((*MockBlockchainAPI)(nil).ExecuteScript), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteScript", reflect.TypeOf((*MockBlockchainAPI)(nil).ExecuteScript), arg0, arg1)
 }
 
 // ExecuteScriptAtBlock mocks base method
-func (m *MockBlockchainAPI) ExecuteScriptAtBlock(arg0 []byte, arg1 uint64) (*types.ScriptResult, error) {
+func (m *MockBlockchainAPI) ExecuteScriptAtBlock(arg0 []byte, arg1 [][]byte, arg2 uint64) (*types.ScriptResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExecuteScriptAtBlock", arg0, arg1)
+	ret := m.ctrl.Call(m, "ExecuteScriptAtBlock", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*types.ScriptResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ExecuteScriptAtBlock indicates an expected call of ExecuteScriptAtBlock
-func (mr *MockBlockchainAPIMockRecorder) ExecuteScriptAtBlock(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockBlockchainAPIMockRecorder) ExecuteScriptAtBlock(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteScriptAtBlock", reflect.TypeOf((*MockBlockchainAPI)(nil).ExecuteScriptAtBlock), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteScriptAtBlock", reflect.TypeOf((*MockBlockchainAPI)(nil).ExecuteScriptAtBlock), arg0, arg1, arg2)
 }
 
 // GetAccount mocks base method
