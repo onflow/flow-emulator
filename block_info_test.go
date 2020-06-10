@@ -67,7 +67,7 @@ func TestBlockInfo(t *testing.T) {
 			}
 		`)
 
-		result, err := b.ExecuteScript(script)
+		result, err := b.ExecuteScript(script, nil)
 		assert.NoError(t, err)
 
 		assert.True(t, result.Succeeded())

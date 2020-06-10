@@ -115,6 +115,8 @@ github.com/dapperlabs/flow-go v0.4.1-0.20200602194037-af8844481849 h1:WbSR+IkqAS
 github.com/dapperlabs/flow-go v0.4.1-0.20200602194037-af8844481849/go.mod h1:1jjmYcE2rbUTQywrv/tCm0V2EzeKVrNbMmiq71hejBA=
 github.com/dapperlabs/flow-go v0.4.1-0.20200602235543-7c086e054cc3 h1:+UKAlUn9FfYp/MFV6ff5EcQAk68DuIusbVPMfOTTto8=
 github.com/dapperlabs/flow-go v0.4.1-0.20200602235543-7c086e054cc3/go.mod h1:/BdLWfMxQzG/RX+OhdkgmolAMkVnT2tO92VVevlSS6U=
+github.com/dapperlabs/flow-go v0.4.1-0.20200604202209-6aaa7f78fd9c h1:wjPG79F6yYPsNlWa4NB20lEsFgEfbvxJs/cqT2ngRHs=
+github.com/dapperlabs/flow-go v0.4.1-0.20200604202209-6aaa7f78fd9c/go.mod h1:NLfBJkFMEeE8KnMvzkcOnCgJ2RubeAsBQkTlU42fsRU=
 github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200312195452-df4550a863b7/go.mod h1:6UyHoekg86OJnzTz9hp3Ubzp2ZkrDMFg2krGbVEiloU=
 github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200602194037-af8844481849 h1:2KFSBau3NqjwKA5kJ8uzlV0Ma0B0NAnW3tlAoeBtTNI=
 github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200602194037-af8844481849/go.mod h1:9RLfdwwRI3FVD/tm4Y8E9aqViRnCiXTcGgcmB8CsEVQ=
@@ -533,8 +535,14 @@ github.com/onflow/cadence v0.4.0-beta2 h1:8I3ieiBiPZM59W5TVvrn4z051SEh+7OWuz4qfV
 github.com/onflow/cadence v0.4.0-beta2/go.mod h1:gaPtSctdMzT5NAoJgzsRuwUkdgRswVHsRXFNNmCTn3I=
 github.com/onflow/cadence v0.4.0 h1:oAKY/HclZZhc5wJgJwdPjWXJuC5IjuuHHVAAq3S7AHI=
 github.com/onflow/cadence v0.4.0/go.mod h1:gaPtSctdMzT5NAoJgzsRuwUkdgRswVHsRXFNNmCTn3I=
+github.com/onflow/cadence v0.4.1-0.20200604185918-21edaa9bfcdd h1:MYPhW5wojW1wlIncBN6Atsi+aC9FPUcCJcURADcmzsk=
+github.com/onflow/cadence v0.4.1-0.20200604185918-21edaa9bfcdd/go.mod h1:dgj1JPlSDeY6ZSqD/yCW06reFSt+19d/IFgQ1eE8Bfg=
+github.com/onflow/cadence v0.4.1-0.20200604200650-30a200f9c324 h1:MVknTPVGjL7cVFQhs9Yv9idJAEAnJXFU8hy/+mtIrp0=
+github.com/onflow/cadence v0.4.1-0.20200604200650-30a200f9c324/go.mod h1:dgj1JPlSDeY6ZSqD/yCW06reFSt+19d/IFgQ1eE8Bfg=
 github.com/onflow/flow v0.1.4-0.20200601215056-34a11def1d6b h1:wG1lmGfSIJW4L0ObdHNWHdk2LLXUoHrOU68krvtB//0=
 github.com/onflow/flow v0.1.4-0.20200601215056-34a11def1d6b/go.mod h1:lzyAYmbu1HfkZ9cfnL5/sjrrsnJiUU8fRL26CqLP7+c=
+github.com/onflow/flow v0.1.4-0.20200604213222-88267b4985e0 h1:F/Q1yj5hHayBp07Gjv06oiNVd/dYvy64fHwgWKjYXOA=
+github.com/onflow/flow v0.1.4-0.20200604213222-88267b4985e0/go.mod h1:lzyAYmbu1HfkZ9cfnL5/sjrrsnJiUU8fRL26CqLP7+c=
 github.com/onflow/flow-ft/contracts v0.0.0-20200525235630-0e8024a483ce h1:I8SaLOFlQN7Jr+aU1mZB0mnsq2qlaaJPeji4PmkTWfA=
 github.com/onflow/flow-ft/contracts v0.0.0-20200525235630-0e8024a483ce/go.mod h1:KwzrK5thiLObKHTHaHf9lrvOS3HLr9jntNEZUQ4yJgw=
 github.com/onflow/flow-go-sdk v0.3.0-beta1/go.mod h1:8v6vcYGh5/PtYcM3IXflLcCb00I91WDbnNF8SjirnlI=
@@ -544,6 +552,9 @@ github.com/onflow/flow-go-sdk v0.4.0/go.mod h1:MHn8oQCkBNcl2rXdYSm9VYYK4ogwEpyrd
 github.com/onflow/flow/protobuf/go/flow v0.1.4/go.mod h1:kRugbzZjwQqvevJhrnnCFMJZNmoSJmxlKt6hTGXZojM=
 github.com/onflow/flow/protobuf/go/flow v0.1.5-0.20200601215056-34a11def1d6b h1:n/KYBKS3/m5g0GNXWLueVUgwcI51XgAXlFBqox2c1uA=
 github.com/onflow/flow/protobuf/go/flow v0.1.5-0.20200601215056-34a11def1d6b/go.mod h1:kRugbzZjwQqvevJhrnnCFMJZNmoSJmxlKt6hTGXZojM=
+github.com/onflow/flow/protobuf/go/flow v0.1.5-0.20200604133535-22946f453515/go.mod h1:kRugbzZjwQqvevJhrnnCFMJZNmoSJmxlKt6hTGXZojM=
+github.com/onflow/flow/protobuf/go/flow v0.1.5-0.20200604213222-88267b4985e0 h1:RyVnhM6M1z9bL7cDb2nO+IjUo3EXlot3QdwXL8aKhpM=
+github.com/onflow/flow/protobuf/go/flow v0.1.5-0.20200604213222-88267b4985e0/go.mod h1:kRugbzZjwQqvevJhrnnCFMJZNmoSJmxlKt6hTGXZojM=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
 github.com/onsi/ginkgo v1.7.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
 github.com/onsi/ginkgo v1.8.0 h1:VkHVNpR4iVnU8XQR6DBm8BqYjN7CRzw+xKUbVVbbW9w=
