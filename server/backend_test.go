@@ -68,7 +68,7 @@ func TestBackend(t *testing.T) {
 			Times(1)
 
 		api.EXPECT().
-			ExecuteScriptAtBlock(sampleScriptText, latestBlock.Height).
+			ExecuteScriptAtBlock(sampleScriptText, nil, latestBlock.Height).
 			Return(&types.ScriptResult{
 				Value: scriptResponse,
 				Error: nil,
@@ -93,7 +93,7 @@ func TestBackend(t *testing.T) {
 		}
 
 		api.EXPECT().
-			ExecuteScriptAtBlock(sampleScriptText, executionScriptRequest.BlockHeight).
+			ExecuteScriptAtBlock(sampleScriptText, nil, executionScriptRequest.BlockHeight).
 			Return(&types.ScriptResult{
 				Value: scriptResponse,
 				Error: nil,
@@ -125,7 +125,7 @@ func TestBackend(t *testing.T) {
 			Times(1)
 
 		api.EXPECT().
-			ExecuteScriptAtBlock(sampleScriptText, randomBlock.Height).
+			ExecuteScriptAtBlock(sampleScriptText, nil, randomBlock.Height).
 			Return(&types.ScriptResult{
 				Value: scriptResponse,
 				Error: nil,

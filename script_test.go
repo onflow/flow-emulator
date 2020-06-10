@@ -1,6 +1,7 @@
 package emulator_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/onflow/cadence"
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	emulator "github.com/dapperlabs/flow-emulator"
+	jsoncdc "github.com/onflow/cadence/encoding/json"
 )
 
 func TestExecuteScript(t *testing.T) {
@@ -30,7 +32,7 @@ func TestExecuteScript(t *testing.T) {
 	callScript := generateGetCounterCountScript(counterAddress, b.ServiceKey().Address)
 
 	// Sample call (value is 0)
-	scriptResult, err := b.ExecuteScript([]byte(callScript))
+	scriptResult, err := b.ExecuteScript([]byte(callScript), nil)
 	require.NoError(t, err)
 	assert.Equal(t, cadence.NewInt(0), scriptResult.Value)
 
@@ -46,7 +48,7 @@ func TestExecuteScript(t *testing.T) {
 		t.Skip("TODO: fix stored ledger")
 
 		// Sample call (value is still 0)
-		result, err := b.ExecuteScript([]byte(callScript))
+		result, err := b.ExecuteScript([]byte(callScript), nil)
 		require.NoError(t, err)
 		assert.Equal(t, cadence.NewInt(0), result.Value)
 	})
@@ -56,9 +58,45 @@ func TestExecuteScript(t *testing.T) {
 
 	t.Run("AfterCommit", func(t *testing.T) {
 		// Sample call (value is 2)
-		result, err := b.ExecuteScript([]byte(callScript))
+		result, err := b.ExecuteScript([]byte(callScript), nil)
 		require.NoError(t, err)
 		assert.Equal(t, cadence.NewInt(2), result.Value)
+	})
+}
+
+func TestExecuteScript_WithArguments(t *testing.T) {
+	t.Run("Int", func(t *testing.T) {
+		b, err := emulator.NewBlockchain()
+		require.NoError(t, err)
+
+		scriptWithArgs := fmt.Sprintf(`
+			pub fun main(n: Int): Int {
+				return n
+			}
+		`)
+
+		arg, err := jsoncdc.Encode(cadence.NewInt(10))
+		require.NoError(t, err)
+		scriptResult, err := b.ExecuteScript([]byte(scriptWithArgs), [][]byte{arg})
+		require.NoError(t, err)
+		assert.Equal(t, cadence.NewInt(10), scriptResult.Value)
+	})
+	t.Run("String", func(t *testing.T) {
+		b, err := emulator.NewBlockchain()
+		require.NoError(t, err)
+
+		scriptWithArgs := fmt.Sprintf(`
+			pub fun main(n: String): Int {
+				log(n)
+				return 0
+			}
+		`)
+
+		arg, err := jsoncdc.Encode(cadence.NewString("Hello, World"))
+		require.NoError(t, err)
+		scriptResult, err := b.ExecuteScript([]byte(scriptWithArgs), [][]byte{arg})
+		require.NoError(t, err)
+		assert.Contains(t, scriptResult.Logs, "\"Hello, World\"")
 	})
 }
 

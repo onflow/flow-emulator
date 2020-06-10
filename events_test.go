@@ -27,7 +27,7 @@ func TestEventEmitted(t *testing.T) {
 			}
 		`)
 
-		result, err := b.ExecuteScript(script)
+		result, err := b.ExecuteScript(script, nil)
 		assert.NoError(t, err)
 		require.Len(t, result.Events, 1)
 

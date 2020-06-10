@@ -3,10 +3,9 @@ package emulator_test
 import (
 	"testing"
 
+	emulator "github.com/dapperlabs/flow-emulator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/dapperlabs/flow-emulator"
 )
 
 func TestRuntimeLogs(t *testing.T) {
@@ -19,7 +18,7 @@ func TestRuntimeLogs(t *testing.T) {
 		}
 	`)
 
-	result, err := b.ExecuteScript(script)
+	result, err := b.ExecuteScript(script, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, []string{`"elephant ears"`}, result.Logs)
 }

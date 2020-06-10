@@ -68,8 +68,8 @@ type BlockchainAPI interface {
 	GetAccount(address sdk.Address) (*sdk.Account, error)
 	GetAccountAtBlock(address sdk.Address, blockHeight uint64) (*sdk.Account, error)
 	GetEventsByHeight(blockHeight uint64, eventType string) ([]sdk.Event, error)
-	ExecuteScript(script []byte) (*types.ScriptResult, error)
-	ExecuteScriptAtBlock(script []byte, blockHeight uint64) (*types.ScriptResult, error)
+	ExecuteScript(script []byte, arguments [][]byte) (*types.ScriptResult, error)
+	ExecuteScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) (*types.ScriptResult, error)
 	ServiceKey() ServiceKey
 }
 
@@ -697,7 +697,7 @@ func (b *Blockchain) ResetPendingBlock() error {
 }
 
 // ExecuteScript executes a read-only script against the world state and returns the result.
-func (b *Blockchain) ExecuteScript(script []byte) (*types.ScriptResult, error) {
+func (b *Blockchain) ExecuteScript(script []byte, arguments [][]byte) (*types.ScriptResult, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -706,10 +706,10 @@ func (b *Blockchain) ExecuteScript(script []byte) (*types.ScriptResult, error) {
 		return nil, err
 	}
 
-	return b.ExecuteScriptAtBlock(script, latestBlock.Height)
+	return b.ExecuteScriptAtBlock(script, arguments, latestBlock.Height)
 }
 
-func (b *Blockchain) ExecuteScriptAtBlock(script []byte, blockHeight uint64) (*types.ScriptResult, error) {
+func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) (*types.ScriptResult, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -722,7 +722,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, blockHeight uint64) (*t
 
 	header := requestedBlock.Header
 
-	result, err := b.virtualMachine.NewBlockContext(header, newBlocks(b)).ExecuteScript(requestedLedgerView, script)
+	result, err := b.virtualMachine.NewBlockContext(header, newBlocks(b)).ExecuteScript(requestedLedgerView, script, arguments)
 
 	if err != nil {
 		return nil, err
