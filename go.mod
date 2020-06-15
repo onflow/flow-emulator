@@ -3,7 +3,7 @@ module github.com/dapperlabs/flow-emulator
 go 1.13
 
 require (
-	github.com/dapperlabs/flow-go v0.4.1-0.20200604202209-6aaa7f78fd9c
+	github.com/dapperlabs/flow-go v0.4.1-0.20200614192624-7c449b02172a
 	github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200602194037-af8844481849
 	github.com/davecgh/go-spew v1.1.1
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
@@ -14,9 +14,8 @@ require (
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
 	github.com/onflow/cadence v0.4.1-0.20200604185918-21edaa9bfcdd
-	github.com/onflow/flow v0.1.4-0.20200604213222-88267b4985e0 // indirect
 	github.com/onflow/flow-go-sdk v0.4.0
-	github.com/onflow/flow/protobuf/go/flow v0.1.5-0.20200604213222-88267b4985e0
+	github.com/onflow/flow/protobuf/go/flow v0.1.5-0.20200611205353-548107cc9aca
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.5.1
 	github.com/prometheus/common v0.9.1
@@ -25,9 +24,9 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.6
 	github.com/stretchr/testify v1.5.1
-	github.com/vektra/mockery v1.1.2 // indirect
 	golang.org/x/crypto v0.0.0-20200429183012-4b2356b1ed79 // indirect
 	golang.org/x/sys v0.0.0-20200501145240-bc7a7d42d5c3 // indirect
+	golang.org/x/tools v0.0.0-20200323144430-8dcfad9e016e // indirect
 	google.golang.org/grpc v1.28.0
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )

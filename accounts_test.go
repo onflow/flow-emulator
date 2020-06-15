@@ -21,6 +21,49 @@ const testContract = "pub contract Test {}"
 func TestCreateAccount(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 
+	t.Run("SimpleAddresses", func(t *testing.T) {
+		b, err := emulator.NewBlockchain(emulator.WithSimpleAddresses())
+		require.NoError(t, err)
+
+		accountKey := accountKeys.New()
+
+		createAccountScript, err := templates.CreateAccount([]*flow.AccountKey{accountKey}, nil)
+		require.NoError(t, err)
+
+		tx := flow.NewTransaction().
+			SetScript(createAccountScript).
+			SetGasLimit(emulator.MaxGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address).
+			AddAuthorizer(b.ServiceKey().Address)
+
+		fmt.Println("tx script", string(createAccountScript))
+		fmt.Println("tx proposal key", b.ServiceKey().Address.Hex(), b.ServiceKey().ID, b.ServiceKey().SequenceNumber)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		fmt.Println("tx sign envelope", b.ServiceKey().Address.Hex(), b.ServiceKey().ID)
+		assert.NoError(t, err)
+		fmt.Println("Signed with service account", b.ServiceKey().Address.Hex(), b.ServiceKey().PublicKey)
+
+		err = b.AddTransaction(*tx)
+		require.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+		assertTransactionSucceeded(t, result)
+
+		_, err = b.CommitBlock()
+		assert.NoError(t, err)
+
+		account := b.LastCreatedAccount()
+
+		assert.Equal(t, "0000000000000005", account.Address.Hex())
+		assert.Equal(t, uint64(0), account.Balance)
+		require.Len(t, account.Keys, 1)
+		assert.Equal(t, accountKey.PublicKey.Encode(), account.Keys[0].PublicKey.Encode())
+		assert.Empty(t, account.Code)
+	})
+
 	t.Run("SingleKey", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
