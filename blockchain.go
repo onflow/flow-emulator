@@ -50,6 +50,8 @@ type Blockchain struct {
 	virtualMachine virtualmachine.VirtualMachine
 
 	serviceKey ServiceKey
+
+	simpleAddresses bool
 }
 
 // BlockchainAPI defines the method set of an emulated blockchain.
@@ -118,8 +120,9 @@ const MaxGasLimit = 999999999
 
 // config is a set of configuration options for an emulated blockchain.
 type config struct {
-	ServiceKey ServiceKey
-	Store      storage.Store
+	ServiceKey      ServiceKey
+	Store           storage.Store
+	SimpleAddresses bool
 }
 
 // defaultConfig is the default configuration for an emulated blockchain.
@@ -151,6 +154,14 @@ func WithStore(store storage.Store) Option {
 	}
 }
 
+// virtualmachine.WithSimpleAddresses enables simple addresses, which are sequential starting with 0x1
+// (Address{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1} to be precise)
+func WithSimpleAddresses() Option {
+	return func(c *config) {
+		c.SimpleAddresses = true
+	}
+}
+
 // NewBlockchain instantiates a new emulated blockchain with the provided options.
 func NewBlockchain(opts ...Option) (*Blockchain, error) {
 
@@ -173,6 +184,11 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	// set up service key
 	serviceKey := config.ServiceKey
 	serviceKey.Address = sdk.ServiceAddress(sdk.Emulator)
+
+	if config.SimpleAddresses {
+		serviceKey.Address = sdk.Address(virtualmachine.SimpleServiceAddress())
+	}
+
 	serviceKey.Weight = sdk.AccountKeyWeightThreshold
 
 	latestBlock, err := store.LatestBlock()
@@ -189,7 +205,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		genesisLedgerView := store.LedgerViewByHeight(0)
 
 		// storage is empty, bootstrap new execution state
-		bootstrapLedger(genesisLedgerView, store, serviceKey.AccountKey())
+		bootstrapLedger(genesisLedgerView, store, serviceKey.AccountKey(), config.SimpleAddresses)
 
 		// commit the genesis block to storage
 		genesis := flowgo.Genesis(nil)
@@ -214,14 +230,15 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	}
 
 	b := &Blockchain{
-		storage:      config.Store,
-		pendingBlock: pendingBlock,
-		serviceKey:   serviceKey,
+		storage:         config.Store,
+		pendingBlock:    pendingBlock,
+		serviceKey:      serviceKey,
+		simpleAddresses: config.SimpleAddresses, // TODO really needed
 	}
 
 	interpreterRuntime := runtime.NewInterpreterRuntime()
 
-	b.virtualMachine, err = virtualmachine.New(interpreterRuntime)
+	b.virtualMachine, err = virtualmachine.New(interpreterRuntime, virtualmachine.WithSimpleAddresses(config.SimpleAddresses))
 
 	if err != nil {
 		return nil, fmt.Errorf("cannot create virual machine: %w", err)
@@ -442,7 +459,7 @@ func (b *Blockchain) getAccount(address flowgo.Address) (*flowgo.Account, error)
 		return nil, err
 	}
 
-	ledgerAccess := virtualmachine.LedgerDAL{b.storage.LedgerViewByHeight(latestBlock.Height)}
+	ledgerAccess := virtualmachine.LedgerDAL{b.storage.LedgerViewByHeight(latestBlock.Height), b.simpleAddresses}
 
 	acct := ledgerAccess.GetAccount(address)
 
@@ -753,7 +770,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blo
 
 // LastCreatedAccount returns the last account that was created in the blockchain.
 func (b *Blockchain) LastCreatedAccount() *flowgo.Account {
-	ledgerAccess := virtualmachine.LedgerDAL{Ledger: b.pendingBlock.ledgerView}
+	ledgerAccess := virtualmachine.LedgerDAL{Ledger: b.pendingBlock.ledgerView, SimpleAddresses: b.simpleAddresses}
 	addressState, _ := ledgerAccess.GetAddressState()
 	address := addressState.CurrentAddress()
 	account := ledgerAccess.GetAccount(address)
@@ -830,7 +847,8 @@ func convertToSealedResults(
 
 const genesisTokenSupply = 1_000_000_000_000_000
 
-func bootstrapLedger(ledger virtualmachine.Ledger, storage storage.Store, accountKey *sdk.AccountKey) {
+func bootstrapLedger(ledger virtualmachine.Ledger, storage storage.Store, accountKey *sdk.AccountKey,
+	simpleAddresses bool) {
 	publicKey, _ := crypto.DecodePublicKey(
 		crypto.SigningAlgorithm(accountKey.SigAlgo),
 		accountKey.PublicKey.Encode(),
@@ -843,7 +861,7 @@ func bootstrapLedger(ledger virtualmachine.Ledger, storage storage.Store, accoun
 		Weight:    virtualmachine.AccountKeyWeightThreshold,
 	}
 
-	bootstrap.BootstrapView(ledger, flowAccountKey, genesisTokenSupply)
+	bootstrap.BootstrapView(ledger, flowAccountKey, genesisTokenSupply, simpleAddresses)
 }
 
 const DefaultServicePrivateKeySeed = "elephant ears space cowboy octopus rodeo potato cannon pineapple"
