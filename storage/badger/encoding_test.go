@@ -65,9 +65,23 @@ func TestEncodeBlock(t *testing.T) {
 	err = decodeBlock(&decodedBlock, data)
 	require.Nil(t, err)
 
-	assert.Equal(t, block.Header.Height, decodedBlock.Header.Height)
-	assert.Equal(t, block.Header.ParentID, decodedBlock.Header.ParentID)
-	assert.Equal(t, block.Payload.Guarantees, decodedBlock.Payload.Guarantees)
+	assert.Equal(t, block.ID(), decodedBlock.ID())
+	assert.Equal(t, *block.Header, *decodedBlock.Header)
+	assert.Equal(t, *block.Payload, *decodedBlock.Payload)
+}
+func TestEncodeGenesisBlock(t *testing.T) {
+	block := flowgo.Genesis(nil)
+
+	data, err := encodeBlock(*block)
+	require.Nil(t, err)
+
+	var decodedBlock flowgo.Block
+	err = decodeBlock(&decodedBlock, data)
+	require.Nil(t, err)
+
+	assert.Equal(t, block.ID(), decodedBlock.ID())
+	assert.Equal(t, *block.Header, *decodedBlock.Header)
+	assert.Equal(t, *block.Payload, *decodedBlock.Payload)
 }
 
 func TestEncodeEvent(t *testing.T) {
