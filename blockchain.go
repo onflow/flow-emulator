@@ -176,16 +176,13 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	serviceKey.Weight = sdk.AccountKeyWeightThreshold
 
 	latestBlock, err := store.LatestBlock()
-	if err == nil && latestBlock.Header.Height > 0 {
+	if err == nil {
 		// storage contains data, load state from storage
 		latestLedgerView := store.LedgerViewByHeight(latestBlock.Header.Height)
 
 		// restore pending block header from store information
 		pendingBlock = newPendingBlock(&latestBlock, latestLedgerView)
-	} else if err != nil && !errors.Is(err, storage.ErrNotFound) {
-		// internal storage error, fail fast
-		return nil, err
-	} else {
+	} else if errors.Is(err, storage.ErrNotFound) {
 		genesisLedgerView := store.LedgerViewByHeight(0)
 
 		// storage is empty, bootstrap new execution state
@@ -211,6 +208,9 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 
 		// create pending block from genesis
 		pendingBlock = newPendingBlock(genesis, ledgerView)
+	} else {
+		// internal storage error, fail fast
+		return nil, err
 	}
 
 	b := &Blockchain{
@@ -224,7 +224,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	b.virtualMachine, err = virtualmachine.New(interpreterRuntime)
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot create virual machine: %w", err)
+		return nil, fmt.Errorf("cannot create virtual machine: %w", err)
 	}
 
 	return b, nil
