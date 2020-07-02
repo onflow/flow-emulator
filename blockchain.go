@@ -353,19 +353,15 @@ func (b *Blockchain) GetCollection(colID sdk.Identifier) (*sdk.Collection, error
 // GetTransaction gets an existing transaction by ID.
 //
 // The function first looks in the pending block, then the current blockchain state.
-func (b *Blockchain) GetTransaction(ID sdk.Identifier) (*sdk.Transaction, error) {
+func (b *Blockchain) GetTransaction(id sdk.Identifier) (*sdk.Transaction, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	txID := sdkconvert.SDKIdentifierToFlow(ID)
+	txID := sdkconvert.SDKIdentifierToFlow(id)
 
 	pendingTx := b.pendingBlock.GetTransaction(txID)
 	if pendingTx != nil {
-		pendingSDKTx, err := sdkconvert.FlowTransactionToSDK(*pendingTx)
-		if err != nil {
-			return nil, err
-		}
-
+		pendingSDKTx := sdkconvert.FlowTransactionToSDK(*pendingTx)
 		return &pendingSDKTx, nil
 	}
 
@@ -377,13 +373,7 @@ func (b *Blockchain) GetTransaction(ID sdk.Identifier) (*sdk.Transaction, error)
 		return nil, &StorageError{err}
 	}
 
-	var sdkTx sdk.Transaction
-
-	sdkTx, err = sdkconvert.FlowTransactionToSDK(tx)
-	if err != nil {
-		return nil, err
-	}
-
+	sdkTx := sdkconvert.FlowTransactionToSDK(tx)
 	return &sdkTx, nil
 }
 
@@ -491,20 +481,17 @@ func (b *Blockchain) GetEventsByHeight(blockHeight uint64, eventType string) ([]
 }
 
 // AddTransaction validates a transaction and adds it to the current pending block.
-func (b *Blockchain) AddTransaction(sdkTx sdk.Transaction) error {
+func (b *Blockchain) AddTransaction(tx sdk.Transaction) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	return b.addTransaction(sdkTx)
+	return b.addTransaction(tx)
 }
 
 // AddTransaction validates a transaction and adds it to the current pending block.
 func (b *Blockchain) addTransaction(sdkTx sdk.Transaction) error {
 
-	tx, err := sdkconvert.SDKTransactionToFlow(sdkTx)
-	if err != nil {
-		return err
-	}
+	tx := sdkconvert.SDKTransactionToFlow(sdkTx)
 
 	// If Index > 0, pending block has begun execution (cannot add anymore txs)
 	if b.pendingBlock.ExecutionStarted() {
@@ -515,7 +502,7 @@ func (b *Blockchain) addTransaction(sdkTx sdk.Transaction) error {
 		return &DuplicateTransactionError{TxID: tx.ID()}
 	}
 
-	_, err = b.storage.TransactionByID(tx.ID())
+	_, err := b.storage.TransactionByID(tx.ID())
 	if err == nil {
 		// Found the transaction, this is a dupe
 		return &DuplicateTransactionError{TxID: tx.ID()}
