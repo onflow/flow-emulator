@@ -37,7 +37,12 @@ func TestInitialization(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.EqualValues(t, 0, latestBlock.Height)
-		assert.Equal(t, sdkConvert.FlowIdentifierToSDK(flowgo.Genesis(nil).ID()), latestBlock.ID)
+		assert.Equal(t,
+			sdkConvert.FlowIdentifierToSDK(
+				flowgo.Genesis(nil, flowgo.Emulator).ID(),
+			),
+			latestBlock.ID,
+		)
 	})
 
 	t.Run("should restore state when initialized with non-empty store", func(t *testing.T) {

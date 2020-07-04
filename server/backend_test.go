@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
+	"github.com/dapperlabs/flow-go/fvm"
 	"github.com/golang/mock/gomock"
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
@@ -159,11 +159,11 @@ func TestBackend(t *testing.T) {
 			Return(&account, nil).
 			Times(1)
 
-		request := access.GetAccountRequest{
+		request := access.GetAccountAtLatestBlockRequest{
 			Address: account.Address.Bytes(),
 		}
 
-		response, err := backend.GetAccount(context.Background(), &request)
+		response, err := backend.GetAccountAtLatestBlock(context.Background(), &request)
 
 		assert.NoError(t, err)
 
@@ -561,7 +561,7 @@ func TestBackend(t *testing.T) {
 
 		api.EXPECT().
 			AddTransaction(gomock.Any()).
-			Return(&types.FlowError{FlowError: &virtualmachine.InvalidSignaturePublicKeyError{}}).
+			Return(&types.FlowError{FlowError: &fvm.InvalidSignaturePublicKeyError{}}).
 			Times(1)
 
 		tx := test.TransactionGenerator().New()
