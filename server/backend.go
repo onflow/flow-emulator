@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
+	"github.com/dapperlabs/flow-go/fvm"
 	"github.com/logrusorgru/aurora"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -62,9 +62,9 @@ func (b *Backend) SendTransaction(ctx context.Context, req *access.SendTransacti
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		case *types.FlowError:
 			switch t.FlowError.(type) {
-			case *virtualmachine.InvalidSignaturePublicKeyError:
+			case *fvm.InvalidSignaturePublicKeyError:
 				return nil, status.Error(codes.InvalidArgument, err.Error())
-			case *virtualmachine.InvalidSignatureAccountError:
+			case *fvm.InvalidSignatureAccountError:
 				return nil, status.Error(codes.InvalidArgument, err.Error())
 			default:
 				return nil, status.Error(codes.Internal, err.Error())
@@ -256,7 +256,10 @@ func (b *Backend) GetTransactionResult(ctx context.Context, req *access.GetTrans
 }
 
 // GetAccount returns the info associated with an address.
-func (b *Backend) GetAccount(ctx context.Context, req *access.GetAccountRequest) (*access.GetAccountResponse, error) {
+func (b *Backend) GetAccountAtLatestBlock(
+	ctx context.Context,
+	req *access.GetAccountAtLatestBlockRequest,
+) (*access.AccountResponse, error) {
 	address := sdk.BytesToAddress(req.GetAddress())
 	account, err := b.blockchain.GetAccount(address)
 	if err != nil {
@@ -274,9 +277,13 @@ func (b *Backend) GetAccount(ctx context.Context, req *access.GetAccountRequest)
 
 	accMsg := sdkconvert.AccountToMessage(*account)
 
-	return &access.GetAccountResponse{
+	return &access.AccountResponse{
 		Account: accMsg,
 	}, nil
+}
+
+func (b *Backend) GetAccountAtBlockHeight(ctx context.Context, request *access.GetAccountAtBlockHeightRequest) (*access.AccountResponse, error) {
+	panic("implement me")
 }
 
 // ExecuteScriptAtLatestBlock executes a script at a the latest block

@@ -70,7 +70,7 @@ func TestEncodeBlock(t *testing.T) {
 	assert.Equal(t, *block.Payload, *decodedBlock.Payload)
 }
 func TestEncodeGenesisBlock(t *testing.T) {
-	block := flowgo.Genesis(nil)
+	block := flowgo.Genesis(nil, flowgo.Emulator)
 
 	data, err := encodeBlock(*block)
 	require.Nil(t, err)

@@ -9,13 +9,13 @@ import (
 	"github.com/dapperlabs/flow-emulator/types"
 )
 
-func AssertFlowVMErrorType(t *testing.T, expected interface{}, err error) bool {
+func AssertFVMErrorType(t *testing.T, expected interface{}, err error) bool {
 	require.IsType(t, err, &types.FlowError{})
 
 	flowError := err.(*types.FlowError)
 
 	if !assert.IsType(t, expected, flowError.FlowError) {
-		t.Log(flowError.FlowError.ErrorMessage())
+		t.Log(flowError.FlowError.Error())
 		return false
 	}
 
