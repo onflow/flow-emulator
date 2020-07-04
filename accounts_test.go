@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
+	"github.com/dapperlabs/flow-go/fvm"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
@@ -37,13 +37,8 @@ func TestCreateAccount(t *testing.T) {
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
 
-		fmt.Println("tx script", string(createAccountScript))
-		fmt.Println("tx proposal key", b.ServiceKey().Address.Hex(), b.ServiceKey().ID, b.ServiceKey().SequenceNumber)
-
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
-		fmt.Println("tx sign envelope", b.ServiceKey().Address.Hex(), b.ServiceKey().ID)
 		assert.NoError(t, err)
-		fmt.Println("Signed with service account", b.ServiceKey().Address.Hex(), b.ServiceKey().PublicKey)
 
 		err = b.AddTransaction(*tx)
 		require.NoError(t, err)
@@ -55,7 +50,8 @@ func TestCreateAccount(t *testing.T) {
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)
 
-		account := b.LastCreatedAccount()
+		account, err := lastCreatedAccount(b, result)
+		require.NoError(t, err)
 
 		assert.Equal(t, "0000000000000005", account.Address.Hex())
 		assert.Equal(t, uint64(0), account.Balance)
@@ -93,7 +89,8 @@ func TestCreateAccount(t *testing.T) {
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)
 
-		account := b.LastCreatedAccount()
+		account, err := lastCreatedAccount(b, result)
+		require.NoError(t, err)
 
 		assert.Equal(t, uint64(0), account.Balance)
 		require.Len(t, account.Keys, 1)
@@ -131,7 +128,8 @@ func TestCreateAccount(t *testing.T) {
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)
 
-		account := b.LastCreatedAccount()
+		account, err := lastCreatedAccount(b, result)
+		require.NoError(t, err)
 
 		assert.Equal(t, uint64(0), account.Balance)
 		require.Len(t, account.Keys, 2)
@@ -172,7 +170,8 @@ func TestCreateAccount(t *testing.T) {
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)
 
-		account := b.LastCreatedAccount()
+		account, err := lastCreatedAccount(b, result)
+		require.NoError(t, err)
 
 		assert.Equal(t, uint64(0), account.Balance)
 		require.Len(t, account.Keys, 2)
@@ -210,7 +209,8 @@ func TestCreateAccount(t *testing.T) {
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)
 
-		account := b.LastCreatedAccount()
+		account, err := lastCreatedAccount(b, result)
+		require.NoError(t, err)
 
 		assert.Equal(t, uint64(0), account.Balance)
 		assert.Empty(t, account.Keys)
@@ -267,8 +267,6 @@ func TestCreateAccount(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		lastAccount := b.LastCreatedAccount()
-
 		accountKey := accountKeys.New()
 		accountKey.SetHashAlgo(crypto.SHA3_384) // SHA3_384 is invalid for ECDSA_P256
 
@@ -290,17 +288,11 @@ func TestCreateAccount(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 		assert.True(t, result.Reverted())
-
-		newAccount := b.LastCreatedAccount()
-
-		assert.Equal(t, lastAccount, newAccount)
 	})
 
 	t.Run("InvalidCode", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
-
-		lastAccount := b.LastCreatedAccount()
 
 		code := []byte("not a valid script")
 
@@ -322,10 +314,6 @@ func TestCreateAccount(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 		assert.True(t, result.Reverted())
-
-		newAccount := b.LastCreatedAccount()
-
-		assert.Equal(t, lastAccount, newAccount)
 	})
 }
 
@@ -501,7 +489,7 @@ func TestRemoveAccountKey(t *testing.T) {
 	result, err = b.ExecuteNextTransaction()
 	assert.NoError(t, err)
 
-	unittest.AssertFlowVMErrorType(t, &virtualmachine.InvalidSignaturePublicKeyError{}, result.Error)
+	unittest.AssertFVMErrorType(t, &fvm.InvalidSignaturePublicKeyError{}, result.Error)
 
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
@@ -630,7 +618,7 @@ func TestUpdateAccountCode(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFlowVMErrorType(t, &virtualmachine.MissingSignatureError{}, result.Error)
+		unittest.AssertFVMErrorType(t, &fvm.MissingSignatureError{}, result.Error)
 
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)

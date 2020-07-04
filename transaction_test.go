@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/dapperlabs/flow-go/engine/execution/computation/virtualmachine"
+	"github.com/dapperlabs/flow-go/fvm"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
@@ -169,8 +169,8 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		require.Error(t, result.Error)
 
 		assert.IsType(t, &types.FlowError{}, result.Error)
-		assert.IsType(t, &virtualmachine.InvalidProposalSequenceNumberError{}, result.Error.(*types.FlowError).FlowError)
-		assert.Equal(t, invalidSequenceNumber, result.Error.(*types.FlowError).FlowError.(*virtualmachine.InvalidProposalSequenceNumberError).ProvidedSeqNumber)
+		assert.IsType(t, &fvm.InvalidProposalKeySequenceNumberError{}, result.Error.(*types.FlowError).FlowError)
+		assert.Equal(t, invalidSequenceNumber, result.Error.(*types.FlowError).FlowError.(*fvm.InvalidProposalKeySequenceNumberError).ProvidedSeqNumber)
 	})
 }
 
@@ -342,7 +342,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFlowVMErrorType(t, &virtualmachine.MissingSignatureError{}, result.Error)
+		unittest.AssertFVMErrorType(t, &fvm.MissingSignatureError{}, result.Error)
 	})
 
 	t.Run("Invalid account", func(t *testing.T) {
@@ -370,7 +370,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFlowVMErrorType(t, &virtualmachine.InvalidSignatureAccountError{}, result.Error)
+		unittest.AssertFVMErrorType(t, &fvm.InvalidSignatureAccountError{}, result.Error)
 	})
 
 	t.Run("Invalid key", func(t *testing.T) {
@@ -400,7 +400,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFlowVMErrorType(t, &virtualmachine.InvalidSignaturePublicKeyError{}, result.Error)
+		unittest.AssertFVMErrorType(t, &fvm.InvalidSignaturePublicKeyError{}, result.Error)
 	})
 
 	t.Run("Key weights", func(t *testing.T) {
@@ -450,7 +450,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 			result, err := b.ExecuteNextTransaction()
 			assert.NoError(t, err)
 
-			unittest.AssertFlowVMErrorType(t, &virtualmachine.MissingSignatureError{}, result.Error)
+			unittest.AssertFVMErrorType(t, &fvm.MissingSignatureError{}, result.Error)
 		})
 
 		t.Run("Sufficient key weight", func(t *testing.T) {
@@ -489,7 +489,7 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFlowVMErrorType(t, &virtualmachine.MissingSignatureError{}, result.Error)
+		unittest.AssertFVMErrorType(t, &fvm.MissingSignatureError{}, result.Error)
 	})
 
 	t.Run("Multiple payload signers", func(t *testing.T) {
@@ -546,6 +546,9 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 
 func TestSubmitTransaction_Arguments(t *testing.T) {
 	addresses := test.AddressGenerator()
+
+	fix64Value, _ := cadence.NewFix64("123456.00000")
+	uFix64Value, _ := cadence.NewUFix64("123456.00000")
 
 	var tests = []struct {
 		argType cadence.Type
@@ -637,11 +640,11 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 		},
 		{
 			cadence.Fix64Type{},
-			cadence.NewFix64(123_405_600_000),
+			fix64Value,
 		},
 		{
 			cadence.UFix64Type{},
-			cadence.NewUFix64(123_405_600_000),
+			uFix64Value,
 		},
 		{
 			cadence.ConstantSizedArrayType{
