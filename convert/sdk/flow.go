@@ -167,7 +167,7 @@ func FlowSignAlgoToSDK(signAlgo flowcrypto.SigningAlgorithm) sdkcrypto.Signature
 }
 
 func SDKSignAlgoToFlow(signAlgo sdkcrypto.SignatureAlgorithm) flowcrypto.SigningAlgorithm {
-	return flowcrypto.StringToSignatureAlgorithm(signAlgo.String())
+	return flowcrypto.StringToSigningAlgorithm(signAlgo.String())
 }
 
 func flowhashAlgoToSDK(hashAlgo flowhash.HashingAlgorithm) sdkcrypto.HashAlgorithm {
@@ -175,7 +175,7 @@ func flowhashAlgoToSDK(hashAlgo flowhash.HashingAlgorithm) sdkcrypto.HashAlgorit
 }
 
 func SDKHashAlgoToFlow(hashAlgo sdkcrypto.HashAlgorithm) flowhash.HashingAlgorithm {
-	return flowhash.StringToHashAlgorithm(hashAlgo.String())
+	return flowhash.StringToHashingAlgorithm(hashAlgo.String())
 }
 
 func FlowAccountPublicKeyToSDK(flowPublicKey flowgo.AccountPublicKey, id int) (sdk.AccountKey, error) {

@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/onflow/cadence"
 	"github.com/onflow/flow-go-sdk"
+	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -85,4 +87,23 @@ func assertTransactionSucceeded(t *testing.T, result *types.TransactionResult) {
 	if !assert.True(t, result.Succeeded()) {
 		t.Error(result.Error)
 	}
+}
+
+func lastCreatedAccount(b *emulator.Blockchain, result *types.TransactionResult) (*sdk.Account, error) {
+	address, err := lastCreatedAccountAddress(result)
+	if err != nil {
+		return nil, err
+	}
+
+	return b.GetAccount(address)
+}
+
+func lastCreatedAccountAddress(result *types.TransactionResult) (sdk.Address, error) {
+	for _, event := range result.Events {
+		if event.Type == sdk.EventAccountCreated {
+			return sdk.Address(event.Value.Fields[0].(cadence.Address)), nil
+		}
+	}
+
+	return sdk.Address{}, fmt.Errorf("no account created in this result")
 }

@@ -77,8 +77,10 @@ func TestExecuteScript_WithArguments(t *testing.T) {
 
 		arg, err := jsoncdc.Encode(cadence.NewInt(10))
 		require.NoError(t, err)
+
 		scriptResult, err := b.ExecuteScript([]byte(scriptWithArgs), [][]byte{arg})
 		require.NoError(t, err)
+
 		assert.Equal(t, cadence.NewInt(10), scriptResult.Value)
 	})
 	t.Run("String", func(t *testing.T) {
