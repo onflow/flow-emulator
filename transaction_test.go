@@ -698,10 +698,12 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 
 			tx := flow.NewTransaction().
 				SetScript(script(tt.argType)).
-				AddArgument(tt.arg).
 				SetGasLimit(emulator.MaxGasLimit).
 				SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
 				SetPayer(b.ServiceKey().Address)
+
+			err = tx.AddArgument(tt.arg)
+			assert.NoError(t, err)
 
 			err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 			assert.NoError(t, err)
@@ -733,10 +735,12 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(script).
-			AddArgument(cadence.NewInt(x)).
 			SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
+
+		err = tx.AddArgument(cadence.NewInt(x))
+		assert.NoError(t, err)
 
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
