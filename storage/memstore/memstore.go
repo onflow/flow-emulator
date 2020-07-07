@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
-	"github.com/dapperlabs/flow-go/fvm"
+	"github.com/dapperlabs/flow-go/fvm/state"
 	flowgo "github.com/dapperlabs/flow-go/model/flow"
 
 	"github.com/dapperlabs/flow-emulator/storage"
@@ -26,7 +26,7 @@ type Store struct {
 	// Transaction results by ID
 	transactionResults map[flowgo.Identifier]types.StorableTransactionResult
 	// Ledger states by block height
-	ledger map[uint64]*fvm.MapLedger
+	ledger map[uint64]*state.MapLedger
 	// events by block height
 	eventsByBlockHeight map[uint64][]flowgo.Event
 	// highest block height
@@ -42,7 +42,7 @@ func New() *Store {
 		collections:         make(map[flowgo.Identifier]flowgo.LightCollection),
 		transactions:        make(map[flowgo.Identifier]flowgo.TransactionBody),
 		transactionResults:  make(map[flowgo.Identifier]types.StorableTransactionResult),
-		ledger:              make(map[uint64]*fvm.MapLedger),
+		ledger:              make(map[uint64]*state.MapLedger),
 		eventsByBlockHeight: make(map[uint64][]flowgo.Event),
 	}
 }
@@ -223,16 +223,16 @@ func (s *Store) LedgerViewByHeight(blockHeight uint64) *delta.View {
 }
 
 func (s *Store) insertLedgerDelta(blockHeight uint64, delta delta.Delta) error {
-	var oldLedger *fvm.MapLedger
+	var oldLedger *state.MapLedger
 
 	// use empty ledger if this is the genesis block
 	if blockHeight == 0 {
-		oldLedger = fvm.NewMapLedger()
+		oldLedger = state.NewMapLedger()
 	} else {
 		oldLedger = s.ledger[blockHeight-1]
 	}
 
-	newLedger := fvm.NewMapLedger()
+	newLedger := state.NewMapLedger()
 
 	// copy values from the previous ledger
 	for keyString, value := range oldLedger.Registers {

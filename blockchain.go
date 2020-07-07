@@ -20,6 +20,7 @@ import (
 	"github.com/dapperlabs/flow-go/crypto/hash"
 	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
 	"github.com/dapperlabs/flow-go/fvm"
+	"github.com/dapperlabs/flow-go/fvm/state"
 	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
@@ -869,7 +870,7 @@ const genesisTokenSupply = 1_000_000_000_000_000
 func bootstrapLedger(
 	vm *fvm.VirtualMachine,
 	ctx fvm.Context,
-	ledger fvm.Ledger,
+	ledger state.Ledger,
 	accountKey *sdk.AccountKey,
 ) error {
 	publicKey, _ := crypto.DecodePublicKey(
