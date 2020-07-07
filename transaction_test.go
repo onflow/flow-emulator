@@ -884,20 +884,15 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 
 	accountKey, accountSigner := accountKeys.NewWithSigner()
 
-	createAccountScript, err := templates.CreateAccount(
-		[]*flow.AccountKey{
-			accountKey,
-		},
+	createAccountTx := templates.CreateAccount(
+		[]*flow.AccountKey{accountKey},
 		[]byte(helloWorldContract),
+		b.ServiceKey().Address,
 	)
-	require.NoError(t, err)
 
-	createAccountTx := flow.NewTransaction().
-		SetScript(createAccountScript).
-		SetGasLimit(emulator.MaxGasLimit).
+	createAccountTx.SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
-		SetPayer(b.ServiceKey().Address).
-		AddAuthorizer(b.ServiceKey().Address)
+		SetPayer(b.ServiceKey().Address)
 
 	err = createAccountTx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 	assert.NoError(t, err)
@@ -968,20 +963,16 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 	accountKey, accountSigner := accountKeys.NewWithSigner()
 	_ = accountSigner
 
-	createAccountScript, err := templates.CreateAccount(
-		[]*flow.AccountKey{
-			accountKey,
-		},
+	createAccountTx := templates.CreateAccount(
+		[]*flow.AccountKey{accountKey},
 		nil,
+		b.ServiceKey().Address,
 	)
-	require.NoError(t, err)
 
-	createAccountTx := flow.NewTransaction().
-		SetScript(createAccountScript).
+	createAccountTx.
 		SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
-		SetPayer(b.ServiceKey().Address).
-		AddAuthorizer(b.ServiceKey().Address)
+		SetPayer(b.ServiceKey().Address)
 
 	err = createAccountTx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 	assert.NoError(t, err)
@@ -1019,12 +1010,11 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 
 	accountKey = account.Keys[0]
 
-	updateAccountScript := templates.UpdateAccountCode([]byte(helloWorldContract))
-	updateAccountCodeTx := flow.NewTransaction().
-		SetScript(updateAccountScript).
+	updateAccountCodeTx := templates.UpdateAccountCode(newAccountAddress, []byte(helloWorldContract))
+	updateAccountCodeTx.
+		SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(newAccountAddress, accountKey.ID, accountKey.SequenceNumber).
-		SetPayer(newAccountAddress).
-		AddAuthorizer(newAccountAddress)
+		SetPayer(newAccountAddress)
 
 	err = updateAccountCodeTx.SignEnvelope(newAccountAddress, accountKey.ID, accountSigner)
 	assert.NoError(t, err)
