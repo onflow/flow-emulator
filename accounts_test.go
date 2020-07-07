@@ -21,21 +21,17 @@ const testContract = "pub contract Test {}"
 func TestCreateAccount(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 
-	t.Run("SimpleAddresses", func(t *testing.T) {
+	t.Run("Simple addresses", func(t *testing.T) {
 		b, err := emulator.NewBlockchain(emulator.WithSimpleAddresses())
 		require.NoError(t, err)
 
 		accountKey := accountKeys.New()
 
-		createAccountScript, err := templates.CreateAccount([]*flow.AccountKey{accountKey}, nil)
-		require.NoError(t, err)
+		tx := templates.CreateAccount([]*flow.AccountKey{accountKey}, nil, b.ServiceKey().Address)
 
-		tx := flow.NewTransaction().
-			SetScript(createAccountScript).
-			SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
-			SetPayer(b.ServiceKey().Address).
-			AddAuthorizer(b.ServiceKey().Address)
+			SetPayer(b.ServiceKey().Address)
 
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
@@ -60,21 +56,17 @@ func TestCreateAccount(t *testing.T) {
 		assert.Empty(t, account.Code)
 	})
 
-	t.Run("SingleKey", func(t *testing.T) {
+	t.Run("Single public keys", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		accountKey := accountKeys.New()
 
-		createAccountScript, err := templates.CreateAccount([]*flow.AccountKey{accountKey}, nil)
-		require.NoError(t, err)
+		tx := templates.CreateAccount([]*flow.AccountKey{accountKey}, nil, b.ServiceKey().Address)
 
-		tx := flow.NewTransaction().
-			SetScript(createAccountScript).
-			SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
-			SetPayer(b.ServiceKey().Address).
-			AddAuthorizer(b.ServiceKey().Address)
+			SetPayer(b.ServiceKey().Address)
 
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
@@ -98,22 +90,22 @@ func TestCreateAccount(t *testing.T) {
 		assert.Empty(t, account.Code)
 	})
 
-	t.Run("MultipleKeys", func(t *testing.T) {
+	t.Run("Multiple public keys", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		accountKeyA := accountKeys.New()
 		accountKeyB := accountKeys.New()
 
-		createAccountScript, err := templates.CreateAccount([]*flow.AccountKey{accountKeyA, accountKeyB}, nil)
-		assert.NoError(t, err)
+		tx := templates.CreateAccount(
+			[]*flow.AccountKey{accountKeyA, accountKeyB},
+			nil,
+			b.ServiceKey().Address,
+		)
 
-		tx := flow.NewTransaction().
-			SetScript(createAccountScript).
-			SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
-			SetPayer(b.ServiceKey().Address).
-			AddAuthorizer(b.ServiceKey().Address)
+			SetPayer(b.ServiceKey().Address)
 
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
@@ -138,7 +130,7 @@ func TestCreateAccount(t *testing.T) {
 		assert.Empty(t, account.Code)
 	})
 
-	t.Run("KeysAndCode", func(t *testing.T) {
+	t.Run("Public keys and code", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -147,15 +139,15 @@ func TestCreateAccount(t *testing.T) {
 
 		code := []byte(testContract)
 
-		createAccountScript, err := templates.CreateAccount([]*flow.AccountKey{accountKeyA, accountKeyB}, code)
-		assert.NoError(t, err)
+		tx := templates.CreateAccount(
+			[]*flow.AccountKey{accountKeyA, accountKeyB},
+			code,
+			b.ServiceKey().Address,
+		)
 
-		tx := flow.NewTransaction().
-			SetScript(createAccountScript).
-			SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
-			SetPayer(b.ServiceKey().Address).
-			AddAuthorizer(b.ServiceKey().Address)
+			SetPayer(b.ServiceKey().Address)
 
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
@@ -180,21 +172,21 @@ func TestCreateAccount(t *testing.T) {
 		assert.Equal(t, code, account.Code)
 	})
 
-	t.Run("CodeAndNoKeys", func(t *testing.T) {
+	t.Run("Code and no keys", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		code := []byte(testContract)
 
-		createAccountScript, err := templates.CreateAccount(nil, code)
-		assert.NoError(t, err)
+		tx := templates.CreateAccount(
+			nil,
+			code,
+			b.ServiceKey().Address,
+		)
 
-		tx := flow.NewTransaction().
-			SetScript(createAccountScript).
-			SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
-			SetPayer(b.ServiceKey().Address).
-			AddAuthorizer(b.ServiceKey().Address)
+			SetPayer(b.ServiceKey().Address)
 
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
@@ -217,7 +209,7 @@ func TestCreateAccount(t *testing.T) {
 		assert.Equal(t, code, account.Code)
 	})
 
-	t.Run("EventEmitted", func(t *testing.T) {
+	t.Run("Event emitted", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -225,15 +217,15 @@ func TestCreateAccount(t *testing.T) {
 
 		code := []byte(testContract)
 
-		createAccountScript, err := templates.CreateAccount([]*flow.AccountKey{accountKey}, code)
-		assert.NoError(t, err)
+		tx := templates.CreateAccount(
+			[]*flow.AccountKey{accountKey},
+			code,
+			b.ServiceKey().Address,
+		)
 
-		tx := flow.NewTransaction().
-			SetScript(createAccountScript).
-			SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
-			SetPayer(b.ServiceKey().Address).
-			AddAuthorizer(b.ServiceKey().Address)
+			SetPayer(b.ServiceKey().Address)
 
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
@@ -263,19 +255,20 @@ func TestCreateAccount(t *testing.T) {
 		assert.Equal(t, code, account.Code)
 	})
 
-	t.Run("InvalidKeyHashingAlgorithm", func(t *testing.T) {
+	t.Run("Invalid hash algorithm", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		accountKey := accountKeys.New()
 		accountKey.SetHashAlgo(crypto.SHA3_384) // SHA3_384 is invalid for ECDSA_P256
 
-		createAccountScript, err := templates.CreateAccount([]*flow.AccountKey{accountKey}, nil)
-		require.NoError(t, err)
+		tx := templates.CreateAccount(
+			[]*flow.AccountKey{accountKey},
+			nil,
+			b.ServiceKey().Address,
+		)
 
-		tx := flow.NewTransaction().
-			SetScript(createAccountScript).
-			SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -290,18 +283,19 @@ func TestCreateAccount(t *testing.T) {
 		assert.True(t, result.Reverted())
 	})
 
-	t.Run("InvalidCode", func(t *testing.T) {
+	t.Run("Invalid code", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		code := []byte("not a valid script")
 
-		createAccountScript, err := templates.CreateAccount(nil, code)
-		assert.NoError(t, err)
+		tx := templates.CreateAccount(
+			nil,
+			code,
+			b.ServiceKey().Address,
+		)
 
-		tx := flow.NewTransaction().
-			SetScript(createAccountScript).
-			SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -320,21 +314,17 @@ func TestCreateAccount(t *testing.T) {
 func TestAddAccountKey(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 
-	t.Run("ValidKey", func(t *testing.T) {
+	t.Run("Valid key", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		newAccountKey, newSigner := accountKeys.NewWithSigner()
 
-		addKeyScript, err := templates.AddAccountKey(newAccountKey)
-		assert.NoError(t, err)
+		tx1 := templates.AddAccountKey(b.ServiceKey().Address, newAccountKey)
 
-		tx1 := flow.NewTransaction().
-			SetScript(addKeyScript).
-			SetGasLimit(emulator.MaxGasLimit).
+		tx1.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
-			SetPayer(b.ServiceKey().Address).
-			AddAuthorizer(b.ServiceKey().Address)
+			SetPayer(b.ServiceKey().Address)
 
 		err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
@@ -374,22 +364,18 @@ func TestAddAccountKey(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("InvalidKeyHashingAlgorithm", func(t *testing.T) {
+	t.Run("Invalid hash algorithm", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		accountKey := accountKeys.New()
 		accountKey.SetHashAlgo(crypto.SHA3_384) // SHA3_384 is invalid for ECDSA_P256
 
-		addKeyScript, err := templates.AddAccountKey(accountKey)
-		assert.NoError(t, err)
+		tx := templates.AddAccountKey(b.ServiceKey().Address, accountKey)
 
-		tx := flow.NewTransaction().
-			SetScript(addKeyScript).
-			SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
-			SetPayer(b.ServiceKey().Address).
-			AddAuthorizer(b.ServiceKey().Address)
+			SetPayer(b.ServiceKey().Address)
 
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
@@ -411,16 +397,14 @@ func TestRemoveAccountKey(t *testing.T) {
 
 	newAccountKey, newSigner := accountKeys.NewWithSigner()
 
-	addKeyScript, err := templates.AddAccountKey(newAccountKey)
+	// create transaction that adds public key to account keys
+	tx1 := templates.AddAccountKey(b.ServiceKey().Address, newAccountKey)
 	assert.NoError(t, err)
 
 	// create transaction that adds public key to account keys
-	tx1 := flow.NewTransaction().
-		SetScript(addKeyScript).
-		SetGasLimit(emulator.MaxGasLimit).
+	tx1.SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
-		SetPayer(b.ServiceKey().Address).
-		AddAuthorizer(b.ServiceKey().Address)
+		SetPayer(b.ServiceKey().Address)
 
 	// sign with service key
 	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
@@ -443,12 +427,11 @@ func TestRemoveAccountKey(t *testing.T) {
 	assert.Len(t, account.Keys, 2)
 
 	// create transaction that removes service key
-	tx2 := flow.NewTransaction().
-		SetScript(templates.RemoveAccountKey(0)).
-		SetGasLimit(emulator.MaxGasLimit).
+	tx2 := templates.RemoveAccountKey(b.ServiceKey().Address, 0)
+
+	tx2.SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
-		SetPayer(b.ServiceKey().Address).
-		AddAuthorizer(b.ServiceKey().Address)
+		SetPayer(b.ServiceKey().Address)
 
 	// sign with service key
 	err = tx2.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
@@ -471,12 +454,11 @@ func TestRemoveAccountKey(t *testing.T) {
 	assert.Len(t, account.Keys, 1)
 
 	// create transaction that removes remaining account key
-	tx3 := flow.NewTransaction().
-		SetScript(templates.RemoveAccountKey(0)).
-		SetGasLimit(emulator.MaxGasLimit).
+	tx3 := templates.RemoveAccountKey(b.ServiceKey().Address, 0)
+
+	tx3.SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
-		SetPayer(b.ServiceKey().Address).
-		AddAuthorizer(b.ServiceKey().Address)
+		SetPayer(b.ServiceKey().Address)
 
 	// sign with service key (that has been removed)
 	err = tx3.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
@@ -500,12 +482,11 @@ func TestRemoveAccountKey(t *testing.T) {
 	assert.Len(t, account.Keys, 1)
 
 	// create transaction that removes remaining account key
-	tx4 := flow.NewTransaction().
-		SetScript(templates.RemoveAccountKey(0)).
-		SetGasLimit(emulator.MaxGasLimit).
+	tx4 := templates.RemoveAccountKey(b.ServiceKey().Address, 0)
+
+	tx4.SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
-		SetPayer(b.ServiceKey().Address).
-		AddAuthorizer(b.ServiceKey().Address)
+		SetPayer(b.ServiceKey().Address)
 
 	// sign with remaining account key
 	err = tx4.SignEnvelope(b.ServiceKey().Address, 0, newSigner)
@@ -549,7 +530,7 @@ func TestUpdateAccountCode(t *testing.T) {
 
 	accountKeyB, signerB := accountKeys.NewWithSigner()
 
-	t.Run("ValidSignature", func(t *testing.T) {
+	t.Run("Valid signature", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -561,12 +542,11 @@ func TestUpdateAccountCode(t *testing.T) {
 
 		assert.Equal(t, codeA, account.Code)
 
-		tx := flow.NewTransaction().
-			SetScript(templates.UpdateAccountCode(codeB)).
-			SetGasLimit(emulator.MaxGasLimit).
+		tx := templates.UpdateAccountCode(accountAddressB, codeB)
+
+		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
-			SetPayer(b.ServiceKey().Address).
-			AddAuthorizer(accountAddressB)
+			SetPayer(b.ServiceKey().Address)
 
 		err = tx.SignPayload(accountAddressB, 0, signerB)
 		assert.NoError(t, err)
@@ -590,7 +570,7 @@ func TestUpdateAccountCode(t *testing.T) {
 		assert.Equal(t, codeB, account.Code)
 	})
 
-	t.Run("InvalidSignature", func(t *testing.T) {
+	t.Run("Invalid signature", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -602,12 +582,11 @@ func TestUpdateAccountCode(t *testing.T) {
 
 		assert.Equal(t, codeA, account.Code)
 
-		tx := flow.NewTransaction().
-			SetScript(templates.UpdateAccountCode(codeB)).
-			SetGasLimit(emulator.MaxGasLimit).
+		tx := templates.UpdateAccountCode(accountAddressB, codeB)
+
+		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
-			SetPayer(b.ServiceKey().Address).
-			AddAuthorizer(accountAddressB)
+			SetPayer(b.ServiceKey().Address)
 
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)

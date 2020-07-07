@@ -790,23 +790,16 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, code []byte) (s
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	createAccountScript, err := templates.CreateAccount(publicKeys, code)
-
-	if err != nil {
-		return sdk.Address{}, err
-	}
-
 	serviceKey := b.ServiceKey()
-	serviceKeyAddress := serviceKey.Address
+	serviceAddress := serviceKey.Address
 
-	tx := sdk.NewTransaction().
-		SetScript(createAccountScript).
-		SetGasLimit(MaxGasLimit).
-		SetProposalKey(serviceKeyAddress, serviceKey.ID, serviceKey.SequenceNumber).
-		SetPayer(serviceKeyAddress).
-		AddAuthorizer(serviceKeyAddress)
+	tx := templates.CreateAccount(publicKeys, code, serviceAddress)
 
-	err = tx.SignEnvelope(serviceKeyAddress, serviceKey.ID, serviceKey.Signer())
+	tx.SetGasLimit(MaxGasLimit).
+		SetProposalKey(serviceAddress, serviceKey.ID, serviceKey.SequenceNumber).
+		SetPayer(serviceAddress)
+
+	err := tx.SignEnvelope(serviceAddress, serviceKey.ID, serviceKey.Signer())
 	if err != nil {
 		return sdk.Address{}, err
 	}
