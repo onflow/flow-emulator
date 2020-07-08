@@ -159,11 +159,11 @@ func TestBackend(t *testing.T) {
 			Return(&account, nil).
 			Times(1)
 
-		request := access.GetAccountAtLatestBlockRequest{
+		request := access.GetAccountRequest{
 			Address: account.Address.Bytes(),
 		}
 
-		response, err := backend.GetAccountAtLatestBlock(context.Background(), &request)
+		response, err := backend.GetAccount(context.Background(), &request)
 
 		assert.NoError(t, err)
 
