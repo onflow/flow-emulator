@@ -3,8 +3,8 @@ module github.com/dapperlabs/flow-emulator
 go 1.13
 
 require (
-	github.com/dapperlabs/flow-go v0.4.1-0.20200708001351-5f50af1498fa
-	github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200708001351-5f50af1498fa
+	github.com/dapperlabs/flow-go v0.4.1-0.20200708192840-30b3e2d5a586
+	github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200708192840-30b3e2d5a586
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dgraph-io/badger/v2 v2.0.3
 	github.com/ethereum/go-ethereum v1.9.13 // indirect
