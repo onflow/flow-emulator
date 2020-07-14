@@ -141,7 +141,7 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, scriptResponse, value)
 	}))
 
-	t.Run("GetAccount", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetAccountAtLatestBlock", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
 		keys := test.AccountKeyGenerator()
 
 		account := flow.Account{
@@ -159,11 +159,11 @@ func TestBackend(t *testing.T) {
 			Return(&account, nil).
 			Times(1)
 
-		request := access.GetAccountRequest{
+		request := access.GetAccountAtLatestBlockRequest{
 			Address: account.Address.Bytes(),
 		}
 
-		response, err := backend.GetAccount(context.Background(), &request)
+		response, err := backend.GetAccountAtLatestBlock(context.Background(), &request)
 
 		assert.NoError(t, err)
 
