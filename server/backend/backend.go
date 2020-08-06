@@ -2,9 +2,12 @@ package backend
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 
+	"github.com/dapperlabs/flow-go/engine/access/rpc/handler"
 	"github.com/dapperlabs/flow-go/fvm"
+	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/logrusorgru/aurora"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -14,6 +17,7 @@ import (
 	sdk "github.com/onflow/flow-go-sdk"
 
 	emulator "github.com/dapperlabs/flow-emulator"
+	convert "github.com/dapperlabs/flow-emulator/convert/sdk"
 	"github.com/dapperlabs/flow-emulator/types"
 )
 
@@ -32,6 +36,152 @@ func New(logger *logrus.Logger, blockchain emulator.BlockchainAPI) *Backend {
 		blockchain: blockchain,
 		automine:   false,
 	}
+}
+
+func (b *Backend) Ping(ctx context.Context) error {
+	return nil
+}
+
+func (b *Backend) GetNetworkParameters(ctx context.Context) handler.NetworkParameters {
+	return handler.NetworkParameters{
+		ChainID: flowgo.Emulator,
+	}
+}
+
+// GetLatestBlockHeader gets the latest sealed block header.
+func (b *Backend) GetLatestBlockHeader(ctx context.Context, isSealed bool) (*flowgo.Header, error) {
+	block, err := b.blockchain.GetLatestBlock()
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	blockID := block.ID()
+
+	b.logger.WithFields(logrus.Fields{
+		"blockHeight": block.Header.Height,
+		"blockID":     hex.EncodeToString(blockID[:]),
+	}).Debug("🎁  GetLatestBlockHeader called")
+
+	return block.Header, nil
+}
+
+// GetBlockHeaderByHeight gets a block header by height.
+func (b *Backend) GetBlockHeaderByHeight(
+	ctx context.Context,
+	height uint64,
+) (*flowgo.Header, error) {
+	block, err := b.blockchain.GetBlockByHeight(height)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	blockID := block.ID()
+
+	b.logger.WithFields(logrus.Fields{
+		"blockHeight": block.Header.Height,
+		"blockID":     hex.EncodeToString(blockID[:]),
+	}).Debug("🎁  GetBlockHeaderByHeight called")
+
+	return block.Header, nil
+}
+
+// GetBlockHeaderByID gets a block header by ID.
+func (b *Backend) GetBlockHeaderByID(
+	ctx context.Context,
+	id sdk.Identifier,
+) (*flowgo.Header, error) {
+	block, err := b.blockchain.GetBlockByID(id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	blockID := block.ID()
+
+	b.logger.WithFields(logrus.Fields{
+		"blockHeight": block.Header.Height,
+		"blockID":     hex.EncodeToString(blockID[:]),
+	}).Debug("🎁  GetBlockHeaderByID called")
+
+	return block.Header, nil
+}
+
+// GetLatestBlock gets the latest sealed block.
+func (b *Backend) GetLatestBlock(ctx context.Context, isSealed bool) (*flowgo.Block, error) {
+	block, err := b.blockchain.GetLatestBlock()
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	blockID := block.ID()
+
+	b.logger.WithFields(logrus.Fields{
+		"blockHeight": block.Header.Height,
+		"blockID":     hex.EncodeToString(blockID[:]),
+	}).Debug("🎁  GetLatestBlock called")
+
+	return block, nil
+}
+
+// GetBlockByHeight gets a block by height.
+func (b *Backend) GetBlockByHeight(
+	ctx context.Context,
+	height uint64,
+) (*flowgo.Block, error) {
+	block, err := b.blockchain.GetBlockByHeight(height)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	blockID := block.ID()
+
+	b.logger.WithFields(logrus.Fields{
+		"blockHeight": block.Header.Height,
+		"blockID":     hex.EncodeToString(blockID[:]),
+	}).Debug("🎁  GetBlockByHeight called")
+
+	return block, nil
+}
+
+// GetBlockByHeight gets a block by ID.
+func (b *Backend) GetBlockByID(
+	ctx context.Context,
+	id sdk.Identifier,
+) (*flowgo.Block, error) {
+	block, err := b.blockchain.GetBlockByID(id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	blockID := block.ID()
+
+	b.logger.WithFields(logrus.Fields{
+		"blockHeight": block.Header.Height,
+		"blockID":     hex.EncodeToString(blockID[:]),
+	}).Debug("🎁  GetBlockByID called")
+
+	return block, nil
+}
+
+// GetCollectionByID gets a collection by ID.
+func (b *Backend) GetCollectionByID(
+	ctx context.Context,
+	id sdk.Identifier,
+) (*sdk.Collection, error) {
+	col, err := b.blockchain.GetCollection(id)
+	if err != nil {
+		switch err.(type) {
+		case emulator.NotFoundError:
+			return nil, status.Error(codes.NotFound, err.Error())
+		default:
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+
+	b.logger.
+		WithField("colID", id.Hex()).
+		Debugf("📚  GetCollectionByID called")
+
+	return col, nil
 }
 
 // SendTransaction submits a transaction to the network.
@@ -64,130 +214,6 @@ func (b *Backend) SendTransaction(ctx context.Context, tx sdk.Transaction) error
 	}
 
 	return nil
-}
-
-// GetLatestBlockHeader gets the latest sealed block header.
-func (b *Backend) GetLatestBlockHeader(ctx context.Context) (*sdk.Block, error) {
-	block, err := b.blockchain.GetLatestBlock()
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	b.logger.WithFields(logrus.Fields{
-		"blockHeight": block.Height,
-		"blockID":     block.ID.Hex(),
-	}).Debug("🎁  GetLatestBlockHeader called")
-
-	return block, nil
-}
-
-// GetBlockHeaderByHeight gets a block header by height.
-func (b *Backend) GetBlockHeaderByHeight(
-	ctx context.Context,
-	height uint64,
-) (*sdk.Block, error) {
-	block, err := b.blockchain.GetBlockByHeight(height)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	b.logger.WithFields(logrus.Fields{
-		"blockHeight": block.Height,
-		"blockID":     block.ID.Hex(),
-	}).Debug("🎁  GetBlockHeaderByHeight called")
-
-	return block, nil
-}
-
-// GetBlockHeaderByID gets a block header by ID.
-func (b *Backend) GetBlockHeaderByID(
-	ctx context.Context,
-	id sdk.Identifier,
-) (*sdk.Block, error) {
-	block, err := b.blockchain.GetBlockByID(id)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	b.logger.WithFields(logrus.Fields{
-		"blockHeight": block.Height,
-		"blockID":     block.ID.Hex(),
-	}).Debug("🎁  GetBlockHeaderByID called")
-
-	return block, nil
-}
-
-// GetLatestBlock gets the latest sealed block.
-func (b *Backend) GetLatestBlock(ctx context.Context) (*sdk.Block, error) {
-	block, err := b.blockchain.GetLatestBlock()
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	b.logger.WithFields(logrus.Fields{
-		"blockHeight": block.Height,
-		"blockID":     block.ID.Hex(),
-	}).Debug("🎁  GetLatestBlock called")
-
-	return block, nil
-}
-
-// GetBlockByHeight gets a block by height.
-func (b *Backend) GetBlockByHeight(
-	ctx context.Context,
-	height uint64,
-) (*sdk.Block, error) {
-	block, err := b.blockchain.GetBlockByHeight(height)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	b.logger.WithFields(logrus.Fields{
-		"blockHeight": block.Height,
-		"blockID":     block.ID.Hex(),
-	}).Debug("🎁  GetBlockByHeight called")
-
-	return block, nil
-}
-
-// GetBlockByHeight gets a block by ID.
-func (b *Backend) GetBlockByID(
-	ctx context.Context,
-	id sdk.Identifier,
-) (*sdk.Block, error) {
-	block, err := b.blockchain.GetBlockByID(id)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	b.logger.WithFields(logrus.Fields{
-		"blockHeight": block.Height,
-		"blockID":     block.ID.Hex(),
-	}).Debug("🎁  GetBlockByID called")
-
-	return block, nil
-}
-
-// GetCollectionByID gets a collection by ID.
-func (b *Backend) GetCollectionByID(
-	ctx context.Context,
-	id sdk.Identifier,
-) (*sdk.Collection, error) {
-	col, err := b.blockchain.GetCollection(id)
-	if err != nil {
-		switch err.(type) {
-		case emulator.NotFoundError:
-			return nil, status.Error(codes.NotFound, err.Error())
-		default:
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-	}
-
-	b.logger.
-		WithField("colID", id.Hex()).
-		Debugf("📚  GetCollectionByID called")
-
-	return col, nil
 }
 
 // GetTransaction gets a transaction by ID.
@@ -298,15 +324,15 @@ func (b *Backend) ExecuteScriptAtLatestBlock(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	return b.executeScriptAtBlock(script, arguments, block.Height)
+	return b.executeScriptAtBlock(script, arguments, block.Header.Height)
 }
 
 // ExecuteScriptAtBlockHeight executes a script at a specific block height
 func (b *Backend) ExecuteScriptAtBlockHeight(
 	ctx context.Context,
+	blockHeight uint64,
 	script []byte,
 	arguments [][]byte,
-	blockHeight uint64,
 ) ([]byte, error) {
 	b.logger.
 		WithField("blockHeight", blockHeight).
@@ -318,9 +344,9 @@ func (b *Backend) ExecuteScriptAtBlockHeight(
 // ExecuteScriptAtBlockID executes a script at a specific block ID
 func (b *Backend) ExecuteScriptAtBlockID(
 	ctx context.Context,
+	blockID sdk.Identifier,
 	script []byte,
 	arguments [][]byte,
-	blockID sdk.Identifier,
 ) ([]byte, error) {
 	b.logger.
 		WithField("blockID", blockID).
@@ -331,7 +357,7 @@ func (b *Backend) ExecuteScriptAtBlockID(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	return b.executeScriptAtBlock(script, arguments, block.Height)
+	return b.executeScriptAtBlock(script, arguments, block.Header.Height)
 }
 
 type BlockEvents struct {
@@ -344,7 +370,7 @@ func (b *Backend) GetEventsForHeightRange(
 	ctx context.Context,
 	eventType string,
 	startHeight, endHeight uint64,
-) ([]BlockEvents, error) {
+) ([]flowgo.BlockEvents, error) {
 	latestBlock, err := b.blockchain.GetLatestBlock()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -352,8 +378,8 @@ func (b *Backend) GetEventsForHeightRange(
 
 	// if end height is not set, use latest block height
 	// if end height is higher than latest, use latest
-	if endHeight == 0 || endHeight > latestBlock.Height {
-		endHeight = latestBlock.Height
+	if endHeight == 0 || endHeight > latestBlock.Header.Height {
+		endHeight = latestBlock.Header.Height
 	}
 
 	// check for invalid queries
@@ -361,7 +387,7 @@ func (b *Backend) GetEventsForHeightRange(
 		return nil, status.Error(codes.InvalidArgument, "invalid query: start block must be <= end block")
 	}
 
-	results := make([]BlockEvents, 0)
+	results := make([]flowgo.BlockEvents, 0)
 	eventCount := 0
 
 	for height := startHeight; height <= endHeight; height++ {
@@ -380,9 +406,15 @@ func (b *Backend) GetEventsForHeightRange(
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 
-		result := BlockEvents{
-			Block:  block,
-			Events: events,
+		flowEvents, err := convert.SDKEventsToFlow(events)
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+
+		result := flowgo.BlockEvents{
+			BlockID:     block.ID(),
+			BlockHeight: block.Header.Height,
+			Events:      flowEvents,
 		}
 
 		results = append(results, result)
@@ -404,8 +436,8 @@ func (b *Backend) GetEventsForBlockIDs(
 	ctx context.Context,
 	eventType string,
 	blockIDs []sdk.Identifier,
-) ([]BlockEvents, error) {
-	results := make([]BlockEvents, 0)
+) ([]flowgo.BlockEvents, error) {
+	results := make([]flowgo.BlockEvents, 0)
 	eventCount := 0
 
 	for _, blockID := range blockIDs {
@@ -419,14 +451,20 @@ func (b *Backend) GetEventsForBlockIDs(
 			}
 		}
 
-		events, err := b.blockchain.GetEventsByHeight(block.Height, eventType)
+		events, err := b.blockchain.GetEventsByHeight(block.Header.Height, eventType)
 		if err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 
-		result := BlockEvents{
-			Block:  block,
-			Events: events,
+		flowEvents, err := convert.SDKEventsToFlow(events)
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+
+		result := flowgo.BlockEvents{
+			BlockID:     block.ID(),
+			BlockHeight: block.Header.Height,
+			Events:      flowEvents,
 		}
 
 		results = append(results, result)
@@ -453,10 +491,12 @@ func (b *Backend) CommitBlock() {
 		printTransactionResult(b.logger, result)
 	}
 
+	blockID := block.ID()
+
 	b.logger.WithFields(logrus.Fields{
-		"blockHeight": block.Height,
-		"blockID":     block.ID.Hex(),
-	}).Debugf("📦  Block #%d committed", block.Height)
+		"blockHeight": block.Header.Height,
+		"blockID":     hex.EncodeToString(blockID[:]),
+	}).Debugf("📦  Block #%d committed", block.Header.Height)
 }
 
 // executeScriptAtBlock is a helper for executing a script at a specific block

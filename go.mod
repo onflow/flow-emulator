@@ -7,7 +7,8 @@ require (
 	github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200708192840-30b3e2d5a586
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dgraph-io/badger/v2 v2.0.3
-	github.com/ethereum/go-ethereum v1.9.13 // indirect
+	github.com/docker/distribution v2.7.1+incompatible // indirect
+	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.2.0
 	github.com/golang/mock v1.4.3
 	github.com/golang/protobuf v1.4.0
@@ -16,7 +17,7 @@ require (
 	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
 	github.com/onflow/cadence v0.8.0
 	github.com/onflow/flow-go-sdk v0.9.0
-	github.com/onflow/flow/protobuf/go/flow v0.1.5-0.20200722220305-ee8119767329
+	github.com/onflow/flow/protobuf/go/flow v0.1.5-0.20200806013300-5011e9d6a292
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.5.1
 	github.com/prometheus/common v0.9.1
@@ -27,5 +28,6 @@ require (
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/sys v0.0.0-20200509044756-6aff5f38e54f // indirect
 	google.golang.org/grpc v1.28.0
-	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
+
+replace github.com/dapperlabs/flow-go => ../flow-go

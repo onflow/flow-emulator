@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/dapperlabs/flow-go/engine/access/rpc/handler"
+	legacyhandler "github.com/dapperlabs/flow-go/engine/access/rpc/handler/legacy"
+
+	"github.com/dapperlabs/flow-go/model/flow"
 	grpcprometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/onflow/flow/protobuf/go/flow/access"
+	legacyaccess "github.com/onflow/flow/protobuf/go/flow/legacy/access"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-	"github.com/onflow/flow/protobuf/go/flow/access"
-	legacyaccess "github.com/onflow/flow/protobuf/go/flow/legacy/access"
-
 	"github.com/dapperlabs/flow-emulator/server/backend"
-	"github.com/dapperlabs/flow-emulator/server/handler"
-	legacyhandler "github.com/dapperlabs/flow-emulator/server/handler/legacy"
 )
 
 type GRPCServer struct {
@@ -23,14 +24,17 @@ type GRPCServer struct {
 	grpcServer *grpc.Server
 }
 
-func NewGRPCServer(logger *logrus.Logger, backend *backend.Backend, port int, debug bool) *GRPCServer {
+func NewGRPCServer(logger *logrus.Logger, b *backend.Backend, port int, debug bool) *GRPCServer {
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpcprometheus.StreamServerInterceptor),
 		grpc.UnaryInterceptor(grpcprometheus.UnaryServerInterceptor),
 	)
 
-	legacyaccess.RegisterAccessAPIServer(grpcServer, legacyhandler.New(backend))
-	access.RegisterAccessAPIServer(grpcServer, handler.New(backend))
+	chain := flow.Emulator.Chain()
+	adaptedBackend := backend.NewAdapter(b)
+
+	legacyaccess.RegisterAccessAPIServer(grpcServer, legacyhandler.New(adaptedBackend, chain))
+	access.RegisterAccessAPIServer(grpcServer, handler.New(adaptedBackend, chain))
 
 	grpcprometheus.Register(grpcServer)
 
