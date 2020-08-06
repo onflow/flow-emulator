@@ -10,6 +10,11 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"github.com/onflow/flow/protobuf/go/flow/access"
+	legacyaccess "github.com/onflow/flow/protobuf/go/flow/legacy/access"
+
+	"github.com/dapperlabs/flow-emulator/server/backend"
+	"github.com/dapperlabs/flow-emulator/server/handler"
+	legacyhandler "github.com/dapperlabs/flow-emulator/server/handler/legacy"
 )
 
 type GRPCServer struct {
@@ -18,13 +23,15 @@ type GRPCServer struct {
 	grpcServer *grpc.Server
 }
 
-func NewGRPCServer(logger *logrus.Logger, backend *Backend, port int, debug bool) *GRPCServer {
+func NewGRPCServer(logger *logrus.Logger, backend *backend.Backend, port int, debug bool) *GRPCServer {
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpcprometheus.StreamServerInterceptor),
 		grpc.UnaryInterceptor(grpcprometheus.UnaryServerInterceptor),
 	)
 
-	access.RegisterAccessAPIServer(grpcServer, backend)
+	legacyaccess.RegisterAccessAPIServer(grpcServer, legacyhandler.New(backend))
+	access.RegisterAccessAPIServer(grpcServer, handler.New(backend))
+
 	grpcprometheus.Register(grpcServer)
 
 	if debug {

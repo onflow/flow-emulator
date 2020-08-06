@@ -10,6 +10,7 @@ require (
 	github.com/ethereum/go-ethereum v1.9.13 // indirect
 	github.com/fxamacker/cbor/v2 v2.2.0
 	github.com/golang/mock v1.4.3
+	github.com/golang/protobuf v1.4.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
