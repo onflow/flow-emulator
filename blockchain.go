@@ -58,11 +58,11 @@ type BlockchainAPI interface {
 	AddTransaction(tx sdk.Transaction) error
 	ExecuteNextTransaction() (*types.TransactionResult, error)
 	ExecuteBlock() ([]*types.TransactionResult, error)
-	CommitBlock() (*sdk.Block, error)
-	ExecuteAndCommitBlock() (*sdk.Block, []*types.TransactionResult, error)
-	GetLatestBlock() (*sdk.Block, error)
-	GetBlockByID(id sdk.Identifier) (*sdk.Block, error)
-	GetBlockByHeight(height uint64) (*sdk.Block, error)
+	CommitBlock() (*flowgo.Block, error)
+	ExecuteAndCommitBlock() (*flowgo.Block, []*types.TransactionResult, error)
+	GetLatestBlock() (*flowgo.Block, error)
+	GetBlockByID(id sdk.Identifier) (*flowgo.Block, error)
+	GetBlockByHeight(height uint64) (*flowgo.Block, error)
 	GetCollection(colID sdk.Identifier) (*sdk.Collection, error)
 	GetTransaction(txID sdk.Identifier) (*sdk.Transaction, error)
 	GetTransactionResult(txID sdk.Identifier) (*sdk.TransactionResult, error)
@@ -289,29 +289,27 @@ func (b *Blockchain) PendingBlockTimestamp() time.Time {
 	return b.pendingBlock.Block().Header.Timestamp
 }
 
-func (b *Blockchain) getLatestBlock() (flowgo.Block, error) {
+func (b *Blockchain) getLatestBlock() (*flowgo.Block, error) {
 	block, err := b.storage.LatestBlock()
 	if err != nil {
-		return flowgo.Block{}, &StorageError{err}
+		return nil, &StorageError{err}
 	}
 
-	return block, nil
+	return &block, nil
 }
 
 // GetLatestBlock gets the latest sealed block.
-func (b *Blockchain) GetLatestBlock() (*sdk.Block, error) {
+func (b *Blockchain) GetLatestBlock() (*flowgo.Block, error) {
 	block, err := b.getLatestBlock()
 	if err != nil {
 		return nil, err
 	}
 
-	sdkBlock := sdkconvert.FlowBlockToSDK(block)
-
-	return &sdkBlock, nil
+	return block, nil
 }
 
 // GetBlockByID gets a block by ID.
-func (b *Blockchain) GetBlockByID(id sdk.Identifier) (*sdk.Block, error) {
+func (b *Blockchain) GetBlockByID(id sdk.Identifier) (*flowgo.Block, error) {
 	block, err := b.storage.BlockByID(sdkconvert.SDKIdentifierToFlow(id))
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
@@ -320,21 +318,17 @@ func (b *Blockchain) GetBlockByID(id sdk.Identifier) (*sdk.Block, error) {
 		return nil, &StorageError{err}
 	}
 
-	sdkBlock := sdkconvert.FlowBlockToSDK(*block)
-
-	return &sdkBlock, nil
+	return block, nil
 }
 
 // GetBlockByHeight gets a block by height.
-func (b *Blockchain) GetBlockByHeight(height uint64) (*sdk.Block, error) {
+func (b *Blockchain) GetBlockByHeight(height uint64) (*flowgo.Block, error) {
 	block, err := b.getBlockByHeight(height)
 	if err != nil {
 		return nil, err
 	}
 
-	sdkBlock := sdkconvert.FlowBlockToSDK(*block)
-
-	return &sdkBlock, nil
+	return block, nil
 }
 
 func (b *Blockchain) getBlockByHeight(height uint64) (*flowgo.Block, error) {
@@ -465,7 +459,7 @@ func (b *Blockchain) getAccount(address flowgo.Address) (*flowgo.Account, error)
 		return nil, err
 	}
 
-	view := b.storage.LedgerViewByHeight(latestBlock.Height)
+	view := b.storage.LedgerViewByHeight(latestBlock.Header.Height)
 
 	account, err := b.vm.GetAccount(b.vmCtx, address, view)
 	if errors.Is(err, fvm.ErrAccountNotFound) {
@@ -531,7 +525,7 @@ func (b *Blockchain) addTransaction(sdkTx sdk.Transaction) error {
 	}
 
 	// add transaction to pending block
-	b.pendingBlock.AddTransaction(tx)
+	b.pendingBlock.AddTransaction(*tx)
 
 	return nil
 }
@@ -631,18 +625,16 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 // CommitBlock seals the current pending block and saves it to storage.
 //
 // This function clears the pending transaction pool and resets the pending block.
-func (b *Blockchain) CommitBlock() (*sdk.Block, error) {
+func (b *Blockchain) CommitBlock() (*flowgo.Block, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	flowBlock, err := b.commitBlock()
+	block, err := b.commitBlock()
 	if err != nil {
 		return nil, err
 	}
 
-	sdkBlock := sdkconvert.FlowBlockToSDK(*flowBlock)
-
-	return &sdkBlock, err
+	return block, nil
 }
 
 func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
@@ -681,7 +673,7 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 }
 
 // ExecuteAndCommitBlock is a utility that combines ExecuteBlock with CommitBlock.
-func (b *Blockchain) ExecuteAndCommitBlock() (*sdk.Block, []*types.TransactionResult, error) {
+func (b *Blockchain) ExecuteAndCommitBlock() (*flowgo.Block, []*types.TransactionResult, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -689,7 +681,7 @@ func (b *Blockchain) ExecuteAndCommitBlock() (*sdk.Block, []*types.TransactionRe
 }
 
 // ExecuteAndCommitBlock is a utility that combines ExecuteBlock with CommitBlock.
-func (b *Blockchain) executeAndCommitBlock() (*sdk.Block, []*types.TransactionResult, error) {
+func (b *Blockchain) executeAndCommitBlock() (*flowgo.Block, []*types.TransactionResult, error) {
 
 	results, err := b.executeBlock()
 	if err != nil {
@@ -701,8 +693,7 @@ func (b *Blockchain) executeAndCommitBlock() (*sdk.Block, []*types.TransactionRe
 		return nil, results, err
 	}
 
-	sdkBlock := sdkconvert.FlowBlockToSDK(*block)
-	return &sdkBlock, results, nil
+	return block, results, nil
 }
 
 // ResetPendingBlock clears the transactions in pending block.
@@ -718,7 +709,7 @@ func (b *Blockchain) ResetPendingBlock() error {
 	latestLedgerView := b.storage.LedgerViewByHeight(latestBlock.Header.Height)
 
 	// reset pending block using latest committed block and ledger state
-	b.pendingBlock = newPendingBlock(&latestBlock, latestLedgerView)
+	b.pendingBlock = newPendingBlock(latestBlock, latestLedgerView)
 
 	return nil
 }
@@ -733,7 +724,7 @@ func (b *Blockchain) ExecuteScript(script []byte, arguments [][]byte) (*types.Sc
 		return nil, err
 	}
 
-	return b.ExecuteScriptAtBlock(script, arguments, latestBlock.Height)
+	return b.ExecuteScriptAtBlock(script, arguments, latestBlock.Header.Height)
 }
 
 func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) (*types.ScriptResult, error) {

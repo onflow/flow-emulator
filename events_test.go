@@ -96,7 +96,7 @@ func TestEventEmitted(t *testing.T) {
 		location := runtime.AddressLocation(address.Bytes())
 		expectedType := fmt.Sprintf("%s.Test.MyEvent", location.ID())
 
-		events, err := b.GetEventsByHeight(block.Height, expectedType)
+		events, err := b.GetEventsByHeight(block.Header.Height, expectedType)
 		require.NoError(t, err)
 		require.Len(t, events, 1)
 
