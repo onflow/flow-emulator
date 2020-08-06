@@ -2,30 +2,29 @@ package unittest
 
 import (
 	flowgo "github.com/dapperlabs/flow-go/model/flow"
-	flowUnittest "github.com/dapperlabs/flow-go/utils/unittest"
-	"github.com/dapperlabs/flow-go/utils/unittest/generator"
+	"github.com/onflow/flow-go-sdk/test"
 
+	convert "github.com/dapperlabs/flow-emulator/convert/sdk"
 	"github.com/dapperlabs/flow-emulator/types"
 )
 
-func TransactionFixture(n ...func(t *flowgo.TransactionBody)) flowgo.TransactionBody {
-
-	tx := flowUnittest.TransactionBodyFixture()
-
-	for _, f := range n {
-		f(&tx)
-	}
-
-	return tx
+func TransactionFixture() flowgo.TransactionBody {
+	return *convert.SDKTransactionToFlow(*test.TransactionGenerator().New())
 }
 
 func StorableTransactionResultFixture() types.StorableTransactionResult {
-	events := generator.EventGenerator()
+	events := test.EventGenerator()
+
+	eventA, _ := convert.SDKEventToFlow(events.New())
+	eventB, _ := convert.SDKEventToFlow(events.New())
 
 	return types.StorableTransactionResult{
 		ErrorCode:    42,
 		ErrorMessage: "foo",
 		Logs:         []string{"a", "b", "c"},
-		Events:       []flowgo.Event{events.New(), events.New()},
+		Events: []flowgo.Event{
+			eventA,
+			eventB,
+		},
 	}
 }
