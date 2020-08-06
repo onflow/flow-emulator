@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	emulator "github.com/dapperlabs/flow-emulator"
-	sdkConvert "github.com/dapperlabs/flow-emulator/convert/sdk"
+	convert "github.com/dapperlabs/flow-emulator/convert/sdk"
 	"github.com/dapperlabs/flow-emulator/storage/badger"
 )
 
@@ -36,12 +36,10 @@ func TestInitialization(t *testing.T) {
 		latestBlock, err := b.GetLatestBlock()
 		require.NoError(t, err)
 
-		assert.EqualValues(t, 0, latestBlock.Height)
+		assert.EqualValues(t, 0, latestBlock.Header.Height)
 		assert.Equal(t,
-			sdkConvert.FlowIdentifierToSDK(
-				flowgo.Genesis(nil, flowgo.Emulator).ID(),
-			),
-			latestBlock.ID,
+			flowgo.Genesis(nil, flowgo.Emulator).ID(),
+			latestBlock.ID(),
 		)
 	})
 
@@ -103,7 +101,7 @@ func TestInitialization(t *testing.T) {
 		minedTx, err := b.GetTransaction(tx.ID())
 		require.NoError(t, err)
 
-		minedEvents, err := b.GetEventsByHeight(block.Height, "")
+		minedEvents, err := b.GetEventsByHeight(block.Header.Height, "")
 
 		// Create a new blockchain with the same store
 		b, _ = emulator.NewBlockchain(emulator.WithStore(store))
@@ -112,17 +110,17 @@ func TestInitialization(t *testing.T) {
 			latestBlock, err := b.GetLatestBlock()
 			require.NoError(t, err)
 
-			assert.Equal(t, block.ID, latestBlock.ID)
+			assert.Equal(t, block.ID(), latestBlock.ID())
 
-			blockByHeight, err := b.GetBlockByHeight(block.Height)
+			blockByHeight, err := b.GetBlockByHeight(block.Header.Height)
 			require.NoError(t, err)
 
-			assert.Equal(t, block.ID, blockByHeight.ID)
+			assert.Equal(t, block.ID(), blockByHeight.ID())
 
-			blockByHash, err := b.GetBlockByID(block.ID)
+			blockByHash, err := b.GetBlockByID(convert.FlowIdentifierToSDK(block.ID()))
 			require.NoError(t, err)
 
-			assert.Equal(t, block.ID, blockByHash.ID)
+			assert.Equal(t, block.ID(), blockByHash.ID())
 		})
 
 		t.Run("should be able to read transactions", func(t *testing.T) {
@@ -133,7 +131,7 @@ func TestInitialization(t *testing.T) {
 		})
 
 		t.Run("should be able to read events", func(t *testing.T) {
-			gotEvents, err := b.GetEventsByHeight(block.Height, "")
+			gotEvents, err := b.GetEventsByHeight(block.Header.Height, "")
 			require.NoError(t, err)
 
 			assert.Equal(t, minedEvents, gotEvents)
