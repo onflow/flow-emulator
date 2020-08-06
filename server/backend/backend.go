@@ -1,4 +1,4 @@
-package server
+package backend
 
 import (
 	"context"
@@ -12,24 +12,21 @@ import (
 
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	sdk "github.com/onflow/flow-go-sdk"
-	sdkconvert "github.com/onflow/flow-go-sdk/client/convert"
-	"github.com/onflow/flow/protobuf/go/flow/access"
-	"github.com/onflow/flow/protobuf/go/flow/entities"
 
 	emulator "github.com/dapperlabs/flow-emulator"
 	"github.com/dapperlabs/flow-emulator/types"
 )
 
 // Backend wraps an emulated blockchain and implements the RPC handlers
-// required by the Observation API.
+// required by the Access API.
 type Backend struct {
 	logger     *logrus.Logger
 	blockchain emulator.BlockchainAPI
 	automine   bool
 }
 
-// NewBackend returns a new backend.
-func NewBackend(logger *logrus.Logger, blockchain emulator.BlockchainAPI) *Backend {
+// New returns a new backend.
+func New(logger *logrus.Logger, blockchain emulator.BlockchainAPI) *Backend {
 	return &Backend{
 		logger:     logger,
 		blockchain: blockchain,
@@ -37,40 +34,24 @@ func NewBackend(logger *logrus.Logger, blockchain emulator.BlockchainAPI) *Backe
 	}
 }
 
-// Ping the Observation API server for a response.
-func (b *Backend) Ping(ctx context.Context, req *access.PingRequest) (*access.PingResponse, error) {
-	return &access.PingResponse{}, nil
-}
-
-func (b *Backend) GetNetworkParameters(context.Context, *access.GetNetworkParametersRequest) (*access.GetNetworkParametersResponse, error) {
-	panic("implement me")
-}
-
 // SendTransaction submits a transaction to the network.
-func (b *Backend) SendTransaction(ctx context.Context, req *access.SendTransactionRequest) (*access.SendTransactionResponse, error) {
-	txMsg := req.GetTransaction()
-
-	tx, err := sdkconvert.MessageToTransaction(txMsg)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	err = b.blockchain.AddTransaction(tx)
+func (b *Backend) SendTransaction(ctx context.Context, tx sdk.Transaction) error {
+	err := b.blockchain.AddTransaction(tx)
 	if err != nil {
 		switch t := err.(type) {
 		case *emulator.DuplicateTransactionError:
-			return nil, status.Error(codes.InvalidArgument, err.Error())
+			return status.Error(codes.InvalidArgument, err.Error())
 		case *types.FlowError:
 			switch t.FlowError.(type) {
 			case *fvm.InvalidSignaturePublicKeyError:
-				return nil, status.Error(codes.InvalidArgument, err.Error())
+				return status.Error(codes.InvalidArgument, err.Error())
 			case *fvm.InvalidSignatureAccountError:
-				return nil, status.Error(codes.InvalidArgument, err.Error())
+				return status.Error(codes.InvalidArgument, err.Error())
 			default:
-				return nil, status.Error(codes.Internal, err.Error())
+				return status.Error(codes.Internal, err.Error())
 			}
 		default:
-			return nil, status.Error(codes.Internal, err.Error())
+			return status.Error(codes.Internal, err.Error())
 		}
 	} else {
 		b.logger.
@@ -78,19 +59,15 @@ func (b *Backend) SendTransaction(ctx context.Context, req *access.SendTransacti
 			Debug("️✉️   Transaction submitted")
 	}
 
-	response := &access.SendTransactionResponse{
-		Id: tx.ID().Bytes(),
-	}
-
 	if b.automine {
-		b.commitBlock()
+		b.CommitBlock()
 	}
 
-	return response, nil
+	return nil
 }
 
 // GetLatestBlockHeader gets the latest sealed block header.
-func (b *Backend) GetLatestBlockHeader(ctx context.Context, req *access.GetLatestBlockHeaderRequest) (*access.BlockHeaderResponse, error) {
+func (b *Backend) GetLatestBlockHeader(ctx context.Context) (*sdk.Block, error) {
 	block, err := b.blockchain.GetLatestBlock()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -101,12 +78,15 @@ func (b *Backend) GetLatestBlockHeader(ctx context.Context, req *access.GetLates
 		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetLatestBlockHeader called")
 
-	return b.blockToHeaderResponse(block)
+	return block, nil
 }
 
 // GetBlockHeaderByHeight gets a block header by height.
-func (b *Backend) GetBlockHeaderByHeight(ctx context.Context, req *access.GetBlockHeaderByHeightRequest) (*access.BlockHeaderResponse, error) {
-	block, err := b.blockchain.GetBlockByHeight(req.GetHeight())
+func (b *Backend) GetBlockHeaderByHeight(
+	ctx context.Context,
+	height uint64,
+) (*sdk.Block, error) {
+	block, err := b.blockchain.GetBlockByHeight(height)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -116,14 +96,15 @@ func (b *Backend) GetBlockHeaderByHeight(ctx context.Context, req *access.GetBlo
 		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetBlockHeaderByHeight called")
 
-	return b.blockToHeaderResponse(block)
+	return block, nil
 }
 
 // GetBlockHeaderByID gets a block header by ID.
-func (b *Backend) GetBlockHeaderByID(ctx context.Context, req *access.GetBlockHeaderByIDRequest) (*access.BlockHeaderResponse, error) {
-	blockID := sdk.HashToID(req.GetId())
-
-	block, err := b.blockchain.GetBlockByID(blockID)
+func (b *Backend) GetBlockHeaderByID(
+	ctx context.Context,
+	id sdk.Identifier,
+) (*sdk.Block, error) {
+	block, err := b.blockchain.GetBlockByID(id)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -133,11 +114,11 @@ func (b *Backend) GetBlockHeaderByID(ctx context.Context, req *access.GetBlockHe
 		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetBlockHeaderByID called")
 
-	return b.blockToHeaderResponse(block)
+	return block, nil
 }
 
 // GetLatestBlock gets the latest sealed block.
-func (b *Backend) GetLatestBlock(ctx context.Context, req *access.GetLatestBlockRequest) (*access.BlockResponse, error) {
+func (b *Backend) GetLatestBlock(ctx context.Context) (*sdk.Block, error) {
 	block, err := b.blockchain.GetLatestBlock()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -148,12 +129,15 @@ func (b *Backend) GetLatestBlock(ctx context.Context, req *access.GetLatestBlock
 		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetLatestBlock called")
 
-	return b.blockResponse(block)
+	return block, nil
 }
 
 // GetBlockByHeight gets a block by height.
-func (b *Backend) GetBlockByHeight(ctx context.Context, req *access.GetBlockByHeightRequest) (*access.BlockResponse, error) {
-	block, err := b.blockchain.GetBlockByHeight(req.GetHeight())
+func (b *Backend) GetBlockByHeight(
+	ctx context.Context,
+	height uint64,
+) (*sdk.Block, error) {
+	block, err := b.blockchain.GetBlockByHeight(height)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -163,14 +147,15 @@ func (b *Backend) GetBlockByHeight(ctx context.Context, req *access.GetBlockByHe
 		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetBlockByHeight called")
 
-	return b.blockResponse(block)
+	return block, nil
 }
 
 // GetBlockByHeight gets a block by ID.
-func (b *Backend) GetBlockByID(ctx context.Context, req *access.GetBlockByIDRequest) (*access.BlockResponse, error) {
-	blockID := sdk.HashToID(req.GetId())
-
-	block, err := b.blockchain.GetBlockByID(blockID)
+func (b *Backend) GetBlockByID(
+	ctx context.Context,
+	id sdk.Identifier,
+) (*sdk.Block, error) {
+	block, err := b.blockchain.GetBlockByID(id)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -180,13 +165,14 @@ func (b *Backend) GetBlockByID(ctx context.Context, req *access.GetBlockByIDRequ
 		"blockID":     block.ID.Hex(),
 	}).Debug("🎁  GetBlockByID called")
 
-	return b.blockResponse(block)
+	return block, nil
 }
 
 // GetCollectionByID gets a collection by ID.
-func (b *Backend) GetCollectionByID(ctx context.Context, req *access.GetCollectionByIDRequest) (*access.CollectionResponse, error) {
-	id := sdk.HashToID(req.GetId())
-
+func (b *Backend) GetCollectionByID(
+	ctx context.Context,
+	id sdk.Identifier,
+) (*sdk.Collection, error) {
 	col, err := b.blockchain.GetCollection(id)
 	if err != nil {
 		switch err.(type) {
@@ -201,15 +187,14 @@ func (b *Backend) GetCollectionByID(ctx context.Context, req *access.GetCollecti
 		WithField("colID", id.Hex()).
 		Debugf("📚  GetCollectionByID called")
 
-	return &access.CollectionResponse{
-		Collection: sdkconvert.CollectionToMessage(*col),
-	}, nil
+	return col, nil
 }
 
 // GetTransaction gets a transaction by ID.
-func (b *Backend) GetTransaction(ctx context.Context, req *access.GetTransactionRequest) (*access.TransactionResponse, error) {
-	id := sdk.HashToID(req.GetId())
-
+func (b *Backend) GetTransaction(
+	ctx context.Context,
+	id sdk.Identifier,
+) (*sdk.Transaction, error) {
 	tx, err := b.blockchain.GetTransaction(id)
 	if err != nil {
 		switch err.(type) {
@@ -224,20 +209,14 @@ func (b *Backend) GetTransaction(ctx context.Context, req *access.GetTransaction
 		WithField("txID", id.String()).
 		Debugf("💵  GetTransaction called")
 
-	txMsg, err := sdkconvert.TransactionToMessage(*tx)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return &access.TransactionResponse{
-		Transaction: txMsg,
-	}, nil
+	return tx, nil
 }
 
 // GetTransactionResult gets a transaction by ID.
-func (b *Backend) GetTransactionResult(ctx context.Context, req *access.GetTransactionRequest) (*access.TransactionResultResponse, error) {
-	id := sdk.HashToID(req.GetId())
-
+func (b *Backend) GetTransactionResult(
+	ctx context.Context,
+	id sdk.Identifier,
+) (*sdk.TransactionResult, error) {
 	result, err := b.blockchain.GetTransactionResult(id)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -247,21 +226,14 @@ func (b *Backend) GetTransactionResult(ctx context.Context, req *access.GetTrans
 		WithField("txID", id.String()).
 		Debugf("📝  GetTransactionResult called")
 
-	res, err := sdkconvert.TransactionResultToMessage(*result)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return res, nil
+	return result, nil
 }
 
 // GetAccount returns an account by address at the latest sealed block.
 func (b *Backend) GetAccount(
 	ctx context.Context,
-	req *access.GetAccountRequest,
-) (*access.GetAccountResponse, error) {
-	address := sdk.BytesToAddress(req.GetAddress())
-
+	address sdk.Address,
+) (*sdk.Account, error) {
 	b.logger.
 		WithField("address", address).
 		Debugf("👤  GetAccount called")
@@ -271,18 +243,14 @@ func (b *Backend) GetAccount(
 		return nil, err
 	}
 
-	return &access.GetAccountResponse{
-		Account: account,
-	}, nil
+	return account, nil
 }
 
 // GetAccountAtLatestBlock returns an account by address at the latest sealed block.
 func (b *Backend) GetAccountAtLatestBlock(
 	ctx context.Context,
-	req *access.GetAccountAtLatestBlockRequest,
-) (*access.AccountResponse, error) {
-	address := sdk.BytesToAddress(req.GetAddress())
-
+	address sdk.Address,
+) (*sdk.Account, error) {
 	b.logger.
 		WithField("address", address).
 		Debugf("👤  GetAccountAtLatestBlock called")
@@ -292,12 +260,10 @@ func (b *Backend) GetAccountAtLatestBlock(
 		return nil, err
 	}
 
-	return &access.AccountResponse{
-		Account: account,
-	}, nil
+	return account, nil
 }
 
-func (b *Backend) getAccount(address sdk.Address) (*entities.Account, error) {
+func (b *Backend) getAccount(address sdk.Address) (*sdk.Account, error) {
 	account, err := b.blockchain.GetAccount(address)
 	if err != nil {
 		switch err.(type) {
@@ -308,54 +274,77 @@ func (b *Backend) getAccount(address sdk.Address) (*entities.Account, error) {
 		}
 	}
 
-	b.logger.
-		WithField("address", address).
-		Debugf("👤  GetAccountAtLatestBlock called")
-
-	return sdkconvert.AccountToMessage(*account), nil
+	return account, nil
 }
 
-func (b *Backend) GetAccountAtBlockHeight(ctx context.Context, request *access.GetAccountAtBlockHeightRequest) (*access.AccountResponse, error) {
+func (b *Backend) GetAccountAtBlockHeight(
+	ctx context.Context,
+	address sdk.Address,
+	height uint64,
+) (*sdk.Account, error) {
 	panic("implement me")
 }
 
 // ExecuteScriptAtLatestBlock executes a script at a the latest block
-func (b *Backend) ExecuteScriptAtLatestBlock(ctx context.Context, req *access.ExecuteScriptAtLatestBlockRequest) (*access.ExecuteScriptResponse, error) {
-	script := req.GetScript()
-	arguments := req.GetArguments()
+func (b *Backend) ExecuteScriptAtLatestBlock(
+	ctx context.Context,
+	script []byte,
+	arguments [][]byte,
+) ([]byte, error) {
+	b.logger.Debugf("👤  ExecuteScriptAtLatestBlock called")
+
 	block, err := b.blockchain.GetLatestBlock()
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+
 	return b.executeScriptAtBlock(script, arguments, block.Height)
 }
 
 // ExecuteScriptAtBlockHeight executes a script at a specific block height
-func (b *Backend) ExecuteScriptAtBlockHeight(ctx context.Context, req *access.ExecuteScriptAtBlockHeightRequest) (*access.ExecuteScriptResponse, error) {
-	script := req.GetScript()
-	blockHeight := req.GetBlockHeight()
-	arguments := req.GetArguments()
+func (b *Backend) ExecuteScriptAtBlockHeight(
+	ctx context.Context,
+	script []byte,
+	arguments [][]byte,
+	blockHeight uint64,
+) ([]byte, error) {
+	b.logger.
+		WithField("blockHeight", blockHeight).
+		Debugf("👤  ExecuteScriptAtBlockHeight called")
+
 	return b.executeScriptAtBlock(script, arguments, blockHeight)
 }
 
 // ExecuteScriptAtBlockID executes a script at a specific block ID
-func (b *Backend) ExecuteScriptAtBlockID(ctx context.Context, req *access.ExecuteScriptAtBlockIDRequest) (*access.ExecuteScriptResponse, error) {
-	script := req.GetScript()
-	arguments := req.GetArguments()
-	blockID := sdk.HashToID(req.GetBlockId())
+func (b *Backend) ExecuteScriptAtBlockID(
+	ctx context.Context,
+	script []byte,
+	arguments [][]byte,
+	blockID sdk.Identifier,
+) ([]byte, error) {
+	b.logger.
+		WithField("blockID", blockID).
+		Debugf("👤  ExecuteScriptAtBlockID called")
 
 	block, err := b.blockchain.GetBlockByID(blockID)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+
 	return b.executeScriptAtBlock(script, arguments, block.Height)
 }
 
-// GetEventsForHeightRange returns events matching a query.
-func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEventsForHeightRangeRequest) (*access.EventsResponse, error) {
-	startHeight := req.GetStartHeight()
-	endHeight := req.GetEndHeight()
+type BlockEvents struct {
+	Block  *sdk.Block
+	Events []sdk.Event
+}
 
+// GetEventsForHeightRange returns events matching a query.
+func (b *Backend) GetEventsForHeightRange(
+	ctx context.Context,
+	eventType string,
+	startHeight, endHeight uint64,
+) ([]BlockEvents, error) {
 	latestBlock, err := b.blockchain.GetLatestBlock()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -372,9 +361,7 @@ func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEv
 		return nil, status.Error(codes.InvalidArgument, "invalid query: start block must be <= end block")
 	}
 
-	eventType := req.GetType()
-
-	results := make([]*access.EventsResponse_Result, 0)
+	results := make([]BlockEvents, 0)
 	eventCount := 0
 
 	for height := startHeight; height <= endHeight; height++ {
@@ -393,9 +380,9 @@ func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEv
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 
-		result, err := b.eventsBlockResult(block, events)
-		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
+		result := BlockEvents{
+			Block:  block,
+			Events: events,
 		}
 
 		results = append(results, result)
@@ -403,28 +390,26 @@ func (b *Backend) GetEventsForHeightRange(ctx context.Context, req *access.GetEv
 	}
 
 	b.logger.WithFields(logrus.Fields{
-		"eventType":   req.Type,
-		"startHeight": req.StartHeight,
-		"endHeight":   req.EndHeight,
+		"eventType":   eventType,
+		"startHeight": startHeight,
+		"endHeight":   endHeight,
 		"eventCount":  eventCount,
 	}).Debugf("🎁  GetEventsForHeightRange called")
 
-	res := access.EventsResponse{
-		Results: results,
-	}
-
-	return &res, nil
+	return results, nil
 }
 
 // GetEventsForBlockIDs returns events matching a set of block IDs.
-func (b *Backend) GetEventsForBlockIDs(ctx context.Context, req *access.GetEventsForBlockIDsRequest) (*access.EventsResponse, error) {
-	eventType := req.GetType()
-
-	results := make([]*access.EventsResponse_Result, 0)
+func (b *Backend) GetEventsForBlockIDs(
+	ctx context.Context,
+	eventType string,
+	blockIDs []sdk.Identifier,
+) ([]BlockEvents, error) {
+	results := make([]BlockEvents, 0)
 	eventCount := 0
 
-	for _, blockID := range req.GetBlockIds() {
-		block, err := b.blockchain.GetBlockByID(sdk.HashToID(blockID))
+	for _, blockID := range blockIDs {
+		block, err := b.blockchain.GetBlockByID(blockID)
 		if err != nil {
 			switch err.(type) {
 			case emulator.NotFoundError:
@@ -439,9 +424,9 @@ func (b *Backend) GetEventsForBlockIDs(ctx context.Context, req *access.GetEvent
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 
-		result, err := b.eventsBlockResult(block, events)
-		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
+		result := BlockEvents{
+			Block:  block,
+			Events: events,
 		}
 
 		results = append(results, result)
@@ -449,19 +434,15 @@ func (b *Backend) GetEventsForBlockIDs(ctx context.Context, req *access.GetEvent
 	}
 
 	b.logger.WithFields(logrus.Fields{
-		"eventType":  req.Type,
+		"eventType":  eventType,
 		"eventCount": eventCount,
 	}).Debugf("🎁  GetEventsForBlockIDs called")
 
-	res := access.EventsResponse{
-		Results: results,
-	}
-
-	return &res, nil
+	return results, nil
 }
 
-// commitBlock executes the current pending transactions and commits the results in a new block.
-func (b *Backend) commitBlock() {
+// CommitBlock executes the current pending transactions and commits the results in a new block.
+func (b *Backend) CommitBlock() {
 	block, results, err := b.blockchain.ExecuteAndCommitBlock()
 	if err != nil {
 		b.logger.WithError(err).Error("Failed to commit block")
@@ -479,7 +460,7 @@ func (b *Backend) commitBlock() {
 }
 
 // executeScriptAtBlock is a helper for executing a script at a specific block
-func (b *Backend) executeScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) (*access.ExecuteScriptResponse, error) {
+func (b *Backend) executeScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) ([]byte, error) {
 	result, err := b.blockchain.ExecuteScriptAtBlock(script, arguments, blockHeight)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -492,55 +473,7 @@ func (b *Backend) executeScriptAtBlock(script []byte, arguments [][]byte, blockH
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	response := &access.ExecuteScriptResponse{
-		Value: valueBytes,
-	}
-
-	return response, nil
-}
-
-// blockToHeaderResponse constructs a block header response from a block.
-func (b *Backend) blockToHeaderResponse(block *sdk.Block) (*access.BlockHeaderResponse, error) {
-	msg, err := sdkconvert.BlockHeaderToMessage(*&block.BlockHeader)
-	if err != nil {
-		return nil, err
-	}
-
-	return &access.BlockHeaderResponse{
-		Block: msg,
-	}, nil
-}
-
-// blockResponse constructs a block response from a block.
-func (b *Backend) blockResponse(block *sdk.Block) (*access.BlockResponse, error) {
-	msg, err := sdkconvert.BlockToMessage(*block)
-	if err != nil {
-		return nil, err
-	}
-
-	return &access.BlockResponse{
-		Block: msg,
-	}, nil
-}
-
-func (b *Backend) eventsBlockResult(
-	block *sdk.Block,
-	events []sdk.Event,
-) (result *access.EventsResponse_Result, err error) {
-	eventMessages := make([]*entities.Event, len(events))
-	for i, event := range events {
-		eventMessages[i], err = sdkconvert.EventToMessage(event)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	blockID := block.ID
-	return &access.EventsResponse_Result{
-		BlockId:     blockID[:],
-		BlockHeight: block.Height,
-		Events:      eventMessages,
-	}, nil
+	return valueBytes, nil
 }
 
 // EnableAutoMine enables the automine flag.

@@ -1,4 +1,4 @@
-package server_test
+package handler_test
 
 import (
 	"context"
@@ -22,7 +22,8 @@ import (
 
 	emulator "github.com/dapperlabs/flow-emulator"
 	"github.com/dapperlabs/flow-emulator/mocks"
-	"github.com/dapperlabs/flow-emulator/server"
+	"github.com/dapperlabs/flow-emulator/server/backend"
+	"github.com/dapperlabs/flow-emulator/server/handler"
 	"github.com/dapperlabs/flow-emulator/types"
 )
 
@@ -30,9 +31,11 @@ func TestPing(t *testing.T) {
 	ctx := context.Background()
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
-	backend := server.NewBackend(logrus.New(), b)
 
-	_, err = backend.Ping(ctx, &access.PingRequest{})
+	backend := backend.New(logrus.New(), b)
+	handler := handler.New(backend)
+
+	_, err = handler.Ping(ctx, &access.PingRequest{})
 	assert.NoError(t, err)
 }
 
@@ -41,20 +44,21 @@ func TestBackend(t *testing.T) {
 	results := test.TransactionResultGenerator()
 
 	// wrapper which manages mock lifecycle
-	withMocks := func(sut func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI)) func(t *testing.T) {
+	withMocks := func(sut func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI)) func(t *testing.T) {
 		return func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
 			api := mocks.NewMockBlockchainAPI(mockCtrl)
 
-			backend := server.NewBackend(logrus.New(), api)
+			backend := backend.New(logrus.New(), api)
+			handler := handler.New(backend)
 
-			sut(t, backend, api)
+			sut(t, handler, api)
 		}
 	}
 
-	t.Run("ExecuteScriptAtLatestBlock", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("ExecuteScriptAtLatestBlock", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 		sampleScriptText := []byte("hey I'm so totally uninterpretable script text with unicode ć, ń, ó, ś, ź")
 		scriptResponse := cadence.NewInt(rand.Int())
 		executionScriptRequest := access.ExecuteScriptAtLatestBlockRequest{
@@ -75,7 +79,7 @@ func TestBackend(t *testing.T) {
 			}, nil).
 			Times(1)
 
-		response, err := backend.ExecuteScriptAtLatestBlock(context.Background(), &executionScriptRequest)
+		response, err := handler.ExecuteScriptAtLatestBlock(context.Background(), &executionScriptRequest)
 		assert.NoError(t, err)
 
 		value, err := jsoncdc.Decode(response.GetValue())
@@ -84,7 +88,7 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, scriptResponse, value)
 	}))
 
-	t.Run("ExecuteScriptAtBlockHeight", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("ExecuteScriptAtBlockHeight", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 		sampleScriptText := []byte("hey I'm so totally uninterpretable script text with unicode ć, ń, ó, ś, ź")
 		scriptResponse := cadence.NewInt(rand.Int())
 		executionScriptRequest := access.ExecuteScriptAtBlockHeightRequest{
@@ -100,7 +104,7 @@ func TestBackend(t *testing.T) {
 			}, nil).
 			Times(1)
 
-		response, err := backend.ExecuteScriptAtBlockHeight(context.Background(), &executionScriptRequest)
+		response, err := handler.ExecuteScriptAtBlockHeight(context.Background(), &executionScriptRequest)
 		assert.NoError(t, err)
 
 		value, err := jsoncdc.Decode(response.GetValue())
@@ -109,7 +113,7 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, scriptResponse, value)
 	}))
 
-	t.Run("ExecuteScriptAtBlockID", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("ExecuteScriptAtBlockID", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 		sampleScriptText := []byte("hey I'm so totally uninterpretable script text with unicode ć, ń, ó, ś, ź")
 		scriptResponse := cadence.NewInt(rand.Int())
 		randomBlock := &flow.Block{BlockHeader: flow.BlockHeader{Height: rand.Uint64()}}
@@ -132,7 +136,7 @@ func TestBackend(t *testing.T) {
 			}, nil).
 			Times(1)
 
-		response, err := backend.ExecuteScriptAtBlockID(context.Background(), &executionScriptRequest)
+		response, err := handler.ExecuteScriptAtBlockID(context.Background(), &executionScriptRequest)
 		assert.NoError(t, err)
 
 		value, err := jsoncdc.Decode(response.GetValue())
@@ -141,7 +145,7 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, scriptResponse, value)
 	}))
 
-	t.Run("GetAccountAtLatestBlock", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetAccountAtLatestBlock", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 		keys := test.AccountKeyGenerator()
 
 		account := flow.Account{
@@ -163,7 +167,7 @@ func TestBackend(t *testing.T) {
 			Address: account.Address.Bytes(),
 		}
 
-		response, err := backend.GetAccountAtLatestBlock(context.Background(), &request)
+		response, err := handler.GetAccountAtLatestBlock(context.Background(), &request)
 
 		assert.NoError(t, err)
 
@@ -176,7 +180,7 @@ func TestBackend(t *testing.T) {
 		}
 	}))
 
-	t.Run("GetEventsForHeightRange fails with invalid block heights", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetEventsForHeightRange fails with invalid block heights", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 		latestBlock := flow.Block{BlockHeader: flow.BlockHeader{Height: 21}}
 
 		api.EXPECT().
@@ -188,7 +192,7 @@ func TestBackend(t *testing.T) {
 			Return([]flow.Event{}, nil).
 			Times(0)
 
-		response, err := backend.GetEventsForHeightRange(context.Background(), &access.GetEventsForHeightRangeRequest{
+		response, err := handler.GetEventsForHeightRange(context.Background(), &access.GetEventsForHeightRangeRequest{
 			Type:        "SomeEvents",
 			StartHeight: 37,
 			EndHeight:   21,
@@ -202,7 +206,7 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, grpcError.Code(), codes.InvalidArgument)
 	}))
 
-	t.Run("GetEventsForHeightRange fails if blockchain returns error", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetEventsForHeightRange fails if blockchain returns error", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 		startBlock := &flow.Block{BlockHeader: flow.BlockHeader{Height: 10}}
 
 		latestBlock := &flow.Block{BlockHeader: flow.BlockHeader{Height: 11}}
@@ -221,7 +225,7 @@ func TestBackend(t *testing.T) {
 			Return(nil, errors.New("dummy")).
 			Times(1)
 
-		_, err := backend.GetEventsForHeightRange(
+		_, err := handler.GetEventsForHeightRange(
 			context.Background(),
 			&access.GetEventsForHeightRangeRequest{StartHeight: 10, EndHeight: 11},
 		)
@@ -233,7 +237,7 @@ func TestBackend(t *testing.T) {
 		}
 	}))
 
-	t.Run("GetEventsForHeightRange", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetEventsForHeightRange", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 		events := test.EventGenerator()
 
 		eventsToReturn := []flow.Event{
@@ -244,8 +248,8 @@ func TestBackend(t *testing.T) {
 		eventType := "SomeEvents"
 
 		blocks := []flow.Block{
-			flow.Block{BlockHeader: flow.BlockHeader{Height: 1}},
-			flow.Block{BlockHeader: flow.BlockHeader{Height: 2}},
+			{BlockHeader: flow.BlockHeader{Height: 1}},
+			{BlockHeader: flow.BlockHeader{Height: 2}},
 		}
 
 		var (
@@ -274,7 +278,7 @@ func TestBackend(t *testing.T) {
 			GetEventsByHeight(blocks[1].Height, eventType).
 			Return(eventsToReturn, nil)
 
-		response, err := backend.GetEventsForHeightRange(context.Background(), &access.GetEventsForHeightRangeRequest{
+		response, err := handler.GetEventsForHeightRange(context.Background(), &access.GetEventsForHeightRangeRequest{
 			Type:        eventType,
 			StartHeight: startHeight,
 			EndHeight:   endHeight,
@@ -294,7 +298,7 @@ func TestBackend(t *testing.T) {
 		}
 	}))
 
-	t.Run("GetEventsForHeightRange succeeds if end height is higher than latest", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetEventsForHeightRange succeeds if end height is higher than latest", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 		events := test.EventGenerator()
 
 		eventsToReturn := []flow.Event{
@@ -336,7 +340,7 @@ func TestBackend(t *testing.T) {
 			GetEventsByHeight(blocks[1].Height, eventType).
 			Return(eventsToReturn, nil)
 
-		response, err := backend.GetEventsForHeightRange(context.Background(), &access.GetEventsForHeightRangeRequest{
+		response, err := handler.GetEventsForHeightRange(context.Background(), &access.GetEventsForHeightRangeRequest{
 			Type:        eventType,
 			StartHeight: startHeight,
 			EndHeight:   endHeight,
@@ -356,7 +360,7 @@ func TestBackend(t *testing.T) {
 		}
 	}))
 
-	t.Run("GetLatestBlockHeader", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetLatestBlockHeader", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 		parentID := flow.Block{BlockHeader: flow.BlockHeader{Height: rand.Uint64()}}.ID
 		latestBlock := &flow.Block{BlockHeader: flow.BlockHeader{Height: rand.Uint64(), ParentID: parentID}}
 
@@ -367,7 +371,7 @@ func TestBackend(t *testing.T) {
 
 		getBlockHeaderRequest := access.GetLatestBlockHeaderRequest{}
 
-		response, err := backend.GetLatestBlockHeader(context.Background(), &getBlockHeaderRequest)
+		response, err := handler.GetLatestBlockHeader(context.Background(), &getBlockHeaderRequest)
 		assert.NoError(t, err)
 
 		blockResponse := response.GetBlock()
@@ -376,7 +380,7 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, latestBlock.ParentID, flow.HashToID(blockResponse.GetParentId()))
 	}))
 
-	t.Run("GetBlockHeaderAtBlockHeight", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetBlockHeaderAtBlockHeight", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 		parentID := flow.Block{BlockHeader: flow.BlockHeader{Height: rand.Uint64()}}.ID
 		requestedBlock := &flow.Block{BlockHeader: flow.BlockHeader{Height: rand.Uint64(), ParentID: parentID}}
 
@@ -388,7 +392,7 @@ func TestBackend(t *testing.T) {
 		getBlockHeaderRequest := access.GetBlockHeaderByHeightRequest{
 			Height: requestedBlock.Height,
 		}
-		response, err := backend.GetBlockHeaderByHeight(context.Background(), &getBlockHeaderRequest)
+		response, err := handler.GetBlockHeaderByHeight(context.Background(), &getBlockHeaderRequest)
 		assert.NoError(t, err)
 
 		blockResponse := response.GetBlock()
@@ -397,7 +401,7 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, requestedBlock.ParentID, flow.HashToID(blockResponse.GetParentId()))
 	}))
 
-	t.Run("GetBlockHeaderAtBlockID", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetBlockHeaderAtBlockID", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 		parentID := flow.Block{BlockHeader: flow.BlockHeader{Height: rand.Uint64()}}.ID
 		requestedBlock := &flow.Block{BlockHeader: flow.BlockHeader{Height: rand.Uint64(), ParentID: parentID}}
 
@@ -409,7 +413,7 @@ func TestBackend(t *testing.T) {
 		getBlockHeaderRequest := access.GetBlockHeaderByIDRequest{
 			Id: requestedBlock.ID.Bytes(),
 		}
-		response, err := backend.GetBlockHeaderByID(context.Background(), &getBlockHeaderRequest)
+		response, err := handler.GetBlockHeaderByID(context.Background(), &getBlockHeaderRequest)
 		assert.NoError(t, err)
 
 		blockResponse := response.GetBlock()
@@ -418,7 +422,7 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, requestedBlock.ParentID, flow.HashToID(blockResponse.GetParentId()))
 	}))
 
-	t.Run("GetTransaction tx does not exists", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetTransaction tx does not exists", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 
 		id := []byte{2, 2, 2, 2}
 
@@ -427,7 +431,7 @@ func TestBackend(t *testing.T) {
 			Return(nil, &emulator.TransactionNotFoundError{}).
 			Times(1)
 
-		response, err := backend.GetTransaction(context.Background(), &access.GetTransactionRequest{
+		response, err := handler.GetTransaction(context.Background(), &access.GetTransactionRequest{
 			Id: id,
 		})
 
@@ -441,7 +445,7 @@ func TestBackend(t *testing.T) {
 		assert.Nil(t, response)
 	}))
 
-	t.Run("GetTransactionResult", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetTransactionResult", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 		txID := ids.New()
 		expectedResult := results.New()
 
@@ -450,7 +454,7 @@ func TestBackend(t *testing.T) {
 			Return(&expectedResult, nil).
 			Times(1)
 
-		response, err := backend.GetTransactionResult(context.Background(), &access.GetTransactionRequest{
+		response, err := handler.GetTransactionResult(context.Background(), &access.GetTransactionRequest{
 			Id: txID.Bytes(),
 		})
 
@@ -462,7 +466,7 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, expectedResult, result)
 	}))
 
-	// t.Run("GetTransaction", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	// t.Run("GetTransaction", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 
 	// 	txEventType := "TxEvent"
 
@@ -505,17 +509,17 @@ func TestBackend(t *testing.T) {
 	// 	assert.Equal(t, txEventType, event.Type)
 	// }))
 
-	t.Run("Ping", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("Ping", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 
-		response, err := backend.Ping(context.Background(), &access.PingRequest{})
+		response, err := handler.Ping(context.Background(), &access.PingRequest{})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, response)
 	}))
 
-	t.Run("SendTransaction with nil tx", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("SendTransaction with nil tx", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 
-		response, err := backend.SendTransaction(context.Background(), &access.SendTransactionRequest{
+		response, err := handler.SendTransaction(context.Background(), &access.SendTransactionRequest{
 			Transaction: nil,
 		})
 
@@ -529,7 +533,7 @@ func TestBackend(t *testing.T) {
 
 	}))
 
-	t.Run("SendTransaction", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("SendTransaction", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 
 		var capturedTx flow.Transaction
 
@@ -549,7 +553,7 @@ func TestBackend(t *testing.T) {
 			Transaction: txMsg,
 		}
 
-		response, err := backend.SendTransaction(context.Background(), &requestTx)
+		response, err := handler.SendTransaction(context.Background(), &requestTx)
 		require.NoError(t, err)
 		require.NotNil(t, response)
 
@@ -557,7 +561,7 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, capturedTx.ID(), flow.HashToID(response.GetId()))
 	}))
 
-	t.Run("SendTransaction which errors while processing", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("SendTransaction which errors while processing", withMocks(func(t *testing.T, handler *handler.Handler, api *mocks.MockBlockchainAPI) {
 
 		api.EXPECT().
 			AddTransaction(gomock.Any()).
@@ -575,7 +579,7 @@ func TestBackend(t *testing.T) {
 		requestTx := access.SendTransactionRequest{
 			Transaction: txMsg,
 		}
-		response, err := backend.SendTransaction(context.Background(), &requestTx)
+		response, err := handler.SendTransaction(context.Background(), &requestTx)
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -585,48 +589,5 @@ func TestBackend(t *testing.T) {
 
 		assert.Equal(t, codes.InvalidArgument, grpcError.Code())
 
-	}))
-
-	t.Run("SendTransaction with AutoMine enabled", withMocks(func(t *testing.T, backend *server.Backend, api *mocks.MockBlockchainAPI) {
-
-		// enable automine flag
-		backend.EnableAutoMine()
-		// disable automine flag at the end of the test
-		defer backend.DisableAutoMine()
-
-		var capturedTx flow.Transaction
-
-		api.EXPECT().
-			AddTransaction(gomock.Any()).
-			DoAndReturn(func(tx flow.Transaction) error {
-				capturedTx = tx
-				return nil
-			}).
-			Times(1)
-
-		// expect transaction to be executed immediately
-		api.EXPECT().
-			ExecuteAndCommitBlock().
-			DoAndReturn(func() (*flow.Block, []*types.TransactionResult, error) {
-				return &flow.Block{BlockHeader: flow.BlockHeader{}, BlockPayload: flow.BlockPayload{}},
-					make([]*types.TransactionResult, 0), nil
-			}).
-			Times(1)
-
-		tx := test.TransactionGenerator().New()
-
-		txMsg, err := convert.TransactionToMessage(*tx)
-		require.NoError(t, err)
-
-		requestTx := access.SendTransactionRequest{
-			Transaction: txMsg,
-		}
-		response, err := backend.SendTransaction(context.Background(), &requestTx)
-
-		assert.NoError(t, err)
-		require.NotNil(t, response)
-
-		assert.Equal(t, capturedTx.ID(), capturedTx.ID())
-		assert.Equal(t, capturedTx.ID(), flow.HashToID(response.GetId()))
 	}))
 }
