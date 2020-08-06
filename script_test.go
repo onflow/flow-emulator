@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	"github.com/onflow/cadence"
+	jsoncdc "github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	emulator "github.com/dapperlabs/flow-emulator"
-	jsoncdc "github.com/onflow/cadence/encoding/json"
 )
 
 func TestExecuteScript(t *testing.T) {

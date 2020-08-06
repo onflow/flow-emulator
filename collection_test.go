@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	emulator "github.com/dapperlabs/flow-emulator"
+	convert "github.com/dapperlabs/flow-emulator/convert/sdk"
 )
 
 func TestCollections(t *testing.T) {
@@ -19,7 +20,7 @@ func TestCollections(t *testing.T) {
 		require.NoError(t, err)
 
 		// block should not contain any collections
-		assert.Empty(t, block.CollectionGuarantees)
+		assert.Empty(t, block.Payload.Guarantees)
 	})
 
 	t.Run("Non-empty block", func(t *testing.T) {
@@ -61,11 +62,11 @@ func TestCollections(t *testing.T) {
 		require.NoError(t, err)
 
 		// block should contain at least one collection
-		assert.NotEmpty(t, block.CollectionGuarantees)
+		assert.NotEmpty(t, block.Payload.Guarantees)
 
 		i := 0
-		for _, guarantee := range block.CollectionGuarantees {
-			collection, err := b.GetCollection(guarantee.CollectionID)
+		for _, guarantee := range block.Payload.Guarantees {
+			collection, err := b.GetCollection(convert.FlowIdentifierToSDK(guarantee.ID()))
 			require.NoError(t, err)
 
 			for _, txID := range collection.TransactionIDs {
