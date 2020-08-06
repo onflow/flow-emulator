@@ -9,14 +9,11 @@ import (
 
 	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
 	flowgo "github.com/dapperlabs/flow-go/model/flow"
-	fixtures "github.com/dapperlabs/flow-go/utils/unittest"
-	flowGenerator "github.com/dapperlabs/flow-go/utils/unittest/generator"
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	flowUnitest "github.com/dapperlabs/flow-go/utils/unittest"
-
+	convert "github.com/dapperlabs/flow-emulator/convert/sdk"
 	"github.com/dapperlabs/flow-emulator/storage"
 	"github.com/dapperlabs/flow-emulator/storage/badger"
 	"github.com/dapperlabs/flow-emulator/utils/unittest"
@@ -42,8 +39,8 @@ func TestBlocks(t *testing.T) {
 
 	t.Run("should return error for not found", func(t *testing.T) {
 		t.Run("BlockByID", func(t *testing.T) {
-			freshId := flowUnitest.IdentifierFixture()
-			_, err := store.BlockByID(freshId)
+			freshId := test.IdentifierGenerator().New()
+			_, err := store.BlockByID(flowgo.Identifier(freshId))
 			if assert.Error(t, err) {
 				assert.Equal(t, storage.ErrNotFound, err)
 			}
@@ -111,8 +108,16 @@ func TestCollections(t *testing.T) {
 		require.Nil(t, os.RemoveAll(dir))
 	}()
 
+	ids := test.IdentifierGenerator()
+
 	// collection with 3 transactions
-	col := fixtures.CollectionFixture(3).Light()
+	col := flowgo.LightCollection{
+		Transactions: []flowgo.Identifier{
+			flowgo.Identifier(ids.New()),
+			flowgo.Identifier(ids.New()),
+			flowgo.Identifier(ids.New()),
+		},
+	}
 
 	t.Run("should return error for not found", func(t *testing.T) {
 		_, err := store.CollectionByID(col.ID())
@@ -168,10 +173,12 @@ func TestTransactionResults(t *testing.T) {
 		require.Nil(t, os.RemoveAll(dir))
 	}()
 
+	ids := test.IdentifierGenerator()
+
 	result := unittest.StorableTransactionResultFixture()
 
 	t.Run("should return error for not found", func(t *testing.T) {
-		txID := flowUnitest.IdentifierFixture()
+		txID := flowgo.Identifier(ids.New())
 
 		_, err := store.TransactionResultByID(txID)
 		if assert.Error(t, err) {
@@ -180,7 +187,7 @@ func TestTransactionResults(t *testing.T) {
 	})
 
 	t.Run("should be able to insert result", func(t *testing.T) {
-		txID := flowUnitest.IdentifierFixture()
+		txID := flowgo.Identifier(ids.New())
 
 		err := store.InsertTransactionResult(txID, result)
 		assert.NoError(t, err)
@@ -289,8 +296,12 @@ func TestInsertEvents(t *testing.T) {
 		require.Nil(t, os.RemoveAll(dir))
 	}()
 
+	events := test.EventGenerator()
+
 	t.Run("should be able to insert events", func(t *testing.T) {
-		events := []flowgo.Event{flowGenerator.EventGenerator().New()}
+		event, _ := convert.SDKEventToFlow(events.New())
+		events := []flowgo.Event{event}
+
 		var blockHeight uint64 = 1
 
 		err := store.InsertEvents(blockHeight, events)
@@ -310,6 +321,8 @@ func TestEventsByHeight(t *testing.T) {
 		require.Nil(t, os.RemoveAll(dir))
 	}()
 
+	events := test.EventGenerator()
+
 	var (
 		nonEmptyBlockHeight    uint64 = 1
 		emptyBlockHeight       uint64 = 2
@@ -321,7 +334,8 @@ func TestEventsByHeight(t *testing.T) {
 	)
 
 	for i := range allEvents {
-		event := flowGenerator.EventGenerator().New()
+		event, _ := convert.SDKEventToFlow(events.New())
+
 		event.TransactionIndex = uint32(i)
 		event.EventIndex = uint32(i * 2)
 
@@ -389,7 +403,9 @@ func TestPersistence(t *testing.T) {
 
 	block := &flowgo.Block{Header: &flowgo.Header{Height: 1}}
 	tx := unittest.TransactionFixture()
-	events := []flowgo.Event{flowGenerator.EventGenerator().New()}
+
+	event, _ := convert.SDKEventToFlow(test.EventGenerator().New())
+	events := []flowgo.Event{event}
 
 	ledger := make(delta.Delta)
 	ledger["foo"] = []byte("bar")
@@ -483,7 +499,7 @@ func BenchmarkBlockDiskUsage(b *testing.B) {
 		block := &flowgo.Block{
 			Header: &flowgo.Header{
 				Height:   uint64(i),
-				ParentID: flowUnitest.IdentifierFixture(),
+				ParentID: flowgo.Identifier(ids.New()),
 			},
 			Payload: &flowgo.Payload{
 				Guarantees: []*flowgo.CollectionGuarantee{
