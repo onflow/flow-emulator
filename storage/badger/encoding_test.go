@@ -4,12 +4,11 @@ import (
 	"testing"
 
 	flowgo "github.com/dapperlabs/flow-go/model/flow"
-	flowUnittest "github.com/dapperlabs/flow-go/utils/unittest"
-	flowGenerator "github.com/dapperlabs/flow-go/utils/unittest/generator"
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	convert "github.com/dapperlabs/flow-emulator/convert/sdk"
 	"github.com/dapperlabs/flow-emulator/types"
 	"github.com/dapperlabs/flow-emulator/utils/unittest"
 )
@@ -42,12 +41,10 @@ func TestEncodeTransactionResult(t *testing.T) {
 func TestEncodeBlock(t *testing.T) {
 	ids := test.IdentifierGenerator()
 
-	id := flowUnittest.IdentifierFixture()
-
 	block := flowgo.Block{
 		Header: &flowgo.Header{
 			Height:   1234,
-			ParentID: id,
+			ParentID: flowgo.Identifier(ids.New()),
 		},
 		Payload: &flowgo.Payload{
 			Guarantees: []*flowgo.CollectionGuarantee{
@@ -85,7 +82,8 @@ func TestEncodeGenesisBlock(t *testing.T) {
 }
 
 func TestEncodeEvent(t *testing.T) {
-	event := flowGenerator.EventGenerator().New()
+	event, _ := convert.SDKEventToFlow(test.EventGenerator().New())
+
 	data, err := encodeEvent(event)
 	require.Nil(t, err)
 
