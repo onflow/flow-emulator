@@ -360,11 +360,6 @@ func (b *Backend) ExecuteScriptAtBlockID(
 	return b.executeScriptAtBlock(script, arguments, block.Header.Height)
 }
 
-type BlockEvents struct {
-	Block  *sdk.Block
-	Events []sdk.Event
-}
-
 // GetEventsForHeightRange returns events matching a query.
 func (b *Backend) GetEventsForHeightRange(
 	ctx context.Context,
