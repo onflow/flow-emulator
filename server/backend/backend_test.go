@@ -20,21 +20,21 @@ import (
 	"google.golang.org/grpc/status"
 
 	emulator "github.com/dapperlabs/flow-emulator"
-	"github.com/dapperlabs/flow-emulator/mocks"
 	"github.com/dapperlabs/flow-emulator/server/backend"
+	"github.com/dapperlabs/flow-emulator/server/backend/mocks"
 	"github.com/dapperlabs/flow-emulator/types"
 )
 
-func backendTest(f func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI)) func(t *testing.T) {
+func backendTest(f func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator)) func(t *testing.T) {
 	return func(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		defer mockCtrl.Finish()
 
-		api := mocks.NewMockBlockchainAPI(mockCtrl)
+		emu := mocks.NewMockEmulator(mockCtrl)
 
-		backend := backend.New(logrus.New(), api)
+		backend := backend.New(logrus.New(), emu)
 
-		f(t, backend, api)
+		f(t, backend, emu)
 	}
 }
 
@@ -42,19 +42,19 @@ func TestBackend(t *testing.T) {
 	ids := test.IdentifierGenerator()
 	results := test.TransactionResultGenerator()
 
-	t.Run("ExecuteScriptAtLatestBlock", backendTest(func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("ExecuteScriptAtLatestBlock", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 		script := []byte("hey I'm so totally uninterpretable script text with unicode ć, ń, ó, ś, ź")
 
 		expectedValue := cadence.NewInt(rand.Int())
 
 		latestBlock := &flowgo.Block{Header: &flowgo.Header{Height: rand.Uint64()}}
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetLatestBlock().
 			Return(latestBlock, nil).
 			Times(1)
 
-		api.EXPECT().
+		emu.EXPECT().
 			ExecuteScriptAtBlock(script, nil, latestBlock.Header.Height).
 			Return(&types.ScriptResult{
 				Value: expectedValue,
@@ -71,13 +71,13 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, expectedValue, actualValue)
 	}))
 
-	t.Run("ExecuteScriptAtBlockHeight", backendTest(func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("ExecuteScriptAtBlockHeight", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 		script := []byte("hey I'm so totally uninterpretable script text with unicode ć, ń, ó, ś, ź")
 		blockHeight := rand.Uint64()
 
 		expectedValue := cadence.NewInt(rand.Int())
 
-		api.EXPECT().
+		emu.EXPECT().
 			ExecuteScriptAtBlock(script, nil, blockHeight).
 			Return(&types.ScriptResult{
 				Value: expectedValue,
@@ -94,18 +94,18 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, expectedValue, actualValue)
 	}))
 
-	t.Run("ExecuteScriptAtBlockID", backendTest(func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("ExecuteScriptAtBlockID", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 		script := []byte("hey I'm so totally uninterpretable script text with unicode ć, ń, ó, ś, ź")
 		expectedValue := cadence.NewInt(rand.Int())
 
 		randomBlock := &flowgo.Block{Header: &flowgo.Header{Height: rand.Uint64()}}
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetBlockByID(flow.Identifier(randomBlock.ID())).
 			Return(randomBlock, nil).
 			Times(1)
 
-		api.EXPECT().
+		emu.EXPECT().
 			ExecuteScriptAtBlock(script, nil, randomBlock.Header.Height).
 			Return(&types.ScriptResult{
 				Value: expectedValue,
@@ -127,7 +127,7 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, expectedValue, actualValue)
 	}))
 
-	t.Run("GetAccountAtLatestBlock", backendTest(func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetAccountAtLatestBlock", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 		keys := test.AccountKeyGenerator()
 
 		expectedAccount := flow.Account{
@@ -140,7 +140,7 @@ func TestBackend(t *testing.T) {
 			},
 		}
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetAccount(expectedAccount.Address).
 			Return(&expectedAccount, nil).
 			Times(1)
@@ -151,14 +151,14 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, expectedAccount, *actualAccount)
 	}))
 
-	t.Run("GetEventsForHeightRange fails with invalid block heights", backendTest(func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetEventsForHeightRange fails with invalid block heights", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 		latestBlock := flowgo.Block{Header: &flowgo.Header{Height: 21}}
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetLatestBlock().
 			Return(&latestBlock, nil)
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetEventsByHeight(gomock.Any(), gomock.Any()).
 			Return([]flow.Event{}, nil).
 			Times(0)
@@ -176,20 +176,20 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, grpcError.Code(), codes.InvalidArgument)
 	}))
 
-	t.Run("GetEventsForHeightRange fails if blockchain returns error", backendTest(func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetEventsForHeightRange fails if blockchain returns error", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 		startBlock := flowgo.Block{Header: &flowgo.Header{Height: 10}}
 		latestBlock := flowgo.Block{Header: &flowgo.Header{Height: 11}}
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetLatestBlock().
 			Return(&latestBlock, nil)
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetBlockByHeight(startBlock.Header.Height).
 			Return(&startBlock, nil).
 			Times(1)
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetEventsByHeight(startBlock.Header.Height, gomock.Any()).
 			Return(nil, errors.New("dummy")).
 			Times(1)
@@ -210,7 +210,7 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, grpcError.Code(), codes.Internal)
 	}))
 
-	t.Run("GetEventsForHeightRange", backendTest(func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetEventsForHeightRange", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 		events := test.EventGenerator()
 
 		eventsToReturn := []flow.Event{
@@ -231,23 +231,23 @@ func TestBackend(t *testing.T) {
 			endHeight   = blocks[1].Header.Height
 		)
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetLatestBlock().
 			Return(&latestBlock, nil)
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetBlockByHeight(blocks[0].Header.Height).
 			Return(&blocks[0], nil)
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetBlockByHeight(blocks[1].Header.Height).
 			Return(&blocks[1], nil)
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetEventsByHeight(blocks[0].Header.Height, eventType).
 			Return(eventsToReturn, nil)
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetEventsByHeight(blocks[1].Header.Height, eventType).
 			Return(eventsToReturn, nil)
 
@@ -269,7 +269,7 @@ func TestBackend(t *testing.T) {
 		}
 	}))
 
-	t.Run("GetEventsForHeightRange succeeds if end height is higher than latest", backendTest(func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetEventsForHeightRange succeeds if end height is higher than latest", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 		events := test.EventGenerator()
 
 		eventsToReturn := []flow.Event{
@@ -291,23 +291,23 @@ func TestBackend(t *testing.T) {
 			endHeight uint64 = 10
 		)
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetLatestBlock().
 			Return(&latestBlock, nil)
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetBlockByHeight(blocks[0].Header.Height).
 			Return(&blocks[0], nil)
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetBlockByHeight(blocks[1].Header.Height).
 			Return(&blocks[1], nil)
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetEventsByHeight(blocks[0].Header.Height, eventType).
 			Return(eventsToReturn, nil)
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetEventsByHeight(blocks[1].Header.Height, eventType).
 			Return(eventsToReturn, nil)
 
@@ -329,11 +329,11 @@ func TestBackend(t *testing.T) {
 		}
 	}))
 
-	t.Run("GetLatestBlockHeader", backendTest(func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetLatestBlockHeader", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 		parentID := flowgo.Block{Header: &flowgo.Header{Height: rand.Uint64()}}.ID()
 		latestBlock := flowgo.Block{Header: &flowgo.Header{Height: rand.Uint64(), ParentID: parentID}}
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetLatestBlock().
 			Return(&latestBlock, nil).
 			Times(1)
@@ -346,11 +346,11 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, latestBlock.Header.ParentID, header.ParentID)
 	}))
 
-	t.Run("GetBlockHeaderAtBlockHeight", backendTest(func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetBlockHeaderAtBlockHeight", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 		parentID := flowgo.Block{Header: &flowgo.Header{Height: rand.Uint64()}}.ID()
 		requestedBlock := flowgo.Block{Header: &flowgo.Header{Height: rand.Uint64(), ParentID: parentID}}
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetBlockByHeight(requestedBlock.Header.Height).
 			Return(&requestedBlock, nil).
 			Times(1)
@@ -363,11 +363,11 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, requestedBlock.Header.ParentID, header.ParentID)
 	}))
 
-	t.Run("GetBlockHeaderAtBlockID", backendTest(func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetBlockHeaderAtBlockID", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 		parentID := flowgo.Block{Header: &flowgo.Header{Height: rand.Uint64()}}.ID()
 		requestedBlock := flowgo.Block{Header: &flowgo.Header{Height: rand.Uint64(), ParentID: parentID}}
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetBlockByID(flow.Identifier(requestedBlock.ID())).
 			Return(&requestedBlock, nil).
 			Times(1)
@@ -380,10 +380,10 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, requestedBlock.Header.ParentID, header.ParentID)
 	}))
 
-	t.Run("GetTransaction tx does not exists", backendTest(func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetTransaction tx does not exists", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 		txID := ids.New()
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetTransaction(txID).
 			Return(nil, &emulator.TransactionNotFoundError{}).
 			Times(1)
@@ -399,11 +399,11 @@ func TestBackend(t *testing.T) {
 		assert.Nil(t, tx)
 	}))
 
-	t.Run("GetTransactionResult", backendTest(func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("GetTransactionResult", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 		txID := ids.New()
 		expectedTx := results.New()
 
-		api.EXPECT().
+		emu.EXPECT().
 			GetTransactionResult(txID).
 			Return(&expectedTx, nil).
 			Times(1)
@@ -414,7 +414,7 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, expectedTx, *actualTx)
 	}))
 
-	// t.Run("GetTransaction", backendTest(func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI) {
+	// t.Run("GetTransaction", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 
 	// 	txEventType := "TxEvent"
 
@@ -433,7 +433,7 @@ func TestBackend(t *testing.T) {
 
 	// 	tx.Events = txEvents
 
-	// 	api.EXPECT().
+	// 	emu.EXPECT().
 	// 		GetTransaction(gomock.Eq(txHash)).
 	// 		Return(&tx, nil).
 	// 		Times(1)
@@ -457,16 +457,16 @@ func TestBackend(t *testing.T) {
 	// 	assert.Equal(t, txEventType, event.Type)
 	// }))
 
-	t.Run("Ping", backendTest(func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("Ping", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 		err := backend.Ping(context.Background())
 		assert.NoError(t, err)
 	}))
 
-	t.Run("SendTransaction", backendTest(func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("SendTransaction", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 
 		var actualTx flow.Transaction
 
-		api.EXPECT().
+		emu.EXPECT().
 			AddTransaction(gomock.Any()).
 			DoAndReturn(func(tx flow.Transaction) error {
 				actualTx = tx
@@ -482,9 +482,9 @@ func TestBackend(t *testing.T) {
 		assert.Equal(t, *expectedTx, actualTx)
 	}))
 
-	t.Run("SendTransaction which errors while processing", backendTest(func(t *testing.T, backend *backend.Backend, api *mocks.MockBlockchainAPI) {
+	t.Run("SendTransaction which errors while processing", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 
-		api.EXPECT().
+		emu.EXPECT().
 			AddTransaction(gomock.Any()).
 			Return(&types.FlowError{FlowError: &fvm.InvalidSignaturePublicKeyError{}}).
 			Times(1)
@@ -508,9 +508,9 @@ func TestBackendAutoMine(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	api := mocks.NewMockBlockchainAPI(mockCtrl)
+	emu := mocks.NewMockEmulator(mockCtrl)
 
-	backend := backend.New(logrus.New(), api)
+	backend := backend.New(logrus.New(), emu)
 
 	// enable automine flag
 	backend.EnableAutoMine()
@@ -519,7 +519,7 @@ func TestBackendAutoMine(t *testing.T) {
 
 	var actualTx flow.Transaction
 
-	api.EXPECT().
+	emu.EXPECT().
 		AddTransaction(gomock.Any()).
 		DoAndReturn(func(tx flow.Transaction) error {
 			actualTx = tx
@@ -528,7 +528,7 @@ func TestBackendAutoMine(t *testing.T) {
 		Times(1)
 
 	// expect transaction to be executed immediately
-	api.EXPECT().
+	emu.EXPECT().
 		ExecuteAndCommitBlock().
 		DoAndReturn(func() (*flowgo.Block, []*types.TransactionResult, error) {
 			return &flowgo.Block{Header: &flowgo.Header{}, Payload: &flowgo.Payload{}},
