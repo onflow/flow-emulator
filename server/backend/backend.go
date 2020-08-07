@@ -24,17 +24,17 @@ import (
 // Backend wraps an emulated blockchain and implements the RPC handlers
 // required by the Access API.
 type Backend struct {
-	logger     *logrus.Logger
-	blockchain emulator.BlockchainAPI
-	automine   bool
+	logger   *logrus.Logger
+	emulator Emulator
+	automine bool
 }
 
 // New returns a new backend.
-func New(logger *logrus.Logger, blockchain emulator.BlockchainAPI) *Backend {
+func New(logger *logrus.Logger, emulator Emulator) *Backend {
 	return &Backend{
-		logger:     logger,
-		blockchain: blockchain,
-		automine:   false,
+		logger:   logger,
+		emulator: emulator,
+		automine: false,
 	}
 }
 
@@ -50,7 +50,7 @@ func (b *Backend) GetNetworkParameters(ctx context.Context) handler.NetworkParam
 
 // GetLatestBlockHeader gets the latest sealed block header.
 func (b *Backend) GetLatestBlockHeader(ctx context.Context, isSealed bool) (*flowgo.Header, error) {
-	block, err := b.blockchain.GetLatestBlock()
+	block, err := b.emulator.GetLatestBlock()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -70,7 +70,7 @@ func (b *Backend) GetBlockHeaderByHeight(
 	ctx context.Context,
 	height uint64,
 ) (*flowgo.Header, error) {
-	block, err := b.blockchain.GetBlockByHeight(height)
+	block, err := b.emulator.GetBlockByHeight(height)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -90,7 +90,7 @@ func (b *Backend) GetBlockHeaderByID(
 	ctx context.Context,
 	id sdk.Identifier,
 ) (*flowgo.Header, error) {
-	block, err := b.blockchain.GetBlockByID(id)
+	block, err := b.emulator.GetBlockByID(id)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -107,7 +107,7 @@ func (b *Backend) GetBlockHeaderByID(
 
 // GetLatestBlock gets the latest sealed block.
 func (b *Backend) GetLatestBlock(ctx context.Context, isSealed bool) (*flowgo.Block, error) {
-	block, err := b.blockchain.GetLatestBlock()
+	block, err := b.emulator.GetLatestBlock()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -127,7 +127,7 @@ func (b *Backend) GetBlockByHeight(
 	ctx context.Context,
 	height uint64,
 ) (*flowgo.Block, error) {
-	block, err := b.blockchain.GetBlockByHeight(height)
+	block, err := b.emulator.GetBlockByHeight(height)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -147,7 +147,7 @@ func (b *Backend) GetBlockByID(
 	ctx context.Context,
 	id sdk.Identifier,
 ) (*flowgo.Block, error) {
-	block, err := b.blockchain.GetBlockByID(id)
+	block, err := b.emulator.GetBlockByID(id)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -167,7 +167,7 @@ func (b *Backend) GetCollectionByID(
 	ctx context.Context,
 	id sdk.Identifier,
 ) (*sdk.Collection, error) {
-	col, err := b.blockchain.GetCollection(id)
+	col, err := b.emulator.GetCollection(id)
 	if err != nil {
 		switch err.(type) {
 		case emulator.NotFoundError:
@@ -186,7 +186,7 @@ func (b *Backend) GetCollectionByID(
 
 // SendTransaction submits a transaction to the network.
 func (b *Backend) SendTransaction(ctx context.Context, tx sdk.Transaction) error {
-	err := b.blockchain.AddTransaction(tx)
+	err := b.emulator.AddTransaction(tx)
 	if err != nil {
 		switch t := err.(type) {
 		case *emulator.DuplicateTransactionError:
@@ -221,7 +221,7 @@ func (b *Backend) GetTransaction(
 	ctx context.Context,
 	id sdk.Identifier,
 ) (*sdk.Transaction, error) {
-	tx, err := b.blockchain.GetTransaction(id)
+	tx, err := b.emulator.GetTransaction(id)
 	if err != nil {
 		switch err.(type) {
 		case emulator.NotFoundError:
@@ -243,7 +243,7 @@ func (b *Backend) GetTransactionResult(
 	ctx context.Context,
 	id sdk.Identifier,
 ) (*sdk.TransactionResult, error) {
-	result, err := b.blockchain.GetTransactionResult(id)
+	result, err := b.emulator.GetTransactionResult(id)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -290,7 +290,7 @@ func (b *Backend) GetAccountAtLatestBlock(
 }
 
 func (b *Backend) getAccount(address sdk.Address) (*sdk.Account, error) {
-	account, err := b.blockchain.GetAccount(address)
+	account, err := b.emulator.GetAccount(address)
 	if err != nil {
 		switch err.(type) {
 		case emulator.NotFoundError:
@@ -319,7 +319,7 @@ func (b *Backend) ExecuteScriptAtLatestBlock(
 ) ([]byte, error) {
 	b.logger.Debugf("👤  ExecuteScriptAtLatestBlock called")
 
-	block, err := b.blockchain.GetLatestBlock()
+	block, err := b.emulator.GetLatestBlock()
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -352,7 +352,7 @@ func (b *Backend) ExecuteScriptAtBlockID(
 		WithField("blockID", blockID).
 		Debugf("👤  ExecuteScriptAtBlockID called")
 
-	block, err := b.blockchain.GetBlockByID(blockID)
+	block, err := b.emulator.GetBlockByID(blockID)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -371,7 +371,7 @@ func (b *Backend) GetEventsForHeightRange(
 	eventType string,
 	startHeight, endHeight uint64,
 ) ([]flowgo.BlockEvents, error) {
-	latestBlock, err := b.blockchain.GetLatestBlock()
+	latestBlock, err := b.emulator.GetLatestBlock()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -391,7 +391,7 @@ func (b *Backend) GetEventsForHeightRange(
 	eventCount := 0
 
 	for height := startHeight; height <= endHeight; height++ {
-		block, err := b.blockchain.GetBlockByHeight(height)
+		block, err := b.emulator.GetBlockByHeight(height)
 		if err != nil {
 			switch err.(type) {
 			case emulator.NotFoundError:
@@ -401,7 +401,7 @@ func (b *Backend) GetEventsForHeightRange(
 			}
 		}
 
-		events, err := b.blockchain.GetEventsByHeight(height, eventType)
+		events, err := b.emulator.GetEventsByHeight(height, eventType)
 		if err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
@@ -441,7 +441,7 @@ func (b *Backend) GetEventsForBlockIDs(
 	eventCount := 0
 
 	for _, blockID := range blockIDs {
-		block, err := b.blockchain.GetBlockByID(blockID)
+		block, err := b.emulator.GetBlockByID(blockID)
 		if err != nil {
 			switch err.(type) {
 			case emulator.NotFoundError:
@@ -451,7 +451,7 @@ func (b *Backend) GetEventsForBlockIDs(
 			}
 		}
 
-		events, err := b.blockchain.GetEventsByHeight(block.Header.Height, eventType)
+		events, err := b.emulator.GetEventsByHeight(block.Header.Height, eventType)
 		if err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
@@ -481,7 +481,7 @@ func (b *Backend) GetEventsForBlockIDs(
 
 // CommitBlock executes the current pending transactions and commits the results in a new block.
 func (b *Backend) CommitBlock() {
-	block, results, err := b.blockchain.ExecuteAndCommitBlock()
+	block, results, err := b.emulator.ExecuteAndCommitBlock()
 	if err != nil {
 		b.logger.WithError(err).Error("Failed to commit block")
 		return
@@ -501,7 +501,7 @@ func (b *Backend) CommitBlock() {
 
 // executeScriptAtBlock is a helper for executing a script at a specific block
 func (b *Backend) executeScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) ([]byte, error) {
-	result, err := b.blockchain.ExecuteScriptAtBlock(script, arguments, blockHeight)
+	result, err := b.emulator.ExecuteScriptAtBlock(script, arguments, blockHeight)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
