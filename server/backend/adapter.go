@@ -9,20 +9,22 @@ import (
 	convert "github.com/dapperlabs/flow-emulator/convert/sdk"
 )
 
+// Adapter wraps the emulator backend to be compatible with handler.AccessAPI.
 type Adapter struct {
 	backend *Backend
 }
 
+// NewAdapter returns a new backend adapter.
 func NewAdapter(backend *Backend) *Adapter {
 	return &Adapter{backend: backend}
 }
 
 func (a *Adapter) Ping(ctx context.Context) error {
-	panic("implement me")
+	return a.backend.Ping(ctx)
 }
 
 func (a *Adapter) GetNetworkParameters(ctx context.Context) handler.NetworkParameters {
-	panic("implement me")
+	return a.backend.GetNetworkParameters(ctx)
 }
 
 func (a *Adapter) GetLatestBlockHeader(ctx context.Context, isSealed bool) (*flowgo.Header, error) {
