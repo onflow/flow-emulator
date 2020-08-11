@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/onflow/cadence"
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/prometheus/common/log"
@@ -30,6 +31,7 @@ type Config struct {
 	Persist            bool          `default:"false" flag:"persist" info:"enable persistent storage"`
 	DBPath             string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
 	SimpleAddresses    bool          `default:"false" flag:"simple-addresses" info:"use sequential addresses starting with 0x01"`
+	TokenSupply        string        `default:"100000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
 }
 
 const EnvPrefix = "FLOW"
@@ -104,6 +106,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				ServiceKeyHashAlgo: serviceKeyHashAlgo,
 				Persist:            conf.Persist,
 				DBPath:             conf.DBPath,
+				GenesisTokenSupply: parseTokenSupply(conf.TokenSupply),
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
@@ -139,4 +142,19 @@ func initConfig(cmd *cobra.Command) {
 func Exit(code int, msg string) {
 	fmt.Println(msg)
 	os.Exit(code)
+}
+
+func parseTokenSupply(supply string) cadence.UFix64 {
+	tokenSupply, err := cadence.NewUFix64(supply)
+	if err != nil {
+		Exit(
+			1,
+			fmt.Sprintf(
+				"Invalid token supply. Failed to parse `%s` as an unsigned 64-bit fixed-point number: %s",
+				conf.TokenSupply,
+				err.Error()),
+		)
+	}
+
+	return tokenSupply
 }
