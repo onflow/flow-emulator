@@ -3,9 +3,9 @@ package sdk
 import (
 	"fmt"
 
+	"github.com/dapperlabs/flow-go/access"
 	flowcrypto "github.com/dapperlabs/flow-go/crypto"
 	flowhash "github.com/dapperlabs/flow-go/crypto/hash"
-	"github.com/dapperlabs/flow-go/engine/access/rpc/handler"
 	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
@@ -139,7 +139,7 @@ func FlowTransactionToSDK(flowTx flowgo.TransactionBody) sdk.Transaction {
 	}
 }
 
-func SDKTransactionResultToFlow(result *sdk.TransactionResult) (*handler.TransactionResult, error) {
+func SDKTransactionResultToFlow(result *sdk.TransactionResult) (*access.TransactionResult, error) {
 	statusCode := uint(0)
 	errorMessage := ""
 
@@ -153,7 +153,7 @@ func SDKTransactionResultToFlow(result *sdk.TransactionResult) (*handler.Transac
 		return nil, err
 	}
 
-	return &handler.TransactionResult{
+	return &access.TransactionResult{
 		Status:       flowgo.TransactionStatus(result.Status),
 		StatusCode:   statusCode,
 		Events:       events,

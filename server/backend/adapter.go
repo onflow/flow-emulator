@@ -3,13 +3,13 @@ package backend
 import (
 	"context"
 
-	"github.com/dapperlabs/flow-go/engine/access/rpc/handler"
+	"github.com/dapperlabs/flow-go/access"
 	flowgo "github.com/dapperlabs/flow-go/model/flow"
 
 	convert "github.com/dapperlabs/flow-emulator/convert/sdk"
 )
 
-// Adapter wraps the emulator backend to be compatible with handler.AccessAPI.
+// Adapter wraps the emulator backend to be compatible with access.API.
 type Adapter struct {
 	backend *Backend
 }
@@ -23,7 +23,7 @@ func (a *Adapter) Ping(ctx context.Context) error {
 	return a.backend.Ping(ctx)
 }
 
-func (a *Adapter) GetNetworkParameters(ctx context.Context) handler.NetworkParameters {
+func (a *Adapter) GetNetworkParameters(ctx context.Context) access.NetworkParameters {
 	return a.backend.GetNetworkParameters(ctx)
 }
 
@@ -73,7 +73,7 @@ func (a *Adapter) GetTransaction(ctx context.Context, id flowgo.Identifier) (*fl
 	return convert.SDKTransactionToFlow(*tx), nil
 }
 
-func (a *Adapter) GetTransactionResult(ctx context.Context, id flowgo.Identifier) (*handler.TransactionResult, error) {
+func (a *Adapter) GetTransactionResult(ctx context.Context, id flowgo.Identifier) (*access.TransactionResult, error) {
 	result, err := a.backend.GetTransactionResult(ctx, convert.FlowIdentifierToSDK(id))
 	if err != nil {
 		return nil, err

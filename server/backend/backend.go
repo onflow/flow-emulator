@@ -5,16 +5,15 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/dapperlabs/flow-go/engine/access/rpc/handler"
+	"github.com/dapperlabs/flow-go/access"
 	"github.com/dapperlabs/flow-go/fvm"
 	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/logrusorgru/aurora"
+	jsoncdc "github.com/onflow/cadence/encoding/json"
+	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	jsoncdc "github.com/onflow/cadence/encoding/json"
-	sdk "github.com/onflow/flow-go-sdk"
 
 	emulator "github.com/dapperlabs/flow-emulator"
 	convert "github.com/dapperlabs/flow-emulator/convert/sdk"
@@ -42,8 +41,8 @@ func (b *Backend) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (b *Backend) GetNetworkParameters(ctx context.Context) handler.NetworkParameters {
-	return handler.NetworkParameters{
+func (b *Backend) GetNetworkParameters(ctx context.Context) access.NetworkParameters {
+	return access.NetworkParameters{
 		ChainID: flowgo.Emulator,
 	}
 }
