@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/dapperlabs/flow-go v0.4.1-0.20200811032128-2be0a8775d65
-	github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200807192114-48e83a4952bc
+	github.com/dapperlabs/flow-go/crypto v0.3.2-0.20200811032128-2be0a8775d65
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dgraph-io/badger/v2 v2.0.3
 	github.com/fxamacker/cbor/v2 v2.2.0
