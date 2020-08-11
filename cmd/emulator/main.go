@@ -7,15 +7,9 @@ import (
 	"github.com/dapperlabs/flow-emulator/cmd/emulator/start"
 )
 
-const DefaultServicePrivateKeySeed = emulator.DefaultServicePrivateKeySeed
-
 func defaultServiceKey(bool) (crypto.PrivateKey, crypto.SignatureAlgorithm, crypto.HashAlgorithm) {
-	servicePrivateKey, _ := crypto.GeneratePrivateKey(crypto.ECDSA_P256, []byte(DefaultServicePrivateKeySeed))
-
-	serviceKeySigAlgo := servicePrivateKey.Algorithm()
-	serviceKeyHashAlgo := crypto.SHA3_256
-
-	return servicePrivateKey, serviceKeySigAlgo, serviceKeyHashAlgo
+	serviceKey := emulator.DefaultServiceKey()
+	return *serviceKey.PrivateKey, serviceKey.SigAlgo, serviceKey.HashAlgo
 }
 
 func main() {
