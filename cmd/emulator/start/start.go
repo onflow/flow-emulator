@@ -32,6 +32,7 @@ type Config struct {
 	DBPath             string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
 	SimpleAddresses    bool          `default:"false" flag:"simple-addresses" info:"use sequential addresses starting with 0x01"`
 	TokenSupply        string        `default:"100000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
+	ScriptGasLimit     int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
 }
 
 const EnvPrefix = "FLOW"
@@ -107,6 +108,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				Persist:            conf.Persist,
 				DBPath:             conf.DBPath,
 				GenesisTokenSupply: parseTokenSupply(conf.TokenSupply),
+				ScriptGasLimit:     uint64(conf.ScriptGasLimit),
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
