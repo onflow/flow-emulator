@@ -89,6 +89,26 @@ func (r ServiceKey) AccountKey() *sdk.AccountKey {
 	}
 }
 
+const defaultServiceKeyPrivateKeySeed = "elephant ears space cowboy octopus rodeo potato cannon pineapple"
+const defaultServiceKeySigAlgo = sdkcrypto.ECDSA_P256
+const defaultServiceKeyHashAlgo = sdkcrypto.SHA3_256
+
+func DefaultServiceKey() ServiceKey {
+	privateKey, err := sdkcrypto.GeneratePrivateKey(
+		defaultServiceKeySigAlgo,
+		[]byte(defaultServiceKeyPrivateKeySeed),
+	)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to generate default service key: %s", err.Error()))
+	}
+
+	return ServiceKey{
+		PrivateKey: &privateKey,
+		SigAlgo:    defaultServiceKeySigAlgo,
+		HashAlgo:   defaultServiceKeyHashAlgo,
+	}
+}
+
 // MaxGasLimit is the maximum gas limit supported by the emulated blockchain.
 //
 // TODO: replace with safe limit
@@ -96,14 +116,28 @@ const MaxGasLimit = 999999999
 
 // config is a set of configuration options for an emulated blockchain.
 type config struct {
-	ServiceKey      ServiceKey
-	Store           storage.Store
-	SimpleAddresses bool
+	ServiceKey         ServiceKey
+	Store              storage.Store
+	SimpleAddresses    bool
+	GenesisTokenSupply cadence.UFix64
 }
 
+const defaultGenesisTokenSupply = "100000000000.0"
+
 // defaultConfig is the default configuration for an emulated blockchain.
-// NOTE: Instantiated in init function
-var defaultConfig config
+var defaultConfig = func() config {
+	genesisTokenSupply, err := cadence.NewUFix64(defaultGenesisTokenSupply)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to parse default genesis token supply: %s", err.Error()))
+	}
+
+	return config{
+		ServiceKey:         DefaultServiceKey(),
+		Store:              nil,
+		SimpleAddresses:    false,
+		GenesisTokenSupply: genesisTokenSupply,
+	}
+}()
 
 // Option is a function applying a change to the emulator config.
 type Option func(*config)
@@ -134,6 +168,13 @@ func WithStore(store storage.Store) Option {
 func WithSimpleAddresses() Option {
 	return func(c *config) {
 		c.SimpleAddresses = true
+	}
+}
+
+// WithGenesisTokenSupply sets the genesis token supply.
+func WithGenesisTokenSupply(supply cadence.UFix64) Option {
+	return func(c *config) {
+		c.GenesisTokenSupply = supply
 	}
 }
 
@@ -205,6 +246,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 			b.vmCtx,
 			genesisLedgerView,
 			serviceKey.AccountKey(),
+			config.GenesisTokenSupply,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to bootstrap execution state: %w", err)
@@ -826,13 +868,12 @@ func convertToSealedResults(
 	return output, nil
 }
 
-const genesisTokenSupply = 1_000_000_000_000_000
-
 func bootstrapLedger(
 	vm *fvm.VirtualMachine,
 	ctx fvm.Context,
 	ledger state.Ledger,
 	accountKey *sdk.AccountKey,
+	genesisTokenSupply cadence.UFix64,
 ) error {
 	publicKey, _ := crypto.DecodePublicKey(
 		crypto.SigningAlgorithm(accountKey.SigAlgo),
@@ -852,22 +893,6 @@ func bootstrapLedger(
 	}
 
 	return nil
-}
-
-const DefaultServicePrivateKeySeed = "elephant ears space cowboy octopus rodeo potato cannon pineapple"
-
-func init() {
-	// Initialize default emulator options
-	privateKey, err := sdkcrypto.GeneratePrivateKey(sdkcrypto.ECDSA_P256, []byte(DefaultServicePrivateKeySeed))
-	if err != nil {
-		panic("Failed to generate default service key: " + err.Error())
-	}
-
-	defaultConfig.ServiceKey = ServiceKey{
-		PrivateKey: &privateKey,
-		SigAlgo:    privateKey.Algorithm(),
-		HashAlgo:   sdkcrypto.SHA3_256,
-	}
 }
 
 type blocks struct {
