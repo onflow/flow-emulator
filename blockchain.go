@@ -120,9 +120,11 @@ type config struct {
 	Store              storage.Store
 	SimpleAddresses    bool
 	GenesisTokenSupply cadence.UFix64
+	ScriptGasLimit     uint64
 }
 
 const defaultGenesisTokenSupply = "100000000000.0"
+const defaultScriptGasLimit = 100000
 
 // defaultConfig is the default configuration for an emulated blockchain.
 var defaultConfig = func() config {
@@ -136,6 +138,7 @@ var defaultConfig = func() config {
 		Store:              nil,
 		SimpleAddresses:    false,
 		GenesisTokenSupply: genesisTokenSupply,
+		ScriptGasLimit:     defaultScriptGasLimit,
 	}
 }()
 
@@ -175,6 +178,15 @@ func WithSimpleAddresses() Option {
 func WithGenesisTokenSupply(supply cadence.UFix64) Option {
 	return func(c *config) {
 		c.GenesisTokenSupply = supply
+	}
+}
+
+// WithScriptGasLimit sets the gas limit for scripts.
+//
+// This limit does not affect transactions, which declare their own limit.
+func WithScriptGasLimit(limit uint64) Option {
+	return func(c *config) {
+		c.ScriptGasLimit = limit
 	}
 }
 
@@ -226,6 +238,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		fvm.WithBlocks(newBlocks(b)),
 		fvm.WithRestrictedDeployment(false),
 		fvm.WithRestrictedAccountCreation(false),
+		fvm.WithGasLimit(config.ScriptGasLimit),
 	)
 
 	var pendingBlock *pendingBlock
