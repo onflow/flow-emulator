@@ -386,6 +386,8 @@ github.com/libp2p/go-libp2p-pubsub v0.3.3/go.mod h1:DTMSVmZZfXodB/pvdTGrY2eHPZ9W
 github.com/libp2p/go-libp2p-secio v0.2.2/go.mod h1:wP3bS+m5AUnFA+OFO7Er03uO1mncHG0uVwGrwvjYlNY=
 github.com/libp2p/go-libp2p-secio v0.2.2/go.mod h1:wP3bS+m5AUnFA+OFO7Er03uO1mncHG0uVwGrwvjYlNY=
 github.com/libp2p/go-libp2p-secio v0.2.2/go.mod h1:wP3bS+m5AUnFA+OFO7Er03uO1mncHG0uVwGrwvjYlNY=
+github.com/libp2p/go-libp2p-secio v0.2.2/go.mod h1:wP3bS+m5AUnFA+OFO7Er03uO1mncHG0uVwGrwvjYlNY=
+github.com/libp2p/go-libp2p-swarm v0.2.8/go.mod h1:JQKMGSth4SMqonruY0a8yjlPVIkb0mdNSwckW7OYziM=
 github.com/libp2p/go-libp2p-swarm v0.2.8/go.mod h1:JQKMGSth4SMqonruY0a8yjlPVIkb0mdNSwckW7OYziM=
 github.com/libp2p/go-libp2p-swarm v0.2.8/go.mod h1:JQKMGSth4SMqonruY0a8yjlPVIkb0mdNSwckW7OYziM=
 github.com/libp2p/go-libp2p-testing v0.0.3/go.mod h1:gvchhf3FQOtBdr+eFUABet5a4MBLK8jM3V4Zghvmi+E=
