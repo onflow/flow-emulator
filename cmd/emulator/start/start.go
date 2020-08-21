@@ -61,11 +61,15 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 			serviceKeyHashAlgo = crypto.StringToHashAlgorithm(conf.ServiceKeyHashAlgo)
 
 			if len(conf.ServicePublicKey) > 0 {
+				checkKeyAlgorithms(serviceKeySigAlgo, serviceKeyHashAlgo)
+
 				servicePublicKey, err = crypto.DecodePublicKeyHex(serviceKeySigAlgo, conf.ServicePublicKey)
 				if err != nil {
 					Exit(1, err.Error())
 				}
 			} else if len(conf.ServicePrivateKey) > 0 {
+				checkKeyAlgorithms(serviceKeySigAlgo, serviceKeyHashAlgo)
+
 				servicePrivateKey, err = crypto.DecodePrivateKeyHex(serviceKeySigAlgo, conf.ServicePrivateKey)
 				if err != nil {
 					Exit(1, err.Error())
@@ -159,4 +163,14 @@ func parseTokenSupply(supply string) cadence.UFix64 {
 	}
 
 	return tokenSupply
+}
+
+func checkKeyAlgorithms(sigAlgo crypto.SignatureAlgorithm, hashAlgo crypto.HashAlgorithm) {
+	if sigAlgo == crypto.UnknownSignatureAlgorithm {
+		Exit(1, "must specify signature algorithm")
+	}
+
+	if hashAlgo == crypto.UnknownHashAlgorithm {
+		Exit(1, "must specify hash algorithm")
+	}
 }
