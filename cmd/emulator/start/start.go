@@ -42,7 +42,11 @@ var (
 	conf   Config
 )
 
-type serviceKeyFunc func(init bool) (crypto.PrivateKey, crypto.SignatureAlgorithm, crypto.HashAlgorithm)
+type serviceKeyFunc func(
+	init bool,
+	sigAlgo crypto.SignatureAlgorithm,
+	hashAlgo crypto.HashAlgorithm,
+) (crypto.PrivateKey, crypto.SignatureAlgorithm, crypto.HashAlgorithm)
 
 func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 	cmd := &cobra.Command{
@@ -77,7 +81,11 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 
 				servicePublicKey = servicePrivateKey.PublicKey()
 			} else {
-				servicePrivateKey, serviceKeySigAlgo, serviceKeyHashAlgo = getServiceKey(conf.Init)
+				servicePrivateKey, serviceKeySigAlgo, serviceKeyHashAlgo = getServiceKey(
+					conf.Init,
+					serviceKeySigAlgo,
+					serviceKeyHashAlgo,
+				)
 				servicePublicKey = servicePrivateKey.PublicKey()
 			}
 

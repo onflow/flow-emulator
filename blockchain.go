@@ -90,12 +90,19 @@ func (r ServiceKey) AccountKey() *sdk.AccountKey {
 }
 
 const defaultServiceKeyPrivateKeySeed = "elephant ears space cowboy octopus rodeo potato cannon pineapple"
-const defaultServiceKeySigAlgo = sdkcrypto.ECDSA_P256
-const defaultServiceKeyHashAlgo = sdkcrypto.SHA3_256
+const DefaultServiceKeySigAlgo = sdkcrypto.ECDSA_P256
+const DefaultServiceKeyHashAlgo = sdkcrypto.SHA3_256
 
 func DefaultServiceKey() ServiceKey {
+	return GenerateDefaultServiceKey(DefaultServiceKeySigAlgo, DefaultServiceKeyHashAlgo)
+}
+
+func GenerateDefaultServiceKey(
+	sigAlgo sdkcrypto.SignatureAlgorithm,
+	hashAlgo sdkcrypto.HashAlgorithm,
+) ServiceKey {
 	privateKey, err := sdkcrypto.GeneratePrivateKey(
-		defaultServiceKeySigAlgo,
+		sigAlgo,
 		[]byte(defaultServiceKeyPrivateKeySeed),
 	)
 	if err != nil {
@@ -104,8 +111,8 @@ func DefaultServiceKey() ServiceKey {
 
 	return ServiceKey{
 		PrivateKey: &privateKey,
-		SigAlgo:    defaultServiceKeySigAlgo,
-		HashAlgo:   defaultServiceKeyHashAlgo,
+		SigAlgo:    sigAlgo,
+		HashAlgo:   hashAlgo,
 	}
 }
 
