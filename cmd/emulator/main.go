@@ -7,8 +7,20 @@ import (
 	"github.com/dapperlabs/flow-emulator/cmd/emulator/start"
 )
 
-func defaultServiceKey(bool) (crypto.PrivateKey, crypto.SignatureAlgorithm, crypto.HashAlgorithm) {
-	serviceKey := emulator.DefaultServiceKey()
+func defaultServiceKey(
+	init bool,
+	sigAlgo crypto.SignatureAlgorithm,
+	hashAlgo crypto.HashAlgorithm,
+) (crypto.PrivateKey, crypto.SignatureAlgorithm, crypto.HashAlgorithm) {
+	if sigAlgo == crypto.UnknownSignatureAlgorithm {
+		sigAlgo = emulator.DefaultServiceKeySigAlgo
+	}
+
+	if hashAlgo == crypto.UnknownHashAlgorithm {
+		hashAlgo = emulator.DefaultServiceKeyHashAlgo
+	}
+
+	serviceKey := emulator.GenerateDefaultServiceKey(sigAlgo, hashAlgo)
 	return *serviceKey.PrivateKey, serviceKey.SigAlgo, serviceKey.HashAlgo
 }
 
