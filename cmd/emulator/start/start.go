@@ -24,8 +24,8 @@ type Config struct {
 	BlockTime          time.Duration `flag:"block-time,b" info:"time between sealed blocks"`
 	ServicePrivateKey  string        `flag:"service-priv-key" info:"service account private key"`
 	ServicePublicKey   string        `flag:"service-pub-key" info:"service account public key"`
-	ServiceKeySigAlgo  string        `default:"ECDSA_P256" flag:"service-sig-algo" info:"service account key signature algorithm"`
-	ServiceKeyHashAlgo string        `default:"SHA3_256" flag:"service-hash-algo" info:"service account key hash algorithm"`
+	ServiceKeySigAlgo  string        `flag:"service-sig-algo" info:"service account key signature algorithm"`
+	ServiceKeyHashAlgo string        `flag:"service-hash-algo" info:"service account key hash algorithm"`
 	Init               bool          `default:"false" flag:"init" info:"whether to initialize a new account profile"`
 	GRPCDebug          bool          `default:"false" flag:"grpc-debug" info:"enable gRPC server reflection for debugging with grpc_cli"`
 	Persist            bool          `default:"false" flag:"persist" info:"enable persistent storage"`
@@ -175,10 +175,10 @@ func parseTokenSupply(supply string) cadence.UFix64 {
 
 func checkKeyAlgorithms(sigAlgo crypto.SignatureAlgorithm, hashAlgo crypto.HashAlgorithm) {
 	if sigAlgo == crypto.UnknownSignatureAlgorithm {
-		Exit(1, "must specify signature algorithm")
+		Exit(1, "Must specify service key signature algorithm (e.g. --service-sig-algo=ECDSA_P256)")
 	}
 
 	if hashAlgo == crypto.UnknownHashAlgorithm {
-		Exit(1, "must specify hash algorithm")
+		Exit(1, "Must specify service key hash algorithm (e.g. --service-hash-algo=SHA3_256)")
 	}
 }
