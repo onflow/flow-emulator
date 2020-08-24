@@ -210,8 +210,9 @@ func (s *Store) insertTransactionResult(txID flowgo.Identifier, result types.Sto
 func (s *Store) LedgerViewByHeight(blockHeight uint64) *delta.View {
 	return delta.NewView(func(key flowgo.RegisterID) (value flowgo.RegisterValue, err error) {
 
-		s.mu.RLock()
-		defer s.mu.RUnlock()
+		// Ledger.Get writes (!), so acquire a write lock!
+		s.mu.Lock()
+		defer s.mu.Unlock()
 
 		ledger, ok := s.ledger[blockHeight]
 		if !ok {
@@ -220,6 +221,10 @@ func (s *Store) LedgerViewByHeight(blockHeight uint64) *delta.View {
 
 		return ledger.Get(key)
 	})
+}
+
+func (s *Store) UnsafeInsertLedgerDelta(blockHeight uint64, delta delta.Delta) error {
+	return s.insertLedgerDelta(blockHeight, delta)
 }
 
 func (s *Store) insertLedgerDelta(blockHeight uint64, delta delta.Delta) error {
