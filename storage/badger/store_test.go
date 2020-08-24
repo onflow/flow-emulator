@@ -22,8 +22,8 @@ import (
 func TestBlocks(t *testing.T) {
 	store, dir := setupStore(t)
 	defer func() {
-		require.Nil(t, store.Close())
-		require.Nil(t, os.RemoveAll(dir))
+		require.NoError(t, store.Close())
+		require.NoError(t, os.RemoveAll(dir))
 	}()
 
 	block1 := &flowgo.Block{
@@ -104,8 +104,8 @@ func TestBlocks(t *testing.T) {
 func TestCollections(t *testing.T) {
 	store, dir := setupStore(t)
 	defer func() {
-		require.Nil(t, store.Close())
-		require.Nil(t, os.RemoveAll(dir))
+		require.NoError(t, store.Close())
+		require.NoError(t, os.RemoveAll(dir))
 	}()
 
 	ids := test.IdentifierGenerator()
@@ -132,7 +132,7 @@ func TestCollections(t *testing.T) {
 
 		t.Run("should be able to get inserted collection", func(t *testing.T) {
 			storedCol, err := store.CollectionByID(col.ID())
-			require.Nil(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, col, storedCol)
 		})
 	})
@@ -141,8 +141,8 @@ func TestCollections(t *testing.T) {
 func TestTransactions(t *testing.T) {
 	store, dir := setupStore(t)
 	defer func() {
-		require.Nil(t, store.Close())
-		require.Nil(t, os.RemoveAll(dir))
+		require.NoError(t, store.Close())
+		require.NoError(t, os.RemoveAll(dir))
 	}()
 
 	tx := unittest.TransactionFixture()
@@ -160,7 +160,7 @@ func TestTransactions(t *testing.T) {
 
 		t.Run("should be able to get inserted tx", func(t *testing.T) {
 			storedTx, err := store.TransactionByID(tx.ID())
-			require.Nil(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tx.ID(), storedTx.ID())
 		})
 	})
@@ -169,8 +169,8 @@ func TestTransactions(t *testing.T) {
 func TestTransactionResults(t *testing.T) {
 	store, dir := setupStore(t)
 	defer func() {
-		require.Nil(t, store.Close())
-		require.Nil(t, os.RemoveAll(dir))
+		require.NoError(t, store.Close())
+		require.NoError(t, os.RemoveAll(dir))
 	}()
 
 	ids := test.IdentifierGenerator()
@@ -204,8 +204,8 @@ func TestLedger(t *testing.T) {
 	t.Run("get/set", func(t *testing.T) {
 		store, dir := setupStore(t)
 		defer func() {
-			require.Nil(t, store.Close())
-			require.Nil(t, os.RemoveAll(dir))
+			require.NoError(t, store.Close())
+			require.NoError(t, os.RemoveAll(dir))
 		}()
 
 		var blockHeight uint64 = 1
@@ -229,8 +229,8 @@ func TestLedger(t *testing.T) {
 	t.Run("versioning", func(t *testing.T) {
 		store, dir := setupStore(t)
 		defer func() {
-			require.Nil(t, store.Close())
-			require.Nil(t, os.RemoveAll(dir))
+			require.NoError(t, store.Close())
+			require.NoError(t, os.RemoveAll(dir))
 		}()
 
 		// Create a list of ledgers, where the ledger at index i has
@@ -292,8 +292,8 @@ func TestLedger(t *testing.T) {
 func TestInsertEvents(t *testing.T) {
 	store, dir := setupStore(t)
 	defer func() {
-		require.Nil(t, store.Close())
-		require.Nil(t, os.RemoveAll(dir))
+		require.NoError(t, store.Close())
+		require.NoError(t, os.RemoveAll(dir))
 	}()
 
 	events := test.EventGenerator()
@@ -317,8 +317,8 @@ func TestInsertEvents(t *testing.T) {
 func TestEventsByHeight(t *testing.T) {
 	store, dir := setupStore(t)
 	defer func() {
-		require.Nil(t, store.Close())
-		require.Nil(t, os.RemoveAll(dir))
+		require.NoError(t, store.Close())
+		require.NoError(t, os.RemoveAll(dir))
 	}()
 
 	events := test.EventGenerator()
@@ -397,8 +397,8 @@ func TestEventsByHeight(t *testing.T) {
 func TestPersistence(t *testing.T) {
 	store, dir := setupStore(t)
 	defer func() {
-		require.Nil(t, store.Close())
-		require.Nil(t, os.RemoveAll(dir))
+		require.NoError(t, store.Close())
+		require.NoError(t, os.RemoveAll(dir))
 	}()
 
 	block := &flowgo.Block{Header: &flowgo.Header{Height: 1}}
@@ -426,7 +426,7 @@ func TestPersistence(t *testing.T) {
 
 	// create a new store with the same database directory
 	store, err = badger.New(badger.WithPath(dir))
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	// should be able to retrieve what we stored
 	gotBlock, err := store.LatestBlock()
@@ -571,10 +571,10 @@ func BenchmarkLedgerDiskUsage(b *testing.B) {
 // and deleting the temporary directory.
 func setupStore(t *testing.T) (*badger.Store, string) {
 	dir, err := ioutil.TempDir("", "badger-test")
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	store, err := badger.New(badger.WithPath(dir))
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	return store, dir
 }
