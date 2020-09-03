@@ -35,7 +35,7 @@ func TestCommitBlock(t *testing.T) {
 	assert.Equal(t, flow.TransactionStatusPending, tx1Result.Status)
 
 	tx2 := flow.NewTransaction().
-		SetScript([]byte("invalid script")).
+		SetScript([]byte(`transaction { execute { panic("revert!") } }`)).
 		SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
@@ -46,7 +46,7 @@ func TestCommitBlock(t *testing.T) {
 
 	// Add tx2 to pending block
 	err = b.AddTransaction(*tx2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	tx2Result, err := b.GetTransactionResult(tx2.ID())
 	assert.NoError(t, err)

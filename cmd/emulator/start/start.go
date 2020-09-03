@@ -33,6 +33,7 @@ type Config struct {
 	SimpleAddresses    bool          `default:"false" flag:"simple-addresses" info:"use sequential addresses starting with 0x01"`
 	TokenSupply        string        `default:"100000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
 	ScriptGasLimit     int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
+	TransactionExpiry  int           `default:"10" flag:"transaction-expiry" info:"transaction expiry, measured in blocks"`
 }
 
 const EnvPrefix = "FLOW"
@@ -121,6 +122,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				DBPath:             conf.DBPath,
 				GenesisTokenSupply: parseTokenSupply(conf.TokenSupply),
 				ScriptGasLimit:     uint64(conf.ScriptGasLimit),
+				TransactionExpiry:  uint(conf.TransactionExpiry),
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)

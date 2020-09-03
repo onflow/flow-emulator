@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dapperlabs/flow-go/access"
 	"github.com/dapperlabs/flow-go/crypto"
 	"github.com/dapperlabs/flow-go/crypto/hash"
 	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
@@ -49,6 +50,8 @@ type Blockchain struct {
 	// used to execute transactions and scripts
 	vm    *fvm.VirtualMachine
 	vmCtx fvm.Context
+
+	transactionValidator *access.TransactionValidator
 
 	serviceKey ServiceKey
 }
@@ -128,6 +131,35 @@ type config struct {
 	SimpleAddresses    bool
 	GenesisTokenSupply cadence.UFix64
 	ScriptGasLimit     uint64
+	TransactionExpiry  uint
+}
+
+func (conf config) GetStore() storage.Store {
+	// if no store is specified, use a memstore
+	// NOTE: we don't initialize this in defaultConfig because otherwise the same
+	// memstore is shared between Blockchain instances
+	if conf.Store == nil {
+		return memstore.New()
+	}
+
+	return conf.Store
+}
+
+func (conf config) GetChainID() flowgo.ChainID {
+	if conf.SimpleAddresses {
+		return flowgo.MonotonicEmulator
+	}
+
+	return flowgo.Emulator
+}
+
+func (conf config) GetServiceKey() ServiceKey {
+	// set up service key
+	serviceKey := conf.ServiceKey
+	serviceKey.Address = sdk.Address(conf.GetChainID().Chain().ServiceAddress())
+	serviceKey.Weight = sdk.AccountKeyWeightThreshold
+
+	return serviceKey
 }
 
 const defaultGenesisTokenSupply = "100000000000.0"
@@ -146,6 +178,7 @@ var defaultConfig = func() config {
 		SimpleAddresses:    false,
 		GenesisTokenSupply: genesisTokenSupply,
 		ScriptGasLimit:     defaultScriptGasLimit,
+		TransactionExpiry:  0, // TODO: replace with sensible default
 	}
 }()
 
@@ -197,109 +230,179 @@ func WithScriptGasLimit(limit uint64) Option {
 	}
 }
 
+// WithTransactionExpiry sets the transaction expiry measured in blocks.
+//
+// If set to zero, transaction expiry is disabled and the reference block ID field
+// is not required.
+func WithTransactionExpiry(expiry uint) Option {
+	return func(c *config) {
+		c.TransactionExpiry = expiry
+	}
+}
+
 // NewBlockchain instantiates a new emulated blockchain with the provided options.
 func NewBlockchain(opts ...Option) (*Blockchain, error) {
 
 	// apply options to the default config
-	config := defaultConfig
+	conf := defaultConfig
 	for _, opt := range opts {
-		opt(&config)
+		opt(&conf)
 	}
-
-	// if no store is specified, use a memstore
-	// NOTE: we don't initialize this in defaultConfig because otherwise the same
-	// memstore is shared between Blockchain instances
-	if config.Store == nil {
-		config.Store = memstore.New()
-	}
-	store := config.Store
-
-	chainID := flowgo.Emulator
-
-	if config.SimpleAddresses {
-		chainID = flowgo.MonotonicEmulator
-	}
-
-	// set up service key
-	serviceKey := config.ServiceKey
-	serviceKey.Address = sdk.Address(chainID.Chain().ServiceAddress())
-	serviceKey.Weight = sdk.AccountKeyWeightThreshold
 
 	b := &Blockchain{
-		storage:    config.Store,
-		serviceKey: serviceKey,
+		storage:    conf.GetStore(),
+		serviceKey: conf.GetServiceKey(),
 	}
 
-	rt := runtime.NewInterpreterRuntime()
+	var err error
 
-	b.vm = fvm.New(rt)
+	blocks := newBlocks(b)
 
-	astCache, err := fvm.NewLRUASTCache(256)
+	b.vm, b.vmCtx, err = configureFVM(conf, blocks)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize AST cache: %w", err)
-	}
-
-	b.vmCtx = fvm.NewContext(
-		fvm.WithChain(chainID.Chain()),
-		fvm.WithASTCache(astCache),
-		fvm.WithBlocks(newBlocks(b)),
-		fvm.WithRestrictedDeployment(false),
-		fvm.WithRestrictedAccountCreation(false),
-		fvm.WithGasLimit(config.ScriptGasLimit),
-	)
-
-	var pendingBlock *pendingBlock
-
-	latestBlock, err := store.LatestBlock()
-	if err == nil {
-		// storage contains data, load state from storage
-		latestLedgerView := store.LedgerViewByHeight(latestBlock.Header.Height)
-
-		// restore pending block header from store information
-		pendingBlock = newPendingBlock(&latestBlock, latestLedgerView)
-	} else if errors.Is(err, storage.ErrNotFound) {
-		genesisLedgerView := store.LedgerViewByHeight(0)
-
-		// storage is empty, bootstrap new execution state
-		err := bootstrapLedger(
-			b.vm,
-			b.vmCtx,
-			genesisLedgerView,
-			serviceKey.AccountKey(),
-			config.GenesisTokenSupply,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to bootstrap execution state: %w", err)
-		}
-
-		// commit the genesis block to storage
-		genesis := flowgo.Genesis(nil, chainID)
-
-		err = store.CommitBlock(
-			*genesis,
-			nil,
-			nil,
-			nil,
-			genesisLedgerView.Delta(),
-			nil,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		// get empty ledger view
-		ledgerView := store.LedgerViewByHeight(0)
-
-		// create pending block from genesis
-		pendingBlock = newPendingBlock(genesis, ledgerView)
-	} else {
-		// internal storage error, fail fast
 		return nil, err
 	}
 
-	b.pendingBlock = pendingBlock
+	latestBlock, latestLedgerView, err := configureLedger(conf, b.storage, b.vm, b.vmCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	b.pendingBlock = newPendingBlock(latestBlock, latestLedgerView)
+	b.transactionValidator = configureTransactionValidator(conf, blocks)
 
 	return b, nil
+}
+
+func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {
+	vm := fvm.New(runtime.NewInterpreterRuntime())
+
+	astCache, err := fvm.NewLRUASTCache(256)
+	if err != nil {
+		return nil, fvm.Context{}, fmt.Errorf("failed to initialize AST cache: %w", err)
+	}
+
+	ctx := fvm.NewContext(
+		fvm.WithChain(conf.GetChainID().Chain()),
+		fvm.WithASTCache(astCache),
+		fvm.WithBlocks(blocks),
+		fvm.WithRestrictedDeployment(false),
+		fvm.WithRestrictedAccountCreation(false),
+		fvm.WithGasLimit(conf.ScriptGasLimit),
+	)
+
+	return vm, ctx, nil
+}
+
+func configureLedger(
+	conf config,
+	store storage.Store,
+	vm *fvm.VirtualMachine,
+	ctx fvm.Context,
+) (*flowgo.Block, *delta.View, error) {
+	latestBlock, err := store.LatestBlock()
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			// storage is empty, bootstrap new ledger state
+			return configureNewLedger(conf, store, vm, ctx)
+		}
+
+		// internal storage error, fail fast
+		return nil, nil, err
+	}
+
+	// storage contains data, load state from storage
+	return configureExistingLedger(&latestBlock, store)
+}
+
+func configureNewLedger(
+	conf config,
+	store storage.Store,
+	vm *fvm.VirtualMachine,
+	ctx fvm.Context,
+) (*flowgo.Block, *delta.View, error) {
+	genesisLedgerView := store.LedgerViewByHeight(0)
+
+	err := bootstrapLedger(
+		vm,
+		ctx,
+		genesisLedgerView,
+		conf.GetServiceKey().AccountKey(),
+		conf.GenesisTokenSupply,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to bootstrap execution state: %w", err)
+	}
+
+	// commit the genesis block to storage
+	genesis := flowgo.Genesis(nil, conf.GetChainID())
+
+	err = store.CommitBlock(
+		*genesis,
+		nil,
+		nil,
+		nil,
+		genesisLedgerView.Delta(),
+		nil,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// get empty ledger view
+	ledgerView := store.LedgerViewByHeight(0)
+
+	return genesis, ledgerView, nil
+}
+
+func configureExistingLedger(
+	latestBlock *flowgo.Block,
+	store storage.Store,
+) (*flowgo.Block, *delta.View, error) {
+	latestLedgerView := store.LedgerViewByHeight(latestBlock.Header.Height)
+
+	return latestBlock, latestLedgerView, nil
+}
+
+func bootstrapLedger(
+	vm *fvm.VirtualMachine,
+	ctx fvm.Context,
+	ledger state.Ledger,
+	accountKey *sdk.AccountKey,
+	genesisTokenSupply cadence.UFix64,
+) error {
+	publicKey, _ := crypto.DecodePublicKey(
+		crypto.SigningAlgorithm(accountKey.SigAlgo),
+		accountKey.PublicKey.Encode(),
+	)
+
+	flowAccountKey := flowgo.AccountPublicKey{
+		PublicKey: publicKey,
+		SignAlgo:  crypto.SigningAlgorithm(accountKey.SigAlgo),
+		HashAlgo:  hash.HashingAlgorithm(accountKey.HashAlgo),
+		Weight:    fvm.AccountKeyWeightThreshold,
+	}
+
+	err := vm.Run(ctx, fvm.Bootstrap(flowAccountKey, genesisTokenSupply), ledger)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func configureTransactionValidator(conf config, blocks *blocks) *access.TransactionValidator {
+	return access.NewTransactionValidator(
+		blocks,
+		access.TransactionValidationOptions{
+			Expiry:                       conf.TransactionExpiry,
+			ExpiryBuffer:                 0,
+			AllowEmptyReferenceBlockID:   conf.TransactionExpiry == 0,
+			AllowUnknownReferenceBlockID: false,
+			MaxGasLimit:                  MaxGasLimit,
+			CheckScriptsParse:            true,
+		},
+	)
 }
 
 // ServiceKey returns the service private key for this blockchain.
@@ -328,23 +431,14 @@ func (b *Blockchain) PendingBlockTimestamp() time.Time {
 	return b.pendingBlock.Block().Header.Timestamp
 }
 
-func (b *Blockchain) getLatestBlock() (*flowgo.Block, error) {
+// GetLatestBlock gets the latest sealed block.
+func (b *Blockchain) GetLatestBlock() (*flowgo.Block, error) {
 	block, err := b.storage.LatestBlock()
 	if err != nil {
 		return nil, &StorageError{err}
 	}
 
 	return &block, nil
-}
-
-// GetLatestBlock gets the latest sealed block.
-func (b *Blockchain) GetLatestBlock() (*flowgo.Block, error) {
-	block, err := b.getLatestBlock()
-	if err != nil {
-		return nil, err
-	}
-
-	return block, nil
 }
 
 // GetBlockByID gets a block by ID.
@@ -354,6 +448,7 @@ func (b *Blockchain) GetBlockByID(id sdk.Identifier) (*flowgo.Block, error) {
 		if errors.Is(err, storage.ErrNotFound) {
 			return nil, &BlockNotFoundByIDError{ID: id}
 		}
+
 		return nil, &StorageError{err}
 	}
 
@@ -541,7 +636,7 @@ func (b *Blockchain) addTransaction(sdkTx sdk.Transaction) error {
 
 	tx := sdkconvert.SDKTransactionToFlow(sdkTx)
 
-	// If Index > 0, pending block has begun execution (cannot add anymore txs)
+	// If index > 0, pending block has begun execution (cannot add more transactions)
 	if b.pendingBlock.ExecutionStarted() {
 		return &PendingBlockMidExecutionError{BlockID: b.pendingBlock.ID()}
 	}
@@ -552,15 +647,16 @@ func (b *Blockchain) addTransaction(sdkTx sdk.Transaction) error {
 
 	_, err := b.storage.TransactionByID(tx.ID())
 	if err == nil {
-		// Found the transaction, this is a dupe
+		// Found the transaction, this is a duplicate
 		return &DuplicateTransactionError{TxID: tx.ID()}
 	} else if !errors.Is(err, storage.ErrNotFound) {
 		// Error in the storage provider
 		return fmt.Errorf("failed to check storage for transaction %w", err)
 	}
 
-	if tx.ProposalKey == (flowgo.ProposalKey{}) {
-		return &InvalidTransactionError{TxID: tx.ID(), MissingFields: []string{"proposal_key"}}
+	err = b.transactionValidator.Validate(tx)
+	if err != nil {
+		return convertAccessError(err)
 	}
 
 	// add transaction to pending block
@@ -740,15 +836,15 @@ func (b *Blockchain) ResetPendingBlock() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	latestBlock, err := b.getLatestBlock()
+	latestBlock, err := b.storage.LatestBlock()
 	if err != nil {
-		return err
+		return &StorageError{err}
 	}
 
 	latestLedgerView := b.storage.LedgerViewByHeight(latestBlock.Header.Height)
 
 	// reset pending block using latest committed block and ledger state
-	b.pendingBlock = newPendingBlock(latestBlock, latestLedgerView)
+	b.pendingBlock = newPendingBlock(&latestBlock, latestLedgerView)
 
 	return nil
 }
@@ -823,13 +919,19 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, code []byte) (s
 	serviceKey := b.ServiceKey()
 	serviceAddress := serviceKey.Address
 
+	latestBlock, err := b.GetLatestBlock()
+	if err != nil {
+		return sdk.Address{}, err
+	}
+
 	tx := templates.CreateAccount(publicKeys, code, serviceAddress)
 
 	tx.SetGasLimit(MaxGasLimit).
+		SetReferenceBlockID(sdk.Identifier(latestBlock.ID())).
 		SetProposalKey(serviceAddress, serviceKey.ID, serviceKey.SequenceNumber).
 		SetPayer(serviceAddress)
 
-	err := tx.SignEnvelope(serviceAddress, serviceKey.ID, serviceKey.Signer())
+	err = tx.SignEnvelope(serviceAddress, serviceKey.ID, serviceKey.Signer())
 	if err != nil {
 		return sdk.Address{}, err
 	}
@@ -887,48 +989,3 @@ func convertToSealedResults(
 
 	return output, nil
 }
-
-func bootstrapLedger(
-	vm *fvm.VirtualMachine,
-	ctx fvm.Context,
-	ledger state.Ledger,
-	accountKey *sdk.AccountKey,
-	genesisTokenSupply cadence.UFix64,
-) error {
-	publicKey, _ := crypto.DecodePublicKey(
-		crypto.SigningAlgorithm(accountKey.SigAlgo),
-		accountKey.PublicKey.Encode(),
-	)
-
-	flowAccountKey := flowgo.AccountPublicKey{
-		PublicKey: publicKey,
-		SignAlgo:  crypto.SigningAlgorithm(accountKey.SigAlgo),
-		HashAlgo:  hash.HashingAlgorithm(accountKey.HashAlgo),
-		Weight:    fvm.AccountKeyWeightThreshold,
-	}
-
-	err := vm.Run(ctx, fvm.Bootstrap(flowAccountKey, genesisTokenSupply), ledger)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-type blocks struct {
-	blockchain *Blockchain
-}
-
-func newBlocks(b *Blockchain) blocks {
-	return blocks{b}
-}
-
-func (b blocks) ByHeight(height uint64) (*flowgo.Block, error) {
-	if height == b.blockchain.pendingBlock.Height() {
-		return b.blockchain.pendingBlock.Block(), nil
-	}
-
-	return b.blockchain.storage.BlockByHeight(height)
-}
-
-var _ fvm.Blocks = &blocks{}

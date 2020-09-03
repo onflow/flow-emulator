@@ -42,7 +42,7 @@ func setupPendingBlockTests(t *testing.T) (
 	require.NoError(t, err)
 
 	invalid := flow.NewTransaction().
-		SetScript([]byte("invalid script")).
+		SetScript([]byte(`transaction { execute { panic("revert!") } }`)).
 		SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).

@@ -64,6 +64,7 @@ type Config struct {
 	ServiceKeySigAlgo  crypto.SignatureAlgorithm
 	ServiceKeyHashAlgo crypto.HashAlgorithm
 	GenesisTokenSupply cadence.UFix64
+	TransactionExpiry  uint
 	ScriptGasLimit     uint64
 	Persist            bool
 	// DBPath is the path to the Badger database on disk.
@@ -173,6 +174,7 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithStore(store),
 		emulator.WithGenesisTokenSupply(conf.GenesisTokenSupply),
 		emulator.WithScriptGasLimit(conf.ScriptGasLimit),
+		emulator.WithTransactionExpiry(conf.TransactionExpiry),
 	}
 
 	if conf.ServicePublicKey != (crypto.PublicKey{}) {
