@@ -53,7 +53,11 @@ func (s *Store) BlockByID(id flowgo.Identifier) (*flowgo.Block, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	blockHeight := s.blockIDToHeight[id]
+	blockHeight, ok := s.blockIDToHeight[id]
+	if !ok {
+		return nil, storage.ErrNotFound
+	}
+
 	block, ok := s.blocks[blockHeight]
 	if !ok {
 		return nil, storage.ErrNotFound
@@ -89,11 +93,13 @@ func (s *Store) StoreBlock(block *flowgo.Block) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.store(block)
+	return s.storeBlock(block)
 }
 
-func (s *Store) store(block *flowgo.Block) error {
+func (s *Store) storeBlock(block *flowgo.Block) error {
 	s.blocks[block.Header.Height] = *block
+	s.blockIDToHeight[block.ID()] = block.Header.Height
+
 	if block.Header.Height > s.blockHeight {
 		s.blockHeight = block.Header.Height
 	}
@@ -120,7 +126,7 @@ func (s *Store) CommitBlock(
 		)
 	}
 
-	err := s.store(&block)
+	err := s.storeBlock(&block)
 	if err != nil {
 		return err
 	}
