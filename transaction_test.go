@@ -58,27 +58,27 @@ func TestSubmitTransaction(t *testing.T) {
 // TODO: Add test case for missing ReferenceBlockID
 // TODO: Add test case for missing ProposalKey
 func TestSubmitTransaction_Invalid(t *testing.T) {
-	b, err := emulator.NewBlockchain()
-	require.NoError(t, err)
-
-	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
 	t.Run("Empty transaction", func(t *testing.T) {
+		b, err := emulator.NewBlockchain()
+		require.NoError(t, err)
+
 		t.Skip("TODO: transaction validation")
 
 		// Create empty transaction (no required fields)
 		tx := flow.NewTransaction()
 
-		err := tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		// Submit tx
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, err, &emulator.InvalidTransactionError{})
+		assert.IsType(t, err, &emulator.IncompleteTransactionError{})
 	})
 
 	t.Run("Missing script", func(t *testing.T) {
-		t.Skip("TODO: transaction validation")
+		b, err := emulator.NewBlockchain()
+		require.NoError(t, err)
 
 		// Create transaction with no Script field
 		tx := flow.NewTransaction().
@@ -86,16 +86,39 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err := tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		assert.NoError(t, err)
+
+		err = b.AddTransaction(*tx)
+		assert.IsType(t, err, &emulator.IncompleteTransactionError{})
+	})
+
+	t.Run("Missing script", func(t *testing.T) {
+		b, err := emulator.NewBlockchain()
+		require.NoError(t, err)
+
+		// Create transaction with invalid Script field
+		tx := flow.NewTransaction().
+			SetScript([]byte("this script cannot be parsed")).
+			SetGasLimit(emulator.MaxGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		// Submit tx
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, err, &emulator.InvalidTransactionError{})
+		assert.IsType(t, &emulator.InvalidTransactionScriptError{}, err)
 	})
 
 	t.Run("Missing gas limit", func(t *testing.T) {
 		t.Skip("TODO: transaction validation")
+
+		b, err := emulator.NewBlockchain()
+		require.NoError(t, err)
+
+		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
 		// Create transaction with no GasLimit field
 		tx := flow.NewTransaction().
@@ -103,16 +126,21 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err := tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		// Submit tx
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, err, &emulator.InvalidTransactionError{})
+		assert.IsType(t, &emulator.IncompleteTransactionError{}, err)
 	})
 
 	t.Run("Missing payer account", func(t *testing.T) {
 		t.Skip("TODO: transaction validation")
+
+		b, err := emulator.NewBlockchain()
+		require.NoError(t, err)
+
+		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
 		// Create transaction with no PayerAccount field
 		tx := flow.NewTransaction().
@@ -120,15 +148,19 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
 			SetGasLimit(emulator.MaxGasLimit)
 
-		err := tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		// Submit tx
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, err, &emulator.InvalidTransactionError{})
+		assert.IsType(t, err, &emulator.IncompleteTransactionError{})
 	})
 
 	t.Run("Missing proposal key", func(t *testing.T) {
+		b, err := emulator.NewBlockchain()
+		require.NoError(t, err)
+
+		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
 		// Create transaction with no PayerAccount field
 		tx := flow.NewTransaction().
@@ -137,15 +169,19 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 
 		tx.ProposalKey = flow.ProposalKey{}
 
-		err := tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		// Submit tx
 		err = b.AddTransaction(*tx)
-		assert.IsType(t, err, &emulator.InvalidTransactionError{})
+		assert.IsType(t, &emulator.IncompleteTransactionError{}, err)
 	})
 
 	t.Run("Invalid sequence number", func(t *testing.T) {
+		b, err := emulator.NewBlockchain()
+		require.NoError(t, err)
+
+		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
 		invalidSequenceNumber := b.ServiceKey().SequenceNumber + 2137
 		tx := flow.NewTransaction().
@@ -155,7 +191,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 			SetGasLimit(emulator.MaxGasLimit).
 			AddAuthorizer(b.ServiceKey().Address)
 
-		err := tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		// Submit tx
@@ -171,6 +207,60 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		assert.IsType(t, &types.FlowError{}, result.Error)
 		assert.IsType(t, &fvm.InvalidProposalKeySequenceNumberError{}, result.Error.(*types.FlowError).FlowError)
 		assert.Equal(t, invalidSequenceNumber, result.Error.(*types.FlowError).FlowError.(*fvm.InvalidProposalKeySequenceNumberError).ProvidedSeqNumber)
+	})
+
+	const expiry = 10
+
+	t.Run("Missing reference block ID", func(t *testing.T) {
+		b, err := emulator.NewBlockchain(
+			emulator.WithTransactionExpiry(expiry),
+		)
+		require.NoError(t, err)
+
+		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
+
+		tx := flow.NewTransaction().
+			SetScript([]byte(addTwoScript)).
+			SetGasLimit(emulator.MaxGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		assert.NoError(t, err)
+
+		err = b.AddTransaction(*tx)
+		assert.IsType(t, &emulator.IncompleteTransactionError{}, err)
+	})
+
+	t.Run("Expired transaction", func(t *testing.T) {
+		b, err := emulator.NewBlockchain(
+			emulator.WithTransactionExpiry(expiry),
+		)
+		require.NoError(t, err)
+
+		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
+
+		expiredBlock, err := b.GetLatestBlock()
+		require.NoError(t, err)
+
+		// commit blocks until expiry window is exceeded
+		for i := 0; i < expiry+1; i++ {
+			_, _, err := b.ExecuteAndCommitBlock()
+			require.NoError(t, err)
+		}
+
+		tx := flow.NewTransaction().
+			SetScript([]byte(addTwoScript)).
+			SetReferenceBlockID(flow.Identifier(expiredBlock.ID())).
+			SetGasLimit(emulator.MaxGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		assert.NoError(t, err)
+
+		err = b.AddTransaction(*tx)
+		assert.IsType(t, &emulator.ExpiredTransactionError{}, err)
 	})
 }
 
@@ -211,7 +301,7 @@ func TestSubmitTransaction_Reverted(t *testing.T) {
 	require.NoError(t, err)
 
 	tx := flow.NewTransaction().
-		SetScript([]byte("invalid script")).
+		SetScript([]byte(`transaction { execute { panic("revert!") } }`)).
 		SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).

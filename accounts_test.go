@@ -195,7 +195,7 @@ func TestCreateAccount(t *testing.T) {
 		assert.NoError(t, err)
 
 		result, err := b.ExecuteNextTransaction()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assertTransactionSucceeded(t, result)
 
 		_, err = b.CommitBlock()
@@ -234,7 +234,7 @@ func TestCreateAccount(t *testing.T) {
 		assert.NoError(t, err)
 
 		result, err := b.ExecuteNextTransaction()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assertTransactionSucceeded(t, result)
 
 		block, err := b.CommitBlock()
@@ -279,7 +279,8 @@ func TestCreateAccount(t *testing.T) {
 		assert.NoError(t, err)
 
 		result, err := b.ExecuteNextTransaction()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		assert.True(t, result.Reverted())
 	})
 
@@ -306,7 +307,8 @@ func TestCreateAccount(t *testing.T) {
 		assert.NoError(t, err)
 
 		result, err := b.ExecuteNextTransaction()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		assert.True(t, result.Reverted())
 	})
 }
