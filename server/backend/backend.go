@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"strings"
 
 	"github.com/dapperlabs/flow-go/access"
 	"github.com/dapperlabs/flow-go/fvm"
@@ -365,6 +366,12 @@ func (b *Backend) GetEventsForHeightRange(
 	eventType string,
 	startHeight, endHeight uint64,
 ) ([]flowgo.BlockEvents, error) {
+
+	err := validateEventType(eventType)
+	if err != nil {
+		return nil, err
+	}
+
 	latestBlock, err := b.emulator.GetLatestBlock()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -431,6 +438,12 @@ func (b *Backend) GetEventsForBlockIDs(
 	eventType string,
 	blockIDs []sdk.Identifier,
 ) ([]flowgo.BlockEvents, error) {
+
+	err := validateEventType(eventType)
+	if err != nil {
+		return nil, err
+	}
+
 	results := make([]flowgo.BlockEvents, 0)
 	eventCount := 0
 
@@ -471,6 +484,13 @@ func (b *Backend) GetEventsForBlockIDs(
 	}).Debugf("🎁  GetEventsForBlockIDs called")
 
 	return results, nil
+}
+
+func validateEventType(eventType string) error {
+	if len(strings.TrimSpace(eventType)) == 0 {
+		return status.Error(codes.InvalidArgument, "invalid query: eventType must not be empty")
+	}
+	return nil
 }
 
 // CommitBlock executes the current pending transactions and commits the results in a new block.
