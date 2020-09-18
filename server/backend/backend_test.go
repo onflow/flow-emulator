@@ -273,7 +273,7 @@ func TestBackend(t *testing.T) {
 
 			assert.NotNil(t, results)
 
-			require.Len(t, blocks, 2)
+			require.Len(t, results, 2)
 
 			for i, block := range results {
 				assert.Len(t, block.Events, 2)
@@ -336,13 +336,30 @@ func TestBackend(t *testing.T) {
 
 			assert.NotNil(t, results)
 
-			require.Len(t, blocks, 2)
+			require.Len(t, results, 2)
 
 			for i, block := range results {
 				assert.Len(t, block.Events, 2)
 				assert.Equal(t, block.BlockID, blocks[i].ID())
 				assert.Equal(t, block.BlockHeight, blocks[i].Header.Height)
 			}
+		}),
+	)
+
+	t.Run(
+		"GetEventsForHeightRange fails with empty eventType",
+		backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
+
+			eventType := " "
+			height := uint64(1)
+
+			_, err := backend.GetEventsForHeightRange(context.Background(), eventType, height, height)
+			require.Error(t, err)
+
+			grpcError, ok := status.FromError(err)
+			require.True(t, ok)
+
+			assert.Equal(t, grpcError.Code(), codes.InvalidArgument)
 		}),
 	)
 
@@ -487,6 +504,91 @@ func TestBackend(t *testing.T) {
 			require.True(t, ok)
 
 			assert.Equal(t, codes.InvalidArgument, grpcError.Code())
+		}),
+	)
+
+	t.Run(
+		"GetEventsForBlockIDs",
+		backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
+			events := test.EventGenerator()
+
+			eventsToReturn := []flow.Event{
+				events.New(),
+				events.New(),
+			}
+
+			eventType := "SomeEvents"
+
+			blocks := []flowgo.Block{
+				{Header: &flowgo.Header{Height: 1}},
+				{Header: &flowgo.Header{Height: 2}},
+			}
+
+			emu.EXPECT().
+				GetBlockByID(flow.Identifier(blocks[0].ID())).
+				Return(&blocks[0], nil)
+
+			emu.EXPECT().
+				GetBlockByID(flow.Identifier(blocks[1].ID())).
+				Return(&blocks[1], nil)
+
+			emu.EXPECT().
+				GetEventsByHeight(blocks[0].Header.Height, eventType).
+				Return(eventsToReturn, nil)
+
+			emu.EXPECT().
+				GetEventsByHeight(blocks[1].Header.Height, eventType).
+				Return(eventsToReturn, nil)
+
+			blockIDs := make([]flow.Identifier, len(blocks))
+			for i, b := range blocks {
+				blockIDs[i] = flow.Identifier(b.ID())
+			}
+
+			results, err := backend.GetEventsForBlockIDs(context.Background(),
+				eventType,
+				blockIDs,
+			)
+			require.NoError(t, err)
+
+			assert.NotNil(t, results)
+
+			require.Len(t, results, 2)
+
+			for i, block := range results {
+				assert.Len(t, block.Events, 2)
+				assert.Equal(t, block.BlockID, blocks[i].ID())
+				assert.Equal(t, block.BlockHeight, blocks[i].Header.Height)
+			}
+		}),
+	)
+
+	t.Run(
+		"GetEventsForBlockIDs fails with empty eventType",
+		backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
+
+			eventType := " "
+
+			blocks := []flowgo.Block{
+				{Header: &flowgo.Header{Height: 1}},
+				{Header: &flowgo.Header{Height: 2}},
+			}
+
+			blockIDs := make([]flow.Identifier, len(blocks))
+			for i, b := range blocks {
+				blockIDs[i] = flow.Identifier(b.ID())
+			}
+
+			_, err := backend.GetEventsForBlockIDs(context.Background(),
+				eventType,
+				blockIDs,
+			)
+			require.Error(t, err)
+
+			grpcError, ok := status.FromError(err)
+			require.True(t, ok)
+
+			assert.Equal(t, grpcError.Code(), codes.InvalidArgument)
 		}),
 	)
 }
