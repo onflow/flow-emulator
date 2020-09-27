@@ -1,11 +1,17 @@
 package backend
 
 import (
-	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	sdk "github.com/onflow/flow-go-sdk"
+
+	emulator "github.com/dapperlabs/flow-emulator"
+
+	flowgo "github.com/dapperlabs/flow-go/model/flow"
 
 	"github.com/dapperlabs/flow-emulator/types"
 )
+
+var _ Emulator = &emulator.Network{}
+var _ Emulator = &emulator.Blockchain{}
 
 // Emulator defines the method set of an emulated blockchain.
 type Emulator interface {
@@ -25,4 +31,5 @@ type Emulator interface {
 	GetEventsByHeight(blockHeight uint64, eventType string) ([]sdk.Event, error)
 	ExecuteScript(script []byte, arguments [][]byte) (*types.ScriptResult, error)
 	ExecuteScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) (*types.ScriptResult, error)
+	CreateAccount(publicKeys []*sdk.AccountKey, code []byte) (sdk.Address, error)
 }
