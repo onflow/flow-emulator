@@ -16,6 +16,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/onflow/cadence"
+	"github.com/onflow/cadence/runtime"
+	sdk "github.com/onflow/flow-go-sdk"
+	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
+	"github.com/onflow/flow-go-sdk/templates"
+
 	"github.com/dapperlabs/flow-go/access"
 	"github.com/dapperlabs/flow-go/crypto"
 	"github.com/dapperlabs/flow-go/crypto/hash"
@@ -23,11 +29,6 @@ import (
 	"github.com/dapperlabs/flow-go/fvm"
 	"github.com/dapperlabs/flow-go/fvm/state"
 	flowgo "github.com/dapperlabs/flow-go/model/flow"
-	"github.com/onflow/cadence"
-	"github.com/onflow/cadence/runtime"
-	sdk "github.com/onflow/flow-go-sdk"
-	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
-	"github.com/onflow/flow-go-sdk/templates"
 
 	"github.com/dapperlabs/flow-emulator/convert"
 	sdkconvert "github.com/dapperlabs/flow-emulator/convert/sdk"
@@ -439,6 +440,16 @@ func (b *Blockchain) GetLatestBlock() (*flowgo.Block, error) {
 	}
 
 	return &block, nil
+}
+
+// GetLatestBlock gets the latest sealed block ID.
+func (b *Blockchain) GetLatestBlockID() (sdk.Identifier, error) {
+	block, err := b.storage.LatestBlock()
+	if err != nil {
+		return sdk.Identifier{}, &StorageError{err}
+	}
+
+	return sdk.Identifier(block.ID()), nil
 }
 
 // GetBlockByID gets a block by ID.

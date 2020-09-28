@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/onflow/cadence"
+
 	flowgo "github.com/dapperlabs/flow-go/model/flow"
 
+	jsoncdc "github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/flow-go-sdk"
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/client"
@@ -163,6 +166,14 @@ func (n *Network) GetLatestBlock() (*flowgo.Block, error) {
 	}
 	return fromSDKBlock(block), nil
 }
+func (n *Network) GetLatestBlockID() (sdk.Identifier, error) {
+	ctx := context.Background()
+	block, err := n.flowClient.GetLatestBlock(ctx, true)
+	if err != nil {
+		return sdk.Identifier{}, err
+	}
+	return block.ID, nil
+}
 func (n *Network) GetBlockByID(id sdk.Identifier) (*flowgo.Block, error) {
 	ctx := context.Background()
 	block, err := n.flowClient.GetBlockByID(ctx, id)
@@ -186,7 +197,7 @@ func (n *Network) GetTransaction(txID sdk.Identifier) (*sdk.Transaction, error) 
 	panic("not implemented")
 }
 func (n *Network) GetTransactionResult(txID sdk.Identifier) (*sdk.TransactionResult, error) {
-	panic("not implemented")
+	return n.flowClient.GetTransactionResult(context.Background(), txID)
 }
 func (n *Network) GetAccount(address sdk.Address) (*sdk.Account, error) {
 	panic("not implemented")
@@ -195,11 +206,30 @@ func (n *Network) GetAccountAtBlock(address sdk.Address, blockHeight uint64) (*s
 	panic("not implemented")
 }
 func (n *Network) GetEventsByHeight(blockHeight uint64, eventType string) ([]sdk.Event, error) {
-	panic("not implemented")
+	// panic("not implemented")
+	ctx := context.Background()
+	blockEvents, err := n.flowClient.GetEventsForHeightRange(ctx, client.EventRangeQuery{
+		Type:        eventType,
+		StartHeight: blockHeight,
+		EndHeight:   blockHeight,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return blockEvents[0].Events, nil
+
 }
 func (n *Network) ExecuteScript(script []byte, args [][]byte) (*types.ScriptResult, error) {
 	ctx := context.Background()
-	res, err := n.flowClient.ExecuteScriptAtLatestBlock(ctx, script, nil)
+	arguments := []cadence.Value{}
+	for _, arg := range args {
+		val, err := jsoncdc.Decode(arg)
+		if err != nil {
+			return nil, err
+		}
+		arguments = append(arguments, val)
+	}
+	res, err := n.flowClient.ExecuteScriptAtLatestBlock(ctx, script, arguments)
 	return &types.ScriptResult{
 		Value: res,
 		Error: err,
