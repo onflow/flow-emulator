@@ -6,8 +6,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/dapperlabs/flow-go/fvm"
-	flowgo "github.com/dapperlabs/flow-go/model/flow"
+	"github.com/onflow/flow-go/fvm"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/golang/mock/gomock"
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
@@ -489,7 +489,7 @@ func TestBackend(t *testing.T) {
 
 			emu.EXPECT().
 				AddTransaction(gomock.Any()).
-				Return(&types.FlowError{FlowError: &fvm.InvalidSignaturePublicKeyError{}}).
+				Return(&types.FlowError{FlowError: &fvm.InvalidSignaturePublicKeyDoesNotExistError{}}).
 				Times(1)
 
 			expectedTx := test.TransactionGenerator().New()
