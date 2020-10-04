@@ -2,11 +2,12 @@ package sdk
 
 import (
 	"fmt"
+	"github.com/onflow/flow-go/fvm"
 
-	"github.com/dapperlabs/flow-go/access"
-	flowcrypto "github.com/dapperlabs/flow-go/crypto"
-	flowhash "github.com/dapperlabs/flow-go/crypto/hash"
-	flowgo "github.com/dapperlabs/flow-go/model/flow"
+	"github.com/onflow/flow-go/access"
+	flowcrypto "github.com/onflow/flow-go/crypto"
+	flowhash "github.com/onflow/flow-go/crypto/hash"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	sdk "github.com/onflow/flow-go-sdk"
@@ -40,7 +41,7 @@ func FlowIdentifiersToSDK(flowIdentifiers []flowgo.Identifier) []sdk.Identifier 
 func SDKProposalKeyToFlow(sdkProposalKey sdk.ProposalKey) flowgo.ProposalKey {
 	return flowgo.ProposalKey{
 		Address:        SDKAddressToFlow(sdkProposalKey.Address),
-		KeyID:          uint64(sdkProposalKey.KeyID),
+		KeyID:          uint64(sdkProposalKey.KeyIndex),
 		SequenceNumber: sdkProposalKey.SequenceNumber,
 	}
 }
@@ -48,7 +49,7 @@ func SDKProposalKeyToFlow(sdkProposalKey sdk.ProposalKey) flowgo.ProposalKey {
 func FlowProposalKeyToSDK(flowProposalKey flowgo.ProposalKey) sdk.ProposalKey {
 	return sdk.ProposalKey{
 		Address:        FlowAddressToSDK(flowProposalKey.Address),
-		KeyID:          int(flowProposalKey.KeyID),
+		KeyIndex:       int(flowProposalKey.KeyID),
 		SequenceNumber: flowProposalKey.SequenceNumber,
 	}
 }
@@ -81,7 +82,7 @@ func SDKTransactionSignatureToFlow(sdkTransactionSignature sdk.TransactionSignat
 	return flowgo.TransactionSignature{
 		Address:     SDKAddressToFlow(sdkTransactionSignature.Address),
 		SignerIndex: sdkTransactionSignature.SignerIndex,
-		KeyID:       uint64(sdkTransactionSignature.KeyID),
+		KeyID:       uint64(sdkTransactionSignature.KeyIndex),
 		Signature:   sdkTransactionSignature.Signature,
 	}
 }
@@ -90,7 +91,7 @@ func FlowTransactionSignatureToSDK(flowTransactionSignature flowgo.TransactionSi
 	return sdk.TransactionSignature{
 		Address:     FlowAddressToSDK(flowTransactionSignature.Address),
 		SignerIndex: flowTransactionSignature.SignerIndex,
-		KeyID:       int(flowTransactionSignature.KeyID),
+		KeyIndex:    int(flowTransactionSignature.KeyID),
 		Signature:   flowTransactionSignature.Signature,
 	}
 }
@@ -234,7 +235,7 @@ func FlowSignAlgoToSDK(signAlgo flowcrypto.SigningAlgorithm) sdkcrypto.Signature
 }
 
 func SDKSignAlgoToFlow(signAlgo sdkcrypto.SignatureAlgorithm) flowcrypto.SigningAlgorithm {
-	return flowcrypto.StringToSigningAlgorithm(signAlgo.String())
+	return fvm.StringToSigningAlgorithm(signAlgo.String())
 }
 
 func flowhashAlgoToSDK(hashAlgo flowhash.HashingAlgorithm) sdkcrypto.HashAlgorithm {
@@ -242,10 +243,10 @@ func flowhashAlgoToSDK(hashAlgo flowhash.HashingAlgorithm) sdkcrypto.HashAlgorit
 }
 
 func SDKHashAlgoToFlow(hashAlgo sdkcrypto.HashAlgorithm) flowhash.HashingAlgorithm {
-	return flowhash.StringToHashingAlgorithm(hashAlgo.String())
+	return fvm.StringToHashingAlgorithm(hashAlgo.String())
 }
 
-func FlowAccountPublicKeyToSDK(flowPublicKey flowgo.AccountPublicKey, id int) (sdk.AccountKey, error) {
+func FlowAccountPublicKeyToSDK(flowPublicKey flowgo.AccountPublicKey, index int) (sdk.AccountKey, error) {
 	// TODO - Looks like SDK contains copy-paste of code from flow-go
 	// Once crypto become its own separate library, this can possibly be simplified or not needed
 	encodedPublicKey := flowPublicKey.PublicKey.Encode()
@@ -260,12 +261,13 @@ func FlowAccountPublicKeyToSDK(flowPublicKey flowgo.AccountPublicKey, id int) (s
 	sdkHashAlgo := flowhashAlgoToSDK(flowPublicKey.HashAlgo)
 
 	return sdk.AccountKey{
-		ID:             id,
+		Index:          index,
 		PublicKey:      sdkPublicKey,
 		SigAlgo:        sdkSignAlgo,
 		HashAlgo:       sdkHashAlgo,
 		Weight:         flowPublicKey.Weight,
 		SequenceNumber: flowPublicKey.SeqNumber,
+		Revoked:        flowPublicKey.Revoked,
 	}, nil
 }
 
@@ -282,7 +284,7 @@ func SDKAccountKeyToFlow(key *sdk.AccountKey) (flowgo.AccountPublicKey, error) {
 	flowhashAlgo := SDKHashAlgoToFlow(key.HashAlgo)
 
 	return flowgo.AccountPublicKey{
-		Index:     key.ID,
+		Index:     key.Index,
 		PublicKey: flowPublicKey,
 		SignAlgo:  flowSignAlgo,
 		HashAlgo:  flowhashAlgo,
@@ -313,6 +315,7 @@ func FlowAccountPublicKeysToSDK(flowPublicKeys []flowgo.AccountPublicKey) ([]*sd
 		if err != nil {
 			return nil, err
 		}
+
 		ret[i] = &v
 	}
 	return ret, nil
@@ -323,6 +326,7 @@ func FlowAccountToSDK(flowAccount flowgo.Account) (sdk.Account, error) {
 	if err != nil {
 		return sdk.Account{}, err
 	}
+
 	return sdk.Account{
 		Address: FlowAddressToSDK(flowAccount.Address),
 		Balance: flowAccount.Balance,

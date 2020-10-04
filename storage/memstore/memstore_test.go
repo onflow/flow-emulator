@@ -4,8 +4,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
-	flowgo "github.com/dapperlabs/flow-go/model/flow"
+	"github.com/onflow/flow-go/engine/execution/state/delta"
+	"github.com/onflow/flow-go/fvm/state"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +20,11 @@ func TestMemstore(t *testing.T) {
 
 	err := store.UnsafeInsertLedgerDelta(
 		blockHeight,
-		delta.Delta{key: value},
+		delta.Delta{
+			Data: map[string]flowgo.RegisterValue{
+				string(state.RegisterID("", "", key)): value,
+			},
+		},
 	)
 	require.NoError(t, err)
 
@@ -31,7 +36,7 @@ func TestMemstore(t *testing.T) {
 			defer wg.Done()
 
 			view := store.LedgerViewByHeight(blockHeight)
-			actualValue, err := view.Get(flowgo.RegisterID(key))
+			actualValue, err := view.Get("", "", key)
 			require.NoError(t, err)
 
 			require.NoError(t, err)

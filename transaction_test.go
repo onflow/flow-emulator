@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/dapperlabs/flow-go/fvm"
+	"github.com/onflow/flow-go/fvm"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
@@ -30,11 +30,11 @@ func TestSubmitTransaction(t *testing.T) {
 	tx1 := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
 		SetGasLimit(emulator.MaxGasLimit).
-		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
-	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 	assert.NoError(t, err)
 
 	// Submit tx1
@@ -68,7 +68,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		// Create empty transaction (no required fields)
 		tx := flow.NewTransaction()
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		// Submit tx
@@ -83,10 +83,10 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		// Create transaction with no Script field
 		tx := flow.NewTransaction().
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -101,10 +101,10 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript([]byte("this script cannot be parsed")).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		// Submit tx
@@ -123,10 +123,10 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		// Create transaction with no GasLimit field
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
-			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		// Submit tx
@@ -145,10 +145,10 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		// Create transaction with no PayerAccount field
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
-			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetGasLimit(emulator.MaxGasLimit)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		// Submit tx
@@ -169,7 +169,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 
 		tx.ProposalKey = flow.ProposalKey{}
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		// Submit tx
@@ -187,11 +187,11 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetPayer(b.ServiceKey().Address).
-			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, invalidSequenceNumber).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, invalidSequenceNumber).
 			SetGasLimit(emulator.MaxGasLimit).
 			AddAuthorizer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		// Submit tx
@@ -222,10 +222,10 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -253,10 +253,10 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 			SetScript([]byte(addTwoScript)).
 			SetReferenceBlockID(flow.Identifier(expiredBlock.ID())).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -273,11 +273,11 @@ func TestSubmitTransaction_Duplicate(t *testing.T) {
 	tx := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
 		SetGasLimit(emulator.MaxGasLimit).
-		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
-	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 	assert.NoError(t, err)
 
 	// Submit tx
@@ -303,11 +303,11 @@ func TestSubmitTransaction_Reverted(t *testing.T) {
 	tx := flow.NewTransaction().
 		SetScript([]byte(`transaction { execute { panic("revert!") } }`)).
 		SetGasLimit(emulator.MaxGasLimit).
-		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
-	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 	assert.NoError(t, err)
 
 	// Submit invalid tx1
@@ -352,7 +352,7 @@ func TestSubmitTransaction_Authorizers(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(script).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address).
 			AddAuthorizer(accountAddressB)
@@ -360,7 +360,7 @@ func TestSubmitTransaction_Authorizers(t *testing.T) {
 		err = tx.SignPayload(accountAddressB, 0, signerB)
 		assert.NoError(t, err)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -386,11 +386,11 @@ func TestSubmitTransaction_Authorizers(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(script).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -419,11 +419,11 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(addressA).
 			AddAuthorizer(b.ServiceKey().Address)
 
-		err = tx.SignPayload(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignPayload(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -444,14 +444,14 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript([]byte(`transaction { execute { } }`)).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(invalidAddress)
 
-		err = tx.SignPayload(invalidAddress, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignPayload(invalidAddress, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -460,7 +460,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, &fvm.InvalidSignatureAccountError{}, result.Error)
+		unittest.AssertFVMErrorType(t, &fvm.InvalidSignaturePublicKeyDoesNotExistError{}, result.Error)
 	})
 
 	t.Run("Invalid key", func(t *testing.T) {
@@ -477,11 +477,11 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, invalidSigner)
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, invalidSigner)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -490,7 +490,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, &fvm.InvalidSignaturePublicKeyError{}, result.Error)
+		unittest.AssertFVMErrorType(t, &fvm.InvalidSignatureVerificationError{}, result.Error)
 	})
 
 	t.Run("Key weights", func(t *testing.T) {
@@ -566,11 +566,11 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(addressA)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -604,7 +604,7 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(multipleAccountScript).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address).
 			AddAuthorizer(accountAddressB)
@@ -612,7 +612,7 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 		err = tx.SignPayload(accountAddressB, 0, signerB)
 		assert.NoError(t, err)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -789,13 +789,13 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 			tx := flow.NewTransaction().
 				SetScript(script(tt.argType)).
 				SetGasLimit(emulator.MaxGasLimit).
-				SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+				SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 				SetPayer(b.ServiceKey().Address)
 
 			err = tx.AddArgument(tt.arg)
 			assert.NoError(t, err)
 
-			err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+			err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 			assert.NoError(t, err)
 
 			err = b.AddTransaction(*tx)
@@ -826,13 +826,13 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript(script).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
 		err = tx.AddArgument(cadence.NewInt(x))
 		assert.NoError(t, err)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -856,11 +856,11 @@ func TestGetTransaction(t *testing.T) {
 	tx1 := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
 		SetGasLimit(emulator.MaxGasLimit).
-		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
-	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 	assert.NoError(t, err)
 
 	err = b.AddTransaction(*tx1)
@@ -894,11 +894,11 @@ func TestGetTransactionResult(t *testing.T) {
 	tx := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
 		SetGasLimit(emulator.MaxGasLimit).
-		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
-	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 	assert.NoError(t, err)
 
 	result, err := b.GetTransactionResult(tx.ID())
@@ -981,10 +981,10 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 	)
 
 	createAccountTx.SetGasLimit(emulator.MaxGasLimit).
-		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address)
 
-	err = createAccountTx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+	err = createAccountTx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 	assert.NoError(t, err)
 
 	err = b.AddTransaction(*createAccountTx)
@@ -1027,10 +1027,10 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 	callHelloCode := []byte(fmt.Sprintf(callHelloTxTemplate, newAccountAddress.Hex()))
 	callHelloTx := flow.NewTransaction().
 		SetScript(callHelloCode).
-		SetProposalKey(newAccountAddress, accountKey.ID, accountKey.SequenceNumber).
+		SetProposalKey(newAccountAddress, accountKey.Index, accountKey.SequenceNumber).
 		SetPayer(newAccountAddress)
 
-	err = callHelloTx.SignEnvelope(newAccountAddress, accountKey.ID, accountSigner)
+	err = callHelloTx.SignEnvelope(newAccountAddress, accountKey.Index, accountSigner)
 	assert.NoError(t, err)
 
 	err = b.AddTransaction(*callHelloTx)
@@ -1061,10 +1061,10 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 
 	createAccountTx.
 		SetGasLimit(emulator.MaxGasLimit).
-		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address)
 
-	err = createAccountTx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+	err = createAccountTx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 	assert.NoError(t, err)
 
 	err = b.AddTransaction(*createAccountTx)
@@ -1103,10 +1103,10 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 	updateAccountCodeTx := templates.UpdateAccountCode(newAccountAddress, []byte(helloWorldContract))
 	updateAccountCodeTx.
 		SetGasLimit(emulator.MaxGasLimit).
-		SetProposalKey(newAccountAddress, accountKey.ID, accountKey.SequenceNumber).
+		SetProposalKey(newAccountAddress, accountKey.Index, accountKey.SequenceNumber).
 		SetPayer(newAccountAddress)
 
-	err = updateAccountCodeTx.SignEnvelope(newAccountAddress, accountKey.ID, accountSigner)
+	err = updateAccountCodeTx.SignEnvelope(newAccountAddress, accountKey.Index, accountSigner)
 	assert.NoError(t, err)
 
 	err = b.AddTransaction(*updateAccountCodeTx)
@@ -1126,10 +1126,10 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 	callHelloCode := []byte(fmt.Sprintf(callHelloTxTemplate, newAccountAddress.Hex()))
 	callHelloTx := flow.NewTransaction().
 		SetScript(callHelloCode).
-		SetProposalKey(newAccountAddress, accountKey.ID, accountKey.SequenceNumber).
+		SetProposalKey(newAccountAddress, accountKey.Index, accountKey.SequenceNumber).
 		SetPayer(newAccountAddress)
 
-	err = callHelloTx.SignEnvelope(newAccountAddress, accountKey.ID, accountSigner)
+	err = callHelloTx.SignEnvelope(newAccountAddress, accountKey.Index, accountSigner)
 	assert.NoError(t, err)
 
 	err = b.AddTransaction(*callHelloTx)

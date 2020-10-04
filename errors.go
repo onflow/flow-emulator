@@ -3,8 +3,8 @@ package emulator
 import (
 	"fmt"
 
-	"github.com/dapperlabs/flow-go/access"
-	flowgo "github.com/dapperlabs/flow-go/model/flow"
+	"github.com/onflow/flow-go/access"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 )

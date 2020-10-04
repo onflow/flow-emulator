@@ -5,7 +5,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/dapperlabs/flow-go/model/flow"
+	"github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 )
 

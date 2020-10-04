@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
-	flowgo "github.com/dapperlabs/flow-go/model/flow"
+	"github.com/onflow/flow-go/engine/execution/state/delta"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -210,19 +210,24 @@ func TestLedger(t *testing.T) {
 
 		var blockHeight uint64 = 1
 
-		ledger := make(delta.Delta)
-		ledger["foo"] = []byte("bar")
+		const owner = ""
+		const controller = ""
+		const key = "foo"
+		expected := []byte("bar")
+
+		d := delta.NewDelta()
+		d.Set(owner, controller, key, expected)
 
 		t.Run("should get able to set ledger", func(t *testing.T) {
-			err := store.InsertLedgerDelta(blockHeight, ledger)
+			err := store.InsertLedgerDelta(blockHeight, d)
 			assert.NoError(t, err)
 		})
 
 		t.Run("should be to get set ledger", func(t *testing.T) {
 			gotLedger := store.LedgerViewByHeight(blockHeight)
-			gotRegister, err := gotLedger.Get(flowgo.RegisterID("foo"))
+			actual, err := gotLedger.Get(owner, controller, key)
 			assert.NoError(t, err)
-			assert.Equal(t, ledger["foo"], gotRegister)
+			assert.Equal(t, expected, actual)
 		})
 	})
 
@@ -233,18 +238,22 @@ func TestLedger(t *testing.T) {
 			require.NoError(t, os.RemoveAll(dir))
 		}()
 
+		const owner = ""
+		const controller = ""
+
 		// Create a list of ledgers, where the ledger at index i has
 		// keys (i+2)-1->(i+2)+1 set to value i-1.
 		totalBlocks := 10
-		var ledgers []delta.Delta
+		var deltas []delta.Delta
 		for i := 2; i < totalBlocks+2; i++ {
-			ledger := make(delta.Delta)
+			d := delta.NewDelta()
 			for j := i - 1; j <= i+1; j++ {
-				ledger[fmt.Sprintf("%d", j)] = []byte{byte(i - 1)}
+				key := fmt.Sprintf("%d", j)
+				d.Set(owner, controller, key, []byte{byte(i - 1)})
 			}
-			ledgers = append(ledgers, ledger)
+			deltas = append(deltas, d)
 		}
-		require.Equal(t, totalBlocks, len(ledgers))
+		require.Equal(t, totalBlocks, len(deltas))
 
 		// Insert all the ledgers, starting with block 1.
 		// This will result in a ledger state that looks like this:
@@ -253,7 +262,7 @@ func TestLedger(t *testing.T) {
 		// ...
 		// The combined state at block N looks like:
 		// {1: 1, 2: 2, 3: 3, ..., N+1: N, N+2: N}
-		for i, ledger := range ledgers {
+		for i, ledger := range deltas {
 			err := store.InsertLedgerDelta(uint64(i+1), ledger)
 			require.NoError(t, err)
 		}
@@ -262,7 +271,7 @@ func TestLedger(t *testing.T) {
 		t.Run("should version the first written block", func(t *testing.T) {
 			gotLedger := store.LedgerViewByHeight(1)
 			for i := 1; i <= 3; i++ {
-				val, err := gotLedger.Get(flowgo.RegisterID(fmt.Sprintf("%d", i)))
+				val, err := gotLedger.Get(owner, controller, fmt.Sprintf("%d", i))
 				assert.NoError(t, err)
 				assert.Equal(t, []byte{byte(1)}, val)
 			}
@@ -274,13 +283,13 @@ func TestLedger(t *testing.T) {
 				gotLedger := store.LedgerViewByHeight(uint64(block))
 				// The keys 1->N-1 are defined in previous blocks
 				for i := 1; i < block; i++ {
-					val, err := gotLedger.Get(flowgo.RegisterID(fmt.Sprintf("%d", i)))
+					val, err := gotLedger.Get(owner, controller, fmt.Sprintf("%d", i))
 					assert.NoError(t, err)
 					assert.Equal(t, []byte{byte(i)}, val)
 				}
 				// The keys N->N+2 are defined in the queried block
 				for i := block; i <= block+2; i++ {
-					val, err := gotLedger.Get(flowgo.RegisterID(fmt.Sprintf("%d", i)))
+					val, err := gotLedger.Get(owner, controller, fmt.Sprintf("%d", i))
 					assert.NoError(t, err)
 					assert.Equal(t, []byte{byte(block)}, val)
 				}
@@ -407,8 +416,14 @@ func TestPersistence(t *testing.T) {
 	event, _ := convert.SDKEventToFlow(test.EventGenerator().New())
 	events := []flowgo.Event{event}
 
-	ledger := make(delta.Delta)
-	ledger["foo"] = []byte("bar")
+	const owner = ""
+	const controller = ""
+	const key = "foo"
+
+	expected := []byte("bar")
+
+	d := delta.NewDelta()
+	d.Set(owner, controller, key, expected)
 
 	// insert some stuff to to the store
 	err := store.StoreBlock(block)
@@ -417,7 +432,7 @@ func TestPersistence(t *testing.T) {
 	assert.NoError(t, err)
 	err = store.InsertEvents(block.Header.Height, events)
 	assert.NoError(t, err)
-	err = store.InsertLedgerDelta(block.Header.Height, ledger)
+	err = store.InsertLedgerDelta(block.Header.Height, d)
 	assert.NoError(t, err)
 
 	// close the store
@@ -442,9 +457,9 @@ func TestPersistence(t *testing.T) {
 	assert.Equal(t, events, gotEvents)
 
 	gotLedger := store.LedgerViewByHeight(block.Header.Height)
-	gotRegister, err := gotLedger.Get(flowgo.RegisterID("foo"))
+	actual, err := gotLedger.Get(owner, controller, "foo")
 	assert.NoError(t, err)
-	assert.Equal(t, ledger["foo"], gotRegister)
+	assert.Equal(t, expected, actual)
 }
 
 func benchmarkInsertLedgerDelta(b *testing.B, nKeys int) {
@@ -460,9 +475,13 @@ func benchmarkInsertLedgerDelta(b *testing.B, nKeys int) {
 	}
 	defer store.Close()
 
-	ledger := make(delta.Delta)
+	const owner = ""
+	const controller = ""
+
+	ledger := delta.NewDelta()
 	for i := 0; i < nKeys; i++ {
-		ledger[fmt.Sprintf("%d", i)] = []byte{byte(i)}
+		key := fmt.Sprintf("%d", i)
+		ledger.Set(owner, controller, key, []byte{byte(i)})
 	}
 
 	b.StartTimer()
@@ -541,12 +560,16 @@ func BenchmarkLedgerDiskUsage(b *testing.B) {
 	}
 	defer store.Close()
 
+	const owner = ""
+	const controller = ""
+
 	b.StartTimer()
 	var lastDBSize int64
 	for i := 0; i < b.N; i++ {
-		ledger := make(delta.Delta)
+		ledger := delta.NewDelta()
 		for j := 0; j < 100; j++ {
-			ledger[fmt.Sprintf("%d-%d", i, j)] = []byte{byte(i), byte(j)}
+			key := fmt.Sprintf("%d-%d", i, j)
+			ledger.Set(owner, controller, key, []byte{byte(i), byte(j)})
 		}
 		if err := store.InsertLedgerDelta(uint64(i), ledger); err != nil {
 			b.Fatal(err)
