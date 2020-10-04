@@ -16,13 +16,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dapperlabs/flow-go/access"
-	"github.com/dapperlabs/flow-go/crypto"
-	"github.com/dapperlabs/flow-go/crypto/hash"
-	"github.com/dapperlabs/flow-go/engine/execution/state/delta"
-	"github.com/dapperlabs/flow-go/fvm"
-	"github.com/dapperlabs/flow-go/fvm/state"
-	flowgo "github.com/dapperlabs/flow-go/model/flow"
+	"github.com/onflow/flow-go/access"
+	"github.com/onflow/flow-go/crypto"
+	"github.com/onflow/flow-go/crypto/hash"
+	"github.com/onflow/flow-go/engine/execution/state/delta"
+	"github.com/onflow/flow-go/fvm"
+	"github.com/onflow/flow-go/fvm/state"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
 	sdk "github.com/onflow/flow-go-sdk"
@@ -57,7 +57,7 @@ type Blockchain struct {
 }
 
 type ServiceKey struct {
-	ID             int
+	Index          int
 	Address        sdk.Address
 	SequenceNumber uint64
 	PrivateKey     *sdkcrypto.PrivateKey
@@ -67,28 +67,28 @@ type ServiceKey struct {
 	Weight         int
 }
 
-func (r ServiceKey) Signer() sdkcrypto.Signer {
-	return sdkcrypto.NewInMemorySigner(*r.PrivateKey, r.HashAlgo)
+func (s ServiceKey) Signer() sdkcrypto.Signer {
+	return sdkcrypto.NewInMemorySigner(*s.PrivateKey, s.HashAlgo)
 }
 
-func (r ServiceKey) AccountKey() *sdk.AccountKey {
+func (s ServiceKey) AccountKey() *sdk.AccountKey {
 
 	var publicKey sdkcrypto.PublicKey
-	if r.PublicKey != nil {
-		publicKey = *r.PublicKey
+	if s.PublicKey != nil {
+		publicKey = *s.PublicKey
 	}
 
-	if r.PrivateKey != nil {
-		publicKey = r.PrivateKey.PublicKey()
+	if s.PrivateKey != nil {
+		publicKey = s.PrivateKey.PublicKey()
 	}
 
 	return &sdk.AccountKey{
-		ID:             r.ID,
+		Index:          s.Index,
 		PublicKey:      publicKey,
-		SigAlgo:        r.SigAlgo,
-		HashAlgo:       r.HashAlgo,
-		Weight:         r.Weight,
-		SequenceNumber: r.SequenceNumber,
+		SigAlgo:        s.SigAlgo,
+		HashAlgo:       s.HashAlgo,
+		Weight:         s.Weight,
+		SequenceNumber: s.SequenceNumber,
 	}
 }
 
@@ -335,7 +335,7 @@ func configureNewLedger(
 	}
 
 	// commit the genesis block to storage
-	genesis := flowgo.Genesis(nil, conf.GetChainID())
+	genesis := flowgo.Genesis(conf.GetChainID())
 
 	err = store.CommitBlock(
 		*genesis,
@@ -413,7 +413,7 @@ func (b *Blockchain) ServiceKey() ServiceKey {
 	}
 
 	if len(serviceAccount.Keys) > 0 {
-		b.serviceKey.ID = 0
+		b.serviceKey.Index = 0
 		b.serviceKey.SequenceNumber = serviceAccount.Keys[0].SeqNumber
 		b.serviceKey.Weight = serviceAccount.Keys[0].Weight
 	}
@@ -928,10 +928,10 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, code []byte) (s
 
 	tx.SetGasLimit(MaxGasLimit).
 		SetReferenceBlockID(sdk.Identifier(latestBlock.ID())).
-		SetProposalKey(serviceAddress, serviceKey.ID, serviceKey.SequenceNumber).
+		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
 		SetPayer(serviceAddress)
 
-	err = tx.SignEnvelope(serviceAddress, serviceKey.ID, serviceKey.Signer())
+	err = tx.SignEnvelope(serviceAddress, serviceKey.Index, serviceKey.Signer())
 	if err != nil {
 		return sdk.Address{}, err
 	}
