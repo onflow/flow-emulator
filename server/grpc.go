@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/dapperlabs/flow-go/access"
-	legacyaccess "github.com/dapperlabs/flow-go/access/legacy"
-	"github.com/dapperlabs/flow-go/model/flow"
+	"github.com/onflow/flow-go/access"
+	legacyaccess "github.com/onflow/flow-go/access/legacy"
+	"github.com/onflow/flow-go/model/flow"
 	grpcprometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	accessproto "github.com/onflow/flow/protobuf/go/flow/access"
 	legacyaccessproto "github.com/onflow/flow/protobuf/go/flow/legacy/access"

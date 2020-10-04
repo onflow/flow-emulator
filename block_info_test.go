@@ -35,10 +35,10 @@ func TestBlockInfo(t *testing.T) {
 				}
 			`)).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -49,10 +49,10 @@ func TestBlockInfo(t *testing.T) {
 		assertTransactionSucceeded(t, result)
 
 		require.Len(t, result.Logs, 2)
-		assert.Equal(t, fmt.Sprintf("Block(height: %v, id: 0x%x, timestamp: %.8f)", block2.Header.Height+1,
-			b.PendingBlockID(), float64(b.PendingBlockTimestamp().Unix())), result.Logs[0])
-		assert.Equal(t, fmt.Sprintf("Block(height: %v, id: 0x%x, timestamp: %.8f)", block2.Header.Height,
-			block2.ID(), float64(block2.Header.Timestamp.Unix())), result.Logs[1])
+		assert.Equal(t, fmt.Sprintf("Block(height: %v, view: %v, id: 0x%x, timestamp: %.8f)", block2.Header.Height+1,
+			block2.Header.View, b.PendingBlockID(), float64(b.PendingBlockTimestamp().Unix())), result.Logs[0])
+		assert.Equal(t, fmt.Sprintf("Block(height: %v, view: %v, id: 0x%x, timestamp: %.8f)", block2.Header.Height,
+			block2.Header.View, block2.ID(), float64(block2.Header.Timestamp.Unix())), result.Logs[1])
 	})
 
 	t.Run("works as script", func(t *testing.T) {
@@ -72,9 +72,9 @@ func TestBlockInfo(t *testing.T) {
 		assert.True(t, result.Succeeded())
 
 		require.Len(t, result.Logs, 2)
-		assert.Equal(t, fmt.Sprintf("Block(height: %v, id: 0x%x, timestamp: %.8f)", block2.Header.Height,
-			block2.ID(), float64(block2.Header.Timestamp.Unix())), result.Logs[0])
-		assert.Equal(t, fmt.Sprintf("Block(height: %v, id: 0x%x, timestamp: %.8f)", block1.Header.Height,
-			block1.ID(), float64(block1.Header.Timestamp.Unix())), result.Logs[1])
+		assert.Equal(t, fmt.Sprintf("Block(height: %v, view: %v, id: 0x%x, timestamp: %.8f)", block2.Header.Height,
+			block2.Header.View, block2.ID(), float64(block2.Header.Timestamp.Unix())), result.Logs[0])
+		assert.Equal(t, fmt.Sprintf("Block(height: %v, view: %v, id: 0x%x, timestamp: %.8f)", block1.Header.Height,
+			block1.Header.View, block1.ID(), float64(block1.Header.Timestamp.Unix())), result.Logs[1])
 	})
 }
