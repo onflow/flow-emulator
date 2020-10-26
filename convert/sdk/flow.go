@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"github.com/onflow/flow-go/fvm"
 
-	"github.com/onflow/flow-go/access"
-	flowcrypto "github.com/onflow/flow-go/crypto"
-	flowhash "github.com/onflow/flow-go/crypto/hash"
-	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	sdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
+	"github.com/onflow/flow-go/access"
+	flowcrypto "github.com/onflow/flow-go/crypto"
+	flowhash "github.com/onflow/flow-go/crypto/hash"
+	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
 func SDKIdentifierToFlow(sdkIdentifier sdk.Identifier) flowgo.Identifier {
@@ -41,7 +41,7 @@ func FlowIdentifiersToSDK(flowIdentifiers []flowgo.Identifier) []sdk.Identifier 
 func SDKProposalKeyToFlow(sdkProposalKey sdk.ProposalKey) flowgo.ProposalKey {
 	return flowgo.ProposalKey{
 		Address:        SDKAddressToFlow(sdkProposalKey.Address),
-		KeyID:          uint64(sdkProposalKey.KeyIndex),
+		KeyIndex:       uint64(sdkProposalKey.KeyIndex),
 		SequenceNumber: sdkProposalKey.SequenceNumber,
 	}
 }
@@ -49,7 +49,7 @@ func SDKProposalKeyToFlow(sdkProposalKey sdk.ProposalKey) flowgo.ProposalKey {
 func FlowProposalKeyToSDK(flowProposalKey flowgo.ProposalKey) sdk.ProposalKey {
 	return sdk.ProposalKey{
 		Address:        FlowAddressToSDK(flowProposalKey.Address),
-		KeyIndex:       int(flowProposalKey.KeyID),
+		KeyIndex:       int(flowProposalKey.KeyIndex),
 		SequenceNumber: flowProposalKey.SequenceNumber,
 	}
 }
@@ -82,7 +82,7 @@ func SDKTransactionSignatureToFlow(sdkTransactionSignature sdk.TransactionSignat
 	return flowgo.TransactionSignature{
 		Address:     SDKAddressToFlow(sdkTransactionSignature.Address),
 		SignerIndex: sdkTransactionSignature.SignerIndex,
-		KeyID:       uint64(sdkTransactionSignature.KeyIndex),
+		KeyIndex:    uint64(sdkTransactionSignature.KeyIndex),
 		Signature:   sdkTransactionSignature.Signature,
 	}
 }
@@ -91,7 +91,7 @@ func FlowTransactionSignatureToSDK(flowTransactionSignature flowgo.TransactionSi
 	return sdk.TransactionSignature{
 		Address:     FlowAddressToSDK(flowTransactionSignature.Address),
 		SignerIndex: flowTransactionSignature.SignerIndex,
-		KeyIndex:    int(flowTransactionSignature.KeyID),
+		KeyIndex:    int(flowTransactionSignature.KeyIndex),
 		Signature:   flowTransactionSignature.Signature,
 	}
 }
@@ -328,10 +328,11 @@ func FlowAccountToSDK(flowAccount flowgo.Account) (sdk.Account, error) {
 	}
 
 	return sdk.Account{
-		Address: FlowAddressToSDK(flowAccount.Address),
-		Balance: flowAccount.Balance,
-		Code:    flowAccount.Code,
-		Keys:    sdkPublicKeys,
+		Address:   FlowAddressToSDK(flowAccount.Address),
+		Balance:   flowAccount.Balance,
+		Code:      nil,
+		Keys:      sdkPublicKeys,
+		Contracts: flowAccount.Contracts,
 	}, nil
 }
 
@@ -342,10 +343,10 @@ func SDKAccountToFlow(account *sdk.Account) (*flowgo.Account, error) {
 	}
 
 	return &flowgo.Account{
-		Address: SDKAddressToFlow(account.Address),
-		Balance: account.Balance,
-		Code:    account.Code,
-		Keys:    keys,
+		Address:   SDKAddressToFlow(account.Address),
+		Balance:   account.Balance,
+		Keys:      keys,
+		Contracts: account.Contracts,
 	}, nil
 }
 

@@ -233,16 +233,6 @@ func (s *Store) UnsafeInsertLedgerDelta(blockHeight uint64, delta delta.Delta) e
 	return s.insertLedgerDelta(blockHeight, delta)
 }
 
-func DeltaHasBeenDeleted(d delta.Delta, registerID flowgo.RegisterID) bool {
-	value, exists := d.Data[string(registerID)]
-	return exists && value == nil
-}
-
-func MapLedgerSet(m *state.MapLedger, registerID flowgo.RegisterID, value flowgo.RegisterValue) {
-	m.RegisterTouches[string(registerID)] = true
-	m.Registers[string(registerID)] = value
-}
-
 func (s *Store) insertLedgerDelta(blockHeight uint64, delta delta.Delta) error {
 	var oldLedger *state.MapLedger
 
@@ -256,11 +246,11 @@ func (s *Store) insertLedgerDelta(blockHeight uint64, delta delta.Delta) error {
 	newLedger := state.NewMapLedger()
 
 	// copy values from the previous ledger
-	for keyString, value := range oldLedger.Registers {
-		key := flowgo.RegisterID(keyString)
-
-		if !DeltaHasBeenDeleted(delta, key) {
-			MapLedgerSet(newLedger, key, value)
+	for keyString, oldValue := range oldLedger.Registers {
+		value, exists := delta.Data[keyString]
+		if !exists || value.Value != nil {
+			newLedger.RegisterTouches[keyString] = true
+			newLedger.Registers[keyString] = oldValue
 		}
 	}
 
@@ -269,7 +259,7 @@ func (s *Store) insertLedgerDelta(blockHeight uint64, delta delta.Delta) error {
 	for i, value := range values {
 		key := ids[i]
 		if value != nil {
-			MapLedgerSet(newLedger, key, value)
+			newLedger.Set(key.Owner, key.Controller, key.Key, value)
 		}
 	}
 

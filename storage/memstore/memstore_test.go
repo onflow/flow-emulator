@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/onflow/flow-go/engine/execution/state/delta"
-	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,16 +12,23 @@ import (
 
 func TestMemstore(t *testing.T) {
 	const blockHeight = 0
-	const key = "foo"
-	value := []byte("bar")
+	key := flowgo.RegisterID{
+		Owner:      "",
+		Controller: "",
+		Key:        "foo",
+	}
+	value := flowgo.RegisterEntry{
+		Key:   key,
+		Value: []byte("bar"),
+	}
 
 	store := New()
 
 	err := store.UnsafeInsertLedgerDelta(
 		blockHeight,
 		delta.Delta{
-			Data: map[string]flowgo.RegisterValue{
-				string(state.RegisterID("", "", key)): value,
+			Data: map[string]flowgo.RegisterEntry{
+				key.String(): value,
 			},
 		},
 	)
@@ -36,11 +42,10 @@ func TestMemstore(t *testing.T) {
 			defer wg.Done()
 
 			view := store.LedgerViewByHeight(blockHeight)
-			actualValue, err := view.Get("", "", key)
-			require.NoError(t, err)
+			actualValue, err := view.Get("", "", "foo")
 
 			require.NoError(t, err)
-			assert.Equal(t, value, actualValue)
+			assert.Equal(t, value.Value, actualValue)
 		}()
 	}
 

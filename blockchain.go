@@ -16,6 +16,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/onflow/cadence"
+	"github.com/onflow/cadence/runtime"
+	sdk "github.com/onflow/flow-go-sdk"
+	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
+	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go/access"
 	"github.com/onflow/flow-go/crypto"
 	"github.com/onflow/flow-go/crypto/hash"
@@ -23,11 +28,6 @@ import (
 	"github.com/onflow/flow-go/fvm"
 	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
-	"github.com/onflow/cadence"
-	"github.com/onflow/cadence/runtime"
-	sdk "github.com/onflow/flow-go-sdk"
-	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
-	"github.com/onflow/flow-go-sdk/templates"
 
 	"github.com/dapperlabs/flow-emulator/convert"
 	sdkconvert "github.com/dapperlabs/flow-emulator/convert/sdk"
@@ -911,8 +911,8 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blo
 }
 
 // CreateAccount submits a transaction to create a new account with the given
-// account keys and code. The transaction is paid by the service account.
-func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, code []byte) (sdk.Address, error) {
+// account keys and contracts. The transaction is paid by the service account.
+func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, contracts map[string][]byte) (sdk.Address, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -924,7 +924,7 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, code []byte) (s
 		return sdk.Address{}, err
 	}
 
-	tx := templates.CreateAccount(publicKeys, code, serviceAddress)
+	tx := templates.CreateAccountWithContracts(publicKeys, contracts, serviceAddress)
 
 	tx.SetGasLimit(MaxGasLimit).
 		SetReferenceBlockID(sdk.Identifier(latestBlock.ID())).

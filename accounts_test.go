@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/onflow/flow-go/fvm"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go-sdk/test"
+	"github.com/onflow/flow-go/fvm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -27,7 +27,7 @@ func TestCreateAccount(t *testing.T) {
 
 		accountKey := accountKeys.New()
 
-		tx := templates.CreateAccount([]*flow.AccountKey{accountKey}, nil, b.ServiceKey().Address)
+		tx := templates.CreateAccount([]*flow.AccountKey{accountKey}, b.ServiceKey().Address)
 
 		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -53,7 +53,7 @@ func TestCreateAccount(t *testing.T) {
 		assert.Equal(t, uint64(0), account.Balance)
 		require.Len(t, account.Keys, 1)
 		assert.Equal(t, accountKey.PublicKey.Encode(), account.Keys[0].PublicKey.Encode())
-		assert.Empty(t, account.Code)
+		assert.Empty(t, account.Contracts)
 	})
 
 	t.Run("Single public keys", func(t *testing.T) {
@@ -62,7 +62,7 @@ func TestCreateAccount(t *testing.T) {
 
 		accountKey := accountKeys.New()
 
-		tx := templates.CreateAccount([]*flow.AccountKey{accountKey}, nil, b.ServiceKey().Address)
+		tx := templates.CreateAccount([]*flow.AccountKey{accountKey}, b.ServiceKey().Address)
 
 		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -87,7 +87,7 @@ func TestCreateAccount(t *testing.T) {
 		assert.Equal(t, uint64(0), account.Balance)
 		require.Len(t, account.Keys, 1)
 		assert.Equal(t, accountKey.PublicKey.Encode(), account.Keys[0].PublicKey.Encode())
-		assert.Empty(t, account.Code)
+		assert.Empty(t, account.Contracts)
 	})
 
 	t.Run("Multiple public keys", func(t *testing.T) {
@@ -99,7 +99,6 @@ func TestCreateAccount(t *testing.T) {
 
 		tx := templates.CreateAccount(
 			[]*flow.AccountKey{accountKeyA, accountKeyB},
-			nil,
 			b.ServiceKey().Address,
 		)
 
@@ -127,21 +126,21 @@ func TestCreateAccount(t *testing.T) {
 		require.Len(t, account.Keys, 2)
 		assert.Equal(t, accountKeyA.PublicKey.Encode(), account.Keys[0].PublicKey.Encode())
 		assert.Equal(t, accountKeyB.PublicKey.Encode(), account.Keys[1].PublicKey.Encode())
-		assert.Empty(t, account.Code)
+		assert.Empty(t, account.Contracts)
 	})
 
-	t.Run("Public keys and code", func(t *testing.T) {
+	t.Run("Public keys and contract", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		accountKeyA := accountKeys.New()
 		accountKeyB := accountKeys.New()
 
-		code := []byte(testContract)
+		contracts := map[string][]byte{"Test": []byte(testContract)}
 
-		tx := templates.CreateAccount(
+		tx := templates.CreateAccountWithContracts(
 			[]*flow.AccountKey{accountKeyA, accountKeyB},
-			code,
+			contracts,
 			b.ServiceKey().Address,
 		)
 
@@ -169,18 +168,76 @@ func TestCreateAccount(t *testing.T) {
 		require.Len(t, account.Keys, 2)
 		assert.Equal(t, accountKeyA.PublicKey.Encode(), account.Keys[0].PublicKey.Encode())
 		assert.Equal(t, accountKeyB.PublicKey.Encode(), account.Keys[1].PublicKey.Encode())
-		assert.Equal(t, code, account.Code)
+		assert.Equal(t, contracts, account.Contracts)
+	})
+
+	t.Run("Public keys and two contracts", func(t *testing.T) {
+		b, err := emulator.NewBlockchain()
+		require.NoError(t, err)
+
+		codeA := `
+		  pub contract Test1 {
+			  pub fun a(): Int {
+				  return 1
+			  }
+		  }
+		`
+		codeB := fmt.Sprintf(`
+		  pub contract Test2 {
+			  pub fun b(): Int {
+				  return 2
+			  }
+		  }
+		`)
+
+		accountKey := accountKeys.New()
+
+		contracts := map[string][]byte{
+			"Test1": []byte(codeA),
+			"Test2": []byte(codeB),
+		}
+
+		tx := templates.CreateAccountWithContracts(
+			[]*flow.AccountKey{accountKey},
+			contracts,
+			b.ServiceKey().Address,
+		)
+
+		tx.SetGasLimit(emulator.MaxGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		assert.NoError(t, err)
+
+		err = b.AddTransaction(*tx)
+		require.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		require.NoError(t, err)
+		assertTransactionSucceeded(t, result)
+
+		_, err = b.CommitBlock()
+		assert.NoError(t, err)
+
+		account, err := lastCreatedAccount(b, result)
+		require.NoError(t, err)
+
+		assert.Equal(t, uint64(0), account.Balance)
+		require.Len(t, account.Keys, 1)
+		assert.Equal(t, accountKey.PublicKey.Encode(), account.Keys[0].PublicKey.Encode())
+		assert.Equal(t, contracts, account.Contracts)
 	})
 
 	t.Run("Code and no keys", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		code := []byte(testContract)
+		contracts := map[string][]byte{"Test": []byte(testContract)}
 
-		tx := templates.CreateAccount(
+		tx := templates.CreateAccountWithContracts(
 			nil,
-			code,
+			contracts,
 			b.ServiceKey().Address,
 		)
 
@@ -206,7 +263,7 @@ func TestCreateAccount(t *testing.T) {
 
 		assert.Equal(t, uint64(0), account.Balance)
 		assert.Empty(t, account.Keys)
-		assert.Equal(t, code, account.Code)
+		assert.Equal(t, contracts, account.Contracts)
 	})
 
 	t.Run("Event emitted", func(t *testing.T) {
@@ -215,11 +272,11 @@ func TestCreateAccount(t *testing.T) {
 
 		accountKey := accountKeys.New()
 
-		code := []byte(testContract)
+		contracts := map[string][]byte{"Test": []byte(testContract)}
 
-		tx := templates.CreateAccount(
+		tx := templates.CreateAccountWithContracts(
 			[]*flow.AccountKey{accountKey},
-			code,
+			contracts,
 			b.ServiceKey().Address,
 		)
 
@@ -252,7 +309,7 @@ func TestCreateAccount(t *testing.T) {
 		assert.Equal(t, uint64(0), account.Balance)
 		require.Len(t, account.Keys, 1)
 		assert.Equal(t, accountKey.PublicKey, account.Keys[0].PublicKey)
-		assert.Equal(t, code, account.Code)
+		assert.Equal(t, contracts, account.Contracts)
 	})
 
 	t.Run("Invalid hash algorithm", func(t *testing.T) {
@@ -264,7 +321,6 @@ func TestCreateAccount(t *testing.T) {
 
 		tx := templates.CreateAccount(
 			[]*flow.AccountKey{accountKey},
-			nil,
 			b.ServiceKey().Address,
 		)
 
@@ -288,11 +344,39 @@ func TestCreateAccount(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		code := []byte("not a valid script")
+		contracts := map[string][]byte{"Test": []byte("not a valid script")}
 
-		tx := templates.CreateAccount(
+		tx := templates.CreateAccountWithContracts(
 			nil,
-			code,
+			contracts,
+			b.ServiceKey().Address,
+		)
+
+		tx.SetGasLimit(emulator.MaxGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		assert.NoError(t, err)
+
+		err = b.AddTransaction(*tx)
+		assert.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		require.NoError(t, err)
+
+		assert.True(t, result.Reverted())
+	})
+
+	t.Run("Invalid contract name", func(t *testing.T) {
+		b, err := emulator.NewBlockchain()
+		require.NoError(t, err)
+
+		contracts := map[string][]byte{"Test2": []byte(testContract)}
+
+		tx := templates.CreateAccountWithContracts(
+			nil,
+			contracts,
 			b.ServiceKey().Address,
 		)
 
@@ -546,15 +630,19 @@ func TestUpdateAccountCode(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		accountAddressB, err := b.CreateAccount([]*flow.AccountKey{accountKeyB}, codeA)
+		contracts := map[string][]byte{"Test": codeA}
+
+		accountAddressB, err := b.CreateAccount(
+			[]*flow.AccountKey{accountKeyB},
+			contracts)
 		require.NoError(t, err)
 
 		account, err := b.GetAccount(accountAddressB)
 		require.NoError(t, err)
 
-		assert.Equal(t, codeA, account.Code)
+		assert.Equal(t, contracts, account.Contracts)
 
-		tx := templates.UpdateAccountCode(accountAddressB, codeB)
+		tx := templates.UpdateAccountCode(accountAddressB, "Test", codeB)
 
 		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -579,22 +667,24 @@ func TestUpdateAccountCode(t *testing.T) {
 		account, err = b.GetAccount(accountAddressB)
 		assert.NoError(t, err)
 
-		assert.Equal(t, codeB, account.Code)
+		assert.Equal(t, codeB, account.Contracts["Test"])
 	})
 
 	t.Run("Invalid signature", func(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		accountAddressB, err := b.CreateAccount([]*flow.AccountKey{accountKeyB}, codeA)
+		accountAddressB, err := b.CreateAccount(
+			[]*flow.AccountKey{accountKeyB},
+			map[string][]byte{"Test": codeA})
 		require.NoError(t, err)
 
 		account, err := b.GetAccount(accountAddressB)
 		require.NoError(t, err)
 
-		assert.Equal(t, codeA, account.Code)
+		assert.Equal(t, codeA, account.Contracts["Test"])
 
-		tx := templates.UpdateAccountCode(accountAddressB, codeB)
+		tx := templates.UpdateAccountCode(accountAddressB, "Test", codeB)
 
 		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -618,7 +708,7 @@ func TestUpdateAccountCode(t *testing.T) {
 		assert.NoError(t, err)
 
 		// code should not be updated
-		assert.Equal(t, codeA, account.Code)
+		assert.Equal(t, codeA, account.Contracts["Test"])
 	})
 }
 
@@ -626,15 +716,15 @@ func TestImportAccountCode(t *testing.T) {
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
-	accountScript := []byte(`
+	accountContracts := map[string][]byte{"Computer": []byte(`
       pub contract Computer {
           pub fun answer(): Int {
               return 42
           }
       }
-	`)
+	`)}
 
-	address, err := b.CreateAccount(nil, accountScript)
+	address, err := b.CreateAccount(nil, accountContracts)
 	assert.NoError(t, err)
 
 	script := []byte(fmt.Sprintf(`
