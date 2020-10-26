@@ -49,7 +49,7 @@ func TestEventEmitted(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		accountScript := []byte(`
+		accountContracts := map[string][]byte{"Test": []byte(`
             pub contract Test {
 				pub event MyEvent(x: Int, y: Int)
 
@@ -57,11 +57,11 @@ func TestEventEmitted(t *testing.T) {
 					emit MyEvent(x: x, y: y)
 				}
 			}
-		`)
+		`)}
 
 		publicKey := b.ServiceKey().AccountKey()
 
-		address, err := b.CreateAccount([]*flow.AccountKey{publicKey}, accountScript)
+		address, err := b.CreateAccount([]*flow.AccountKey{publicKey}, accountContracts)
 		assert.NoError(t, err)
 
 		script := []byte(fmt.Sprintf(`
@@ -93,7 +93,10 @@ func TestEventEmitted(t *testing.T) {
 		block, err := b.CommitBlock()
 		require.NoError(t, err)
 
-		location := runtime.AddressLocation(address.Bytes())
+		location := runtime.AddressContractLocation{
+			AddressLocation: address.Bytes(),
+			Name:            "Test",
+		}
 		expectedType := fmt.Sprintf("%s.Test.MyEvent", location.ID())
 
 		events, err := b.GetEventsByHeight(block.Header.Height, expectedType)

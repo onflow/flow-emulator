@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/onflow/flow-go/fvm"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
@@ -13,6 +12,7 @@ import (
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go-sdk/test"
+	"github.com/onflow/flow-go/fvm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -933,7 +933,10 @@ func TestGetTransactionResult(t *testing.T) {
 
 	event := result.Events[0]
 
-	location := runtime.AddressLocation(counterAddress.Bytes())
+	location := runtime.AddressContractLocation{
+		AddressLocation: runtime.AddressLocation(counterAddress.Bytes()),
+		Name:            "Counting",
+	}
 	eventType := fmt.Sprintf("%s.Counting.CountIncremented", location.ID())
 
 	assert.Equal(t, tx.ID(), event.TransactionID)
@@ -974,9 +977,9 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 
 	accountKey, accountSigner := accountKeys.NewWithSigner()
 
-	createAccountTx := templates.CreateAccount(
+	createAccountTx := templates.CreateAccountWithContracts(
 		[]*flow.AccountKey{accountKey},
-		[]byte(helloWorldContract),
+		map[string][]byte{"HelloWorld": []byte(helloWorldContract)},
 		b.ServiceKey().Address,
 	)
 
@@ -1055,7 +1058,6 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 
 	createAccountTx := templates.CreateAccount(
 		[]*flow.AccountKey{accountKey},
-		nil,
 		b.ServiceKey().Address,
 	)
 
@@ -1100,7 +1102,7 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 
 	accountKey = account.Keys[0]
 
-	updateAccountCodeTx := templates.UpdateAccountCode(newAccountAddress, []byte(helloWorldContract))
+	updateAccountCodeTx := templates.SetAccountCode(newAccountAddress, "HelloWorld", []byte(helloWorldContract))
 	updateAccountCodeTx.
 		SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(newAccountAddress, accountKey.Index, accountKey.SequenceNumber).

@@ -63,7 +63,8 @@ func generateAddTwoToCounterScript(counterAddress flow.Address) string {
 }
 
 func deployAndGenerateAddTwoScript(t *testing.T, b *emulator.Blockchain) (string, flow.Address) {
-	counterAddress, err := b.CreateAccount(nil, []byte(counterScript))
+	counterAddress, err := b.CreateAccount(nil,
+		map[string][]byte{"Counting": []byte(counterScript)})
 	require.NoError(t, err)
 
 	return generateAddTwoToCounterScript(counterAddress), counterAddress

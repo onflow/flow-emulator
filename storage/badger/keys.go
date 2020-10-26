@@ -82,15 +82,29 @@ func ledgerKey(blockHeight uint64) []byte {
 }
 
 func ledgerChangelogKey(registerID flowgo.RegisterID) []byte {
-	return []byte(fmt.Sprintf("%s-%s", ledgerChangelogKeyPrefix, registerID))
+	return []byte(fmt.Sprintf("%s-%s-%s-%s",
+		ledgerChangelogKeyPrefix,
+		registerID.Owner,
+		registerID.Controller,
+		registerID.Key))
 }
 
 func ledgerValueKey(registerID flowgo.RegisterID, blockHeight uint64) []byte {
-	return []byte(fmt.Sprintf("%s-%s-%032d", ledgerValueKeyPrefix, string(registerID), blockHeight))
+	return []byte(fmt.Sprintf("%s-%s-%032d", ledgerValueKeyPrefix, registerID.String(), blockHeight))
 }
 
 // registerIDFromLedgerChangelogKey recovers the register ID from a ledger
 // changelog key.
-func registerIDFromLedgerChangelogKey(key []byte) string {
-	return strings.TrimPrefix(string(key), ledgerChangelogKeyPrefix+"-")
+func registerIDFromLedgerChangelogKey(key []byte) (flowgo.RegisterID, error) {
+	registerString := strings.TrimPrefix(string(key), ledgerChangelogKeyPrefix+"-")
+	parts := strings.SplitN(registerString, "-", 3)
+	if len(parts) < 3 {
+		return flowgo.RegisterID{}, fmt.Errorf("failed to parse register ID from %s", string(key))
+	}
+
+	return flowgo.RegisterID{
+		Owner:      parts[0],
+		Controller: parts[1],
+		Key:        parts[2],
+	}, nil
 }
