@@ -8,8 +8,8 @@ import (
 	"github.com/onflow/flow-go/engine/execution/state/delta"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
-	"github.com/dapperlabs/flow-emulator/storage"
-	"github.com/dapperlabs/flow-emulator/types"
+	"github.com/onflow/flow-emulator/storage"
+	"github.com/onflow/flow-emulator/types"
 )
 
 // Store is an embedded storage implementation using Badger as the underlying

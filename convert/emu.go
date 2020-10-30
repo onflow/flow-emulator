@@ -3,7 +3,7 @@ package convert
 import (
 	"github.com/onflow/flow-go/fvm"
 
-	"github.com/dapperlabs/flow-emulator/types"
+	"github.com/onflow/flow-emulator/types"
 )
 
 func ToStorableResult(tp *fvm.TransactionProcedure, txIndex uint32) (types.StorableTransactionResult, error) {

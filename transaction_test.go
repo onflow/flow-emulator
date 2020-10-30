@@ -16,9 +16,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	emulator "github.com/dapperlabs/flow-emulator"
-	"github.com/dapperlabs/flow-emulator/types"
-	"github.com/dapperlabs/flow-emulator/utils/unittest"
+	emulator "github.com/onflow/flow-emulator"
+	"github.com/onflow/flow-emulator/types"
+	"github.com/onflow/flow-emulator/utils/unittest"
 )
 
 func TestSubmitTransaction(t *testing.T) {

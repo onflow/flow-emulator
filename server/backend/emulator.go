@@ -4,8 +4,8 @@ import (
 	sdk "github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
-	emulator "github.com/dapperlabs/flow-emulator"
-	"github.com/dapperlabs/flow-emulator/types"
+	emulator "github.com/onflow/flow-emulator"
+	"github.com/onflow/flow-emulator/types"
 )
 
 var _ Emulator = &emulator.Network{}

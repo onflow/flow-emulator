@@ -7,6 +7,7 @@ import (
 
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
+	"github.com/onflow/flow-emulator/types"
 	"github.com/onflow/flow-go-sdk"
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/client"
@@ -14,8 +15,6 @@ import (
 	"github.com/onflow/flow-go-sdk/templates"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"google.golang.org/grpc"
-
-	"github.com/dapperlabs/flow-emulator/types"
 )
 
 type Network struct {
