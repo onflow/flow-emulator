@@ -174,7 +174,7 @@ type PendingBlockCommitBeforeExecutionError struct {
 }
 
 func (e *PendingBlockCommitBeforeExecutionError) Error() string {
-	return fmt.Sprintf("pending block with ID %s cannot be commited before execution", e.BlockID)
+	return fmt.Sprintf("pending block with ID %s cannot be committed before execution", e.BlockID)
 }
 
 // A PendingBlockMidExecutionError indicates that the current pending block is mid-execution.
