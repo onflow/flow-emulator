@@ -33,7 +33,7 @@ const (
 )
 
 // CheckCollector produces multiple checks and returns
-// live only if all decendant checks are live.
+// live only if all descendant checks are live.
 //
 // Each child check may only be used by one goroutine,
 // the CheckCollector may be used by multiple routines at once to
