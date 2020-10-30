@@ -103,6 +103,7 @@ func TestInitialization(t *testing.T) {
 		require.NoError(t, err)
 
 		minedEvents, err := b.GetEventsByHeight(block.Header.Height, "")
+		require.NoError(t, err)
 
 		// Create a new blockchain with the same store
 		b, _ = emulator.NewBlockchain(emulator.WithStore(store))
