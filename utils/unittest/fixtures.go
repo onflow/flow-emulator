@@ -4,8 +4,8 @@ import (
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go-sdk/test"
 
-	convert "github.com/dapperlabs/flow-emulator/convert/sdk"
-	"github.com/dapperlabs/flow-emulator/types"
+	convert "github.com/onflow/flow-emulator/convert/sdk"
+	"github.com/onflow/flow-emulator/types"
 )
 
 func TransactionFixture() flowgo.TransactionBody {

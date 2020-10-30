@@ -11,7 +11,7 @@ import (
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/flow-go-sdk"
 
-	emulator "github.com/dapperlabs/flow-emulator"
+	emulator "github.com/onflow/flow-emulator"
 )
 
 func TestEventEmitted(t *testing.T) {

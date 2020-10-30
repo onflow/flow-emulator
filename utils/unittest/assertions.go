@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dapperlabs/flow-emulator/types"
+	"github.com/onflow/flow-emulator/types"
 )
 
 func AssertFVMErrorType(t *testing.T, expected interface{}, err error) bool {
