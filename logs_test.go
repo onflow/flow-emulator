@@ -3,7 +3,7 @@ package emulator_test
 import (
 	"testing"
 
-	emulator "github.com/dapperlabs/flow-emulator"
+	emulator "github.com/onflow/flow-emulator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -29,11 +29,11 @@ import (
 	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
-	"github.com/dapperlabs/flow-emulator/convert"
-	sdkconvert "github.com/dapperlabs/flow-emulator/convert/sdk"
-	"github.com/dapperlabs/flow-emulator/storage"
-	"github.com/dapperlabs/flow-emulator/storage/memstore"
-	"github.com/dapperlabs/flow-emulator/types"
+	"github.com/onflow/flow-emulator/convert"
+	sdkconvert "github.com/onflow/flow-emulator/convert/sdk"
+	"github.com/onflow/flow-emulator/storage"
+	"github.com/onflow/flow-emulator/storage/memstore"
+	"github.com/onflow/flow-emulator/types"
 )
 
 // Blockchain emulates the functionality of the Flow blockchain.

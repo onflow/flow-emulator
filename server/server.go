@@ -8,9 +8,9 @@ import (
 	"github.com/psiemens/graceland"
 	"github.com/sirupsen/logrus"
 
-	emulator "github.com/dapperlabs/flow-emulator"
-	"github.com/dapperlabs/flow-emulator/server/backend"
-	"github.com/dapperlabs/flow-emulator/storage"
+	emulator "github.com/onflow/flow-emulator"
+	"github.com/onflow/flow-emulator/server/backend"
+	"github.com/onflow/flow-emulator/storage"
 )
 
 // EmulatorServer is a local server that runs a Flow Emulator instance.

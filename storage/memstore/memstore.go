@@ -8,8 +8,8 @@ import (
 	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
-	"github.com/dapperlabs/flow-emulator/storage"
-	"github.com/dapperlabs/flow-emulator/types"
+	"github.com/onflow/flow-emulator/storage"
+	"github.com/onflow/flow-emulator/types"
 )
 
 // Store implements the Store interface with an in-memory store.

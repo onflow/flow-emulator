@@ -46,8 +46,8 @@ generate: generate-mocks
 
 .PHONY: generate-mocks
 generate-mocks:
-	GO111MODULE=on mockgen -destination=server/backend/mocks/emulator.go -package=mocks github.com/dapperlabs/flow-emulator/server/backend Emulator
-	GO111MODULE=on mockgen -destination=storage/mocks/store.go -package=mocks github.com/dapperlabs/flow-emulator/storage Store
+	GO111MODULE=on mockgen -destination=server/backend/mocks/emulator.go -package=mocks github.com/onflow/flow-emulator/server/backend Emulator
+	GO111MODULE=on mockgen -destination=storage/mocks/store.go -package=mocks github.com/onflow/flow-emulator/storage Store
 
 .PHONY: ci
 ci: install-tools generate test coverage

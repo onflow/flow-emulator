@@ -3,7 +3,7 @@ package server
 import (
 	"time"
 
-	"github.com/dapperlabs/flow-emulator/server/backend"
+	"github.com/onflow/flow-emulator/server/backend"
 )
 
 type BlocksTicker struct {

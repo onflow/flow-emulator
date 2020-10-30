@@ -6,7 +6,7 @@ import (
 	"github.com/onflow/flow-go/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
-	convert "github.com/dapperlabs/flow-emulator/convert/sdk"
+	convert "github.com/onflow/flow-emulator/convert/sdk"
 )
 
 // Adapter wraps the emulator backend to be compatible with access.API.
