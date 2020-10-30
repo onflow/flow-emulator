@@ -1,4 +1,4 @@
-module github.com/dapperlabs/flow-emulator
+module github.com/onflow/flow-emulator
 
 go 1.13
 

@@ -3,8 +3,8 @@ package convert
 import (
 	"github.com/onflow/flow-go/fvm"
 
-	sdkConvert "github.com/dapperlabs/flow-emulator/convert/sdk"
-	"github.com/dapperlabs/flow-emulator/types"
+	sdkConvert "github.com/onflow/flow-emulator/convert/sdk"
+	"github.com/onflow/flow-emulator/types"
 )
 
 func VMTransactionResultToEmulator(tp *fvm.TransactionProcedure, txIndex int) types.TransactionResult {

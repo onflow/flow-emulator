@@ -14,7 +14,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/dapperlabs/flow-emulator/server"
+	"github.com/onflow/flow-emulator/server"
 )
 
 type Config struct {

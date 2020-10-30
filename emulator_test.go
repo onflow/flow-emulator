@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	emulator "github.com/dapperlabs/flow-emulator"
-	"github.com/dapperlabs/flow-emulator/types"
+	emulator "github.com/onflow/flow-emulator"
+	"github.com/onflow/flow-emulator/types"
 )
 
 const counterScript = `

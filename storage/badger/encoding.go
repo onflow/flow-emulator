@@ -6,7 +6,7 @@ import (
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/fxamacker/cbor/v2"
 
-	"github.com/dapperlabs/flow-emulator/types"
+	"github.com/onflow/flow-emulator/types"
 )
 
 var em cbor.EncMode

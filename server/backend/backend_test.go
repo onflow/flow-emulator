@@ -19,10 +19,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	emulator "github.com/dapperlabs/flow-emulator"
-	"github.com/dapperlabs/flow-emulator/server/backend"
-	"github.com/dapperlabs/flow-emulator/server/backend/mocks"
-	"github.com/dapperlabs/flow-emulator/types"
+	emulator "github.com/onflow/flow-emulator"
+	"github.com/onflow/flow-emulator/server/backend"
+	"github.com/onflow/flow-emulator/server/backend/mocks"
+	"github.com/onflow/flow-emulator/types"
 )
 
 func backendTest(f func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator)) func(t *testing.T) {

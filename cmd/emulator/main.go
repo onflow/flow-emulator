@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/onflow/flow-go-sdk/crypto"
 
-	emulator "github.com/dapperlabs/flow-emulator"
-	"github.com/dapperlabs/flow-emulator/cmd/emulator/start"
+	emulator "github.com/onflow/flow-emulator"
+	"github.com/onflow/flow-emulator/cmd/emulator/start"
 )
 
 func defaultServiceKey(
