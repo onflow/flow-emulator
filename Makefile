@@ -18,6 +18,7 @@ export DOCKER_BUILDKIT := 1
 
 .PHONY: install-tools
 install-tools:
+	mkdir -p ${GOPATH}; \
 	cd ${GOPATH}; \
 	GO111MODULE=on go get github.com/golang/mock/mockgen@v1.3.1; \
 	GO111MODULE=on go get github.com/axw/gocov/gocov; \
