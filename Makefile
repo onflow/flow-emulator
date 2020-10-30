@@ -11,6 +11,8 @@ PATH := $(PATH):$(GOPATH)/bin
 # OS
 UNAME := $(shell uname)
 
+GOPATH ?= $(HOME)/go
+
 # Enable docker build kit
 export DOCKER_BUILDKIT := 1
 
@@ -66,3 +68,19 @@ docker-push:
 ifneq (${VERSION},)
 	docker push "gcr.io/dl-flow/emulator:${VERSION}"
 endif
+
+.PHONY: install-linter
+install-linter:
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.26.0
+
+.PHONY: lint
+lint:
+	golangci-lint run -v ./...
+
+.PHONY: check-headers
+check-headers:
+	@./check-headers.sh
+
+.PHONY: check-tidy
+check-tidy:
+	go mod tidy
