@@ -5,8 +5,8 @@
 package mocks
 
 import (
-	types "github.com/onflow/flow-emulator/types"
 	gomock "github.com/golang/mock/gomock"
+	types "github.com/onflow/flow-emulator/types"
 	delta "github.com/onflow/flow-go/engine/execution/state/delta"
 	flow "github.com/onflow/flow-go/model/flow"
 	reflect "reflect"
