@@ -1,4 +1,4 @@
-# Emulator
+# Flow Emulator
 
 The Flow Emulator is a lightweight tool that emulates the behaviour of the real Flow network. 
 
