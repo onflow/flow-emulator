@@ -45,7 +45,11 @@ func TestCreateAccount(t *testing.T) {
 
 		accountKey := accountKeys.New()
 
-		tx := templates.CreateAccount([]*flow.AccountKey{accountKey}, b.ServiceKey().Address)
+		tx := templates.CreateAccount(
+			[]*flow.AccountKey{accountKey},
+			nil,
+			b.ServiceKey().Address,
+		)
 
 		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -80,7 +84,11 @@ func TestCreateAccount(t *testing.T) {
 
 		accountKey := accountKeys.New()
 
-		tx := templates.CreateAccount([]*flow.AccountKey{accountKey}, b.ServiceKey().Address)
+		tx := templates.CreateAccount(
+			[]*flow.AccountKey{accountKey},
+			nil,
+			b.ServiceKey().Address,
+		)
 
 		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -117,6 +125,7 @@ func TestCreateAccount(t *testing.T) {
 
 		tx := templates.CreateAccount(
 			[]*flow.AccountKey{accountKeyA, accountKeyB},
+			nil,
 			b.ServiceKey().Address,
 		)
 
@@ -154,9 +163,14 @@ func TestCreateAccount(t *testing.T) {
 		accountKeyA := accountKeys.New()
 		accountKeyB := accountKeys.New()
 
-		contracts := map[string][]byte{"Test": []byte(testContract)}
+		contracts := []templates.Contract{
+			{
+				Name: "Test",
+				Source: testContract,
+			},
+		}
 
-		tx := templates.CreateAccountWithContracts(
+		tx := templates.CreateAccount(
 			[]*flow.AccountKey{accountKeyA, accountKeyB},
 			contracts,
 			b.ServiceKey().Address,
@@ -210,12 +224,18 @@ func TestCreateAccount(t *testing.T) {
 
 		accountKey := accountKeys.New()
 
-		contracts := map[string][]byte{
-			"Test1": []byte(codeA),
-			"Test2": []byte(codeB),
+		contracts := []templates.Contract{
+			{
+				Name: "Test1",
+				Source: codeA,
+			},
+			{
+				Name: "Test2",
+				Source: codeB,
+			},
 		}
 
-		tx := templates.CreateAccountWithContracts(
+		tx := templates.CreateAccount(
 			[]*flow.AccountKey{accountKey},
 			contracts,
 			b.ServiceKey().Address,
@@ -251,9 +271,14 @@ func TestCreateAccount(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		contracts := map[string][]byte{"Test": []byte(testContract)}
+		contracts := []templates.Contract{
+			{
+				Name:   "Test",
+				Source: testContract,
+			},
+		}
 
-		tx := templates.CreateAccountWithContracts(
+		tx := templates.CreateAccount(
 			nil,
 			contracts,
 			b.ServiceKey().Address,
@@ -290,9 +315,14 @@ func TestCreateAccount(t *testing.T) {
 
 		accountKey := accountKeys.New()
 
-		contracts := map[string][]byte{"Test": []byte(testContract)}
+		contracts := []templates.Contract{
+			{
+				Name:   "Test",
+				Source: testContract,
+			},
+		}
 
-		tx := templates.CreateAccountWithContracts(
+		tx := templates.CreateAccount(
 			[]*flow.AccountKey{accountKey},
 			contracts,
 			b.ServiceKey().Address,
@@ -339,6 +369,7 @@ func TestCreateAccount(t *testing.T) {
 
 		tx := templates.CreateAccount(
 			[]*flow.AccountKey{accountKey},
+			nil,
 			b.ServiceKey().Address,
 		)
 
@@ -362,9 +393,14 @@ func TestCreateAccount(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		contracts := map[string][]byte{"Test": []byte("not a valid script")}
+		contracts := []templates.Contract{
+			{
+				Name:   "Test",
+				Source: "not a valid script",
+			},
+		}
 
-		tx := templates.CreateAccountWithContracts(
+		tx := templates.CreateAccount(
 			nil,
 			contracts,
 			b.ServiceKey().Address,
@@ -390,9 +426,14 @@ func TestCreateAccount(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		contracts := map[string][]byte{"Test2": []byte(testContract)}
+		contracts := []templates.Contract{
+			{
+				Name:   "Test2",
+				Source: testContract,
+			},
+		}
 
-		tx := templates.CreateAccountWithContracts(
+		tx := templates.CreateAccount(
 			nil,
 			contracts,
 			b.ServiceKey().Address,
@@ -660,7 +701,7 @@ func TestUpdateAccountCode(t *testing.T) {
 
 		assert.Equal(t, contracts, account.Contracts)
 
-		tx := templates.UpdateAccountCode(accountAddressB, "Test", codeB)
+		tx := templates.UpdateAccountContract(accountAddressB, "Test", codeB)
 
 		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -702,7 +743,7 @@ func TestUpdateAccountCode(t *testing.T) {
 
 		assert.Equal(t, codeA, account.Contracts["Test"])
 
-		tx := templates.UpdateAccountCode(accountAddressB, "Test", codeB)
+		tx := templates.UpdateAccountContract(accountAddressB, "Test", codeB)
 
 		tx.SetGasLimit(emulator.MaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
