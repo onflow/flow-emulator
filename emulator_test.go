@@ -25,6 +25,7 @@ import (
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-go-sdk"
 	sdk "github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -81,8 +82,17 @@ func generateAddTwoToCounterScript(counterAddress flow.Address) string {
 }
 
 func deployAndGenerateAddTwoScript(t *testing.T, b *emulator.Blockchain) (string, flow.Address) {
-	counterAddress, err := b.CreateAccount(nil,
-		map[string][]byte{"Counting": []byte(counterScript)})
+	contracts := []templates.Contract{
+		{
+			Name:   "Counting",
+			Source: counterScript,
+		},
+	}
+
+	counterAddress, err := b.CreateAccount(
+		nil,
+		contracts,
+	)
 	require.NoError(t, err)
 
 	return generateAddTwoToCounterScript(counterAddress), counterAddress

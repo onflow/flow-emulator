@@ -912,7 +912,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blo
 
 // CreateAccount submits a transaction to create a new account with the given
 // account keys and contracts. The transaction is paid by the service account.
-func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, contracts map[string][]byte) (sdk.Address, error) {
+func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, contracts []templates.Contract) (sdk.Address, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -924,7 +924,7 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, contracts map[s
 		return sdk.Address{}, err
 	}
 
-	tx := templates.CreateAccountWithContracts(publicKeys, contracts, serviceAddress)
+	tx := templates.CreateAccount(publicKeys, contracts, serviceAddress)
 
 	tx.SetGasLimit(MaxGasLimit).
 		SetReferenceBlockID(sdk.Identifier(latestBlock.ID())).

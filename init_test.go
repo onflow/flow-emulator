@@ -8,6 +8,7 @@ import (
 
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk/templates"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -53,8 +54,14 @@ func TestInitialization(t *testing.T) {
 
 		b, _ := emulator.NewBlockchain(emulator.WithStore(store))
 
-		counterAddress, err := b.CreateAccount(nil,
-			map[string][]byte{"Counting": []byte(counterScript)})
+		contracts := []templates.Contract{
+			{
+				Name:   "Counting",
+				Source: counterScript,
+			},
+		}
+
+		counterAddress, err := b.CreateAccount(nil, contracts)
 		require.NoError(t, err)
 
 		// Submit a transaction adds some ledger state and event state
