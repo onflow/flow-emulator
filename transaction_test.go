@@ -948,14 +948,8 @@ func TestGetTransactionResult(t *testing.T) {
 const helloWorldContract = `
     pub contract HelloWorld {
 
-        pub let greeting: String
-
-        init() {
-            self.greeting = "Hello, World!"
-        }
-
         pub fun hello(): String {
-            return self.greeting
+            return "Hello, World!"
         }
     }
 `
@@ -977,9 +971,16 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 
 	accountKey, accountSigner := accountKeys.NewWithSigner()
 
-	createAccountTx := templates.CreateAccountWithContracts(
+	contracts := []templates.Contract{
+		{
+			Name:   "HelloWorld",
+			Source: helloWorldContract,
+		},
+	}
+
+	createAccountTx := templates.CreateAccount(
 		[]*flow.AccountKey{accountKey},
-		map[string][]byte{"HelloWorld": []byte(helloWorldContract)},
+		contracts,
 		b.ServiceKey().Address,
 	)
 
@@ -1056,8 +1057,16 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 	accountKey, accountSigner := accountKeys.NewWithSigner()
 	_ = accountSigner
 
+	contracts := []templates.Contract{
+		{
+			Name: "HelloWorld",
+			Source: `pub contract HelloWorld {}`,
+		},
+	}
+
 	createAccountTx := templates.CreateAccount(
 		[]*flow.AccountKey{accountKey},
+		contracts,
 		b.ServiceKey().Address,
 	)
 
@@ -1102,7 +1111,11 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 
 	accountKey = account.Keys[0]
 
-	updateAccountCodeTx := templates.SetAccountCode(newAccountAddress, "HelloWorld", []byte(helloWorldContract))
+	updateAccountCodeTx := templates.UpdateAccountContract(
+		newAccountAddress,
+		"HelloWorld",
+		[]byte(helloWorldContract),
+	)
 	updateAccountCodeTx.
 		SetGasLimit(emulator.MaxGasLimit).
 		SetProposalKey(newAccountAddress, accountKey.Index, accountKey.SequenceNumber).

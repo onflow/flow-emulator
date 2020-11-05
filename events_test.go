@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -49,19 +50,27 @@ func TestEventEmitted(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		accountContracts := map[string][]byte{"Test": []byte(`
-            pub contract Test {
-				pub event MyEvent(x: Int, y: Int)
+		accountContracts := []templates.Contract{
+			{
+				Name: "Test",
+				Source: `
+                    pub contract Test {
+						pub event MyEvent(x: Int, y: Int)
 
-				pub fun emitMyEvent(x: Int, y: Int) {
-					emit MyEvent(x: x, y: y)
-				}
-			}
-		`)}
+						pub fun emitMyEvent(x: Int, y: Int) {
+							emit MyEvent(x: x, y: y)
+						}
+					}
+				`,
+			},
+		}
 
 		publicKey := b.ServiceKey().AccountKey()
 
-		address, err := b.CreateAccount([]*flow.AccountKey{publicKey}, accountContracts)
+		address, err := b.CreateAccount(
+			[]*flow.AccountKey{publicKey},
+			accountContracts,
+		)
 		assert.NoError(t, err)
 
 		script := []byte(fmt.Sprintf(`
