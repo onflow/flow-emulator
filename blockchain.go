@@ -119,11 +119,6 @@ func GenerateDefaultServiceKey(
 	}
 }
 
-// MaxGasLimit is the maximum gas limit supported by the emulated blockchain.
-//
-// TODO: replace with safe limit
-const MaxGasLimit = 999999999
-
 // config is a set of configuration options for an emulated blockchain.
 type config struct {
 	ServiceKey         ServiceKey
@@ -400,8 +395,9 @@ func configureTransactionValidator(conf config, blocks *blocks) *access.Transact
 			ExpiryBuffer:                 0,
 			AllowEmptyReferenceBlockID:   conf.TransactionExpiry == 0,
 			AllowUnknownReferenceBlockID: false,
-			MaxGasLimit:                  MaxGasLimit,
+			MaxGasLimit:                  flowgo.DefaultMaxGasLimit,
 			CheckScriptsParse:            true,
+			MaxTxSizeLimit:               flowgo.DefaultMaxTxSizeLimit,
 		},
 	)
 }
@@ -927,7 +923,7 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, contracts []tem
 
 	tx := templates.CreateAccount(publicKeys, contracts, serviceAddress)
 
-	tx.SetGasLimit(MaxGasLimit).
+	tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
 		SetReferenceBlockID(sdk.Identifier(latestBlock.ID())).
 		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
 		SetPayer(serviceAddress)

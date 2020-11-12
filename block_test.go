@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/onflow/flow-go-sdk"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -36,7 +37,7 @@ func TestCommitBlock(t *testing.T) {
 
 	tx1 := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
-		SetGasLimit(emulator.MaxGasLimit).
+		SetGasLimit(flowgo.DefaultMaxGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
@@ -54,7 +55,7 @@ func TestCommitBlock(t *testing.T) {
 
 	tx2 := flow.NewTransaction().
 		SetScript([]byte(`transaction { execute { panic("revert!") } }`)).
-		SetGasLimit(emulator.MaxGasLimit).
+		SetGasLimit(flowgo.DefaultMaxGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)

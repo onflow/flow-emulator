@@ -7,6 +7,7 @@ import (
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/flow-go-sdk"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -21,7 +22,7 @@ func TestExecuteScript(t *testing.T) {
 
 	tx := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
-		SetGasLimit(emulator.MaxGasLimit).
+		SetGasLimit(flowgo.DefaultMaxGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
