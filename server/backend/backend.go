@@ -48,23 +48,6 @@ func (b *Backend) GetNetworkParameters(ctx context.Context) access.NetworkParame
 	}
 }
 
-// GetLatestBlockID gets the latest block id
-func (b *Backend) GetLatestBlockID() (sdk.Identifier, error) {
-	block, err := b.emulator.GetLatestBlock()
-	if err != nil {
-		return sdk.EmptyID, status.Error(codes.Internal, err.Error())
-	}
-
-	blockID := block.ID()
-
-	b.logger.WithFields(logrus.Fields{
-		"blockHeight": block.Header.Height,
-		"blockID":     hex.EncodeToString(blockID[:]),
-	}).Debug("🎁  GetLatestBlockID called")
-
-	return sdk.Identifier(blockID), nil
-}
-
 // GetLatestBlockHeader gets the latest sealed block header.
 func (b *Backend) GetLatestBlockHeader(ctx context.Context, isSealed bool) (*flowgo.Header, error) {
 	block, err := b.emulator.GetLatestBlock()

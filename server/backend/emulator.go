@@ -14,7 +14,7 @@ var _ Emulator = &emulator.Blockchain{}
 // Emulator defines the method set of an emulated blockchain.
 type Emulator interface {
 	ServiceKey() emulator.ServiceKey
-	// GetLatestBlockID() (sdk.Identifier, error)
+	GetLatestBlockID() (sdk.Identifier, error)
 	AddTransaction(tx sdk.Transaction) error
 	ExecuteNextTransaction() (*types.TransactionResult, error)
 	ExecuteBlock() ([]*types.TransactionResult, error)

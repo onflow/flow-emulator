@@ -434,6 +434,16 @@ func (b *Blockchain) PendingBlockTimestamp() time.Time {
 	return b.pendingBlock.Block().Header.Timestamp
 }
 
+// GetLatestBlockID gets the latest block id
+func (b *Blockchain) GetLatestBlockID() (sdk.Identifier, error) {
+	block, err := b.storage.LatestBlock()
+	if err != nil {
+		return sdk.EmptyID, &StorageError{err}
+	}
+
+	return sdk.Identifier(block.ID()), nil
+}
+
 // GetLatestBlock gets the latest sealed block.
 func (b *Blockchain) GetLatestBlock() (*flowgo.Block, error) {
 	block, err := b.storage.LatestBlock()
