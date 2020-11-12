@@ -27,6 +27,7 @@ import (
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/onflow/flow-go/fvm"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -51,7 +52,7 @@ func TestCreateAccount(t *testing.T) {
 			b.ServiceKey().Address,
 		)
 
-		tx.SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -90,7 +91,7 @@ func TestCreateAccount(t *testing.T) {
 			b.ServiceKey().Address,
 		)
 
-		tx.SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -129,7 +130,7 @@ func TestCreateAccount(t *testing.T) {
 			b.ServiceKey().Address,
 		)
 
-		tx.SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -176,7 +177,7 @@ func TestCreateAccount(t *testing.T) {
 			b.ServiceKey().Address,
 		)
 
-		tx.SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -246,7 +247,7 @@ func TestCreateAccount(t *testing.T) {
 			b.ServiceKey().Address,
 		)
 
-		tx.SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -295,7 +296,7 @@ func TestCreateAccount(t *testing.T) {
 			b.ServiceKey().Address,
 		)
 
-		tx.SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -344,7 +345,7 @@ func TestCreateAccount(t *testing.T) {
 			b.ServiceKey().Address,
 		)
 
-		tx.SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -394,7 +395,7 @@ func TestCreateAccount(t *testing.T) {
 			b.ServiceKey().Address,
 		)
 
-		tx.SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -427,7 +428,7 @@ func TestCreateAccount(t *testing.T) {
 			b.ServiceKey().Address,
 		)
 
-		tx.SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -460,7 +461,7 @@ func TestCreateAccount(t *testing.T) {
 			b.ServiceKey().Address,
 		)
 
-		tx.SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -488,7 +489,7 @@ func TestAddAccountKey(t *testing.T) {
 
 		tx1 := templates.AddAccountKey(b.ServiceKey().Address, newAccountKey)
 
-		tx1.SetGasLimit(emulator.MaxGasLimit).
+		tx1.SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -512,7 +513,7 @@ func TestAddAccountKey(t *testing.T) {
 
 		tx2 := flow.NewTransaction().
 			SetScript(script).
-			SetGasLimit(emulator.MaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, newKeyID, newKeySequenceNum).
 			SetPayer(b.ServiceKey().Address)
 
@@ -539,7 +540,7 @@ func TestAddAccountKey(t *testing.T) {
 
 		tx := templates.AddAccountKey(b.ServiceKey().Address, accountKey)
 
-		tx.SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -568,7 +569,7 @@ func TestRemoveAccountKey(t *testing.T) {
 	assert.NoError(t, err)
 
 	// create transaction that adds public key to account keys
-	tx1.SetGasLimit(emulator.MaxGasLimit).
+	tx1.SetGasLimit(flowgo.DefaultMaxGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address)
 
@@ -597,7 +598,7 @@ func TestRemoveAccountKey(t *testing.T) {
 	// create transaction that removes service key
 	tx2 := templates.RemoveAccountKey(b.ServiceKey().Address, 0)
 
-	tx2.SetGasLimit(emulator.MaxGasLimit).
+	tx2.SetGasLimit(flowgo.DefaultMaxGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address)
 
@@ -627,7 +628,7 @@ func TestRemoveAccountKey(t *testing.T) {
 	// create transaction that removes remaining account key
 	tx3 := templates.RemoveAccountKey(b.ServiceKey().Address, 0)
 
-	tx3.SetGasLimit(emulator.MaxGasLimit).
+	tx3.SetGasLimit(flowgo.DefaultMaxGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address)
 
@@ -658,7 +659,7 @@ func TestRemoveAccountKey(t *testing.T) {
 	// create transaction that removes remaining account key
 	tx4 := templates.RemoveAccountKey(b.ServiceKey().Address, 1)
 
-	tx4.SetGasLimit(emulator.MaxGasLimit).
+	tx4.SetGasLimit(flowgo.DefaultMaxGasLimit).
 		SetProposalKey(b.ServiceKey().Address, account.Keys[1].Index, account.Keys[1].SequenceNumber).
 		SetPayer(b.ServiceKey().Address)
 
@@ -737,7 +738,7 @@ func TestUpdateAccountCode(t *testing.T) {
 
 		tx := templates.UpdateAccountContract(accountAddressB, "Test", []byte(codeB))
 
-		tx.SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -787,7 +788,7 @@ func TestUpdateAccountCode(t *testing.T) {
 
 		tx := templates.UpdateAccountContract(accountAddressB, "Test", []byte(codeB))
 
-		tx.SetGasLimit(emulator.MaxGasLimit).
+		tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -849,7 +850,7 @@ func TestImportAccountCode(t *testing.T) {
 
 	tx := flow.NewTransaction().
 		SetScript(script).
-		SetGasLimit(emulator.MaxGasLimit).
+		SetGasLimit(flowgo.DefaultMaxGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address)
 
