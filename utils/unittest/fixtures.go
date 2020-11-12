@@ -1,8 +1,8 @@
 package unittest
 
 import (
-	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/onflow/flow-go-sdk/test"
+	flowgo "github.com/onflow/flow-go/model/flow"
 
 	convert "github.com/dapperlabs/flow-emulator/convert/sdk"
 	"github.com/dapperlabs/flow-emulator/types"

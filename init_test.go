@@ -6,9 +6,9 @@ import (
 	"os"
 	"testing"
 
-	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-go-sdk"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -38,7 +38,7 @@ func TestInitialization(t *testing.T) {
 
 		assert.EqualValues(t, 0, latestBlock.Header.Height)
 		assert.Equal(t,
-			flowgo.Genesis(nil, flowgo.Emulator).ID(),
+			flowgo.Genesis(flowgo.Emulator).ID(),
 			latestBlock.ID(),
 		)
 	})
@@ -80,11 +80,11 @@ func TestInitialization(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript([]byte(script)).
 			SetGasLimit(emulator.MaxGasLimit).
-			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().SequenceNumber).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().ID, b.ServiceKey().Signer())
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)

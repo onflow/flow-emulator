@@ -3,9 +3,9 @@ package emulator
 import (
 	"errors"
 
-	"github.com/dapperlabs/flow-go/access"
-	"github.com/dapperlabs/flow-go/fvm"
-	flowgo "github.com/dapperlabs/flow-go/model/flow"
+	"github.com/onflow/flow-go/access"
+	"github.com/onflow/flow-go/fvm"
+	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/dapperlabs/flow-emulator/storage"
 )

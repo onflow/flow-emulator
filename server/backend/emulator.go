@@ -2,11 +2,9 @@ package backend
 
 import (
 	sdk "github.com/onflow/flow-go-sdk"
+	flowgo "github.com/onflow/flow-go/model/flow"
 
 	emulator "github.com/dapperlabs/flow-emulator"
-
-	flowgo "github.com/dapperlabs/flow-go/model/flow"
-
 	"github.com/dapperlabs/flow-emulator/types"
 )
 

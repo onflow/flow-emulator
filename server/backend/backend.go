@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dapperlabs/flow-go/access"
-	"github.com/dapperlabs/flow-go/fvm"
-	flowgo "github.com/dapperlabs/flow-go/model/flow"
 	"github.com/logrusorgru/aurora"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	sdk "github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go/access"
+	"github.com/onflow/flow-go/fvm"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -193,9 +193,15 @@ func (b *Backend) SendTransaction(ctx context.Context, tx sdk.Transaction) error
 			return status.Error(codes.InvalidArgument, err.Error())
 		case *types.FlowError:
 			switch t.FlowError.(type) {
-			case *fvm.InvalidSignaturePublicKeyError:
-				return status.Error(codes.InvalidArgument, err.Error())
-			case *fvm.InvalidSignatureAccountError:
+			case *fvm.InvalidSignaturePublicKeyDoesNotExistError,
+				*fvm.InvalidSignatureVerificationError,
+				*fvm.InvalidProposalKeyPublicKeyDoesNotExistError,
+				*fvm.InvalidSignaturePublicKeyRevokedError,
+				*fvm.InvalidProposalKeyMissingSignatureError,
+				*fvm.MissingPayerError,
+				*fvm.MissingSignatureError,
+				*fvm.InvalidProposalKeySequenceNumberError:
+
 				return status.Error(codes.InvalidArgument, err.Error())
 			default:
 				return status.Error(codes.Internal, err.Error())
@@ -413,9 +419,10 @@ func (b *Backend) GetEventsForHeightRange(
 		}
 
 		result := flowgo.BlockEvents{
-			BlockID:     block.ID(),
-			BlockHeight: block.Header.Height,
-			Events:      flowEvents,
+			BlockID:        block.ID(),
+			BlockHeight:    block.Header.Height,
+			BlockTimestamp: block.Header.Timestamp,
+			Events:         flowEvents,
 		}
 
 		results = append(results, result)
@@ -469,9 +476,10 @@ func (b *Backend) GetEventsForBlockIDs(
 		}
 
 		result := flowgo.BlockEvents{
-			BlockID:     block.ID(),
-			BlockHeight: block.Header.Height,
-			Events:      flowEvents,
+			BlockID:        block.ID(),
+			BlockHeight:    block.Header.Height,
+			BlockTimestamp: block.Header.Timestamp,
+			Events:         flowEvents,
 		}
 
 		results = append(results, result)

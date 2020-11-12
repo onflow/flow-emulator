@@ -5,11 +5,13 @@
 package mocks
 
 import (
-	types "github.com/dapperlabs/flow-emulator/types"
-	flow "github.com/dapperlabs/flow-go/model/flow"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	flow_go_sdk "github.com/onflow/flow-go-sdk"
-	reflect "reflect"
+	flow "github.com/onflow/flow-go/model/flow"
+
+	types "github.com/dapperlabs/flow-emulator/types"
 )
 
 // MockEmulator is a mock of Emulator interface

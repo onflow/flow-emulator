@@ -3,8 +3,8 @@ package backend
 import (
 	"context"
 
-	"github.com/dapperlabs/flow-go/access"
-	flowgo "github.com/dapperlabs/flow-go/model/flow"
+	"github.com/onflow/flow-go/access"
+	flowgo "github.com/onflow/flow-go/model/flow"
 
 	convert "github.com/dapperlabs/flow-emulator/convert/sdk"
 )

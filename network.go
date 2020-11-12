@@ -6,15 +6,13 @@ import (
 	"time"
 
 	"github.com/onflow/cadence"
-
-	flowgo "github.com/dapperlabs/flow-go/model/flow"
-
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/flow-go-sdk"
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/client"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"google.golang.org/grpc"
 
 	"github.com/dapperlabs/flow-emulator/types"
@@ -50,7 +48,7 @@ func NewNetwork(flowAccessAddress, privateKeyHex string) (*Network, error) {
 	signer := crypto.NewInMemorySigner(privateKey, accountKey.HashAlgo)
 
 	serviceKey := ServiceKey{
-		ID:             accountKey.ID,
+		Index:          accountKey.Index,
 		Address:        addr,
 		SequenceNumber: accountKey.SequenceNumber,
 		PrivateKey:     &privateKey,
@@ -89,7 +87,7 @@ func (n *Network) ExecuteNextTransaction() (*types.TransactionResult, error) {
 	// If service account was the proposer, we have to manage the sequence number here
 	if txResp.Error == nil && // TODO: remove once https://github.com/dapperlabs/flow-go/issues/4107 is done
 		tx.ProposalKey.Address == n.serviceKey.Address &&
-		tx.ProposalKey.KeyID == n.serviceKey.ID {
+		tx.ProposalKey.KeyIndex == n.serviceKey.Index {
 		n.serviceKey.SequenceNumber++
 	}
 
@@ -105,7 +103,7 @@ func (n *Network) CreateAccount(publicKeys []*flow.AccountKey, code []byte) (flo
 
 	for _, key := range publicKeys {
 		// Reset IDs and Sequence Numbers
-		key.ID = 0
+		key.Index = 0
 		key.SequenceNumber = 0
 	}
 
@@ -116,12 +114,12 @@ func (n *Network) CreateAccount(publicKeys []*flow.AccountKey, code []byte) (flo
 
 	accountTx := templates.CreateAccount(publicKeys, code, n.serviceKey.Address).
 		SetReferenceBlockID(finalizedBlock.ID).
-		SetProposalKey(n.serviceKey.Address, n.serviceKey.ID, n.serviceKey.SequenceNumber).
+		SetProposalKey(n.serviceKey.Address, n.serviceKey.Index, n.serviceKey.SequenceNumber).
 		SetPayer(n.serviceKey.Address)
 
 	err = accountTx.SignEnvelope(
 		n.serviceKey.Address,
-		n.serviceKey.ID,
+		n.serviceKey.Index,
 		n.signer,
 	)
 	if err != nil {
