@@ -14,7 +14,7 @@ require (
 	// this references: https://github.com/onflow/flow-go/tree/feature/multiple-contract-support.
 	github.com/onflow/flow-go v0.11.1-0.20201109210205-312549711f62
 	github.com/onflow/flow-go-sdk v0.12.1
-	github.com/onflow/flow-go/crypto v0.9.4
+	github.com/onflow/flow-go/crypto v0.11.0
 	github.com/onflow/flow/protobuf/go/flow v0.1.8
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.5.1
