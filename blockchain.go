@@ -394,6 +394,7 @@ func bootstrapLedger(
 func configureTransactionValidator(conf config, blocks *blocks) *access.TransactionValidator {
 	return access.NewTransactionValidator(
 		blocks,
+		conf.GetChainID().Chain(),
 		access.TransactionValidationOptions{
 			Expiry:                       conf.TransactionExpiry,
 			ExpiryBuffer:                 0,
