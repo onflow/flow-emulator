@@ -87,7 +87,7 @@ func TestInitialization(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(script)).
-			SetGasLimit(emulator.MaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
