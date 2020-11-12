@@ -87,8 +87,16 @@ func TestChangelist(t *testing.T) {
 
 func TestChangelog(t *testing.T) {
 	var (
-		key1 = flow.RegisterID("key1")
-		key2 = flow.RegisterID("key2")
+		key1 = flow.RegisterID{
+			Owner:      "",
+			Controller: "",
+			Key:        "key1",
+		}
+		key2 = flow.RegisterID{
+			Owner:      "",
+			Controller: "",
+			Key:        "key2",
+		}
 	)
 
 	t.Run("should return notFound", func(t *testing.T) {

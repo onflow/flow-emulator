@@ -92,7 +92,7 @@ func (c *changelist) add(n uint64) {
 type changelog struct {
 	// Maps register IDs to an ordered slice of all the block heights at which
 	// the register value changed.
-	registers map[string]changelist
+	registers map[flow.RegisterID]changelist
 	// Guards the register list from concurrent writes.
 	sync.RWMutex
 }
@@ -100,15 +100,15 @@ type changelog struct {
 // newChangelog returns a new changelog.
 func newChangelog() changelog {
 	return changelog{
-		registers: make(map[string]changelist),
+		registers: make(map[flow.RegisterID]changelist),
 		RWMutex:   sync.RWMutex{},
 	}
 }
 
 // getMostRecentChange returns the most recent block height at which the
 // register with the given ID changed value.
-func (c changelog) getMostRecentChange(registerID flow.RegisterID, blockHeight uint64) uint64 {
-	clist, ok := c.registers[string(registerID)]
+func (c *changelog) getMostRecentChange(registerID flow.RegisterID, blockHeight uint64) uint64 {
+	clist, ok := c.registers[registerID]
 	if !ok {
 		return notFound
 	}
@@ -116,20 +116,15 @@ func (c changelog) getMostRecentChange(registerID flow.RegisterID, blockHeight u
 	return clist.search(blockHeight)
 }
 
-// changelists returns an exhaustive list of changelists keyed by register ID.
-func (c changelog) changelists() map[string]changelist {
-	return c.registers
-}
-
 // getChangelist returns the changelist corresponding to the given register ID.
 // Returns an empty changelist if none exists.
-func (c changelog) getChangelist(registerID flow.RegisterID) changelist {
-	return c.registers[string(registerID)]
+func (c *changelog) getChangelist(registerID flow.RegisterID) changelist {
+	return c.registers[registerID]
 }
 
 // setChangelist sets the changelist for the given register ID, discarding the
 // existing changelist if one exists.
-func (c changelog) setChangelist(registerID string, clist changelist) {
+func (c *changelog) setChangelist(registerID flow.RegisterID, clist changelist) {
 	c.registers[registerID] = clist
 }
 
@@ -139,7 +134,7 @@ func (c changelog) setChangelist(registerID string, clist changelist) {
 //
 // If the changelist doesn't exist, it is created.
 func (c *changelog) addChange(registerID flow.RegisterID, blockHeight uint64) {
-	clist := c.registers[string(registerID)]
+	clist := c.registers[registerID]
 	clist.add(blockHeight)
-	c.registers[string(registerID)] = clist
+	c.registers[registerID] = clist
 }

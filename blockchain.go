@@ -123,6 +123,7 @@ func GenerateDefaultServiceKey(
 //
 // TODO: replace with safe limit
 const MaxGasLimit = 999999999
+const MaxTxSizeLimit = 999999999
 
 // config is a set of configuration options for an emulated blockchain.
 type config struct {
@@ -394,12 +395,14 @@ func bootstrapLedger(
 func configureTransactionValidator(conf config, blocks *blocks) *access.TransactionValidator {
 	return access.NewTransactionValidator(
 		blocks,
+		conf.GetChainID().Chain(),
 		access.TransactionValidationOptions{
 			Expiry:                       conf.TransactionExpiry,
 			ExpiryBuffer:                 0,
 			AllowEmptyReferenceBlockID:   conf.TransactionExpiry == 0,
 			AllowUnknownReferenceBlockID: false,
 			MaxGasLimit:                  MaxGasLimit,
+			MaxTxSizeLimit:               MaxTxSizeLimit,
 			CheckScriptsParse:            true,
 		},
 	)

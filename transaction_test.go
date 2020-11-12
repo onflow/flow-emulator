@@ -412,9 +412,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
-
-		addressA := flow.HexToAddress("0000000000000000000000000000000000000002")
+		addTwoScript, addressA := deployAndGenerateAddTwoScript(t, b)
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
@@ -430,13 +428,13 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		assert.NoError(t, err)
 
 		result, err := b.ExecuteNextTransaction()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		unittest.AssertFVMErrorType(t, &fvm.MissingSignatureError{}, result.Error)
 	})
 
 	t.Run("Invalid account", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(emulator.WithSimpleAddresses())
 		require.NoError(t, err)
 
 		invalidAddress := flow.HexToAddress("0000000000000000000000000000000000000002")
@@ -458,7 +456,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		assert.NoError(t, err)
 
 		result, err := b.ExecuteNextTransaction()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		unittest.AssertFVMErrorType(t, &fvm.InvalidSignaturePublicKeyDoesNotExistError{}, result.Error)
 	})
@@ -488,7 +486,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		assert.NoError(t, err)
 
 		result, err := b.ExecuteNextTransaction()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		unittest.AssertFVMErrorType(t, &fvm.InvalidSignatureVerificationError{}, result.Error)
 	})
@@ -538,14 +536,14 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 
 		t.Run("Insufficient key weight", func(t *testing.T) {
 			result, err := b.ExecuteNextTransaction()
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			unittest.AssertFVMErrorType(t, &fvm.MissingSignatureError{}, result.Error)
 		})
 
 		t.Run("Sufficient key weight", func(t *testing.T) {
 			result, err := b.ExecuteNextTransaction()
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			assertTransactionSucceeded(t, result)
 		})
@@ -559,9 +557,7 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		addressA := flow.HexToAddress("0000000000000000000000000000000000000002")
-
-		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
+		addTwoScript, addressA := deployAndGenerateAddTwoScript(t, b)
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
@@ -577,7 +573,7 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 		assert.NoError(t, err)
 
 		result, err := b.ExecuteNextTransaction()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		unittest.AssertFVMErrorType(t, &fvm.MissingSignatureError{}, result.Error)
 	})
@@ -867,7 +863,7 @@ func TestGetTransaction(t *testing.T) {
 	assert.NoError(t, err)
 
 	result, err := b.ExecuteNextTransaction()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assertTransactionSucceeded(t, result)
 
 	t.Run("Nonexistent", func(t *testing.T) {
@@ -915,7 +911,7 @@ func TestGetTransactionResult(t *testing.T) {
 	require.Empty(t, result.Events)
 
 	_, err = b.ExecuteNextTransaction()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	result, err = b.GetTransactionResult(tx.ID())
 	assert.NoError(t, err)
@@ -991,7 +987,7 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 	assert.NoError(t, err)
 
 	result, err := b.ExecuteNextTransaction()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assertTransactionSucceeded(t, result)
 
 	_, err = b.CommitBlock()
@@ -1037,7 +1033,7 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 	assert.NoError(t, err)
 
 	result, err = b.ExecuteNextTransaction()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assertTransactionSucceeded(t, result)
 
 	_, err = b.CommitBlock()
@@ -1071,7 +1067,7 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 	assert.NoError(t, err)
 
 	result, err := b.ExecuteNextTransaction()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assertTransactionSucceeded(t, result)
 
 	_, err = b.CommitBlock()
@@ -1136,7 +1132,7 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 	assert.NoError(t, err)
 
 	result, err = b.ExecuteNextTransaction()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assertTransactionSucceeded(t, result)
 
 	_, err = b.CommitBlock()

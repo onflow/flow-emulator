@@ -5,13 +5,12 @@
 package mocks
 
 import (
-	reflect "reflect"
-
+	flow_emulator "github.com/dapperlabs/flow-emulator"
+	types "github.com/dapperlabs/flow-emulator/types"
 	gomock "github.com/golang/mock/gomock"
 	flow_go_sdk "github.com/onflow/flow-go-sdk"
 	flow "github.com/onflow/flow-go/model/flow"
-
-	types "github.com/dapperlabs/flow-emulator/types"
+	reflect "reflect"
 )
 
 // MockEmulator is a mock of Emulator interface
@@ -64,6 +63,21 @@ func (m *MockEmulator) CommitBlock() (*flow.Block, error) {
 func (mr *MockEmulatorMockRecorder) CommitBlock() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitBlock", reflect.TypeOf((*MockEmulator)(nil).CommitBlock))
+}
+
+// CreateAccount mocks base method
+func (m *MockEmulator) CreateAccount(arg0 []*flow_go_sdk.AccountKey, arg1 []byte) (flow_go_sdk.Address, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateAccount", arg0, arg1)
+	ret0, _ := ret[0].(flow_go_sdk.Address)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateAccount indicates an expected call of CreateAccount
+func (mr *MockEmulatorMockRecorder) CreateAccount(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAccount", reflect.TypeOf((*MockEmulator)(nil).CreateAccount), arg0, arg1)
 }
 
 // ExecuteAndCommitBlock mocks base method
@@ -275,4 +289,18 @@ func (m *MockEmulator) GetTransactionResult(arg0 flow_go_sdk.Identifier) (*flow_
 func (mr *MockEmulatorMockRecorder) GetTransactionResult(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionResult", reflect.TypeOf((*MockEmulator)(nil).GetTransactionResult), arg0)
+}
+
+// ServiceKey mocks base method
+func (m *MockEmulator) ServiceKey() flow_emulator.ServiceKey {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ServiceKey")
+	ret0, _ := ret[0].(flow_emulator.ServiceKey)
+	return ret0
+}
+
+// ServiceKey indicates an expected call of ServiceKey
+func (mr *MockEmulatorMockRecorder) ServiceKey() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceKey", reflect.TypeOf((*MockEmulator)(nil).ServiceKey))
 }

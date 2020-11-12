@@ -6,7 +6,6 @@ import (
 
 	"github.com/dgraph-io/badger/v2"
 	"github.com/onflow/flow-go/engine/execution/state/delta"
-	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/dapperlabs/flow-emulator/storage"
@@ -57,9 +56,9 @@ func (s *Store) setup() error {
 
 		for iter.Rewind(); iter.Valid(); iter.Next() {
 			item := iter.Item()
-			registerID := registerIDFromLedgerChangelogKey(item.Key())
+			registerID, err := registerIDFromLedgerChangelogKey(item.Key())
 			// ensure the register ID is value
-			if len(registerID) == 0 {
+			if err != nil {
 				return errors.New("found changelist for invalid register ID")
 			}
 
@@ -315,7 +314,11 @@ func insertTransactionResult(txID flowgo.Identifier, result types.StorableTransa
 
 func (s *Store) LedgerViewByHeight(blockHeight uint64) *delta.View {
 	return delta.NewView(func(owner, controller, key string) (value flowgo.RegisterValue, err error) {
-		id := state.RegisterID(owner, controller, key)
+		id := flowgo.RegisterID{
+			Owner:      owner,
+			Controller: controller,
+			Key:        key,
+		}
 
 		//return types.NewLedgerView(func(key string) (value []byte, err error) {
 		s.ledgerChangeLog.RLock()
@@ -463,11 +466,11 @@ func (s *Store) Close() error {
 }
 
 // Sync syncs database content to disk.
-func (s Store) Sync() error {
+func (s *Store) Sync() error {
 	return s.db.Sync()
 }
 
-func (s Store) RunValueLogGC(discardRatio float64) error {
+func (s *Store) RunValueLogGC(discardRatio float64) error {
 	err := s.db.RunValueLogGC(discardRatio)
 
 	// ignore ErrNoRewrite, which occurs when GC results in no cleanup
