@@ -68,8 +68,6 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		t.Skip("TODO: transaction validation")
-
 		// Create empty transaction (no required fields)
 		tx := flow.NewTransaction()
 
@@ -146,7 +144,6 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Missing payer account", func(t *testing.T) {
-		t.Skip("TODO: transaction validation")
 
 		b, err := emulator.NewBlockchain(
 			emulator.WithSimpleAddresses(),
