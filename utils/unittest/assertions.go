@@ -28,7 +28,7 @@ import (
 )
 
 func AssertFVMErrorType(t *testing.T, expected interface{}, err error) bool {
-	require.IsType(t, err, &types.FlowError{})
+	require.IsType(t, &types.FlowError{}, err)
 
 	flowError := err.(*types.FlowError)
 
