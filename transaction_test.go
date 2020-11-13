@@ -412,13 +412,11 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
-		addressA := flow.HexToAddress("0000000000000000000000000000000000000002")
-
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
-			SetPayer(addressA).
+			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
 
 		err = tx.SignPayload(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
@@ -437,16 +435,24 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		invalidAddress := flow.HexToAddress("0000000000000000000000000000000000000002")
+		addresses := flow.NewAddressGenerator(flow.Emulator)
+		for {
+			_, err := b.GetAccount(addresses.NextAddress())
+			if err != nil {
+				break
+			}
+		}
+
+		nonExistentAccountAddress := addresses.Address()
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(`transaction { execute { } }`)).
 			SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
-			AddAuthorizer(invalidAddress)
+			AddAuthorizer(nonExistentAccountAddress)
 
-		err = tx.SignPayload(invalidAddress, b.ServiceKey().Index, b.ServiceKey().Signer())
+		err = tx.SignPayload(nonExistentAccountAddress, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
 
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
@@ -557,8 +563,6 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		addressA := flow.HexToAddress("0000000000000000000000000000000000000002")
-
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
 		tx := flow.NewTransaction().
@@ -566,7 +570,7 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 			SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
-			AddAuthorizer(addressA)
+			AddAuthorizer(b.ServiceKey().Address)
 
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
