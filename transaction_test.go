@@ -565,12 +565,21 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
+		// create a new account,
+		// authorizer must be different from payer
+
+		accountKeyB, _ := accountKeys.NewWithSigner()
+		accountKeyB.SetWeight(flow.AccountKeyWeightThreshold)
+
+		accountAddressB, err := b.CreateAccount([]*flow.AccountKey{accountKeyB}, nil)
+		assert.NoError(t, err)
+
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
-			AddAuthorizer(b.ServiceKey().Address)
+			AddAuthorizer(accountAddressB)
 
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
