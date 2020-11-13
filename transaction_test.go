@@ -23,9 +23,7 @@ import (
 )
 
 func TestSubmitTransaction(t *testing.T) {
-	b, err := emulator.NewBlockchain(
-		emulator.WithSimpleAddresses(),
-	)
+	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
 	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
@@ -63,9 +61,7 @@ func TestSubmitTransaction(t *testing.T) {
 func TestSubmitTransaction_Invalid(t *testing.T) {
 
 	t.Run("Empty transaction", func(t *testing.T) {
-		b, err := emulator.NewBlockchain(
-			emulator.WithSimpleAddresses(),
-		)
+		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		// Create empty transaction (no required fields)
@@ -80,9 +76,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Missing script", func(t *testing.T) {
-		b, err := emulator.NewBlockchain(
-			emulator.WithSimpleAddresses(),
-		)
+		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		// Create transaction with no Script field
@@ -99,9 +93,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Missing script", func(t *testing.T) {
-		b, err := emulator.NewBlockchain(
-			emulator.WithSimpleAddresses(),
-		)
+		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		// Create transaction with invalid Script field
@@ -122,9 +114,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	t.Run("Missing gas limit", func(t *testing.T) {
 		t.Skip("TODO: transaction validation")
 
-		b, err := emulator.NewBlockchain(
-			emulator.WithSimpleAddresses(),
-		)
+		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
@@ -145,9 +135,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 
 	t.Run("Missing payer account", func(t *testing.T) {
 
-		b, err := emulator.NewBlockchain(
-			emulator.WithSimpleAddresses(),
-		)
+		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
@@ -167,9 +155,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Missing proposal key", func(t *testing.T) {
-		b, err := emulator.NewBlockchain(
-			emulator.WithSimpleAddresses(),
-		)
+		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
@@ -190,9 +176,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Invalid sequence number", func(t *testing.T) {
-		b, err := emulator.NewBlockchain(
-			emulator.WithSimpleAddresses(),
-		)
+		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
@@ -227,7 +211,6 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 
 	t.Run("Missing reference block ID", func(t *testing.T) {
 		b, err := emulator.NewBlockchain(
-			emulator.WithSimpleAddresses(),
 			emulator.WithTransactionExpiry(expiry),
 		)
 		require.NoError(t, err)
@@ -249,7 +232,6 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 
 	t.Run("Expired transaction", func(t *testing.T) {
 		b, err := emulator.NewBlockchain(
-			emulator.WithSimpleAddresses(),
 			emulator.WithTransactionExpiry(expiry),
 		)
 		require.NoError(t, err)
@@ -281,9 +263,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 }
 
 func TestSubmitTransaction_Duplicate(t *testing.T) {
-	b, err := emulator.NewBlockchain(
-		emulator.WithSimpleAddresses(),
-	)
+	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
 	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
@@ -315,9 +295,7 @@ func TestSubmitTransaction_Duplicate(t *testing.T) {
 }
 
 func TestSubmitTransaction_Reverted(t *testing.T) {
-	b, err := emulator.NewBlockchain(
-		emulator.WithSimpleAddresses(),
-	)
+	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
 	tx := flow.NewTransaction().
@@ -349,9 +327,7 @@ func TestSubmitTransaction_Reverted(t *testing.T) {
 }
 
 func TestSubmitTransaction_Authorizers(t *testing.T) {
-	b, err := emulator.NewBlockchain(
-		emulator.WithSimpleAddresses(),
-	)
+	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
 	accountKeys := test.AccountKeyGenerator()
@@ -431,9 +407,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 
 	t.Run("Missing envelope signature", func(t *testing.T) {
-		b, err := emulator.NewBlockchain(
-			emulator.WithSimpleAddresses(),
-		)
+		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
@@ -460,9 +434,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 	})
 
 	t.Run("Invalid account", func(t *testing.T) {
-		b, err := emulator.NewBlockchain(
-			emulator.WithSimpleAddresses(),
-		)
+		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		invalidAddress := flow.HexToAddress("0000000000000000000000000000000000000002")
@@ -490,9 +462,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 	})
 
 	t.Run("Invalid key", func(t *testing.T) {
-		b, err := emulator.NewBlockchain(
-			emulator.WithSimpleAddresses(),
-			)
+		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
@@ -522,9 +492,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 	})
 
 	t.Run("Key weights", func(t *testing.T) {
-		b, err := emulator.NewBlockchain(
-			emulator.WithSimpleAddresses(),
-		)
+		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		accountKeyA, signerA := accountKeys.NewWithSigner()
@@ -586,9 +554,7 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 
 	t.Run("Missing payload signature", func(t *testing.T) {
-		b, err := emulator.NewBlockchain(
-			emulator.WithSimpleAddresses(),
-			)
+		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		addressA := flow.HexToAddress("0000000000000000000000000000000000000002")
@@ -615,9 +581,7 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 	})
 
 	t.Run("Multiple payload signers", func(t *testing.T) {
-		b, err := emulator.NewBlockchain(
-			emulator.WithSimpleAddresses(),
-		)
+		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		accountKeyB, signerB := accountKeys.NewWithSigner()
@@ -817,9 +781,7 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 		t.Run(tt.argType.ID(), func(t *testing.T) {
 			t.Parallel()
 
-			b, err := emulator.NewBlockchain(
-				emulator.WithSimpleAddresses(),
-			)
+			b, err := emulator.NewBlockchain()
 			require.NoError(t, err)
 
 			tx := flow.NewTransaction().
@@ -846,9 +808,7 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 	}
 
 	t.Run("Log", func(t *testing.T) {
-		b, err := emulator.NewBlockchain(
-			emulator.WithSimpleAddresses(),
-		)
+		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
 		script := []byte(`
@@ -886,9 +846,7 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 }
 
 func TestGetTransaction(t *testing.T) {
-	b, err := emulator.NewBlockchain(
-		emulator.WithSimpleAddresses(),
-	)
+	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
 	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
@@ -926,9 +884,7 @@ func TestGetTransaction(t *testing.T) {
 }
 
 func TestGetTransactionResult(t *testing.T) {
-	b, err := emulator.NewBlockchain(
-		emulator.WithSimpleAddresses(),
-	)
+	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
 	addTwoScript, counterAddress := deployAndGenerateAddTwoScript(t, b)
@@ -1008,9 +964,7 @@ const callHelloTxTemplate = `
 func TestHelloWorld_NewAccount(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 
-	b, err := emulator.NewBlockchain(
-		emulator.WithSimpleAddresses(),
-	)
+	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
 	accountKey, accountSigner := accountKeys.NewWithSigner()
@@ -1095,9 +1049,7 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 func TestHelloWorld_UpdateAccount(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 
-	b, err := emulator.NewBlockchain(
-		emulator.WithSimpleAddresses(),
-	)
+	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
 	accountKey, accountSigner := accountKeys.NewWithSigner()
