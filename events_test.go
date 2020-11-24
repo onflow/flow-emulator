@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/flow-go-sdk/templates"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
@@ -103,13 +104,13 @@ func TestEventEmitted(t *testing.T) {
 		block, err := b.CommitBlock()
 		require.NoError(t, err)
 
-		location := runtime.AddressContractLocation{
-			AddressLocation: address.Bytes(),
-			Name:            "Test",
+		location := runtime.AddressLocation{
+			Address: common.BytesToAddress(address.Bytes()),
+			Name:    "Test",
 		}
-		expectedType := fmt.Sprintf("%s.Test.MyEvent", location.ID())
+		expectedType := location.TypeID("Test.MyEvent")
 
-		events, err := b.GetEventsByHeight(block.Header.Height, expectedType)
+		events, err := b.GetEventsByHeight(block.Header.Height, string(expectedType))
 		require.NoError(t, err)
 		require.Len(t, events, 1)
 
@@ -119,7 +120,7 @@ func TestEventEmitted(t *testing.T) {
 
 		expectedID := flow.Event{TransactionID: tx.ID(), EventIndex: 0}.ID()
 
-		assert.Equal(t, expectedType, actualEvent.Type)
+		assert.Equal(t, string(expectedType), actualEvent.Type)
 		assert.Equal(t, expectedID, actualEvent.ID())
 		assert.Equal(t, cadence.NewInt(1), decodedEvent.Fields[0])
 		assert.Equal(t, cadence.NewInt(2), decodedEvent.Fields[1])
