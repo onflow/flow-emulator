@@ -736,7 +736,13 @@ func TestUpdateAccountCode(t *testing.T) {
 			account.Contracts,
 		)
 
-		tx := templates.UpdateAccountContract(accountAddressB, "Test", []byte(codeB))
+		tx := templates.UpdateAccountContract(
+			accountAddressB,
+			templates.Contract{
+				Name: "Test",
+				Source: codeB,
+			},
+		)
 
 		tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -786,7 +792,13 @@ func TestUpdateAccountCode(t *testing.T) {
 
 		assert.Equal(t, codeA, string(account.Contracts["Test"]))
 
-		tx := templates.UpdateAccountContract(accountAddressB, "Test", []byte(codeB))
+		tx := templates.UpdateAccountContract(
+			accountAddressB,
+			templates.Contract{
+				Name: "Test",
+				Source: codeB,
+			},
+		)
 
 		tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
