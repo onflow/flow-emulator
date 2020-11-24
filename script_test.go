@@ -1,7 +1,6 @@
 package emulator_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/onflow/cadence"
