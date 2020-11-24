@@ -220,13 +220,13 @@ func TestCreateAccount(t *testing.T) {
 			  }
 		  }
 		`
-		codeB := fmt.Sprintf(`
+		codeB := `
 		  pub contract Test2 {
 			  pub fun b(): Int {
 				  return 2
 			  }
 		  }
-		`)
+		`
 
 		accountKey := accountKeys.New()
 
