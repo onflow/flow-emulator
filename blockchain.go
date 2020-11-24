@@ -28,6 +28,7 @@ import (
 	"github.com/onflow/flow-go/fvm"
 	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/convert"
 	sdkconvert "github.com/onflow/flow-emulator/convert/sdk"
@@ -278,6 +279,7 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 	}
 
 	ctx := fvm.NewContext(
+		zerolog.Nop(),
 		fvm.WithChain(conf.GetChainID().Chain()),
 		fvm.WithASTCache(astCache),
 		fvm.WithBlocks(blocks),
