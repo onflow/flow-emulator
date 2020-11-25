@@ -24,10 +24,7 @@ jobs:
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-
-    - run: |
-        make ci
-        make check-tidy
-        make check-headers
+    - run: make ci
 
   lint:
     runs-on: ubuntu-latest
