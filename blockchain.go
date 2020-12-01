@@ -286,6 +286,7 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 		fvm.WithRestrictedDeployment(false),
 		fvm.WithRestrictedAccountCreation(false),
 		fvm.WithGasLimit(conf.ScriptGasLimit),
+		fvm.WithCadenceLogging(true),
 	)
 
 	return vm, ctx, nil
