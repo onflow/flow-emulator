@@ -36,22 +36,23 @@ import (
 )
 
 type Config struct {
-	Port               int           `default:"3569" flag:"port,p" info:"port to run RPC server"`
-	HTTPPort           int           `default:"8080" flag:"http-port" info:"port to run HTTP server"`
-	Verbose            bool          `default:"false" flag:"verbose,v" info:"enable verbose logging"`
-	BlockTime          time.Duration `flag:"block-time,b" info:"time between sealed blocks, e.g. '300ms', '-1.5h' or '2h45m'. Valid units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'"`
-	ServicePrivateKey  string        `flag:"service-priv-key" info:"service account private key"`
-	ServicePublicKey   string        `flag:"service-pub-key" info:"service account public key"`
-	ServiceKeySigAlgo  string        `flag:"service-sig-algo" info:"service account key signature algorithm"`
-	ServiceKeyHashAlgo string        `flag:"service-hash-algo" info:"service account key hash algorithm"`
-	Init               bool          `default:"false" flag:"init" info:"whether to initialize a new account profile"`
-	GRPCDebug          bool          `default:"false" flag:"grpc-debug" info:"enable gRPC server reflection for debugging with grpc_cli"`
-	Persist            bool          `default:"false" flag:"persist" info:"enable persistent storage"`
-	DBPath             string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
-	SimpleAddresses    bool          `default:"false" flag:"simple-addresses" info:"use sequential addresses starting with 0x01"`
-	TokenSupply        string        `default:"100000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
-	ScriptGasLimit     int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
-	TransactionExpiry  int           `default:"10" flag:"transaction-expiry" info:"transaction expiry, measured in blocks"`
+	Port                   int           `default:"3569" flag:"port,p" info:"port to run RPC server"`
+	HTTPPort               int           `default:"8080" flag:"http-port" info:"port to run HTTP server"`
+	Verbose                bool          `default:"false" flag:"verbose,v" info:"enable verbose logging"`
+	BlockTime              time.Duration `flag:"block-time,b" info:"time between sealed blocks, e.g. '300ms', '-1.5h' or '2h45m'. Valid units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'"`
+	ServicePrivateKey      string        `flag:"service-priv-key" info:"service account private key"`
+	ServicePublicKey       string        `flag:"service-pub-key" info:"service account public key"`
+	ServiceKeySigAlgo      string        `flag:"service-sig-algo" info:"service account key signature algorithm"`
+	ServiceKeyHashAlgo     string        `flag:"service-hash-algo" info:"service account key hash algorithm"`
+	Init                   bool          `default:"false" flag:"init" info:"whether to initialize a new account profile"`
+	GRPCDebug              bool          `default:"false" flag:"grpc-debug" info:"enable gRPC server reflection for debugging with grpc_cli"`
+	Persist                bool          `default:"false" flag:"persist" info:"enable persistent storage"`
+	DBPath                 string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
+	SimpleAddresses        bool          `default:"false" flag:"simple-addresses" info:"use sequential addresses starting with 0x01"`
+	TokenSupply            string        `default:"100000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
+	TransactionExpiry      int           `default:"10" flag:"transaction-expiry" info:"transaction expiry, measured in blocks"`
+	TransactionMaxGasLimit int           `default:"9999" flag:"transaction-max-gas-limit" info:"maximum gas limit for transactions"`
+	ScriptGasLimit         int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
 }
 
 const EnvPrefix = "FLOW"
@@ -131,16 +132,17 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				GRPCDebug: conf.GRPCDebug,
 				HTTPPort:  conf.HTTPPort,
 				// TODO: allow headers to be parsed from environment
-				HTTPHeaders:        nil,
-				BlockTime:          conf.BlockTime,
-				ServicePublicKey:   servicePublicKey,
-				ServiceKeySigAlgo:  serviceKeySigAlgo,
-				ServiceKeyHashAlgo: serviceKeyHashAlgo,
-				Persist:            conf.Persist,
-				DBPath:             conf.DBPath,
-				GenesisTokenSupply: parseTokenSupply(conf.TokenSupply),
-				ScriptGasLimit:     uint64(conf.ScriptGasLimit),
-				TransactionExpiry:  uint(conf.TransactionExpiry),
+				HTTPHeaders:            nil,
+				BlockTime:              conf.BlockTime,
+				ServicePublicKey:       servicePublicKey,
+				ServiceKeySigAlgo:      serviceKeySigAlgo,
+				ServiceKeyHashAlgo:     serviceKeyHashAlgo,
+				Persist:                conf.Persist,
+				DBPath:                 conf.DBPath,
+				GenesisTokenSupply:     parseTokenSupply(conf.TokenSupply),
+				TransactionMaxGasLimit: uint64(conf.TransactionMaxGasLimit),
+				ScriptGasLimit:         uint64(conf.ScriptGasLimit),
+				TransactionExpiry:      uint(conf.TransactionExpiry),
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)

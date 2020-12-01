@@ -73,18 +73,19 @@ var (
 
 // Config is the configuration for an emulator server.
 type Config struct {
-	GRPCPort           int
-	GRPCDebug          bool
-	HTTPPort           int
-	HTTPHeaders        []HTTPHeader
-	BlockTime          time.Duration
-	ServicePublicKey   crypto.PublicKey
-	ServiceKeySigAlgo  crypto.SignatureAlgorithm
-	ServiceKeyHashAlgo crypto.HashAlgorithm
-	GenesisTokenSupply cadence.UFix64
-	TransactionExpiry  uint
-	ScriptGasLimit     uint64
-	Persist            bool
+	GRPCPort               int
+	GRPCDebug              bool
+	HTTPPort               int
+	HTTPHeaders            []HTTPHeader
+	BlockTime              time.Duration
+	ServicePublicKey       crypto.PublicKey
+	ServiceKeySigAlgo      crypto.SignatureAlgorithm
+	ServiceKeyHashAlgo     crypto.HashAlgorithm
+	GenesisTokenSupply     cadence.UFix64
+	TransactionExpiry      uint
+	TransactionMaxGasLimit uint64
+	ScriptGasLimit         uint64
+	Persist                bool
 	// DBPath is the path to the Badger database on disk.
 	DBPath string
 	// DBGCInterval is the time interval at which to garbage collect the Badger value log.
@@ -191,6 +192,7 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 	options := []emulator.Option{
 		emulator.WithStore(store),
 		emulator.WithGenesisTokenSupply(conf.GenesisTokenSupply),
+		emulator.WithTransactionMaxGasLimit(conf.TransactionMaxGasLimit),
 		emulator.WithScriptGasLimit(conf.ScriptGasLimit),
 		emulator.WithTransactionExpiry(conf.TransactionExpiry),
 	}
