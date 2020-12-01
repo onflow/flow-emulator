@@ -122,12 +122,13 @@ func GenerateDefaultServiceKey(
 
 // config is a set of configuration options for an emulated blockchain.
 type config struct {
-	ServiceKey         ServiceKey
-	Store              storage.Store
-	SimpleAddresses    bool
-	GenesisTokenSupply cadence.UFix64
-	ScriptGasLimit     uint64
-	TransactionExpiry  uint
+	ServiceKey             ServiceKey
+	Store                  storage.Store
+	SimpleAddresses        bool
+	GenesisTokenSupply     cadence.UFix64
+	TransactionMaxGasLimit uint64
+	ScriptGasLimit         uint64
+	TransactionExpiry      uint
 }
 
 func (conf config) GetStore() storage.Store {
@@ -160,6 +161,7 @@ func (conf config) GetServiceKey() ServiceKey {
 
 const defaultGenesisTokenSupply = "100000000000.0"
 const defaultScriptGasLimit = 100000
+const defaultTransactionMaxGasLimit = flowgo.DefaultMaxGasLimit
 
 // defaultConfig is the default configuration for an emulated blockchain.
 var defaultConfig = func() config {
@@ -169,12 +171,13 @@ var defaultConfig = func() config {
 	}
 
 	return config{
-		ServiceKey:         DefaultServiceKey(),
-		Store:              nil,
-		SimpleAddresses:    false,
-		GenesisTokenSupply: genesisTokenSupply,
-		ScriptGasLimit:     defaultScriptGasLimit,
-		TransactionExpiry:  0, // TODO: replace with sensible default
+		ServiceKey:             DefaultServiceKey(),
+		Store:                  nil,
+		SimpleAddresses:        false,
+		GenesisTokenSupply:     genesisTokenSupply,
+		ScriptGasLimit:         defaultScriptGasLimit,
+		TransactionMaxGasLimit: defaultTransactionMaxGasLimit,
+		TransactionExpiry:      0, // TODO: replace with sensible default
 	}
 }()
 
@@ -217,9 +220,23 @@ func WithGenesisTokenSupply(supply cadence.UFix64) Option {
 	}
 }
 
+// WithTransactionMaxGasLimit sets the maximum gas limit for transactions.
+//
+// Individual transactions will still be bounded by the limit they declare.
+// This function sets the maximum limit that any transaction can declare.
+//
+// This limit does not affect script executions. Use WithScriptGasLimit
+// to set the gas limit for script executions.
+func WithTransactionMaxGasLimit(maxLimit uint64) Option {
+	return func(c *config) {
+		c.TransactionMaxGasLimit = maxLimit
+	}
+}
+
 // WithScriptGasLimit sets the gas limit for scripts.
 //
 // This limit does not affect transactions, which declare their own limit.
+// Use WithTransactionMaxGasLimit to set the maximum gas limit for transactions.
 func WithScriptGasLimit(limit uint64) Option {
 	return func(c *config) {
 		c.ScriptGasLimit = limit
@@ -397,7 +414,7 @@ func configureTransactionValidator(conf config, blocks *blocks) *access.Transact
 			ExpiryBuffer:                 0,
 			AllowEmptyReferenceBlockID:   conf.TransactionExpiry == 0,
 			AllowUnknownReferenceBlockID: false,
-			MaxGasLimit:                  flowgo.DefaultMaxGasLimit,
+			MaxGasLimit:                  conf.TransactionMaxGasLimit,
 			CheckScriptsParse:            true,
 			MaxTxSizeLimit:               flowgo.DefaultMaxTxSizeLimit,
 		},
