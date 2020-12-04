@@ -2,6 +2,7 @@ package backend
 
 import (
 	sdk "github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk/templates"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
 	emulator "github.com/onflow/flow-emulator"
@@ -31,5 +32,5 @@ type Emulator interface {
 	GetEventsByHeight(blockHeight uint64, eventType string) ([]sdk.Event, error)
 	ExecuteScript(script []byte, arguments [][]byte) (*types.ScriptResult, error)
 	ExecuteScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) (*types.ScriptResult, error)
-	CreateAccount(publicKeys []*sdk.AccountKey, code []byte) (sdk.Address, error)
+	CreateAccount(publicKeys []*sdk.AccountKey, contracts []templates.Contract) (sdk.Address, error)
 }

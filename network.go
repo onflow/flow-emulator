@@ -96,7 +96,7 @@ func (n *Network) ExecuteNextTransaction() (*types.TransactionResult, error) {
 		Events:        txResp.Events,
 	}, nil
 }
-func (n *Network) CreateAccount(publicKeys []*flow.AccountKey, code []byte) (flow.Address, error) {
+func (n *Network) CreateAccount(publicKeys []*flow.AccountKey, contracts []templates.Contract) (flow.Address, error) {
 	ctx := context.Background()
 	addr := flow.Address{}
 
@@ -111,7 +111,7 @@ func (n *Network) CreateAccount(publicKeys []*flow.AccountKey, code []byte) (flo
 		return addr, err
 	}
 
-	accountTx := templates.CreateAccount(publicKeys, code, n.serviceKey.Address).
+	accountTx := templates.CreateAccount(publicKeys, contracts, n.serviceKey.Address).
 		SetReferenceBlockID(finalizedBlock.ID).
 		SetProposalKey(n.serviceKey.Address, n.serviceKey.Index, n.serviceKey.SequenceNumber).
 		SetPayer(n.serviceKey.Address)

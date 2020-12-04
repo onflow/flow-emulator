@@ -439,6 +439,14 @@ func (b *Blockchain) GetLatestBlock() (*flowgo.Block, error) {
 
 	return &block, nil
 }
+func (b *Blockchain) GetLatestBlockID() (sdk.Identifier, error) {
+	block, err := b.storage.LatestBlock()
+	if err != nil {
+		return sdk.EmptyID, &StorageError{err}
+	}
+
+	return sdk.Identifier(block.ID()), nil
+}
 
 // GetBlockByID gets a block by ID.
 func (b *Blockchain) GetBlockByID(id sdk.Identifier) (*flowgo.Block, error) {
