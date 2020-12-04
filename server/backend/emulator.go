@@ -1,32 +1,20 @@
-/*
- * Flow Emulator
- *
- * Copyright 2019-2020 Dapper Labs, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package backend
 
 import (
-	flowgo "github.com/onflow/flow-go/model/flow"
 	sdk "github.com/onflow/flow-go-sdk"
+	flowgo "github.com/onflow/flow-go/model/flow"
 
+	emulator "github.com/onflow/flow-emulator"
 	"github.com/onflow/flow-emulator/types"
 )
 
+var _ Emulator = &emulator.Network{}
+var _ Emulator = &emulator.Blockchain{}
+
 // Emulator defines the method set of an emulated blockchain.
 type Emulator interface {
+	ServiceKey() emulator.ServiceKey
+	GetLatestBlockID() (sdk.Identifier, error)
 	AddTransaction(tx sdk.Transaction) error
 	ExecuteNextTransaction() (*types.TransactionResult, error)
 	ExecuteBlock() ([]*types.TransactionResult, error)
@@ -43,4 +31,5 @@ type Emulator interface {
 	GetEventsByHeight(blockHeight uint64, eventType string) ([]sdk.Event, error)
 	ExecuteScript(script []byte, arguments [][]byte) (*types.ScriptResult, error)
 	ExecuteScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) (*types.ScriptResult, error)
+	CreateAccount(publicKeys []*sdk.AccountKey, code []byte) (sdk.Address, error)
 }
