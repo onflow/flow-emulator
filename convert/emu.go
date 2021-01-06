@@ -33,10 +33,7 @@ func ToStorableResult(tp *fvm.TransactionProcedure, txIndex uint32) (types.Stora
 		errorMessage = tp.Err.Error()
 	}
 
-	events, err := tp.ConvertEvents(txIndex)
-	if err != nil {
-		return types.StorableTransactionResult{}, err
-	}
+	events := tp.Events
 
 	return types.StorableTransactionResult{
 		ErrorCode:    errorCode,

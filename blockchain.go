@@ -303,6 +303,7 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 		fvm.WithRestrictedDeployment(false),
 		fvm.WithRestrictedAccountCreation(false),
 		fvm.WithGasLimit(conf.ScriptGasLimit),
+		fvm.WithCadenceLogging(true),
 	)
 
 	return vm, ctx, nil
@@ -397,7 +398,7 @@ func bootstrapLedger(
 		Weight:    fvm.AccountKeyWeightThreshold,
 	}
 
-	err := vm.Run(ctx, fvm.Bootstrap(flowAccountKey, genesisTokenSupply), ledger)
+	err := vm.Run(ctx, fvm.Bootstrap(flowAccountKey, fvm.WithInitialTokenSupply(genesisTokenSupply)), ledger)
 	if err != nil {
 		return err
 	}
@@ -752,8 +753,9 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 		func(
 			ledgerView *delta.View,
 			txBody *flowgo.TransactionBody,
+			txIndex uint32,
 		) (*fvm.TransactionProcedure, error) {
-			tx := fvm.Transaction(txBody)
+			tx := fvm.Transaction(txBody, txIndex)
 
 			err := b.vm.Run(ctx, tx, ledgerView)
 			if err != nil {
@@ -768,8 +770,11 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 		return nil, err
 	}
 
-	tr := convert.VMTransactionResultToEmulator(tp, b.pendingBlock.index)
-
+	tr, err := convert.VMTransactionResultToEmulator(tp, int(b.pendingBlock.index))
+	if err != nil {
+		// fail fast if fatal error occurs
+		return nil, err
+	}
 	return &tr, nil
 }
 
@@ -906,7 +911,10 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blo
 	hasher := hash.NewSHA3_256()
 	scriptID := sdk.HashToID(hasher.ComputeHash(script))
 
-	events := sdkconvert.RuntimeEventsToSDK(scriptProc.Events, scriptID, 0)
+	events, err := sdkconvert.RuntimeEventsToSDK(scriptProc.Events, scriptID, 0)
+	if err != nil {
+		return nil, err
+	}
 
 	var scriptError error = nil
 	var convertedValue cadence.Value = nil

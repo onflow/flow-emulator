@@ -29,7 +29,7 @@ type pendingBlock struct {
 	// events emitted during execution
 	events []flowgo.Event
 	// index of transaction execution
-	index int
+	index uint32
 }
 
 // newPendingBlock creates a new pending block sequentially after a specified block.
@@ -139,28 +139,23 @@ func (b *pendingBlock) nextTransaction() *flowgo.TransactionBody {
 // This function uses the provided execute function to perform the actual
 // execution, then updates the pending block with the output.
 func (b *pendingBlock) ExecuteNextTransaction(
-	execute func(ledgerView *delta.View, tx *flowgo.TransactionBody) (*fvm.TransactionProcedure, error),
+	execute func(ledgerView *delta.View, tx *flowgo.TransactionBody, txIndex uint32) (*fvm.TransactionProcedure, error),
 ) (*fvm.TransactionProcedure, error) {
 	tx := b.nextTransaction()
+	b.index++
 
 	childView := b.ledgerView.NewChild()
 
-	tp, err := execute(childView, tx)
+	tp, err := execute(childView, tx, b.index)
 	if err != nil {
 		// fail fast if fatal error occurs
 		return nil, err
 	}
 
 	// increment transaction index even if transaction reverts
-	b.index++
-
-	convertedEvents, err := tp.ConvertEvents(uint32(b.index))
-	if err != nil {
-		return nil, err
-	}
 
 	if tp.Err == nil {
-		b.events = append(b.events, convertedEvents...)
+		b.events = append(b.events, tp.Events...)
 		b.ledgerView.MergeView(childView)
 	}
 
@@ -184,7 +179,7 @@ func (b *pendingBlock) ExecutionStarted() bool {
 
 // ExecutionComplete returns true if the pending block is fully executed.
 func (b *pendingBlock) ExecutionComplete() bool {
-	return b.index >= b.Size()
+	return b.index >= uint32(b.Size())
 }
 
 // Size returns the number of transactions in the pending block.

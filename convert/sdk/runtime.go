@@ -19,24 +19,37 @@
 package sdk
 
 import (
+	"fmt"
 	"github.com/onflow/cadence"
+	jsoncdc "github.com/onflow/cadence/encoding/json"
 	sdk "github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go/model/flow"
 )
 
-func RuntimeEventToSDK(runtimeEvent cadence.Event, txID sdk.Identifier, txIndex int, eventIndex int) sdk.Event {
+func RuntimeEventToSDK(runtimeEvent flow.Event, txID sdk.Identifier, txIndex int, eventIndex int) (sdk.Event, error) {
+	v, err := jsoncdc.Decode(runtimeEvent.Payload)
+
+	if err != nil {
+		return sdk.Event{}, fmt.Errorf("could not decode cadence event")
+	}
+
 	return sdk.Event{
-		Type:             runtimeEvent.EventType.ID(),
+		Type:             string(runtimeEvent.Type),
 		TransactionID:    txID,
 		TransactionIndex: txIndex,
 		EventIndex:       eventIndex,
-		Value:            runtimeEvent,
-	}
+		Value:            v.(cadence.Event),
+	}, nil
 }
 
-func RuntimeEventsToSDK(runtimeEvents []cadence.Event, txID sdk.Identifier, txIndex int) []sdk.Event {
+func RuntimeEventsToSDK(runtimeEvents []flow.Event, txID sdk.Identifier, txIndex int) ([]sdk.Event, error) {
 	ret := make([]sdk.Event, len(runtimeEvents))
 	for i, runtimeEvent := range runtimeEvents {
-		ret[i] = RuntimeEventToSDK(runtimeEvent, txID, txIndex, i)
+		e, err := RuntimeEventToSDK(runtimeEvent, txID, txIndex, i)
+		if err != nil {
+			return nil, err
+		}
+		ret[i] = e
 	}
-	return ret
+	return ret, nil
 }

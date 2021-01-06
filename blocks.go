@@ -20,6 +20,7 @@ package emulator
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/onflow/flow-go/access"
 	"github.com/onflow/flow-go/fvm"
@@ -39,12 +40,55 @@ func newBlocks(b *Blockchain) *blocks {
 	return &blocks{b}
 }
 
-func (b *blocks) ByHeight(height uint64) (*flowgo.Block, error) {
-	if height == b.blockchain.pendingBlock.Height() {
-		return b.blockchain.pendingBlock.Block(), nil
+func (b *blocks) ByHeightFrom(height uint64, header *flowgo.Header) (*flowgo.Header, error) {
+	if header == nil {
+		byHeight, err := b.blockchain.storage.BlockByHeight(height)
+		if err != nil {
+			return nil, err
+		}
+		return byHeight.Header, nil
 	}
 
-	return b.blockchain.storage.BlockByHeight(height)
+	if header.Height == height {
+		return header, nil
+	}
+
+	if height > header.Height {
+		return nil, fmt.Errorf("requested height (%d) larger than given header's height (%d)", height, header.Height)
+	}
+
+	id := header.ParentID
+
+	// travel chain back
+	for {
+		// recent block should be in cache so this is supposed to be fast
+		parent, err := b.blockchain.storage.BlockByID(id)
+		if err != nil {
+			return nil, fmt.Errorf("cannot retrieve block parent: %w", err)
+		}
+		if parent.Header.Height == height {
+			return parent.Header, nil
+		}
+
+		_, err = b.blockchain.storage.BlockByHeight(parent.Header.Height)
+		// if height isn't finalized, move to parent
+		if err != nil && errors.Is(err, storage.ErrNotFound) {
+			id = parent.Header.ParentID
+			continue
+		}
+		// any other error bubbles up
+		if err != nil {
+			return nil, fmt.Errorf("cannot retrieve block parent: %w", err)
+		}
+		//if parent is finalized block, we can just use finalized chain
+		// to get desired height
+
+		block, err := b.blockchain.storage.BlockByHeight(height)
+		if err != nil {
+			return nil, err
+		}
+		return block.Header, nil
+	}
 }
 
 func (b *blocks) HeaderByID(id flowgo.Identifier) (*flowgo.Header, error) {

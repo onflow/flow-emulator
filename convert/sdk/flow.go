@@ -20,7 +20,6 @@ package sdk
 
 import (
 	"fmt"
-	"github.com/onflow/flow-go/fvm"
 
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
@@ -29,6 +28,7 @@ import (
 	"github.com/onflow/flow-go/access"
 	flowcrypto "github.com/onflow/flow-go/crypto"
 	flowhash "github.com/onflow/flow-go/crypto/hash"
+	"github.com/onflow/flow-go/fvm"
 	flowgo "github.com/onflow/flow-go/model/flow"
 )
 

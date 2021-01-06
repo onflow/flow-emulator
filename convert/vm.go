@@ -25,17 +25,20 @@ import (
 	"github.com/onflow/flow-emulator/types"
 )
 
-func VMTransactionResultToEmulator(tp *fvm.TransactionProcedure, txIndex int) types.TransactionResult {
+func VMTransactionResultToEmulator(tp *fvm.TransactionProcedure, txIndex int) (types.TransactionResult, error) {
 	txID := sdkConvert.FlowIdentifierToSDK(tp.ID)
 
-	sdkEvents := sdkConvert.RuntimeEventsToSDK(tp.Events, txID, txIndex)
+	sdkEvents, err := sdkConvert.RuntimeEventsToSDK(tp.Events, txID, txIndex)
+	if err != nil {
+		return types.TransactionResult{}, err
+	}
 
 	return types.TransactionResult{
 		TransactionID: txID,
 		Error:         VMErrorToEmulator(tp.Err),
 		Logs:          tp.Logs,
 		Events:        sdkEvents,
-	}
+	}, nil
 }
 
 func VMErrorToEmulator(vmError fvm.Error) error {
