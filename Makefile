@@ -53,7 +53,7 @@ generate-mocks:
 	GO111MODULE=on ${GOPATH}/bin/mockgen -destination=storage/mocks/store.go -package=mocks github.com/onflow/flow-emulator/storage Store
 
 .PHONY: ci
-ci: install-tools generate test coverage
+ci: install-tools test check-tidy test coverage check-headers
 
 .PHONY: docker-build-emulator
 docker-build:
@@ -72,7 +72,7 @@ endif
 
 .PHONY: install-linter
 install-linter:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.26.0
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.29.0
 
 .PHONY: lint
 lint:
@@ -83,5 +83,6 @@ check-headers:
 	@./check-headers.sh
 
 .PHONY: check-tidy
-check-tidy:
+check-tidy: generate
 	go mod tidy
+	git diff --exit-code

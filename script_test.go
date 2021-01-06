@@ -1,7 +1,6 @@
 package emulator_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/onflow/cadence"
@@ -70,11 +69,11 @@ func TestExecuteScript_WithArguments(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		scriptWithArgs := fmt.Sprintf(`
+		scriptWithArgs := `
 			pub fun main(n: Int): Int {
 				return n
 			}
-		`)
+		`
 
 		arg, err := jsoncdc.Encode(cadence.NewInt(10))
 		require.NoError(t, err)
@@ -88,12 +87,12 @@ func TestExecuteScript_WithArguments(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		scriptWithArgs := fmt.Sprintf(`
+		scriptWithArgs := `
 			pub fun main(n: String): Int {
 				log(n)
 				return 0
 			}
-		`)
+		`
 
 		arg, err := jsoncdc.Encode(cadence.NewString("Hello, World"))
 		require.NoError(t, err)

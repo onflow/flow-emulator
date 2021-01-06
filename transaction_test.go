@@ -7,6 +7,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
+	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
@@ -944,14 +945,14 @@ func TestGetTransactionResult(t *testing.T) {
 
 	event := result.Events[0]
 
-	location := runtime.AddressContractLocation{
-		AddressLocation: runtime.AddressLocation(counterAddress.Bytes()),
-		Name:            "Counting",
+	location := runtime.AddressLocation{
+		Address: common.BytesToAddress(counterAddress.Bytes()),
+		Name:    "Counting",
 	}
-	eventType := fmt.Sprintf("%s.Counting.CountIncremented", location.ID())
+	eventType := location.TypeID("Counting.CountIncremented")
 
 	assert.Equal(t, tx.ID(), event.TransactionID)
-	assert.Equal(t, eventType, event.Type)
+	assert.Equal(t, string(eventType), event.Type)
 	assert.Equal(t, 0, event.EventIndex)
 	assert.Equal(t, cadence.NewInt(2), event.Value.Fields[0])
 }
@@ -1124,8 +1125,10 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 
 	updateAccountCodeTx := templates.UpdateAccountContract(
 		newAccountAddress,
-		"HelloWorld",
-		[]byte(helloWorldContract),
+		templates.Contract{
+			Name:   "HelloWorld",
+			Source: helloWorldContract,
+		},
 	)
 	updateAccountCodeTx.
 		SetGasLimit(flowgo.DefaultMaxGasLimit).
