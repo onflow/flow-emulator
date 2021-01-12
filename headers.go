@@ -22,10 +22,10 @@ import (
 	"errors"
 
 	flowgo "github.com/onflow/flow-go/model/flow"
-	storage2 "github.com/onflow/flow-go/storage"
+	"github.com/onflow/flow-go/storage"
 )
 
-var _ storage2.Headers = &headers{}
+var _ storage.Headers = &headers{}
 
 type headers struct {
 	blockchain *Blockchain
@@ -55,7 +55,7 @@ func (h headers) ByHeight(height uint64) (*flowgo.Header, error) {
 	return block.Header, nil
 }
 
-func (h headers) ByParentID(parentID flowgo.Identifier) ([]*flowgo.Header, error) {
+func (h headers) ByParentID(_ flowgo.Identifier) ([]*flowgo.Header, error) {
 	return nil, errors.New("not implemented")
 }
 
