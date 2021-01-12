@@ -6,7 +6,6 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/onflow/cadence"
-	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
 	"github.com/onflow/flow-go-sdk"
@@ -945,7 +944,7 @@ func TestGetTransactionResult(t *testing.T) {
 
 	event := result.Events[0]
 
-	location := runtime.AddressLocation{
+	location := common.AddressLocation{
 		Address: common.BytesToAddress(counterAddress.Bytes()),
 		Name:    "Counting",
 	}

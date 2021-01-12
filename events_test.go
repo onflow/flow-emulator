@@ -11,14 +11,17 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/onflow/cadence"
-	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/flow-go-sdk"
 
 	emulator "github.com/onflow/flow-emulator"
 )
 
 func TestEventEmitted(t *testing.T) {
+
 	t.Run("EmittedFromScript", func(t *testing.T) {
+
+		// Emitting events in scripts is not supported
+
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -32,20 +35,8 @@ func TestEventEmitted(t *testing.T) {
 
 		result, err := b.ExecuteScript(script, nil)
 		assert.NoError(t, err)
-		require.Len(t, result.Events, 1)
-
-		actualEvent := result.Events[0]
-
-		decodedEvent := actualEvent.Value
-
-		location := runtime.ScriptLocation(result.ScriptID.Bytes())
-		expectedType := fmt.Sprintf("%s.MyEvent", location.ID())
-
-		// NOTE: ID is undefined for events emitted from scripts
-
-		assert.Equal(t, expectedType, actualEvent.Type)
-		assert.Equal(t, cadence.NewInt(1), decodedEvent.Fields[0])
-		assert.Equal(t, cadence.NewInt(2), decodedEvent.Fields[1])
+		require.Error(t, result.Error)
+		require.Empty(t, result.Events)
 	})
 
 	t.Run("EmittedFromAccount", func(t *testing.T) {
@@ -104,7 +95,7 @@ func TestEventEmitted(t *testing.T) {
 		block, err := b.CommitBlock()
 		require.NoError(t, err)
 
-		location := runtime.AddressLocation{
+		location := common.AddressLocation{
 			Address: common.BytesToAddress(address.Bytes()),
 			Name:    "Test",
 		}
