@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2020 Dapper Labs, Inc.
+ * Copyright 2019-2021 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,52 +21,40 @@ package emulator
 import (
 	"errors"
 
-	"github.com/onflow/flow-go/access"
-	"github.com/onflow/flow-go/fvm"
 	flowgo "github.com/onflow/flow-go/model/flow"
-
-	"github.com/onflow/flow-emulator/storage"
+	storage2 "github.com/onflow/flow-go/storage"
 )
 
-var _ fvm.Blocks = &blocks{}
-var _ access.Blocks = &blocks{}
+var _ storage2.Headers = &headers{}
 
-type blocks struct {
+type headers struct {
 	blockchain *Blockchain
-	headers *headers
 }
 
-func newBlocks(b *Blockchain) *blocks {
-	return &blocks{
-		blockchain: b,
-		headers:    newHeaders(b),
-	}
+func newHeaders(b *Blockchain) *headers {
+	return &headers{b}
 }
 
-
-func (b *blocks) HeaderByID(id flowgo.Identifier) (*flowgo.Header, error) {
-	block, err := b.blockchain.storage.BlockByID(id)
-	if err != nil {
-		if errors.Is(err, storage.ErrNotFound) {
-			return nil, nil
-		}
-
-		return nil, err
-	}
-
-	return block.Header, nil
+func (h headers) Store(_ *flowgo.Header) error {
+	return errors.New("not implemented")
 }
 
-func (b *blocks) FinalizedHeader() (*flowgo.Header, error) {
-	block, err := b.blockchain.storage.LatestBlock()
+func (h headers) ByBlockID(blockID flowgo.Identifier) (*flowgo.Header, error) {
+	block, err := h.blockchain.storage.BlockByID(blockID)
 	if err != nil {
 		return nil, err
 	}
-
 	return block.Header, nil
 }
 
-func (b *blocks) ByHeightFrom(height uint64, header *flowgo.Header) (*flowgo.Header, error) {
-	return fvm.NewBlockFinder(b.headers).
-		ByHeightFrom(height, header)
+func (h headers) ByHeight(height uint64) (*flowgo.Header, error) {
+	block, err := h.blockchain.storage.BlockByHeight(height)
+	if err != nil {
+		return nil, err
+	}
+	return block.Header, nil
+}
+
+func (h headers) ByParentID(parentID flowgo.Identifier) ([]*flowgo.Header, error) {
+	return nil, errors.New("not implemented")
 }

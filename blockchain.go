@@ -303,6 +303,7 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 		fvm.WithRestrictedDeployment(false),
 		fvm.WithRestrictedAccountCreation(false),
 		fvm.WithGasLimit(conf.ScriptGasLimit),
+		fvm.WithCadenceLogging(true),
 	)
 
 	return vm, ctx, nil
@@ -397,7 +398,7 @@ func bootstrapLedger(
 		Weight:    fvm.AccountKeyWeightThreshold,
 	}
 
-	err := vm.Run(ctx, fvm.Bootstrap(flowAccountKey, genesisTokenSupply), ledger)
+	err := vm.Run(ctx, fvm.Bootstrap(flowAccountKey, fvm.WithInitialTokenSupply(genesisTokenSupply)), ledger)
 	if err != nil {
 		return err
 	}
@@ -751,9 +752,10 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 	tp, err := b.pendingBlock.ExecuteNextTransaction(
 		func(
 			ledgerView *delta.View,
+			txIndex uint32,
 			txBody *flowgo.TransactionBody,
 		) (*fvm.TransactionProcedure, error) {
-			tx := fvm.Transaction(txBody)
+			tx := fvm.Transaction(txBody, txIndex)
 
 			err := b.vm.Run(ctx, tx, ledgerView)
 			if err != nil {
@@ -768,9 +770,13 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 		return nil, err
 	}
 
-	tr := convert.VMTransactionResultToEmulator(tp, b.pendingBlock.index)
+	tr, err := convert.VMTransactionResultToEmulator(tp)
+	if err != nil {
+		// fail fast if fatal error occurs
+		return nil, err
+	}
 
-	return &tr, nil
+	return tr, nil
 }
 
 // CommitBlock seals the current pending block and saves it to storage.
@@ -906,7 +912,10 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blo
 	hasher := hash.NewSHA3_256()
 	scriptID := sdk.HashToID(hasher.ComputeHash(script))
 
-	events := sdkconvert.RuntimeEventsToSDK(scriptProc.Events, scriptID, 0)
+	events, err := sdkconvert.FlowEventsToSDK(scriptProc.Events)
+	if err != nil {
+		return nil, err
+	}
 
 	var scriptError error = nil
 	var convertedValue cadence.Value = nil
@@ -996,7 +1005,7 @@ func convertToSealedResults(
 	output := make(map[flowgo.Identifier]*types.StorableTransactionResult)
 
 	for id, result := range results {
-		temp, err := convert.ToStorableResult(result.Transaction, result.Index)
+		temp, err := convert.ToStorableResult(result.Transaction)
 		if err != nil {
 			return nil, err
 		}

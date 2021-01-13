@@ -277,7 +277,10 @@ func (s *Store) insertLedgerDelta(blockHeight uint64, delta delta.Delta) error {
 	for i, value := range values {
 		key := ids[i]
 		if value != nil {
-			newLedger.Set(key.Owner, key.Controller, key.Key, value)
+			err := newLedger.Set(key.Owner, key.Controller, key.Key, value)
+			if err != nil {
+				return nil
+			}
 		}
 	}
 

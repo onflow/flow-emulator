@@ -24,7 +24,7 @@ import (
 	"github.com/onflow/flow-emulator/types"
 )
 
-func ToStorableResult(tp *fvm.TransactionProcedure, txIndex uint32) (types.StorableTransactionResult, error) {
+func ToStorableResult(tp *fvm.TransactionProcedure) (types.StorableTransactionResult, error) {
 	var errorCode int
 	var errorMessage string
 
@@ -33,15 +33,10 @@ func ToStorableResult(tp *fvm.TransactionProcedure, txIndex uint32) (types.Stora
 		errorMessage = tp.Err.Error()
 	}
 
-	events, err := tp.ConvertEvents(txIndex)
-	if err != nil {
-		return types.StorableTransactionResult{}, err
-	}
-
 	return types.StorableTransactionResult{
 		ErrorCode:    errorCode,
 		ErrorMessage: errorMessage,
 		Logs:         tp.Logs,
-		Events:       events,
+		Events:       tp.Events,
 	}, nil
 }
