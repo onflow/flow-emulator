@@ -12,7 +12,7 @@ require (
 	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
 	github.com/onflow/cadence v0.10.5
 	// this references: https://github.com/onflow/flow-go/tree/feature/multiple-contract-support.
-	github.com/onflow/flow-go v0.13.1-0.20210113150027-80980aebd034
+	github.com/onflow/flow-go v0.13.1-0.20210113160735-f265a4fe652e
 	github.com/onflow/flow-go-sdk v0.12.3
 	github.com/onflow/flow-go/crypto v0.12.0
 	github.com/onflow/flow/protobuf/go/flow v0.1.8

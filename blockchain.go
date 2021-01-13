@@ -412,12 +412,28 @@ func bootstrapLedger(
 		Weight:    fvm.AccountKeyWeightThreshold,
 	}
 
-	err := vm.Run(ctx, fvm.Bootstrap(flowAccountKey, fvm.WithInitialTokenSupply(genesisTokenSupply)), ledger)
+	bootstrap := configureBootstrapProcedure(ctx, flowAccountKey, genesisTokenSupply)
+
+	err := vm.Run(ctx, bootstrap, ledger)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func configureBootstrapProcedure(ctx fvm.Context, flowAccountKey flowgo.AccountPublicKey, supply cadence.UFix64) *fvm.BootstrapProcedure {
+	if ctx.LimitAccountStorage {
+		return fvm.Bootstrap(flowAccountKey,
+			fvm.WithInitialTokenSupply(supply),
+			fvm.WithAccountCreationFee(10000000),
+			fvm.WithMinimumStorageReservation(10000000),
+		)
+	}
+	return fvm.Bootstrap(
+		flowAccountKey,
+		fvm.WithInitialTokenSupply(supply),
+	)
 }
 
 func configureTransactionValidator(conf config, blocks *blocks) *access.TransactionValidator {
