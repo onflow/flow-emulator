@@ -28,6 +28,7 @@ This command has several useful flags:
 - `-i` Time interval between blocks (default: `5s`)
 - `--persist` Enable persistent storage (uses [Badger](https://github.com/dgraph-io/badger) key-value DB)
 - `--dbpath` Path to store database (default: `"./flowdb"`)
+- `--storage-limit` Enable limiting account storage use to their storage capacity
 
 ### Using the emulator in a project	
 

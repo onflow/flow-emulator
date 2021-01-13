@@ -129,6 +129,7 @@ type config struct {
 	TransactionMaxGasLimit uint64
 	ScriptGasLimit         uint64
 	TransactionExpiry      uint
+	StorageLimitEnabled    bool
 }
 
 func (conf config) GetStore() storage.Store {
@@ -178,6 +179,7 @@ var defaultConfig = func() config {
 		ScriptGasLimit:         defaultScriptGasLimit,
 		TransactionMaxGasLimit: defaultTransactionMaxGasLimit,
 		TransactionExpiry:      0, // TODO: replace with sensible default
+		StorageLimitEnabled:    false,
 	}
 }()
 
@@ -253,6 +255,17 @@ func WithTransactionExpiry(expiry uint) Option {
 	}
 }
 
+// WithStorageLimitEnabled enables/disables limiting account storage used to their storage capacity.
+//
+// If set to false, accounts can store any amount of data,
+// otherwise they can only store as much as their storage capacity.
+// The default is false.
+func WithStorageLimitEnabled(enabled bool) Option {
+	return func(c *config) {
+		c.StorageLimitEnabled = enabled
+	}
+}
+
 // NewBlockchain instantiates a new emulated blockchain with the provided options.
 func NewBlockchain(opts ...Option) (*Blockchain, error) {
 
@@ -304,6 +317,7 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 		fvm.WithRestrictedAccountCreation(false),
 		fvm.WithGasLimit(conf.ScriptGasLimit),
 		fvm.WithCadenceLogging(true),
+		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
 	)
 
 	return vm, ctx, nil
@@ -398,12 +412,28 @@ func bootstrapLedger(
 		Weight:    fvm.AccountKeyWeightThreshold,
 	}
 
-	err := vm.Run(ctx, fvm.Bootstrap(flowAccountKey, genesisTokenSupply), ledger)
+	bootstrap := configureBootstrapProcedure(ctx, flowAccountKey, genesisTokenSupply)
+
+	err := vm.Run(ctx, bootstrap, ledger)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func configureBootstrapProcedure(ctx fvm.Context, flowAccountKey flowgo.AccountPublicKey, supply cadence.UFix64) *fvm.BootstrapProcedure {
+	if ctx.LimitAccountStorage {
+		return fvm.Bootstrap(flowAccountKey,
+			fvm.WithInitialTokenSupply(supply),
+			fvm.WithAccountCreationFee(10000000),
+			fvm.WithMinimumStorageReservation(10000000),
+		)
+	}
+	return fvm.Bootstrap(
+		flowAccountKey,
+		fvm.WithInitialTokenSupply(supply),
+	)
 }
 
 func configureTransactionValidator(conf config, blocks *blocks) *access.TransactionValidator {
