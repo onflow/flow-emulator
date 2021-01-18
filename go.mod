@@ -27,5 +27,3 @@ require (
 	github.com/stretchr/testify v1.6.1
 	google.golang.org/grpc v1.31.1
 )
-
-replace github.com/fxamacker/cbor/v2 => github.com/turbolent/cbor/v2 v2.2.1-0.20200911003300-cac23af49154
