@@ -426,8 +426,8 @@ func configureBootstrapProcedure(ctx fvm.Context, flowAccountKey flowgo.AccountP
 	if ctx.LimitAccountStorage {
 		return fvm.Bootstrap(flowAccountKey,
 			fvm.WithInitialTokenSupply(supply),
-			fvm.WithAccountCreationFee(10000000),
-			fvm.WithMinimumStorageReservation(10000000),
+			fvm.WithAccountCreationFee(fvm.DefaultAccountCreationFee),
+			fvm.WithMinimumStorageReservation(fvm.DefaultAccountCreationFee),
 		)
 	}
 	return fvm.Bootstrap(
