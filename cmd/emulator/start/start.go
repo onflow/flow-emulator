@@ -51,6 +51,7 @@ type Config struct {
 	SimpleAddresses        bool          `default:"false" flag:"simple-addresses" info:"use sequential addresses starting with 0x01"`
 	TokenSupply            string        `default:"100000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
 	TransactionExpiry      int           `default:"10" flag:"transaction-expiry" info:"transaction expiry, measured in blocks"`
+	StorageLimitEnabled    bool          `default:"true" flag:"storage-limit" info:"enable account storage limit"`
 	TransactionMaxGasLimit int           `default:"9999" flag:"transaction-max-gas-limit" info:"maximum gas limit for transactions"`
 	ScriptGasLimit         int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
 }
@@ -143,6 +144,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				TransactionMaxGasLimit: uint64(conf.TransactionMaxGasLimit),
 				ScriptGasLimit:         uint64(conf.ScriptGasLimit),
 				TransactionExpiry:      uint(conf.TransactionExpiry),
+				StorageLimitEnabled:    conf.StorageLimitEnabled,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)

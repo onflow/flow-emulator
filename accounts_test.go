@@ -41,7 +41,10 @@ func TestCreateAccount(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 
 	t.Run("Simple addresses", func(t *testing.T) {
-		b, err := emulator.NewBlockchain(emulator.WithSimpleAddresses())
+		b, err := emulator.NewBlockchain(
+			emulator.WithSimpleAddresses(),
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		accountKey := accountKeys.New()
@@ -80,7 +83,9 @@ func TestCreateAccount(t *testing.T) {
 	})
 
 	t.Run("Single public keys", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		accountKey := accountKeys.New()
@@ -118,7 +123,9 @@ func TestCreateAccount(t *testing.T) {
 	})
 
 	t.Run("Multiple public keys", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		accountKeyA := accountKeys.New()
@@ -158,7 +165,9 @@ func TestCreateAccount(t *testing.T) {
 	})
 
 	t.Run("Public keys and contract", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		accountKeyA := accountKeys.New()
@@ -166,7 +175,7 @@ func TestCreateAccount(t *testing.T) {
 
 		contracts := []templates.Contract{
 			{
-				Name: "Test",
+				Name:   "Test",
 				Source: testContract,
 			},
 		}
@@ -210,7 +219,9 @@ func TestCreateAccount(t *testing.T) {
 	})
 
 	t.Run("Public keys and two contracts", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		codeA := `
@@ -232,11 +243,11 @@ func TestCreateAccount(t *testing.T) {
 
 		contracts := []templates.Contract{
 			{
-				Name: "Test1",
+				Name:   "Test1",
 				Source: codeA,
 			},
 			{
-				Name: "Test2",
+				Name:   "Test2",
 				Source: codeB,
 			},
 		}
@@ -280,7 +291,9 @@ func TestCreateAccount(t *testing.T) {
 	})
 
 	t.Run("Code and no keys", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		contracts := []templates.Contract{
@@ -327,7 +340,9 @@ func TestCreateAccount(t *testing.T) {
 	})
 
 	t.Run("Event emitted", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		accountKey := accountKeys.New()
@@ -383,7 +398,9 @@ func TestCreateAccount(t *testing.T) {
 	})
 
 	t.Run("Invalid hash algorithm", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		accountKey := accountKeys.New()
@@ -412,7 +429,9 @@ func TestCreateAccount(t *testing.T) {
 	})
 
 	t.Run("Invalid code", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		contracts := []templates.Contract{
@@ -445,7 +464,9 @@ func TestCreateAccount(t *testing.T) {
 	})
 
 	t.Run("Invalid contract name", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		contracts := []templates.Contract{
@@ -482,7 +503,9 @@ func TestAddAccountKey(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 
 	t.Run("Valid key", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		newAccountKey, newSigner := accountKeys.NewWithSigner()
@@ -532,7 +555,9 @@ func TestAddAccountKey(t *testing.T) {
 	})
 
 	t.Run("Invalid hash algorithm", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		accountKey := accountKeys.New()
@@ -557,7 +582,9 @@ func TestAddAccountKey(t *testing.T) {
 }
 
 func TestRemoveAccountKey(t *testing.T) {
-	b, err := emulator.NewBlockchain()
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+	)
 	require.NoError(t, err)
 
 	accountKeys := test.AccountKeyGenerator()
@@ -710,12 +737,14 @@ func TestUpdateAccountCode(t *testing.T) {
 	accountKeyB, signerB := accountKeys.NewWithSigner()
 
 	t.Run("Valid signature", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		contracts := []templates.Contract{
 			{
-				Name: "Test",
+				Name:   "Test",
 				Source: codeA,
 			},
 		}
@@ -739,7 +768,7 @@ func TestUpdateAccountCode(t *testing.T) {
 		tx := templates.UpdateAccountContract(
 			accountAddressB,
 			templates.Contract{
-				Name: "Test",
+				Name:   "Test",
 				Source: codeB,
 			},
 		)
@@ -771,7 +800,9 @@ func TestUpdateAccountCode(t *testing.T) {
 	})
 
 	t.Run("Invalid signature", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		contracts := []templates.Contract{
@@ -795,7 +826,7 @@ func TestUpdateAccountCode(t *testing.T) {
 		tx := templates.UpdateAccountContract(
 			accountAddressB,
 			templates.Contract{
-				Name: "Test",
+				Name:   "Test",
 				Source: codeB,
 			},
 		)
@@ -827,7 +858,9 @@ func TestUpdateAccountCode(t *testing.T) {
 }
 
 func TestImportAccountCode(t *testing.T) {
-	b, err := emulator.NewBlockchain()
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+	)
 	require.NoError(t, err)
 
 	accountContracts := []templates.Contract{

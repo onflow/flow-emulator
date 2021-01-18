@@ -83,6 +83,7 @@ type Config struct {
 	ServiceKeyHashAlgo     crypto.HashAlgorithm
 	GenesisTokenSupply     cadence.UFix64
 	TransactionExpiry      uint
+	StorageLimitEnabled    bool
 	TransactionMaxGasLimit uint64
 	ScriptGasLimit         uint64
 	Persist                bool
@@ -195,6 +196,7 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithTransactionMaxGasLimit(conf.TransactionMaxGasLimit),
 		emulator.WithScriptGasLimit(conf.ScriptGasLimit),
 		emulator.WithTransactionExpiry(conf.TransactionExpiry),
+		emulator.WithStorageLimitEnabled(conf.StorageLimitEnabled),
 	}
 
 	if conf.ServicePublicKey != (crypto.PublicKey{}) {
