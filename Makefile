@@ -1,7 +1,5 @@
 # The short Git commit hash
 SHORT_COMMIT := $(shell git rev-parse --short HEAD)
-# The tag of the current commit, otherwise empty
-VERSION := $(shell git describe --tags --abbrev=0 --exact-match 2>/dev/null)
 # Name of the cover profile
 COVER_PROFILE := cover.out
 # Disable go sum database lookup for private repos
@@ -54,21 +52,6 @@ generate-mocks:
 
 .PHONY: ci
 ci: install-tools test check-tidy test coverage check-headers
-
-.PHONY: docker-build-emulator
-docker-build:
-	docker build --ssh default -f cmd/emulator/Dockerfile -t gcr.io/dl-flow/emulator:latest -t "gcr.io/dl-flow/emulator:$(SHORT_COMMIT)" .
-ifneq (${VERSION},)
-	docker tag gcr.io/dl-flow/emulator:latest gcr.io/dl-flow/emulator:${VERSION}
-endif
-
-.PHONY: docker-push-emulator
-docker-push:
-	docker push gcr.io/dl-flow/emulator:latest
-	docker push "gcr.io/dl-flow/emulator:$(SHORT_COMMIT)"
-ifneq (${VERSION},)
-	docker push "gcr.io/dl-flow/emulator:${VERSION}"
-endif
 
 .PHONY: install-linter
 install-linter:
