@@ -2,7 +2,7 @@
 
 The Flow Emulator is a lightweight tool that emulates the behaviour of the real Flow network. 
 
-The emulator exposes a gRPC server that implements the Flow Observation API, which is designed to have near feature parity
+The emulator exposes a gRPC server that implements the Flow Access API, which is designed to have near feature parity
 with the real network API.
 
 ## Running the emulator with the Flow CLI
