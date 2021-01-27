@@ -29,6 +29,7 @@ This command has several useful flags:
 - `--persist` Enable persistent storage (uses [Badger](https://github.com/dgraph-io/badger) key-value DB)
 - `--dbpath` Path to store database (default: `"./flowdb"`)
 - `--storage-limit` Enable limiting account storage use to their storage capacity
+- `--transaction-fees` Enable transaction fees
 
 ### Using the emulator in a project	
 
