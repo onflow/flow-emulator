@@ -11,7 +11,8 @@ require (
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
 	github.com/onflow/cadence v0.12.5
-	github.com/onflow/flow-go v0.13.2-0.20210127151702-b0658d47967e
+	// https://github.com/onflow/flow-go/tree/1d1871273596472583e39e8abb0d32b905d6832e
+	github.com/onflow/flow-go v0.13.2-0.20210127163913-1d1871273596
 	github.com/onflow/flow-go-sdk v0.14.2
 	github.com/onflow/flow-go/crypto v0.12.0
 	github.com/onflow/flow/protobuf/go/flow v0.1.8
