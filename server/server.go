@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/onflow/cadence"
+	"github.com/onflow/flow-go/fvm"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/psiemens/graceland"
 	"github.com/sirupsen/logrus"
@@ -84,6 +85,7 @@ type Config struct {
 	GenesisTokenSupply     cadence.UFix64
 	TransactionExpiry      uint
 	StorageLimitEnabled    bool
+	TransactionFeesEnabled bool
 	TransactionMaxGasLimit uint64
 	ScriptGasLimit         uint64
 	Persist                bool
@@ -112,6 +114,17 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		logger.WithError(err).Error("❗  Failed to configure emulated blockchain")
 		return nil
 	}
+
+	chain := blockchain.GetChain()
+
+	contracts := logrus.Fields{
+		"FlowServiceAccount": chain.ServiceAddress().HexWithPrefix(),
+		"FlowToken":          fvm.FlowTokenAddress(chain).HexWithPrefix(),
+		"FungibleToken":      fvm.FungibleTokenAddress(chain).HexWithPrefix(),
+		"FlowFees":           fvm.FlowFeesAddress(chain).HexWithPrefix(),
+		"FlowStorageFees":    chain.ServiceAddress().HexWithPrefix(),
+	}
+	logger.WithFields(contracts).Infof("📜  Flow contracts")
 
 	backend := configureBackend(logger, conf, blockchain)
 
@@ -197,6 +210,7 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithScriptGasLimit(conf.ScriptGasLimit),
 		emulator.WithTransactionExpiry(conf.TransactionExpiry),
 		emulator.WithStorageLimitEnabled(conf.StorageLimitEnabled),
+		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 	}
 
 	if conf.ServicePublicKey != (crypto.PublicKey{}) {

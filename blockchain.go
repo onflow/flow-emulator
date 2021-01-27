@@ -130,6 +130,7 @@ type config struct {
 	ScriptGasLimit         uint64
 	TransactionExpiry      uint
 	StorageLimitEnabled    bool
+	TransactionFeesEnabled bool
 }
 
 func (conf config) GetStore() storage.Store {
@@ -259,10 +260,20 @@ func WithTransactionExpiry(expiry uint) Option {
 //
 // If set to false, accounts can store any amount of data,
 // otherwise they can only store as much as their storage capacity.
-// The default is false.
+// The default is true.
 func WithStorageLimitEnabled(enabled bool) Option {
 	return func(c *config) {
 		c.StorageLimitEnabled = enabled
+	}
+}
+
+// WithTransactionFeesEnabled enables/disables transaction fees.
+//
+// If set to false transactions don't cost any flow.
+// The default is false.
+func WithTransactionFeesEnabled(enabled bool) Option {
+	return func(c *config) {
+		c.TransactionFeesEnabled = enabled
 	}
 }
 
@@ -356,8 +367,7 @@ func configureNewLedger(
 		vm,
 		ctx,
 		genesisLedgerView,
-		conf.GetServiceKey().AccountKey(),
-		conf.GenesisTokenSupply,
+		conf,
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to bootstrap execution state: %w", err)
@@ -397,9 +407,9 @@ func bootstrapLedger(
 	vm *fvm.VirtualMachine,
 	ctx fvm.Context,
 	ledger state.Ledger,
-	accountKey *sdk.AccountKey,
-	genesisTokenSupply cadence.UFix64,
+	conf config,
 ) error {
+	accountKey := conf.GetServiceKey().AccountKey()
 	publicKey, _ := crypto.DecodePublicKey(
 		crypto.SigningAlgorithm(accountKey.SigAlgo),
 		accountKey.PublicKey.Encode(),
@@ -412,7 +422,7 @@ func bootstrapLedger(
 		Weight:    fvm.AccountKeyWeightThreshold,
 	}
 
-	bootstrap := configureBootstrapProcedure(ctx, flowAccountKey, genesisTokenSupply)
+	bootstrap := configureBootstrapProcedure(conf, flowAccountKey, conf.GenesisTokenSupply)
 
 	err := vm.Run(ctx, bootstrap, ledger)
 	if err != nil {
@@ -422,17 +432,26 @@ func bootstrapLedger(
 	return nil
 }
 
-func configureBootstrapProcedure(ctx fvm.Context, flowAccountKey flowgo.AccountPublicKey, supply cadence.UFix64) *fvm.BootstrapProcedure {
-	if ctx.LimitAccountStorage {
-		return fvm.Bootstrap(flowAccountKey,
+func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPublicKey, supply cadence.UFix64) *fvm.BootstrapProcedure {
+	options := make([]fvm.BootstrapProcedureOption, 0)
+	options = append(options,
+		fvm.WithInitialTokenSupply(supply),
+	)
+	if conf.StorageLimitEnabled {
+		options = append(options,
 			fvm.WithInitialTokenSupply(supply),
 			fvm.WithAccountCreationFee(fvm.DefaultAccountCreationFee),
 			fvm.WithMinimumStorageReservation(fvm.DefaultMinimumStorageReservation),
 		)
 	}
+	if conf.TransactionFeesEnabled {
+		options = append(options,
+			fvm.WithTransactionFee(fvm.DefaultTransactionFees),
+		)
+	}
 	return fvm.Bootstrap(
 		flowAccountKey,
-		fvm.WithInitialTokenSupply(supply),
+		options...,
 	)
 }
 
@@ -522,6 +541,10 @@ func (b *Blockchain) getBlockByHeight(height uint64) (*flowgo.Block, error) {
 	}
 
 	return block, nil
+}
+
+func (b *Blockchain) GetChain() flowgo.Chain {
+	return b.vmCtx.Chain
 }
 
 func (b *Blockchain) GetCollection(colID sdk.Identifier) (*sdk.Collection, error) {
