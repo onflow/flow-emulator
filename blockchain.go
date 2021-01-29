@@ -303,15 +303,9 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {
 	vm := fvm.New(runtime.NewInterpreterRuntime())
 
-	astCache, err := fvm.NewLRUASTCache(256)
-	if err != nil {
-		return nil, fvm.Context{}, fmt.Errorf("failed to initialize AST cache: %w", err)
-	}
-
 	ctx := fvm.NewContext(
 		zerolog.Nop(),
 		fvm.WithChain(conf.GetChainID().Chain()),
-		fvm.WithASTCache(astCache),
 		fvm.WithBlocks(blocks),
 		fvm.WithRestrictedDeployment(false),
 		fvm.WithRestrictedAccountCreation(false),
