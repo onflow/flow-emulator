@@ -10,18 +10,18 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
-	github.com/onflow/cadence v0.12.5
-	github.com/onflow/flow-go v0.13.2-0.20210122234808-f166b2a7aa23
+	github.com/onflow/cadence v0.12.6-0.20210129000118-ad2b07a09690
+	github.com/onflow/flow-go v0.13.2-0.20210129004655-5062860fe54b
 	github.com/onflow/flow-go-sdk v0.14.2
 	github.com/onflow/flow-go/crypto v0.12.0
 	github.com/onflow/flow/protobuf/go/flow v0.1.8
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.5.1
-	github.com/prometheus/common v0.9.1
+	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/common v0.14.0
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.0.0-20190623041652-6e01eb1354fc
 	github.com/rs/zerolog v1.19.0
-	github.com/sirupsen/logrus v1.4.2
+	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v0.0.6
 	github.com/stretchr/testify v1.6.1
 	google.golang.org/grpc v1.31.1
