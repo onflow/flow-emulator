@@ -1,6 +1,6 @@
 # Flow Emulator
 
-The Flow Emulator is a lightweight tool that emulates the behaviour of the real Flow network. 
+The Flow Emulator is a lightweight tool that emulates the behaviour of the real Flow network.
 
 The emulator exposes a gRPC server that implements the Flow Access API, which is designed to have near feature parity
 with the real network API.
@@ -15,36 +15,36 @@ Follow [these steps](https://github.com/onflow/flow-cli) to install the Flow CLI
 
 ### Starting the server
 
-You can start the emulator with the Flow CLI:	
+You can start the emulator with the Flow CLI:
 
-```shell script	
+```shell script
 flow emulator start --init
 ```
 
-This command has several useful flags:	
+This command has several useful flags:
 
-- `-v` Enable verbose logging (this is useful for debugging)	
-- `-p` Port to listen on (default: `3569`)	
+- `-v` Enable verbose logging (this is useful for debugging)
+- `-p` Port to listen on (default: `3569`)
 - `-i` Time interval between blocks (default: `5s`)
 - `--persist` Enable persistent storage (uses [Badger](https://github.com/dgraph-io/badger) key-value DB)
 - `--dbpath` Path to store database (default: `"./flowdb"`)
 - `--storage-limit` Enable limiting account storage use to their storage capacity
 - `--transaction-fees` Enable transaction fees
 
-### Using the emulator in a project	
+### Using the emulator in a project
 
 You can start the emulator in your project context by running the above command
-in the same directory as `flow.json`. This will configure the emulator with your 
-project's service account, meaning you can use it to sign and submit transactions.	
+in the same directory as `flow.json`. This will configure the emulator with your
+project's service account, meaning you can use it to sign and submit transactions.
 
 ## Running the emulator with Docker
 
-Docker builds for the emulator are automatically built and pushed to 
-`gcr.io/dl-flow/emulator`, tagged by commit and semantic version. You can also [build the image locally](#building).
+Docker builds for the emulator are automatically built and pushed to
+`gcr.io/flow-container-registry/emulator`, tagged by commit and semantic version. You can also [build the image locally](#building).
 
 ### Configuration
 
-In addition to using command-line flags, the emulator can also be configured with environment 
+In addition to using command-line flags, the emulator can also be configured with environment
 variables, which can be passed into the Docker image.
 
 Here's a sample configuration:
@@ -60,10 +60,10 @@ FLOW_DBPATH=./path/to/db
 Here's how to run the emulator Docker image on port 9001 in verbose mode:
 
 ```bash
-docker run -e FLOW_PORT=9001 -e FLOW_VERBOSE=true gcr.io/dl-flow/emulator
+docker run -e FLOW_PORT=9001 -e FLOW_VERBOSE=true gcr.io/flow-container-registry/emulator
 ```
 
-The full list of configurable variables is specified [by the `Config` struct](cmd/emulator/main.go). 
+The full list of configurable variables is specified [by the `Config` struct](cmd/emulator/main.go).
 
 The environment variable names are the upper-case struct fields names, prefixed with `FLOW_`.
 
@@ -74,13 +74,13 @@ configuration, including account keys. In order to start, at least one
 key (called the service key) must be configured. This key is used by default
 when creating other accounts.
 
-Because Docker does not persist files by default, this file will be 
+Because Docker does not persist files by default, this file will be
 re-generated each time the emulator image restarts. For situations
 where it is important that the emulator always uses the same service key (ie.
 unit tests) you can specify a hex-encoded public key as an environment variable.
 
 ```bash
-docker run -e FLOW_SERVICEPUBLICKEY=<hex-encoded key> gcr.io/dl-flow/emulator
+docker run -e FLOW_SERVICEPUBLICKEY=<hex-encoded key> gcr.io/flow-container-registry/emulator
 ```
 
 To generate a service key, use the `keys generate` command in the Flow CLI.
@@ -92,14 +92,14 @@ flow keys generate
 
 To build the container locally, use `make docker-build` from the root of this repository.
 
-Images are automatically built and pushed to `gcr.io/dl-flow/emulator` via [Team City](https://ci.eng.dapperlabs.com/project/Flow_FlowGo_FlowEmulator) on any push to master, i.e. Pull Request merge
+Images are automatically built and pushed to `gcr.io/flow-container-registry/emulator` via [Team City](https://ci.eng.dapperlabs.com/project/Flow_FlowGo_FlowEmulator) on any push to master, i.e. Pull Request merge
 
 ## Deployment
 
 The emulator is currently being deployed via [Team City](https://ci.eng.dapperlabs.com/project/Flow_FlowGo_FlowEmulator)
 All commands relating to the deployment process live in the `Makefile` in this directory
 
-The deployment has a persistent volume and should keep state persistent. 
+The deployment has a persistent volume and should keep state persistent.
 The deployment file for the Ingress/Service/Deployment combo, and the
 Persistent Volume Claim are located in the k8s folder.
 
@@ -151,7 +151,7 @@ To gain persistence for data on the emulator, you will have to provision a volum
 Make sure the emulator also has access to the same `flow.json` file, or always launch it with the same service key, as mentioned above.
 
 ```bash
-docker run -e FLOW_SERVICEPUBLICKEY=<hex-encoded key> -e FLOW_DBPATH="/flowdb" -v "$(pwd)/flowdb":"/flowdb"  -p 3569:3569 gcr.io/dl-flow/emulator
+docker run -e FLOW_SERVICEPUBLICKEY=<hex-encoded key> -e FLOW_DBPATH="/flowdb" -v "$(pwd)/flowdb":"/flowdb"  -p 3569:3569 gcr.io/flow-container-registry/emulator
 ```
 
 ## Development

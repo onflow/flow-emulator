@@ -49,7 +49,7 @@ jobs:
       - name: Prepare
         id: prep
         run: |
-          DOCKER_IMAGE=gcr.io/dl-flow/emulator
+          DOCKER_IMAGE=gcr.io/flow-container-registry/emulator
           VERSION=edge
 
           if [[ $GITHUB_REF == refs/tags/* ]]; then

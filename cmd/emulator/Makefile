@@ -11,7 +11,7 @@ endif
 # Service information
 #----------------------------------------------------------------------
 SERVICE_SHORT_NAME=emulator
-SERVICE_LONG_NAME=dl-flow/${SERVICE_SHORT_NAME}
+SERVICE_LONG_NAME=flow-container-registry/${SERVICE_SHORT_NAME}
 DEPLOYMENT_NAME=flow-emulator-v2
 
 # Build information
