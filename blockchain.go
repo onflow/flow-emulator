@@ -439,7 +439,6 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 	)
 	if conf.StorageLimitEnabled {
 		options = append(options,
-			fvm.WithInitialTokenSupply(supply),
 			fvm.WithAccountCreationFee(fvm.DefaultAccountCreationFee),
 			fvm.WithMinimumStorageReservation(fvm.DefaultMinimumStorageReservation),
 		)
