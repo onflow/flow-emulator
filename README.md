@@ -7,11 +7,11 @@ with the real network API.
 
 ## Running the emulator with the Flow CLI
 
-The emulator is bundled with the [Flow CLI](https://github.com/dapperlabs/flow-cli), a command-line interface for working with Flow.
+The emulator is bundled with the [Flow CLI](https://docs.onflow.org/flow-cli), a command-line interface for working with Flow.
 
 ### Installation
 
-Follow [these steps](https://github.com/dapperlabs/flow-cli#flow-cli) to install the Flow CLI.
+Follow [these steps](https://github.com/onflow/flow-cli) to install the Flow CLI.
 
 ### Starting the server
 
