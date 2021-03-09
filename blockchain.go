@@ -418,7 +418,8 @@ func bootstrapLedger(
 
 	bootstrap := configureBootstrapProcedure(conf, flowAccountKey, conf.GenesisTokenSupply)
 
-	err := vm.Run(ctx, bootstrap, ledger)
+	programs := fvm.NewEmptyPrograms()
+	err := vm.Run(ctx, bootstrap, ledger, programs)
 	if err != nil {
 		return err
 	}
@@ -658,7 +659,8 @@ func (b *Blockchain) getAccount(address flowgo.Address) (*flowgo.Account, error)
 
 	view := b.storage.LedgerViewByHeight(latestBlock.Header.Height)
 
-	account, err := b.vm.GetAccount(b.vmCtx, address, view)
+	programs := fvm.NewEmptyPrograms()
+	account, err := b.vm.GetAccount(b.vmCtx, address, view, programs)
 	if errors.Is(err, fvm.ErrAccountNotFound) {
 		return nil, &AccountNotFoundError{Address: address}
 	}
@@ -803,7 +805,9 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 		) (*fvm.TransactionProcedure, error) {
 			tx := fvm.Transaction(txBody, txIndex)
 
-			err := b.vm.Run(ctx, tx, ledgerView)
+			programs := fvm.NewEmptyPrograms()
+
+			err := b.vm.Run(ctx, tx, ledgerView, programs)
 			if err != nil {
 				return nil, err
 			}
@@ -950,7 +954,8 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blo
 
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
 
-	err = b.vm.Run(blockContext, scriptProc, requestedLedgerView)
+	programs := fvm.NewEmptyPrograms()
+	err = b.vm.Run(blockContext, scriptProc, requestedLedgerView, programs)
 	if err != nil {
 		return nil, err
 	}
