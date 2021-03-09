@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
@@ -198,7 +197,6 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 
 		result, err := b.ExecuteNextTransaction()
 		require.NoError(t, err)
-		spew.Dump(result)
 
 		require.Error(t, result.Error)
 
