@@ -31,6 +31,18 @@ type headers struct {
 	blockchain *Blockchain
 }
 
+func (h headers) IndexByChunkID(headerID, chunkID flowgo.Identifier) error {
+	panic("TODO")
+}
+
+func (h headers) BatchIndexByChunkID(headerID, chunkID flowgo.Identifier, batch storage.BatchStorage) error {
+	panic("TODO")
+}
+
+func (h headers) IDByChunkID(chunkID flowgo.Identifier) (flowgo.Identifier, error) {
+	panic("TODO")
+}
+
 func newHeaders(b *Blockchain) *headers {
 	return &headers{b}
 }
