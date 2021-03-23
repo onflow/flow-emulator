@@ -401,7 +401,7 @@ func configureExistingLedger(
 func bootstrapLedger(
 	vm *fvm.VirtualMachine,
 	ctx fvm.Context,
-	ledger state.Ledger,
+	ledger state.View,
 	conf config,
 ) error {
 	accountKey := conf.GetServiceKey().AccountKey()
