@@ -800,7 +800,7 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 	// use the computer to execute the next transaction
 	tp, err := b.pendingBlock.ExecuteNextTransaction(
 		func(
-			ledgerView *delta.View,
+			ledgerView state.View,
 			txIndex uint32,
 			txBody *flowgo.TransactionBody,
 		) (*fvm.TransactionProcedure, error) {

@@ -70,4 +70,3 @@ func (h headers) ByHeight(height uint64) (*flowgo.Header, error) {
 func (h headers) ByParentID(_ flowgo.Identifier) ([]*flowgo.Header, error) {
 	return nil, errors.New("not implemented")
 }
-

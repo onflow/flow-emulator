@@ -33,13 +33,13 @@ var _ access.Blocks = &blocks{}
 
 type blocks struct {
 	blockchain *Blockchain
-	headers *headers
+	headers    *headers
 }
 
 func newBlocks(b *Blockchain) *blocks {
 	return &blocks{
 		blockchain: b,
-		headers: newHeaders(b),
+		headers:    newHeaders(b),
 	}
 }
 
