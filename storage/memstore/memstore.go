@@ -23,7 +23,7 @@ import (
 	"sync"
 
 	"github.com/onflow/flow-go/engine/execution/state/delta"
-	utils "github.com/onflow/flow-go/fvm/utils"
+	"github.com/onflow/flow-go/fvm/utils"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/onflow/flow-emulator/storage"
