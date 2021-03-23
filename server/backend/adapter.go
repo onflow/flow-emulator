@@ -192,3 +192,7 @@ func (a *Adapter) GetEventsForBlockIDs(
 ) ([]flowgo.BlockEvents, error) {
 	return a.backend.GetEventsForBlockIDs(ctx, eventType, convert.FlowIdentifiersToSDK(blockIDs))
 }
+
+func (a *Adapter) GetLatestProtocolStateSnapshot(ctx context.Context) ([]byte, error) {
+	return a.backend.GetLatestProtocolStateSnapshot(ctx)
+}
