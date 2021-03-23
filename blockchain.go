@@ -26,6 +26,7 @@ import (
 	"github.com/onflow/flow-go/crypto/hash"
 	"github.com/onflow/flow-go/engine/execution/state/delta"
 	"github.com/onflow/flow-go/fvm"
+	"github.com/onflow/flow-go/fvm/programs"
 	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
@@ -418,7 +419,7 @@ func bootstrapLedger(
 
 	bootstrap := configureBootstrapProcedure(conf, flowAccountKey, conf.GenesisTokenSupply)
 
-	programs := fvm.NewEmptyPrograms()
+	programs := programs.NewEmptyPrograms()
 	err := vm.Run(ctx, bootstrap, ledger, programs)
 	if err != nil {
 		return err
@@ -659,7 +660,7 @@ func (b *Blockchain) getAccount(address flowgo.Address) (*flowgo.Account, error)
 
 	view := b.storage.LedgerViewByHeight(latestBlock.Header.Height)
 
-	programs := fvm.NewEmptyPrograms()
+	programs := programs.NewEmptyPrograms()
 	account, err := b.vm.GetAccount(b.vmCtx, address, view, programs)
 	if errors.Is(err, fvm.ErrAccountNotFound) {
 		return nil, &AccountNotFoundError{Address: address}
@@ -805,7 +806,7 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 		) (*fvm.TransactionProcedure, error) {
 			tx := fvm.Transaction(txBody, txIndex)
 
-			programs := fvm.NewEmptyPrograms()
+			programs := programs.NewEmptyPrograms()
 
 			err := b.vm.Run(ctx, tx, ledgerView, programs)
 			if err != nil {
@@ -954,7 +955,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blo
 
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
 
-	programs := fvm.NewEmptyPrograms()
+	programs := programs.NewEmptyPrograms()
 	err = b.vm.Run(blockContext, scriptProc, requestedLedgerView, programs)
 	if err != nil {
 		return nil, err
