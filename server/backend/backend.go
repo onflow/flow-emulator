@@ -556,6 +556,10 @@ func (b *Backend) executeScriptAtBlock(script []byte, arguments [][]byte, blockH
 	return valueBytes, nil
 }
 
+func (b *Backend) GetLatestProtocolStateSnapshot(_ context.Context) ([]byte, error) {
+	panic("implement me")
+}
+
 // EnableAutoMine enables the automine flag.
 func (b *Backend) EnableAutoMine() {
 	b.automine = true
