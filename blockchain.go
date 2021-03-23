@@ -405,14 +405,14 @@ func bootstrapLedger(
 ) error {
 	accountKey := conf.GetServiceKey().AccountKey()
 	publicKey, _ := crypto.DecodePublicKey(
-		crypto.SigningAlgorithm(accountKey.SigAlgo),
+		accountKey.SigAlgo,
 		accountKey.PublicKey.Encode(),
 	)
 
 	flowAccountKey := flowgo.AccountPublicKey{
 		PublicKey: publicKey,
-		SignAlgo:  crypto.SigningAlgorithm(accountKey.SigAlgo),
-		HashAlgo:  hash.HashingAlgorithm(accountKey.HashAlgo),
+		SignAlgo:  accountKey.SigAlgo,
+		HashAlgo:  accountKey.HashAlgo,
 		Weight:    fvm.AccountKeyWeightThreshold,
 	}
 
