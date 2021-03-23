@@ -5,6 +5,7 @@ import (
 
 	"github.com/onflow/flow-go/engine/execution/state/delta"
 	"github.com/onflow/flow-go/fvm"
+	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
@@ -139,7 +140,7 @@ func (b *pendingBlock) nextTransaction() *flowgo.TransactionBody {
 // This function uses the provided execute function to perform the actual
 // execution, then updates the pending block with the output.
 func (b *pendingBlock) ExecuteNextTransaction(
-	execute func(ledgerView *delta.View, txIndex uint32, tx *flowgo.TransactionBody) (*fvm.TransactionProcedure, error),
+	execute func(ledgerView state.View, txIndex uint32, tx *flowgo.TransactionBody) (*fvm.TransactionProcedure, error),
 ) (*fvm.TransactionProcedure, error) {
 	tx := b.nextTransaction()
 
