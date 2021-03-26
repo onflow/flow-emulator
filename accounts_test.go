@@ -909,3 +909,137 @@ func TestImportAccountCode(t *testing.T) {
 	assert.NoError(t, err)
 	assertTransactionSucceeded(t, result)
 }
+
+func TestAccountAccess(t *testing.T) {
+
+	t.Parallel()
+
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+	)
+	require.NoError(t, err)
+
+	// Create first account and deploy a contract A
+	// which has a field
+	// which only other code in the same should be allowed to access
+
+	accountContracts := []templates.Contract{
+		{
+			Name: "A",
+			Source: `
+				pub contract A {
+					access(account) let a: Int
+
+					init() {
+						self.a = 1
+					}
+				}
+			`,
+		},
+	}
+
+	accountKeys := test.AccountKeyGenerator()
+
+	accountKey1, signer1 := accountKeys.NewWithSigner()
+
+	address1, err := b.CreateAccount(
+		[]*flow.AccountKey{accountKey1},
+		accountContracts,
+	)
+	assert.NoError(t, err)
+
+	// Deploy another contract B to the same account
+	// which accesses the field in contract A
+	// which allows access to code in the same account
+
+	tx := templates.AddAccountContract(
+		address1,
+		templates.Contract{
+			Name: "B",
+			Source: fmt.Sprintf(`
+				    import A from 0x%s
+
+					pub contract B {
+						pub fun use() {
+							let b = A.a
+						}
+					}
+				`,
+				address1.Hex(),
+			),
+		},
+	)
+
+	tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+		SetPayer(b.ServiceKey().Address)
+
+	err = tx.SignPayload(address1, 0, signer1)
+	assert.NoError(t, err)
+
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+	assert.NoError(t, err)
+
+	err = b.AddTransaction(*tx)
+	require.NoError(t, err)
+
+	result, err := b.ExecuteNextTransaction()
+	require.NoError(t, err)
+	assertTransactionSucceeded(t, result)
+
+	_, err = b.CommitBlock()
+	require.NoError(t, err)
+
+	// Create another account 2
+
+	accountKey2, signer2 := accountKeys.NewWithSigner()
+
+	address2, err := b.CreateAccount(
+		[]*flow.AccountKey{accountKey2},
+		nil,
+	)
+	assert.NoError(t, err)
+
+	// Deploy a contract C to the second account
+	// which accesses the field in contract A of the first account
+	// which allows access to code in the same account
+
+	tx = templates.AddAccountContract(
+		address2,
+		templates.Contract{
+			Name: "C",
+			Source: fmt.Sprintf(`
+				    import A from 0x%s
+
+					pub contract C {
+						pub fun use() {
+							let b = A.a
+						}
+					}
+				`,
+				address1.Hex(),
+			),
+		},
+	)
+
+	tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+		SetPayer(b.ServiceKey().Address)
+
+	err = tx.SignPayload(address2, 0, signer2)
+	assert.NoError(t, err)
+
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+	assert.NoError(t, err)
+
+	err = b.AddTransaction(*tx)
+	require.NoError(t, err)
+
+	result, err = b.ExecuteNextTransaction()
+	require.NoError(t, err)
+
+	require.False(t, result.Succeeded())
+	require.Error(t, result.Error)
+
+	require.Contains(t, result.Error.Error(), "error: cannot access `a`: field has account access")
+}
