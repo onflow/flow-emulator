@@ -313,7 +313,9 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 }
 
 func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {
-	vm := fvm.New(runtime.NewInterpreterRuntime())
+	rt := runtime.NewInterpreterRuntime()
+
+	vm := fvm.NewVirtualMachine(rt)
 
 	ctx := fvm.NewContext(
 		zerolog.Nop(),
