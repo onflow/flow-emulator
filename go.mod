@@ -9,8 +9,8 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
-	github.com/onflow/cadence v0.14.3
-	github.com/onflow/flow-go v0.15.1-0.20210322235253-6b2a6d97e78a
+	github.com/onflow/cadence v0.14.4
+	github.com/onflow/flow-go v0.15.3
 	github.com/onflow/flow-go-sdk v0.17.0
 	github.com/onflow/flow-go/crypto v0.12.0
 	github.com/onflow/flow/protobuf/go/flow v0.2.0
