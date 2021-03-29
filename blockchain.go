@@ -412,6 +412,11 @@ func bootstrapLedger(
 		accountKey.PublicKey.Encode(),
 	)
 
+	ctx = fvm.NewContextFromParent(
+		ctx,
+		fvm.WithAccountStorageLimit(false),
+	)
+
 	flowAccountKey := flowgo.AccountPublicKey{
 		PublicKey: publicKey,
 		SignAlgo:  accountKey.SigAlgo,
