@@ -31,16 +31,16 @@ type headers struct {
 	blockchain *Blockchain
 }
 
-func (h headers) IndexByChunkID(headerID, chunkID flowgo.Identifier) error {
-	panic("TODO")
+func (h headers) IndexByChunkID(_, _ flowgo.Identifier) error {
+	panic("should not be called")
 }
 
-func (h headers) BatchIndexByChunkID(headerID, chunkID flowgo.Identifier, batch storage.BatchStorage) error {
-	panic("TODO")
+func (h headers) BatchIndexByChunkID(_, _ flowgo.Identifier, batch storage.BatchStorage) error {
+	panic("should not be called")
 }
 
-func (h headers) IDByChunkID(chunkID flowgo.Identifier) (flowgo.Identifier, error) {
-	panic("TODO")
+func (h headers) IDByChunkID(_ flowgo.Identifier) (flowgo.Identifier, error) {
+	panic("should not be called")
 }
 
 func newHeaders(b *Blockchain) *headers {
