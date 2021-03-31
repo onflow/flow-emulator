@@ -157,7 +157,11 @@ func (b *pendingBlock) ExecuteNextTransaction(
 
 	if tp.Err == nil {
 		b.events = append(b.events, tp.Events...)
-		b.ledgerView.MergeView(childView)
+		err := b.ledgerView.MergeView(childView)
+		if err != nil {
+			// fail fast if fatal error occurs
+			return nil, err
+		}
 	}
 
 	b.transactionResults[tx.ID()] = IndexedTransactionResult{
