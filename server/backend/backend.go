@@ -22,13 +22,13 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"github.com/onflow/flow-go/fvm/errors"
 	"strings"
 
 	"github.com/logrusorgru/aurora"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go/access"
-	"github.com/onflow/flow-go/fvm"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -211,14 +211,13 @@ func (b *Backend) SendTransaction(ctx context.Context, tx sdk.Transaction) error
 			return status.Error(codes.InvalidArgument, err.Error())
 		case *types.FlowError:
 			switch t.FlowError.(type) {
-			case *fvm.InvalidSignaturePublicKeyDoesNotExistError,
-				*fvm.InvalidSignatureVerificationError,
-				*fvm.InvalidProposalKeyPublicKeyDoesNotExistError,
-				*fvm.InvalidSignaturePublicKeyRevokedError,
-				*fvm.InvalidProposalKeyMissingSignatureError,
-				*fvm.MissingPayerError,
-				*fvm.MissingSignatureError,
-				*fvm.InvalidProposalKeySequenceNumberError:
+			case
+				*errors.InvalidEnvelopeSignatureError,
+				*errors.InvalidPayloadSignatureError,
+				*errors.InvalidProposalSignatureError,
+				*errors.InvalidAddressError,
+				*errors.AccountAuthorizationError,
+				*errors.InvalidProposalSeqNumberError:
 
 				return status.Error(codes.InvalidArgument, err.Error())
 			default:

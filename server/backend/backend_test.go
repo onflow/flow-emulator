@@ -21,16 +21,17 @@ package backend_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
 	"testing"
 
-	"github.com/onflow/flow-go/fvm"
-	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/golang/mock/gomock"
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/test"
+	fvmErrors "github.com/onflow/flow-go/fvm/errors"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -507,7 +508,13 @@ func TestBackend(t *testing.T) {
 
 			emu.EXPECT().
 				AddTransaction(gomock.Any()).
-				Return(&types.FlowError{FlowError: &fvm.InvalidSignaturePublicKeyDoesNotExistError{}}).
+				Return(
+					&types.FlowError{
+						FlowError: fvmErrors.NewInvalidProposalSignatureError(
+							flowgo.EmptyAddress,
+							0,
+							fmt.Errorf("")),
+					}).
 				Times(1)
 
 			expectedTx := test.TransactionGenerator().New()

@@ -17,14 +17,16 @@ func setupPendingBlockTests(t *testing.T) (
 	*flow.Transaction,
 	*flow.Transaction,
 ) {
-	b, err := emulator.NewBlockchain()
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+	)
 	require.NoError(t, err)
 
 	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
 	tx1 := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
-		SetGasLimit(flowgo.DefaultMaxGasLimit).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
@@ -34,7 +36,7 @@ func setupPendingBlockTests(t *testing.T) (
 
 	tx2 := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
-		SetGasLimit(flowgo.DefaultMaxGasLimit).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber+1).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
@@ -44,7 +46,7 @@ func setupPendingBlockTests(t *testing.T) (
 
 	invalid := flow.NewTransaction().
 		SetScript([]byte(`transaction { execute { panic("revert!") } }`)).
-		SetGasLimit(flowgo.DefaultMaxGasLimit).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
@@ -258,7 +260,9 @@ func TestPendingBlockDuringExecution(t *testing.T) {
 }
 
 func TestPendingBlockCommit(t *testing.T) {
-	b, err := emulator.NewBlockchain()
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+	)
 	require.NoError(t, err)
 
 	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
@@ -266,7 +270,7 @@ func TestPendingBlockCommit(t *testing.T) {
 	t.Run("CommitBlock", func(t *testing.T) {
 		tx1 := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
@@ -295,7 +299,7 @@ func TestPendingBlockCommit(t *testing.T) {
 	t.Run("ExecuteAndCommitBlock", func(t *testing.T) {
 		tx1 := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)

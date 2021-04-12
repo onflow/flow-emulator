@@ -40,7 +40,9 @@ func TestEventEmitted(t *testing.T) {
 	})
 
 	t.Run("EmittedFromAccount", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		accountContracts := []templates.Contract{
@@ -78,7 +80,7 @@ func TestEventEmitted(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(script).
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 

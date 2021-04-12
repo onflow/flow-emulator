@@ -20,6 +20,7 @@ package convert
 
 import (
 	"github.com/onflow/flow-go/fvm"
+	"github.com/onflow/flow-go/fvm/errors"
 
 	sdkConvert "github.com/onflow/flow-emulator/convert/sdk"
 	"github.com/onflow/flow-emulator/types"
@@ -41,7 +42,7 @@ func VMTransactionResultToEmulator(tp *fvm.TransactionProcedure) (*types.Transac
 	}, nil
 }
 
-func VMErrorToEmulator(vmError fvm.Error) error {
+func VMErrorToEmulator(vmError errors.Error) error {
 	if vmError == nil {
 		return nil
 	}

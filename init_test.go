@@ -52,7 +52,7 @@ func TestInitialization(t *testing.T) {
 		require.Nil(t, err)
 		defer store.Close()
 
-		b, _ := emulator.NewBlockchain(emulator.WithStore(store))
+		b, _ := emulator.NewBlockchain(emulator.WithStore(store), emulator.WithStorageLimitEnabled(false))
 
 		contracts := []templates.Contract{
 			{
@@ -87,7 +87,7 @@ func TestInitialization(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(script)).
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)

@@ -26,6 +26,7 @@ import (
 	"github.com/onflow/flow-go/crypto/hash"
 	"github.com/onflow/flow-go/engine/execution/state/delta"
 	"github.com/onflow/flow-go/fvm"
+	fvmErrors "github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/programs"
 	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -164,7 +165,7 @@ func (conf config) GetServiceKey() ServiceKey {
 
 const defaultGenesisTokenSupply = "100000000000.0"
 const defaultScriptGasLimit = 100000
-const defaultTransactionMaxGasLimit = flowgo.DefaultMaxGasLimit
+const defaultTransactionMaxGasLimit = flowgo.DefaultMaxTransactionGasLimit
 
 // defaultConfig is the default configuration for an emulated blockchain.
 var defaultConfig = func() config {
@@ -444,6 +445,7 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 		options = append(options,
 			fvm.WithAccountCreationFee(fvm.DefaultAccountCreationFee),
 			fvm.WithMinimumStorageReservation(fvm.DefaultMinimumStorageReservation),
+			fvm.WithStoragePerFlow(fvm.DefaultStoragePerFlow),
 		)
 	}
 	if conf.TransactionFeesEnabled {
@@ -468,7 +470,8 @@ func configureTransactionValidator(conf config, blocks *blocks) *access.Transact
 			AllowUnknownReferenceBlockID: false,
 			MaxGasLimit:                  conf.TransactionMaxGasLimit,
 			CheckScriptsParse:            true,
-			MaxTxSizeLimit:               flowgo.DefaultMaxTxSizeLimit,
+			MaxTransactionByteSize:       flowgo.DefaultMaxTransactionByteSize,
+			MaxCollectionByteSize:        flowgo.DefaultMaxCollectionByteSize,
 		},
 	)
 }
@@ -669,7 +672,7 @@ func (b *Blockchain) getAccount(address flowgo.Address) (*flowgo.Account, error)
 
 	programs := programs.NewEmptyPrograms()
 	account, err := b.vm.GetAccount(b.vmCtx, address, view, programs)
-	if errors.Is(err, fvm.ErrAccountNotFound) {
+	if fvmErrors.IsAccountNotFoundError(err) {
 		return nil, &AccountNotFoundError{Address: address}
 	}
 
@@ -1010,7 +1013,7 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, contracts []tem
 
 	tx := templates.CreateAccount(publicKeys, contracts, serviceAddress)
 
-	tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
+	tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetReferenceBlockID(sdk.Identifier(latestBlock.ID())).
 		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
 		SetPayer(serviceAddress)
