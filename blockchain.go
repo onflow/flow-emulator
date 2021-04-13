@@ -163,7 +163,7 @@ func (conf config) GetServiceKey() ServiceKey {
 	return serviceKey
 }
 
-const defaultGenesisTokenSupply = "100000000000.0"
+const defaultGenesisTokenSupply = "10000000000.0"
 const defaultScriptGasLimit = 100000
 const defaultTransactionMaxGasLimit = flowgo.DefaultMaxTransactionGasLimit
 
