@@ -202,6 +202,8 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 
 		assert.IsType(t, &types.FlowError{}, result.Error)
 		assert.IsType(t, &fvmerrors.InvalidProposalSeqNumberError{}, result.Error.(*types.FlowError).FlowError)
+		// TODO ProvidedSeqNumber was changed to private field, un-comment following line when getter is added
+		// https://github.com/onflow/flow-emulator/pull/41/files#r614266443
 		//assert.Equal(t, invalidSequenceNumber, result.Error.(*types.FlowError).FlowError.(*fvmerrors.InvalidProposalSeqNumberError).ProvidedSeqNumber)
 	})
 
