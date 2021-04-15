@@ -28,7 +28,7 @@ import (
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go/access"
-	"github.com/onflow/flow-go/fvm"
+	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -210,15 +210,16 @@ func (b *Backend) SendTransaction(ctx context.Context, tx sdk.Transaction) error
 		case *emulator.DuplicateTransactionError:
 			return status.Error(codes.InvalidArgument, err.Error())
 		case *types.FlowError:
+			// TODO - confirm these
 			switch t.FlowError.(type) {
-			case *fvm.InvalidSignaturePublicKeyDoesNotExistError,
-				*fvm.InvalidSignatureVerificationError,
-				*fvm.InvalidProposalKeyPublicKeyDoesNotExistError,
-				*fvm.InvalidSignaturePublicKeyRevokedError,
-				*fvm.InvalidProposalKeyMissingSignatureError,
-				*fvm.MissingPayerError,
-				*fvm.MissingSignatureError,
-				*fvm.InvalidProposalKeySequenceNumberError:
+			case *fvmerrors.AccountAuthorizationError,
+				*fvmerrors.InvalidEnvelopeSignatureError,
+				*fvmerrors.InvalidPayloadSignatureError,
+				*fvmerrors.InvalidProposalSignatureError,
+				*fvmerrors.AccountNotFoundError,
+				*fvmerrors.AccountPublicKeyNotFoundError,
+				*fvmerrors.InvalidProposalSeqNumberError,
+				*fvmerrors.InvalidAddressError:
 
 				return status.Error(codes.InvalidArgument, err.Error())
 			default:
