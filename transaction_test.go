@@ -212,7 +212,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 
 		assert.IsType(t, &types.FlowError{}, result.Error)
 		assert.IsType(t, &fvmerrors.InvalidProposalSeqNumberError{}, result.Error.(*types.FlowError).FlowError)
-		assert.Equal(t, invalidSequenceNumber, result.Error.(*types.FlowError).FlowError.(*errors.InvalidProposalSeqNumberError).ProvidedSeqNumber())
+		assert.Equal(t, invalidSequenceNumber, result.Error.(*types.FlowError).FlowError.(*fvmerrors.InvalidProposalSeqNumberError).ProvidedSeqNumber())
 	})
 
 	const expiry = 10
