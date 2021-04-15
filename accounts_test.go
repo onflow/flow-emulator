@@ -20,13 +20,13 @@ package emulator_test
 
 import (
 	"fmt"
-	"github.com/onflow/flow-go/fvm/errors"
 	"testing"
 
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go-sdk/test"
+	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -670,7 +670,7 @@ func TestRemoveAccountKey(t *testing.T) {
 	result, err = b.ExecuteNextTransaction()
 	assert.NoError(t, err)
 
-	unittest.AssertFVMErrorType(t, &errors.InvalidProposalSignatureError{}, result.Error)
+	unittest.AssertFVMErrorType(t, &fvmerrors.InvalidProposalSignatureError{}, result.Error)
 
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
@@ -844,7 +844,7 @@ func TestUpdateAccountCode(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, &errors.AccountAuthorizationError{}, result.Error)
+		unittest.AssertFVMErrorType(t, &fvmerrors.AccountAuthorizationError{}, result.Error)
 
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)

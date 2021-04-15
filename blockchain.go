@@ -26,7 +26,7 @@ import (
 	"github.com/onflow/flow-go/crypto/hash"
 	"github.com/onflow/flow-go/engine/execution/state/delta"
 	"github.com/onflow/flow-go/fvm"
-	fvmErrors "github.com/onflow/flow-go/fvm/errors"
+	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/programs"
 	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -672,7 +672,7 @@ func (b *Blockchain) getAccount(address flowgo.Address) (*flowgo.Account, error)
 
 	programs := programs.NewEmptyPrograms()
 	account, err := b.vm.GetAccount(b.vmCtx, address, view, programs)
-	if fvmErrors.IsAccountNotFoundError(err) {
+	if fvmerrors.IsAccountNotFoundError(err) {
 		return nil, &AccountNotFoundError{Address: address}
 	}
 

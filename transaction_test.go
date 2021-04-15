@@ -2,7 +2,6 @@ package emulator_test
 
 import (
 	"fmt"
-	"github.com/onflow/flow-go/fvm/errors"
 	"testing"
 
 	"github.com/onflow/cadence"
@@ -12,6 +11,7 @@ import (
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go-sdk/test"
+	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -211,7 +211,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		require.Error(t, result.Error)
 
 		assert.IsType(t, &types.FlowError{}, result.Error)
-		assert.IsType(t, &errors.InvalidProposalSeqNumberError{}, result.Error.(*types.FlowError).FlowError)
+		assert.IsType(t, &fvmerrors.InvalidProposalSeqNumberError{}, result.Error.(*types.FlowError).FlowError)
 		assert.Equal(t, invalidSequenceNumber, result.Error.(*types.FlowError).FlowError.(*errors.InvalidProposalSeqNumberError).ProvidedSeqNumber())
 	})
 
@@ -444,7 +444,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, &errors.AccountAuthorizationError{}, result.Error)
+		unittest.AssertFVMErrorType(t, &fvmerrors.AccountAuthorizationError{}, result.Error)
 	})
 
 	t.Run("Invalid account", func(t *testing.T) {
@@ -480,7 +480,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, &errors.InvalidProposalSignatureError{}, result.Error)
+		unittest.AssertFVMErrorType(t, &fvmerrors.InvalidProposalSignatureError{}, result.Error)
 	})
 
 	t.Run("Invalid key", func(t *testing.T) {
@@ -512,7 +512,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, &errors.InvalidProposalSignatureError{}, result.Error)
+		unittest.AssertFVMErrorType(t, &fvmerrors.InvalidProposalSignatureError{}, result.Error)
 	})
 
 	t.Run("Key weights", func(t *testing.T) {
@@ -564,7 +564,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 			result, err := b.ExecuteNextTransaction()
 			assert.NoError(t, err)
 
-			unittest.AssertFVMErrorType(t, &errors.AccountAuthorizationError{}, result.Error)
+			unittest.AssertFVMErrorType(t, &fvmerrors.AccountAuthorizationError{}, result.Error)
 		})
 
 		t.Run("Sufficient key weight", func(t *testing.T) {
@@ -612,7 +612,7 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, &errors.AccountAuthorizationError{}, result.Error)
+		unittest.AssertFVMErrorType(t, &fvmerrors.AccountAuthorizationError{}, result.Error)
 	})
 
 	t.Run("Multiple payload signers", func(t *testing.T) {

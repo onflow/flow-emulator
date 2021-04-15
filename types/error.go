@@ -19,11 +19,11 @@
 package types
 
 import (
-	"github.com/onflow/flow-go/fvm/errors"
+	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 )
 
 type FlowError struct {
-	FlowError errors.Error
+	FlowError fvmerrors.Error
 }
 
 func (f *FlowError) Error() string {
