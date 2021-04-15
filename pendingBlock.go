@@ -1,6 +1,7 @@
 package emulator
 
 import (
+	"math/rand"
 	"time"
 
 	"github.com/onflow/flow-go/engine/execution/state/delta"
@@ -14,9 +15,14 @@ type IndexedTransactionResult struct {
 	Index       uint32
 }
 
+// MaxViewIncrease represents the largest difference in view number between
+// two consecutive blocks. The minimum view increment is 1.
+const MaxViewIncrease = 3
+
 // A pendingBlock contains the pending state required to form a new block.
 type pendingBlock struct {
 	height    uint64
+	view      uint64
 	parentID  flowgo.Identifier
 	timestamp time.Time
 	// mapping from transaction ID to transaction
@@ -38,6 +44,9 @@ func newPendingBlock(prevBlock *flowgo.Block, ledgerView *delta.View) *pendingBl
 
 	return &pendingBlock{
 		height:             prevBlock.Header.Height + 1,
+		// the view increments by between 1 and MaxViewIncrease to match
+		// behaviour on a real network, where views are not consecutive
+		view:               prevBlock.Header.View + uint64(rand.Intn(MaxViewIncrease)+1),
 		parentID:           prevBlock.ID(),
 		timestamp:          time.Now().UTC(),
 		transactions:       make(map[flowgo.Identifier]*flowgo.TransactionBody),
@@ -73,6 +82,7 @@ func (b *pendingBlock) Block() *flowgo.Block {
 	return &flowgo.Block{
 		Header: &flowgo.Header{
 			Height:    b.height,
+			View: b.view,
 			ParentID:  b.parentID,
 			Timestamp: b.timestamp,
 		},
