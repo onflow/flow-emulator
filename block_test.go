@@ -99,8 +99,11 @@ func TestCommitBlock(t *testing.T) {
 }
 
 func TestBlockView(t *testing.T) {
+	const nBlocks = 3
+
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
+
 
 	t.Run("genesis should have 0 view", func(t *testing.T) {
 		block, err := b.GetBlockByHeight(0)
@@ -112,7 +115,7 @@ func TestBlockView(t *testing.T) {
 	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
 	// create a few blocks, each with one transaction
-	for i := 0; i < 3; i++ {
+	for i := 0; i < nBlocks; i++ {
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
@@ -131,14 +134,10 @@ func TestBlockView(t *testing.T) {
 		// execute and commit the block
 		_, _, err = b.ExecuteAndCommitBlock()
 		require.NoError(t, err)
-
 	}
 
-	for height := uint64(1); ; height++ {
+	for height := uint64(1); height <= nBlocks+1; height++ {
 		block, err := b.GetBlockByHeight(height)
-		if _, ok := err.(emulator.BlockNotFoundError); ok {
-			break
-		}
 		require.NoError(t, err)
 
 		maxView := height*emulator.MaxViewIncrease
