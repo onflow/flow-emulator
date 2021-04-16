@@ -19,6 +19,7 @@
 package emulator_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/onflow/flow-go-sdk"
@@ -97,4 +98,54 @@ func TestCommitBlock(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, flow.TransactionStatusSealed, tx2Result.Status)
 	assert.Error(t, tx2Result.Error)
+}
+
+func TestBlockView(t *testing.T) {
+	const nBlocks = 3
+
+	b, err := emulator.NewBlockchain()
+	require.NoError(t, err)
+
+
+	t.Run("genesis should have 0 view", func(t *testing.T) {
+		block, err := b.GetBlockByHeight(0)
+		require.NoError(t, err)
+		assert.Equal(t, uint64(0), block.Header.Height)
+		assert.Equal(t, uint64(0), block.Header.View)
+	})
+
+	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
+
+	// create a few blocks, each with one transaction
+	for i := 0; i < nBlocks; i++ {
+
+		tx := flow.NewTransaction().
+			SetScript([]byte(addTwoScript)).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address).
+			AddAuthorizer(b.ServiceKey().Address)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		assert.NoError(t, err)
+
+		// Add tx to pending block
+		err = b.AddTransaction(*tx)
+		assert.NoError(t, err)
+
+		// execute and commit the block
+		_, _, err = b.ExecuteAndCommitBlock()
+		require.NoError(t, err)
+	}
+
+	for height := uint64(1); height <= nBlocks+1; height++ {
+		block, err := b.GetBlockByHeight(height)
+		require.NoError(t, err)
+
+		maxView := height*emulator.MaxViewIncrease
+		t.Run(fmt.Sprintf("block %d should have view <%d", height, maxView), func(t *testing.T) {
+			assert.Equal(t, height, block.Header.Height)
+			assert.LessOrEqual(t, block.Header.View, maxView)
+		})
+	}
 }

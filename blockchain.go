@@ -497,6 +497,11 @@ func (b *Blockchain) PendingBlockID() flowgo.Identifier {
 	return b.pendingBlock.ID()
 }
 
+// PendingBlockView returns the view of the pending block.
+func (b *Blockchain) PendingBlockView() uint64 {
+	return b.pendingBlock.view
+}
+
 // PendingBlockTimestamp returns the Timestamp of the pending block.
 func (b *Blockchain) PendingBlockTimestamp() time.Time {
 	return b.pendingBlock.Block().Header.Timestamp
