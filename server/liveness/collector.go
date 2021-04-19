@@ -82,7 +82,7 @@ func (c *CheckCollector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if toleranceStr := r.Header.Get(ToleranceHeader); toleranceStr != "" {
 		tolerance, err = time.ParseDuration(toleranceStr)
 		if err != nil {
-			http.Error(w, "Invalid tolerace: "+toleranceStr, http.StatusBadRequest)
+			http.Error(w, "Invalid tolerance: "+toleranceStr, http.StatusBadRequest)
 			return
 		}
 	}
@@ -95,7 +95,7 @@ func (c *CheckCollector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// IsLive checks if we are still live against the given the tolerace between hearbeats.
+// IsLive checks if we are still live against the given the tolerance between hearbeats.
 //
 // If tolerance is 0, the default tolerance is used.
 func (c *CheckCollector) IsLive(tolerance time.Duration) bool {
