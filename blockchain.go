@@ -445,7 +445,7 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 		options = append(options,
 			fvm.WithAccountCreationFee(fvm.DefaultAccountCreationFee),
 			fvm.WithMinimumStorageReservation(fvm.DefaultMinimumStorageReservation),
-			fvm.WithStoragePerFlow(fvm.DefaultStoragePerFlow),
+			fvm.WithStorageMBPerFLOW(fvm.DefaultStorageMBPerFLOW),
 		)
 	}
 	if conf.TransactionFeesEnabled {
