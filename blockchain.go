@@ -163,9 +163,9 @@ func (conf config) GetServiceKey() ServiceKey {
 	return serviceKey
 }
 
-const defaultGenesisTokenSupply = "100000000000.0"
+const defaultGenesisTokenSupply = "10000000000.0"
 const defaultScriptGasLimit = 100000
-const defaultTransactionMaxGasLimit = flowgo.DefaultMaxGasLimit
+const defaultTransactionMaxGasLimit = flowgo.DefaultMaxTransactionGasLimit
 
 // defaultConfig is the default configuration for an emulated blockchain.
 var defaultConfig = func() config {
@@ -445,6 +445,7 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 		options = append(options,
 			fvm.WithAccountCreationFee(fvm.DefaultAccountCreationFee),
 			fvm.WithMinimumStorageReservation(fvm.DefaultMinimumStorageReservation),
+			fvm.WithStorageMBPerFLOW(fvm.DefaultStorageMBPerFLOW),
 		)
 	}
 	if conf.TransactionFeesEnabled {
@@ -469,7 +470,8 @@ func configureTransactionValidator(conf config, blocks *blocks) *access.Transact
 			AllowUnknownReferenceBlockID: false,
 			MaxGasLimit:                  conf.TransactionMaxGasLimit,
 			CheckScriptsParse:            true,
-			MaxTxSizeLimit:               flowgo.DefaultMaxTxSizeLimit,
+			MaxTransactionByteSize:       flowgo.DefaultMaxTransactionByteSize,
+			MaxCollectionByteSize:        flowgo.DefaultMaxCollectionByteSize,
 		},
 	)
 }
@@ -1016,7 +1018,7 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, contracts []tem
 
 	tx := templates.CreateAccount(publicKeys, contracts, serviceAddress)
 
-	tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
+	tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetReferenceBlockID(sdk.Identifier(latestBlock.ID())).
 		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
 		SetPayer(serviceAddress)

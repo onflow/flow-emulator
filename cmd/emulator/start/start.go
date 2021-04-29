@@ -49,7 +49,7 @@ type Config struct {
 	Persist                bool          `default:"false" flag:"persist" info:"enable persistent storage"`
 	DBPath                 string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
 	SimpleAddresses        bool          `default:"false" flag:"simple-addresses" info:"use sequential addresses starting with 0x01"`
-	TokenSupply            string        `default:"100000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
+	TokenSupply            string        `default:"10000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
 	TransactionExpiry      int           `default:"10" flag:"transaction-expiry" info:"transaction expiry, measured in blocks"`
 	StorageLimitEnabled    bool          `default:"true" flag:"storage-limit" info:"enable account storage limit"`
 	TransactionFeesEnabled bool          `default:"false" flag:"transaction-fees" info:"enable transaction fees"`
