@@ -69,3 +69,48 @@ func TestMemstore(t *testing.T) {
 
 	wg.Wait()
 }
+
+func TestMemstoreSetValueToNil(t *testing.T) {
+	store := New()
+	key := flowgo.RegisterID{
+		Owner:      "",
+		Controller: "",
+		Key:        "foo",
+	}
+	value := flowgo.RegisterEntry{
+		Key:   key,
+		Value: []byte("bar"),
+	}
+	nilValue := flowgo.RegisterEntry{
+		Key:   key,
+		Value: nil,
+	}
+
+	// set initial value
+	err := store.insertLedgerDelta(0,
+		delta.Delta{
+			Data: map[string]flowgo.RegisterEntry{
+				key.String(): value,
+			},
+		})
+	require.NoError(t, err)
+
+	// check initial value
+	register, err := store.LedgerViewByHeight(0).Get(key.Owner, key.Controller, key.Key)
+	require.NoError(t, err)
+	require.Equal(t, string(value.Value), string(register))
+
+	// set value to nil
+	err = store.insertLedgerDelta(1,
+		delta.Delta{
+			Data: map[string]flowgo.RegisterEntry{
+				key.String(): nilValue,
+			},
+		})
+	require.NoError(t, err)
+
+	// check value is nil
+	register, err = store.LedgerViewByHeight(1).Get(key.Owner, key.Controller, key.Key)
+	require.NoError(t, err)
+	require.Equal(t, string(nilValue.Value), string(register))
+}
