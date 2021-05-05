@@ -63,22 +63,22 @@ type ServiceKey struct {
 	Index          int
 	Address        sdk.Address
 	SequenceNumber uint64
-	PrivateKey     *sdkcrypto.PrivateKey
-	PublicKey      *sdkcrypto.PublicKey
+	PrivateKey     sdkcrypto.PrivateKey
+	PublicKey      sdkcrypto.PublicKey
 	HashAlgo       sdkcrypto.HashAlgorithm
 	SigAlgo        sdkcrypto.SignatureAlgorithm
 	Weight         int
 }
 
 func (s ServiceKey) Signer() sdkcrypto.Signer {
-	return sdkcrypto.NewInMemorySigner(*s.PrivateKey, s.HashAlgo)
+	return sdkcrypto.NewInMemorySigner(s.PrivateKey, s.HashAlgo)
 }
 
 func (s ServiceKey) AccountKey() *sdk.AccountKey {
 
 	var publicKey sdkcrypto.PublicKey
 	if s.PublicKey != nil {
-		publicKey = *s.PublicKey
+		publicKey = s.PublicKey
 	}
 
 	if s.PrivateKey != nil {
@@ -116,7 +116,7 @@ func GenerateDefaultServiceKey(
 	}
 
 	return ServiceKey{
-		PrivateKey: &privateKey,
+		PrivateKey: privateKey,
 		SigAlgo:    sigAlgo,
 		HashAlgo:   hashAlgo,
 	}
@@ -197,7 +197,7 @@ func WithServicePublicKey(
 ) Option {
 	return func(c *config) {
 		c.ServiceKey = ServiceKey{
-			PublicKey: &servicePublicKey,
+			PublicKey: servicePublicKey,
 			SigAlgo:   sigAlgo,
 			HashAlgo:  hashAlgo,
 		}
