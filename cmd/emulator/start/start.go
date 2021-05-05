@@ -123,7 +123,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				"serviceHashAlgo": serviceKeyHashAlgo,
 			}
 
-			if servicePrivateKey != (crypto.PrivateKey{}) {
+			if servicePrivateKey != nil {
 				serviceFields["servicePrivKey"] = hex.EncodeToString(servicePrivateKey.Encode())
 			}
 

@@ -22,8 +22,8 @@ import (
 	"time"
 
 	"github.com/onflow/cadence"
-	"github.com/onflow/flow-go/fvm"
 	"github.com/onflow/flow-go-sdk/crypto"
+	"github.com/onflow/flow-go/fvm"
 	"github.com/psiemens/graceland"
 	"github.com/sirupsen/logrus"
 
@@ -213,7 +213,7 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 	}
 
-	if conf.ServicePublicKey != (crypto.PublicKey{}) {
+	if conf.ServicePublicKey != nil {
 		options = append(
 			options,
 			emulator.WithServicePublicKey(conf.ServicePublicKey, conf.ServiceKeySigAlgo, conf.ServiceKeyHashAlgo),
