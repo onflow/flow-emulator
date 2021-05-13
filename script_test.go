@@ -5,6 +5,7 @@ import (
 
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
+	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
@@ -107,4 +108,28 @@ func TestExecuteScript_WithArguments(t *testing.T) {
 func TestExecuteScriptAtBlockHeight(t *testing.T) {
 	// TODO
 	// Test that scripts can be executed at different block heights
+}
+
+func TestInfiniteScript(t *testing.T) {
+
+	const limit = 10
+	b, err := emulator.NewBlockchain(
+		emulator.WithScriptGasLimit(limit),
+	)
+	require.NoError(t, err)
+
+	const code = `
+      pub fun main() {
+          main()
+      }
+    `
+	result, err := b.ExecuteScript([]byte(code), nil)
+	require.NoError(t, err)
+
+	require.ErrorAs(t,
+		result.Error,
+		&runtime.ComputationLimitExceededError{
+			Limit: limit,
+		},
+	)
 }

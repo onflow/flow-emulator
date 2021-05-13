@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/onflow/cadence"
+	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
 	"github.com/onflow/flow-go-sdk"
@@ -1202,3 +1203,63 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
 }
+
+
+func TestInfiniteTransaction(t *testing.T) {
+
+	const limit = 10
+
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+		emulator.WithTransactionMaxGasLimit(limit),
+	)
+	require.NoError(t, err)
+
+	const code = `
+      pub fun test() {
+          test()
+      }
+
+      transaction {
+          execute {
+              test()
+          }
+      }
+    `
+
+	// Create a new account
+
+	accountKeys := test.AccountKeyGenerator()
+	accountKey, signer := accountKeys.NewWithSigner()
+	accountAddress, err := b.CreateAccount([]*flow.AccountKey{accountKey}, nil)
+	assert.NoError(t, err)
+
+	// Sign the transaction using the new account.
+	// Do not test using the service account,
+	// as the computation limit is disabled for it
+
+	tx := flow.NewTransaction().
+		SetScript([]byte(code)).
+		SetGasLimit(limit).
+		SetProposalKey(accountAddress, 0, 0).
+		SetPayer(accountAddress)
+
+	err = tx.SignEnvelope(accountAddress, 0, signer)
+	assert.NoError(t, err)
+
+	// Submit tx
+	err = b.AddTransaction(*tx)
+	assert.NoError(t, err)
+
+	// Execute tx
+	result, err := b.ExecuteNextTransaction()
+	assert.NoError(t, err)
+
+	require.ErrorAs(t,
+		result.Error,
+		&runtime.ComputationLimitExceededError{
+			Limit: limit,
+		},
+	)
+}
+
