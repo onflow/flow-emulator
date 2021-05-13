@@ -29,3 +29,7 @@ type FlowError struct {
 func (f *FlowError) Error() string {
 	return f.FlowError.Error()
 }
+
+func (f *FlowError) Unwrap() error {
+	return f.FlowError
+}
