@@ -4,14 +4,14 @@ go 1.13
 
 require (
 	github.com/dgraph-io/badger/v2 v2.0.3
-	github.com/fxamacker/cbor/v2 v2.2.1-0.20201006223149-25f67fca9803
+	github.com/fxamacker/cbor/v2 v2.2.1-0.20210510192846-c3f3c69e7bc8
 	github.com/golang/mock v1.4.4
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
-	github.com/onflow/cadence v0.15.1
-	github.com/onflow/flow-go v0.16.3-0.20210427194927-6050c2a3ae42 // https://github.com/onflow/flow-go/tree/v0.16 commit: https://github.com/onflow/flow-go/commit/6050c2a3ae42d6333ffcfd79d187f56a1011fc35
-	github.com/onflow/flow-go-sdk v0.19.0
+	github.com/onflow/cadence v0.16.0
+	github.com/onflow/flow-go v0.16.1-0.20210518223940-722d2f6b3cc3 // https://github.com/onflow/flow-go/tree/v0.16 commit: https://github.com/onflow/flow-go/commit/6050c2a3ae42d6333ffcfd79d187f56a1011fc35
+	github.com/onflow/flow-go-sdk v0.20.0-alpha.1
 	github.com/onflow/flow-go/crypto v0.12.0
 	github.com/onflow/flow/protobuf/go/flow v0.2.0
 	github.com/pkg/errors v0.9.1
