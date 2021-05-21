@@ -327,6 +327,7 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 		fvm.WithGasLimit(conf.ScriptGasLimit),
 		fvm.WithCadenceLogging(true),
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
+		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 	)
 
 	return vm, ctx, nil
