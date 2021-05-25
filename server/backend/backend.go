@@ -549,6 +549,10 @@ func (b *Backend) executeScriptAtBlock(script []byte, arguments [][]byte, blockH
 
 	printScriptResult(b.logger, result)
 
+	if !result.Succeeded() {
+		return nil, result.Error
+	}
+
 	valueBytes, err := jsoncdc.Encode(result.Value)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
