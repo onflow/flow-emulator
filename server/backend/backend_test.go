@@ -21,6 +21,7 @@ package backend_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
 	"testing"
 
@@ -93,6 +94,34 @@ func TestBackend(t *testing.T) {
 			assert.NoError(t, err)
 
 			assert.Equal(t, expectedValue, actualValue)
+		}),
+	)
+
+	t.Run(
+		"ExecuteScriptAtLatestBlock fails with error",
+		backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
+			script := []byte("I will fail you!")
+			scriptErr := fmt.Errorf("failure description")
+
+			latestBlock := flowgo.Block{Header: &flowgo.Header{Height: rand.Uint64()}}
+
+			emu.EXPECT().
+				GetLatestBlock().
+				Return(&latestBlock, nil).
+				Times(1)
+
+			emu.EXPECT().
+				ExecuteScriptAtBlock(script, nil, latestBlock.Header.Height).
+				Return(&types.ScriptResult{
+					Value: nil,
+					Error: scriptErr,
+				}, nil).
+				Times(1)
+
+			value, err := backend.ExecuteScriptAtLatestBlock(context.Background(), script, nil)
+			assert.Error(t, err)
+			assert.Nil(t, value)
+			assert.Equal(t, err.Error(), scriptErr.Error())
 		}),
 	)
 
