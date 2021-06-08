@@ -323,7 +323,6 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 		fvm.WithChain(conf.GetChainID().Chain()),
 		fvm.WithBlocks(blocks),
 		fvm.WithRestrictedDeployment(false),
-		fvm.WithRestrictedAccountCreation(false),
 		fvm.WithGasLimit(conf.ScriptGasLimit),
 		fvm.WithCadenceLogging(true),
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
@@ -441,6 +440,7 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 	options := make([]fvm.BootstrapProcedureOption, 0)
 	options = append(options,
 		fvm.WithInitialTokenSupply(supply),
+		fvm.WithRestrictedAccountCreationEnabled(false),
 	)
 	if conf.StorageLimitEnabled {
 		options = append(options,
