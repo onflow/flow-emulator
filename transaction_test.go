@@ -660,14 +660,12 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 
 		assert.Contains(t,
 			result.Logs,
-			interpreter.NewAddressValueFromBytes(b.ServiceKey().Address.Bytes()).
-				String(interpreter.StringResults{}),
+			interpreter.NewAddressValueFromBytes(b.ServiceKey().Address.Bytes()).String(),
 		)
 
 		assert.Contains(t,
 			result.Logs,
-			interpreter.NewAddressValueFromBytes(accountAddressB.Bytes()).
-				String(interpreter.StringResults{}),
+			interpreter.NewAddressValueFromBytes(accountAddressB.Bytes()).String(),
 		)
 	})
 }
