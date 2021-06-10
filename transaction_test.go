@@ -660,14 +660,12 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 
 		assert.Contains(t,
 			result.Logs,
-			interpreter.NewAddressValueFromBytes(b.ServiceKey().Address.Bytes()).
-				String(interpreter.StringResults{}),
+			interpreter.NewAddressValueFromBytes(b.ServiceKey().Address.Bytes()).String(),
 		)
 
 		assert.Contains(t,
 			result.Logs,
-			interpreter.NewAddressValueFromBytes(accountAddressB.Bytes()).
-				String(interpreter.StringResults{}),
+			interpreter.NewAddressValueFromBytes(accountAddressB.Bytes()).String(),
 		)
 	})
 }
@@ -1052,12 +1050,15 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 
 	var newAccountAddress flow.Address
 	for _, event := range createAccountTxResult.Events {
-		if event.Type == flow.EventAccountCreated {
-			accountCreatedEvent := flow.AccountCreatedEvent(event)
-			newAccountAddress = accountCreatedEvent.Address()
-			break
+		if event.Type != flow.EventAccountCreated {
+			continue
 		}
+		accountCreatedEvent := flow.AccountCreatedEvent(event)
+		newAccountAddress = accountCreatedEvent.Address()
+		break
+	}
 
+	if newAccountAddress == flow.EmptyAddress {
 		assert.Fail(t, "missing account created event")
 	}
 
@@ -1141,15 +1142,18 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 
 	var newAccountAddress flow.Address
 	for _, event := range createAccountTxResult.Events {
-		if event.Type == flow.EventAccountCreated {
-			accountCreatedEvent := flow.AccountCreatedEvent(event)
-			newAccountAddress = accountCreatedEvent.Address()
-			break
+		if event.Type != flow.EventAccountCreated {
+			continue
 		}
-
-		assert.Fail(t, "missing account created event")
+		accountCreatedEvent := flow.AccountCreatedEvent(event)
+		newAccountAddress = accountCreatedEvent.Address()
+		break
 	}
 
+	if newAccountAddress == flow.EmptyAddress {
+		assert.Fail(t, "missing account created event")
+	}
+	
 	t.Logf("new account address: 0x%s", newAccountAddress.Hex())
 
 	account, err := b.GetAccount(newAccountAddress)
@@ -1205,7 +1209,6 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
 }
-
 
 func TestInfiniteTransaction(t *testing.T) {
 
@@ -1264,4 +1267,3 @@ func TestInfiniteTransaction(t *testing.T) {
 		},
 	)
 }
-
