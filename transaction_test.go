@@ -551,11 +551,8 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
 
-		// Sufficient keys
+		// Add key so we have sufficient keys
 		err = tx.SignEnvelope(accountAddressA, 0, signerA)
-		assert.NoError(t, err)
-
-		err = tx.SignEnvelope(accountAddressA, 1, signerB)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
