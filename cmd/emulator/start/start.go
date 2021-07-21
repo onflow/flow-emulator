@@ -53,7 +53,7 @@ type Config struct {
 	TokenSupply            string        `default:"1000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
 	TransactionExpiry      int           `default:"10" flag:"transaction-expiry" info:"transaction expiry, measured in blocks"`
 	StorageLimitEnabled    bool          `default:"true" flag:"storage-limit" info:"enable account storage limit"`
-	StorageMBPerFLOW       string        `flag:"storage-cost" info:"the MB amount of storage capacity an account has per 1 FLOW token it has. e.g. '100.0'. The default is taken from the current version of flow-go"`
+	StorageMBPerFLOW       string        `flag:"storage-per-flow" info:"the MB amount of storage capacity an account has per 1 FLOW token it has. e.g. '100.0'. The default is taken from the current version of flow-go"`
 	MinimumAccountBalance  string        `flag:"min-account-balance" info:"The minimum account balance of an account. This is also the cost of creating one account. e.g. '0.001'. The default is taken from the current version of flow-go"`
 	TransactionFeesEnabled bool          `default:"false" flag:"transaction-fees" info:"enable transaction fees"`
 	TransactionMaxGasLimit int           `default:"9999" flag:"transaction-max-gas-limit" info:"maximum gas limit for transactions"`
@@ -139,7 +139,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 
 			storageMBPerFLOW := fvm.DefaultStorageMBPerFLOW
 			if conf.StorageMBPerFLOW != "" {
-				storageMBPerFLOW = parseCadenceUFix64(conf.StorageMBPerFLOW, "storage-cost")
+				storageMBPerFLOW = parseCadenceUFix64(conf.StorageMBPerFLOW, "storage-per-flow")
 			}
 
 			serverConf := &server.Config{
