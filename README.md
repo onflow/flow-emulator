@@ -29,6 +29,8 @@ This command has several useful flags:
 - `--persist` Enable persistent storage (uses [Badger](https://github.com/dgraph-io/badger) key-value DB)
 - `--dbpath` Path to store database (default: `"./flowdb"`)
 - `--storage-limit` Enable limiting account storage use to their storage capacity
+- `--storage-per-flow` The MB amount of storage capacity an account has per 1 FLOW token it has. e.g. '100.0'. The default is taken from the current version of flow-go
+- `--min-account-balance"` The minimum account balance of an account. This is also the cost of creating one account. e.g. '0.001'. The default is taken from the current version of flow-go
 - `--transaction-fees` Enable transaction fees
 
 ### Using the emulator in a project
