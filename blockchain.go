@@ -124,15 +124,17 @@ func GenerateDefaultServiceKey(
 
 // config is a set of configuration options for an emulated blockchain.
 type config struct {
-	ServiceKey             ServiceKey
-	Store                  storage.Store
-	SimpleAddresses        bool
-	GenesisTokenSupply     cadence.UFix64
-	TransactionMaxGasLimit uint64
-	ScriptGasLimit         uint64
-	TransactionExpiry      uint
-	StorageLimitEnabled    bool
-	TransactionFeesEnabled bool
+	ServiceKey                ServiceKey
+	Store                     storage.Store
+	SimpleAddresses           bool
+	GenesisTokenSupply        cadence.UFix64
+	TransactionMaxGasLimit    uint64
+	ScriptGasLimit            uint64
+	TransactionExpiry         uint
+	StorageLimitEnabled       bool
+	TransactionFeesEnabled    bool
+	MinimumStorageReservation cadence.UFix64
+	StorageMBPerFLOW          cadence.UFix64
 }
 
 func (conf config) GetStore() storage.Store {
@@ -175,14 +177,16 @@ var defaultConfig = func() config {
 	}
 
 	return config{
-		ServiceKey:             DefaultServiceKey(),
-		Store:                  nil,
-		SimpleAddresses:        false,
-		GenesisTokenSupply:     genesisTokenSupply,
-		ScriptGasLimit:         defaultScriptGasLimit,
-		TransactionMaxGasLimit: defaultTransactionMaxGasLimit,
-		TransactionExpiry:      0, // TODO: replace with sensible default
-		StorageLimitEnabled:    true,
+		ServiceKey:                DefaultServiceKey(),
+		Store:                     nil,
+		SimpleAddresses:           false,
+		GenesisTokenSupply:        genesisTokenSupply,
+		ScriptGasLimit:            defaultScriptGasLimit,
+		TransactionMaxGasLimit:    defaultTransactionMaxGasLimit,
+		MinimumStorageReservation: fvm.DefaultMinimumStorageReservation,
+		StorageMBPerFLOW:          fvm.DefaultStorageMBPerFLOW,
+		TransactionExpiry:         0, // TODO: replace with sensible default
+		StorageLimitEnabled:       true,
 	}
 }()
 
@@ -266,6 +270,25 @@ func WithTransactionExpiry(expiry uint) Option {
 func WithStorageLimitEnabled(enabled bool) Option {
 	return func(c *config) {
 		c.StorageLimitEnabled = enabled
+	}
+}
+
+// WithMinimumStorageReservation sets the minimum account balance.
+//
+// The cost of creating new accounts is also set to this value.
+// The default is taken from fvm.DefaultMinimumStorageReservation
+func WithMinimumStorageReservation(minimumStorageReservation cadence.UFix64) Option {
+	return func(c *config) {
+		c.MinimumStorageReservation = minimumStorageReservation
+	}
+}
+
+// WithStorageMBPerFLOW sets the cost of a megabyte of storage in FLOW
+//
+// the default is taken from fvm.DefaultStorageMBPerFLOW
+func WithStorageMBPerFLOW(storageMBPerFLOW cadence.UFix64) Option {
+	return func(c *config) {
+		c.StorageMBPerFLOW = storageMBPerFLOW
 	}
 }
 
@@ -444,9 +467,9 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 	)
 	if conf.StorageLimitEnabled {
 		options = append(options,
-			fvm.WithAccountCreationFee(fvm.DefaultAccountCreationFee),
-			fvm.WithMinimumStorageReservation(fvm.DefaultMinimumStorageReservation),
-			fvm.WithStorageMBPerFLOW(fvm.DefaultStorageMBPerFLOW),
+			fvm.WithAccountCreationFee(conf.MinimumStorageReservation),
+			fvm.WithMinimumStorageReservation(conf.MinimumStorageReservation),
+			fvm.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		)
 	}
 	if conf.TransactionFeesEnabled {
