@@ -5,84 +5,80 @@ The Flow Emulator is a lightweight tool that emulates the behaviour of the real 
 The emulator exposes a gRPC server that implements the Flow Access API, which is designed to have near feature parity
 with the real network API.
 
+# Running
+
+## Configuration
+The Flow Emulator can be run in different modes and settings, all of them are described in the table bellow. 
+
+Please note that if you will run the emulator using the Flow CLI you must use flags to pass configuration values
+and if you plan to run the emulator with Docker you must use the environment variables (Env) to pass configuration values.
+
+| Flag             | Env   | Default | Description                                                            |
+| ----------------- | ------ | ----------------- | ----------------- |
+| `--port`, `-p` | `FLOW_PORT` | `3569` | RPC port to listen on |
+| `--http-port` | `FLOW_HTTPPORT` | `8080` | HTTP port to listen on |
+| `--verbose`, `-v` | `FLOW_VERBOSE` | `false` | Enable verbose logging (useful for debugging) |
+| `--block-time`, `-b` | `FLOW_BLOCKTIME` | `0` | Time between sealed blocks. Valid units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h` |
+| `--service-priv-key` | `FLOW_SERVICEPRIVATEKEY` | random | Private key used for the [service account](https://docs.onflow.org/flow-token/concepts/#flow-service-account) |
+| `--service-pub-key` | `FLOW_SERVICEPUBLICKEY` | random | Public key used for the [service account](https://docs.onflow.org/flow-token/concepts/#flow-service-account) |
+| `--service-sig-algo` | `FLOW_SERVICEKEYSIGALGO` | `ECDSA_P256` | Service account key [signature algorithm](https://docs.onflow.org/cadence/language/crypto/#signing-algorithms) |
+| `--service-hash-algo` | `FLOW_SERVICEKEYHASHALGO` | `SHA3_256` | Service account key [hash algorithm](https://docs.onflow.org/cadence/language/crypto/#hashing) |
+| `--init` | `FLOW_INIT` | `false` | Generate and set a new [service account](https://docs.onflow.org/flow-token/concepts/#flow-service-account) |
+| `--grpc-debug` | `FLOW_GRPCDEBUG` | `false` | Enable gRPC server reflection for debugging with grpc_cli |
+| `--persist` | `FLOW_PERSIST` | false | Enable persistence of the state between restarts |
+| `--dbpath` | `FLOW_DBPATH` | `./flowdb` | Specify path for the database file persisting the state |
+| `--simple-addresses` | `FLOW_SIMPLEADDRESSES` | `false` | Use sequential addresses starting with `0x1` |
+| `--token-supply` | `FLOW_TOKENSUPPLY` | `1000000000.0` | Initial FLOW token supply |
+| `--transaction-expiry` | `FLOW_TRANSACTIONEXPIRY` | `10` | [Transaction expiry](https://docs.onflow.org/flow-go-sdk/building-transactions/#reference-block), measured in blocks |
+| `--storage-limit` | `FLOW_STORAGELIMITENABLED` | `true` | Enable [account storage limit](https://docs.onflow.org/cadence/language/accounts/#storage-limit) |
+| `--storage-per-flow` | `FLOW_STORAGEMBPERFLOW` |  | Specify size of the storage in MB for each FLOW in account balance. Default value from the flow-go |
+| `--min-account-balance` | `FLOW_MINIMUMACCOUNTBALANCE` |  | Specify minimum balance the account must have. Default value from the flow-go |
+| `--transaction-fees` | `FLOW_TRANSACTIONFEESENABLED` | `false` | Enable [transaction fees](https://docs.onflow.org/flow-token/concepts/#transaction-fees) |
+| `--transaction-max-gas-limit` | `FLOW_TRANSACTIONMAXGASLIMIT` | `9999` | Maximum [gas limit for transactions](https://docs.onflow.org/flow-go-sdk/building-transactions/#gas-limit) |
+| `--script-gas-limit` | `FLOW_SCRIPTGASLIMIT` | `100000` | Specify gas limit for script execution |
+
 ## Running the emulator with the Flow CLI
 
 The emulator is bundled with the [Flow CLI](https://docs.onflow.org/flow-cli), a command-line interface for working with Flow.
 
 ### Installation
 
-Follow [these steps](https://github.com/onflow/flow-cli) to install the Flow CLI.
+Follow [these steps](https://docs.onflow.org/flow-cli/install/) to install the Flow CLI.
 
 ### Starting the server
+
+Starting the emulator by using Flow CLI also leverages CLI configuration file `flow.json`. 
+You can use the `flow.json` to specify the service account which will be reused between restarts. 
+Read more about CLI configuration [here](https://docs.onflow.org/flow-cli/configuration/).
 
 You can start the emulator with the Flow CLI:
 
 ```shell script
-flow emulator start --init
+flow emulator --init
 ```
-
-This command has several useful flags:
-
-- `-v` Enable verbose logging (this is useful for debugging)
-- `-p` Port to listen on (default: `3569`)
-- `-i` Time interval between blocks (default: `5s`)
-- `--persist` Enable persistent storage (uses [Badger](https://github.com/dgraph-io/badger) key-value DB)
-- `--dbpath` Path to store database (default: `"./flowdb"`)
-- `--storage-limit` Enable limiting account storage use to their storage capacity
-- `--storage-per-flow` The MB amount of storage capacity an account has per 1 FLOW token it has. e.g. '100.0'. The default is taken from the current version of flow-go
-- `--min-account-balance"` The minimum account balance of an account. This is also the cost of creating one account. e.g. '0.001'. The default is taken from the current version of flow-go
-- `--transaction-fees` Enable transaction fees
 
 ### Using the emulator in a project
 
 You can start the emulator in your project context by running the above command
 in the same directory as `flow.json`. This will configure the emulator with your
 project's service account, meaning you can use it to sign and submit transactions.
+Read more about the project and configuration [here](https://docs.onflow.org/flow-cli/configuration/).
 
 ## Running the emulator with Docker
 
 Docker builds for the emulator are automatically built and pushed to
 `gcr.io/flow-container-registry/emulator`, tagged by commit and semantic version. You can also [build the image locally](#building).
 
-### Configuration
-
-In addition to using command-line flags, the emulator can also be configured with environment
-variables, which can be passed into the Docker image.
-
-Here's a sample configuration:
-
-```
-FLOW_VERBOSE=true
-FLOW_PORT=3596
-FLOW_INTERVAL=5s
-FLOW_PERSIST=true
-FLOW_DBPATH=./path/to/db
-```
-
-Here's how to run the emulator Docker image on port 9001 in verbose mode:
-
 ```bash
-docker run -e FLOW_PORT=9001 -e FLOW_VERBOSE=true gcr.io/flow-container-registry/emulator
+docker run gcr.io/flow-container-registry/emulator
 ```
 
-The full list of configurable variables is specified [by the `Config` struct](cmd/emulator/main.go).
+The full list of environment variables can be found [here](#configuration). 
+You can pass any environment variable by using `-e` docker flag and pass the valid value.
 
-The environment variable names are the upper-case struct fields names, prefixed with `FLOW_`.
-
-#### Accounts
-
-The emulator uses a `flow.json` configuration file to store persistent
-configuration, including account keys. In order to start, at least one
-key (called the service key) must be configured. This key is used by default
-when creating other accounts.
-
-Because Docker does not persist files by default, this file will be
-re-generated each time the emulator image restarts. For situations
-where it is important that the emulator always uses the same service key (ie.
-unit tests) you can specify a hex-encoded public key as an environment variable.
-
+*Custom Configuration Example:*
 ```bash
-docker run -e FLOW_SERVICEPUBLICKEY=<hex-encoded key> gcr.io/flow-container-registry/emulator
+docker run -e FLOW_PORT=9001 -e FLOW_VERBOSE=true -e FLOW_SERVICEPUBLICKEY=<hex-encoded key> gcr.io/flow-container-registry/emulator
 ```
 
 To generate a service key, use the `keys generate` command in the Flow CLI.
@@ -90,82 +86,6 @@ To generate a service key, use the `keys generate` command in the Flow CLI.
 flow keys generate
 ```
 
-## Building
-
-To build the container locally, use `make docker-build` from the root of this repository.
-
-Images are automatically built and pushed to `gcr.io/flow-container-registry/emulator` via [Team City](https://ci.eng.dapperlabs.com/project/Flow_FlowGo_FlowEmulator) on any push to master, i.e. Pull Request merge
-
-## Deployment
-
-The emulator is currently being deployed via [Team City](https://ci.eng.dapperlabs.com/project/Flow_FlowGo_FlowEmulator)
-All commands relating to the deployment process live in the `Makefile` in this directory
-
-The deployment has a persistent volume and should keep state persistent.
-The deployment file for the Ingress/Service/Deployment combo, and the
-Persistent Volume Claim are located in the k8s folder.
-
-### Accessing the deployment
-
-#### Web Address
-
-*This is only available from the office currently*
-
-It should be available publicly via `https://grpc.emulator.staging.withflow.org/`
-
-#### Port Forwarding
-
-If you have direct access to the cluster, you can use `kubectl` to access the emulator
-```bash
-export EMULATOR_POD_NAME=$(kubectl get pod -n flow -l app=flow-emulator -o jsonpath="{.items[0].metadata.name}")
-kubectl port-forward -n flow $EMULATOR_POD_NAME 3569:3569
-```
-
-#### From a Kubernetes Pod
-
-If you are in the same namespace (flow), you can simply access the service via it's service name, e.g. `flow-emulator-v1`.
-If you are in a different namespace, you will need to use a [Service without selectors](https://kubernetes.io/docs/concepts/services-networking/service/#services-without-selectors)
-e.g.
-
-```yaml
-kind: Service
-apiVersion: v1
-metadata:
-  name: flow-emulator-v1
-  namespace: YOUR_NAMESPACE
-spec:
-  type: ExternalName
-  externalName: flow-emulator-v1.flow.svc.cluster.local
-  ports:
-      protocol: TCP
-      port: 3569
-      targetPort: 3569
-```
-
-### Creating your own deployment
-
-Our current deployment settings are available in the [k8s](cmd/emulator/k8s) sub directory, if you'd like to setup the emulator in your own Kubernetes cluster. We are using the `Traefik` Ingress controller, but if that is not needed for your purposes, that can be removed, along with any corresponding annotations in the deployment file.
-
-If not using Kubernetes, you can run the Docker container independently. Make sure to run the Docker container with the gRPC port exposed (default is `3569`). Metrics are also available on port `8080` on the `/metrics` endpoint.
-
-To gain persistence for data on the emulator, you will have to provision a volume for the docker container. We've done this through `Persistent Volumes` on Kubernetes, but a mounted volume would suffice. The mount point can be set with the `FLOW_DBPATH` environment variable. We suggest a volume of at least 10GB (100GB for a long-term deployment).
-
-Make sure the emulator also has access to the same `flow.json` file, or always launch it with the same service key, as mentioned above.
-
-```bash
-docker run -e FLOW_SERVICEPUBLICKEY=<hex-encoded key> -e FLOW_DBPATH="/flowdb" -v "$(pwd)/flowdb":"/flowdb"  -p 3569:3569 gcr.io/flow-container-registry/emulator
-```
-
 ## Development
 
-Run a development version of emulator server:
-
-```shell script
-make run
-```
-
-Run all unit tests in this repository:
-
-```shell script
-make test
-```
+Read [contributing document](./CONTRIBUTING.md).
