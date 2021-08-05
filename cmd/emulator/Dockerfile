@@ -3,7 +3,7 @@
 # NOTE: Must be run in the context of the repo's root directory
 
 ## Build the app binary
-FROM golang:1.13 AS build-app
+FROM golang:1.16 AS build-app
 
 # Build the app binary in /app
 RUN mkdir /app

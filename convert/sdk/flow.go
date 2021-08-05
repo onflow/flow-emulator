@@ -20,7 +20,6 @@ package sdk
 
 import (
 	"fmt"
-	"github.com/onflow/flow-go/fvm"
 
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
@@ -28,7 +27,6 @@ import (
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/access"
 	flowcrypto "github.com/onflow/flow-go/crypto"
-	flowhash "github.com/onflow/flow-go/crypto/hash"
 	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
@@ -248,35 +246,19 @@ func FlowEventsToSDK(flowEvents []flowgo.Event) ([]sdk.Event, error) {
 	return ret, nil
 }
 
-func FlowSignAlgoToSDK(signAlgo flowcrypto.SigningAlgorithm) sdkcrypto.SignatureAlgorithm {
-	return sdkcrypto.StringToSignatureAlgorithm(signAlgo.String())
-}
-
-func SDKSignAlgoToFlow(signAlgo sdkcrypto.SignatureAlgorithm) flowcrypto.SigningAlgorithm {
-	return fvm.StringToSigningAlgorithm(signAlgo.String())
-}
-
-func flowhashAlgoToSDK(hashAlgo flowhash.HashingAlgorithm) sdkcrypto.HashAlgorithm {
-	return sdkcrypto.StringToHashAlgorithm(hashAlgo.String())
-}
-
-func SDKHashAlgoToFlow(hashAlgo sdkcrypto.HashAlgorithm) flowhash.HashingAlgorithm {
-	return fvm.StringToHashingAlgorithm(hashAlgo.String())
-}
-
 func FlowAccountPublicKeyToSDK(flowPublicKey flowgo.AccountPublicKey, index int) (sdk.AccountKey, error) {
 	// TODO - Looks like SDK contains copy-paste of code from flow-go
 	// Once crypto become its own separate library, this can possibly be simplified or not needed
 	encodedPublicKey := flowPublicKey.PublicKey.Encode()
 
-	sdkSignAlgo := FlowSignAlgoToSDK(flowPublicKey.SignAlgo)
+	sdkSignAlgo := flowPublicKey.SignAlgo
 
 	sdkPublicKey, err := sdkcrypto.DecodePublicKey(sdkSignAlgo, encodedPublicKey)
 	if err != nil {
 		return sdk.AccountKey{}, err
 	}
 
-	sdkHashAlgo := flowhashAlgoToSDK(flowPublicKey.HashAlgo)
+	sdkHashAlgo := flowPublicKey.HashAlgo
 
 	return sdk.AccountKey{
 		Index:          index,
@@ -292,14 +274,14 @@ func FlowAccountPublicKeyToSDK(flowPublicKey flowgo.AccountPublicKey, index int)
 func SDKAccountKeyToFlow(key *sdk.AccountKey) (flowgo.AccountPublicKey, error) {
 	encodedPublicKey := key.PublicKey.Encode()
 
-	flowSignAlgo := SDKSignAlgoToFlow(key.SigAlgo)
+	flowSignAlgo := key.SigAlgo
 
 	flowPublicKey, err := flowcrypto.DecodePublicKey(flowSignAlgo, encodedPublicKey)
 	if err != nil {
 		return flowgo.AccountPublicKey{}, err
 	}
 
-	flowhashAlgo := SDKHashAlgoToFlow(key.HashAlgo)
+	flowhashAlgo := key.HashAlgo
 
 	return flowgo.AccountPublicKey{
 		Index:     key.Index,

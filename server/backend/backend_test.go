@@ -21,16 +21,17 @@ package backend_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
 	"testing"
 
-	"github.com/onflow/flow-go/fvm"
-	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/golang/mock/gomock"
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/test"
+	fvmerrors "github.com/onflow/flow-go/fvm/errors"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -93,6 +94,34 @@ func TestBackend(t *testing.T) {
 			assert.NoError(t, err)
 
 			assert.Equal(t, expectedValue, actualValue)
+		}),
+	)
+
+	t.Run(
+		"ExecuteScriptAtLatestBlock fails with error",
+		backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
+			script := []byte("I will fail you!")
+			scriptErr := fmt.Errorf("failure description")
+
+			latestBlock := flowgo.Block{Header: &flowgo.Header{Height: rand.Uint64()}}
+
+			emu.EXPECT().
+				GetLatestBlock().
+				Return(&latestBlock, nil).
+				Times(1)
+
+			emu.EXPECT().
+				ExecuteScriptAtBlock(script, nil, latestBlock.Header.Height).
+				Return(&types.ScriptResult{
+					Value: nil,
+					Error: scriptErr,
+				}, nil).
+				Times(1)
+
+			value, err := backend.ExecuteScriptAtLatestBlock(context.Background(), script, nil)
+			assert.Error(t, err)
+			assert.Nil(t, value)
+			assert.Equal(t, err.Error(), scriptErr.Error())
 		}),
 	)
 
@@ -507,7 +536,7 @@ func TestBackend(t *testing.T) {
 
 			emu.EXPECT().
 				AddTransaction(gomock.Any()).
-				Return(&types.FlowError{FlowError: &fvm.InvalidSignaturePublicKeyDoesNotExistError{}}).
+				Return(&types.FlowError{FlowError: &fvmerrors.AccountAuthorizationError{}}).
 				Times(1)
 
 			expectedTx := test.TransactionGenerator().New()

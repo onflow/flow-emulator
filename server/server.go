@@ -23,6 +23,7 @@ import (
 
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-go-sdk/crypto"
+	"github.com/onflow/flow-go/fvm"
 	"github.com/psiemens/graceland"
 	"github.com/sirupsen/logrus"
 
@@ -73,18 +74,23 @@ var (
 
 // Config is the configuration for an emulator server.
 type Config struct {
-	GRPCPort           int
-	GRPCDebug          bool
-	HTTPPort           int
-	HTTPHeaders        []HTTPHeader
-	BlockTime          time.Duration
-	ServicePublicKey   crypto.PublicKey
-	ServiceKeySigAlgo  crypto.SignatureAlgorithm
-	ServiceKeyHashAlgo crypto.HashAlgorithm
-	GenesisTokenSupply cadence.UFix64
-	TransactionExpiry  uint
-	ScriptGasLimit     uint64
-	Persist            bool
+	GRPCPort                  int
+	GRPCDebug                 bool
+	HTTPPort                  int
+	HTTPHeaders               []HTTPHeader
+	BlockTime                 time.Duration
+	ServicePublicKey          crypto.PublicKey
+	ServiceKeySigAlgo         crypto.SignatureAlgorithm
+	ServiceKeyHashAlgo        crypto.HashAlgorithm
+	GenesisTokenSupply        cadence.UFix64
+	TransactionExpiry         uint
+	StorageLimitEnabled       bool
+	MinimumStorageReservation cadence.UFix64
+	StorageMBPerFLOW          cadence.UFix64
+	TransactionFeesEnabled    bool
+	TransactionMaxGasLimit    uint64
+	ScriptGasLimit            uint64
+	Persist                   bool
 	// DBPath is the path to the Badger database on disk.
 	DBPath string
 	// DBGCInterval is the time interval at which to garbage collect the Badger value log.
@@ -110,6 +116,17 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		logger.WithError(err).Error("❗  Failed to configure emulated blockchain")
 		return nil
 	}
+
+	chain := blockchain.GetChain()
+
+	contracts := logrus.Fields{
+		"FlowServiceAccount": chain.ServiceAddress().HexWithPrefix(),
+		"FlowToken":          fvm.FlowTokenAddress(chain).HexWithPrefix(),
+		"FungibleToken":      fvm.FungibleTokenAddress(chain).HexWithPrefix(),
+		"FlowFees":           fvm.FlowFeesAddress(chain).HexWithPrefix(),
+		"FlowStorageFees":    chain.ServiceAddress().HexWithPrefix(),
+	}
+	logger.WithFields(contracts).Infof("📜  Flow contracts")
 
 	backend := configureBackend(logger, conf, blockchain)
 
@@ -191,11 +208,16 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 	options := []emulator.Option{
 		emulator.WithStore(store),
 		emulator.WithGenesisTokenSupply(conf.GenesisTokenSupply),
+		emulator.WithTransactionMaxGasLimit(conf.TransactionMaxGasLimit),
 		emulator.WithScriptGasLimit(conf.ScriptGasLimit),
 		emulator.WithTransactionExpiry(conf.TransactionExpiry),
+		emulator.WithStorageLimitEnabled(conf.StorageLimitEnabled),
+		emulator.WithMinimumStorageReservation(conf.MinimumStorageReservation),
+		emulator.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
+		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 	}
 
-	if conf.ServicePublicKey != (crypto.PublicKey{}) {
+	if conf.ServicePublicKey != nil {
 		options = append(
 			options,
 			emulator.WithServicePublicKey(conf.ServicePublicKey, conf.ServiceKeySigAlgo, conf.ServiceKeyHashAlgo),

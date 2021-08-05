@@ -39,7 +39,7 @@ func defaultServiceKey(
 	}
 
 	serviceKey := emulator.GenerateDefaultServiceKey(sigAlgo, hashAlgo)
-	return *serviceKey.PrivateKey, serviceKey.SigAlgo, serviceKey.HashAlgo
+	return serviceKey.PrivateKey, serviceKey.SigAlgo, serviceKey.HashAlgo
 }
 
 func main() {

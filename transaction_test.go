@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
+	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go-sdk/test"
-	"github.com/onflow/flow-go/fvm"
+	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,14 +23,16 @@ import (
 )
 
 func TestSubmitTransaction(t *testing.T) {
-	b, err := emulator.NewBlockchain()
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+	)
 	require.NoError(t, err)
 
 	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
 	tx1 := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
-		SetGasLimit(flowgo.DefaultMaxGasLimit).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
@@ -81,7 +83,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 
 		// Create transaction with no Script field
 		tx := flow.NewTransaction().
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -99,7 +101,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		// Create transaction with invalid Script field
 		tx := flow.NewTransaction().
 			SetScript([]byte("this script cannot be parsed")).
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -114,7 +116,9 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	t.Run("Missing gas limit", func(t *testing.T) {
 		t.Skip("TODO: transaction validation")
 
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
@@ -135,7 +139,9 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 
 	t.Run("Missing payer account", func(t *testing.T) {
 
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
@@ -144,7 +150,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
-			SetGasLimit(flowgo.DefaultMaxGasLimit)
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit)
 
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
 		assert.NoError(t, err)
@@ -155,7 +161,9 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Missing proposal key", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
@@ -163,7 +171,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		// Create transaction with no PayerAccount field
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
-			SetGasLimit(flowgo.DefaultMaxGasLimit)
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit)
 
 		tx.ProposalKey = flow.ProposalKey{}
 
@@ -176,7 +184,9 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Invalid sequence number", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
@@ -186,7 +196,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 			SetScript([]byte(addTwoScript)).
 			SetPayer(b.ServiceKey().Address).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, invalidSequenceNumber).
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			AddAuthorizer(b.ServiceKey().Address)
 
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
@@ -198,13 +208,12 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 
 		result, err := b.ExecuteNextTransaction()
 		require.NoError(t, err)
-		spew.Dump(result)
 
 		require.Error(t, result.Error)
 
 		assert.IsType(t, &types.FlowError{}, result.Error)
-		assert.IsType(t, &fvm.InvalidProposalKeySequenceNumberError{}, result.Error.(*types.FlowError).FlowError)
-		assert.Equal(t, invalidSequenceNumber, result.Error.(*types.FlowError).FlowError.(*fvm.InvalidProposalKeySequenceNumberError).ProvidedSeqNumber)
+		assert.IsType(t, &fvmerrors.InvalidProposalSeqNumberError{}, result.Error.(*types.FlowError).FlowError)
+		assert.Equal(t, invalidSequenceNumber, result.Error.(*types.FlowError).FlowError.(*fvmerrors.InvalidProposalSeqNumberError).ProvidedSeqNumber())
 	})
 
 	const expiry = 10
@@ -212,6 +221,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	t.Run("Missing reference block ID", func(t *testing.T) {
 		b, err := emulator.NewBlockchain(
 			emulator.WithTransactionExpiry(expiry),
+			emulator.WithStorageLimitEnabled(false),
 		)
 		require.NoError(t, err)
 
@@ -219,7 +229,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -233,6 +243,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	t.Run("Expired transaction", func(t *testing.T) {
 		b, err := emulator.NewBlockchain(
 			emulator.WithTransactionExpiry(expiry),
+			emulator.WithStorageLimitEnabled(false),
 		)
 		require.NoError(t, err)
 
@@ -250,7 +261,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetReferenceBlockID(flow.Identifier(expiredBlock.ID())).
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -263,14 +274,16 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 }
 
 func TestSubmitTransaction_Duplicate(t *testing.T) {
-	b, err := emulator.NewBlockchain()
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+	)
 	require.NoError(t, err)
 
 	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
 	tx := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
-		SetGasLimit(flowgo.DefaultMaxGasLimit).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
@@ -300,7 +313,7 @@ func TestSubmitTransaction_Reverted(t *testing.T) {
 
 	tx := flow.NewTransaction().
 		SetScript([]byte(`transaction { execute { panic("revert!") } }`)).
-		SetGasLimit(flowgo.DefaultMaxGasLimit).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
@@ -327,7 +340,9 @@ func TestSubmitTransaction_Reverted(t *testing.T) {
 }
 
 func TestSubmitTransaction_Authorizers(t *testing.T) {
-	b, err := emulator.NewBlockchain()
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+	)
 	require.NoError(t, err)
 
 	accountKeys := test.AccountKeyGenerator()
@@ -349,7 +364,7 @@ func TestSubmitTransaction_Authorizers(t *testing.T) {
 		// create transaction with two authorizing accounts
 		tx := flow.NewTransaction().
 			SetScript(script).
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address).
@@ -383,7 +398,7 @@ func TestSubmitTransaction_Authorizers(t *testing.T) {
 		// create transaction with two accounts
 		tx := flow.NewTransaction().
 			SetScript(script).
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
@@ -407,14 +422,16 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 
 	t.Run("Missing envelope signature", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
@@ -428,7 +445,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, &fvm.MissingSignatureError{}, result.Error)
+		unittest.AssertFVMErrorType(t, &fvmerrors.AccountAuthorizationError{}, result.Error)
 	})
 
 	t.Run("Invalid account", func(t *testing.T) {
@@ -447,7 +464,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(`transaction { execute { } }`)).
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(nonExistentAccountAddress)
@@ -464,11 +481,13 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, &fvm.InvalidSignaturePublicKeyDoesNotExistError{}, result.Error)
+		unittest.AssertFVMErrorType(t, &fvmerrors.InvalidProposalSignatureError{}, result.Error)
 	})
 
 	t.Run("Invalid key", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
@@ -480,7 +499,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
@@ -494,11 +513,13 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, &fvm.InvalidSignatureVerificationError{}, result.Error)
+		unittest.AssertFVMErrorType(t, &fvmerrors.InvalidProposalSignatureError{}, result.Error)
 	})
 
 	t.Run("Key weights", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		accountKeyA, signerA := accountKeys.NewWithSigner()
@@ -518,7 +539,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(script).
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(accountAddressA, 1, 0).
 			SetPayer(accountAddressA).
 			AddAuthorizer(accountAddressA)
@@ -530,11 +551,8 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
 
-		// Sufficient keys
+		// Add key so we have sufficient keys
 		err = tx.SignEnvelope(accountAddressA, 0, signerA)
-		assert.NoError(t, err)
-
-		err = tx.SignEnvelope(accountAddressA, 1, signerB)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -544,7 +562,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 			result, err := b.ExecuteNextTransaction()
 			assert.NoError(t, err)
 
-			unittest.AssertFVMErrorType(t, &fvm.MissingSignatureError{}, result.Error)
+			unittest.AssertFVMErrorType(t, &fvmerrors.AccountAuthorizationError{}, result.Error)
 		})
 
 		t.Run("Sufficient key weight", func(t *testing.T) {
@@ -560,7 +578,9 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 
 	t.Run("Missing payload signature", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
@@ -576,7 +596,7 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(accountAddressB)
@@ -590,11 +610,13 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, &fvm.MissingSignatureError{}, result.Error)
+		unittest.AssertFVMErrorType(t, &fvmerrors.AccountAuthorizationError{}, result.Error)
 	})
 
 	t.Run("Multiple payload signers", func(t *testing.T) {
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
 		require.NoError(t, err)
 
 		accountKeyB, signerB := accountKeys.NewWithSigner()
@@ -614,7 +636,7 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(multipleAccountScript).
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address).
@@ -799,7 +821,7 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 
 			tx := flow.NewTransaction().
 				SetScript(script(tt.argType)).
-				SetGasLimit(flowgo.DefaultMaxGasLimit).
+				SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 				SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 				SetPayer(b.ServiceKey().Address)
 
@@ -836,7 +858,7 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 
 		tx := flow.NewTransaction().
 			SetScript(script).
-			SetGasLimit(flowgo.DefaultMaxGasLimit).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
@@ -859,14 +881,16 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 }
 
 func TestGetTransaction(t *testing.T) {
-	b, err := emulator.NewBlockchain()
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+	)
 	require.NoError(t, err)
 
 	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
 	tx1 := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
-		SetGasLimit(flowgo.DefaultMaxGasLimit).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
@@ -897,14 +921,16 @@ func TestGetTransaction(t *testing.T) {
 }
 
 func TestGetTransactionResult(t *testing.T) {
-	b, err := emulator.NewBlockchain()
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+	)
 	require.NoError(t, err)
 
 	addTwoScript, counterAddress := deployAndGenerateAddTwoScript(t, b)
 
 	tx := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
-		SetGasLimit(flowgo.DefaultMaxGasLimit).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
@@ -944,14 +970,14 @@ func TestGetTransactionResult(t *testing.T) {
 
 	event := result.Events[0]
 
-	location := runtime.AddressContractLocation{
-		AddressLocation: runtime.AddressLocation(counterAddress.Bytes()),
-		Name:            "Counting",
+	location := common.AddressLocation{
+		Address: common.BytesToAddress(counterAddress.Bytes()),
+		Name:    "Counting",
 	}
-	eventType := fmt.Sprintf("%s.Counting.CountIncremented", location.ID())
+	eventType := location.TypeID("Counting.CountIncremented")
 
 	assert.Equal(t, tx.ID(), event.TransactionID)
-	assert.Equal(t, eventType, event.Type)
+	assert.Equal(t, string(eventType), event.Type)
 	assert.Equal(t, 0, event.EventIndex)
 	assert.Equal(t, cadence.NewInt(2), event.Value.Fields[0])
 }
@@ -977,7 +1003,9 @@ const callHelloTxTemplate = `
 func TestHelloWorld_NewAccount(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 
-	b, err := emulator.NewBlockchain()
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+	)
 	require.NoError(t, err)
 
 	accountKey, accountSigner := accountKeys.NewWithSigner()
@@ -995,7 +1023,7 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 		b.ServiceKey().Address,
 	)
 
-	createAccountTx.SetGasLimit(flowgo.DefaultMaxGasLimit).
+	createAccountTx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address)
 
@@ -1019,12 +1047,15 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 
 	var newAccountAddress flow.Address
 	for _, event := range createAccountTxResult.Events {
-		if event.Type == flow.EventAccountCreated {
-			accountCreatedEvent := flow.AccountCreatedEvent(event)
-			newAccountAddress = accountCreatedEvent.Address()
-			break
+		if event.Type != flow.EventAccountCreated {
+			continue
 		}
+		accountCreatedEvent := flow.AccountCreatedEvent(event)
+		newAccountAddress = accountCreatedEvent.Address()
+		break
+	}
 
+	if newAccountAddress == flow.EmptyAddress {
 		assert.Fail(t, "missing account created event")
 	}
 
@@ -1062,7 +1093,9 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 func TestHelloWorld_UpdateAccount(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 
-	b, err := emulator.NewBlockchain()
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+	)
 	require.NoError(t, err)
 
 	accountKey, accountSigner := accountKeys.NewWithSigner()
@@ -1070,7 +1103,7 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 
 	contracts := []templates.Contract{
 		{
-			Name: "HelloWorld",
+			Name:   "HelloWorld",
 			Source: `pub contract HelloWorld {}`,
 		},
 	}
@@ -1082,7 +1115,7 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 	)
 
 	createAccountTx.
-		SetGasLimit(flowgo.DefaultMaxGasLimit).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address)
 
@@ -1106,15 +1139,18 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 
 	var newAccountAddress flow.Address
 	for _, event := range createAccountTxResult.Events {
-		if event.Type == flow.EventAccountCreated {
-			accountCreatedEvent := flow.AccountCreatedEvent(event)
-			newAccountAddress = accountCreatedEvent.Address()
-			break
+		if event.Type != flow.EventAccountCreated {
+			continue
 		}
-
-		assert.Fail(t, "missing account created event")
+		accountCreatedEvent := flow.AccountCreatedEvent(event)
+		newAccountAddress = accountCreatedEvent.Address()
+		break
 	}
 
+	if newAccountAddress == flow.EmptyAddress {
+		assert.Fail(t, "missing account created event")
+	}
+	
 	t.Logf("new account address: 0x%s", newAccountAddress.Hex())
 
 	account, err := b.GetAccount(newAccountAddress)
@@ -1124,11 +1160,13 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 
 	updateAccountCodeTx := templates.UpdateAccountContract(
 		newAccountAddress,
-		"HelloWorld",
-		[]byte(helloWorldContract),
+		templates.Contract{
+			Name:   "HelloWorld",
+			Source: helloWorldContract,
+		},
 	)
 	updateAccountCodeTx.
-		SetGasLimit(flowgo.DefaultMaxGasLimit).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(newAccountAddress, accountKey.Index, accountKey.SequenceNumber).
 		SetPayer(newAccountAddress)
 
@@ -1167,4 +1205,62 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
+}
+
+func TestInfiniteTransaction(t *testing.T) {
+
+	const limit = 10
+
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+		emulator.WithTransactionMaxGasLimit(limit),
+	)
+	require.NoError(t, err)
+
+	const code = `
+      pub fun test() {
+          test()
+      }
+
+      transaction {
+          execute {
+              test()
+          }
+      }
+    `
+
+	// Create a new account
+
+	accountKeys := test.AccountKeyGenerator()
+	accountKey, signer := accountKeys.NewWithSigner()
+	accountAddress, err := b.CreateAccount([]*flow.AccountKey{accountKey}, nil)
+	assert.NoError(t, err)
+
+	// Sign the transaction using the new account.
+	// Do not test using the service account,
+	// as the computation limit is disabled for it
+
+	tx := flow.NewTransaction().
+		SetScript([]byte(code)).
+		SetGasLimit(limit).
+		SetProposalKey(accountAddress, 0, 0).
+		SetPayer(accountAddress)
+
+	err = tx.SignEnvelope(accountAddress, 0, signer)
+	assert.NoError(t, err)
+
+	// Submit tx
+	err = b.AddTransaction(*tx)
+	assert.NoError(t, err)
+
+	// Execute tx
+	result, err := b.ExecuteNextTransaction()
+	assert.NoError(t, err)
+
+	require.ErrorAs(t,
+		result.Error,
+		&runtime.ComputationLimitExceededError{
+			Limit: limit,
+		},
+	)
 }

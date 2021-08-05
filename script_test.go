@@ -1,11 +1,11 @@
 package emulator_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
+	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
@@ -15,14 +15,16 @@ import (
 )
 
 func TestExecuteScript(t *testing.T) {
-	b, err := emulator.NewBlockchain()
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+	)
 	require.NoError(t, err)
 
 	addTwoScript, counterAddress := deployAndGenerateAddTwoScript(t, b)
 
 	tx := flow.NewTransaction().
 		SetScript([]byte(addTwoScript)).
-		SetGasLimit(flowgo.DefaultMaxGasLimit).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
@@ -70,11 +72,11 @@ func TestExecuteScript_WithArguments(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		scriptWithArgs := fmt.Sprintf(`
+		scriptWithArgs := `
 			pub fun main(n: Int): Int {
 				return n
 			}
-		`)
+		`
 
 		arg, err := jsoncdc.Encode(cadence.NewInt(10))
 		require.NoError(t, err)
@@ -88,12 +90,12 @@ func TestExecuteScript_WithArguments(t *testing.T) {
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
-		scriptWithArgs := fmt.Sprintf(`
+		scriptWithArgs := `
 			pub fun main(n: String): Int {
 				log(n)
 				return 0
 			}
-		`)
+		`
 
 		arg, err := jsoncdc.Encode(cadence.NewString("Hello, World"))
 		require.NoError(t, err)
@@ -106,4 +108,28 @@ func TestExecuteScript_WithArguments(t *testing.T) {
 func TestExecuteScriptAtBlockHeight(t *testing.T) {
 	// TODO
 	// Test that scripts can be executed at different block heights
+}
+
+func TestInfiniteScript(t *testing.T) {
+
+	const limit = 10
+	b, err := emulator.NewBlockchain(
+		emulator.WithScriptGasLimit(limit),
+	)
+	require.NoError(t, err)
+
+	const code = `
+      pub fun main() {
+          main()
+      }
+    `
+	result, err := b.ExecuteScript([]byte(code), nil)
+	require.NoError(t, err)
+
+	require.ErrorAs(t,
+		result.Error,
+		&runtime.ComputationLimitExceededError{
+			Limit: limit,
+		},
+	)
 }

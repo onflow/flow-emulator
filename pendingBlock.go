@@ -1,10 +1,12 @@
 package emulator
 
 import (
+	"math/rand"
 	"time"
 
 	"github.com/onflow/flow-go/engine/execution/state/delta"
 	"github.com/onflow/flow-go/fvm"
+	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
@@ -13,9 +15,14 @@ type IndexedTransactionResult struct {
 	Index       uint32
 }
 
+// MaxViewIncrease represents the largest difference in view number between
+// two consecutive blocks. The minimum view increment is 1.
+const MaxViewIncrease = 3
+
 // A pendingBlock contains the pending state required to form a new block.
 type pendingBlock struct {
 	height    uint64
+	view      uint64
 	parentID  flowgo.Identifier
 	timestamp time.Time
 	// mapping from transaction ID to transaction
@@ -29,7 +36,7 @@ type pendingBlock struct {
 	// events emitted during execution
 	events []flowgo.Event
 	// index of transaction execution
-	index int
+	index uint32
 }
 
 // newPendingBlock creates a new pending block sequentially after a specified block.
@@ -37,6 +44,9 @@ func newPendingBlock(prevBlock *flowgo.Block, ledgerView *delta.View) *pendingBl
 
 	return &pendingBlock{
 		height:             prevBlock.Header.Height + 1,
+		// the view increments by between 1 and MaxViewIncrease to match
+		// behaviour on a real network, where views are not consecutive
+		view:               prevBlock.Header.View + uint64(rand.Intn(MaxViewIncrease)+1),
 		parentID:           prevBlock.ID(),
 		timestamp:          time.Now().UTC(),
 		transactions:       make(map[flowgo.Identifier]*flowgo.TransactionBody),
@@ -72,6 +82,7 @@ func (b *pendingBlock) Block() *flowgo.Block {
 	return &flowgo.Block{
 		Header: &flowgo.Header{
 			Height:    b.height,
+			View: b.view,
 			ParentID:  b.parentID,
 			Timestamp: b.timestamp,
 		},
@@ -139,34 +150,33 @@ func (b *pendingBlock) nextTransaction() *flowgo.TransactionBody {
 // This function uses the provided execute function to perform the actual
 // execution, then updates the pending block with the output.
 func (b *pendingBlock) ExecuteNextTransaction(
-	execute func(ledgerView *delta.View, tx *flowgo.TransactionBody) (*fvm.TransactionProcedure, error),
+	execute func(ledgerView state.View, txIndex uint32, tx *flowgo.TransactionBody) (*fvm.TransactionProcedure, error),
 ) (*fvm.TransactionProcedure, error) {
 	tx := b.nextTransaction()
 
 	childView := b.ledgerView.NewChild()
 
-	tp, err := execute(childView, tx)
+	// increment transaction index even if transaction reverts
+	b.index++
+
+	tp, err := execute(childView, b.index, tx)
 	if err != nil {
 		// fail fast if fatal error occurs
 		return nil, err
 	}
 
-	// increment transaction index even if transaction reverts
-	b.index++
-
-	convertedEvents, err := tp.ConvertEvents(uint32(b.index))
-	if err != nil {
-		return nil, err
-	}
-
 	if tp.Err == nil {
-		b.events = append(b.events, convertedEvents...)
-		b.ledgerView.MergeView(childView)
+		b.events = append(b.events, tp.Events...)
+		err := b.ledgerView.MergeView(childView)
+		if err != nil {
+			// fail fast if fatal error occurs
+			return nil, err
+		}
 	}
 
 	b.transactionResults[tx.ID()] = IndexedTransactionResult{
 		Transaction: tp,
-		Index:       uint32(b.index),
+		Index:       b.index,
 	}
 
 	return tp, nil
@@ -184,7 +194,7 @@ func (b *pendingBlock) ExecutionStarted() bool {
 
 // ExecutionComplete returns true if the pending block is fully executed.
 func (b *pendingBlock) ExecutionComplete() bool {
-	return b.index >= b.Size()
+	return b.index >= uint32(b.Size())
 }
 
 // Size returns the number of transactions in the pending block.

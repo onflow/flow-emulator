@@ -33,18 +33,14 @@ var _ access.Blocks = &blocks{}
 
 type blocks struct {
 	blockchain *Blockchain
+	headers    *headers
 }
 
 func newBlocks(b *Blockchain) *blocks {
-	return &blocks{b}
-}
-
-func (b *blocks) ByHeight(height uint64) (*flowgo.Block, error) {
-	if height == b.blockchain.pendingBlock.Height() {
-		return b.blockchain.pendingBlock.Block(), nil
+	return &blocks{
+		blockchain: b,
+		headers:    newHeaders(b),
 	}
-
-	return b.blockchain.storage.BlockByHeight(height)
 }
 
 func (b *blocks) HeaderByID(id flowgo.Identifier) (*flowgo.Header, error) {
@@ -67,4 +63,9 @@ func (b *blocks) FinalizedHeader() (*flowgo.Header, error) {
 	}
 
 	return block.Header, nil
+}
+
+func (b *blocks) ByHeightFrom(height uint64, header *flowgo.Header) (*flowgo.Header, error) {
+	return fvm.NewBlockFinder(b.headers).
+		ByHeightFrom(height, header)
 }

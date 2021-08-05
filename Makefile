@@ -1,7 +1,5 @@
 # The short Git commit hash
 SHORT_COMMIT := $(shell git rev-parse --short HEAD)
-# The tag of the current commit, otherwise empty
-VERSION := $(shell git describe --tags --abbrev=0 --exact-match 2>/dev/null)
 # Name of the cover profile
 COVER_PROFILE := cover.out
 # Disable go sum database lookup for private repos
@@ -53,26 +51,11 @@ generate-mocks:
 	GO111MODULE=on ${GOPATH}/bin/mockgen -destination=storage/mocks/store.go -package=mocks github.com/onflow/flow-emulator/storage Store
 
 .PHONY: ci
-ci: install-tools generate test coverage
-
-.PHONY: docker-build-emulator
-docker-build:
-	docker build --ssh default -f cmd/emulator/Dockerfile -t gcr.io/dl-flow/emulator:latest -t "gcr.io/dl-flow/emulator:$(SHORT_COMMIT)" .
-ifneq (${VERSION},)
-	docker tag gcr.io/dl-flow/emulator:latest gcr.io/dl-flow/emulator:${VERSION}
-endif
-
-.PHONY: docker-push-emulator
-docker-push:
-	docker push gcr.io/dl-flow/emulator:latest
-	docker push "gcr.io/dl-flow/emulator:$(SHORT_COMMIT)"
-ifneq (${VERSION},)
-	docker push "gcr.io/dl-flow/emulator:${VERSION}"
-endif
+ci: install-tools test check-tidy test coverage check-headers
 
 .PHONY: install-linter
 install-linter:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.26.0
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.29.0
 
 .PHONY: lint
 lint:
@@ -83,5 +66,6 @@ check-headers:
 	@./check-headers.sh
 
 .PHONY: check-tidy
-check-tidy:
+check-tidy: generate
 	go mod tidy
+	git diff --exit-code

@@ -26,8 +26,11 @@ import (
 	"github.com/onflow/flow-go/crypto/hash"
 	"github.com/onflow/flow-go/engine/execution/state/delta"
 	"github.com/onflow/flow-go/fvm"
+	fvmerrors "github.com/onflow/flow-go/fvm/errors"
+	"github.com/onflow/flow-go/fvm/programs"
 	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/convert"
 	sdkconvert "github.com/onflow/flow-emulator/convert/sdk"
@@ -60,22 +63,22 @@ type ServiceKey struct {
 	Index          int
 	Address        sdk.Address
 	SequenceNumber uint64
-	PrivateKey     *sdkcrypto.PrivateKey
-	PublicKey      *sdkcrypto.PublicKey
+	PrivateKey     sdkcrypto.PrivateKey
+	PublicKey      sdkcrypto.PublicKey
 	HashAlgo       sdkcrypto.HashAlgorithm
 	SigAlgo        sdkcrypto.SignatureAlgorithm
 	Weight         int
 }
 
 func (s ServiceKey) Signer() sdkcrypto.Signer {
-	return sdkcrypto.NewInMemorySigner(*s.PrivateKey, s.HashAlgo)
+	return sdkcrypto.NewInMemorySigner(s.PrivateKey, s.HashAlgo)
 }
 
 func (s ServiceKey) AccountKey() *sdk.AccountKey {
 
 	var publicKey sdkcrypto.PublicKey
 	if s.PublicKey != nil {
-		publicKey = *s.PublicKey
+		publicKey = s.PublicKey
 	}
 
 	if s.PrivateKey != nil {
@@ -113,7 +116,7 @@ func GenerateDefaultServiceKey(
 	}
 
 	return ServiceKey{
-		PrivateKey: &privateKey,
+		PrivateKey: privateKey,
 		SigAlgo:    sigAlgo,
 		HashAlgo:   hashAlgo,
 	}
@@ -121,12 +124,17 @@ func GenerateDefaultServiceKey(
 
 // config is a set of configuration options for an emulated blockchain.
 type config struct {
-	ServiceKey         ServiceKey
-	Store              storage.Store
-	SimpleAddresses    bool
-	GenesisTokenSupply cadence.UFix64
-	ScriptGasLimit     uint64
-	TransactionExpiry  uint
+	ServiceKey                ServiceKey
+	Store                     storage.Store
+	SimpleAddresses           bool
+	GenesisTokenSupply        cadence.UFix64
+	TransactionMaxGasLimit    uint64
+	ScriptGasLimit            uint64
+	TransactionExpiry         uint
+	StorageLimitEnabled       bool
+	TransactionFeesEnabled    bool
+	MinimumStorageReservation cadence.UFix64
+	StorageMBPerFLOW          cadence.UFix64
 }
 
 func (conf config) GetStore() storage.Store {
@@ -157,8 +165,9 @@ func (conf config) GetServiceKey() ServiceKey {
 	return serviceKey
 }
 
-const defaultGenesisTokenSupply = "100000000000.0"
+const defaultGenesisTokenSupply = "10000000000.0"
 const defaultScriptGasLimit = 100000
+const defaultTransactionMaxGasLimit = flowgo.DefaultMaxTransactionGasLimit
 
 // defaultConfig is the default configuration for an emulated blockchain.
 var defaultConfig = func() config {
@@ -168,12 +177,16 @@ var defaultConfig = func() config {
 	}
 
 	return config{
-		ServiceKey:         DefaultServiceKey(),
-		Store:              nil,
-		SimpleAddresses:    false,
-		GenesisTokenSupply: genesisTokenSupply,
-		ScriptGasLimit:     defaultScriptGasLimit,
-		TransactionExpiry:  0, // TODO: replace with sensible default
+		ServiceKey:                DefaultServiceKey(),
+		Store:                     nil,
+		SimpleAddresses:           false,
+		GenesisTokenSupply:        genesisTokenSupply,
+		ScriptGasLimit:            defaultScriptGasLimit,
+		TransactionMaxGasLimit:    defaultTransactionMaxGasLimit,
+		MinimumStorageReservation: fvm.DefaultMinimumStorageReservation,
+		StorageMBPerFLOW:          fvm.DefaultStorageMBPerFLOW,
+		TransactionExpiry:         0, // TODO: replace with sensible default
+		StorageLimitEnabled:       true,
 	}
 }()
 
@@ -188,7 +201,7 @@ func WithServicePublicKey(
 ) Option {
 	return func(c *config) {
 		c.ServiceKey = ServiceKey{
-			PublicKey: &servicePublicKey,
+			PublicKey: servicePublicKey,
 			SigAlgo:   sigAlgo,
 			HashAlgo:  hashAlgo,
 		}
@@ -216,9 +229,23 @@ func WithGenesisTokenSupply(supply cadence.UFix64) Option {
 	}
 }
 
+// WithTransactionMaxGasLimit sets the maximum gas limit for transactions.
+//
+// Individual transactions will still be bounded by the limit they declare.
+// This function sets the maximum limit that any transaction can declare.
+//
+// This limit does not affect script executions. Use WithScriptGasLimit
+// to set the gas limit for script executions.
+func WithTransactionMaxGasLimit(maxLimit uint64) Option {
+	return func(c *config) {
+		c.TransactionMaxGasLimit = maxLimit
+	}
+}
+
 // WithScriptGasLimit sets the gas limit for scripts.
 //
 // This limit does not affect transactions, which declare their own limit.
+// Use WithTransactionMaxGasLimit to set the maximum gas limit for transactions.
 func WithScriptGasLimit(limit uint64) Option {
 	return func(c *config) {
 		c.ScriptGasLimit = limit
@@ -232,6 +259,46 @@ func WithScriptGasLimit(limit uint64) Option {
 func WithTransactionExpiry(expiry uint) Option {
 	return func(c *config) {
 		c.TransactionExpiry = expiry
+	}
+}
+
+// WithStorageLimitEnabled enables/disables limiting account storage used to their storage capacity.
+//
+// If set to false, accounts can store any amount of data,
+// otherwise they can only store as much as their storage capacity.
+// The default is true.
+func WithStorageLimitEnabled(enabled bool) Option {
+	return func(c *config) {
+		c.StorageLimitEnabled = enabled
+	}
+}
+
+// WithMinimumStorageReservation sets the minimum account balance.
+//
+// The cost of creating new accounts is also set to this value.
+// The default is taken from fvm.DefaultMinimumStorageReservation
+func WithMinimumStorageReservation(minimumStorageReservation cadence.UFix64) Option {
+	return func(c *config) {
+		c.MinimumStorageReservation = minimumStorageReservation
+	}
+}
+
+// WithStorageMBPerFLOW sets the cost of a megabyte of storage in FLOW
+//
+// the default is taken from fvm.DefaultStorageMBPerFLOW
+func WithStorageMBPerFLOW(storageMBPerFLOW cadence.UFix64) Option {
+	return func(c *config) {
+		c.StorageMBPerFLOW = storageMBPerFLOW
+	}
+}
+
+// WithTransactionFeesEnabled enables/disables transaction fees.
+//
+// If set to false transactions don't cost any flow.
+// The default is false.
+func WithTransactionFeesEnabled(enabled bool) Option {
+	return func(c *config) {
+		c.TransactionFeesEnabled = enabled
 	}
 }
 
@@ -270,20 +337,19 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 }
 
 func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {
-	vm := fvm.New(runtime.NewInterpreterRuntime())
+	rt := runtime.NewInterpreterRuntime()
 
-	astCache, err := fvm.NewLRUASTCache(256)
-	if err != nil {
-		return nil, fvm.Context{}, fmt.Errorf("failed to initialize AST cache: %w", err)
-	}
+	vm := fvm.NewVirtualMachine(rt)
 
 	ctx := fvm.NewContext(
+		zerolog.Nop(),
 		fvm.WithChain(conf.GetChainID().Chain()),
-		fvm.WithASTCache(astCache),
 		fvm.WithBlocks(blocks),
 		fvm.WithRestrictedDeployment(false),
-		fvm.WithRestrictedAccountCreation(false),
 		fvm.WithGasLimit(conf.ScriptGasLimit),
+		fvm.WithCadenceLogging(true),
+		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
+		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 	)
 
 	return vm, ctx, nil
@@ -322,8 +388,7 @@ func configureNewLedger(
 		vm,
 		ctx,
 		genesisLedgerView,
-		conf.GetServiceKey().AccountKey(),
-		conf.GenesisTokenSupply,
+		conf,
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to bootstrap execution state: %w", err)
@@ -362,28 +427,60 @@ func configureExistingLedger(
 func bootstrapLedger(
 	vm *fvm.VirtualMachine,
 	ctx fvm.Context,
-	ledger state.Ledger,
-	accountKey *sdk.AccountKey,
-	genesisTokenSupply cadence.UFix64,
+	ledger state.View,
+	conf config,
 ) error {
+	accountKey := conf.GetServiceKey().AccountKey()
 	publicKey, _ := crypto.DecodePublicKey(
-		crypto.SigningAlgorithm(accountKey.SigAlgo),
+		accountKey.SigAlgo,
 		accountKey.PublicKey.Encode(),
+	)
+
+	ctx = fvm.NewContextFromParent(
+		ctx,
+		fvm.WithAccountStorageLimit(false),
 	)
 
 	flowAccountKey := flowgo.AccountPublicKey{
 		PublicKey: publicKey,
-		SignAlgo:  crypto.SigningAlgorithm(accountKey.SigAlgo),
-		HashAlgo:  hash.HashingAlgorithm(accountKey.HashAlgo),
+		SignAlgo:  accountKey.SigAlgo,
+		HashAlgo:  accountKey.HashAlgo,
 		Weight:    fvm.AccountKeyWeightThreshold,
 	}
 
-	err := vm.Run(ctx, fvm.Bootstrap(flowAccountKey, genesisTokenSupply), ledger)
+	bootstrap := configureBootstrapProcedure(conf, flowAccountKey, conf.GenesisTokenSupply)
+
+	programs := programs.NewEmptyPrograms()
+	err := vm.Run(ctx, bootstrap, ledger, programs)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPublicKey, supply cadence.UFix64) *fvm.BootstrapProcedure {
+	options := make([]fvm.BootstrapProcedureOption, 0)
+	options = append(options,
+		fvm.WithInitialTokenSupply(supply),
+		fvm.WithRestrictedAccountCreationEnabled(false),
+	)
+	if conf.StorageLimitEnabled {
+		options = append(options,
+			fvm.WithAccountCreationFee(conf.MinimumStorageReservation),
+			fvm.WithMinimumStorageReservation(conf.MinimumStorageReservation),
+			fvm.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
+		)
+	}
+	if conf.TransactionFeesEnabled {
+		options = append(options,
+			fvm.WithTransactionFee(fvm.DefaultTransactionFees),
+		)
+	}
+	return fvm.Bootstrap(
+		flowAccountKey,
+		options...,
+	)
 }
 
 func configureTransactionValidator(conf config, blocks *blocks) *access.TransactionValidator {
@@ -395,9 +492,10 @@ func configureTransactionValidator(conf config, blocks *blocks) *access.Transact
 			ExpiryBuffer:                 0,
 			AllowEmptyReferenceBlockID:   conf.TransactionExpiry == 0,
 			AllowUnknownReferenceBlockID: false,
-			MaxGasLimit:                  flowgo.DefaultMaxGasLimit,
+			MaxGasLimit:                  conf.TransactionMaxGasLimit,
 			CheckScriptsParse:            true,
-			MaxTxSizeLimit:               flowgo.DefaultMaxTxSizeLimit,
+			MaxTransactionByteSize:       flowgo.DefaultMaxTransactionByteSize,
+			MaxCollectionByteSize:        flowgo.DefaultMaxCollectionByteSize,
 		},
 	)
 }
@@ -421,6 +519,11 @@ func (b *Blockchain) ServiceKey() ServiceKey {
 // PendingBlockID returns the ID of the pending block.
 func (b *Blockchain) PendingBlockID() flowgo.Identifier {
 	return b.pendingBlock.ID()
+}
+
+// PendingBlockView returns the view of the pending block.
+func (b *Blockchain) PendingBlockView() uint64 {
+	return b.pendingBlock.view
 }
 
 // PendingBlockTimestamp returns the Timestamp of the pending block.
@@ -472,6 +575,10 @@ func (b *Blockchain) getBlockByHeight(height uint64) (*flowgo.Block, error) {
 	}
 
 	return block, nil
+}
+
+func (b *Blockchain) GetChain() flowgo.Chain {
+	return b.vmCtx.Chain
 }
 
 func (b *Blockchain) GetCollection(colID sdk.Identifier) (*sdk.Collection, error) {
@@ -592,8 +699,9 @@ func (b *Blockchain) getAccount(address flowgo.Address) (*flowgo.Account, error)
 
 	view := b.storage.LedgerViewByHeight(latestBlock.Header.Height)
 
-	account, err := b.vm.GetAccount(b.vmCtx, address, view)
-	if errors.Is(err, fvm.ErrAccountNotFound) {
+	programs := programs.NewEmptyPrograms()
+	account, err := b.vm.GetAccount(b.vmCtx, address, view, programs)
+	if fvmerrors.IsAccountNotFoundError(err) {
 		return nil, &AccountNotFoundError{Address: address}
 	}
 
@@ -731,12 +839,15 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 	// use the computer to execute the next transaction
 	tp, err := b.pendingBlock.ExecuteNextTransaction(
 		func(
-			ledgerView *delta.View,
+			ledgerView state.View,
+			txIndex uint32,
 			txBody *flowgo.TransactionBody,
 		) (*fvm.TransactionProcedure, error) {
-			tx := fvm.Transaction(txBody)
+			tx := fvm.Transaction(txBody, txIndex)
 
-			err := b.vm.Run(ctx, tx, ledgerView)
+			programs := programs.NewEmptyPrograms()
+
+			err := b.vm.Run(ctx, tx, ledgerView, programs)
 			if err != nil {
 				return nil, err
 			}
@@ -749,9 +860,13 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 		return nil, err
 	}
 
-	tr := convert.VMTransactionResultToEmulator(tp, b.pendingBlock.index)
+	tr, err := convert.VMTransactionResultToEmulator(tp)
+	if err != nil {
+		// fail fast if fatal error occurs
+		return nil, err
+	}
 
-	return &tr, nil
+	return tr, nil
 }
 
 // CommitBlock seals the current pending block and saves it to storage.
@@ -879,7 +994,8 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blo
 
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
 
-	err = b.vm.Run(blockContext, scriptProc, requestedLedgerView)
+	programs := programs.NewEmptyPrograms()
+	err = b.vm.Run(blockContext, scriptProc, requestedLedgerView, programs)
 	if err != nil {
 		return nil, err
 	}
@@ -887,7 +1003,10 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blo
 	hasher := hash.NewSHA3_256()
 	scriptID := sdk.HashToID(hasher.ComputeHash(script))
 
-	events := sdkconvert.RuntimeEventsToSDK(scriptProc.Events, scriptID, 0)
+	events, err := sdkconvert.FlowEventsToSDK(scriptProc.Events)
+	if err != nil {
+		return nil, err
+	}
 
 	var scriptError error = nil
 	var convertedValue cadence.Value = nil
@@ -923,7 +1042,7 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, contracts []tem
 
 	tx := templates.CreateAccount(publicKeys, contracts, serviceAddress)
 
-	tx.SetGasLimit(flowgo.DefaultMaxGasLimit).
+	tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetReferenceBlockID(sdk.Identifier(latestBlock.ID())).
 		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
 		SetPayer(serviceAddress)
@@ -977,7 +1096,7 @@ func convertToSealedResults(
 	output := make(map[flowgo.Identifier]*types.StorableTransactionResult)
 
 	for id, result := range results {
-		temp, err := convert.ToStorableResult(result.Transaction, result.Index)
+		temp, err := convert.ToStorableResult(result.Transaction)
 		if err != nil {
 			return nil, err
 		}

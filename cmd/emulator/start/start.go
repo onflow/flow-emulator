@@ -27,6 +27,7 @@ import (
 	"github.com/onflow/cadence"
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
+	"github.com/onflow/flow-go/fvm"
 	"github.com/prometheus/common/log"
 	"github.com/psiemens/sconfig"
 	"github.com/sirupsen/logrus"
@@ -36,22 +37,27 @@ import (
 )
 
 type Config struct {
-	Port               int           `default:"3569" flag:"port,p" info:"port to run RPC server"`
-	HTTPPort           int           `default:"8080" flag:"http-port" info:"port to run HTTP server"`
-	Verbose            bool          `default:"false" flag:"verbose,v" info:"enable verbose logging"`
-	BlockTime          time.Duration `flag:"block-time,b" info:"time between sealed blocks, e.g. '300ms', '-1.5h' or '2h45m'. Valid units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'"`
-	ServicePrivateKey  string        `flag:"service-priv-key" info:"service account private key"`
-	ServicePublicKey   string        `flag:"service-pub-key" info:"service account public key"`
-	ServiceKeySigAlgo  string        `flag:"service-sig-algo" info:"service account key signature algorithm"`
-	ServiceKeyHashAlgo string        `flag:"service-hash-algo" info:"service account key hash algorithm"`
-	Init               bool          `default:"false" flag:"init" info:"whether to initialize a new account profile"`
-	GRPCDebug          bool          `default:"false" flag:"grpc-debug" info:"enable gRPC server reflection for debugging with grpc_cli"`
-	Persist            bool          `default:"false" flag:"persist" info:"enable persistent storage"`
-	DBPath             string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
-	SimpleAddresses    bool          `default:"false" flag:"simple-addresses" info:"use sequential addresses starting with 0x01"`
-	TokenSupply        string        `default:"100000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
-	ScriptGasLimit     int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
-	TransactionExpiry  int           `default:"10" flag:"transaction-expiry" info:"transaction expiry, measured in blocks"`
+	Port                   int           `default:"3569" flag:"port,p" info:"port to run RPC server"`
+	HTTPPort               int           `default:"8080" flag:"http-port" info:"port to run HTTP server"`
+	Verbose                bool          `default:"false" flag:"verbose,v" info:"enable verbose logging"`
+	BlockTime              time.Duration `flag:"block-time,b" info:"time between sealed blocks, e.g. '300ms', '-1.5h' or '2h45m'. Valid units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'"`
+	ServicePrivateKey      string        `flag:"service-priv-key" info:"service account private key"`
+	ServicePublicKey       string        `flag:"service-pub-key" info:"service account public key"`
+	ServiceKeySigAlgo      string        `flag:"service-sig-algo" info:"service account key signature algorithm"`
+	ServiceKeyHashAlgo     string        `flag:"service-hash-algo" info:"service account key hash algorithm"`
+	Init                   bool          `default:"false" flag:"init" info:"whether to initialize a new account profile"`
+	GRPCDebug              bool          `default:"false" flag:"grpc-debug" info:"enable gRPC server reflection for debugging with grpc_cli"`
+	Persist                bool          `default:"false" flag:"persist" info:"enable persistent storage"`
+	DBPath                 string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
+	SimpleAddresses        bool          `default:"false" flag:"simple-addresses" info:"use sequential addresses starting with 0x01"`
+	TokenSupply            string        `default:"1000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
+	TransactionExpiry      int           `default:"10" flag:"transaction-expiry" info:"transaction expiry, measured in blocks"`
+	StorageLimitEnabled    bool          `default:"true" flag:"storage-limit" info:"enable account storage limit"`
+	StorageMBPerFLOW       string        `flag:"storage-per-flow" info:"the MB amount of storage capacity an account has per 1 FLOW token it has. e.g. '100.0'. The default is taken from the current version of flow-go"`
+	MinimumAccountBalance  string        `flag:"min-account-balance" info:"The minimum account balance of an account. This is also the cost of creating one account. e.g. '0.001'. The default is taken from the current version of flow-go"`
+	TransactionFeesEnabled bool          `default:"false" flag:"transaction-fees" info:"enable transaction fees"`
+	TransactionMaxGasLimit int           `default:"9999" flag:"transaction-max-gas-limit" info:"maximum gas limit for transactions"`
+	ScriptGasLimit         int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
 }
 
 const EnvPrefix = "FLOW"
@@ -120,27 +126,42 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				"serviceHashAlgo": serviceKeyHashAlgo,
 			}
 
-			if servicePrivateKey != (crypto.PrivateKey{}) {
+			if servicePrivateKey != nil {
 				serviceFields["servicePrivKey"] = hex.EncodeToString(servicePrivateKey.Encode())
 			}
 
 			logger.WithFields(serviceFields).Infof("⚙️   Using service account 0x%s", serviceAddress.Hex())
+
+			minimumStorageReservation := fvm.DefaultMinimumStorageReservation
+			if conf.MinimumAccountBalance != "" {
+				minimumStorageReservation = parseCadenceUFix64(conf.MinimumAccountBalance, "min-account-balance")
+			}
+
+			storageMBPerFLOW := fvm.DefaultStorageMBPerFLOW
+			if conf.StorageMBPerFLOW != "" {
+				storageMBPerFLOW = parseCadenceUFix64(conf.StorageMBPerFLOW, "storage-per-flow")
+			}
 
 			serverConf := &server.Config{
 				GRPCPort:  conf.Port,
 				GRPCDebug: conf.GRPCDebug,
 				HTTPPort:  conf.HTTPPort,
 				// TODO: allow headers to be parsed from environment
-				HTTPHeaders:        nil,
-				BlockTime:          conf.BlockTime,
-				ServicePublicKey:   servicePublicKey,
-				ServiceKeySigAlgo:  serviceKeySigAlgo,
-				ServiceKeyHashAlgo: serviceKeyHashAlgo,
-				Persist:            conf.Persist,
-				DBPath:             conf.DBPath,
-				GenesisTokenSupply: parseTokenSupply(conf.TokenSupply),
-				ScriptGasLimit:     uint64(conf.ScriptGasLimit),
-				TransactionExpiry:  uint(conf.TransactionExpiry),
+				HTTPHeaders:               nil,
+				BlockTime:                 conf.BlockTime,
+				ServicePublicKey:          servicePublicKey,
+				ServiceKeySigAlgo:         serviceKeySigAlgo,
+				ServiceKeyHashAlgo:        serviceKeyHashAlgo,
+				Persist:                   conf.Persist,
+				DBPath:                    conf.DBPath,
+				GenesisTokenSupply:        parseCadenceUFix64(conf.TokenSupply, "token-supply"),
+				TransactionMaxGasLimit:    uint64(conf.TransactionMaxGasLimit),
+				ScriptGasLimit:            uint64(conf.ScriptGasLimit),
+				TransactionExpiry:         uint(conf.TransactionExpiry),
+				StorageLimitEnabled:       conf.StorageLimitEnabled,
+				StorageMBPerFLOW:          storageMBPerFLOW,
+				MinimumStorageReservation: minimumStorageReservation,
+				TransactionFeesEnabled:    conf.TransactionFeesEnabled,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
@@ -178,13 +199,14 @@ func Exit(code int, msg string) {
 	os.Exit(code)
 }
 
-func parseTokenSupply(supply string) cadence.UFix64 {
-	tokenSupply, err := cadence.NewUFix64(supply)
+func parseCadenceUFix64(value string, valueName string) cadence.UFix64 {
+	tokenSupply, err := cadence.NewUFix64(value)
 	if err != nil {
 		Exit(
 			1,
 			fmt.Sprintf(
-				"Invalid token supply. Failed to parse `%s` as an unsigned 64-bit fixed-point number: %s",
+				"Failed to parse %s from value `%s` as an unsigned 64-bit fixed-point number: %s",
+				valueName,
 				conf.TokenSupply,
 				err.Error()),
 		)
