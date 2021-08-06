@@ -27,5 +27,3 @@ require (
 	github.com/stretchr/testify v1.7.0
 	google.golang.org/grpc v1.36.1
 )
-
-replace github.com/onflow/flow-go => ../flow-go
