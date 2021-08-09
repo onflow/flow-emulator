@@ -683,7 +683,7 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 		},
 		{
 			cadence.StringType{},
-			cadence.NewString("foo"),
+			cadence.String("foo"),
 		},
 		{
 			cadence.AddressType{},
@@ -787,15 +787,15 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 			},
 			cadence.NewDictionary([]cadence.KeyValuePair{
 				{
-					Key:   cadence.NewString("a"),
+					Key:   cadence.String("a"),
 					Value: cadence.NewInt(1),
 				},
 				{
-					Key:   cadence.NewString("b"),
+					Key:   cadence.String("b"),
 					Value: cadence.NewInt(2),
 				},
 				{
-					Key:   cadence.NewString("c"),
+					Key:   cadence.String("c"),
 					Value: cadence.NewInt(3),
 				},
 			}),
