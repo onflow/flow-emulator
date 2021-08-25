@@ -97,7 +97,7 @@ func TestExecuteScript_WithArguments(t *testing.T) {
 			}
 		`
 
-		arg, err := jsoncdc.Encode(cadence.NewString("Hello, World"))
+		arg, err := jsoncdc.Encode(cadence.String("Hello, World"))
 		require.NoError(t, err)
 		scriptResult, err := b.ExecuteScript([]byte(scriptWithArgs), [][]byte{arg})
 		require.NoError(t, err)
