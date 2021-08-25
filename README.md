@@ -1,9 +1,25 @@
-# Flow Emulator
+<br />
+<p align="center">
+  <a href="https://docs.onflow.org/emulator/">
+    <img src="./emulator-banner.svg" alt="Logo" width="270" height="auto">
+  </a>
 
-The Flow Emulator is a lightweight tool that emulates the behaviour of the real Flow network.
+  <p align="center">
+    <i>The Flow Emulator is a lightweight tool that emulates the behaviour of the real Flow network.</i>
+    <br />
+    <a href="https://docs.onflow.org/emulator/"><strong>Read the docs»</strong></a>
+    <br />
+    <br />
+    <a href="https://github.com/onflow/flow-emulator/issues">Report Bug</a>
+    ·
+    <a href="https://github.com/onflow/flow-emulator/blob/master/CONTRIBUTING.md">Contribute</a>
+  </p>
+</p>
+<br />
+<br />
 
-The emulator exposes a gRPC server that implements the Flow Access API, which is designed to have near feature parity
-with the real network API.
+
+The emulator exposes a gRPC server that implements the Flow Access API, which is designed to have near feature parity with the real network API.
 
 ## Running the emulator with the Flow CLI
 
