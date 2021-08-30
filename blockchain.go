@@ -701,6 +701,9 @@ func (b *Blockchain) GetAccountAtBlock(address sdk.Address, blockHeight uint64) 
 	flowAddress := sdkconvert.SDKAddressToFlow(address)
 
 	account, err := b.getAccountAtBlock(flowAddress, blockHeight)
+	if err != nil {
+		return nil, err
+	}
 
 	sdkAccount, err := sdkconvert.FlowAccountToSDK(*account)
 	if err != nil {
