@@ -22,6 +22,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/onflow/cadence"
@@ -179,8 +180,8 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 func initLogger() *logrus.Logger {
 	var logger = logrus.New()
 
-	switch conf.LogFormat {
-	case "JSON":
+	switch strings.ToLower(conf.LogFormat) {
+	case "json":
 		logger.Formatter = new(logrus.JSONFormatter)
 	default:
 		logger.Formatter = new(logrus.TextFormatter)
