@@ -1072,6 +1072,7 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 
 	callHelloCode := []byte(fmt.Sprintf(callHelloTxTemplate, newAccountAddress.Hex()))
 	callHelloTx := flow.NewTransaction().
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetScript(callHelloCode).
 		SetProposalKey(newAccountAddress, accountKey.Index, accountKey.SequenceNumber).
 		SetPayer(newAccountAddress)
@@ -1150,7 +1151,7 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 	if newAccountAddress == flow.EmptyAddress {
 		assert.Fail(t, "missing account created event")
 	}
-	
+
 	t.Logf("new account address: 0x%s", newAccountAddress.Hex())
 
 	account, err := b.GetAccount(newAccountAddress)
@@ -1189,6 +1190,7 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 
 	callHelloCode := []byte(fmt.Sprintf(callHelloTxTemplate, newAccountAddress.Hex()))
 	callHelloTx := flow.NewTransaction().
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetScript(callHelloCode).
 		SetProposalKey(newAccountAddress, accountKey.Index, accountKey.SequenceNumber).
 		SetPayer(newAccountAddress)
@@ -1209,7 +1211,7 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 
 func TestInfiniteTransaction(t *testing.T) {
 
-	const limit = 10
+	const limit = 1000
 
 	b, err := emulator.NewBlockchain(
 		emulator.WithStorageLimitEnabled(false),
