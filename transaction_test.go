@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	convert "github.com/onflow/flow-emulator/convert/sdk"
+
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
@@ -270,6 +272,118 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 
 		err = b.AddTransaction(*tx)
 		assert.IsType(t, &emulator.ExpiredTransactionError{}, err)
+	})
+
+	t.Run("Invalid hash algorithm proposer", func(t *testing.T) {
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
+		require.NoError(t, err)
+
+		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
+
+		invalidSigner := crypto.NewNaiveSigner(b.ServiceKey().PrivateKey, crypto.SHA2_256)
+
+		tx := flow.NewTransaction().
+			SetScript([]byte(addTwoScript)).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address).
+			AddAuthorizer(b.ServiceKey().Address)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, invalidSigner)
+		assert.NoError(t, err)
+
+		err = b.AddTransaction(*tx)
+		assert.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+
+		assert.Equal(t, result.Error, types.NewSignatureHashingError(
+			b.ServiceKey().Index,
+			convert.SDKAddressToFlow(b.ServiceKey().Address),
+			crypto.SHA3_256,
+			crypto.SHA2_256,
+		))
+	})
+
+	t.Run("Invalid hash algorithm authorizer", func(t *testing.T) {
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
+		require.NoError(t, err)
+
+		pk, err := crypto.GeneratePrivateKey(crypto.ECDSA_P256, []byte("invalid key invalid key invalid key invalid key invalid key invalid key"))
+		assert.NoError(t, err)
+
+		accountKeyB := (&flow.AccountKey{}).FromPrivateKey(pk)
+		accountKeyB.HashAlgo = crypto.SHA3_256
+		accountKeyB.Weight = flow.AccountKeyWeightThreshold
+
+		accountAddressB, err := b.CreateAccount([]*flow.AccountKey{accountKeyB}, nil)
+		assert.NoError(t, err)
+
+		tx := flow.NewTransaction().
+			SetScript([]byte(`
+			  transaction {
+				prepare(signer: AuthAccount) {}
+			  }
+			`)).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address).
+			AddAuthorizer(accountAddressB)
+
+		invalidSigner := crypto.NewNaiveSigner(pk, crypto.SHA2_256)
+		err = tx.SignPayload(accountAddressB, 0, invalidSigner)
+		assert.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		assert.NoError(t, err)
+
+		err = b.AddTransaction(*tx)
+		assert.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+
+		assert.Equal(t, result.Error, types.NewSignatureHashingError(
+			0,
+			convert.SDKAddressToFlow(accountAddressB),
+			crypto.SHA3_256,
+			crypto.SHA2_256,
+		))
+	})
+
+	t.Run("Invalid signature for provided data", func(t *testing.T) {
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
+		require.NoError(t, err)
+
+		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
+
+		tx := flow.NewTransaction().
+			SetScript([]byte(addTwoScript)).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address).
+			AddAuthorizer(b.ServiceKey().Address)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		assert.NoError(t, err)
+
+		tx.SetGasLimit(100) // change data after signing
+
+		err = b.AddTransaction(*tx)
+		assert.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+
+		assert.EqualError(t, result.Error, "")
+		unittest.AssertFVMErrorType(t, &fvmerrors.InvalidProposalSignatureError{}, result.Error)
 	})
 }
 
@@ -1150,7 +1264,7 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 	if newAccountAddress == flow.EmptyAddress {
 		assert.Fail(t, "missing account created event")
 	}
-	
+
 	t.Logf("new account address: 0x%s", newAccountAddress.Hex())
 
 	account, err := b.GetAccount(newAccountAddress)
