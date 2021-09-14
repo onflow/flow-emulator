@@ -19,7 +19,12 @@
 package types
 
 import (
+	"fmt"
+
+	"github.com/onflow/flow-go/crypto/hash"
+
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
+	"github.com/onflow/flow-go/model/flow"
 )
 
 type FlowError struct {
@@ -32,4 +37,35 @@ func (f *FlowError) Error() string {
 
 func (f *FlowError) Unwrap() error {
 	return f.FlowError
+}
+
+type SignatureHashingError struct {
+	index        int
+	address      flow.Address
+	usedAlgo     hash.HashingAlgorithm
+	requiredAlgo hash.HashingAlgorithm
+}
+
+func NewSignatureHashingError(
+	index int,
+	address flow.Address,
+	usedAlgo hash.HashingAlgorithm,
+	requiredAlgo hash.HashingAlgorithm,
+) *SignatureHashingError {
+	return &SignatureHashingError{
+		index,
+		address,
+		usedAlgo,
+		requiredAlgo,
+	}
+}
+
+func (s *SignatureHashingError) Error() string {
+	return fmt.Sprintf(
+		"invalid hashing algorithm signature: public key %d on account %s does not have a valid signature: key requires %s hashing algorithm, but %s was used",
+		s.index,
+		s.address.Hex(),
+		s.requiredAlgo,
+		s.usedAlgo,
+	)
 }
