@@ -868,8 +868,15 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 
 	// if transaction error exist try to further debug what was the problem
 	if tr.Error != nil {
-		tr.Error = b.debugErrorHashingAlgo(tr.Error, tp.Transaction)
+		hashErr := b.testHashingAlgoError(tr.Error, tp.Transaction)
+		if hashErr != nil {
+			tr.Error = hashErr
+		}
 
+		sigErr := b.testGeneralSignatureError(tr.Error, tp.Transaction)
+		if sigErr != nil {
+			tr.Error = sigErr
+		}
 	}
 
 	return tr, nil
@@ -1112,11 +1119,26 @@ func convertToSealedResults(
 	return output, nil
 }
 
-// debugErrorHashingAlgo tries to unwrap error to the root and test for invalid hashing algorithms
-func (b *Blockchain) debugErrorHashingAlgo(err error, tx *flowgo.TransactionBody) error {
+// testGeneralSignatureError checks if there was signature error and add context for debugging
+func (b *Blockchain) testGeneralSignatureError(err error, tx *flowgo.TransactionBody) error {
+	flowErr, ok := err.(*types.FlowError)
+	if !ok {
+		return nil
+	}
+
+	_, ok = flowErr.Unwrap().(*fvmerrors.InvalidProposalSignatureError)
+	if !ok {
+		return nil
+	}
+
+	return types.NewTransactionSignatureError(flowErr, tx)
+}
+
+// testHashingAlgoError tries to unwrap error to the root and test for invalid hashing algorithms
+func (b *Blockchain) testHashingAlgoError(err error, tx *flowgo.TransactionBody) error {
 	sigErr, ok := errors.Unwrap(err).(*fvmerrors.InvalidProposalSignatureError)
 	if !ok {
-		return err
+		return nil
 	}
 
 	switch errors.Unwrap(sigErr).(type) {
@@ -1136,7 +1158,7 @@ func (b *Blockchain) debugErrorHashingAlgo(err error, tx *flowgo.TransactionBody
 		}
 	}
 
-	return err
+	return nil
 }
 
 // testAlternativeHashAlgo tries to verify the signature with alternative hashing algorithm and if
