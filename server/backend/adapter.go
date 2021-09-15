@@ -196,3 +196,7 @@ func (a *Adapter) GetEventsForBlockIDs(
 func (a *Adapter) GetLatestProtocolStateSnapshot(ctx context.Context) ([]byte, error) {
 	return a.backend.GetLatestProtocolStateSnapshot(ctx)
 }
+
+func (a *Adapter) GetExecutionResultForBlockID(ctx context.Context, blockID flowgo.Identifier) (*flowgo.ExecutionResult, error) {
+	return a.backend.GetExecutionResultForBlockID(ctx, blockID)
+}
