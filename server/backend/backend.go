@@ -608,6 +608,16 @@ func printTransactionResult(logger *logrus.Logger, result *types.TransactionResu
 			logPrefix("ERR", result.TransactionID, aurora.RedFg),
 			result.Error.Error(),
 		)
+
+		if sigErr, ok := result.Error.(*types.TransactionSignatureError); ok {
+			logger.
+				WithField("payer", sigErr.Transaction().Payer).
+				WithField("proposer", sigErr.Transaction().ProposalKey.Address).
+				WithField("proposerKeyIndex", sigErr.Transaction().ProposalKey.KeyIndex).
+				WithField("authorizers", sigErr.Transaction().Authorizers).
+				WithField("gasLimit", sigErr.Transaction().GasLimit).
+				Debug("❗  Transaction data")
+		}
 	}
 }
 
