@@ -1126,12 +1126,12 @@ func (b *Blockchain) testGeneralSignatureError(err error, tx *flowgo.Transaction
 		return nil
 	}
 
-	_, ok = flowErr.Unwrap().(*fvmerrors.InvalidProposalSignatureError)
-	if !ok {
-		return nil
+	var propErr *fvmerrors.InvalidProposalSignatureError
+	if errors.As(flowErr, &propErr) {
+		return types.NewSignatureError(flowErr, tx)
 	}
 
-	return types.NewSignatureError(flowErr, tx)
+	return nil
 }
 
 // testHashingAlgoError tries to unwrap error to the root and test for invalid hashing algorithms
