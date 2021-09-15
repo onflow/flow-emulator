@@ -382,7 +382,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		assert.IsType(t, &types.TransactionSignatureError{}, result.Error)
+		assert.IsType(t, &types.SignatureError{}, result.Error)
 	})
 }
 
@@ -596,7 +596,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 
 		unittest.AssertFVMErrorType(t,
 			&fvmerrors.InvalidProposalSignatureError{},
-			result.Error.(*types.TransactionSignatureError).Unwrap(),
+			result.Error.(*types.SignatureError).Unwrap(),
 		)
 	})
 
@@ -631,7 +631,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 
 		unittest.AssertFVMErrorType(t,
 			&fvmerrors.InvalidProposalSignatureError{},
-			result.Error.(*types.TransactionSignatureError).Unwrap(),
+			result.Error.(*types.SignatureError).Unwrap(),
 		)
 	})
 

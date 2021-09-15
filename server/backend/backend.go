@@ -609,7 +609,7 @@ func printTransactionResult(logger *logrus.Logger, result *types.TransactionResu
 			result.Error.Error(),
 		)
 
-		if sigErr, ok := result.Error.(*types.TransactionSignatureError); ok {
+		if sigErr, ok := result.Error.(*types.SignatureError); ok {
 			logger.
 				WithField("payer", sigErr.Transaction().Payer).
 				WithField("proposer", sigErr.Transaction().ProposalKey.Address).

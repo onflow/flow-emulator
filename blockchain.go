@@ -1131,7 +1131,7 @@ func (b *Blockchain) testGeneralSignatureError(err error, tx *flowgo.Transaction
 		return nil
 	}
 
-	return types.NewTransactionSignatureError(flowErr, tx)
+	return types.NewSignatureError(flowErr, tx)
 }
 
 // testHashingAlgoError tries to unwrap error to the root and test for invalid hashing algorithms

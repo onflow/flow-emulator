@@ -674,7 +674,7 @@ func TestRemoveAccountKey(t *testing.T) {
 
 	unittest.AssertFVMErrorType(t,
 		&fvmerrors.InvalidProposalSignatureError{},
-		result.Error.(*types.TransactionSignatureError).Unwrap(),
+		result.Error.(*types.SignatureError).Unwrap(),
 	)
 
 	_, err = b.CommitBlock()

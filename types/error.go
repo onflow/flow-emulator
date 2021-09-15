@@ -39,27 +39,27 @@ func (f *FlowError) Unwrap() error {
 	return f.FlowError
 }
 
-func NewTransactionSignatureError(err *FlowError, tx *flow.TransactionBody) *TransactionSignatureError {
-	return &TransactionSignatureError{
+func NewSignatureError(err *FlowError, tx *flow.TransactionBody) *SignatureError {
+	return &SignatureError{
 		err:         err,
 		transaction: tx,
 	}
 }
 
-type TransactionSignatureError struct {
+type SignatureError struct {
 	err         *FlowError
 	transaction *flow.TransactionBody
 }
 
-func (t *TransactionSignatureError) Error() string {
+func (t *SignatureError) Error() string {
 	return t.err.Error()
 }
 
-func (t *TransactionSignatureError) Unwrap() error {
+func (t *SignatureError) Unwrap() error {
 	return t.err
 }
 
-func (t *TransactionSignatureError) Transaction() *flow.TransactionBody {
+func (t *SignatureError) Transaction() *flow.TransactionBody {
 	return t.transaction
 }
 
@@ -68,8 +68,8 @@ func NewSignatureHashingError(
 	address flow.Address,
 	usedAlgo hash.HashingAlgorithm,
 	requiredAlgo hash.HashingAlgorithm,
-) *TransactionHashingError {
-	return &TransactionHashingError{
+) *SignatureHashingError {
+	return &SignatureHashingError{
 		index,
 		address,
 		usedAlgo,
@@ -77,14 +77,14 @@ func NewSignatureHashingError(
 	}
 }
 
-type TransactionHashingError struct {
+type SignatureHashingError struct {
 	index        int
 	address      flow.Address
 	usedAlgo     hash.HashingAlgorithm
 	requiredAlgo hash.HashingAlgorithm
 }
 
-func (t *TransactionHashingError) Error() string {
+func (t *SignatureHashingError) Error() string {
 	return fmt.Sprintf(
 		"invalid hashing algorithm signature: public key %d on account %s does not have a valid signature: key requires %s hashing algorithm, but %s was used",
 		t.index,
