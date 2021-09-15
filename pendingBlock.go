@@ -43,7 +43,7 @@ type pendingBlock struct {
 func newPendingBlock(prevBlock *flowgo.Block, ledgerView *delta.View) *pendingBlock {
 
 	return &pendingBlock{
-		height:             prevBlock.Header.Height + 1,
+		height: prevBlock.Header.Height + 1,
 		// the view increments by between 1 and MaxViewIncrease to match
 		// behaviour on a real network, where views are not consecutive
 		view:               prevBlock.Header.View + uint64(rand.Intn(MaxViewIncrease)+1),
@@ -82,7 +82,7 @@ func (b *pendingBlock) Block() *flowgo.Block {
 	return &flowgo.Block{
 		Header: &flowgo.Header{
 			Height:    b.height,
-			View: b.view,
+			View:      b.view,
 			ParentID:  b.parentID,
 			Timestamp: b.timestamp,
 		},
