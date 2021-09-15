@@ -300,12 +300,12 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		assert.Equal(t, result.Error, types.NewSignatureHashingError(
+		assert.Equal(t, types.NewSignatureHashingError(
 			b.ServiceKey().Index,
 			convert.SDKAddressToFlow(b.ServiceKey().Address),
 			crypto.SHA3_256,
 			crypto.SHA2_256,
-		))
+		), result.Error)
 	})
 
 	t.Run("Invalid hash algorithm authorizer", func(t *testing.T) {
@@ -348,12 +348,12 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		assert.Equal(t, result.Error, types.NewSignatureHashingError(
+		assert.Equal(t, types.NewSignatureHashingError(
 			0,
 			convert.SDKAddressToFlow(accountAddressB),
 			crypto.SHA3_256,
 			crypto.SHA2_256,
-		))
+		), result.Error)
 	})
 
 	t.Run("Invalid signature for provided data", func(t *testing.T) {
@@ -382,8 +382,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		assert.EqualError(t, result.Error, "")
-		unittest.AssertFVMErrorType(t, &fvmerrors.InvalidProposalSignatureError{}, result.Error)
+		assert.IsType(t, &types.TransactionSignatureError{}, result.Error)
 	})
 }
 
@@ -595,7 +594,10 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, &fvmerrors.InvalidProposalSignatureError{}, result.Error)
+		unittest.AssertFVMErrorType(t,
+			&fvmerrors.InvalidProposalSignatureError{},
+			result.Error.(*types.TransactionSignatureError).Unwrap(),
+		)
 	})
 
 	t.Run("Invalid key", func(t *testing.T) {
@@ -627,7 +629,10 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, &fvmerrors.InvalidProposalSignatureError{}, result.Error)
+		unittest.AssertFVMErrorType(t,
+			&fvmerrors.InvalidProposalSignatureError{},
+			result.Error.(*types.TransactionSignatureError).Unwrap(),
+		)
 	})
 
 	t.Run("Key weights", func(t *testing.T) {

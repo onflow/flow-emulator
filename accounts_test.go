@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/onflow/flow-emulator/types"
+
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
@@ -670,7 +672,10 @@ func TestRemoveAccountKey(t *testing.T) {
 	result, err = b.ExecuteNextTransaction()
 	assert.NoError(t, err)
 
-	unittest.AssertFVMErrorType(t, &fvmerrors.InvalidProposalSignatureError{}, result.Error)
+	unittest.AssertFVMErrorType(t,
+		&fvmerrors.InvalidProposalSignatureError{},
+		result.Error.(*types.TransactionSignatureError).Unwrap(),
+	)
 
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)

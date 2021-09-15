@@ -55,6 +55,10 @@ func (t *TransactionSignatureError) Error() string {
 	return t.err.Error()
 }
 
+func (t *TransactionSignatureError) Unwrap() error {
+	return t.err
+}
+
 func (t *TransactionSignatureError) Transaction() *flow.TransactionBody {
 	return t.transaction
 }
