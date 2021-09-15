@@ -616,7 +616,7 @@ func printTransactionResult(logger *logrus.Logger, result *types.TransactionResu
 				WithField("proposerKeyIndex", sigErr.Transaction().ProposalKey.KeyIndex).
 				WithField("authorizers", sigErr.Transaction().Authorizers).
 				WithField("gasLimit", sigErr.Transaction().GasLimit).
-				Debug("❗  Transaction data")
+				Debug("❗  Transaction Signature Error")
 		}
 	}
 }
