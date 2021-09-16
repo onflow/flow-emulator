@@ -675,12 +675,19 @@ func (b *Blockchain) GetAccount(address sdk.Address) (*sdk.Account, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	latestBlock, err := b.GetLatestBlock()
+	flowAddress := sdkconvert.SDKAddressToFlow(address)
+
+	account, err := b.getAccount(flowAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	return b.GetAccountAtBlock(address, latestBlock.Header.Height)
+	sdkAccount, err := sdkconvert.FlowAccountToSDK(*account)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sdkAccount, nil
 }
 
 // getAccount returns the account for the given address.
