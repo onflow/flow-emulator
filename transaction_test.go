@@ -956,9 +956,10 @@ func TestSubmitTransaction_ProposerSequence(t *testing.T) {
 
 		tx1Result, err := b.GetTransactionResult(tx.ID())
 		assert.NoError(t, err)
-		assert.Equal(t, flow.TransactionStatusSealed, tx1Result.Status)
-
 		assert.Equal(t, prevSeq+1, b.ServiceKey().SequenceNumber)
+		assert.Equal(t, flow.TransactionStatusSealed, tx1Result.Status)
+		assert.Len(t, tx1Result.Events, 0)
+		assert.IsType(t, &emulator.ExecutionError{}, tx1Result.Error)
 	})
 }
 
