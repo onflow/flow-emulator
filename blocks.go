@@ -21,15 +21,11 @@ package emulator
 import (
 	"errors"
 
-	"github.com/onflow/flow-go/access"
 	"github.com/onflow/flow-go/fvm"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/onflow/flow-emulator/storage"
 )
-
-var _ fvm.Blocks = &blocks{}
-var _ access.Blocks = &blocks{}
 
 type blocks struct {
 	blockchain *Blockchain
