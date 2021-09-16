@@ -19,10 +19,9 @@
 package emulator_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
-
-	"github.com/onflow/flow-emulator/types"
 
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
@@ -672,10 +671,8 @@ func TestRemoveAccountKey(t *testing.T) {
 	result, err = b.ExecuteNextTransaction()
 	assert.NoError(t, err)
 
-	unittest.AssertFVMErrorType(t,
-		&fvmerrors.InvalidProposalSignatureError{},
-		result.Error.(*types.SignatureError).Unwrap(),
-	)
+	var sigErr *fvmerrors.InvalidProposalSignatureError
+	assert.True(t, errors.As(result.Error, &sigErr))
 
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)

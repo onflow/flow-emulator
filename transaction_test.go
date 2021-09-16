@@ -1,6 +1,7 @@
 package emulator_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -594,10 +595,8 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t,
-			&fvmerrors.InvalidProposalSignatureError{},
-			result.Error.(*types.SignatureError).Unwrap(),
-		)
+		var sigErr *fvmerrors.InvalidProposalSignatureError
+		assert.True(t, errors.As(result.Error, &sigErr))
 	})
 
 	t.Run("Invalid key", func(t *testing.T) {
@@ -629,10 +628,8 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t,
-			&fvmerrors.InvalidProposalSignatureError{},
-			result.Error.(*types.SignatureError).Unwrap(),
-		)
+		var sigErr *fvmerrors.InvalidProposalSignatureError
+		assert.True(t, errors.As(result.Error, &sigErr))
 	})
 
 	t.Run("Key weights", func(t *testing.T) {
