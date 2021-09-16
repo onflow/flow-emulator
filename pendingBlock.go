@@ -43,7 +43,7 @@ type pendingBlock struct {
 func newPendingBlock(prevBlock *flowgo.Block, ledgerView *delta.View) *pendingBlock {
 
 	return &pendingBlock{
-		height:             prevBlock.Header.Height + 1,
+		height: prevBlock.Header.Height + 1,
 		// the view increments by between 1 and MaxViewIncrease to match
 		// behaviour on a real network, where views are not consecutive
 		view:               prevBlock.Header.View + uint64(rand.Intn(MaxViewIncrease)+1),
@@ -82,7 +82,7 @@ func (b *pendingBlock) Block() *flowgo.Block {
 	return &flowgo.Block{
 		Header: &flowgo.Header{
 			Height:    b.height,
-			View: b.view,
+			View:      b.view,
 			ParentID:  b.parentID,
 			Timestamp: b.timestamp,
 		},
@@ -165,13 +165,12 @@ func (b *pendingBlock) ExecuteNextTransaction(
 		return nil, err
 	}
 
-	if tp.Err == nil {
-		b.events = append(b.events, tp.Events...)
-		err := b.ledgerView.MergeView(childView)
-		if err != nil {
-			// fail fast if fatal error occurs
-			return nil, err
-		}
+	b.events = append(b.events, tp.Events...)
+
+	err = b.ledgerView.MergeView(childView)
+	if err != nil {
+		// fail fast if fatal error occurs
+		return nil, err
 	}
 
 	b.transactionResults[tx.ID()] = IndexedTransactionResult{
