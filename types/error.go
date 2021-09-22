@@ -19,12 +19,7 @@
 package types
 
 import (
-	"fmt"
-
-	"github.com/onflow/flow-go/crypto/hash"
-
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
-	"github.com/onflow/flow-go/model/flow"
 )
 
 type FlowError struct {
@@ -37,59 +32,4 @@ func (f *FlowError) Error() string {
 
 func (f *FlowError) Unwrap() error {
 	return f.FlowError
-}
-
-func NewSignatureError(err *FlowError, tx *flow.TransactionBody) *SignatureError {
-	return &SignatureError{
-		err:         err,
-		transaction: tx,
-	}
-}
-
-type SignatureError struct {
-	err         *FlowError
-	transaction *flow.TransactionBody
-}
-
-func (t *SignatureError) Error() string {
-	return t.err.Error()
-}
-
-func (t *SignatureError) Unwrap() error {
-	return t.err
-}
-
-func (t *SignatureError) Transaction() *flow.TransactionBody {
-	return t.transaction
-}
-
-func NewSignatureHashingError(
-	index int,
-	address flow.Address,
-	usedAlgo hash.HashingAlgorithm,
-	requiredAlgo hash.HashingAlgorithm,
-) *SignatureHashingError {
-	return &SignatureHashingError{
-		index,
-		address,
-		usedAlgo,
-		requiredAlgo,
-	}
-}
-
-type SignatureHashingError struct {
-	index        int
-	address      flow.Address
-	usedAlgo     hash.HashingAlgorithm
-	requiredAlgo hash.HashingAlgorithm
-}
-
-func (t *SignatureHashingError) Error() string {
-	return fmt.Sprintf(
-		"invalid hashing algorithm signature: public key %d on account %s does not have a valid signature: key requires %s hashing algorithm, but %s was used",
-		t.index,
-		t.address.Hex(),
-		t.requiredAlgo,
-		t.usedAlgo,
-	)
 }
