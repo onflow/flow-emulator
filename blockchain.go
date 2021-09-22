@@ -16,6 +16,8 @@ import (
 	"sync"
 	"time"
 
+	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
+
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
 	sdk "github.com/onflow/flow-go-sdk"
@@ -26,7 +28,6 @@ import (
 	"github.com/onflow/flow-go/crypto/hash"
 	"github.com/onflow/flow-go/engine/execution/state/delta"
 	"github.com/onflow/flow-go/fvm"
-	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/programs"
 	"github.com/onflow/flow-go/fvm/state"
@@ -868,15 +869,7 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 
 	// if transaction error exist try to further debug what was the problem
 	if tr.Error != nil {
-		hashErr := b.testHashingAlgoError(tr.Error, tp.Transaction)
-		if hashErr != nil {
-			tr.Error = hashErr
-		}
-
-		sigErr := b.testGeneralSignatureError(tr.Error, tp.Transaction)
-		if sigErr != nil {
-			tr.Error = sigErr
-		}
+		tr.Debug = b.debugSignatureError(tr.Error, tp.Transaction)
 	}
 
 	return tr, nil
@@ -1119,69 +1112,54 @@ func convertToSealedResults(
 	return output, nil
 }
 
-// testGeneralSignatureError checks if there was signature error and add context for debugging
-func (b *Blockchain) testGeneralSignatureError(err error, tx *flowgo.TransactionBody) error {
-	flowErr, ok := err.(*types.FlowError)
-	if !ok {
-		return nil
-	}
-
-	var propErr *fvmerrors.InvalidProposalSignatureError
-	if errors.As(flowErr, &propErr) {
-		return types.NewSignatureError(flowErr, tx)
-	}
-
-	return nil
-}
-
-// testHashingAlgoError tries to unwrap error to the root and test for invalid hashing algorithms
-func (b *Blockchain) testHashingAlgoError(err error, tx *flowgo.TransactionBody) error {
-	sigErr, ok := errors.Unwrap(err).(*fvmerrors.InvalidProposalSignatureError)
-	if !ok {
+// debugSignatureError tries to unwrap error to the root and test for invalid hashing algorithms
+func (b *Blockchain) debugSignatureError(err error, tx *flowgo.TransactionBody) *types.TransactionResultDebug {
+	var sigErr *fvmerrors.InvalidProposalSignatureError
+	if !errors.As(err, &sigErr) {
 		return nil
 	}
 
 	switch errors.Unwrap(sigErr).(type) {
 	case *fvmerrors.InvalidEnvelopeSignatureError:
 		for _, sig := range tx.EnvelopeSignatures {
-			err := b.testAlternativeHashAlgo(sig, tx.EnvelopeMessage())
-			if err != nil {
-				return err
+			debug := b.testAlternativeHashAlgo(sig, tx.EnvelopeMessage())
+			if debug != nil {
+				return debug
 			}
 		}
 	case *fvmerrors.InvalidPayloadSignatureError:
 		for _, sig := range tx.PayloadSignatures {
-			err := b.testAlternativeHashAlgo(sig, tx.PayloadMessage())
-			if err != nil {
-				return err
+			debug := b.testAlternativeHashAlgo(sig, tx.PayloadMessage())
+			if debug != nil {
+				return debug
 			}
 		}
 	}
 
-	return nil
+	return types.NewTransactionInvalidSignature(tx)
 }
 
 // testAlternativeHashAlgo tries to verify the signature with alternative hashing algorithm and if
 // the signature is verified returns more verbose error
-func (b *Blockchain) testAlternativeHashAlgo(sig flowgo.TransactionSignature, msg []byte) error {
+func (b *Blockchain) testAlternativeHashAlgo(sig flowgo.TransactionSignature, msg []byte) *types.TransactionResultDebug {
 	acc, err := b.getAccount(sig.Address)
 	if err != nil {
 		return nil
 	}
 
 	key := acc.Keys[sig.KeyIndex]
-	var invalid hash.HashingAlgorithm
-	for _, h := range []hash.HashingAlgorithm{sdkcrypto.SHA2_256, sdkcrypto.SHA3_256} {
-		if key.HashAlgo != h {
-			invalid = h
+
+	for _, algo := range []hash.HashingAlgorithm{sdkcrypto.SHA2_256, sdkcrypto.SHA3_256} {
+		if key.HashAlgo == algo {
+			continue // skip valid hash algo
+		}
+
+		h, _ := fvmcrypto.NewPrefixedHashing(algo, flowgo.TransactionTagString)
+		valid, _ := key.PublicKey.Verify(sig.Signature, msg, h)
+		if valid {
+			return types.NewTransactionInvalidHashAlgo(key, acc.Address, algo)
 		}
 	}
 
-	h, _ := fvmcrypto.NewPrefixedHashing(invalid, flowgo.TransactionTagString)
-	valid, _ := key.PublicKey.Verify(sig.Signature, msg, h)
-	if !valid {
-		return nil
-	}
-
-	return types.NewSignatureHashingError(key.Index, acc.Address, key.HashAlgo, invalid)
+	return nil
 }
