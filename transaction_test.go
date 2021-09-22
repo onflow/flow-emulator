@@ -301,12 +301,10 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		assert.Equal(t, types.NewSignatureHashingError(
-			b.ServiceKey().Index,
-			convert.SDKAddressToFlow(b.ServiceKey().Address),
-			crypto.SHA3_256,
-			crypto.SHA2_256,
-		), result.Error)
+		pk, _ := convert.SDKAccountKeyToFlow(b.ServiceKey().AccountKey())
+		assert.Equal(t, types.NewTransactionInvalidHashAlgo(
+			pk, convert.SDKAddressToFlow(b.ServiceKey().Address), crypto.SHA2_256,
+		), result.Debug)
 	})
 
 	t.Run("Invalid hash algorithm authorizer", func(t *testing.T) {
@@ -349,12 +347,18 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		assert.Equal(t, types.NewSignatureHashingError(
-			0,
-			convert.SDKAddressToFlow(accountAddressB),
-			crypto.SHA3_256,
-			crypto.SHA2_256,
-		), result.Error)
+		key := flowgo.AccountPublicKey{
+			Index:     0,
+			PublicKey: nil,
+			SignAlgo:  0,
+			HashAlgo:  crypto.SHA3_256,
+			SeqNumber: 0,
+			Weight:    0,
+			Revoked:   false,
+		}
+		assert.Equal(t, types.NewTransactionInvalidHashAlgo(
+			key, convert.SDKAddressToFlow(accountAddressB), crypto.SHA2_256,
+		), result.Debug)
 	})
 
 	t.Run("Invalid signature for provided data", func(t *testing.T) {
@@ -383,7 +387,24 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		assert.IsType(t, &types.SignatureError{}, result.Error)
+		debug := types.NewTransactionInvalidSignature(&flowgo.TransactionBody{
+			ReferenceBlockID: flowgo.Identifier{},
+			Script:           nil,
+			Arguments:        nil,
+			GasLimit:         flowgo.DefaultMaxTransactionGasLimit,
+			ProposalKey: flowgo.ProposalKey{
+				Address:        convert.SDKAddressToFlow(b.ServiceKey().Address),
+				KeyIndex:       uint64(b.ServiceKey().Index),
+				SequenceNumber: b.ServiceKey().SequenceNumber,
+			},
+			Payer:              convert.SDKAddressToFlow(b.ServiceKey().Address),
+			Authorizers:        convert.SDKAddressesToFlow([]flow.Address{b.ServiceKey().Address}),
+			PayloadSignatures:  nil,
+			EnvelopeSignatures: nil,
+		})
+
+		assert.NotNil(t, result.Error)
+		assert.IsType(t, result.Debug, debug)
 	})
 }
 
