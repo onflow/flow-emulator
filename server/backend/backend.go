@@ -609,14 +609,13 @@ func printTransactionResult(logger *logrus.Logger, result *types.TransactionResu
 			result.Error.Error(),
 		)
 
-		if sigErr, ok := result.Error.(*types.SignatureError); ok {
-			logger.
-				WithField("payer", sigErr.Transaction().Payer).
-				WithField("proposer", sigErr.Transaction().ProposalKey.Address).
-				WithField("proposerKeyIndex", sigErr.Transaction().ProposalKey.KeyIndex).
-				WithField("authorizers", sigErr.Transaction().Authorizers).
-				WithField("gasLimit", sigErr.Transaction().GasLimit).
-				Debug("❗  Transaction Signature Error")
+		if result.Debug != nil {
+			for k, v := range result.Debug.Meta {
+				logger.WithField(k, v)
+			}
+			logger.Debug(
+				fmt.Sprintf("%s %s", "❗  Transaction Signature Error", result.Debug.Message),
+			)
 		}
 	}
 }
