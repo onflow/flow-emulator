@@ -128,6 +128,12 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	}
 	logger.WithFields(contracts).Infof("📜  Flow contracts")
 
+	extraContracts := logrus.Fields{
+		"NonFungibleToken": fvm.NonFungibleTokenAddress(chain).HexWithPrefix(),
+		"ExampleNFT":       fvm.ExampleNFTAddress(chain).HexWithPrefix(),
+	}
+	logger.WithFields(extraContracts).Infof("📜  Starter NFT contracts")
+
 	backend := configureBackend(logger, conf, blockchain)
 
 	livenessTicker := NewLivenessTicker(conf.LivenessCheckTolerance)
