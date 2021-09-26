@@ -33,10 +33,11 @@ type StorableTransactionResult struct {
 
 // A TransactionResult is the result of executing a transaction.
 type TransactionResult struct {
-	TransactionID flow.Identifier
-	Error         error
-	Logs          []string
-	Events        []flow.Event
+	TransactionID      flow.Identifier
+	ComputationGasUsed uint64
+	Error              error
+	Logs               []string
+	Events             []flow.Event
 }
 
 // Succeeded returns true if the transaction executed without errors.
