@@ -42,6 +42,7 @@ func TestResult(t *testing.T) {
 			Events:             []flow.Event{},
 		}
 		assert.True(t, trSucceed.Succeeded())
+		assert.False(t, trSucceed.Reverted())
 
 		trReverted := &types.TransactionResult{
 			TransactionID:      idGenerator.New(),
@@ -51,6 +52,7 @@ func TestResult(t *testing.T) {
 			Events:             []flow.Event{},
 		}
 		assert.True(t, trReverted.Reverted())
+		assert.False(t, trReverted.Succeeded())
 
 		srSucceed := &types.ScriptResult{
 			ScriptID: idGenerator.New(),
@@ -60,6 +62,7 @@ func TestResult(t *testing.T) {
 			Events:   []flow.Event{},
 		}
 		assert.True(t, srSucceed.Succeeded())
+		assert.False(t, srSucceed.Reverted())
 
 		srReverted := &types.ScriptResult{
 			ScriptID: idGenerator.New(),
@@ -69,5 +72,6 @@ func TestResult(t *testing.T) {
 			Events:   []flow.Event{},
 		}
 		assert.True(t, srReverted.Reverted())
+		assert.False(t, srReverted.Succeeded())
 	})
 }
