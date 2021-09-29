@@ -19,9 +19,9 @@
 package types
 
 import (
-	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-go-sdk"
+	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
 type StorableTransactionResult struct {
@@ -33,10 +33,11 @@ type StorableTransactionResult struct {
 
 // A TransactionResult is the result of executing a transaction.
 type TransactionResult struct {
-	TransactionID flow.Identifier
-	Error         error
-	Logs          []string
-	Events        []flow.Event
+	TransactionID   flow.Identifier
+	ComputationUsed uint64
+	Error           error
+	Logs            []string
+	Events          []flow.Event
 }
 
 // Succeeded returns true if the transaction executed without errors.

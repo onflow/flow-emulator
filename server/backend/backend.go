@@ -583,10 +583,12 @@ func printTransactionResult(logger *logrus.Logger, result *types.TransactionResu
 	if result.Succeeded() {
 		logger.
 			WithField("txID", result.TransactionID.String()).
+			WithField("computationUsed", result.ComputationUsed).
 			Info("⭐  Transaction executed")
 	} else {
 		logger.
 			WithField("txID", result.TransactionID.String()).
+			WithField("computationUsed", result.ComputationUsed).
 			Warn("❗  Transaction reverted")
 	}
 

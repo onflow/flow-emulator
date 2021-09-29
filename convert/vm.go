@@ -35,10 +35,11 @@ func VMTransactionResultToEmulator(tp *fvm.TransactionProcedure) (*types.Transac
 	}
 
 	return &types.TransactionResult{
-		TransactionID: txID,
-		Error:         VMErrorToEmulator(tp.Err),
-		Logs:          tp.Logs,
-		Events:        sdkEvents,
+		TransactionID:   txID,
+		ComputationUsed: tp.ComputationUsed,
+		Error:           VMErrorToEmulator(tp.Err),
+		Logs:            tp.Logs,
+		Events:          sdkEvents,
 	}, nil
 }
 
