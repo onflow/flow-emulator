@@ -59,7 +59,7 @@ func TestVm(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, flowEvents, tr.Events)
 
-		assert.Equal(t, tp.ComputationUsed, tr.ComputationGasUsed)
+		assert.Equal(t, tp.ComputationUsed, tr.ComputationUsed)
 		assert.Equal(t, tp.Err, tr.Error)
 	})
 }

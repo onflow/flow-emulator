@@ -35,21 +35,21 @@ func TestResult(t *testing.T) {
 		idGenerator := test.IdentifierGenerator()
 
 		trSucceed := &types.TransactionResult{
-			TransactionID:      idGenerator.New(),
-			ComputationGasUsed: 20,
-			Error:              nil,
-			Logs:               []string{},
-			Events:             []flow.Event{},
+			TransactionID:   idGenerator.New(),
+			ComputationUsed: 20,
+			Error:           nil,
+			Logs:            []string{},
+			Events:          []flow.Event{},
 		}
 		assert.True(t, trSucceed.Succeeded())
 		assert.False(t, trSucceed.Reverted())
 
 		trReverted := &types.TransactionResult{
-			TransactionID:      idGenerator.New(),
-			ComputationGasUsed: 20,
-			Error:              errors.New("transaction execution error"),
-			Logs:               []string{},
-			Events:             []flow.Event{},
+			TransactionID:   idGenerator.New(),
+			ComputationUsed: 20,
+			Error:           errors.New("transaction execution error"),
+			Logs:            []string{},
+			Events:          []flow.Event{},
 		}
 		assert.True(t, trReverted.Reverted())
 		assert.False(t, trReverted.Succeeded())
