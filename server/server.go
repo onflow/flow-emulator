@@ -79,6 +79,7 @@ type Config struct {
 	HTTPPort                  int
 	HTTPHeaders               []HTTPHeader
 	BlockTime                 time.Duration
+	ServicePrivateKey         crypto.PrivateKey
 	ServicePublicKey          crypto.PublicKey
 	ServiceKeySigAlgo         crypto.SignatureAlgorithm
 	ServiceKeyHashAlgo        crypto.HashAlgorithm
@@ -99,6 +100,8 @@ type Config struct {
 	DBGCDiscardRatio float64
 	// LivenessCheckTolerance is the time interval in which the server must respond to liveness probes.
 	LivenessCheckTolerance time.Duration
+	// BasicContractsOnly will only deploy the original Flow contracts when emulator starts
+	BasicContractsOnly bool
 }
 
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
@@ -119,14 +122,23 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 
 	chain := blockchain.GetChain()
 
-	contracts := logrus.Fields{
+	contracts := map[string]string{
 		"FlowServiceAccount": chain.ServiceAddress().HexWithPrefix(),
 		"FlowToken":          fvm.FlowTokenAddress(chain).HexWithPrefix(),
 		"FungibleToken":      fvm.FungibleTokenAddress(chain).HexWithPrefix(),
 		"FlowFees":           fvm.FlowFeesAddress(chain).HexWithPrefix(),
 		"FlowStorageFees":    chain.ServiceAddress().HexWithPrefix(),
 	}
-	logger.WithFields(contracts).Infof("📜  Flow contracts")
+	for contract, address := range contracts {
+		logger.WithFields(logrus.Fields{contract: address}).Infof("📜  Flow contract")
+	}
+
+	if !conf.BasicContractsOnly {
+		addresses := deployContracts(conf, blockchain)
+		for contract, address := range addresses {
+			logger.WithFields(logrus.Fields{contract: "0x" + address.Hex()}).Infof("📜  flow-nft")
+		}
+	}
 
 	backend := configureBackend(logger, conf, blockchain)
 
@@ -220,7 +232,7 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 	if conf.ServicePublicKey != nil {
 		options = append(
 			options,
-			emulator.WithServicePublicKey(conf.ServicePublicKey, conf.ServiceKeySigAlgo, conf.ServiceKeyHashAlgo),
+			emulator.WithServiceKey(conf.ServicePublicKey, conf.ServicePrivateKey, conf.ServiceKeySigAlgo, conf.ServiceKeyHashAlgo),
 		)
 	}
 

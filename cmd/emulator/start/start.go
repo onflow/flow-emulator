@@ -60,6 +60,7 @@ type Config struct {
 	TransactionFeesEnabled bool          `default:"false" flag:"transaction-fees" info:"enable transaction fees"`
 	TransactionMaxGasLimit int           `default:"9999" flag:"transaction-max-gas-limit" info:"maximum gas limit for transactions"`
 	ScriptGasLimit         int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
+	BasicContractsOnly     bool          `default:"false" flag:"basic-contracts-only" info:"deploy only basic Flow contracts when emulator starts"`
 }
 
 const EnvPrefix = "FLOW"
@@ -153,6 +154,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				HTTPHeaders:               nil,
 				BlockTime:                 conf.BlockTime,
 				ServicePublicKey:          servicePublicKey,
+				ServicePrivateKey:         servicePrivateKey,
 				ServiceKeySigAlgo:         serviceKeySigAlgo,
 				ServiceKeyHashAlgo:        serviceKeyHashAlgo,
 				Persist:                   conf.Persist,
@@ -165,6 +167,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				StorageMBPerFLOW:          storageMBPerFLOW,
 				MinimumStorageReservation: minimumStorageReservation,
 				TransactionFeesEnabled:    conf.TransactionFeesEnabled,
+				BasicContractsOnly:        conf.BasicContractsOnly,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)

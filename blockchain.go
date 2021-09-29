@@ -193,17 +193,19 @@ var defaultConfig = func() config {
 // Option is a function applying a change to the emulator config.
 type Option func(*config)
 
-// WithServicePublicKey sets the service key from a public key.
-func WithServicePublicKey(
+// WithServiceKey sets the service key from a public key.
+func WithServiceKey(
 	servicePublicKey sdkcrypto.PublicKey,
+	servicePrivateKey sdkcrypto.PrivateKey,
 	sigAlgo sdkcrypto.SignatureAlgorithm,
 	hashAlgo sdkcrypto.HashAlgorithm,
 ) Option {
 	return func(c *config) {
 		c.ServiceKey = ServiceKey{
-			PublicKey: servicePublicKey,
-			SigAlgo:   sigAlgo,
-			HashAlgo:  hashAlgo,
+			PublicKey:  servicePublicKey,
+			PrivateKey: servicePrivateKey,
+			SigAlgo:    sigAlgo,
+			HashAlgo:   hashAlgo,
 		}
 	}
 }
