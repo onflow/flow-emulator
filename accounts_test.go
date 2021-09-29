@@ -37,6 +37,67 @@ import (
 
 const testContract = "pub contract Test {}"
 
+func TestGetAccount(t *testing.T) {
+
+	t.Run("Get account at latest block height", func(t *testing.T) {
+		b, err := emulator.NewBlockchain(
+			emulator.WithSimpleAddresses(),
+			emulator.WithStorageLimitEnabled(false),
+		)
+		require.NoError(t, err)
+
+		acc, err := b.GetAccount(b.ServiceKey().Address)
+		assert.NoError(t, err)
+
+		assert.Equal(t, uint64(0), acc.Keys[0].SequenceNumber)
+	})
+
+	t.Run("Get account at specified block height", func(t *testing.T) {
+		b, err := emulator.NewBlockchain(
+			emulator.WithSimpleAddresses(),
+			emulator.WithStorageLimitEnabled(false),
+		)
+		require.NoError(t, err)
+
+		acc, err := b.GetAccount(b.ServiceKey().Address)
+		assert.NoError(t, err)
+
+		assert.Equal(t, uint64(0), acc.Keys[0].SequenceNumber)
+		contract := templates.Contract{
+			Name:   "Test",
+			Source: testContract,
+		}
+
+		tx := templates.AddAccountContract(b.ServiceKey().Address, contract)
+
+		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		assert.NoError(t, err)
+
+		err = b.AddTransaction(*tx)
+		require.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+		assertTransactionSucceeded(t, result)
+
+		bl, err := b.CommitBlock()
+		assert.NoError(t, err)
+
+		accNow, err := b.GetAccountAtBlock(b.ServiceKey().Address, bl.Header.Height)
+		assert.NoError(t, err)
+
+		accPrev, err := b.GetAccountAtBlock(b.ServiceKey().Address, bl.Header.Height-uint64(1))
+		assert.NoError(t, err)
+
+		assert.Equal(t, accNow.Keys[0].SequenceNumber, uint64(1))
+		assert.Equal(t, accPrev.Keys[0].SequenceNumber, uint64(0))
+	})
+}
+
 func TestCreateAccount(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 

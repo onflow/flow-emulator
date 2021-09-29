@@ -333,7 +333,22 @@ func (b *Backend) GetAccountAtBlockHeight(
 	address sdk.Address,
 	height uint64,
 ) (*sdk.Account, error) {
-	panic("implement me")
+	b.logger.
+		WithField("address", address).
+		WithField("height", height).
+		Debugf("👤  GetAccountAtBlockHeight called")
+
+	account, err := b.emulator.GetAccountAtBlock(address, height)
+	if err != nil {
+		switch err.(type) {
+		case emulator.NotFoundError:
+			return nil, status.Error(codes.NotFound, err.Error())
+		default:
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+
+	return account, nil
 }
 
 // ExecuteScriptAtLatestBlock executes a script at a the latest block
