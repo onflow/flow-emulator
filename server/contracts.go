@@ -15,19 +15,22 @@ import (
 
 var baseContractsPath = "./server/contracts/"
 
-// deployContracts is meant to be a place where you can load up existing contracts
-// NFTStorefront is an example of how you can do this
 func deployContracts(conf *Config, b *emulator.Blockchain) map[string]flow.Address {
-	addresses := make(map[string]flow.Address)
+	nftAddress, _ := deployContract("NonFungibleToken", contracts.NonFungibleToken(), b)
+	exampleNFT, _ := deployContract("ExampleNFT", contracts.ExampleNFT(nftAddress.Hex()), b)
 
-	nftAddress, _ := deployContract("NonFungibleToken", contracts.NonFungibleToken(), b, addresses)
-	deployContract("ExampleNFT", contracts.ExampleNFT(nftAddress.Hex()), b, addresses)
-
-	nftStorefront := loadContract("NFTStorefront.cdc", map[string]flow.Address{
+	nftStorefrontContract := loadContract("NFTStorefront.cdc", map[string]flow.Address{
 		"FungibleToken":    flow.HexToAddress(fvm.FlowTokenAddress(b.GetChain()).Hex()),
 		"NonFungibleToken": nftAddress,
 	})
-	deployContract("NFTStorefront", nftStorefront, b, addresses)
+
+	nftStorefront, _ := deployContract("NFTStorefront", nftStorefrontContract, b)
+
+	addresses := map[string]flow.Address{
+		"NonFungibleToken": nftAddress,
+		"ExampleNFT":       exampleNFT,
+		"NFTStorefront":    nftStorefront,
+	}
 
 	return addresses
 }
@@ -41,8 +44,8 @@ func loadContract(name string, replacements map[string]flow.Address) []byte {
 	return []byte(code)
 }
 
-func deployContract(name string, contract []byte, b *emulator.Blockchain, addresses map[string]flow.Address) (flow.Address, error) {
-	address, err := b.CreateAccount(
+func deployContract(name string, contract []byte, b *emulator.Blockchain) (flow.Address, error) {
+	return b.CreateAccount(
 		nil,
 		[]templates.Contract{
 			{
@@ -51,8 +54,6 @@ func deployContract(name string, contract []byte, b *emulator.Blockchain, addres
 			},
 		},
 	)
-	addresses[name] = address
-	return address, err
 }
 
 func readFile(path string) []byte {
