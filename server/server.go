@@ -19,6 +19,7 @@
 package server
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/onflow/cadence"
@@ -100,8 +101,8 @@ type Config struct {
 	DBGCDiscardRatio float64
 	// LivenessCheckTolerance is the time interval in which the server must respond to liveness probes.
 	LivenessCheckTolerance time.Duration
-	// BasicContractsOnly will only deploy the original Flow contracts when emulator starts
-	BasicContractsOnly bool
+	// Whether to deploy some extra Flow contracts when emulator starts
+	IncludeHelpfulContracts bool
 }
 
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
@@ -133,10 +134,10 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		logger.WithFields(logrus.Fields{contract: address}).Infof("📜  Flow contract")
 	}
 
-	if !conf.BasicContractsOnly {
+	if conf.IncludeHelpfulContracts {
 		addresses := deployContracts(conf, blockchain)
 		for contract, address := range addresses {
-			logger.WithFields(logrus.Fields{contract: "0x" + address.Hex()}).Infof("📜  flow-nft")
+			logger.WithFields(logrus.Fields{contract: fmt.Sprintf("0x%s", address.Hex())}).Infof("📜  flow-nft")
 		}
 	}
 
