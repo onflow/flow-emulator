@@ -12,7 +12,7 @@ require (
 	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
 	github.com/onflow/cadence v0.19.1
 	github.com/onflow/flow-go v0.22.9
-	github.com/onflow/flow-go-sdk v0.21.0
+	github.com/onflow/flow-go-sdk v0.23.0
 	github.com/onflow/flow-go/crypto v0.21.3
 	github.com/onflow/flow/protobuf/go/flow v0.2.2
 	github.com/pkg/errors v0.9.1
