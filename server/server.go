@@ -102,7 +102,7 @@ type Config struct {
 	// LivenessCheckTolerance is the time interval in which the server must respond to liveness probes.
 	LivenessCheckTolerance time.Duration
 	// Whether to deploy some extra Flow contracts when emulator starts
-	IncludeHelpfulContracts bool
+	WithContracts bool
 }
 
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
@@ -134,7 +134,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		logger.WithFields(logrus.Fields{contract: address}).Infof("📜  Flow contract")
 	}
 
-	if conf.IncludeHelpfulContracts {
+	if conf.WithContracts {
 		addresses := deployContracts(conf, blockchain)
 		for contract, address := range addresses {
 			logger.WithFields(logrus.Fields{contract: fmt.Sprintf("0x%s", address.Hex())}).Infof("📜  flow-nft")

@@ -38,29 +38,29 @@ import (
 )
 
 type Config struct {
-	Port                    int           `default:"3569" flag:"port,p" info:"port to run RPC server"`
-	HTTPPort                int           `default:"8080" flag:"http-port" info:"port to run HTTP server"`
-	Verbose                 bool          `default:"false" flag:"verbose,v" info:"enable verbose logging"`
-	LogFormat               string        `default:"text" flag:"log-format" info:"logging output format. Valid values (text, JSON)"`
-	BlockTime               time.Duration `flag:"block-time,b" info:"time between sealed blocks, e.g. '300ms', '-1.5h' or '2h45m'. Valid units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'"`
-	ServicePrivateKey       string        `flag:"service-priv-key" info:"service account private key"`
-	ServicePublicKey        string        `flag:"service-pub-key" info:"service account public key"`
-	ServiceKeySigAlgo       string        `default:"ECDSA_P256" flag:"service-sig-algo" info:"service account key signature algorithm"`
-	ServiceKeyHashAlgo      string        `default:"SHA3_256" flag:"service-hash-algo" info:"service account key hash algorithm"`
-	Init                    bool          `default:"false" flag:"init" info:"whether to initialize a new account profile"`
-	GRPCDebug               bool          `default:"false" flag:"grpc-debug" info:"enable gRPC server reflection for debugging with grpc_cli"`
-	Persist                 bool          `default:"false" flag:"persist" info:"enable persistent storage"`
-	DBPath                  string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
-	SimpleAddresses         bool          `default:"false" flag:"simple-addresses" info:"use sequential addresses starting with 0x01"`
-	TokenSupply             string        `default:"1000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
-	TransactionExpiry       int           `default:"10" flag:"transaction-expiry" info:"transaction expiry, measured in blocks"`
-	StorageLimitEnabled     bool          `default:"true" flag:"storage-limit" info:"enable account storage limit"`
-	StorageMBPerFLOW        string        `flag:"storage-per-flow" info:"the MB amount of storage capacity an account has per 1 FLOW token it has. e.g. '100.0'. The default is taken from the current version of flow-go"`
-	MinimumAccountBalance   string        `flag:"min-account-balance" info:"The minimum account balance of an account. This is also the cost of creating one account. e.g. '0.001'. The default is taken from the current version of flow-go"`
-	TransactionFeesEnabled  bool          `default:"false" flag:"transaction-fees" info:"enable transaction fees"`
-	TransactionMaxGasLimit  int           `default:"9999" flag:"transaction-max-gas-limit" info:"maximum gas limit for transactions"`
-	ScriptGasLimit          int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
-	IncludeHelpfulContracts bool          `default:"false" flag:"include-helpful-contracts" info:"deploy some helpful NFT contracts when emulator starts"`
+	Port                   int           `default:"3569" flag:"port,p" info:"port to run RPC server"`
+	HTTPPort               int           `default:"8080" flag:"http-port" info:"port to run HTTP server"`
+	Verbose                bool          `default:"false" flag:"verbose,v" info:"enable verbose logging"`
+	LogFormat              string        `default:"text" flag:"log-format" info:"logging output format. Valid values (text, JSON)"`
+	BlockTime              time.Duration `flag:"block-time,b" info:"time between sealed blocks, e.g. '300ms', '-1.5h' or '2h45m'. Valid units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'"`
+	ServicePrivateKey      string        `flag:"service-priv-key" info:"service account private key"`
+	ServicePublicKey       string        `flag:"service-pub-key" info:"service account public key"`
+	ServiceKeySigAlgo      string        `default:"ECDSA_P256" flag:"service-sig-algo" info:"service account key signature algorithm"`
+	ServiceKeyHashAlgo     string        `default:"SHA3_256" flag:"service-hash-algo" info:"service account key hash algorithm"`
+	Init                   bool          `default:"false" flag:"init" info:"whether to initialize a new account profile"`
+	GRPCDebug              bool          `default:"false" flag:"grpc-debug" info:"enable gRPC server reflection for debugging with grpc_cli"`
+	Persist                bool          `default:"false" flag:"persist" info:"enable persistent storage"`
+	DBPath                 string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
+	SimpleAddresses        bool          `default:"false" flag:"simple-addresses" info:"use sequential addresses starting with 0x01"`
+	TokenSupply            string        `default:"1000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
+	TransactionExpiry      int           `default:"10" flag:"transaction-expiry" info:"transaction expiry, measured in blocks"`
+	StorageLimitEnabled    bool          `default:"true" flag:"storage-limit" info:"enable account storage limit"`
+	StorageMBPerFLOW       string        `flag:"storage-per-flow" info:"the MB amount of storage capacity an account has per 1 FLOW token it has. e.g. '100.0'. The default is taken from the current version of flow-go"`
+	MinimumAccountBalance  string        `flag:"min-account-balance" info:"The minimum account balance of an account. This is also the cost of creating one account. e.g. '0.001'. The default is taken from the current version of flow-go"`
+	TransactionFeesEnabled bool          `default:"false" flag:"transaction-fees" info:"enable transaction fees"`
+	TransactionMaxGasLimit int           `default:"9999" flag:"transaction-max-gas-limit" info:"maximum gas limit for transactions"`
+	ScriptGasLimit         int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
+	WithContracts          bool          `default:"false" flag:"contracts" info:"deploy common contracts when emulator starts"`
 }
 
 const EnvPrefix = "FLOW"
@@ -167,7 +167,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				StorageMBPerFLOW:          storageMBPerFLOW,
 				MinimumStorageReservation: minimumStorageReservation,
 				TransactionFeesEnabled:    conf.TransactionFeesEnabled,
-				IncludeHelpfulContracts:   conf.IncludeHelpfulContracts,
+				WithContracts:             conf.WithContracts,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
