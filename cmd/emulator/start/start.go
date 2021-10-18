@@ -39,6 +39,7 @@ import (
 type Config struct {
 	Port                   int           `default:"3569" flag:"port,p" info:"port to run RPC server"`
 	HTTPPort               int           `default:"8080" flag:"http-port" info:"port to run HTTP server"`
+	WalletPort             int           `default:"3000" flag:"wallet-port" info:"port to run Dev Wallet server"`
 	Verbose                bool          `default:"false" flag:"verbose,v" info:"enable verbose logging"`
 	BlockTime              time.Duration `flag:"block-time,b" info:"time between sealed blocks, e.g. '300ms', '-1.5h' or '2h45m'. Valid units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'"`
 	ServicePrivateKey      string        `flag:"service-priv-key" info:"service account private key"`
@@ -143,13 +144,15 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 			}
 
 			serverConf := &server.Config{
-				GRPCPort:  conf.Port,
-				GRPCDebug: conf.GRPCDebug,
-				HTTPPort:  conf.HTTPPort,
+				GRPCPort:   conf.Port,
+				GRPCDebug:  conf.GRPCDebug,
+				HTTPPort:   conf.HTTPPort,
+				WalletPort: conf.WalletPort,
 				// TODO: allow headers to be parsed from environment
 				HTTPHeaders:               nil,
 				BlockTime:                 conf.BlockTime,
 				ServicePublicKey:          servicePublicKey,
+				ServicePrivateKey:         servicePrivateKey,
 				ServiceKeySigAlgo:         serviceKeySigAlgo,
 				ServiceKeyHashAlgo:        serviceKeyHashAlgo,
 				Persist:                   conf.Persist,
