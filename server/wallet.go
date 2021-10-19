@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
+	"path/filepath"
 	"strings"
 )
 
@@ -76,6 +77,7 @@ func NewWalletServer(
 
 func (m WalletServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	upath := r.URL.Path
+
 	if !strings.HasPrefix(upath, "/") {
 		upath = "/" + upath
 		r.URL.Path = upath
@@ -89,7 +91,8 @@ func (m WalletServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		//try with .html suffix
-		file, err = m.zipFS.Open(upath[1:] + ".html")
+		upath = upath + ".html"
+		file, err = m.zipFS.Open(upath[1:])
 		if err != nil {
 			w.WriteHeader(500)
 			return
@@ -97,22 +100,22 @@ func (m WalletServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//detect mime type
-	if strings.Contains(upath, ".") {
-		parts := strings.Split(upath, ".")
-		extension := parts[len(parts)-1]
-		mimeType := mime.TypeByExtension("." + extension)
-		if mimeType != "" {
-			w.Header().Add("Content-Type", mimeType)
-		}
+	extension := filepath.Ext(upath)
+	mimeType := mime.TypeByExtension("." + extension)
+	if mimeType != "" {
+		w.Header().Add("Content-Type", mimeType)
 	}
 
-	v, _ := file.Stat()
-	target := v.Size()
+	fileStat, _ := file.Stat()
+	target := fileStat.Size()
 	var buffer []byte = make([]byte, 32768)
 
 	for target > 0 {
 		count, _ := file.Read(buffer)
-		w.Write(buffer[:count])
+		_, err := w.Write(buffer[:count])
+		if err != nil {
+			return
+		}
 		target = target - int64(count)
 	}
 

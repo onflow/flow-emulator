@@ -82,6 +82,7 @@ type Config struct {
 	GRPCDebug                 bool
 	HTTPPort                  int
 	WalletPort                int
+	DevWalletEnabled          bool
 	HTTPHeaders               []HTTPHeader
 	BlockTime                 time.Duration
 	ServicePublicKey          crypto.PublicKey
@@ -151,7 +152,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		wallet:   nil,
 	}
 
-	if conf.ServicePrivateKey != nil {
+	if conf.ServicePrivateKey != nil && conf.DevWalletEnabled {
 
 		walletConfig := WalletConfig{
 			Address:    chain.ServiceAddress().HexWithPrefix(),
@@ -200,6 +201,11 @@ func (s *EmulatorServer) Start() {
 			WithField("port", s.config.WalletPort).
 			Infof("🌱  Starting Dev Wallet on port %d", s.config.WalletPort)
 		s.group.Add(s.wallet)
+	}
+
+	// only start blocks ticker if it exists
+	if s.blocks != nil {
+		s.group.Add(s.blocks)
 	}
 
 	// routines are shut down in insertion order, so database is added last

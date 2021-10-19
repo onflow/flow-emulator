@@ -22,6 +22,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/onflow/cadence"
@@ -40,7 +41,9 @@ type Config struct {
 	Port                   int           `default:"3569" flag:"port,p" info:"port to run RPC server"`
 	HTTPPort               int           `default:"8080" flag:"http-port" info:"port to run HTTP server"`
 	WalletPort             int           `default:"3000" flag:"wallet-port" info:"port to run Dev Wallet server"`
+	DevWalletEnabled       bool          `default:"false" flag:"dev-wallet" info:"enable local Dev Wallet server"`
 	Verbose                bool          `default:"false" flag:"verbose,v" info:"enable verbose logging"`
+	LogFormat              string        `default:"text" flag:"log-format" info:"logging output format. Valid values (text, JSON)"`
 	BlockTime              time.Duration `flag:"block-time,b" info:"time between sealed blocks, e.g. '300ms', '-1.5h' or '2h45m'. Valid units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'"`
 	ServicePrivateKey      string        `flag:"service-priv-key" info:"service account private key"`
 	ServicePublicKey       string        `flag:"service-pub-key" info:"service account public key"`
@@ -89,6 +92,8 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 
 			serviceKeySigAlgo = crypto.StringToSignatureAlgorithm(conf.ServiceKeySigAlgo)
 			serviceKeyHashAlgo = crypto.StringToHashAlgorithm(conf.ServiceKeyHashAlgo)
+
+			logger := initLogger()
 
 			if len(conf.ServicePublicKey) > 0 {
 				checkKeyAlgorithms(serviceKeySigAlgo, serviceKeyHashAlgo)
@@ -144,10 +149,11 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 			}
 
 			serverConf := &server.Config{
-				GRPCPort:   conf.Port,
-				GRPCDebug:  conf.GRPCDebug,
-				HTTPPort:   conf.HTTPPort,
-				WalletPort: conf.WalletPort,
+				GRPCPort:         conf.Port,
+				GRPCDebug:        conf.GRPCDebug,
+				HTTPPort:         conf.HTTPPort,
+				WalletPort:       conf.WalletPort,
+				DevWalletEnabled: conf.DevWalletEnabled,
 				// TODO: allow headers to be parsed from environment
 				HTTPHeaders:               nil,
 				BlockTime:                 conf.BlockTime,
@@ -177,14 +183,19 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 	return cmd
 }
 
-func init() {
-	initLogger()
-}
+func initLogger() *logrus.Logger {
+	var logger = logrus.New()
 
-func initLogger() {
-	logger = logrus.New()
-	logger.Formatter = new(logrus.TextFormatter)
+	switch strings.ToLower(conf.LogFormat) {
+	case "json":
+		logger.Formatter = new(logrus.JSONFormatter)
+	default:
+		logger.Formatter = new(logrus.TextFormatter)
+	}
+
 	logger.Out = os.Stdout
+
+	return logger
 }
 
 func initConfig(cmd *cobra.Command) {
