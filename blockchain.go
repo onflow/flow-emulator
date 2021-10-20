@@ -165,7 +165,7 @@ func (conf config) GetServiceKey() ServiceKey {
 	return serviceKey
 }
 
-const defaultGenesisTokenSupply = "1000000000.0"
+const defaultGenesisTokenSupply = "10000000000.0"
 const defaultScriptGasLimit = 100000
 const defaultTransactionMaxGasLimit = flowgo.DefaultMaxTransactionGasLimit
 
@@ -321,6 +321,8 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	blocks := newBlocks(b)
 
 	b.vm, b.vmCtx, err = configureFVM(conf, blocks)
+	b.vmCtx.ScriptProcessors = []fvm.ScriptProcessor{NewScriptInvocator(b.storage)}
+
 	if err != nil {
 		return nil, err
 	}
@@ -687,7 +689,7 @@ func (b *Blockchain) GetAccount(address sdk.Address) (*sdk.Account, error) {
 		return nil, err
 	}
 
-	return &sdkAccount, err
+	return &sdkAccount, nil
 }
 
 // getAccount returns the account for the given address.
@@ -697,20 +699,44 @@ func (b *Blockchain) getAccount(address flowgo.Address) (*flowgo.Account, error)
 		return nil, err
 	}
 
-	view := b.storage.LedgerViewByHeight(latestBlock.Header.Height)
+	return b.getAccountAtBlock(address, latestBlock.Header.Height)
+}
 
-	programs := programs.NewEmptyPrograms()
-	account, err := b.vm.GetAccount(b.vmCtx, address, view, programs)
+// GetAccountAtBlock returns the account for the given address at specified block height.
+func (b *Blockchain) GetAccountAtBlock(address sdk.Address, blockHeight uint64) (*sdk.Account, error) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	flowAddress := sdkconvert.SDKAddressToFlow(address)
+
+	account, err := b.getAccountAtBlock(flowAddress, blockHeight)
+	if err != nil {
+		return nil, err
+	}
+
+	sdkAccount, err := sdkconvert.FlowAccountToSDK(*account)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sdkAccount, nil
+}
+
+// GetAccountAtBlock returns the account for the given address at specified block height.
+func (b *Blockchain) getAccountAtBlock(address flowgo.Address, blockHeight uint64) (*flowgo.Account, error) {
+
+	account, err := b.vm.GetAccount(
+		b.vmCtx,
+		address,
+		b.storage.LedgerViewByHeight(blockHeight),
+		programs.NewEmptyPrograms(),
+	)
+
 	if fvmerrors.IsAccountNotFoundError(err) {
 		return nil, &AccountNotFoundError{Address: address}
 	}
 
 	return account, nil
-}
-
-// TODO: Implement
-func (b *Blockchain) GetAccountAtBlock(address sdk.Address, blockHeight uint64) (*sdk.Account, error) {
-	panic("not implemented")
 }
 
 // GetEventsByHeight returns the events in the block at the given height, optionally filtered by type.
