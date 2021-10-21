@@ -16,6 +16,7 @@ require (
 	github.com/onflow/flow-go/crypto v0.21.3
 	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20210915191154-12ee8c507a0e
 	github.com/onflow/flow/protobuf/go/flow v0.2.2
+	github.com/onflow/fusd/lib/go/contracts v0.0.0-20211021081023-ae9de8fb2c7e
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/common v0.18.0

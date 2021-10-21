@@ -135,9 +135,10 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	}
 
 	if conf.WithContracts {
-		addresses := deployContracts(conf, blockchain)
-		for contract, address := range addresses {
-			logger.WithFields(logrus.Fields{contract: fmt.Sprintf("0x%s", address.Hex())}).Infof("📜  flow-nft")
+		deployments := deployContracts(conf, blockchain)
+		for _, contract := range deployments {
+			logger.WithFields(logrus.Fields{
+				contract.name: fmt.Sprintf("0x%s", contract.address.Hex())}).Infof(contract.description)
 		}
 	}
 

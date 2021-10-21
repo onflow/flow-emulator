@@ -11,25 +11,36 @@ import (
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go/fvm"
 	"github.com/onflow/flow-nft/lib/go/contracts"
+	fusd "github.com/onflow/fusd/lib/go/contracts"
 )
 
 var baseContractsPath = "./server/contracts/"
 
-func deployContracts(conf *Config, b *emulator.Blockchain) map[string]flow.Address {
+type DeployDescription struct {
+	name        string
+	address     flow.Address
+	description string
+}
+
+func deployContracts(conf *Config, b *emulator.Blockchain) []DeployDescription {
+	ftAddress := flow.HexToAddress(fvm.FungibleTokenAddress(b.GetChain()).Hex())
+
+	fusdAddress, _ := deployContract("FUSD", fusd.FUSD(ftAddress.String()), b)
 	nftAddress, _ := deployContract("NonFungibleToken", contracts.NonFungibleToken(), b)
 	exampleNFT, _ := deployContract("ExampleNFT", contracts.ExampleNFT(nftAddress.Hex()), b)
 
 	nftStorefrontContract := loadContract("NFTStorefront.cdc", map[string]flow.Address{
-		"FungibleToken":    flow.HexToAddress(fvm.FlowTokenAddress(b.GetChain()).Hex()),
+		"FungibleToken":    ftAddress,
 		"NonFungibleToken": nftAddress,
 	})
 
 	nftStorefront, _ := deployContract("NFTStorefront", nftStorefrontContract, b)
 
-	addresses := map[string]flow.Address{
-		"NonFungibleToken": nftAddress,
-		"ExampleNFT":       exampleNFT,
-		"NFTStorefront":    nftStorefront,
+	addresses := []DeployDescription{
+		{"FUSD", fusdAddress, "💵  FUSD contract"},
+		{"NonFungibleToken", nftAddress, "✨   NFT contract"},
+		{"ExampleNFT", exampleNFT, "✨   NFT contract"},
+		{"NFTStorefront", nftStorefront, "✨   NFT contract"},
 	}
 
 	return addresses
