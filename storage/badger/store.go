@@ -28,13 +28,14 @@ import (
 	"time"
 
 	"github.com/dgraph-io/badger/v2"
-	"github.com/onflow/flow-go/engine/execution/state/delta"
-	flowgo "github.com/onflow/flow-go/model/flow"
-
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/google/uuid"
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/types"
+	"github.com/onflow/flow-go/engine/execution/state/delta"
+	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
 // Store is an embedded storage implementation using Badger as the underlying
@@ -42,12 +43,54 @@ import (
 type Store struct {
 	db              *badger.DB
 	ledgerChangeLog changelog
-	dbGit           *git.Repository
+	dbGitRepository *git.Repository
 	path            string
+	badgerOptions   badger.Options
 }
 
 var _ storage.Store = &Store{}
 
+func getTag(r *git.Repository, tag string) *object.Tag {
+	tags, err := r.TagObjects()
+	if err != nil {
+		return nil
+	}
+	var res *object.Tag = nil
+	tags.ForEach(func(t *object.Tag) error {
+		if t.Name == tag {
+			res = t
+		}
+		return nil
+	})
+	return res
+}
+
+func setTag(r *git.Repository, tag string, tagger *object.Signature) (bool, error) {
+	if getTag(r, tag) != nil {
+		return false, nil
+	}
+	h, err := r.Head()
+	if err != nil {
+		return false, err
+	}
+	_, err = r.CreateTag(tag, h.Hash(), &git.CreateTagOptions{
+		Tagger:  tagger,
+		Message: tag,
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+func defaultSignature(name, email string) *object.Signature {
+	return &object.Signature{
+		Name:  name,
+		Email: email,
+		When:  time.Now(),
+	}
+}
+
+//prevents git commits when emulator running
 func (s *Store) lockGit() {
 	lockPath := fmt.Sprintf("%s/.git/index.lock", s.path)
 	ioutil.WriteFile(lockPath, []byte("emulatorLock"), 0755)
@@ -58,52 +101,80 @@ func (s *Store) unlockGit() {
 	os.Remove(lockPath)
 }
 
-func (s *Store) tagExists(tag string) bool {
-	tagFoundErr := "tag was found"
-	tags, err := s.dbGit.TagObjects()
+func (s *Store) JumpToContext(context string) error {
+	s.unlockGit()
+	defer s.lockGit()
+	err := s.db.Close()
 	if err != nil {
-		return false
+		return err
 	}
-	res := false
-	err = tags.ForEach(func(t *object.Tag) error {
-		if t.Name == tag {
-			res = true
-			return fmt.Errorf(tagFoundErr)
-		}
-		return nil
-	})
-	if err != nil && err.Error() != tagFoundErr {
-		return false
-	}
-	return res
-}
 
-func (s *Store) SetTag(tag string, tagger *object.Signature) (bool, error) {
-	if s.tagExists(tag) {
-		return false, nil
-	}
-	h, err := s.dbGit.Head()
+	s.newCommit(fmt.Sprintf("Context switching to: %s", context))
+
+	w, _ := s.dbGitRepository.Worktree()
+
+	branch := fmt.Sprintf("refs/heads/%s", context)
+	b := plumbing.ReferenceName(branch)
+
+	// checkout branch ( first branch name is actualy context name )
+	err = w.Checkout(&git.CheckoutOptions{Create: false, Force: true, Branch: b})
+
 	if err != nil {
-		return false, err
+		// branch doesn't exist, it means we need to create it ( first branch is named after context )
+		err := w.Checkout(&git.CheckoutOptions{Create: true, Force: true, Branch: b})
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+
+		//after we create a tag pointing to start of this context
+		created, err := setTag(s.dbGitRepository, context, defaultSignature("Emulator", "emulator@onflow.org"))
+		fmt.Println(created)
+		fmt.Println(err)
+
+	} else {
+
+		//create new branch
+		uuidWithHyphen := uuid.New()
+		uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
+
+		err := w.Checkout(&git.CheckoutOptions{Create: true, Force: true, Branch: plumbing.NewBranchReferenceName(uuid)})
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+
+		//we have new branch but we don't need to create a tag, we just need to reset to tag
+		tag := getTag(s.dbGitRepository, context)
+		if tag != nil && !tag.Hash.IsZero() {
+			commit, _ := tag.Commit()
+			w.Reset(&git.ResetOptions{
+				Mode:   git.HardReset,
+				Commit: commit.Hash,
+			})
+		}
+
 	}
-	_, err = s.dbGit.CreateTag(tag, h.Hash(), &git.CreateTagOptions{
-		Tagger:  tagger,
-		Message: tag,
-	})
+
+	s.db, err = badger.Open(s.badgerOptions)
 	if err != nil {
-		return false, err
+		return fmt.Errorf("could not open database: %w", err)
 	}
-	return true, nil
+
+	return nil
+
 }
 
 func (s *Store) newCommit(message string) {
 	s.unlockGit()
+	defer s.lockGit()
 	s.Sync()
 
-	w, _ := s.dbGit.Worktree()
+	w, _ := s.dbGitRepository.Worktree()
 
 	w.Add("KEYREGISTRY")
 	w.Add("MANIFEST")
+	w.Add("LOCK")
 
 	err := filepath.Walk(s.path, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
@@ -126,38 +197,61 @@ func (s *Store) newCommit(message string) {
 		},
 	})
 
-	s.lockGit()
+}
+
+func (s *Store) openRepository(directory string) (*git.Repository, error) {
+	dbgit, err := git.PlainOpen(directory)
+	if err == nil {
+		return dbgit, err
+	}
+	if err == git.ErrRepositoryNotExists {
+		result, err := git.PlainInit(directory, false)
+		if err == nil {
+			return result, err
+		}
+		return nil, err
+	}
+	return nil, err
 }
 
 // New returns a new Badger Store.
 func New(opts ...Opt) (*Store, error) {
 	badgerOptions := getBadgerOptions(opts...)
-
-	dbgit, _ := git.PlainOpen(badgerOptions.Dir)
-	w, _ := dbgit.Worktree()
-	r, _ := dbgit.Head()
-	w.Reset(&git.ResetOptions{
-		Mode:   git.HardReset,
-		Commit: r.Hash(),
-	})
-
+	badgerOptions.BypassLockGuard = true
 	db, err := badger.Open(badgerOptions)
 	if err != nil {
 		return nil, fmt.Errorf("could not open database: %w", err)
 	}
+	db.Sync()
 
-	store := &Store{db, newChangelog(), dbgit, badgerOptions.Dir}
+	store := &Store{db, newChangelog(), nil, badgerOptions.Dir, badgerOptions}
 	if err = store.setup(); err != nil {
 		return nil, err
 	}
 
-	store.newCommit("Emulator Started New Session")
-	store.lockGit()
 	return store, nil
 }
 
-// setup sets up in-memory indexes and prepares the store for use.
+// setups git, setup sets up in-memory indexes and prepares the store for use.
 func (s *Store) setup() error {
+
+	dbgit, err := s.openRepository(s.path)
+	s.dbGitRepository = dbgit
+	if err != nil {
+		return err
+	}
+
+	w, _ := dbgit.Worktree()
+	r, _ := dbgit.Head()
+	if r != nil {
+		w.Reset(&git.ResetOptions{
+			Mode:   git.HardReset,
+			Commit: r.Hash(),
+		})
+	}
+	s.newCommit("Emulator Started New Session")
+	s.lockGit()
+
 	s.db.RLock()
 	defer s.db.RUnlock()
 

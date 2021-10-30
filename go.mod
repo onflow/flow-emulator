@@ -6,10 +6,14 @@ require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.0 // indirect
 	github.com/dgraph-io/badger/v2 v2.0.3
 	github.com/fxamacker/cbor/v2 v2.2.1-0.20210510192846-c3f3c69e7bc8
+	github.com/go-git/go-billy v4.2.0+incompatible // indirect
+	github.com/go-git/go-billy/v5 v5.3.1 // indirect
 	github.com/go-git/go-git v4.7.0+incompatible // indirect
 	github.com/go-git/go-git/v5 v5.4.2 // indirect
 	github.com/golang/mock v1.6.0
 	github.com/golangci/go-misc v0.0.0-20180628070357-927a3d87b613 // indirect
+	github.com/google/uuid v1.3.0 // indirect
+	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/juju/fslock v0.0.0-20160525022230-4d5c94c67b4b // indirect

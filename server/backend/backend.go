@@ -56,6 +56,11 @@ func New(logger *logrus.Logger, emulator Emulator) *Backend {
 	}
 }
 
+//howswap emulator for state management
+func (b *Backend) SetEmulator(emulator Emulator) {
+	b.emulator = emulator
+}
+
 func (b *Backend) Ping(ctx context.Context) error {
 	return nil
 }

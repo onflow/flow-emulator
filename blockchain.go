@@ -321,7 +321,6 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	blocks := newBlocks(b)
 
 	b.vm, b.vmCtx, err = configureFVM(conf, blocks)
-	b.vmCtx.ScriptProcessors = []fvm.ScriptProcessor{NewScriptInvocator(b.storage)}
 
 	if err != nil {
 		return nil, err
