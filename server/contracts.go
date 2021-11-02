@@ -24,23 +24,29 @@ type DeployDescription struct {
 
 func deployContracts(conf *Config, b *emulator.Blockchain) []DeployDescription {
 	ftAddress := flow.HexToAddress(fvm.FungibleTokenAddress(b.GetChain()).Hex())
+	serviceAcct := b.ServiceKey().Address
 
-	fusdAddress, _ := deployContract("FUSD", fusd.FUSD(ftAddress.String()), b)
-	nftAddress, _ := deployContract("NonFungibleToken", contracts.NonFungibleToken(), b)
-	exampleNFT, _ := deployContract("ExampleNFT", contracts.ExampleNFT(nftAddress.Hex()), b)
-
-	nftStorefrontContract := loadContract("NFTStorefront.cdc", map[string]flow.Address{
-		"FungibleToken":    ftAddress,
-		"NonFungibleToken": nftAddress,
-	})
-
-	nftStorefront, _ := deployContract("NFTStorefront", nftStorefrontContract, b)
+	contracts := map[string][]byte{
+		"FUSD":             fusd.FUSD(ftAddress.String()),
+		"NonFungibleToken": contracts.NonFungibleToken(),
+		"ExampleNFT":       contracts.ExampleNFT(serviceAcct.Hex()),
+		"NFTStoreFront": loadContract("NFTStorefront.cdc", map[string]flow.Address{
+			"FungibleToken":    serviceAcct,
+			"NonFungibleToken": serviceAcct,
+		}),
+	}
+	for name, contract := range contracts {
+		templates.AddAccountContract(serviceAcct, templates.Contract{
+			Name:   name,
+			Source: string(contract),
+		})
+	}
 
 	addresses := []DeployDescription{
-		{"FUSD", fusdAddress, "💵  FUSD contract"},
-		{"NonFungibleToken", nftAddress, "✨   NFT contract"},
-		{"ExampleNFT", exampleNFT, "✨   NFT contract"},
-		{"NFTStorefront", nftStorefront, "✨   NFT contract"},
+		{"FUSD", serviceAcct, "💵  FUSD contract"},
+		{"NonFungibleToken", serviceAcct, "✨   NFT contract"},
+		{"ExampleNFT", serviceAcct, "✨   NFT contract"},
+		{"NFTStorefront", serviceAcct, "✨   NFT contract"},
 	}
 
 	return addresses
@@ -53,18 +59,6 @@ func loadContract(name string, replacements map[string]flow.Address) []byte {
 		code = placeholder.ReplaceAllString(code, fmt.Sprintf("0x%s", realAddress.String()))
 	}
 	return []byte(code)
-}
-
-func deployContract(name string, contract []byte, b *emulator.Blockchain) (flow.Address, error) {
-	return b.CreateAccount(
-		nil,
-		[]templates.Contract{
-			{
-				Name:   name,
-				Source: string(contract),
-			},
-		},
-	)
 }
 
 func readFile(path string) []byte {
