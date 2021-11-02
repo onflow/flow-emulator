@@ -123,14 +123,14 @@ func (s *Store) JumpToContext(context string) error {
 		// branch doesn't exist, it means we need to create it ( first branch is named after context )
 		err := w.Checkout(&git.CheckoutOptions{Create: true, Force: true, Branch: b})
 		if err != nil {
-			fmt.Println(err)
 			return err
 		}
 
 		//after we create a tag pointing to start of this context
 		created, err := setTag(s.dbGitRepository, context, defaultSignature("Emulator", "emulator@onflow.org"))
-		fmt.Println(created)
-		fmt.Println(err)
+		if err != nil && !created {
+			return err
+		}
 
 	} else {
 
@@ -140,7 +140,6 @@ func (s *Store) JumpToContext(context string) error {
 
 		err := w.Checkout(&git.CheckoutOptions{Create: true, Force: true, Branch: plumbing.NewBranchReferenceName(uuid)})
 		if err != nil {
-			fmt.Println(err)
 			return err
 		}
 
