@@ -8,7 +8,9 @@ import (
 
 	emulator "github.com/onflow/flow-emulator"
 	"github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go/fvm"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-nft/lib/go/contracts"
 	fusd "github.com/onflow/fusd/lib/go/contracts"
 )
@@ -42,7 +44,7 @@ func deployContracts(conf *Config, b *emulator.Blockchain) ([]DeployDescription,
 	}
 
 	for _, c := range toDeploy {
-		err := b.DeployContract(c.name, c.source)
+		err := deployContract(b, c.name, c.source)
 		if err != nil {
 			return []DeployDescription{}, err
 		}
@@ -61,6 +63,49 @@ func deployContracts(conf *Config, b *emulator.Blockchain) ([]DeployDescription,
 	}
 
 	return addresses, nil
+}
+
+func deployContract(b *emulator.Blockchain, name string, contract []byte) error {
+
+	serviceKey := b.ServiceKey()
+	serviceAddress := serviceKey.Address
+
+	latestBlock, err := b.GetLatestBlock()
+	if err != nil {
+		return err
+	}
+
+	tx := templates.AddAccountContract(serviceAddress, templates.Contract{
+		Name:   name,
+		Source: string(contract),
+	})
+
+	tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetReferenceBlockID(flow.Identifier(latestBlock.ID())).
+		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
+		SetPayer(serviceAddress)
+
+	err = tx.SignEnvelope(serviceAddress, serviceKey.Index, serviceKey.Signer())
+	if err != nil {
+		return err
+	}
+
+	err = b.AddTransaction(*tx)
+	if err != nil {
+		return err
+	}
+
+	_, results, err := b.ExecuteAndCommitBlock()
+	if err != nil {
+		return err
+	}
+
+	lastResult := results[len(results)-1]
+	if !lastResult.Succeeded() {
+		return lastResult.Error
+	}
+
+	return nil
 }
 
 func loadContract(name string, replacements map[string]flow.Address) []byte {
