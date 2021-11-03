@@ -132,7 +132,6 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 
 	livenessTicker := NewLivenessTicker(conf.LivenessCheckTolerance)
 	grpcServer := NewGRPCServer(logger, backend, conf.GRPCPort, conf.GRPCDebug)
-	httpServer := NewHTTPServer(grpcServer, livenessTicker, conf.HTTPPort, conf.HTTPHeaders)
 
 	server := &EmulatorServer{
 		logger:   logger,
@@ -141,8 +140,11 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		storage:  storage,
 		liveness: livenessTicker,
 		grpc:     grpcServer,
-		http:     httpServer,
+		http:     nil,
 	}
+
+	httpServer := NewHTTPServer(server, backend, &storage, grpcServer, livenessTicker, conf.HTTPPort, conf.HTTPHeaders)
+	server.http = httpServer
 
 	// only create blocks ticker if block time > 0
 	if conf.BlockTime > 0 {

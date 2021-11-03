@@ -21,13 +21,21 @@ package badger
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/dgraph-io/badger/v2"
-	"github.com/onflow/flow-go/engine/execution/state/delta"
-	flowgo "github.com/onflow/flow-go/model/flow"
-
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/google/uuid"
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/types"
+	"github.com/onflow/flow-go/engine/execution/state/delta"
+	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
 // Store is an embedded storage implementation using Badger as the underlying
@@ -35,20 +43,187 @@ import (
 type Store struct {
 	db              *badger.DB
 	ledgerChangeLog changelog
+	dbGitRepository *git.Repository
+	path            string
+	badgerOptions   badger.Options
 }
 
 var _ storage.Store = &Store{}
 
+func getTag(r *git.Repository, tag string) *object.Tag {
+	tags, err := r.TagObjects()
+	if err != nil {
+		return nil
+	}
+	var res *object.Tag = nil
+	tags.ForEach(func(t *object.Tag) error {
+		if t.Name == tag {
+			res = t
+		}
+		return nil
+	})
+	return res
+}
+
+func setTag(r *git.Repository, tag string, tagger *object.Signature) (bool, error) {
+	if getTag(r, tag) != nil {
+		return false, nil
+	}
+	h, err := r.Head()
+	if err != nil {
+		return false, err
+	}
+	_, err = r.CreateTag(tag, h.Hash(), &git.CreateTagOptions{
+		Tagger:  tagger,
+		Message: tag,
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+func defaultSignature(name, email string) *object.Signature {
+	return &object.Signature{
+		Name:  name,
+		Email: email,
+		When:  time.Now(),
+	}
+}
+
+//prevents git commits when emulator running
+func (s *Store) lockGit() {
+	lockPath := fmt.Sprintf("%s/.git/index.lock", s.path)
+	ioutil.WriteFile(lockPath, []byte("emulatorLock"), 0755)
+}
+
+func (s *Store) unlockGit() {
+	lockPath := fmt.Sprintf("%s/.git/index.lock", s.path)
+	os.Remove(lockPath)
+}
+
+func (s *Store) JumpToContext(context string) error {
+	s.unlockGit()
+	defer s.lockGit()
+	err := s.db.Close()
+	if err != nil {
+		return err
+	}
+
+	s.newCommit(fmt.Sprintf("Context switching to: %s", context))
+
+	w, _ := s.dbGitRepository.Worktree()
+
+	branch := fmt.Sprintf("refs/heads/%s", context)
+	b := plumbing.ReferenceName(branch)
+
+	// checkout branch ( first branch name is actualy context name )
+	err = w.Checkout(&git.CheckoutOptions{Create: false, Force: true, Branch: b})
+
+	if err != nil {
+		// branch doesn't exist, it means we need to create it ( first branch is named after context )
+		err := w.Checkout(&git.CheckoutOptions{Create: true, Force: true, Branch: b})
+		if err != nil {
+			return err
+		}
+
+		//after we create a tag pointing to start of this context
+		created, err := setTag(s.dbGitRepository, context, defaultSignature("Emulator", "emulator@onflow.org"))
+		if err != nil && !created {
+			return err
+		}
+
+	} else {
+
+		//create new branch
+		uuidWithHyphen := uuid.New()
+		uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
+
+		err := w.Checkout(&git.CheckoutOptions{Create: true, Force: true, Branch: plumbing.NewBranchReferenceName(uuid)})
+		if err != nil {
+			return err
+		}
+
+		//we have new branch but we don't need to create a tag, we just need to reset to tag
+		tag := getTag(s.dbGitRepository, context)
+		if tag != nil && !tag.Hash.IsZero() {
+			commit, _ := tag.Commit()
+			w.Reset(&git.ResetOptions{
+				Mode:   git.HardReset,
+				Commit: commit.Hash,
+			})
+		}
+
+	}
+
+	s.db, err = badger.Open(s.badgerOptions)
+	if err != nil {
+		return fmt.Errorf("could not open database: %w", err)
+	}
+
+	return nil
+
+}
+
+func (s *Store) newCommit(message string) {
+	s.unlockGit()
+	defer s.lockGit()
+	s.Sync()
+
+	w, _ := s.dbGitRepository.Worktree()
+
+	w.Add("KEYREGISTRY")
+	w.Add("MANIFEST")
+	w.Add("LOCK")
+
+	err := filepath.Walk(s.path, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		if filepath.Ext(path) == ".vlog" || filepath.Ext(path) == ".sst" {
+			w.Add(path[strings.LastIndex(path, "/")+1:])
+		}
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	w.Commit(message, &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "Flow Emulator",
+			Email: "emulator@onflow.org",
+			When:  time.Now(),
+		},
+	})
+
+}
+
+func (s *Store) openRepository(directory string) (*git.Repository, error) {
+	dbgit, err := git.PlainOpen(directory)
+	if err == nil {
+		return dbgit, err
+	}
+	if err == git.ErrRepositoryNotExists {
+		result, err := git.PlainInit(directory, false)
+		if err == nil {
+			return result, err
+		}
+		return nil, err
+	}
+	return nil, err
+}
+
 // New returns a new Badger Store.
 func New(opts ...Opt) (*Store, error) {
 	badgerOptions := getBadgerOptions(opts...)
-
+	badgerOptions.BypassLockGuard = true
 	db, err := badger.Open(badgerOptions)
 	if err != nil {
 		return nil, fmt.Errorf("could not open database: %w", err)
 	}
+	db.Sync()
 
-	store := &Store{db, newChangelog()}
+	store := &Store{db, newChangelog(), nil, badgerOptions.Dir, badgerOptions}
 	if err = store.setup(); err != nil {
 		return nil, err
 	}
@@ -56,8 +231,26 @@ func New(opts ...Opt) (*Store, error) {
 	return store, nil
 }
 
-// setup sets up in-memory indexes and prepares the store for use.
+// setups git, setup sets up in-memory indexes and prepares the store for use.
 func (s *Store) setup() error {
+
+	dbgit, err := s.openRepository(s.path)
+	s.dbGitRepository = dbgit
+	if err != nil {
+		return err
+	}
+
+	w, _ := dbgit.Worktree()
+	r, _ := dbgit.Head()
+	if r != nil {
+		w.Reset(&git.ResetOptions{
+			Mode:   git.HardReset,
+			Commit: r.Hash(),
+		})
+	}
+	s.newCommit("Emulator Started New Session")
+	s.lockGit()
+
 	s.db.RLock()
 	defer s.db.RUnlock()
 
@@ -207,6 +400,8 @@ func (s *Store) CommitBlock(
 		)
 	}
 
+	message := fmt.Sprintf("Committed Block: %s\n", block.ID().String())
+
 	err := s.db.Update(func(txn *badger.Txn) error {
 		err := store(&block)(txn)
 		if err != nil {
@@ -225,13 +420,37 @@ func (s *Store) CommitBlock(
 			if err != nil {
 				return err
 			}
-		}
 
-		for txID, result := range transactionResults {
-			err := insertTransactionResult(txID, *result)(txn)
+			message = fmt.Sprintf("%sTransaction    : %s\n\n", message, txID.String())
+
+			message = fmt.Sprintf("%sArguments (%d): \n\n", message, len(tx.Arguments))
+			for argID, arg := range tx.Arguments {
+				message = fmt.Sprintf("%s\t- Argument %d: %s\n", message, argID, string(arg))
+			}
+
+			message = fmt.Sprintf("%sCode:\n%s", message, tx.Script)
+
+			result := transactionResults[txID]
+			insertTransactionResult(txID, *result)(txn)
 			if err != nil {
 				return err
 			}
+
+			message = fmt.Sprintf("%sResult:\n\n", message)
+
+			message = fmt.Sprintf("%s\t- Error Message : [%d] %s\n\n", message, result.ErrorCode, result.ErrorMessage)
+			message = fmt.Sprintf("%s\t- Logs (%d): \n\n", message, len(result.Logs))
+
+			for _, log := range result.Logs {
+				message = fmt.Sprintf("%s\t\t+ %s\n", message, log)
+			}
+
+			message = fmt.Sprintf("%s\t- Events (%d): \n\n", message, len(result.Events))
+
+			for _, event := range result.Events {
+				message = fmt.Sprintf("%s\t\t+ %d - %s - %s \n", message, event.EventIndex, event.Type, "")
+			}
+
 		}
 
 		err = s.insertLedgerDelta(block.Header.Height, delta)(txn)
@@ -249,6 +468,7 @@ func (s *Store) CommitBlock(
 		return nil
 	})
 
+	s.newCommit(message)
 	return err
 }
 
@@ -480,7 +700,10 @@ func insertEvents(blockHeight uint64, events []flowgo.Event) func(txn *badger.Tx
 // Close closes the underlying Badger database. It is necessary to close
 // a Store before exiting to ensure all writes are persisted to disk.
 func (s *Store) Close() error {
-	return s.db.Close()
+	err := s.db.Close()
+	s.newCommit("Emulator Ended Session")
+	s.unlockGit()
+	return err
 }
 
 // Sync syncs database content to disk.
