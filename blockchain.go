@@ -1050,6 +1050,58 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blo
 	}, nil
 }
 
+// DeployContract deploys a contract to the service account
+func (b *Blockchain) DeployContract(name string, contract []byte) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	serviceKey := b.ServiceKey()
+	serviceAddress := serviceKey.Address
+
+	latestBlock, err := b.GetLatestBlock()
+	if err != nil {
+		return err
+	}
+
+	tx := templates.AddAccountContract(serviceAddress, templates.Contract{
+		Name:   name,
+		Source: string(contract),
+	})
+
+	tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetReferenceBlockID(sdk.Identifier(latestBlock.ID())).
+		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
+		SetPayer(serviceAddress)
+
+	err = tx.SignEnvelope(serviceAddress, serviceKey.Index, serviceKey.Signer())
+	if err != nil {
+		return err
+	}
+
+	err = b.addTransaction(*tx)
+	if err != nil {
+		return err
+	}
+
+	_, results, err := b.executeAndCommitBlock()
+	if err != nil {
+		return err
+	}
+
+	lastResult := results[len(results)-1]
+
+	_, err = b.commitBlock()
+	if err != nil {
+		return err
+	}
+
+	if !lastResult.Succeeded() {
+		return lastResult.Error
+	}
+
+	return nil
+}
+
 // CreateAccount submits a transaction to create a new account with the given
 // account keys and contracts. The transaction is paid by the service account.
 func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, contracts []templates.Contract) (sdk.Address, error) {

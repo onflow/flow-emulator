@@ -8,7 +8,6 @@ import (
 
 	emulator "github.com/onflow/flow-emulator"
 	"github.com/onflow/flow-go-sdk"
-	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go/fvm"
 	"github.com/onflow/flow-nft/lib/go/contracts"
 	fusd "github.com/onflow/fusd/lib/go/contracts"
@@ -22,34 +21,46 @@ type DeployDescription struct {
 	description string
 }
 
-func deployContracts(conf *Config, b *emulator.Blockchain) []DeployDescription {
+func deployContracts(conf *Config, b *emulator.Blockchain) ([]DeployDescription, error) {
 	ftAddress := flow.HexToAddress(fvm.FungibleTokenAddress(b.GetChain()).Hex())
-	serviceAcct := b.ServiceKey().Address
+	serviceAddress := b.ServiceKey().Address
 
-	contracts := map[string][]byte{
-		"FUSD":             fusd.FUSD(ftAddress.String()),
-		"NonFungibleToken": contracts.NonFungibleToken(),
-		"ExampleNFT":       contracts.ExampleNFT(serviceAcct.Hex()),
-		"NFTStoreFront": loadContract("NFTStorefront.cdc", map[string]flow.Address{
-			"FungibleToken":    serviceAcct,
-			"NonFungibleToken": serviceAcct,
-		}),
-	}
-	for name, contract := range contracts {
-		templates.AddAccountContract(serviceAcct, templates.Contract{
-			Name:   name,
-			Source: string(contract),
-		})
-	}
+	nftContract := loadContract("NFTStorefront.cdc", map[string]flow.Address{
+		"FungibleToken":    ftAddress,
+		"NonFungibleToken": serviceAddress,
+	})
 
-	addresses := []DeployDescription{
-		{"FUSD", serviceAcct, "💵  FUSD contract"},
-		{"NonFungibleToken", serviceAcct, "✨   NFT contract"},
-		{"ExampleNFT", serviceAcct, "✨   NFT contract"},
-		{"NFTStorefront", serviceAcct, "✨   NFT contract"},
+	toDeploy := []struct {
+		name        string
+		description string
+		source      []byte
+	}{
+		{"FUSD", "💵  FUSD contract", fusd.FUSD(ftAddress.String())},
+		{"NonFungibleToken", "✨   NFT contract", contracts.NonFungibleToken()},
+		{"ExampleNFT", "✨   NFT contract", contracts.ExampleNFT(serviceAddress.Hex())},
+		{"NFTStorefront", "✨   NFT contract", nftContract},
 	}
 
-	return addresses
+	for _, c := range toDeploy {
+		err := b.DeployContract(c.name, c.source)
+		if err != nil {
+			return []DeployDescription{}, err
+		}
+	}
+
+	serviceAcct, err := b.GetAccount(serviceAddress)
+	if err != nil {
+		return []DeployDescription{}, err
+	}
+
+	addresses := []DeployDescription{}
+	for _, c := range toDeploy {
+		if _, err := serviceAcct.Contracts[c.name]; err {
+			addresses = append(addresses, DeployDescription{c.name, serviceAddress, c.description})
+		}
+	}
+
+	return addresses, nil
 }
 
 func loadContract(name string, replacements map[string]flow.Address) []byte {
