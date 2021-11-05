@@ -53,7 +53,7 @@ type EmulatorServer struct {
 const (
 	defaultGRPCPort               = 3569
 	defaultHTTPPort               = 8080
-	defaultWalletPort             = 3000
+	defaultDevWalletPort          = 8701
 	defaultLivenessCheckTolerance = time.Second
 	defaultDBGCInterval           = time.Minute * 5
 	defaultDBGCRatio              = 0.5
@@ -81,7 +81,7 @@ type Config struct {
 	GRPCPort                  int
 	GRPCDebug                 bool
 	HTTPPort                  int
-	WalletPort                int
+	DevWalletPort             int
 	DevWalletEnabled          bool
 	HTTPHeaders               []HTTPHeader
 	BlockTime                 time.Duration
@@ -164,7 +164,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 			Suffix:     "",
 		}
 
-		server.wallet = NewWalletServer(walletConfig, conf.WalletPort, conf.HTTPHeaders)
+		server.wallet = NewWalletServer(walletConfig, conf.DevWalletPort, conf.HTTPHeaders)
 	}
 
 	// only create blocks ticker if block time > 0
@@ -198,8 +198,8 @@ func (s *EmulatorServer) Start() {
 
 	if s.wallet != nil {
 		s.logger.
-			WithField("port", s.config.WalletPort).
-			Infof("🌱  Starting Dev Wallet on port %d", s.config.WalletPort)
+			WithField("port", s.config.DevWalletPort).
+			Infof("🌱  Starting Dev Wallet on port %d", s.config.DevWalletPort)
 		s.group.Add(s.wallet)
 	}
 
@@ -284,8 +284,8 @@ func sanitizeConfig(conf *Config) *Config {
 		conf.HTTPPort = defaultHTTPPort
 	}
 
-	if conf.WalletPort == 0 {
-		conf.WalletPort = defaultWalletPort
+	if conf.DevWalletPort == 0 {
+		conf.DevWalletPort = defaultDevWalletPort
 	}
 
 	if conf.HTTPHeaders == nil {
