@@ -138,6 +138,8 @@ func (s *Store) JumpToContext(context string) error {
 			return err
 		}
 
+		s.badgerOptions.Logger.Infof("Created a new state snapshot with the name '%s'", context)
+
 	} else {
 
 		//create new branch
@@ -158,6 +160,7 @@ func (s *Store) JumpToContext(context string) error {
 				Commit: commit.Hash,
 			})
 		}
+		s.badgerOptions.Logger.Infof("Switched to snapshot with name '%s'", context)
 
 	}
 
