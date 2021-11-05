@@ -79,6 +79,7 @@ func (m EmulatorApiServer) Snapshot(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 
 	default:
+		m.server.logger.Error("State management only available with badger storage")
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
