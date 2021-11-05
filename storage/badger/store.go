@@ -142,9 +142,9 @@ func (s *Store) JumpToContext(context string) error {
 
 		//create new branch
 		uuidWithHyphen := uuid.New()
-		uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
+		newBranchUuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
 
-		err := w.Checkout(&git.CheckoutOptions{Create: true, Force: true, Branch: plumbing.NewBranchReferenceName(uuid)})
+		err := w.Checkout(&git.CheckoutOptions{Create: true, Force: true, Branch: plumbing.NewBranchReferenceName(newBranchUuid)})
 		if err != nil {
 			return err
 		}
