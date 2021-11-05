@@ -56,7 +56,7 @@ func getTag(r *git.Repository, tag string) *object.Tag {
 		return nil
 	}
 	var res *object.Tag = nil
-	tags.ForEach(func(t *object.Tag) error {
+	_ = tags.ForEach(func(t *object.Tag) error {
 		if t.Name == tag {
 			res = t
 		}
@@ -91,14 +91,16 @@ func defaultSignature(name, email string) *object.Signature {
 }
 
 //prevents git commits when emulator running
+//ignoring error here but it is not critical to operation
 func (s *Store) lockGit() {
 	lockPath := fmt.Sprintf("%s/.git/index.lock", s.path)
-	ioutil.WriteFile(lockPath, []byte("emulatorLock"), 0755)
+	_ = ioutil.WriteFile(lockPath, []byte("emulatorLock"), 0755)
 }
 
+//ignoring error here but it is not critical to operation
 func (s *Store) unlockGit() {
 	lockPath := fmt.Sprintf("%s/.git/index.lock", s.path)
-	os.Remove(lockPath)
+	_ = os.Remove(lockPath)
 }
 
 func (s *Store) JumpToContext(context string) error {
@@ -109,14 +111,18 @@ func (s *Store) JumpToContext(context string) error {
 		return err
 	}
 
-	s.newCommit(fmt.Sprintf("Context switching to: %s", context))
-
-	w, _ := s.dbGitRepository.Worktree()
-
+	err = s.newCommit(fmt.Sprintf("Context switching to: %s", context))
+	if err != nil {
+		return err
+	}
+	w, err := s.dbGitRepository.Worktree()
+	if err != nil {
+		return err
+	}
 	branch := fmt.Sprintf("refs/heads/%s", context)
 	b := plumbing.ReferenceName(branch)
 
-	// checkout branch ( first branch name is actualy context name )
+	// checkout branch ( first branch name is actually context name )
 	err = w.Checkout(&git.CheckoutOptions{Create: false, Force: true, Branch: b})
 
 	if err != nil {
@@ -147,7 +153,7 @@ func (s *Store) JumpToContext(context string) error {
 		tag := getTag(s.dbGitRepository, context)
 		if tag != nil && !tag.Hash.IsZero() {
 			commit, _ := tag.Commit()
-			w.Reset(&git.ResetOptions{
+			_ = w.Reset(&git.ResetOptions{
 				Mode:   git.HardReset,
 				Commit: commit.Hash,
 			})
@@ -164,31 +170,41 @@ func (s *Store) JumpToContext(context string) error {
 
 }
 
-func (s *Store) newCommit(message string) {
+func (s *Store) newCommit(message string) error {
 	s.unlockGit()
 	defer s.lockGit()
-	s.Sync()
+	err := s.Sync()
+	if err != nil {
+		return err
+	}
 
-	w, _ := s.dbGitRepository.Worktree()
+	w, err := s.dbGitRepository.Worktree()
+	if err != nil {
+		return err
+	}
 
-	w.Add("KEYREGISTRY")
-	w.Add("MANIFEST")
-	w.Add("LOCK")
-
-	err := filepath.Walk(s.path, func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(s.path, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
+
+		if info.Name() == "KEYREGISTRY" || info.Name() == "MANIFEST" || info.Name() == "LOCK" {
+			_, adderr := w.Add(path[strings.LastIndex(path, "/")+1:])
+			return adderr
+		}
+
 		if filepath.Ext(path) == ".vlog" || filepath.Ext(path) == ".sst" {
-			w.Add(path[strings.LastIndex(path, "/")+1:])
+			_, adderr := w.Add(path[strings.LastIndex(path, "/")+1:])
+			return adderr
 		}
 		return nil
 	})
+
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	w.Commit(message, &git.CommitOptions{
+	_, err = w.Commit(message, &git.CommitOptions{
 		Author: &object.Signature{
 			Name:  "Flow Emulator",
 			Email: "emulator@onflow.org",
@@ -196,6 +212,10 @@ func (s *Store) newCommit(message string) {
 		},
 	})
 
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *Store) openRepository(directory string) (*git.Repository, error) {
@@ -221,7 +241,7 @@ func New(opts ...Opt) (*Store, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not open database: %w", err)
 	}
-	db.Sync()
+	_ = db.Sync()
 
 	store := &Store{db, newChangelog(), nil, badgerOptions.Dir, badgerOptions}
 	if err = store.setup(); err != nil {
@@ -243,12 +263,15 @@ func (s *Store) setup() error {
 	w, _ := dbgit.Worktree()
 	r, _ := dbgit.Head()
 	if r != nil {
-		w.Reset(&git.ResetOptions{
+		_ = w.Reset(&git.ResetOptions{
 			Mode:   git.HardReset,
 			Commit: r.Hash(),
 		})
 	}
-	s.newCommit("Emulator Started New Session")
+	err = s.newCommit("Emulator Started New Session")
+	if err != nil {
+		return err
+	}
 	s.lockGit()
 
 	s.db.RLock()
@@ -431,7 +454,7 @@ func (s *Store) CommitBlock(
 			message = fmt.Sprintf("%sCode:\n%s", message, tx.Script)
 
 			result := transactionResults[txID]
-			insertTransactionResult(txID, *result)(txn)
+			err = insertTransactionResult(txID, *result)(txn)
 			if err != nil {
 				return err
 			}
@@ -467,8 +490,10 @@ func (s *Store) CommitBlock(
 
 		return nil
 	})
-
-	s.newCommit(message)
+	if err != nil {
+		return err
+	}
+	err = s.newCommit(message)
 	return err
 }
 
@@ -701,7 +726,13 @@ func insertEvents(blockHeight uint64, events []flowgo.Event) func(txn *badger.Tx
 // a Store before exiting to ensure all writes are persisted to disk.
 func (s *Store) Close() error {
 	err := s.db.Close()
-	s.newCommit("Emulator Ended Session")
+	if err != nil {
+		return err
+	}
+	err = s.newCommit("Emulator Ended Session")
+	if err != nil {
+		return err
+	}
 	s.unlockGit()
 	return err
 }
