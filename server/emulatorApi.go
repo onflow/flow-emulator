@@ -19,12 +19,19 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-emulator/storage/badger"
 )
+
+type BlockResponse struct {
+	Height  int    `json:"height"`
+	BlockId string `json:"blockId"`
+	Context string `json:"context,omitempty"`
+}
 
 type EmulatorApiServer struct {
 	router  *mux.Router
@@ -54,6 +61,24 @@ func (m EmulatorApiServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (m EmulatorApiServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	m.backend.CommitBlock()
+
+	header, err := m.backend.GetLatestBlockHeader(nil, true)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	blockResponse := &BlockResponse{
+		Height:  int(header.Height),
+		BlockId: header.ID().String(),
+	}
+
+	err = json.NewEncoder(w).Encode(blockResponse)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -78,6 +103,23 @@ func (m EmulatorApiServer) Snapshot(w http.ResponseWriter, r *http.Request) {
 		}
 
 		m.backend.SetEmulator(blockchain)
+		block, err := blockchain.GetLatestBlock()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		blockResponse := &BlockResponse{
+			Height:  int(block.Header.Height),
+			BlockId: block.Header.ID().String(),
+			Context: name,
+		}
+
+		err = json.NewEncoder(w).Encode(blockResponse)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
 		w.WriteHeader(http.StatusOK)
 
