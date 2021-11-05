@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.0 // indirect
 	github.com/dgraph-io/badger/v2 v2.0.3
-	github.com/fxamacker/cbor/v2 v2.2.1-0.20210510192846-c3f3c69e7bc8
+	github.com/fxamacker/cbor/v2 v2.2.1-0.20210927235116-3d6d5d1de29b
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
