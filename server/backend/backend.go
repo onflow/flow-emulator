@@ -47,7 +47,7 @@ type Backend struct {
 	automine bool
 }
 
-//hotswap emulator for state management
+// SetEmulator hotswaps emulator for state management.
 func (b *Backend) SetEmulator(emulator Emulator) {
 	b.emulator = emulator
 }
