@@ -65,10 +65,13 @@ func (m EmulatorApiServer) Snapshot(w http.ResponseWriter, r *http.Request) {
 	switch (*m.storage).Store().(type) {
 	case *badger.Store:
 		badgerStore := (*m.storage).Store().(*badger.Store)
-		badgerStore.JumpToContext(name)
+		err := badgerStore.JumpToContext(name)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
 		blockchain, err := configureBlockchain(m.server.config, badgerStore)
-
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
