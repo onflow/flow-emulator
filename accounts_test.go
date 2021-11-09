@@ -19,6 +19,7 @@
 package emulator_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -731,7 +732,8 @@ func TestRemoveAccountKey(t *testing.T) {
 	result, err = b.ExecuteNextTransaction()
 	assert.NoError(t, err)
 
-	unittest.AssertFVMErrorType(t, &fvmerrors.InvalidProposalSignatureError{}, result.Error)
+	var sigErr *fvmerrors.InvalidProposalSignatureError
+	assert.True(t, errors.As(result.Error, &sigErr))
 
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)

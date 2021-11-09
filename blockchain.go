@@ -16,6 +16,8 @@ import (
 	"sync"
 	"time"
 
+	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
+
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
 	sdk "github.com/onflow/flow-go-sdk"
@@ -875,7 +877,6 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 			if err != nil {
 				return nil, err
 			}
-
 			return tx, nil
 		},
 	)
@@ -888,6 +889,11 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 	if err != nil {
 		// fail fast if fatal error occurs
 		return nil, err
+	}
+
+	// if transaction error exist try to further debug what was the problem
+	if tr.Error != nil {
+		tr.Debug = b.debugSignatureError(tr.Error, tp.Transaction)
 	}
 
 	return tr, nil
@@ -1128,4 +1134,56 @@ func convertToSealedResults(
 	}
 
 	return output, nil
+}
+
+// debugSignatureError tries to unwrap error to the root and test for invalid hashing algorithms
+func (b *Blockchain) debugSignatureError(err error, tx *flowgo.TransactionBody) *types.TransactionResultDebug {
+	var sigErr *fvmerrors.InvalidProposalSignatureError
+	if !errors.As(err, &sigErr) {
+		return nil
+	}
+
+	switch errors.Unwrap(sigErr).(type) {
+	case *fvmerrors.InvalidEnvelopeSignatureError:
+		for _, sig := range tx.EnvelopeSignatures {
+			debug := b.testAlternativeHashAlgo(sig, tx.EnvelopeMessage())
+			if debug != nil {
+				return debug
+			}
+		}
+	case *fvmerrors.InvalidPayloadSignatureError:
+		for _, sig := range tx.PayloadSignatures {
+			debug := b.testAlternativeHashAlgo(sig, tx.PayloadMessage())
+			if debug != nil {
+				return debug
+			}
+		}
+	}
+
+	return types.NewTransactionInvalidSignature(tx)
+}
+
+// testAlternativeHashAlgo tries to verify the signature with alternative hashing algorithm and if
+// the signature is verified returns more verbose error
+func (b *Blockchain) testAlternativeHashAlgo(sig flowgo.TransactionSignature, msg []byte) *types.TransactionResultDebug {
+	acc, err := b.getAccount(sig.Address)
+	if err != nil {
+		return nil
+	}
+
+	key := acc.Keys[sig.KeyIndex]
+
+	for _, algo := range []hash.HashingAlgorithm{sdkcrypto.SHA2_256, sdkcrypto.SHA3_256} {
+		if key.HashAlgo == algo {
+			continue // skip valid hash algo
+		}
+
+		h, _ := fvmcrypto.NewPrefixedHashing(algo, flowgo.TransactionTagString)
+		valid, _ := key.PublicKey.Verify(sig.Signature, msg, h)
+		if valid {
+			return types.NewTransactionInvalidHashAlgo(key, acc.Address, algo)
+		}
+	}
+
+	return nil
 }

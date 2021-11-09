@@ -629,6 +629,15 @@ func printTransactionResult(logger *logrus.Logger, result *types.TransactionResu
 			logPrefix("ERR", result.TransactionID, aurora.RedFg),
 			result.Error.Error(),
 		)
+
+		if result.Debug != nil {
+			for k, v := range result.Debug.Meta {
+				logger.WithField(k, v)
+			}
+			logger.Debug(
+				fmt.Sprintf("%s %s", "❗  Transaction Signature Error", result.Debug.Message),
+			)
+		}
 	}
 }
 

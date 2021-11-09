@@ -1,8 +1,11 @@
 package emulator_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
+
+	convert "github.com/onflow/flow-emulator/convert/sdk"
 
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
@@ -271,6 +274,138 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		err = b.AddTransaction(*tx)
 		assert.IsType(t, &emulator.ExpiredTransactionError{}, err)
 	})
+
+	t.Run("Invalid hash algorithm proposer", func(t *testing.T) {
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
+		require.NoError(t, err)
+
+		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
+
+		invalidSigner := crypto.NewNaiveSigner(b.ServiceKey().PrivateKey, crypto.SHA2_256)
+
+		tx := flow.NewTransaction().
+			SetScript([]byte(addTwoScript)).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address).
+			AddAuthorizer(b.ServiceKey().Address)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, invalidSigner)
+		assert.NoError(t, err)
+
+		err = b.AddTransaction(*tx)
+		assert.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+
+		pk, _ := convert.SDKAccountKeyToFlow(b.ServiceKey().AccountKey())
+		assert.Equal(t, types.NewTransactionInvalidHashAlgo(
+			pk, convert.SDKAddressToFlow(b.ServiceKey().Address), crypto.SHA2_256,
+		), result.Debug)
+	})
+
+	t.Run("Invalid hash algorithm authorizer", func(t *testing.T) {
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
+		require.NoError(t, err)
+
+		pk, err := crypto.GeneratePrivateKey(crypto.ECDSA_P256, []byte("invalid key invalid key invalid key invalid key invalid key invalid key"))
+		assert.NoError(t, err)
+
+		accountKeyB := (&flow.AccountKey{}).FromPrivateKey(pk)
+		accountKeyB.HashAlgo = crypto.SHA3_256
+		accountKeyB.Weight = flow.AccountKeyWeightThreshold
+
+		accountAddressB, err := b.CreateAccount([]*flow.AccountKey{accountKeyB}, nil)
+		assert.NoError(t, err)
+
+		tx := flow.NewTransaction().
+			SetScript([]byte(`
+			  transaction {
+				prepare(signer: AuthAccount) {}
+			  }
+			`)).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address).
+			AddAuthorizer(accountAddressB)
+
+		invalidSigner := crypto.NewNaiveSigner(pk, crypto.SHA2_256)
+		err = tx.SignPayload(accountAddressB, 0, invalidSigner)
+		assert.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		assert.NoError(t, err)
+
+		err = b.AddTransaction(*tx)
+		assert.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+
+		key := flowgo.AccountPublicKey{
+			Index:     0,
+			PublicKey: nil,
+			SignAlgo:  0,
+			HashAlgo:  crypto.SHA3_256,
+			SeqNumber: 0,
+			Weight:    0,
+			Revoked:   false,
+		}
+		assert.Equal(t, types.NewTransactionInvalidHashAlgo(
+			key, convert.SDKAddressToFlow(accountAddressB), crypto.SHA2_256,
+		), result.Debug)
+	})
+
+	t.Run("Invalid signature for provided data", func(t *testing.T) {
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
+		require.NoError(t, err)
+
+		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
+
+		tx := flow.NewTransaction().
+			SetScript([]byte(addTwoScript)).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address).
+			AddAuthorizer(b.ServiceKey().Address)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		assert.NoError(t, err)
+
+		tx.SetGasLimit(100) // change data after signing
+
+		err = b.AddTransaction(*tx)
+		assert.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+
+		debug := types.NewTransactionInvalidSignature(&flowgo.TransactionBody{
+			ReferenceBlockID: flowgo.Identifier{},
+			Script:           nil,
+			Arguments:        nil,
+			GasLimit:         flowgo.DefaultMaxTransactionGasLimit,
+			ProposalKey: flowgo.ProposalKey{
+				Address:        convert.SDKAddressToFlow(b.ServiceKey().Address),
+				KeyIndex:       uint64(b.ServiceKey().Index),
+				SequenceNumber: b.ServiceKey().SequenceNumber,
+			},
+			Payer:              convert.SDKAddressToFlow(b.ServiceKey().Address),
+			Authorizers:        convert.SDKAddressesToFlow([]flow.Address{b.ServiceKey().Address}),
+			PayloadSignatures:  nil,
+			EnvelopeSignatures: nil,
+		})
+
+		assert.NotNil(t, result.Error)
+		assert.IsType(t, result.Debug, debug)
+	})
 }
 
 func TestSubmitTransaction_Duplicate(t *testing.T) {
@@ -481,7 +616,8 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, &fvmerrors.InvalidProposalSignatureError{}, result.Error)
+		var sigErr *fvmerrors.InvalidProposalSignatureError
+		assert.True(t, errors.As(result.Error, &sigErr))
 	})
 
 	t.Run("Invalid key", func(t *testing.T) {
@@ -513,7 +649,8 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, &fvmerrors.InvalidProposalSignatureError{}, result.Error)
+		var sigErr *fvmerrors.InvalidProposalSignatureError
+		assert.True(t, errors.As(result.Error, &sigErr))
 	})
 
 	t.Run("Key weights", func(t *testing.T) {
