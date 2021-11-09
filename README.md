@@ -1,9 +1,25 @@
-# Flow Emulator
+<br />
+<p align="center">
+  <a href="https://docs.onflow.org/emulator/">
+    <img src="./emulator-banner.svg" alt="Logo" width="410" height="auto">
+  </a>
 
-The Flow Emulator is a lightweight tool that emulates the behaviour of the real Flow network.
+  <p align="center">
+    <i>The Flow Emulator is a lightweight tool that emulates the behaviour of the real Flow network.</i>
+    <br />
+    <a href="https://docs.onflow.org/emulator/"><strong>Read the docs»</strong></a>
+    <br />
+    <br />
+    <a href="https://github.com/onflow/flow-emulator/issues">Report Bug</a>
+    ·
+    <a href="https://github.com/onflow/flow-emulator/blob/master/CONTRIBUTING.md">Contribute</a>
+  </p>
+</p>
+<br />
+<br />
 
-The emulator exposes a gRPC server that implements the Flow Access API, which is designed to have near feature parity
-with the real network API.
+
+The emulator exposes a gRPC server that implements the Flow Access API, which is designed to have near feature parity with the real network API.
 
 # Running
 
@@ -18,6 +34,7 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--port`, `-p` | `FLOW_PORT` | `3569` | RPC port to listen on |
 | `--http-port` | `FLOW_HTTPPORT` | `8080` | HTTP port to listen on |
 | `--verbose`, `-v` | `FLOW_VERBOSE` | `false` | Enable verbose logging (useful for debugging) |
+| `--log-format` | `FLOW_LOGFORMAT` | `text` | Output log format (valid values `text`, `JSON`) |
 | `--block-time`, `-b` | `FLOW_BLOCKTIME` | `0` | Time between sealed blocks. Valid units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h` |
 | `--service-priv-key` | `FLOW_SERVICEPRIVATEKEY` | random | Private key used for the [service account](https://docs.onflow.org/flow-token/concepts/#flow-service-account) |
 | `--service-pub-key` | `FLOW_SERVICEPUBLICKEY` | random | Public key used for the [service account](https://docs.onflow.org/flow-token/concepts/#flow-service-account) |

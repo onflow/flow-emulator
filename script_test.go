@@ -112,7 +112,7 @@ func TestExecuteScriptAtBlockHeight(t *testing.T) {
 
 func TestInfiniteScript(t *testing.T) {
 
-	const limit = 10
+	const limit = 1000
 	b, err := emulator.NewBlockchain(
 		emulator.WithScriptGasLimit(limit),
 	)
