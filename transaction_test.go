@@ -880,6 +880,89 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 	})
 }
 
+func TestSubmitTransaction_ProposerSequence(t *testing.T) {
+	t.Run("Valid transaction increases sequence number", func(t *testing.T) {
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
+		require.NoError(t, err)
+
+		script := []byte(`
+		  transaction {
+		    prepare(signer: AuthAccount) {}
+		  }
+		`)
+		prevSeq := b.ServiceKey().SequenceNumber
+
+		tx := flow.NewTransaction().
+			SetScript(script).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address).
+			AddAuthorizer(b.ServiceKey().Address)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		assert.NoError(t, err)
+
+		err = b.AddTransaction(*tx)
+		assert.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+		assertTransactionSucceeded(t, result)
+
+		_, err = b.CommitBlock()
+		assert.NoError(t, err)
+
+		tx1Result, err := b.GetTransactionResult(tx.ID())
+		assert.NoError(t, err)
+		assert.Equal(t, flow.TransactionStatusSealed, tx1Result.Status)
+
+		assert.Equal(t, prevSeq+1, b.ServiceKey().SequenceNumber)
+	})
+
+	t.Run("Reverted transaction increases sequence number", func(t *testing.T) {
+		b, err := emulator.NewBlockchain(
+			emulator.WithStorageLimitEnabled(false),
+		)
+		require.NoError(t, err)
+
+		prevSeq := b.ServiceKey().SequenceNumber
+		script := []byte(`
+		  transaction {
+			prepare(signer: AuthAccount) {} 
+			execute { panic("revert!") }
+		  }
+		`)
+
+		tx := flow.NewTransaction().
+			SetScript(script).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address).
+			AddAuthorizer(b.ServiceKey().Address)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		assert.NoError(t, err)
+
+		err = b.AddTransaction(*tx)
+		assert.NoError(t, err)
+
+		_, err = b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+
+		_, err = b.CommitBlock()
+		assert.NoError(t, err)
+
+		tx1Result, err := b.GetTransactionResult(tx.ID())
+		assert.NoError(t, err)
+		assert.Equal(t, prevSeq+1, b.ServiceKey().SequenceNumber)
+		assert.Equal(t, flow.TransactionStatusSealed, tx1Result.Status)
+		assert.Len(t, tx1Result.Events, 0)
+		assert.IsType(t, &emulator.ExecutionError{}, tx1Result.Error)
+	})
+}
+
 func TestGetTransaction(t *testing.T) {
 	b, err := emulator.NewBlockchain(
 		emulator.WithStorageLimitEnabled(false),
