@@ -41,6 +41,8 @@ and if you plan to run the emulator with Docker you must use the environment var
 | ----------------- | ------ | ----------------- | ----------------- |
 | `--port`, `-p` | `FLOW_PORT` | `3569` | RPC port to listen on |
 | `--http-port` | `FLOW_HTTPPORT` | `8080` | HTTP port to listen on |
+| `--dev-wallet` | `DEV_WALLET` | `false` | Enable local Dev Wallet server |
+| `--dev-wallet-port` | `DEV_WALLET_PORT` | `8701` | Port to run Dev Wallet server on |
 | `--verbose`, `-v` | `FLOW_VERBOSE` | `false` | Enable verbose logging (useful for debugging) |
 | `--log-format` | `FLOW_LOGFORMAT` | `text` | Output log format (valid values `text`, `JSON`) |
 | `--block-time`, `-b` | `FLOW_BLOCKTIME` | `0` | Time between sealed blocks. Valid units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h` |
@@ -89,6 +91,25 @@ You can start the emulator in your project context by running the above command
 in the same directory as `flow.json`. This will configure the emulator with your
 project's service account, meaning you can use it to sign and submit transactions.
 Read more about the project and configuration [here](https://docs.onflow.org/flow-cli/configuration/).
+
+## Launching dev-wallet with the emulator 
+
+You can start the dev-wallet with the `--dev-wallet` flag. Default dev-wallet port is `8701`. 
+
+After starting dev-wallet, you can set your fcl config to use it like below:  
+
+```javascript
+import * as fcl from "@onflow/fcl"
+
+fcl.config()
+  // Point App at Emulator
+  .put("accessNode.api", "http://localhost:8080") 
+  // Point FCL at dev-wallet (default port)
+  .put("discovery.wallet", "http://localhost:8701/fcl/authn") 
+```
+
+You can read more about setting up dev-wallet at [FCL Dev Wallet Project](https://github.com/onflow/fcl-dev-wallet)
+
 
 ## Running the emulator with Docker
 

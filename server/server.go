@@ -19,6 +19,7 @@
 package server
 
 import (
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -45,12 +46,14 @@ type EmulatorServer struct {
 	storage  graceland.Routine
 	grpc     graceland.Routine
 	http     graceland.Routine
+	wallet   graceland.Routine
 	blocks   graceland.Routine
 }
 
 const (
 	defaultGRPCPort               = 3569
 	defaultHTTPPort               = 8080
+	defaultDevWalletPort          = 8701
 	defaultLivenessCheckTolerance = time.Second
 	defaultDBGCInterval           = time.Minute * 5
 	defaultDBGCRatio              = 0.5
@@ -78,10 +81,13 @@ type Config struct {
 	GRPCPort                  int
 	GRPCDebug                 bool
 	HTTPPort                  int
+	DevWalletPort             int
+	DevWalletEnabled          bool
 	HTTPHeaders               []HTTPHeader
 	BlockTime                 time.Duration
 	ServicePrivateKey         crypto.PrivateKey
 	ServicePublicKey          crypto.PublicKey
+	ServicePrivateKey         crypto.PrivateKey
 	ServiceKeySigAlgo         crypto.SignatureAlgorithm
 	ServiceKeyHashAlgo        crypto.HashAlgorithm
 	GenesisTokenSupply        cadence.UFix64
@@ -160,6 +166,22 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		liveness: livenessTicker,
 		grpc:     grpcServer,
 		http:     httpServer,
+		wallet:   nil,
+	}
+
+	if conf.ServicePrivateKey != nil && conf.DevWalletEnabled {
+
+		walletConfig := WalletConfig{
+			Address:    chain.ServiceAddress().HexWithPrefix(),
+			KeyId:      0,
+			PrivateKey: hex.EncodeToString(conf.ServicePrivateKey.Encode()),
+			PublicKey:  hex.EncodeToString(conf.ServicePublicKey.Encode()),
+			AccessNode: fmt.Sprintf("http://localhost:%d", conf.HTTPPort),
+			UseAPI:     false,
+			Suffix:     "",
+		}
+
+		server.wallet = NewWalletServer(walletConfig, conf.DevWalletPort, conf.HTTPHeaders)
 	}
 
 	// only create blocks ticker if block time > 0
@@ -175,23 +197,33 @@ func (s *EmulatorServer) Start() {
 	s.Stop()
 
 	s.group = graceland.NewGroup()
+	// only start blocks ticker if it exists
+	if s.blocks != nil {
+		s.group.Add(s.blocks)
+	}
+	s.group.Add(s.liveness)
 
 	s.logger.
 		WithField("port", s.config.GRPCPort).
 		Infof("🌱  Starting gRPC server on port %d", s.config.GRPCPort)
+	s.group.Add(s.grpc)
 
 	s.logger.
 		WithField("port", s.config.HTTPPort).
 		Infof("🌱  Starting HTTP server on port %d", s.config.HTTPPort)
+	s.group.Add(s.http)
+
+	if s.wallet != nil {
+		s.logger.
+			WithField("port", s.config.DevWalletPort).
+			Infof("🌱  Starting Dev Wallet on port %d", s.config.DevWalletPort)
+		s.group.Add(s.wallet)
+	}
 
 	// only start blocks ticker if it exists
 	if s.blocks != nil {
 		s.group.Add(s.blocks)
 	}
-
-	s.group.Add(s.liveness)
-	s.group.Add(s.grpc)
-	s.group.Add(s.http)
 
 	// routines are shut down in insertion order, so database is added last
 	s.group.Add(s.storage)
@@ -267,6 +299,10 @@ func sanitizeConfig(conf *Config) *Config {
 
 	if conf.HTTPPort == 0 {
 		conf.HTTPPort = defaultHTTPPort
+	}
+
+	if conf.DevWalletPort == 0 {
+		conf.DevWalletPort = defaultDevWalletPort
 	}
 
 	if conf.HTTPHeaders == nil {
