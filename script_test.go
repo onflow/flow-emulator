@@ -1,6 +1,7 @@
 package emulator_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/onflow/cadence"
@@ -105,9 +106,29 @@ func TestExecuteScript_WithArguments(t *testing.T) {
 	})
 }
 
-func TestExecuteScriptAtBlockHeight(t *testing.T) {
-	// TODO
-	// Test that scripts can be executed at different block heights
+func TestExecuteScript_FlowServiceAccountBalance(t *testing.T) {
+
+	t.Parallel()
+
+	b, err := emulator.NewBlockchain()
+	require.NoError(t, err)
+
+	code := fmt.Sprintf(
+		`
+          import FlowServiceAccount from %[1]s
+          pub fun main(): UFix64 {
+            let acct = getAccount(%[1]s)
+            return FlowServiceAccount.defaultTokenBalance(acct)
+          }
+        `,
+		b.GetChain().ServiceAddress().HexWithPrefix(),
+	)
+
+	res, err := b.ExecuteScript([]byte(code), nil)
+	require.NoError(t, err)
+	require.NoError(t, res.Error)
+
+	require.Positive(t, res.Value)
 }
 
 func TestInfiniteScript(t *testing.T) {
