@@ -70,7 +70,6 @@ func NewBadgerStorage(
 ) (*BadgerStorage, error) {
 	store, err := badger.New(
 		badger.WithPath(dbPath),
-		badger.WithLogger(logger),
 		badger.WithTruncate(true),
 	)
 	if err != nil {
