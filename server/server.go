@@ -19,6 +19,8 @@
 package server
 
 import (
+	"encoding/hex"
+	"fmt"
 	"time"
 
 	"github.com/onflow/cadence"
@@ -44,12 +46,14 @@ type EmulatorServer struct {
 	storage  graceland.Routine
 	grpc     graceland.Routine
 	http     graceland.Routine
+	wallet   graceland.Routine
 	blocks   graceland.Routine
 }
 
 const (
 	defaultGRPCPort               = 3569
 	defaultHTTPPort               = 8080
+	defaultDevWalletPort          = 8701
 	defaultLivenessCheckTolerance = time.Second
 	defaultDBGCInterval           = time.Minute * 5
 	defaultDBGCRatio              = 0.5
@@ -77,9 +81,13 @@ type Config struct {
 	GRPCPort                  int
 	GRPCDebug                 bool
 	HTTPPort                  int
+	DevWalletPort             int
+	DevWalletEnabled          bool
 	HTTPHeaders               []HTTPHeader
 	BlockTime                 time.Duration
+	ServicePrivateKey         crypto.PrivateKey
 	ServicePublicKey          crypto.PublicKey
+	ServicePrivateKey         crypto.PrivateKey
 	ServiceKeySigAlgo         crypto.SignatureAlgorithm
 	ServiceKeyHashAlgo        crypto.HashAlgorithm
 	GenesisTokenSupply        cadence.UFix64
@@ -99,6 +107,8 @@ type Config struct {
 	DBGCDiscardRatio float64
 	// LivenessCheckTolerance is the time interval in which the server must respond to liveness probes.
 	LivenessCheckTolerance time.Duration
+	// Whether to deploy some extra Flow contracts when emulator starts
+	WithContracts bool
 }
 
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
@@ -119,14 +129,28 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 
 	chain := blockchain.GetChain()
 
-	contracts := logrus.Fields{
+	contracts := map[string]string{
 		"FlowServiceAccount": chain.ServiceAddress().HexWithPrefix(),
 		"FlowToken":          fvm.FlowTokenAddress(chain).HexWithPrefix(),
 		"FungibleToken":      fvm.FungibleTokenAddress(chain).HexWithPrefix(),
 		"FlowFees":           fvm.FlowFeesAddress(chain).HexWithPrefix(),
 		"FlowStorageFees":    chain.ServiceAddress().HexWithPrefix(),
 	}
-	logger.WithFields(contracts).Infof("📜  Flow contracts")
+	for contract, address := range contracts {
+		logger.WithFields(logrus.Fields{contract: address}).Infof("📜  Flow contract")
+	}
+
+	if conf.WithContracts {
+		deployments, err := deployContracts(conf, blockchain)
+		if err != nil {
+			logger.WithError(err).Error("❗  Failed to deploy contracts")
+		}
+
+		for _, contract := range deployments {
+			logger.WithFields(logrus.Fields{
+				contract.name: fmt.Sprintf("0x%s", contract.address.Hex())}).Infof(contract.description)
+		}
+	}
 
 	backend := configureBackend(logger, conf, blockchain)
 
@@ -140,7 +164,23 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		storage:  storage,
 		liveness: livenessTicker,
 		grpc:     grpcServer,
-		http:     nil,
+		http:     httpServer,
+		wallet:   nil,
+	}
+
+	if conf.ServicePrivateKey != nil && conf.DevWalletEnabled {
+
+		walletConfig := WalletConfig{
+			Address:    chain.ServiceAddress().HexWithPrefix(),
+			KeyId:      0,
+			PrivateKey: hex.EncodeToString(conf.ServicePrivateKey.Encode()),
+			PublicKey:  hex.EncodeToString(conf.ServicePublicKey.Encode()),
+			AccessNode: fmt.Sprintf("http://localhost:%d", conf.HTTPPort),
+			UseAPI:     false,
+			Suffix:     "",
+		}
+
+		server.wallet = NewWalletServer(walletConfig, conf.DevWalletPort, conf.HTTPHeaders)
 	}
 
 	httpServer := NewHTTPServer(server, backend, &storage, grpcServer, livenessTicker, conf.HTTPPort, conf.HTTPHeaders)
@@ -159,23 +199,33 @@ func (s *EmulatorServer) Start() {
 	s.Stop()
 
 	s.group = graceland.NewGroup()
+	// only start blocks ticker if it exists
+	if s.blocks != nil {
+		s.group.Add(s.blocks)
+	}
+	s.group.Add(s.liveness)
 
 	s.logger.
 		WithField("port", s.config.GRPCPort).
 		Infof("🌱  Starting gRPC server on port %d", s.config.GRPCPort)
+	s.group.Add(s.grpc)
 
 	s.logger.
 		WithField("port", s.config.HTTPPort).
 		Infof("🌱  Starting HTTP server on port %d", s.config.HTTPPort)
+	s.group.Add(s.http)
+
+	if s.wallet != nil {
+		s.logger.
+			WithField("port", s.config.DevWalletPort).
+			Infof("🌱  Starting Dev Wallet on port %d", s.config.DevWalletPort)
+		s.group.Add(s.wallet)
+	}
 
 	// only start blocks ticker if it exists
 	if s.blocks != nil {
 		s.group.Add(s.blocks)
 	}
-
-	s.group.Add(s.liveness)
-	s.group.Add(s.grpc)
-	s.group.Add(s.http)
 
 	// routines are shut down in insertion order, so database is added last
 	s.group.Add(s.storage)
@@ -219,7 +269,7 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 	}
 
-	if conf.ServicePublicKey != nil {
+	if conf.ServicePrivateKey == nil && conf.ServicePublicKey != nil {
 		options = append(
 			options,
 			emulator.WithServicePublicKey(conf.ServicePublicKey, conf.ServiceKeySigAlgo, conf.ServiceKeyHashAlgo),
@@ -251,6 +301,10 @@ func sanitizeConfig(conf *Config) *Config {
 
 	if conf.HTTPPort == 0 {
 		conf.HTTPPort = defaultHTTPPort
+	}
+
+	if conf.DevWalletPort == 0 {
+		conf.DevWalletPort = defaultDevWalletPort
 	}
 
 	if conf.HTTPHeaders == nil {
