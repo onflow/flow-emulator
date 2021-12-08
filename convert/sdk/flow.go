@@ -290,6 +290,7 @@ func SDKAccountKeyToFlow(key *sdk.AccountKey) (flowgo.AccountPublicKey, error) {
 		HashAlgo:  flowhashAlgo,
 		Weight:    key.Weight,
 		SeqNumber: key.SequenceNumber,
+		Revoked:   key.Revoked,
 	}, nil
 }
 
