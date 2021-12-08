@@ -13,7 +13,13 @@ import (
 )
 
 func TestCollections(t *testing.T) {
+
+	t.Parallel()
+
 	t.Run("Empty block", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -25,6 +31,9 @@ func TestCollections(t *testing.T) {
 	})
 
 	t.Run("Non-empty block", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithStorageLimitEnabled(false),
 		)

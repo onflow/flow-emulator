@@ -31,6 +31,9 @@ import (
 )
 
 func TestCommitBlock(t *testing.T) {
+
+	t.Parallel()
+
 	b, err := emulator.NewBlockchain(
 		emulator.WithStorageLimitEnabled(false),
 	)
@@ -101,11 +104,13 @@ func TestCommitBlock(t *testing.T) {
 }
 
 func TestBlockView(t *testing.T) {
+
+	t.Parallel()
+
 	const nBlocks = 3
 
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
-
 
 	t.Run("genesis should have 0 view", func(t *testing.T) {
 		block, err := b.GetBlockByHeight(0)
@@ -142,7 +147,7 @@ func TestBlockView(t *testing.T) {
 		block, err := b.GetBlockByHeight(height)
 		require.NoError(t, err)
 
-		maxView := height*emulator.MaxViewIncrease
+		maxView := height * emulator.MaxViewIncrease
 		t.Run(fmt.Sprintf("block %d should have view <%d", height, maxView), func(t *testing.T) {
 			assert.Equal(t, height, block.Header.Height)
 			assert.LessOrEqual(t, block.Header.View, maxView)

@@ -31,7 +31,13 @@ import (
 )
 
 func TestResult(t *testing.T) {
+
+	t.Parallel()
+
 	t.Run("should return correct boolean", func(t *testing.T) {
+
+		t.Parallel()
+
 		idGenerator := test.IdentifierGenerator()
 
 		trSucceed := &types.TransactionResult{

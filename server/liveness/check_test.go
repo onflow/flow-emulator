@@ -26,6 +26,9 @@ import (
 )
 
 func Test_BasicCheck(t *testing.T) {
+
+	t.Parallel()
+
 	mc := NewCheckCollector(time.Millisecond * 20)
 	if !mc.IsLive(0) {
 		t.Errorf("Multicheck with no checks should always pass")
@@ -66,6 +69,9 @@ func Test_BasicCheck(t *testing.T) {
 }
 
 func Test_CheckHTTP(t *testing.T) {
+
+	t.Parallel()
+
 	c := NewCheckCollector(time.Millisecond * 20)
 	r := httptest.NewRequest(http.MethodGet, "/live", nil)
 	wr := httptest.NewRecorder()
@@ -89,6 +95,9 @@ func Test_CheckHTTP(t *testing.T) {
 }
 
 func Test_CheckHTTPOverride(t *testing.T) {
+
+	t.Parallel()
+
 	c := NewCheckCollector(time.Millisecond * 20)
 	r := httptest.NewRequest(http.MethodGet, "/live", nil)
 	r.Header.Add(ToleranceHeader, "30s")
