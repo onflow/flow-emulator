@@ -85,6 +85,7 @@ type Config struct {
 	DevWalletEnabled          bool
 	HTTPHeaders               []HTTPHeader
 	BlockTime                 time.Duration
+	ServicePrivateKey         crypto.PrivateKey
 	ServicePublicKey          crypto.PublicKey
 	ServicePrivateKey         crypto.PrivateKey
 	ServiceKeySigAlgo         crypto.SignatureAlgorithm
@@ -106,6 +107,8 @@ type Config struct {
 	DBGCDiscardRatio float64
 	// LivenessCheckTolerance is the time interval in which the server must respond to liveness probes.
 	LivenessCheckTolerance time.Duration
+	// Whether to deploy some extra Flow contracts when emulator starts
+	WithContracts bool
 }
 
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
@@ -126,14 +129,28 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 
 	chain := blockchain.GetChain()
 
-	contracts := logrus.Fields{
+	contracts := map[string]string{
 		"FlowServiceAccount": chain.ServiceAddress().HexWithPrefix(),
 		"FlowToken":          fvm.FlowTokenAddress(chain).HexWithPrefix(),
 		"FungibleToken":      fvm.FungibleTokenAddress(chain).HexWithPrefix(),
 		"FlowFees":           fvm.FlowFeesAddress(chain).HexWithPrefix(),
 		"FlowStorageFees":    chain.ServiceAddress().HexWithPrefix(),
 	}
-	logger.WithFields(contracts).Infof("📜  Flow contracts")
+	for contract, address := range contracts {
+		logger.WithFields(logrus.Fields{contract: address}).Infof("📜  Flow contract")
+	}
+
+	if conf.WithContracts {
+		deployments, err := deployContracts(conf, blockchain)
+		if err != nil {
+			logger.WithError(err).Error("❗  Failed to deploy contracts")
+		}
+
+		for _, contract := range deployments {
+			logger.WithFields(logrus.Fields{
+				contract.name: fmt.Sprintf("0x%s", contract.address.Hex())}).Infof(contract.description)
+		}
+	}
 
 	backend := configureBackend(logger, conf, blockchain)
 
@@ -250,7 +267,7 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 	}
 
-	if conf.ServicePublicKey != nil {
+	if conf.ServicePrivateKey == nil && conf.ServicePublicKey != nil {
 		options = append(
 			options,
 			emulator.WithServicePublicKey(conf.ServicePublicKey, conf.ServiceKeySigAlgo, conf.ServiceKeyHashAlgo),

@@ -19,7 +19,15 @@
 <br />
 
 
+### The Emulator
+
 The emulator exposes a gRPC server that implements the Flow Access API, which is designed to have near feature parity with the real network API.
+
+### The Flowser Emulator Explorer
+
+There is also an block explorer GUI for the emulator, that will help you speed up development when using the emulator. 
+- [Flowser Github Repository](https://github.com/onflowser/flowser)
+- [Flowser Documentation](https://github.com/onflowser/flowser#-contents)
 
 # Running
 
@@ -36,7 +44,9 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--dev-wallet` | `DEV_WALLET` | `false` | Enable local Dev Wallet server |
 | `--dev-wallet-port` | `DEV_WALLET_PORT` | `8701` | Port to run Dev Wallet server on |
 | `--verbose`, `-v` | `FLOW_VERBOSE` | `false` | Enable verbose logging (useful for debugging) |
+| `--log-format` | `FLOW_LOGFORMAT` | `text` | Output log format (valid values `text`, `JSON`) |
 | `--block-time`, `-b` | `FLOW_BLOCKTIME` | `0` | Time between sealed blocks. Valid units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h` |
+| `--contracts` | `FLOW_CONTRACTS` | `false` | Start with contracts like [FUSD](https://github.com/onflow/fusd), [NFT](https://github.com/onflow/flow-nft/blob/master/contracts/NonFungibleToken.cdc) and an [NFT Marketplace](https://github.com/onflow/nft-storefront), when the emulator starts |
 | `--service-priv-key` | `FLOW_SERVICEPRIVATEKEY` | random | Private key used for the [service account](https://docs.onflow.org/flow-token/concepts/#flow-service-account) |
 | `--service-pub-key` | `FLOW_SERVICEPUBLICKEY` | random | Public key used for the [service account](https://docs.onflow.org/flow-token/concepts/#flow-service-account) |
 | `--service-sig-algo` | `FLOW_SERVICEKEYSIGALGO` | `ECDSA_P256` | Service account key [signature algorithm](https://docs.onflow.org/cadence/language/crypto/#signing-algorithms) |
