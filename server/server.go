@@ -87,7 +87,6 @@ type Config struct {
 	BlockTime                 time.Duration
 	ServicePrivateKey         crypto.PrivateKey
 	ServicePublicKey          crypto.PublicKey
-	ServicePrivateKey         crypto.PrivateKey
 	ServiceKeySigAlgo         crypto.SignatureAlgorithm
 	ServiceKeyHashAlgo        crypto.HashAlgorithm
 	GenesisTokenSupply        cadence.UFix64
@@ -164,7 +163,6 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		storage:  storage,
 		liveness: livenessTicker,
 		grpc:     grpcServer,
-		http:     httpServer,
 		wallet:   nil,
 	}
 
