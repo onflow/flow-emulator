@@ -3,7 +3,6 @@ module github.com/onflow/flow-emulator
 go 1.16
 
 require (
-	github.com/HdrHistogram/hdrhistogram-go v1.1.0 // indirect
 	github.com/dgraph-io/badger/v2 v2.0.3
 	github.com/fxamacker/cbor/v2 v2.2.1-0.20210927235116-3d6d5d1de29b
 	github.com/go-git/go-git/v5 v5.4.2

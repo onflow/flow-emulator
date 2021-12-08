@@ -85,7 +85,6 @@ type Config struct {
 	DevWalletEnabled          bool
 	HTTPHeaders               []HTTPHeader
 	BlockTime                 time.Duration
-	ServicePrivateKey         crypto.PrivateKey
 	ServicePublicKey          crypto.PublicKey
 	ServiceKeySigAlgo         crypto.SignatureAlgorithm
 	ServiceKeyHashAlgo        crypto.HashAlgorithm
@@ -114,13 +113,13 @@ type Config struct {
 func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	conf = sanitizeConfig(conf)
 
-	storage, err := configureStorage(logger, conf)
+	store, err := configureStorage(logger, conf)
 	if err != nil {
 		logger.WithError(err).Error("❗  Failed to configure storage")
 		return nil
 	}
 
-	blockchain, err := configureBlockchain(conf, storage.Store())
+	blockchain, err := configureBlockchain(conf, store.Store())
 	if err != nil {
 		logger.WithError(err).Error("❗  Failed to configure emulated blockchain")
 		return nil
@@ -151,18 +150,19 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		}
 	}
 
-	backend := configureBackend(logger, conf, blockchain)
+	be := configureBackend(logger, conf, blockchain)
 
 	livenessTicker := NewLivenessTicker(conf.LivenessCheckTolerance)
-	grpcServer := NewGRPCServer(logger, backend, conf.GRPCPort, conf.GRPCDebug)
+	grpcServer := NewGRPCServer(logger, be, conf.GRPCPort, conf.GRPCDebug)
 
 	server := &EmulatorServer{
 		logger:   logger,
 		config:   conf,
-		backend:  backend,
-		storage:  storage,
+		backend:  be,
+		storage:  store,
 		liveness: livenessTicker,
 		grpc:     grpcServer,
+		http:     nil,
 		wallet:   nil,
 	}
 
@@ -181,12 +181,12 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		server.wallet = NewWalletServer(walletConfig, conf.DevWalletPort, conf.HTTPHeaders)
 	}
 
-	httpServer := NewHTTPServer(server, backend, &storage, grpcServer, livenessTicker, conf.HTTPPort, conf.HTTPHeaders)
+	httpServer := NewHTTPServer(server, be, &store, grpcServer, livenessTicker, conf.HTTPPort, conf.HTTPHeaders)
 	server.http = httpServer
 
 	// only create blocks ticker if block time > 0
 	if conf.BlockTime > 0 {
-		server.blocks = NewBlocksTicker(backend, conf.BlockTime)
+		server.blocks = NewBlocksTicker(be, conf.BlockTime)
 	}
 
 	return server

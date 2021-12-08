@@ -62,7 +62,7 @@ func (m EmulatorApiServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	m.backend.CommitBlock()
 
-	header, err := m.backend.GetLatestBlockHeader(nil, true)
+	header, err := m.backend.GetLatestBlockHeader(r.Context(), true)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
