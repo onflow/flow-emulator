@@ -86,6 +86,7 @@ type Config struct {
 	HTTPHeaders               []HTTPHeader
 	BlockTime                 time.Duration
 	ServicePublicKey          crypto.PublicKey
+	ServicePrivateKey         crypto.PrivateKey
 	ServiceKeySigAlgo         crypto.SignatureAlgorithm
 	ServiceKeyHashAlgo        crypto.HashAlgorithm
 	GenesisTokenSupply        cadence.UFix64
