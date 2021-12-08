@@ -26,6 +26,9 @@ import (
 )
 
 func TestSubmitTransaction(t *testing.T) {
+
+	t.Parallel()
+
 	b, err := emulator.NewBlockchain(
 		emulator.WithStorageLimitEnabled(false),
 	)
@@ -65,7 +68,12 @@ func TestSubmitTransaction(t *testing.T) {
 // TODO: Add test case for missing ProposalKey
 func TestSubmitTransaction_Invalid(t *testing.T) {
 
+	t.Parallel()
+
 	t.Run("Empty transaction", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -81,6 +89,9 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Missing script", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -98,6 +109,9 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Missing script", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -117,6 +131,9 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Missing gas limit", func(t *testing.T) {
+
+		t.Parallel()
+
 		t.Skip("TODO: transaction validation")
 
 		b, err := emulator.NewBlockchain(
@@ -142,6 +159,8 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 
 	t.Run("Missing payer account", func(t *testing.T) {
 
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithStorageLimitEnabled(false),
 		)
@@ -164,6 +183,9 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Missing proposal key", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithStorageLimitEnabled(false),
 		)
@@ -187,6 +209,9 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Invalid sequence number", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithStorageLimitEnabled(false),
 		)
@@ -222,6 +247,9 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	const expiry = 10
 
 	t.Run("Missing reference block ID", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithTransactionExpiry(expiry),
 			emulator.WithStorageLimitEnabled(false),
@@ -244,6 +272,9 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Expired transaction", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithTransactionExpiry(expiry),
 			emulator.WithStorageLimitEnabled(false),
@@ -276,6 +307,9 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Invalid hash algorithm proposer", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithStorageLimitEnabled(false),
 		)
@@ -308,6 +342,9 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Invalid hash algorithm authorizer", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithStorageLimitEnabled(false),
 		)
@@ -362,6 +399,9 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Invalid signature for provided data", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithStorageLimitEnabled(false),
 		)
@@ -409,6 +449,9 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 }
 
 func TestSubmitTransaction_Duplicate(t *testing.T) {
+
+	t.Parallel()
+
 	b, err := emulator.NewBlockchain(
 		emulator.WithStorageLimitEnabled(false),
 	)
@@ -443,6 +486,9 @@ func TestSubmitTransaction_Duplicate(t *testing.T) {
 }
 
 func TestSubmitTransaction_Reverted(t *testing.T) {
+
+	t.Parallel()
+
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 
@@ -475,6 +521,9 @@ func TestSubmitTransaction_Reverted(t *testing.T) {
 }
 
 func TestSubmitTransaction_Authorizers(t *testing.T) {
+
+	t.Parallel()
+
 	b, err := emulator.NewBlockchain(
 		emulator.WithStorageLimitEnabled(false),
 	)
@@ -554,9 +603,13 @@ func TestSubmitTransaction_Authorizers(t *testing.T) {
 }
 
 func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
-	accountKeys := test.AccountKeyGenerator()
+
+	t.Parallel()
 
 	t.Run("Missing envelope signature", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithStorageLimitEnabled(false),
 		)
@@ -584,6 +637,9 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 	})
 
 	t.Run("Invalid account", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -621,6 +677,9 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 	})
 
 	t.Run("Invalid key", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithStorageLimitEnabled(false),
 		)
@@ -654,10 +713,15 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 	})
 
 	t.Run("Key weights", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithStorageLimitEnabled(false),
 		)
 		require.NoError(t, err)
+
+		accountKeys := test.AccountKeyGenerator()
 
 		accountKeyA, signerA := accountKeys.NewWithSigner()
 		accountKeyA.SetWeight(flow.AccountKeyWeightThreshold / 2)
@@ -712,9 +776,13 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 }
 
 func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
-	accountKeys := test.AccountKeyGenerator()
+
+	t.Parallel()
 
 	t.Run("Missing payload signature", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithStorageLimitEnabled(false),
 		)
@@ -724,6 +792,8 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 
 		// create a new account,
 		// authorizer must be different from payer
+
+		accountKeys := test.AccountKeyGenerator()
 
 		accountKeyB, _ := accountKeys.NewWithSigner()
 		accountKeyB.SetWeight(flow.AccountKeyWeightThreshold)
@@ -751,10 +821,15 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 	})
 
 	t.Run("Multiple payload signers", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithStorageLimitEnabled(false),
 		)
 		require.NoError(t, err)
+
+		accountKeys := test.AccountKeyGenerator()
 
 		accountKeyB, signerB := accountKeys.NewWithSigner()
 		accountKeyB.SetWeight(flow.AccountKeyWeightThreshold)
@@ -805,6 +880,9 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 }
 
 func TestSubmitTransaction_Arguments(t *testing.T) {
+
+	t.Parallel()
+
 	addresses := test.AddressGenerator()
 
 	fix64Value, _ := cadence.NewFix64("123456.00000")
@@ -1018,7 +1096,13 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 }
 
 func TestSubmitTransaction_ProposerSequence(t *testing.T) {
+
+	t.Parallel()
+
 	t.Run("Valid transaction increases sequence number", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithStorageLimitEnabled(false),
 		)
@@ -1059,6 +1143,9 @@ func TestSubmitTransaction_ProposerSequence(t *testing.T) {
 	})
 
 	t.Run("Reverted transaction increases sequence number", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithStorageLimitEnabled(false),
 		)
@@ -1101,6 +1188,9 @@ func TestSubmitTransaction_ProposerSequence(t *testing.T) {
 }
 
 func TestGetTransaction(t *testing.T) {
+
+	t.Parallel()
+
 	b, err := emulator.NewBlockchain(
 		emulator.WithStorageLimitEnabled(false),
 	)
@@ -1141,6 +1231,9 @@ func TestGetTransaction(t *testing.T) {
 }
 
 func TestGetTransactionResult(t *testing.T) {
+
+	t.Parallel()
+
 	b, err := emulator.NewBlockchain(
 		emulator.WithStorageLimitEnabled(false),
 	)
@@ -1221,6 +1314,9 @@ const callHelloTxTemplate = `
 `
 
 func TestHelloWorld_NewAccount(t *testing.T) {
+
+	t.Parallel()
+
 	accountKeys := test.AccountKeyGenerator()
 
 	b, err := emulator.NewBlockchain(
@@ -1312,6 +1408,9 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 }
 
 func TestHelloWorld_UpdateAccount(t *testing.T) {
+
+	t.Parallel()
+
 	accountKeys := test.AccountKeyGenerator()
 
 	b, err := emulator.NewBlockchain(
@@ -1430,6 +1529,8 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 }
 
 func TestInfiniteTransaction(t *testing.T) {
+
+	t.Parallel()
 
 	const limit = 1000
 

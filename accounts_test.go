@@ -40,7 +40,12 @@ const testContract = "pub contract Test {}"
 
 func TestGetAccount(t *testing.T) {
 
+	t.Parallel()
+
 	t.Run("Get account at latest block height", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithSimpleAddresses(),
 			emulator.WithStorageLimitEnabled(false),
@@ -54,6 +59,9 @@ func TestGetAccount(t *testing.T) {
 	})
 
 	t.Run("Get account at specified block height", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithSimpleAddresses(),
 			emulator.WithStorageLimitEnabled(false),
@@ -100,6 +108,9 @@ func TestGetAccount(t *testing.T) {
 }
 
 func TestCreateAccount(t *testing.T) {
+
+	t.Parallel()
+
 	accountKeys := test.AccountKeyGenerator()
 
 	t.Run("Simple addresses", func(t *testing.T) {
@@ -562,6 +573,9 @@ func TestCreateAccount(t *testing.T) {
 }
 
 func TestAddAccountKey(t *testing.T) {
+
+	t.Parallel()
+
 	accountKeys := test.AccountKeyGenerator()
 
 	t.Run("Valid key", func(t *testing.T) {
@@ -644,6 +658,9 @@ func TestAddAccountKey(t *testing.T) {
 }
 
 func TestRemoveAccountKey(t *testing.T) {
+
+	t.Parallel()
+
 	b, err := emulator.NewBlockchain(
 		emulator.WithStorageLimitEnabled(false),
 	)
@@ -778,6 +795,8 @@ func TestRemoveAccountKey(t *testing.T) {
 }
 
 func TestUpdateAccountCode(t *testing.T) {
+
+	t.Parallel()
 
 	const codeA = `
       pub contract Test {
@@ -921,6 +940,9 @@ func TestUpdateAccountCode(t *testing.T) {
 }
 
 func TestImportAccountCode(t *testing.T) {
+
+	t.Parallel()
+
 	b, err := emulator.NewBlockchain(
 		emulator.WithStorageLimitEnabled(false),
 	)

@@ -21,8 +21,8 @@ package badger
 import (
 	"testing"
 
-	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go-sdk/test"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -32,6 +32,9 @@ import (
 )
 
 func TestEncodeTransaction(t *testing.T) {
+
+	t.Parallel()
+
 	tx := unittest.TransactionFixture()
 	data, err := encodeTransaction(tx)
 	require.Nil(t, err)
@@ -44,6 +47,9 @@ func TestEncodeTransaction(t *testing.T) {
 }
 
 func TestEncodeTransactionResult(t *testing.T) {
+
+	t.Parallel()
+
 	result := unittest.StorableTransactionResultFixture()
 
 	data, err := encodeTransactionResult(result)
@@ -57,6 +63,9 @@ func TestEncodeTransactionResult(t *testing.T) {
 }
 
 func TestEncodeBlock(t *testing.T) {
+
+	t.Parallel()
+
 	ids := test.IdentifierGenerator()
 
 	block := flowgo.Block{
@@ -85,6 +94,9 @@ func TestEncodeBlock(t *testing.T) {
 	assert.Equal(t, *block.Payload, *decodedBlock.Payload)
 }
 func TestEncodeGenesisBlock(t *testing.T) {
+
+	t.Parallel()
+
 	block := flowgo.Genesis(flowgo.Emulator)
 
 	data, err := encodeBlock(*block)
@@ -100,6 +112,9 @@ func TestEncodeGenesisBlock(t *testing.T) {
 }
 
 func TestEncodeEvent(t *testing.T) {
+
+	t.Parallel()
+
 	event, _ := convert.SDKEventToFlow(test.EventGenerator().New())
 
 	data, err := encodeEvent(event)
@@ -112,6 +127,9 @@ func TestEncodeEvent(t *testing.T) {
 }
 
 func TestEncodeChangelist(t *testing.T) {
+
+	t.Parallel()
+
 	var clist changelist
 	clist.add(1)
 

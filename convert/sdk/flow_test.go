@@ -1,14 +1,18 @@
 package sdk
 
 import (
+	"testing"
+
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestSDKAccountToFlow(t *testing.T) {
+
+	t.Parallel()
+
 	contract := []byte("pub contract Test {}")
 	var keys []*sdk.AccountKey
 

@@ -18,7 +18,11 @@ import (
 
 func TestEventEmitted(t *testing.T) {
 
+	t.Parallel()
+
 	t.Run("EmittedFromScript", func(t *testing.T) {
+
+		t.Parallel()
 
 		// Emitting events in scripts is not supported
 
@@ -40,6 +44,9 @@ func TestEventEmitted(t *testing.T) {
 	})
 
 	t.Run("EmittedFromAccount", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain(
 			emulator.WithStorageLimitEnabled(false),
 		)

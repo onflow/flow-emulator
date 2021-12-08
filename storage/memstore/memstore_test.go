@@ -29,6 +29,9 @@ import (
 )
 
 func TestMemstore(t *testing.T) {
+
+	t.Parallel()
+
 	const blockHeight = 0
 	key := flowgo.RegisterID{
 		Owner:      "",
@@ -71,6 +74,9 @@ func TestMemstore(t *testing.T) {
 }
 
 func TestMemstoreSetValueToNil(t *testing.T) {
+
+	t.Parallel()
+
 	store := New()
 	key := flowgo.RegisterID{
 		Owner:      "",

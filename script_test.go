@@ -16,6 +16,9 @@ import (
 )
 
 func TestExecuteScript(t *testing.T) {
+
+	t.Parallel()
+
 	b, err := emulator.NewBlockchain(
 		emulator.WithStorageLimitEnabled(false),
 	)
@@ -69,7 +72,13 @@ func TestExecuteScript(t *testing.T) {
 }
 
 func TestExecuteScript_WithArguments(t *testing.T) {
+
+	t.Parallel()
+
 	t.Run("Int", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -87,7 +96,11 @@ func TestExecuteScript_WithArguments(t *testing.T) {
 
 		assert.Equal(t, cadence.NewInt(10), scriptResult.Value)
 	})
+
 	t.Run("String", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -132,6 +145,8 @@ func TestExecuteScript_FlowServiceAccountBalance(t *testing.T) {
 }
 
 func TestInfiniteScript(t *testing.T) {
+
+	t.Parallel()
 
 	const limit = 1000
 	b, err := emulator.NewBlockchain(
