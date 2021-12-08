@@ -19,6 +19,9 @@
 package types
 
 import (
+	"fmt"
+
+	"github.com/onflow/flow-go/crypto/hash"
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -33,11 +36,12 @@ type StorableTransactionResult struct {
 
 // A TransactionResult is the result of executing a transaction.
 type TransactionResult struct {
-	TransactionID   flow.Identifier
+	TransactionID flow.Identifier
 	ComputationUsed uint64
-	Error           error
-	Logs            []string
-	Events          []flow.Event
+  Error         error
+	Logs          []string
+	Events        []flow.Event
+	Debug         *TransactionResultDebug
 }
 
 // Succeeded returns true if the transaction executed without errors.
@@ -48,6 +52,43 @@ func (r TransactionResult) Succeeded() bool {
 // Reverted returns true if the transaction executed with errors.
 func (r TransactionResult) Reverted() bool {
 	return !r.Succeeded()
+}
+
+// TransactionResultDebug provides details about unsuccessful transaction execution
+type TransactionResultDebug struct {
+	Message string
+	Meta    map[string]string
+}
+
+// NewTransactionInvalidHashAlgo creates debug details for transactions with invalid hashing algorithm
+func NewTransactionInvalidHashAlgo(
+	key flowgo.AccountPublicKey,
+	address flowgo.Address,
+	invalidAlgo hash.HashingAlgorithm,
+) *TransactionResultDebug {
+	return &TransactionResultDebug{
+		Message: fmt.Sprintf(
+			"invalid hashing algorithm signature: public key %d on account %s does not have a valid signature: key requires %s hashing algorithm, but %s was used",
+			key.Index, address, key.HashAlgo, invalidAlgo,
+		),
+		Meta: nil,
+	}
+}
+
+// NewTransactionInvalidSignature creates more debug details for transactions with invalid signature
+func NewTransactionInvalidSignature(
+	tx *flowgo.TransactionBody,
+) *TransactionResultDebug {
+	return &TransactionResultDebug{
+		Message: "",
+		Meta: map[string]string{
+			"payer":            tx.Payer.String(),
+			"proposer":         tx.ProposalKey.Address.String(),
+			"proposerKeyIndex": fmt.Sprintf("%d", tx.ProposalKey.KeyIndex),
+			"authorizers":      fmt.Sprintf("%v", tx.Authorizers),
+			"gasLimit":         fmt.Sprintf("%d", tx.GasLimit),
+		},
+	}
 }
 
 // TODO - this class should be part of SDK for consistency
