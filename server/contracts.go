@@ -20,8 +20,6 @@ var (
 	emContracts embed.FS
 )
 
-var baseContractsPath = "./server/contracts/"
-
 type DeployDescription struct {
 	name        string
 	address     flow.Address
@@ -60,7 +58,7 @@ func deployContracts(b *emulator.Blockchain) ([]DeployDescription, error) {
 		return []DeployDescription{}, err
 	}
 
-	addresses := []DeployDescription{}
+	addresses := make([]DeployDescription, 0)
 	for _, c := range toDeploy {
 		if _, err := serviceAcct.Contracts[c.name]; err {
 			addresses = append(addresses, DeployDescription{c.name, serviceAddress, c.description})
