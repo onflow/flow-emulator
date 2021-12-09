@@ -19,7 +19,13 @@ import (
 )
 
 func TestInitialization(t *testing.T) {
+
+	t.Parallel()
+
 	t.Run("should inject initial state when initialized with empty store", func(t *testing.T) {
+
+		t.Parallel()
+
 		dir, err := ioutil.TempDir("", "badger-test")
 		require.Nil(t, err)
 		defer os.RemoveAll(dir)
@@ -45,6 +51,9 @@ func TestInitialization(t *testing.T) {
 	})
 
 	t.Run("should restore state when initialized with non-empty store", func(t *testing.T) {
+
+		t.Parallel()
+
 		dir, err := ioutil.TempDir("", "badger-test")
 		require.Nil(t, err)
 		defer os.RemoveAll(dir)

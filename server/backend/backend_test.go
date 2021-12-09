@@ -57,6 +57,9 @@ func backendTest(f func(t *testing.T, backend *backend.Backend, emu *mocks.MockE
 }
 
 func TestBackend(t *testing.T) {
+
+	t.Parallel()
+
 	ids := test.IdentifierGenerator()
 	results := test.TransactionResultGenerator()
 
@@ -641,6 +644,9 @@ func TestBackend(t *testing.T) {
 }
 
 func TestBackendAutoMine(t *testing.T) {
+
+	t.Parallel()
+
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 

@@ -31,6 +31,9 @@ import (
 )
 
 func TestBlockInfo(t *testing.T) {
+
+	t.Parallel()
+
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 

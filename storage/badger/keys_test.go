@@ -29,11 +29,17 @@ import (
 // this is how Badger sorts when iterating over keys.
 // More information here: https://github.com/dgraph-io/badger/issues/317
 func TestKeyOrdering(t *testing.T) {
+
+	t.Parallel()
+
 	// create a list of heights in increasing order, this test will check the
 	// corresponding keys are also in increasing lexicographic order
 	nums := []uint64{0, 1, 2, 3, 10, 29, 50, 99, 100, 1000, 1234, 100000000, 19825983621301235}
 
 	t.Run("block key", func(t *testing.T) {
+
+		t.Parallel()
+
 		var keys [][]byte
 		for _, num := range nums {
 			keys = append(keys, blockKey(num))
@@ -45,6 +51,9 @@ func TestKeyOrdering(t *testing.T) {
 	})
 
 	t.Run("registers key", func(t *testing.T) {
+
+		t.Parallel()
+
 		var keys [][]byte
 		for _, num := range nums {
 			keys = append(keys, ledgerKey(num))
@@ -56,6 +65,9 @@ func TestKeyOrdering(t *testing.T) {
 	})
 
 	t.Run("event key", func(t *testing.T) {
+
+		t.Parallel()
+
 		var keys [][]byte
 		for _, num := range nums {
 			for i := 0; i < 3; i++ {

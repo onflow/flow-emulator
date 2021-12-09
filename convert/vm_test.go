@@ -31,7 +31,13 @@ import (
 )
 
 func TestVm(t *testing.T) {
+
+	t.Parallel()
+
 	t.Run("should be able to convert", func(t *testing.T) {
+
+		t.Parallel()
+
 		idGenerator := test.IdentifierGenerator()
 
 		eventGenerator := test.EventGenerator()
