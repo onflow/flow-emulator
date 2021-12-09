@@ -1,8 +1,8 @@
 package server
 
 import (
+	"embed"
 	"fmt"
-	"io/ioutil"
 	"path/filepath"
 	"regexp"
 
@@ -15,6 +15,11 @@ import (
 	fusd "github.com/onflow/fusd/lib/go/contracts"
 )
 
+var (
+	//go:embed contracts
+	emContracts embed.FS
+)
+
 var baseContractsPath = "./server/contracts/"
 
 type DeployDescription struct {
@@ -23,7 +28,7 @@ type DeployDescription struct {
 	description string
 }
 
-func deployContracts(conf *Config, b *emulator.Blockchain) ([]DeployDescription, error) {
+func deployContracts(b *emulator.Blockchain) ([]DeployDescription, error) {
 	ftAddress := flow.HexToAddress(fvm.FungibleTokenAddress(b.GetChain()).Hex())
 	serviceAddress := b.ServiceKey().Address
 
@@ -109,18 +114,12 @@ func deployContract(b *emulator.Blockchain, name string, contract []byte) error 
 }
 
 func loadContract(name string, replacements map[string]flow.Address) []byte {
-	code := string(readFile(filepath.Join(baseContractsPath, name)))
+	contractFile, _ := emContracts.ReadFile(filepath.Join("contracts", name))
+	code := string(contractFile)
+
 	for name, realAddress := range replacements {
 		placeholder := regexp.MustCompile(fmt.Sprintf(`"[^"\s].*/%s.cdc"`, name))
 		code = placeholder.ReplaceAllString(code, fmt.Sprintf("0x%s", realAddress.String()))
 	}
 	return []byte(code)
-}
-
-func readFile(path string) []byte {
-	contents, err := ioutil.ReadFile(path)
-	if err != nil {
-		panic(err)
-	}
-	return contents
 }
