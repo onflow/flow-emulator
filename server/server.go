@@ -140,7 +140,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	}
 
 	if conf.WithContracts {
-		deployments, err := deployContracts(conf, blockchain)
+		deployments, err := deployContracts(blockchain)
 		if err != nil {
 			logger.WithError(err).Error("❗  Failed to deploy contracts")
 		}
