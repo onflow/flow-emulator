@@ -268,7 +268,12 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 	}
 
-	if conf.ServicePublicKey != nil {
+	if conf.ServicePrivateKey != nil {
+		options = append(
+			options,
+			emulator.WithServicePrivateKey(conf.ServicePrivateKey, conf.ServiceKeySigAlgo, conf.ServiceKeyHashAlgo),
+		)
+	} else if conf.ServicePublicKey != nil {
 		options = append(
 			options,
 			emulator.WithServicePublicKey(conf.ServicePublicKey, conf.ServiceKeySigAlgo, conf.ServiceKeyHashAlgo),
