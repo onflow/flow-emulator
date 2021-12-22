@@ -21,6 +21,7 @@ package start
 import (
 	"encoding/hex"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -29,7 +30,6 @@ import (
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/fvm"
-	"github.com/prometheus/common/log"
 	"github.com/psiemens/sconfig"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
