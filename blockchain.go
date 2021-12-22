@@ -210,6 +210,22 @@ func WithServicePublicKey(
 	}
 }
 
+// WithServicePrivateKey sets the service key from private key.
+func WithServicePrivateKey(
+	privateKey sdkcrypto.PrivateKey,
+	sigAlgo sdkcrypto.SignatureAlgorithm,
+	hashAlgo sdkcrypto.HashAlgorithm,
+) Option {
+	return func(c *config) {
+		c.ServiceKey = ServiceKey{
+			PrivateKey: privateKey,
+			PublicKey:  privateKey.PublicKey(),
+			HashAlgo:   hashAlgo,
+			SigAlgo:    sigAlgo,
+		}
+	}
+}
+
 // WithStore sets the persistent storage provider.
 func WithStore(store storage.Store) Option {
 	return func(c *config) {
@@ -452,8 +468,7 @@ func bootstrapLedger(
 
 	bootstrap := configureBootstrapProcedure(conf, flowAccountKey, conf.GenesisTokenSupply)
 
-	programs := programs.NewEmptyPrograms()
-	err := vm.Run(ctx, bootstrap, ledger, programs)
+	err := vm.Run(ctx, bootstrap, ledger, programs.NewEmptyPrograms())
 	if err != nil {
 		return err
 	}
@@ -871,9 +886,7 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 		) (*fvm.TransactionProcedure, error) {
 			tx := fvm.Transaction(txBody, txIndex)
 
-			programs := programs.NewEmptyPrograms()
-
-			err := b.vm.Run(ctx, tx, ledgerView, programs)
+			err := b.vm.Run(ctx, tx, ledgerView, programs.NewEmptyPrograms())
 			if err != nil {
 				return nil, err
 			}
@@ -932,11 +945,11 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	if err != nil {
 		return nil, err
 	}
-	delta := b.pendingBlock.LedgerDelta()
+	ledgerDelta := b.pendingBlock.LedgerDelta()
 	events := b.pendingBlock.Events()
 
 	// commit the pending block to storage
-	err = b.storage.CommitBlock(*block, collections, transactions, transactionResults, delta, events)
+	err = b.storage.CommitBlock(*block, collections, transactions, transactionResults, ledgerDelta, events)
 	if err != nil {
 		return nil, err
 	}
@@ -1024,8 +1037,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blo
 
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
 
-	programs := programs.NewEmptyPrograms()
-	err = b.vm.Run(blockContext, scriptProc, requestedLedgerView, programs)
+	err = b.vm.Run(blockContext, scriptProc, requestedLedgerView, programs.NewEmptyPrograms())
 	if err != nil {
 		return nil, err
 	}

@@ -73,6 +73,10 @@ func deployContract(b *emulator.Blockchain, name string, contract []byte) error 
 	serviceKey := b.ServiceKey()
 	serviceAddress := serviceKey.Address
 
+	if serviceKey.PrivateKey == nil {
+		return fmt.Errorf("not able to deploy contracts without set private key")
+	}
+
 	latestBlock, err := b.GetLatestBlock()
 	if err != nil {
 		return err
