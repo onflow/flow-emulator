@@ -15,7 +15,8 @@ RUN git config --global 'url.ssh://git@github.com/.insteadOf' https://github.com
 
 COPY . .
 
-ARG TARGETOS TARGETARCH
+ARG TARGETOS 
+ARG TARGETARCH
 RUN --mount=type=ssh \
     --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
