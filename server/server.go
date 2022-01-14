@@ -21,6 +21,10 @@ package server
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/onflow/flow-go/engine/access/rest"
+	"github.com/rs/zerolog"
+	"net"
+	"os"
 	"time"
 
 	"github.com/onflow/cadence"
@@ -155,6 +159,24 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 
 	livenessTicker := NewLivenessTicker(conf.LivenessCheckTolerance)
 	grpcServer := NewGRPCServer(logger, be, conf.GRPCPort, conf.GRPCDebug)
+
+	adapted := backend.NewAdapter(be)
+	srv, err := rest.NewServer(adapted, "127.0.0.1:3333", zerolog.New(os.Stdout))
+	if err != nil {
+		panic(err)
+	}
+
+	l, err := net.Listen("tcp", "127.0.0.1:3333")
+	if err != nil {
+		panic("failed to start the REST server")
+	}
+
+	go func() {
+		err = srv.Serve(l) // blocking call
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	server := &EmulatorServer{
 		logger:   logger,

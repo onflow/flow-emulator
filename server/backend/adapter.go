@@ -200,3 +200,7 @@ func (a *Adapter) GetLatestProtocolStateSnapshot(ctx context.Context) ([]byte, e
 func (a *Adapter) GetExecutionResultForBlockID(ctx context.Context, blockID flowgo.Identifier) (*flowgo.ExecutionResult, error) {
 	return a.backend.GetExecutionResultForBlockID(ctx, blockID)
 }
+
+func (a *Adapter) GetExecutionResultByID(ctx context.Context, id flowgo.Identifier) (*flowgo.ExecutionResult, error) {
+	return nil, nil
+}

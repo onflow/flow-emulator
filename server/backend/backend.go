@@ -586,7 +586,7 @@ func (b *Backend) GetLatestProtocolStateSnapshot(_ context.Context) ([]byte, err
 }
 
 func (b *Backend) GetExecutionResultForBlockID(_ context.Context, _ flowgo.Identifier) (*flowgo.ExecutionResult, error) {
-	panic("implement me")
+	return nil, nil
 }
 
 // EnableAutoMine enables the automine flag.
