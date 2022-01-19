@@ -53,7 +53,7 @@ type EmulatorServer struct {
 
 const (
 	defaultGRPCPort               = 3569
-	defaultRESTPort               = 8080
+	defaultRESTPort               = 8888
 	defaultAdminPort              = 8080
 	defaultDevWalletPort          = 8701
 	defaultLivenessCheckTolerance = time.Second
