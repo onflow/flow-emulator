@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2020 Dapper Labs, Inc.
+ * Copyright 2019-2022 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ package types
 import (
 	"fmt"
 
-	"github.com/onflow/flow-go/crypto/hash"
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go/crypto/hash"
 	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
@@ -36,12 +36,12 @@ type StorableTransactionResult struct {
 
 // A TransactionResult is the result of executing a transaction.
 type TransactionResult struct {
-	TransactionID flow.Identifier
+	TransactionID   flow.Identifier
 	ComputationUsed uint64
-  Error         error
-	Logs          []string
-	Events        []flow.Event
-	Debug         *TransactionResultDebug
+	Error           error
+	Logs            []string
+	Events          []flow.Event
+	Debug           *TransactionResultDebug
 }
 
 // Succeeded returns true if the transaction executed without errors.
