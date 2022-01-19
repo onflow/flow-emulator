@@ -21,10 +21,6 @@ package server
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/onflow/flow-go/engine/access/rest"
-	"github.com/rs/zerolog"
-	"net"
-	"os"
 	"time"
 
 	"github.com/onflow/cadence"
@@ -50,13 +46,15 @@ type EmulatorServer struct {
 	storage  graceland.Routine
 	grpc     graceland.Routine
 	admin    graceland.Routine
+	rest     graceland.Routine
 	wallet   graceland.Routine
 	blocks   graceland.Routine
 }
 
 const (
 	defaultGRPCPort               = 3569
-	defaultHTTPPort               = 8080
+	defaultRESTPort               = 8080
+	defaultAdminPort              = 8080
 	defaultDevWalletPort          = 8701
 	defaultLivenessCheckTolerance = time.Second
 	defaultDBGCInterval           = time.Minute * 5
@@ -84,7 +82,9 @@ var (
 type Config struct {
 	GRPCPort                  int
 	GRPCDebug                 bool
-	HTTPPort                  int
+	AdminPort                 int
+	RESTPort                  int
+	RESTDebug                 bool
 	DevWalletPort             int
 	DevWalletEnabled          bool
 	HTTPHeaders               []HTTPHeader
@@ -159,23 +159,11 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 
 	livenessTicker := NewLivenessTicker(conf.LivenessCheckTolerance)
 	grpcServer := NewGRPCServer(logger, be, conf.GRPCPort, conf.GRPCDebug)
-
-	srv, err := rest.NewServer(backend.NewAdapter(be), "127.0.0.1:3333", zerolog.New(os.Stdout))
+	restServer, err := NewRestServer(be, conf.RESTPort, conf.RESTDebug)
 	if err != nil {
-		panic(err)
+		logger.WithError(err).Error("❗  Failed to startup REST API")
+		return nil
 	}
-
-	l, err := net.Listen("tcp", "127.0.0.1:3333")
-	if err != nil {
-		panic("failed to start the REST server")
-	}
-
-	go func() {
-		err = srv.Serve(l) // blocking call
-		if err != nil {
-			panic(err)
-		}
-	}()
 
 	server := &EmulatorServer{
 		logger:   logger,
@@ -184,6 +172,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		storage:  store,
 		liveness: livenessTicker,
 		grpc:     grpcServer,
+		rest:     restServer,
 		admin:    nil,
 		wallet:   nil,
 	}
@@ -195,7 +184,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 			KeyId:      0,
 			PrivateKey: hex.EncodeToString(conf.ServicePrivateKey.Encode()),
 			PublicKey:  hex.EncodeToString(conf.ServicePublicKey.Encode()),
-			AccessNode: fmt.Sprintf("http://localhost:%d", conf.HTTPPort),
+			AccessNode: fmt.Sprintf("http://localhost:%d", conf.AdminPort),
 			UseAPI:     false,
 			Suffix:     "",
 		}
@@ -203,8 +192,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		server.wallet = NewWalletServer(walletConfig, conf.DevWalletPort, conf.HTTPHeaders)
 	}
 
-	httpServer := NewHTTPServer(server, be, &store, grpcServer, livenessTicker, conf.HTTPPort, conf.HTTPHeaders)
-	server.admin = httpServer
+	server.admin = NewAdminServer(server, be, &store, grpcServer, livenessTicker, conf.AdminPort, conf.HTTPHeaders)
 
 	// only create blocks ticker if block time > 0
 	if conf.BlockTime > 0 {
@@ -231,8 +219,13 @@ func (s *EmulatorServer) Start() {
 	s.group.Add(s.grpc)
 
 	s.logger.
-		WithField("port", s.config.HTTPPort).
-		Infof("🌱  Starting HTTP server on port %d", s.config.HTTPPort)
+		WithField("port", s.config.RESTPort).
+		Infof("🌱  Starting REST API on port %d", s.config.RESTPort)
+	s.group.Add(s.rest)
+
+	s.logger.
+		WithField("port", s.config.AdminPort).
+		Infof("🌱  Starting admin server on port %d", s.config.AdminPort)
 	s.group.Add(s.admin)
 
 	if s.wallet != nil {
@@ -324,8 +317,12 @@ func sanitizeConfig(conf *Config) *Config {
 		conf.GRPCPort = defaultGRPCPort
 	}
 
-	if conf.HTTPPort == 0 {
-		conf.HTTPPort = defaultHTTPPort
+	if conf.RESTPort == 0 {
+		conf.RESTPort = defaultRESTPort
+	}
+
+	if conf.AdminPort == 0 {
+		conf.AdminPort = defaultAdminPort
 	}
 
 	if conf.DevWalletPort == 0 {
