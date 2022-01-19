@@ -49,7 +49,7 @@ type EmulatorServer struct {
 	liveness graceland.Routine
 	storage  graceland.Routine
 	grpc     graceland.Routine
-	http     graceland.Routine
+	admin    graceland.Routine
 	wallet   graceland.Routine
 	blocks   graceland.Routine
 }
@@ -160,8 +160,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	livenessTicker := NewLivenessTicker(conf.LivenessCheckTolerance)
 	grpcServer := NewGRPCServer(logger, be, conf.GRPCPort, conf.GRPCDebug)
 
-	adapted := backend.NewAdapter(be)
-	srv, err := rest.NewServer(adapted, "127.0.0.1:3333", zerolog.New(os.Stdout))
+	srv, err := rest.NewServer(backend.NewAdapter(be), "127.0.0.1:3333", zerolog.New(os.Stdout))
 	if err != nil {
 		panic(err)
 	}
@@ -185,7 +184,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		storage:  store,
 		liveness: livenessTicker,
 		grpc:     grpcServer,
-		http:     nil,
+		admin:    nil,
 		wallet:   nil,
 	}
 
@@ -205,7 +204,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	}
 
 	httpServer := NewHTTPServer(server, be, &store, grpcServer, livenessTicker, conf.HTTPPort, conf.HTTPHeaders)
-	server.http = httpServer
+	server.admin = httpServer
 
 	// only create blocks ticker if block time > 0
 	if conf.BlockTime > 0 {
@@ -234,7 +233,7 @@ func (s *EmulatorServer) Start() {
 	s.logger.
 		WithField("port", s.config.HTTPPort).
 		Infof("🌱  Starting HTTP server on port %d", s.config.HTTPPort)
-	s.group.Add(s.http)
+	s.group.Add(s.admin)
 
 	if s.wallet != nil {
 		s.logger.
