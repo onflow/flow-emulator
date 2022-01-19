@@ -15,7 +15,7 @@ require (
 	github.com/ipfs/go-ipfs-blockstore v1.1.1 // indirect
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v0.20.3
-	github.com/onflow/flow-go v0.23.2-0.20220119090900-b6728458eab0
+	github.com/onflow/flow-go v0.23.2-0.20220119140019-c5e390f139a8
 	github.com/onflow/flow-go-sdk v0.24.0
 	github.com/onflow/flow-go/crypto v0.23.3
 	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20210915191154-12ee8c507a0e
