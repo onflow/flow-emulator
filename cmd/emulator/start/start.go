@@ -39,7 +39,8 @@ import (
 
 type Config struct {
 	Port                   int           `default:"3569" flag:"port,p" info:"port to run RPC server"`
-	HTTPPort               int           `default:"8080" flag:"http-port" info:"port to run HTTP server"`
+	RestPort               int           `default:"8888" flag:"rest-port" info:"port to run the REST API"`
+	AdminPort              int           `default:"8080" flag:"admin-port" info:"port to run the admin API"`
 	DevWalletPort          int           `default:"8701" flag:"dev-wallet-port" info:"port to run Dev Wallet server"`
 	DevWalletEnabled       bool          `default:"false" flag:"dev-wallet" info:"enable local Dev Wallet server"`
 	Verbose                bool          `default:"false" flag:"verbose,v" info:"enable verbose logging"`
@@ -51,6 +52,7 @@ type Config struct {
 	ServiceKeyHashAlgo     string        `default:"SHA3_256" flag:"service-hash-algo" info:"service account key hash algorithm"`
 	Init                   bool          `default:"false" flag:"init" info:"whether to initialize a new account profile"`
 	GRPCDebug              bool          `default:"false" flag:"grpc-debug" info:"enable gRPC server reflection for debugging with grpc_cli"`
+	RESTDebug              bool          `default:"false" flag:"rest-debug" info:"enable REST API debugging output"`
 	Persist                bool          `default:"false" flag:"persist" info:"enable persistent storage"`
 	DBPath                 string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
 	SimpleAddresses        bool          `default:"false" flag:"simple-addresses" info:"use sequential addresses starting with 0x01"`
@@ -151,7 +153,9 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 			serverConf := &server.Config{
 				GRPCPort:         conf.Port,
 				GRPCDebug:        conf.GRPCDebug,
-				HTTPPort:         conf.HTTPPort,
+				AdminPort:        conf.AdminPort,
+				RESTPort:         conf.RestPort,
+				RESTDebug:        conf.RESTDebug,
 				DevWalletPort:    conf.DevWalletPort,
 				DevWalletEnabled: conf.DevWalletEnabled,
 				// TODO: allow headers to be parsed from environment
