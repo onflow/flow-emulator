@@ -58,7 +58,13 @@ func setupPendingBlockTests(t *testing.T) (
 }
 
 func TestPendingBlockBeforeExecution(t *testing.T) {
+
+	t.Parallel()
+
 	t.Run("EmptyPendingBlock", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, _, _, _ := setupPendingBlockTests(t)
 
 		// Execute empty pending block
@@ -74,6 +80,9 @@ func TestPendingBlockBeforeExecution(t *testing.T) {
 	})
 
 	t.Run("AddDuplicateTransaction", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, tx, _, _ := setupPendingBlockTests(t)
 
 		// Add tx1 to pending block
@@ -89,6 +98,9 @@ func TestPendingBlockBeforeExecution(t *testing.T) {
 	})
 
 	t.Run("CommitBeforeExecution", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, tx, _, _ := setupPendingBlockTests(t)
 
 		// Add tx1 to pending block
@@ -105,7 +117,13 @@ func TestPendingBlockBeforeExecution(t *testing.T) {
 }
 
 func TestPendingBlockDuringExecution(t *testing.T) {
+
+	t.Parallel()
+
 	t.Run("ExecuteNextTransaction", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, tx1, _, invalid := setupPendingBlockTests(t)
 
 		// Add tx1 to pending block
@@ -131,6 +149,9 @@ func TestPendingBlockDuringExecution(t *testing.T) {
 	})
 
 	t.Run("ExecuteBlock", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, tx1, _, invalid := setupPendingBlockTests(t)
 
 		// Add tx1 to pending block
@@ -155,6 +176,9 @@ func TestPendingBlockDuringExecution(t *testing.T) {
 	})
 
 	t.Run("ExecuteNextThenBlock", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, tx1, tx2, invalid := setupPendingBlockTests(t)
 
 		// Add tx1 to pending block
@@ -187,6 +211,9 @@ func TestPendingBlockDuringExecution(t *testing.T) {
 	})
 
 	t.Run("AddTransactionMidExecution", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, tx1, tx2, invalid := setupPendingBlockTests(t)
 
 		// Add tx1 to pending block
@@ -211,6 +238,9 @@ func TestPendingBlockDuringExecution(t *testing.T) {
 	})
 
 	t.Run("CommitMidExecution", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, tx1, _, invalid := setupPendingBlockTests(t)
 
 		// Add tx1 to pending block
@@ -235,6 +265,9 @@ func TestPendingBlockDuringExecution(t *testing.T) {
 	})
 
 	t.Run("TransactionsExhaustedDuringExecution", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, tx1, _, _ := setupPendingBlockTests(t)
 
 		// Add tx1 to pending block
@@ -260,6 +293,9 @@ func TestPendingBlockDuringExecution(t *testing.T) {
 }
 
 func TestPendingBlockCommit(t *testing.T) {
+
+	t.Parallel()
+
 	b, err := emulator.NewBlockchain(
 		emulator.WithStorageLimitEnabled(false),
 	)

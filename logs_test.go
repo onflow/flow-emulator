@@ -9,6 +9,9 @@ import (
 )
 
 func TestRuntimeLogs(t *testing.T) {
+
+	t.Parallel()
+
 	b, err := emulator.NewBlockchain()
 	require.NoError(t, err)
 

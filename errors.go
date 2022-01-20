@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2020 Dapper Labs, Inc.
+ * Copyright 2019-2022 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ package emulator
 import (
 	"fmt"
 
-	"github.com/onflow/flow-go/access"
-	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
+	"github.com/onflow/flow-go/access"
+	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
 // A NotFoundError indicates that an entity could not be found.

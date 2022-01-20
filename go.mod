@@ -1,27 +1,34 @@
 module github.com/onflow/flow-emulator
 
-go 1.13
+go 1.16
 
 require (
-	github.com/dgraph-io/badger/v2 v2.0.3
-	github.com/fxamacker/cbor/v2 v2.2.1-0.20210510192846-c3f3c69e7bc8
-	github.com/golang/mock v1.5.0
+	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
+	github.com/dgraph-io/badger/v2 v2.2007.4
+	github.com/fxamacker/cbor/v2 v2.3.1-0.20211029162100-5d5d7c3edd41
+	github.com/go-git/go-git/v5 v5.4.2
+	github.com/golang/mock v1.6.0
+	github.com/google/uuid v1.3.0
+	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.12.0
-	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
-	github.com/onflow/cadence v0.18.0
-	github.com/onflow/flow-go v0.18.4
-	github.com/onflow/flow-go-sdk v0.20.1-0.20210623043139-533a95abf071
-	github.com/onflow/flow-go/crypto v0.18.0
-	github.com/onflow/flow/protobuf/go/flow v0.2.0
+	github.com/ipfs/go-ipfs-blockstore v1.1.1 // indirect
+	github.com/logrusorgru/aurora v2.0.3+incompatible
+	github.com/onflow/cadence v0.20.3
+	github.com/onflow/flow-go v0.23.2-0.20220119144252-3b1e087a7ac2
+	github.com/onflow/flow-go-sdk v0.24.0
+	github.com/onflow/flow-go/crypto v0.23.3
+	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20210915191154-12ee8c507a0e
+	github.com/onflow/flow/protobuf/go/flow v0.2.3
+	github.com/onflow/fusd/lib/go/contracts v0.0.0-20211021081023-ae9de8fb2c7e
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.7.1
-	github.com/prometheus/common v0.14.0
+	github.com/prometheus/client_golang v1.11.0
 	github.com/psiemens/graceland v1.0.0
-	github.com/psiemens/sconfig v0.0.0-20190623041652-6e01eb1354fc
-	github.com/rs/zerolog v1.19.0
+	github.com/psiemens/sconfig v0.1.0
+	github.com/rs/zerolog v1.26.1
 	github.com/sirupsen/logrus v1.6.0
-	github.com/spf13/cobra v0.0.6
+	github.com/spf13/cobra v1.3.0
 	github.com/stretchr/testify v1.7.0
-	google.golang.org/grpc v1.33.2
+	go.uber.org/zap v1.19.1 // indirect
+	google.golang.org/grpc v1.43.0
 )

@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2020 Dapper Labs, Inc.
+ * Copyright 2019-2022 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,9 @@ func backendTest(f func(t *testing.T, backend *backend.Backend, emu *mocks.MockE
 }
 
 func TestBackend(t *testing.T) {
+
+	t.Parallel()
+
 	ids := test.IdentifierGenerator()
 	results := test.TransactionResultGenerator()
 
@@ -641,6 +644,9 @@ func TestBackend(t *testing.T) {
 }
 
 func TestBackendAutoMine(t *testing.T) {
+
+	t.Parallel()
+
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 

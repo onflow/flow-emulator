@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2020 Dapper Labs, Inc.
+ * Copyright 2019-2022 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,11 @@ func VMTransactionResultToEmulator(tp *fvm.TransactionProcedure) (*types.Transac
 	}
 
 	return &types.TransactionResult{
-		TransactionID: txID,
-		Error:         VMErrorToEmulator(tp.Err),
-		Logs:          tp.Logs,
-		Events:        sdkEvents,
+		TransactionID:   txID,
+		ComputationUsed: tp.ComputationUsed,
+		Error:           VMErrorToEmulator(tp.Err),
+		Logs:            tp.Logs,
+		Events:          sdkEvents,
 	}, nil
 }
 

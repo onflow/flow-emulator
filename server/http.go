@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2020 Dapper Labs, Inc.
+ * Copyright 2019-2022 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,14 @@ import (
 	"net/http"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
-	LivenessPath = "/live"
-	MetricsPath  = "/metrics"
+	LivenessPath    = "/live"
+	MetricsPath     = "/metrics"
+	EmulatorApiPath = "/emulator/"
 )
 
 type HTTPHeader struct {
@@ -42,7 +44,10 @@ type HTTPServer struct {
 	httpServer *http.Server
 }
 
-func NewHTTPServer(
+func NewAdminServer(
+	emulatorServer *EmulatorServer,
+	backend *backend.Backend,
+	storage *Storage,
 	grpcServer *GRPCServer,
 	liveness *LivenessTicker,
 	port int,
@@ -64,6 +69,9 @@ func NewHTTPServer(
 
 	// register gRPC HTTP proxy
 	mux.Handle("/", wrappedHandler(wrappedServer, headers))
+
+	// register API handler
+	mux.Handle(EmulatorApiPath, NewEmulatorApiServer(emulatorServer, backend, storage))
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),

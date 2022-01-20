@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2020 Dapper Labs, Inc.
+ * Copyright 2019-2022 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,4 +195,12 @@ func (a *Adapter) GetEventsForBlockIDs(
 
 func (a *Adapter) GetLatestProtocolStateSnapshot(ctx context.Context) ([]byte, error) {
 	return a.backend.GetLatestProtocolStateSnapshot(ctx)
+}
+
+func (a *Adapter) GetExecutionResultForBlockID(ctx context.Context, blockID flowgo.Identifier) (*flowgo.ExecutionResult, error) {
+	return a.backend.GetExecutionResultForBlockID(ctx, blockID)
+}
+
+func (a *Adapter) GetExecutionResultByID(ctx context.Context, id flowgo.Identifier) (*flowgo.ExecutionResult, error) {
+	return nil, nil
 }

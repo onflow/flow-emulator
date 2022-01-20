@@ -1,6 +1,7 @@
 package emulator_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/onflow/cadence"
@@ -15,6 +16,9 @@ import (
 )
 
 func TestExecuteScript(t *testing.T) {
+
+	t.Parallel()
+
 	b, err := emulator.NewBlockchain(
 		emulator.WithStorageLimitEnabled(false),
 	)
@@ -68,7 +72,13 @@ func TestExecuteScript(t *testing.T) {
 }
 
 func TestExecuteScript_WithArguments(t *testing.T) {
+
+	t.Parallel()
+
 	t.Run("Int", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -86,7 +96,11 @@ func TestExecuteScript_WithArguments(t *testing.T) {
 
 		assert.Equal(t, cadence.NewInt(10), scriptResult.Value)
 	})
+
 	t.Run("String", func(t *testing.T) {
+
+		t.Parallel()
+
 		b, err := emulator.NewBlockchain()
 		require.NoError(t, err)
 
@@ -97,7 +111,7 @@ func TestExecuteScript_WithArguments(t *testing.T) {
 			}
 		`
 
-		arg, err := jsoncdc.Encode(cadence.NewString("Hello, World"))
+		arg, err := jsoncdc.Encode(cadence.String("Hello, World"))
 		require.NoError(t, err)
 		scriptResult, err := b.ExecuteScript([]byte(scriptWithArgs), [][]byte{arg})
 		require.NoError(t, err)
@@ -105,14 +119,36 @@ func TestExecuteScript_WithArguments(t *testing.T) {
 	})
 }
 
-func TestExecuteScriptAtBlockHeight(t *testing.T) {
-	// TODO
-	// Test that scripts can be executed at different block heights
+func TestExecuteScript_FlowServiceAccountBalance(t *testing.T) {
+
+	t.Parallel()
+
+	b, err := emulator.NewBlockchain()
+	require.NoError(t, err)
+
+	code := fmt.Sprintf(
+		`
+          import FlowServiceAccount from %[1]s
+          pub fun main(): UFix64 {
+            let acct = getAccount(%[1]s)
+            return FlowServiceAccount.defaultTokenBalance(acct)
+          }
+        `,
+		b.GetChain().ServiceAddress().HexWithPrefix(),
+	)
+
+	res, err := b.ExecuteScript([]byte(code), nil)
+	require.NoError(t, err)
+	require.NoError(t, res.Error)
+
+	require.Positive(t, res.Value)
 }
 
 func TestInfiniteScript(t *testing.T) {
 
-	const limit = 10
+	t.Parallel()
+
+	const limit = 1000
 	b, err := emulator.NewBlockchain(
 		emulator.WithScriptGasLimit(limit),
 	)

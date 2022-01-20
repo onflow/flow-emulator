@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2020 Dapper Labs, Inc.
+ * Copyright 2019-2022 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ import (
 )
 
 func Test_BasicCheck(t *testing.T) {
+
+	t.Parallel()
+
 	mc := NewCheckCollector(time.Millisecond * 20)
 	if !mc.IsLive(0) {
 		t.Errorf("Multicheck with no checks should always pass")
@@ -66,6 +69,9 @@ func Test_BasicCheck(t *testing.T) {
 }
 
 func Test_CheckHTTP(t *testing.T) {
+
+	t.Parallel()
+
 	c := NewCheckCollector(time.Millisecond * 20)
 	r := httptest.NewRequest(http.MethodGet, "/live", nil)
 	wr := httptest.NewRecorder()
@@ -89,6 +95,9 @@ func Test_CheckHTTP(t *testing.T) {
 }
 
 func Test_CheckHTTPOverride(t *testing.T) {
+
+	t.Parallel()
+
 	c := NewCheckCollector(time.Millisecond * 20)
 	r := httptest.NewRequest(http.MethodGet, "/live", nil)
 	r.Header.Add(ToleranceHeader, "30s")

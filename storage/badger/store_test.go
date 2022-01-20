@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2020 Dapper Labs, Inc.
+ * Copyright 2019-2022 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/onflow/flow-go-sdk/test"
 	"github.com/onflow/flow-go/engine/execution/state/delta"
 	flowgo "github.com/onflow/flow-go/model/flow"
-	"github.com/onflow/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -38,6 +38,9 @@ import (
 )
 
 func TestBlocks(t *testing.T) {
+
+	t.Parallel()
+
 	store, dir := setupStore(t)
 	defer func() {
 		require.NoError(t, store.Close())
@@ -120,6 +123,9 @@ func TestBlocks(t *testing.T) {
 }
 
 func TestCollections(t *testing.T) {
+
+	t.Parallel()
+
 	store, dir := setupStore(t)
 	defer func() {
 		require.NoError(t, store.Close())
@@ -157,6 +163,9 @@ func TestCollections(t *testing.T) {
 }
 
 func TestTransactions(t *testing.T) {
+
+	t.Parallel()
+
 	store, dir := setupStore(t)
 	defer func() {
 		require.NoError(t, store.Close())
@@ -185,6 +194,9 @@ func TestTransactions(t *testing.T) {
 }
 
 func TestTransactionResults(t *testing.T) {
+
+	t.Parallel()
+
 	store, dir := setupStore(t)
 	defer func() {
 		require.NoError(t, store.Close())
@@ -219,7 +231,13 @@ func TestTransactionResults(t *testing.T) {
 }
 
 func TestLedger(t *testing.T) {
+
+	t.Parallel()
+
 	t.Run("get/set", func(t *testing.T) {
+
+		t.Parallel()
+
 		store, dir := setupStore(t)
 		defer func() {
 			require.NoError(t, store.Close())
@@ -250,6 +268,9 @@ func TestLedger(t *testing.T) {
 	})
 
 	t.Run("versioning", func(t *testing.T) {
+
+		t.Parallel()
+
 		store, dir := setupStore(t)
 		defer func() {
 			require.NoError(t, store.Close())
@@ -317,6 +338,9 @@ func TestLedger(t *testing.T) {
 }
 
 func TestInsertEvents(t *testing.T) {
+
+	t.Parallel()
+
 	store, dir := setupStore(t)
 	defer func() {
 		require.NoError(t, store.Close())
@@ -342,6 +366,9 @@ func TestInsertEvents(t *testing.T) {
 	})
 }
 func TestEventsByHeight(t *testing.T) {
+
+	t.Parallel()
+
 	store, dir := setupStore(t)
 	defer func() {
 		require.NoError(t, store.Close())
@@ -422,6 +449,9 @@ func TestEventsByHeight(t *testing.T) {
 }
 
 func TestPersistence(t *testing.T) {
+
+	t.Parallel()
+
 	store, dir := setupStore(t)
 	defer func() {
 		require.NoError(t, store.Close())

@@ -3,7 +3,7 @@
 # NOTE: Must be run in the context of the repo's root directory
 
 ## Build the app binary
-FROM golang:1.16 AS build-app
+FROM --platform=$BUILDPLATFORM golang:1.16 AS build-app
 
 # Build the app binary in /app
 RUN mkdir /app
@@ -15,10 +15,12 @@ RUN git config --global 'url.ssh://git@github.com/.insteadOf' https://github.com
 
 COPY . .
 
+ARG TARGETOS 
+ARG TARGETARCH
 RUN --mount=type=ssh \
     --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    GO111MODULE=on CGO_ENABLED=0 GOOOS=linux GOARCH=amd64 \
+    GO111MODULE=on CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
     go build -ldflags "-extldflags -static" -o ./app ./cmd/emulator
 
 ## Add the binary to a fresh distroless image

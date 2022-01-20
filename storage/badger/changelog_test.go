@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2020 Dapper Labs, Inc.
+ * Copyright 2019-2022 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,13 @@ import (
 )
 
 func TestChangelist(t *testing.T) {
+
+	t.Parallel()
+
 	t.Run("should be safe to interact with empty changelist", func(t *testing.T) {
+
+		t.Parallel()
+
 		var clist changelist
 		assert.NotPanics(t, func() {
 			clist.search(1)
@@ -37,6 +43,9 @@ func TestChangelist(t *testing.T) {
 	})
 
 	t.Run("should return notFound", func(t *testing.T) {
+
+		t.Parallel()
+
 		var clist changelist
 		// should not find anything when empty
 		val := clist.search(1)
@@ -50,8 +59,14 @@ func TestChangelist(t *testing.T) {
 	})
 
 	t.Run("should be able to find values", func(t *testing.T) {
+
+		t.Parallel()
+
 		// If an exact match exists, should always find that
 		t.Run("exact match", func(t *testing.T) {
+
+			t.Parallel()
+
 			var clist changelist
 
 			clist.add(1)
@@ -63,9 +78,13 @@ func TestChangelist(t *testing.T) {
 			val = clist.search(2)
 			assert.EqualValues(t, 2, val)
 		})
+
 		// If no exact match exists, should find the highest value that is
 		// lower than the input
 		t.Run("approx matches", func(t *testing.T) {
+
+			t.Parallel()
+
 			var clist changelist
 
 			clist.add(0)
@@ -104,6 +123,9 @@ func TestChangelist(t *testing.T) {
 }
 
 func TestChangelog(t *testing.T) {
+
+	t.Parallel()
+
 	var (
 		key1 = flow.RegisterID{
 			Owner:      "",
@@ -118,6 +140,9 @@ func TestChangelog(t *testing.T) {
 	)
 
 	t.Run("should return notFound", func(t *testing.T) {
+
+		t.Parallel()
+
 		clog := newChangelog()
 
 		// should not find anything in empty changelog
@@ -133,6 +158,9 @@ func TestChangelog(t *testing.T) {
 	})
 
 	t.Run("should find exact block/register matches", func(t *testing.T) {
+
+		t.Parallel()
+
 		clog := newChangelog()
 
 		clog.addChange(key1, 1)
@@ -141,6 +169,9 @@ func TestChangelog(t *testing.T) {
 	})
 
 	t.Run("should find approx matches", func(t *testing.T) {
+
+		t.Parallel()
+
 		clog := newChangelog()
 
 		clog.addChange(key1, 1)

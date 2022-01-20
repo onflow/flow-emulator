@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2020 Dapper Labs, Inc.
+ * Copyright 2019-2022 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@ import (
 )
 
 func TestMemstore(t *testing.T) {
+
+	t.Parallel()
+
 	const blockHeight = 0
 	key := flowgo.RegisterID{
 		Owner:      "",
@@ -71,6 +74,9 @@ func TestMemstore(t *testing.T) {
 }
 
 func TestMemstoreSetValueToNil(t *testing.T) {
+
+	t.Parallel()
+
 	store := New()
 	key := flowgo.RegisterID{
 		Owner:      "",

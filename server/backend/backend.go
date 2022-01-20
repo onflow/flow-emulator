@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2020 Dapper Labs, Inc.
+ * Copyright 2019-2022 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,11 @@ type Backend struct {
 	logger   *logrus.Logger
 	emulator Emulator
 	automine bool
+}
+
+// SetEmulator hotswaps emulator for state management.
+func (b *Backend) SetEmulator(emulator Emulator) {
+	b.emulator = emulator
 }
 
 // New returns a new backend.
@@ -333,7 +338,22 @@ func (b *Backend) GetAccountAtBlockHeight(
 	address sdk.Address,
 	height uint64,
 ) (*sdk.Account, error) {
-	panic("implement me")
+	b.logger.
+		WithField("address", address).
+		WithField("height", height).
+		Debugf("👤  GetAccountAtBlockHeight called")
+
+	account, err := b.emulator.GetAccountAtBlock(address, height)
+	if err != nil {
+		switch err.(type) {
+		case emulator.NotFoundError:
+			return nil, status.Error(codes.NotFound, err.Error())
+		default:
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+
+	return account, nil
 }
 
 // ExecuteScriptAtLatestBlock executes a script at a the latest block
@@ -565,6 +585,10 @@ func (b *Backend) GetLatestProtocolStateSnapshot(_ context.Context) ([]byte, err
 	panic("implement me")
 }
 
+func (b *Backend) GetExecutionResultForBlockID(_ context.Context, _ flowgo.Identifier) (*flowgo.ExecutionResult, error) {
+	return nil, nil
+}
+
 // EnableAutoMine enables the automine flag.
 func (b *Backend) EnableAutoMine() {
 	b.automine = true
@@ -579,10 +603,12 @@ func printTransactionResult(logger *logrus.Logger, result *types.TransactionResu
 	if result.Succeeded() {
 		logger.
 			WithField("txID", result.TransactionID.String()).
+			WithField("computationUsed", result.ComputationUsed).
 			Info("⭐  Transaction executed")
 	} else {
 		logger.
 			WithField("txID", result.TransactionID.String()).
+			WithField("computationUsed", result.ComputationUsed).
 			Warn("❗  Transaction reverted")
 	}
 
@@ -608,6 +634,15 @@ func printTransactionResult(logger *logrus.Logger, result *types.TransactionResu
 			logPrefix("ERR", result.TransactionID, aurora.RedFg),
 			result.Error.Error(),
 		)
+
+		if result.Debug != nil {
+			for k, v := range result.Debug.Meta {
+				logger.WithField(k, v)
+			}
+			logger.Debug(
+				fmt.Sprintf("%s %s", "❗  Transaction Signature Error", result.Debug.Message),
+			)
+		}
 	}
 }
 

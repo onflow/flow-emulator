@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2020 Dapper Labs, Inc.
+ * Copyright 2019-2022 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 package emulator_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -37,7 +38,79 @@ import (
 
 const testContract = "pub contract Test {}"
 
+func TestGetAccount(t *testing.T) {
+
+	t.Parallel()
+
+	t.Run("Get account at latest block height", func(t *testing.T) {
+
+		t.Parallel()
+
+		b, err := emulator.NewBlockchain(
+			emulator.WithSimpleAddresses(),
+			emulator.WithStorageLimitEnabled(false),
+		)
+		require.NoError(t, err)
+
+		acc, err := b.GetAccount(b.ServiceKey().Address)
+		assert.NoError(t, err)
+
+		assert.Equal(t, uint64(0), acc.Keys[0].SequenceNumber)
+	})
+
+	t.Run("Get account at specified block height", func(t *testing.T) {
+
+		t.Parallel()
+
+		b, err := emulator.NewBlockchain(
+			emulator.WithSimpleAddresses(),
+			emulator.WithStorageLimitEnabled(false),
+		)
+		require.NoError(t, err)
+
+		acc, err := b.GetAccount(b.ServiceKey().Address)
+		assert.NoError(t, err)
+
+		assert.Equal(t, uint64(0), acc.Keys[0].SequenceNumber)
+		contract := templates.Contract{
+			Name:   "Test",
+			Source: testContract,
+		}
+
+		tx := templates.AddAccountContract(b.ServiceKey().Address, contract)
+
+		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		assert.NoError(t, err)
+
+		err = b.AddTransaction(*tx)
+		require.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+		assertTransactionSucceeded(t, result)
+
+		bl, err := b.CommitBlock()
+		assert.NoError(t, err)
+
+		accNow, err := b.GetAccountAtBlock(b.ServiceKey().Address, bl.Header.Height)
+		assert.NoError(t, err)
+
+		accPrev, err := b.GetAccountAtBlock(b.ServiceKey().Address, bl.Header.Height-uint64(1))
+		assert.NoError(t, err)
+
+		assert.Equal(t, accNow.Keys[0].SequenceNumber, uint64(1))
+		assert.Equal(t, accPrev.Keys[0].SequenceNumber, uint64(0))
+	})
+}
+
 func TestCreateAccount(t *testing.T) {
+
+	t.Parallel()
+
 	accountKeys := test.AccountKeyGenerator()
 
 	t.Run("Simple addresses", func(t *testing.T) {
@@ -500,6 +573,9 @@ func TestCreateAccount(t *testing.T) {
 }
 
 func TestAddAccountKey(t *testing.T) {
+
+	t.Parallel()
+
 	accountKeys := test.AccountKeyGenerator()
 
 	t.Run("Valid key", func(t *testing.T) {
@@ -582,6 +658,9 @@ func TestAddAccountKey(t *testing.T) {
 }
 
 func TestRemoveAccountKey(t *testing.T) {
+
+	t.Parallel()
+
 	b, err := emulator.NewBlockchain(
 		emulator.WithStorageLimitEnabled(false),
 	)
@@ -670,7 +749,8 @@ func TestRemoveAccountKey(t *testing.T) {
 	result, err = b.ExecuteNextTransaction()
 	assert.NoError(t, err)
 
-	unittest.AssertFVMErrorType(t, &fvmerrors.InvalidProposalSignatureError{}, result.Error)
+	var sigErr *fvmerrors.InvalidProposalSignatureError
+	assert.True(t, errors.As(result.Error, &sigErr))
 
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
@@ -715,6 +795,8 @@ func TestRemoveAccountKey(t *testing.T) {
 }
 
 func TestUpdateAccountCode(t *testing.T) {
+
+	t.Parallel()
 
 	const codeA = `
       pub contract Test {
@@ -858,6 +940,9 @@ func TestUpdateAccountCode(t *testing.T) {
 }
 
 func TestImportAccountCode(t *testing.T) {
+
+	t.Parallel()
+
 	b, err := emulator.NewBlockchain(
 		emulator.WithStorageLimitEnabled(false),
 	)
