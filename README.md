@@ -92,6 +92,28 @@ in the same directory as `flow.json`. This will configure the emulator with your
 project's service account, meaning you can use it to sign and submit transactions.
 Read more about the project and configuration [here](https://docs.onflow.org/flow-cli/configuration/).
 
+## Managing emulator state
+It's possible to manage emulator state by using the admin API. You can at any point 
+create a new named snapshot of the state and then at any later point revert emulator 
+state to that reference. 
+
+In order to use the state managment functionality you need to run the emulator with persistent state:
+```bash
+flow emulator --persist
+```
+
+Create a new snapshot by doing an HTTP request: 
+```
+GET http://localhost:8080/emulator/snapshot/{name}
+```
+*Please note the example above uses the default admin API port*
+
+At any later point you can reload to that snapshot by executing the same HTTP request as before. 
+You need to use the same value for `name` parameter.
+
+The snapshot functionality is a great tool for testing where you can first initialize 
+a base snapshot with seed values, execute the test and then revert to that initialized state.
+
 ## Launching dev-wallet with the emulator 
 
 You can start the dev-wallet with the `--dev-wallet` flag. Default dev-wallet port is `8701`. 

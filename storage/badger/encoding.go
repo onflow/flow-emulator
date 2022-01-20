@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2020 Dapper Labs, Inc.
+ * Copyright 2019-2022 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ package badger
 import (
 	"fmt"
 
-	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/fxamacker/cbor/v2"
+	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/onflow/flow-emulator/types"
 )
