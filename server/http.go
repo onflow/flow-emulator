@@ -44,7 +44,7 @@ type HTTPServer struct {
 	httpServer *http.Server
 }
 
-func NewHTTPServer(
+func NewAdminServer(
 	emulatorServer *EmulatorServer,
 	backend *backend.Backend,
 	storage *Storage,

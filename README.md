@@ -39,8 +39,9 @@ and if you plan to run the emulator with Docker you must use the environment var
 
 | Flag             | Env   | Default | Description                                                            |
 | ----------------- | ------ | ----------------- | ----------------- |
-| `--port`, `-p` | `FLOW_PORT` | `3569` | RPC port to listen on |
-| `--http-port` | `FLOW_HTTPPORT` | `8080` | HTTP port to listen on |
+| `--port`, `-p` | `FLOW_PORT` | `3569` | gRPC port to listen on |
+| `--rest-port` | `FLOW_RESTPORT` | `8888` | REST API port to listen on |
+| `--admin-port` | `FLOW_ADMINPORT` | `8080` | Admin API port to listen on |
 | `--dev-wallet` | `DEV_WALLET` | `false` | Enable local Dev Wallet server |
 | `--dev-wallet-port` | `DEV_WALLET_PORT` | `8701` | Port to run Dev Wallet server on |
 | `--verbose`, `-v` | `FLOW_VERBOSE` | `false` | Enable verbose logging (useful for debugging) |
@@ -52,6 +53,7 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--service-sig-algo` | `FLOW_SERVICEKEYSIGALGO` | `ECDSA_P256` | Service account key [signature algorithm](https://docs.onflow.org/cadence/language/crypto/#signing-algorithms) |
 | `--service-hash-algo` | `FLOW_SERVICEKEYHASHALGO` | `SHA3_256` | Service account key [hash algorithm](https://docs.onflow.org/cadence/language/crypto/#hashing) |
 | `--init` | `FLOW_INIT` | `false` | Generate and set a new [service account](https://docs.onflow.org/flow-token/concepts/#flow-service-account) |
+| `--rest-debug` | `FLOW_RESTDEBUG` | `false` | Enable REST API debugging output |
 | `--grpc-debug` | `FLOW_GRPCDEBUG` | `false` | Enable gRPC server reflection for debugging with grpc_cli |
 | `--persist` | `FLOW_PERSIST` | false | Enable persistence of the state between restarts |
 | `--dbpath` | `FLOW_DBPATH` | `./flowdb` | Specify path for the database file persisting the state |
