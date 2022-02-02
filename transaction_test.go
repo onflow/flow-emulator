@@ -1283,8 +1283,9 @@ func TestGetTransactionResult(t *testing.T) {
 
 	event := result.Events[0]
 
+	addr, _ := common.BytesToAddress(counterAddress.Bytes())
 	location := common.AddressLocation{
-		Address: common.BytesToAddress(counterAddress.Bytes()),
+		Address: addr,
 		Name:    "Counting",
 	}
 	eventType := location.TypeID("Counting.CountIncremented")
