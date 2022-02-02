@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-go/engine/access/rest"
+	"github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
 	"net"
 	"net/http"
@@ -52,7 +53,7 @@ func NewRestServer(be *backend.Backend, port int, debug bool) (*RestServer, erro
 		logger = zerolog.New(os.Stdout)
 	}
 
-	srv, err := rest.NewServer(backend.NewAdapter(be), "127.0.0.1:3333", logger)
+	srv, err := rest.NewServer(backend.NewAdapter(be), "127.0.0.1:3333", logger, flow.Emulator.Chain())
 	if err != nil {
 		return nil, err
 	}

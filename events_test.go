@@ -104,8 +104,9 @@ func TestEventEmitted(t *testing.T) {
 		block, err := b.CommitBlock()
 		require.NoError(t, err)
 
+		addr, _ := common.BytesToAddress(address.Bytes())
 		location := common.AddressLocation{
-			Address: common.BytesToAddress(address.Bytes()),
+			Address: addr,
 			Name:    "Test",
 		}
 		expectedType := location.TypeID("Test.MyEvent")

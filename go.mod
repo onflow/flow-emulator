@@ -12,12 +12,11 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.12.0
-	github.com/ipfs/go-ipfs-blockstore v1.1.1 // indirect
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v0.20.3
-	github.com/onflow/flow-go v0.23.2-0.20220119144252-3b1e087a7ac2
+	github.com/onflow/cadence v0.21.0
+	github.com/onflow/flow-go v0.23.2-0.20220201222302-cff34195a61a
 	github.com/onflow/flow-go-sdk v0.24.0
-	github.com/onflow/flow-go/crypto v0.23.3
+	github.com/onflow/flow-go/crypto v0.24.2
 	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20210915191154-12ee8c507a0e
 	github.com/onflow/flow/protobuf/go/flow v0.2.3
 	github.com/onflow/fusd/lib/go/contracts v0.0.0-20211021081023-ae9de8fb2c7e
@@ -29,6 +28,5 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v1.3.0
 	github.com/stretchr/testify v1.7.0
-	go.uber.org/zap v1.19.1 // indirect
 	google.golang.org/grpc v1.43.0
 )
