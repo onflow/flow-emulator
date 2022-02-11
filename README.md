@@ -42,8 +42,8 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--port`, `-p` | `FLOW_PORT` | `3569` | gRPC port to listen on |
 | `--rest-port` | `FLOW_RESTPORT` | `8888` | REST API port to listen on |
 | `--admin-port` | `FLOW_ADMINPORT` | `8080` | Admin API port to listen on |
-| `--dev-wallet` | `DEV_WALLET` | `false` | Enable local Dev Wallet server |
-| `--dev-wallet-port` | `DEV_WALLET_PORT` | `8701` | Port to run Dev Wallet server on |
+| `--dev-wallet` | `FLOW_DEVWALLET` | `false` | Enable local Dev Wallet server |
+| `--dev-wallet-port` | `FLOW_DEVWALLETPORT` | `8701` | Port to run Dev Wallet server on |
 | `--verbose`, `-v` | `FLOW_VERBOSE` | `false` | Enable verbose logging (useful for debugging) |
 | `--log-format` | `FLOW_LOGFORMAT` | `text` | Output log format (valid values `text`, `JSON`) |
 | `--block-time`, `-b` | `FLOW_BLOCKTIME` | `0` | Time between sealed blocks. Valid units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h` |
