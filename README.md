@@ -26,7 +26,7 @@ The emulator exposes a gRPC server that implements the Flow Access API, which is
 ### The Flowser Emulator Explorer
 
 There is also an block explorer GUI for the emulator, that will help you speed up development when using the emulator. 
-- [Flowser Github Repository](https://github.com/onflowser/flowser)
+- [Flowser GitHub Repository](https://github.com/onflowser/flowser)
 - [Flowser Documentation](https://github.com/onflowser/flowser#-contents)
 
 # Running
