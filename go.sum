@@ -1194,8 +1194,8 @@ github.com/onflow/flow-emulator v0.20.3/go.mod h1:xNdVsrMJiAaYJ59Dwo+xvj0ENdvk/b
 github.com/onflow/flow-ft/lib/go/contracts v0.5.0 h1:Cg4gHGVblxcejfNNG5Mfj98Wf4zbY76O0Y28QB0766A=
 github.com/onflow/flow-ft/lib/go/contracts v0.5.0/go.mod h1:1zoTjp1KzNnOPkyqKmWKerUyf0gciw+e6tAEt0Ks3JE=
 github.com/onflow/flow-go v0.18.0/go.mod h1:cQpvFoqth9PR7tarWDa36R/dDOqUK5QYfeYzCdXPLII=
-github.com/onflow/flow-go v0.23.2-0.20220303231117-40a0ffec191a h1:8LgcYCbM0Q4DSZx3pCRj8+THVpOhcG0nxGn08BJtl0Q=
-github.com/onflow/flow-go v0.23.2-0.20220303231117-40a0ffec191a/go.mod h1:iG4jHggskg+5TQTc+Z/utJqIY7k74vtX09D/QOw3A6c=
+github.com/onflow/flow-go v0.23.2-0.20220304145234-bf10d55c40fa h1:tO3RWPEdrWf811ojr4P/bKtw19sy19bMrGhDBVS0ycQ=
+github.com/onflow/flow-go v0.23.2-0.20220304145234-bf10d55c40fa/go.mod h1:/+XZUjcmP7J/P0Zi428oNjGK94lNVoE9G/vu9UTRSKI=
 github.com/onflow/flow-go-sdk v0.20.0-alpha.1/go.mod h1:52QZyLwU3p3UZ2FXOy+sRl4JPdtvJoae1spIUBOFxA8=
 github.com/onflow/flow-go-sdk v0.20.0/go.mod h1:52QZyLwU3p3UZ2FXOy+sRl4JPdtvJoae1spIUBOFxA8=
 github.com/onflow/flow-go-sdk v0.24.0 h1:+p9Cqs3U34KVs5vvnjdLyRAne0ROEfjgJDeDn7ne+4k=
@@ -1203,9 +1203,8 @@ github.com/onflow/flow-go-sdk v0.24.0/go.mod h1:IoptMLPyFXWvyd9yYA6/4EmSeeozl6nJ
 github.com/onflow/flow-go/crypto v0.12.0/go.mod h1:oXuvU0Dr4lHKgye6nHEFbBXIWNv+dBQUzoVW5Go38+o=
 github.com/onflow/flow-go/crypto v0.18.0/go.mod h1:3Ah843iPyjIL+7nH9EillV3OWNptrL+DrQUbVKgg2E4=
 github.com/onflow/flow-go/crypto v0.21.3/go.mod h1:vI6V4CY3R6c4JKBxdcRiR/AnjBfL8OSD97bJc60cLuQ=
-github.com/onflow/flow-go/crypto v0.24.2/go.mod h1:dkVL98P6GHR48iD9zCB6XlnkJX8IQd00FKgt1reV90w=
-github.com/onflow/flow-go/crypto v0.24.3-0.20220203151650-a18137528dd0 h1:oyJWwleuo/0s1P1hbPC0RG5tjxFj83B2N8XQbMqW6MQ=
-github.com/onflow/flow-go/crypto v0.24.3-0.20220203151650-a18137528dd0/go.mod h1:dkVL98P6GHR48iD9zCB6XlnkJX8IQd00FKgt1reV90w=
+github.com/onflow/flow-go/crypto v0.24.3 h1:5puosmiy853m1GPmBLJr4PiLVcCzE4n5o60hRPo9kYA=
+github.com/onflow/flow-go/crypto v0.24.3/go.mod h1:dkVL98P6GHR48iD9zCB6XlnkJX8IQd00FKgt1reV90w=
 github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20210915191154-12ee8c507a0e h1:svZJ1NydwvNGfkJfJXIeECcKecnYC1CtC/BMzdfEI0U=
 github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20210915191154-12ee8c507a0e/go.mod h1:epgW8P53PDpHaqBQCmMgJqdet4h7ONaoIL3kVD/nnzU=
 github.com/onflow/flow/protobuf/go/flow v0.1.9/go.mod h1:kRugbzZjwQqvevJhrnnCFMJZNmoSJmxlKt6hTGXZojM=
@@ -1992,6 +1991,7 @@ golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 h1:go1bK/D/BFZV2I8cIQd1N
 golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 gonum.org/v1/gonum v0.0.0-20180816165407-929014505bf4/go.mod h1:Y+Yx5eoAFn32cQvJDxZx5Dpnq+c3wtXuadVZAcxbbBo=
 gonum.org/v1/gonum v0.6.1/go.mod h1:9mxDZsDKxgMAuccQkewq682L+0eCu4dCN2yonUJTCLU=
+gonum.org/v1/gonum v0.8.2 h1:CCXrcPKiGGotvnN6jfUsKk4rRqm7q09/YbKb5xCEvtM=
 gonum.org/v1/gonum v0.8.2/go.mod h1:oe/vMfY3deqTw+1EZJhuvEW2iwGF1bW9wwu7XCu0+v0=
 gonum.org/v1/netlib v0.0.0-20190313105609-8cb42192e0e0/go.mod h1:wa6Ws7BG/ESfp6dHfk7C6KdzKA7wR7u/rKwOGE66zvw=
 gonum.org/v1/plot v0.0.0-20190515093506-e2840ee46a6b/go.mod h1:Wt8AAjI+ypCyYX3nZBvf6cAIx93T+c/OS2HFAYskSZc=
