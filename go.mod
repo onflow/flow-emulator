@@ -14,7 +14,7 @@ require (
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v0.23.0
-	github.com/onflow/flow-go v0.23.2-0.20220304191851-2564b1124faa
+	github.com/onflow/flow-go v0.23.2-0.20220304202040-f674ad26d273
 	github.com/onflow/flow-go-sdk v0.24.0
 	github.com/onflow/flow-go/crypto v0.24.3
 	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20210915191154-12ee8c507a0e
