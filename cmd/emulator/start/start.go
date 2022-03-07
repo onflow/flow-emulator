@@ -179,7 +179,9 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
-			emu.Start()
+			if emu != nil {
+				emu.Start()
+			}
 		},
 	}
 
