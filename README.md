@@ -25,7 +25,7 @@ The emulator exposes a gRPC server that implements the Flow Access API, which is
 
 ### The Flowser Emulator Explorer
 
-There is also an block explorer GUI for the emulator, that will help you speed up development when using the emulator. 
+There is also a block explorer GUI for the emulator, that will help you speed up development when using the emulator. 
 - [Flowser GitHub Repository](https://github.com/onflowser/flowser)
 - [Flowser Documentation](https://github.com/onflowser/flowser#-contents)
 
@@ -97,7 +97,7 @@ It's possible to manage emulator state by using the admin API. You can at any po
 create a new named snapshot of the state and then at any later point revert emulator 
 state to that reference. 
 
-In order to use the state managment functionality you need to run the emulator with persistent state:
+In order to use the state management functionality you need to run the emulator with persistent state:
 ```bash
 flow emulator --persist
 ```
@@ -117,7 +117,7 @@ a base snapshot with seed values, execute the test and then revert to that initi
 ## Running the emulator with Docker
 
 Docker builds for the emulator are automatically built and pushed to
-`gcr.io/flow-container-registry/emulator`, tagged by commit and semantic version. You can also [build the image locally](#building).
+`gcr.io/flow-container-registry/emulator`, tagged by commit and semantic version. You can also build the image locally.
 
 ```bash
 docker run gcr.io/flow-container-registry/emulator
