@@ -42,8 +42,6 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--port`, `-p` | `FLOW_PORT` | `3569` | gRPC port to listen on |
 | `--rest-port` | `FLOW_RESTPORT` | `8888` | REST API port to listen on |
 | `--admin-port` | `FLOW_ADMINPORT` | `8080` | Admin API port to listen on |
-| `--dev-wallet` | `FLOW_DEVWALLET` | `false` | Enable local Dev Wallet server |
-| `--dev-wallet-port` | `FLOW_DEVWALLETPORT` | `8701` | Port to run Dev Wallet server on |
 | `--verbose`, `-v` | `FLOW_VERBOSE` | `false` | Enable verbose logging (useful for debugging) |
 | `--log-format` | `FLOW_LOGFORMAT` | `text` | Output log format (valid values `text`, `JSON`) |
 | `--block-time`, `-b` | `FLOW_BLOCKTIME` | `0` | Time between sealed blocks. Valid units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h` |
@@ -115,25 +113,6 @@ You need to use the same value for `name` parameter.
 
 The snapshot functionality is a great tool for testing where you can first initialize 
 a base snapshot with seed values, execute the test and then revert to that initialized state.
-
-## Launching dev-wallet with the emulator 
-
-You can start the dev-wallet with the `--dev-wallet` flag. Default dev-wallet port is `8701`. 
-
-After starting dev-wallet, you can set your fcl config to use it like below:  
-
-```javascript
-import * as fcl from "@onflow/fcl"
-
-fcl.config()
-  // Point App at Emulator
-  .put("accessNode.api", "http://localhost:8080") 
-  // Point FCL at dev-wallet (default port)
-  .put("discovery.wallet", "http://localhost:8701/fcl/authn") 
-```
-
-You can read more about setting up dev-wallet at [FCL Dev Wallet Project](https://github.com/onflow/fcl-dev-wallet)
-
 
 ## Running the emulator with Docker
 

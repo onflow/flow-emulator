@@ -41,8 +41,6 @@ type Config struct {
 	Port                   int           `default:"3569" flag:"port,p" info:"port to run RPC server"`
 	RestPort               int           `default:"8888" flag:"rest-port" info:"port to run the REST API"`
 	AdminPort              int           `default:"8080" flag:"admin-port" info:"port to run the admin API"`
-	DevWalletPort          int           `default:"8701" flag:"dev-wallet-port" info:"port to run Dev Wallet server"`
-	DevWallet              bool          `default:"false" flag:"dev-wallet" info:"enable local Dev Wallet server"`
 	Verbose                bool          `default:"false" flag:"verbose,v" info:"enable verbose logging"`
 	LogFormat              string        `default:"text" flag:"log-format" info:"logging output format. Valid values (text, JSON)"`
 	BlockTime              time.Duration `flag:"block-time,b" info:"time between sealed blocks, e.g. '300ms', '-1.5h' or '2h45m'. Valid units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'"`
@@ -151,13 +149,11 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 			}
 
 			serverConf := &server.Config{
-				GRPCPort:         conf.Port,
-				GRPCDebug:        conf.GRPCDebug,
-				AdminPort:        conf.AdminPort,
-				RESTPort:         conf.RestPort,
-				RESTDebug:        conf.RESTDebug,
-				DevWalletPort:    conf.DevWalletPort,
-				DevWalletEnabled: conf.DevWallet,
+				GRPCPort:  conf.Port,
+				GRPCDebug: conf.GRPCDebug,
+				AdminPort: conf.AdminPort,
+				RESTPort:  conf.RestPort,
+				RESTDebug: conf.RESTDebug,
 				// TODO: allow headers to be parsed from environment
 				HTTPHeaders:               nil,
 				BlockTime:                 conf.BlockTime,
