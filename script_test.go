@@ -2,11 +2,11 @@ package emulator_test
 
 import (
 	"fmt"
+	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	"testing"
 
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
-	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
@@ -162,10 +162,5 @@ func TestInfiniteScript(t *testing.T) {
 	result, err := b.ExecuteScript([]byte(code), nil)
 	require.NoError(t, err)
 
-	require.ErrorAs(t,
-		result.Error,
-		&runtime.ComputationLimitExceededError{
-			Limit: limit,
-		},
-	)
+	require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
 }
