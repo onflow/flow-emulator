@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
 	github.com/dgraph-io/badger/v2 v2.2007.4
-	github.com/fxamacker/cbor/v2 v2.3.1-0.20211029162100-5d5d7c3edd41
+	github.com/fxamacker/cbor/v2 v2.4.1-0.20220314011055-12f5cb4b5eb0
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
@@ -13,8 +13,8 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v0.21.3-0.20220310201609-481cb23a7d6b
-	github.com/onflow/flow-go v0.25.1-0.20220316182245-76c3643c084a
+	github.com/onflow/cadence v0.21.3-0.20220317173919-b23d45bcd67d
+	github.com/onflow/flow-go v0.25.1-0.20220317203627-1c99893f6f6a
 	github.com/onflow/flow-go-sdk v0.24.0
 	github.com/onflow/flow-go/crypto v0.24.3
 	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20210915191154-12ee8c507a0e
