@@ -19,7 +19,6 @@
 package server
 
 import (
-	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -47,7 +46,6 @@ type EmulatorServer struct {
 	grpc     graceland.Routine
 	admin    graceland.Routine
 	rest     graceland.Routine
-	wallet   graceland.Routine
 	blocks   graceland.Routine
 }
 
@@ -55,7 +53,6 @@ const (
 	defaultGRPCPort               = 3569
 	defaultRESTPort               = 8888
 	defaultAdminPort              = 8080
-	defaultDevWalletPort          = 8701
 	defaultLivenessCheckTolerance = time.Second
 	defaultDBGCInterval           = time.Minute * 5
 	defaultDBGCRatio              = 0.5
@@ -85,8 +82,6 @@ type Config struct {
 	AdminPort                 int
 	RESTPort                  int
 	RESTDebug                 bool
-	DevWalletPort             int
-	DevWalletEnabled          bool
 	HTTPHeaders               []HTTPHeader
 	BlockTime                 time.Duration
 	ServicePublicKey          crypto.PublicKey
@@ -174,22 +169,6 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		grpc:     grpcServer,
 		rest:     restServer,
 		admin:    nil,
-		wallet:   nil,
-	}
-
-	if conf.ServicePrivateKey != nil && conf.DevWalletEnabled {
-
-		walletConfig := WalletConfig{
-			Address:    chain.ServiceAddress().HexWithPrefix(),
-			KeyId:      0,
-			PrivateKey: hex.EncodeToString(conf.ServicePrivateKey.Encode()),
-			PublicKey:  hex.EncodeToString(conf.ServicePublicKey.Encode()),
-			AccessNode: fmt.Sprintf("http://localhost:%d", conf.AdminPort),
-			UseAPI:     false,
-			Suffix:     "",
-		}
-
-		server.wallet = NewWalletServer(walletConfig, conf.DevWalletPort, conf.HTTPHeaders)
 	}
 
 	server.admin = NewAdminServer(server, be, &store, grpcServer, livenessTicker, conf.AdminPort, conf.HTTPHeaders)
@@ -227,13 +206,6 @@ func (s *EmulatorServer) Start() {
 		WithField("port", s.config.AdminPort).
 		Infof("🌱  Starting admin server on port %d", s.config.AdminPort)
 	s.group.Add(s.admin)
-
-	if s.wallet != nil {
-		s.logger.
-			WithField("port", s.config.DevWalletPort).
-			Infof("🌱  Starting Dev Wallet on port %d", s.config.DevWalletPort)
-		s.group.Add(s.wallet)
-	}
 
 	// only start blocks ticker if it exists
 	if s.blocks != nil {
@@ -323,10 +295,6 @@ func sanitizeConfig(conf *Config) *Config {
 
 	if conf.AdminPort == 0 {
 		conf.AdminPort = defaultAdminPort
-	}
-
-	if conf.DevWalletPort == 0 {
-		conf.DevWalletPort = defaultDevWalletPort
 	}
 
 	if conf.HTTPHeaders == nil {
