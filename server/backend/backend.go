@@ -599,6 +599,10 @@ func (b *Backend) DisableAutoMine() {
 	b.automine = false
 }
 
+func (b *Backend) GetTransactionResultByIndex(context.Context, flowgo.Identifier, uint32) (*access.TransactionResult, error) {
+	panic("GetTransactionResultByIndex not implemented")
+}
+
 func printTransactionResult(logger *logrus.Logger, result *types.TransactionResult) {
 	if result.Succeeded() {
 		logger.
