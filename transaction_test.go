@@ -8,7 +8,6 @@ import (
 	convert "github.com/onflow/flow-emulator/convert/sdk"
 
 	"github.com/onflow/cadence"
-	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
 	"github.com/onflow/flow-go-sdk"
@@ -1580,11 +1579,6 @@ func TestInfiniteTransaction(t *testing.T) {
 	// Execute tx
 	result, err := b.ExecuteNextTransaction()
 	assert.NoError(t, err)
-
-	require.ErrorAs(t,
-		result.Error,
-		&runtime.ComputationLimitExceededError{
-			Limit: limit,
-		},
-	)
+	
+	require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
 }

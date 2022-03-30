@@ -16,6 +16,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/onflow/cadence/runtime/common"
+
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
 
 	"github.com/onflow/cadence"
@@ -491,7 +493,19 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 	}
 	if conf.TransactionFeesEnabled {
 		options = append(options,
-			fvm.WithTransactionFee(fvm.DefaultTransactionFees),
+			fvm.WithTransactionFee(fvm.BootstrapProcedureFeeParameters{
+				SurgeFactor:         cadence.UFix64(100_000_000), // 1.0
+				InclusionEffortCost: cadence.UFix64(100),         // 1E-6
+				ExecutionEffortCost: cadence.UFix64(499_000_000), // 4.99
+			}),
+			fvm.WithExecutionEffortWeights(map[common.ComputationKind]uint64{
+				1001: 1569,
+				1002: 1569,
+				1003: 1569,
+				2020: 808,
+				2006: 2837670,
+				2026: 765,
+			}),
 		)
 	}
 	return fvm.Bootstrap(
