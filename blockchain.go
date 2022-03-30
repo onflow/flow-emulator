@@ -16,12 +16,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/onflow/cadence/runtime/common"
-
-	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
-
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
+	"github.com/onflow/cadence/runtime/common"
 	sdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
@@ -30,6 +27,7 @@ import (
 	"github.com/onflow/flow-go/crypto/hash"
 	"github.com/onflow/flow-go/engine/execution/state/delta"
 	"github.com/onflow/flow-go/fvm"
+	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/programs"
 	"github.com/onflow/flow-go/fvm/state"
