@@ -490,6 +490,10 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 		)
 	}
 	if conf.TransactionFeesEnabled {
+		// This enables variable transaction fees AND execution effort metering
+		// as described in Variable Transaction Fees: Execution Effort FLIP: https://github.com/onflow/flow/pull/753)
+		// TODO: In the future this should be an injectable parameter. For now this is hard coded
+		// as this is the first iteration of variable execution fees.
 		options = append(options,
 			fvm.WithTransactionFee(fvm.BootstrapProcedureFeeParameters{
 				SurgeFactor:         cadence.UFix64(100_000_000), // 1.0
