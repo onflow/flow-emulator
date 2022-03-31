@@ -27,6 +27,8 @@ import (
 	convert "github.com/onflow/flow-emulator/convert/sdk"
 )
 
+var _ access.API = &Adapter{}
+
 // Adapter wraps the emulator backend to be compatible with access.API.
 type Adapter struct {
 	backend *Backend
@@ -203,4 +205,8 @@ func (a *Adapter) GetExecutionResultForBlockID(ctx context.Context, blockID flow
 
 func (a *Adapter) GetExecutionResultByID(ctx context.Context, id flowgo.Identifier) (*flowgo.ExecutionResult, error) {
 	return nil, nil
+}
+
+func (a *Adapter) GetTransactionResultByIndex(ctx context.Context, blockID flowgo.Identifier, index uint32) (*access.TransactionResult, error) {
+	return a.backend.GetTransactionResultByIndex(ctx, blockID, index)
 }
