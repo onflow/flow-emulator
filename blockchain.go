@@ -29,6 +29,7 @@ import (
 	"github.com/onflow/flow-go/fvm"
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
+	"github.com/onflow/flow-go/fvm/meter"
 	"github.com/onflow/flow-go/fvm/programs"
 	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -501,12 +502,12 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 				ExecutionEffortCost: cadence.UFix64(499_000_000), // 4.99
 			}),
 			fvm.WithExecutionEffortWeights(map[common.ComputationKind]uint64{
-				1001: 1569,
-				1002: 1569,
-				1003: 1569,
-				2020: 808,
-				2006: 2837670,
-				2026: 765,
+				common.ComputationKindStatement:          1569,
+				common.ComputationKindLoop:               1569,
+				common.ComputationKindFunctionInvocation: 1569,
+				meter.ComputationKindGetValue:            808,
+				meter.ComputationKindCreateAccount:       2837670,
+				meter.ComputationKindSetValue:            765,
 			}),
 		)
 	}
