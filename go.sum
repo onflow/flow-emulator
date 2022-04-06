@@ -1184,8 +1184,8 @@ github.com/onflow/atree v0.2.0/go.mod h1:f4/LWn5dJiD63/BK35gnw8sNYWAXHapuekslfrm
 github.com/onflow/cadence v0.15.0/go.mod h1:KMzDF6cIv6nb5PJW9aITaqazbmJX8MMeibFcpPP385M=
 github.com/onflow/cadence v0.17.0/go.mod h1:iR/tZpP+1YhM8iRnOBPiBIs7on5dE3hk2ZfunCRQswE=
 github.com/onflow/cadence v0.20.1/go.mod h1:7mzUvPZUIJztIbr9eTvs+fQjWWHTF8veC+yk4ihcNIA=
-github.com/onflow/cadence v0.23.2 h1:bhAXy3IVVfCx6CJlZBKmr6G0IP4g9C7jWlFqMGmbzek=
-github.com/onflow/cadence v0.23.2/go.mod h1:Y++seAx3qsNjjZYTQhClD86D5aF951cMHVPL94Z64J8=
+github.com/onflow/cadence v0.23.3 h1:Hau2tiEyXkEt/9ZdQw+sr8CBofXwJ6rBqT7iWi/7vrM=
+github.com/onflow/cadence v0.23.3/go.mod h1:Y++seAx3qsNjjZYTQhClD86D5aF951cMHVPL94Z64J8=
 github.com/onflow/flow v0.2.4 h1:w93wtRDGeFLzjR73IaeSFCUHVv/ITExk5bfDGdvzWm8=
 github.com/onflow/flow v0.2.4/go.mod h1:lzyAYmbu1HfkZ9cfnL5/sjrrsnJiUU8fRL26CqLP7+c=
 github.com/onflow/flow-core-contracts/lib/go/contracts v0.7.3-0.20210527134022-58c25247091a/go.mod h1:IZ2e7UyLCYmpQ8Kd7k0A32uXqdqfiV1r2sKs5/riblo=
@@ -1197,8 +1197,8 @@ github.com/onflow/flow-emulator v0.20.3/go.mod h1:xNdVsrMJiAaYJ59Dwo+xvj0ENdvk/b
 github.com/onflow/flow-ft/lib/go/contracts v0.5.0 h1:Cg4gHGVblxcejfNNG5Mfj98Wf4zbY76O0Y28QB0766A=
 github.com/onflow/flow-ft/lib/go/contracts v0.5.0/go.mod h1:1zoTjp1KzNnOPkyqKmWKerUyf0gciw+e6tAEt0Ks3JE=
 github.com/onflow/flow-go v0.18.0/go.mod h1:cQpvFoqth9PR7tarWDa36R/dDOqUK5QYfeYzCdXPLII=
-github.com/onflow/flow-go v0.25.5-0.20220330212458-32bda868ae65 h1:OkDLQsN2LT0+JeGPddczp0HZD1xIrAKHXuAYadx/k0M=
-github.com/onflow/flow-go v0.25.5-0.20220330212458-32bda868ae65/go.mod h1:yT5chaiogk6OTPSI/xMj8E+yDiAyCvngyhChwS8hp9U=
+github.com/onflow/flow-go v0.25.6 h1:T3yS3gZ0pQqTo630shyBclWkfmH+Bd2HlanvdxN867Q=
+github.com/onflow/flow-go v0.25.6/go.mod h1:4HtbO8CnXO1EXUmB6aMZIPlzVGjNHvgqMxejbuaUjQE=
 github.com/onflow/flow-go-sdk v0.20.0-alpha.1/go.mod h1:52QZyLwU3p3UZ2FXOy+sRl4JPdtvJoae1spIUBOFxA8=
 github.com/onflow/flow-go-sdk v0.20.0/go.mod h1:52QZyLwU3p3UZ2FXOy+sRl4JPdtvJoae1spIUBOFxA8=
 github.com/onflow/flow-go-sdk v0.24.0 h1:+p9Cqs3U34KVs5vvnjdLyRAne0ROEfjgJDeDn7ne+4k=
