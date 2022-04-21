@@ -868,12 +868,12 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 
 		assert.Contains(t,
 			result.Logs,
-			interpreter.NewUnmeteredAddressValue(b.ServiceKey().Address.Bytes()).String(),
+			interpreter.NewUnmeteredAddressValueFromBytes(b.ServiceKey().Address.Bytes()).String(),
 		)
 
 		assert.Contains(t,
 			result.Logs,
-			interpreter.NewUnmeteredAddressValue(accountAddressB.Bytes()).String(),
+			interpreter.NewUnmeteredAddressValueFromBytes(accountAddressB.Bytes()).String(),
 		)
 	})
 }
