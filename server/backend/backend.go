@@ -600,6 +600,7 @@ func (b *Backend) DisableAutoMine() {
 }
 
 func (b *Backend) GetTransactionResultByIndex(context.Context, flowgo.Identifier, uint32) (*access.TransactionResult, error) {
+	// TODO: implement
 	panic("GetTransactionResultByIndex not implemented")
 }
 
