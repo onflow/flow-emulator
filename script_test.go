@@ -2,7 +2,6 @@ package emulator_test
 
 import (
 	"fmt"
-	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	"testing"
 
 	"github.com/onflow/cadence"
