@@ -210,3 +210,11 @@ func (a *Adapter) GetExecutionResultByID(ctx context.Context, id flowgo.Identifi
 func (a *Adapter) GetTransactionResultByIndex(ctx context.Context, blockID flowgo.Identifier, index uint32) (*access.TransactionResult, error) {
 	return a.backend.GetTransactionResultByIndex(ctx, blockID, index)
 }
+
+func (a *Adapter) GetTransactionsByBlockID(ctx context.Context, blockID flowgo.Identifier) ([]*flowgo.TransactionBody, error) {
+	return a.backend.GetTransactionsByBlockID(ctx, blockID)
+}
+
+func (a *Adapter) GetTransactionResultsByBlockID(ctx context.Context, blockID flowgo.Identifier) ([]*access.TransactionResult, error) {
+	return a.backend.GetTransactionResultsByBlockID(ctx, blockID)
+}
