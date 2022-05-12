@@ -92,6 +92,32 @@ in the same directory as `flow.json`. This will configure the emulator with your
 project's service account, meaning you can use it to sign and submit transactions.
 Read more about the project and configuration [here](https://docs.onflow.org/flow-cli/configuration/).
 
+## Using Emulator in Go
+You can use the emulator as a module in your Go project. To install emulator, use go get:
+```
+go get github.com/onflow/flow-emulator
+```
+
+After installing the emulator module you can initialize it in the code:
+```go
+var opts []emulator.Option
+privKey, err := crypto.DecodePrivateKeyHex(crypto.ECDSA_P256, "")
+
+opts = append(opts, emulator.WithServicePublicKey(
+  privKey.PublicKey(),
+  crypto.ECDSA_P256,
+  crypto.SHA3_256,
+))
+
+blockchain, err := emulator.NewBlockchain(opts...)
+```
+
+You can then access all methods of the blockchain like so:
+```go
+account, err := blockchain.GetAccount(address) 
+```
+
+
 ## Managing emulator state
 It's possible to manage emulator state by using the admin API. You can at any point 
 create a new named snapshot of the state and then at any later point revert emulator 
