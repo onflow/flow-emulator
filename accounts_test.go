@@ -122,11 +122,12 @@ func TestCreateAccount(t *testing.T) {
 
 		accountKey := accountKeys.New()
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			[]*flow.AccountKey{accountKey},
 			nil,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -163,11 +164,12 @@ func TestCreateAccount(t *testing.T) {
 
 		accountKey := accountKeys.New()
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			[]*flow.AccountKey{accountKey},
 			nil,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -204,11 +206,12 @@ func TestCreateAccount(t *testing.T) {
 		accountKeyA := accountKeys.New()
 		accountKeyB := accountKeys.New()
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			[]*flow.AccountKey{accountKeyA, accountKeyB},
 			nil,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -253,11 +256,12 @@ func TestCreateAccount(t *testing.T) {
 			},
 		}
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			[]*flow.AccountKey{accountKeyA, accountKeyB},
 			contracts,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -325,11 +329,12 @@ func TestCreateAccount(t *testing.T) {
 			},
 		}
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			[]*flow.AccountKey{accountKey},
 			contracts,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -376,11 +381,12 @@ func TestCreateAccount(t *testing.T) {
 			},
 		}
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			nil,
 			contracts,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -427,11 +433,12 @@ func TestCreateAccount(t *testing.T) {
 			},
 		}
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			[]*flow.AccountKey{accountKey},
 			contracts,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -479,11 +486,12 @@ func TestCreateAccount(t *testing.T) {
 		accountKey := accountKeys.New()
 		accountKey.SetHashAlgo(crypto.SHA3_384) // SHA3_384 is invalid for ECDSA_P256
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			[]*flow.AccountKey{accountKey},
 			nil,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -514,11 +522,12 @@ func TestCreateAccount(t *testing.T) {
 			},
 		}
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			nil,
 			contracts,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -549,11 +558,12 @@ func TestCreateAccount(t *testing.T) {
 			},
 		}
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			nil,
 			contracts,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -586,7 +596,8 @@ func TestAddAccountKey(t *testing.T) {
 
 		newAccountKey, newSigner := accountKeys.NewWithSigner()
 
-		tx1 := templates.AddAccountKey(b.ServiceKey().Address, newAccountKey)
+		tx1, err := templates.AddAccountKey(b.ServiceKey().Address, newAccountKey)
+		assert.NoError(t, err)
 
 		tx1.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -639,7 +650,8 @@ func TestAddAccountKey(t *testing.T) {
 		accountKey := accountKeys.New()
 		accountKey.SetHashAlgo(crypto.SHA3_384) // SHA3_384 is invalid for ECDSA_P256
 
-		tx := templates.AddAccountKey(b.ServiceKey().Address, accountKey)
+		tx, err := templates.AddAccountKey(b.ServiceKey().Address, accountKey)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -671,7 +683,7 @@ func TestRemoveAccountKey(t *testing.T) {
 	newAccountKey, newSigner := accountKeys.NewWithSigner()
 
 	// create transaction that adds public key to account keys
-	tx1 := templates.AddAccountKey(b.ServiceKey().Address, newAccountKey)
+	tx1, err := templates.AddAccountKey(b.ServiceKey().Address, newAccountKey)
 	assert.NoError(t, err)
 
 	// create transaction that adds public key to account keys

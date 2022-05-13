@@ -1333,11 +1333,12 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 		},
 	}
 
-	createAccountTx := templates.CreateAccount(
+	createAccountTx, err := templates.CreateAccount(
 		[]*flow.AccountKey{accountKey},
 		contracts,
 		b.ServiceKey().Address,
 	)
+	require.NoError(t, err)
 
 	createAccountTx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -1428,11 +1429,12 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 		},
 	}
 
-	createAccountTx := templates.CreateAccount(
+	createAccountTx, err := templates.CreateAccount(
 		[]*flow.AccountKey{accountKey},
 		contracts,
 		b.ServiceKey().Address,
 	)
+	assert.NoError(t, err)
 
 	createAccountTx.
 		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
