@@ -1287,7 +1287,7 @@ func TestGetTransactionResult(t *testing.T) {
 		Address: addr,
 		Name:    "Counting",
 	}
-	eventType := location.TypeID("Counting.CountIncremented")
+	eventType := location.TypeID(nil, "Counting.CountIncremented")
 
 	assert.Equal(t, tx.ID(), event.TransactionID)
 	assert.Equal(t, string(eventType), event.Type)
