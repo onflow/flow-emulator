@@ -20,6 +20,7 @@ package backend
 
 import (
 	"context"
+
 	"github.com/onflow/flow-go/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
@@ -211,11 +212,9 @@ func (a *Adapter) GetTransactionResultByIndex(ctx context.Context, blockID flowg
 }
 
 func (a *Adapter) GetTransactionsByBlockID(ctx context.Context, blockID flowgo.Identifier) ([]*flowgo.TransactionBody, error) {
-	//TODO implement me
-	panic("implement me")
+	return a.backend.GetTransactionsByBlockID(ctx, blockID)
 }
 
 func (a *Adapter) GetTransactionResultsByBlockID(ctx context.Context, blockID flowgo.Identifier) ([]*access.TransactionResult, error) {
-	//TODO implement me
-	panic("implement me")
+	return a.backend.GetTransactionResultsByBlockID(ctx, blockID)
 }
