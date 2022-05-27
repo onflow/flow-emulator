@@ -12,20 +12,20 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v0.21.3-0.20220513161637-08b93d4bb7b9
-	github.com/onflow/flow-go v0.25.13-0.20220513212057-aae8bbb571cc
+	github.com/onflow/cadence v0.21.3-0.20220524232221-b4a37c41632f
+	github.com/onflow/flow-go v0.25.13-0.20220527181337-e50ac5fe58da
 	github.com/onflow/flow-go-sdk v0.24.1-0.20220513205729-d1f58d47c4e3
 	github.com/onflow/flow-go/crypto v0.24.3
 	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20210915191154-12ee8c507a0e
-	github.com/onflow/flow/protobuf/go/flow v0.2.5
+	github.com/onflow/flow/protobuf/go/flow v0.3.0
 	github.com/onflow/fusd/lib/go/contracts v0.0.0-20211021081023-ae9de8fb2c7e
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/client_golang v1.12.1
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
 	github.com/rs/zerolog v1.26.1
-	github.com/sirupsen/logrus v1.6.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.3.0
-	github.com/stretchr/testify v1.7.1-0.20210824115523-ab6dc3262822
-	google.golang.org/grpc v1.44.0
+	github.com/stretchr/testify v1.7.1
+	google.golang.org/grpc v1.45.0
 )
