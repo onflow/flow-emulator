@@ -93,7 +93,7 @@ func TestBackend(t *testing.T) {
 			value, err := backend.ExecuteScriptAtLatestBlock(context.Background(), script, nil)
 			assert.NoError(t, err)
 
-			actualValue, err := jsoncdc.Decode(value)
+			actualValue, err := jsoncdc.Decode(nil, value)
 			assert.NoError(t, err)
 
 			assert.Equal(t, expectedValue, actualValue)
@@ -147,7 +147,7 @@ func TestBackend(t *testing.T) {
 			value, err := backend.ExecuteScriptAtBlockHeight(context.Background(), blockHeight, script, nil)
 			assert.NoError(t, err)
 
-			actualValue, err := jsoncdc.Decode(value)
+			actualValue, err := jsoncdc.Decode(nil, value)
 			assert.NoError(t, err)
 
 			assert.Equal(t, expectedValue, actualValue)
@@ -183,7 +183,7 @@ func TestBackend(t *testing.T) {
 			)
 			assert.NoError(t, err)
 
-			actualValue, err := jsoncdc.Decode(value)
+			actualValue, err := jsoncdc.Decode(nil, value)
 			assert.NoError(t, err)
 
 			assert.Equal(t, expectedValue, actualValue)
