@@ -109,7 +109,7 @@ func TestEventEmitted(t *testing.T) {
 			Address: addr,
 			Name:    "Test",
 		}
-		expectedType := location.TypeID("Test.MyEvent")
+		expectedType := location.TypeID(nil, "Test.MyEvent")
 
 		events, err := b.GetEventsByHeight(block.Header.Height, string(expectedType))
 		require.NoError(t, err)

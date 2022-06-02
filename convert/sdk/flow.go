@@ -215,7 +215,7 @@ func SDKEventsToFlow(events []sdk.Event) ([]flowgo.Event, error) {
 }
 
 func FlowEventToSDK(flowEvent flowgo.Event) (sdk.Event, error) {
-	cadenceValue, err := jsoncdc.Decode(flowEvent.Payload)
+	cadenceValue, err := jsoncdc.Decode(nil, flowEvent.Payload)
 	if err != nil {
 		return sdk.Event{}, err
 	}

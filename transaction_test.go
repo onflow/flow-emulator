@@ -868,12 +868,12 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 
 		assert.Contains(t,
 			result.Logs,
-			interpreter.NewAddressValueFromBytes(b.ServiceKey().Address.Bytes()).String(),
+			interpreter.NewUnmeteredAddressValueFromBytes(b.ServiceKey().Address.Bytes()).String(),
 		)
 
 		assert.Contains(t,
 			result.Logs,
-			interpreter.NewAddressValueFromBytes(accountAddressB.Bytes()).String(),
+			interpreter.NewUnmeteredAddressValueFromBytes(accountAddressB.Bytes()).String(),
 		)
 	})
 }
@@ -1287,7 +1287,7 @@ func TestGetTransactionResult(t *testing.T) {
 		Address: addr,
 		Name:    "Counting",
 	}
-	eventType := location.TypeID("Counting.CountIncremented")
+	eventType := location.TypeID(nil, "Counting.CountIncremented")
 
 	assert.Equal(t, tx.ID(), event.TransactionID)
 	assert.Equal(t, string(eventType), event.Type)
@@ -1333,11 +1333,12 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 		},
 	}
 
-	createAccountTx := templates.CreateAccount(
+	createAccountTx, err := templates.CreateAccount(
 		[]*flow.AccountKey{accountKey},
 		contracts,
 		b.ServiceKey().Address,
 	)
+	require.NoError(t, err)
 
 	createAccountTx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -1428,11 +1429,12 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 		},
 	}
 
-	createAccountTx := templates.CreateAccount(
+	createAccountTx, err := templates.CreateAccount(
 		[]*flow.AccountKey{accountKey},
 		contracts,
 		b.ServiceKey().Address,
 	)
+	assert.NoError(t, err)
 
 	createAccountTx.
 		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
@@ -1579,6 +1581,6 @@ func TestInfiniteTransaction(t *testing.T) {
 	// Execute tx
 	result, err := b.ExecuteNextTransaction()
 	assert.NoError(t, err)
-	
+
 	require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
 }

@@ -1099,7 +1099,10 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, contracts []tem
 		return sdk.Address{}, err
 	}
 
-	tx := templates.CreateAccount(publicKeys, contracts, serviceAddress)
+	tx, err := templates.CreateAccount(publicKeys, contracts, serviceAddress)
+	if err != nil {
+		return sdk.Address{}, err
+	}
 
 	tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetReferenceBlockID(sdk.Identifier(latestBlock.ID())).
