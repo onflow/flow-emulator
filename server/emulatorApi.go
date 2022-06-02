@@ -20,6 +20,7 @@ package server
 
 import (
 	"encoding/json"
+	"github.com/onflow/flow-go-sdk"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -50,6 +51,8 @@ func NewEmulatorApiServer(server *EmulatorServer, backend *backend.Backend, stor
 
 	router.HandleFunc("/emulator/newBlock", r.CommitBlock)
 	router.HandleFunc("/emulator/snapshot/{name}", r.Snapshot)
+
+	router.HandleFunc("/emulator/storages/{address}", r.Storage)
 
 	return r
 }
@@ -128,4 +131,26 @@ func (m EmulatorApiServer) Snapshot(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
+}
+
+func (m EmulatorApiServer) Storage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	vars := mux.Vars(r)
+	address := vars["address"]
+
+	addr := flow.HexToAddress(address)
+
+	storage, err := m.backend.GetAccountStorage(addr)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(storage)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
