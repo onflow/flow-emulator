@@ -83,7 +83,10 @@ func TestGetAccount(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		signer, err := b.ServiceKey().Signer()
+		assert.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -133,7 +136,9 @@ func TestCreateAccount(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		signer, err := b.ServiceKey().Signer()
+		assert.NoError(t, err)
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -175,7 +180,9 @@ func TestCreateAccount(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		signer, err := b.ServiceKey().Signer()
+		assert.NoError(t, err)
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -217,7 +224,9 @@ func TestCreateAccount(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		signer, err := b.ServiceKey().Signer()
+		assert.NoError(t, err)
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -267,7 +276,9 @@ func TestCreateAccount(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		signer, err := b.ServiceKey().Signer()
+		assert.NoError(t, err)
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -340,7 +351,9 @@ func TestCreateAccount(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		signer, err := b.ServiceKey().Signer()
+		assert.NoError(t, err)
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -392,7 +405,9 @@ func TestCreateAccount(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		signer, err := b.ServiceKey().Signer()
+		assert.NoError(t, err)
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -444,7 +459,9 @@ func TestCreateAccount(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		signer, err := b.ServiceKey().Signer()
+		assert.NoError(t, err)
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -497,7 +514,9 @@ func TestCreateAccount(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		signer, err := b.ServiceKey().Signer()
+		assert.NoError(t, err)
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -533,7 +552,9 @@ func TestCreateAccount(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		signer, err := b.ServiceKey().Signer()
+		assert.NoError(t, err)
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -569,7 +590,9 @@ func TestCreateAccount(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		signer, err := b.ServiceKey().Signer()
+		assert.NoError(t, err)
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -603,7 +626,9 @@ func TestAddAccountKey(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		signer, err := b.ServiceKey().Signer()
+		assert.NoError(t, err)
+		err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx1)
@@ -657,7 +682,9 @@ func TestAddAccountKey(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		signer, err := b.ServiceKey().Signer()
+		assert.NoError(t, err)
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -692,7 +719,9 @@ func TestRemoveAccountKey(t *testing.T) {
 		SetPayer(b.ServiceKey().Address)
 
 	// sign with service key
-	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+	signer, err := b.ServiceKey().Signer()
+	assert.NoError(t, err)
+	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	assert.NoError(t, err)
 
 	// submit tx1 (should succeed)
@@ -721,7 +750,9 @@ func TestRemoveAccountKey(t *testing.T) {
 		SetPayer(b.ServiceKey().Address)
 
 	// sign with service key
-	err = tx2.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+	signer, err = b.ServiceKey().Signer()
+	assert.NoError(t, err)
+	err = tx2.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	assert.NoError(t, err)
 
 	// submit tx2 (should succeed)
@@ -751,7 +782,9 @@ func TestRemoveAccountKey(t *testing.T) {
 		SetPayer(b.ServiceKey().Address)
 
 	// sign with service key (that has been removed)
-	err = tx3.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+	signer, err = b.ServiceKey().Signer()
+	assert.NoError(t, err)
+	err = tx3.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	assert.NoError(t, err)
 
 	// submit tx3 (should fail)
@@ -874,7 +907,9 @@ func TestUpdateAccountCode(t *testing.T) {
 		err = tx.SignPayload(accountAddressB, 0, signerB)
 		assert.NoError(t, err)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		signer, err := b.ServiceKey().Signer()
+		assert.NoError(t, err)
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -929,7 +964,9 @@ func TestUpdateAccountCode(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		signer, err := b.ServiceKey().Signer()
+		assert.NoError(t, err)
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		assert.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
@@ -996,7 +1033,9 @@ func TestImportAccountCode(t *testing.T) {
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address)
 
-	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+	signer, err := b.ServiceKey().Signer()
+	assert.NoError(t, err)
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	assert.NoError(t, err)
 
 	err = b.AddTransaction(*tx)
@@ -1074,7 +1113,9 @@ func TestAccountAccess(t *testing.T) {
 	err = tx.SignPayload(address1, 0, signer1)
 	assert.NoError(t, err)
 
-	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+	signer, err := b.ServiceKey().Signer()
+	assert.NoError(t, err)
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	assert.NoError(t, err)
 
 	err = b.AddTransaction(*tx)
@@ -1126,7 +1167,9 @@ func TestAccountAccess(t *testing.T) {
 	err = tx.SignPayload(address2, 0, signer2)
 	assert.NoError(t, err)
 
-	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+	signer, err = b.ServiceKey().Signer()
+	assert.NoError(t, err)
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	assert.NoError(t, err)
 
 	err = b.AddTransaction(*tx)

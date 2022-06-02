@@ -48,7 +48,9 @@ func TestCommitBlock(t *testing.T) {
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
-	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+	signer, err := b.ServiceKey().Signer()
+	assert.NoError(t, err)
+	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	assert.NoError(t, err)
 
 	// Add tx1 to pending block
@@ -66,7 +68,9 @@ func TestCommitBlock(t *testing.T) {
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
-	err = tx2.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+	signer, err = b.ServiceKey().Signer()
+	assert.NoError(t, err)
+	err = tx2.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	assert.NoError(t, err)
 
 	// Add tx2 to pending block
@@ -131,7 +135,9 @@ func TestBlockView(t *testing.T) {
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+		signer, err := b.ServiceKey().Signer()
+		assert.NoError(t, err)
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		assert.NoError(t, err)
 
 		// Add tx to pending block

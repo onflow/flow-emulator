@@ -13,12 +13,15 @@ package emulator
 import (
 	"errors"
 	"fmt"
+	"math"
 	"sync"
 	"time"
 
+	"github.com/onflow/atree"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
+	"github.com/onflow/cadence/runtime/interpreter"
 	sdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
@@ -33,6 +36,7 @@ import (
 	"github.com/onflow/flow-go/fvm/programs"
 	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/convert"
@@ -73,7 +77,7 @@ type ServiceKey struct {
 	Weight         int
 }
 
-func (s ServiceKey) Signer() sdkcrypto.Signer {
+func (s ServiceKey) Signer() (sdkcrypto.Signer, error) {
 	return sdkcrypto.NewInMemorySigner(s.PrivateKey, s.HashAlgo)
 }
 
@@ -979,6 +983,20 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	return block, nil
 }
 
+func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, error) {
+	env := &emulatorEnv{
+		View: b.pendingBlock.ledgerView,
+	}
+
+	ctx := runtime.Context{
+		Interface:         env,
+		Location:          nil,
+		PredeclaredValues: nil,
+	}
+
+	return NewAccountStorage(address, b.vm.Runtime.Storage(ctx))
+}
+
 // ExecuteAndCommitBlock is a utility that combines ExecuteBlock with CommitBlock.
 func (b *Blockchain) ExecuteAndCommitBlock() (*flowgo.Block, []*types.TransactionResult, error) {
 	b.mu.Lock()
@@ -1109,7 +1127,12 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, contracts []tem
 		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
 		SetPayer(serviceAddress)
 
-	err = tx.SignEnvelope(serviceAddress, serviceKey.Index, serviceKey.Signer())
+	signer, err := b.ServiceKey().Signer()
+	if err != nil {
+		return sdk.Address{}, err
+	}
+
+	err = tx.SignEnvelope(serviceAddress, serviceKey.Index, signer)
 	if err != nil {
 		return sdk.Address{}, err
 	}
@@ -1218,4 +1241,185 @@ func (b *Blockchain) testAlternativeHashAlgo(sig flowgo.TransactionSignature, ms
 	}
 
 	return nil
+}
+
+var _ runtime.Interface = &emulatorEnv{}
+
+// emulatorEnv implements runtime.Interface solely for the purpose of extracting state from a delta
+type emulatorEnv struct {
+	View state.View
+}
+
+func (a *emulatorEnv) ResourceOwnerChanged(interpreter *interpreter.Interpreter, resource *interpreter.CompositeValue, oldOwner common.Address, newOwner common.Address) {
+	panic("implement me")
+}
+
+func (a *emulatorEnv) MeterMemory(usage common.MemoryUsage) error {
+	return nil
+}
+
+func (a *emulatorEnv) MeterComputation(operationType common.ComputationKind, intensity uint) error {
+	panic("implement me")
+}
+
+func (a *emulatorEnv) ValidatePublicKey(key *runtime.PublicKey) error {
+	panic("implement me")
+}
+
+func (a *emulatorEnv) RecordTrace(operation string, location common.Location, duration time.Duration, logs []opentracing.LogRecord) {
+	panic("implement me")
+}
+
+func (a *emulatorEnv) BLSVerifyPOP(pk *runtime.PublicKey, s []byte) (bool, error) {
+	panic("implement me")
+}
+
+func (a *emulatorEnv) BLSAggregateSignatures(sigs [][]byte) ([]byte, error) {
+	panic("implement me")
+}
+
+func (a *emulatorEnv) BLSAggregatePublicKeys(keys []*runtime.PublicKey) (*runtime.PublicKey, error) {
+	panic("implement me")
+}
+
+func (a *emulatorEnv) ResolveLocation(_ []runtime.Identifier, _ runtime.Location) ([]runtime.ResolvedLocation, error) {
+	panic("implement ResolveLocation")
+}
+
+func (a *emulatorEnv) GetCode(_ runtime.Location) ([]byte, error) {
+	panic("implement GetCode")
+}
+
+func (a *emulatorEnv) GetProgram(location runtime.Location) (*interpreter.Program, error) {
+	panic("implement GetProgram")
+}
+
+func (a *emulatorEnv) SetProgram(location runtime.Location, program *interpreter.Program) error {
+	panic("implement SetProgram")
+}
+
+func (a *emulatorEnv) GetValue(owner, key []byte) (value []byte, err error) {
+	return a.View.Get(string(owner), "", string(key))
+}
+
+func (a *emulatorEnv) SetValue(_, _, _ []byte) (err error) {
+	panic("implement SetValue")
+}
+
+func (a *emulatorEnv) CreateAccount(_ runtime.Address) (address runtime.Address, err error) {
+	panic("implement CreateAccount")
+}
+
+func (a *emulatorEnv) AddEncodedAccountKey(_ runtime.Address, _ []byte) error {
+	panic("implement AddEncodedAccountKey")
+}
+
+func (a *emulatorEnv) RevokeEncodedAccountKey(_ runtime.Address, _ int) (publicKey []byte, err error) {
+	panic("implement RevokeEncodedAccountKey")
+}
+
+func (a *emulatorEnv) AddAccountKey(_ runtime.Address, _ *runtime.PublicKey, _ runtime.HashAlgorithm, _ int) (*runtime.AccountKey, error) {
+	panic("implement AddAccountKey")
+}
+
+func (a *emulatorEnv) GetAccountKey(_ runtime.Address, _ int) (*runtime.AccountKey, error) {
+	panic("implement GetAccountKey")
+}
+
+func (a *emulatorEnv) RevokeAccountKey(_ runtime.Address, _ int) (*runtime.AccountKey, error) {
+	panic("implement RevokeAccountKey")
+}
+
+func (a *emulatorEnv) UpdateAccountContractCode(_ runtime.Address, _ string, _ []byte) (err error) {
+	panic("implement UpdateAccountContractCode")
+}
+
+func (a *emulatorEnv) GetAccountContractCode(address runtime.Address, name string) (code []byte, err error) {
+	addr := string(flowgo.BytesToAddress(address.Bytes()).Bytes())
+	v, _ := a.View.Get(addr, addr, state.ContractKey(name))
+	return v, nil
+}
+
+func (a *emulatorEnv) RemoveAccountContractCode(_ runtime.Address, _ string) (err error) {
+	panic("implement RemoveAccountContractCode")
+}
+
+func (a *emulatorEnv) GetSigningAccounts() ([]runtime.Address, error) {
+	panic("implement GetSigningAccounts")
+}
+
+func (a *emulatorEnv) ProgramLog(_ string) error {
+	panic("implement ProgramLog")
+}
+
+func (a *emulatorEnv) EmitEvent(_ cadence.Event) error {
+	panic("implement EmitEvent")
+}
+
+func (a *emulatorEnv) ValueExists(_, _ []byte) (exists bool, err error) {
+	panic("implement ValueExists")
+}
+
+func (a *emulatorEnv) GenerateUUID() (uint64, error) {
+	panic("implement GenerateUUID")
+}
+
+func (a *emulatorEnv) GetComputationLimit() uint64 {
+	return math.MaxUint64
+}
+
+func (a *emulatorEnv) SetComputationUsed(_ uint64) error {
+	return nil
+}
+
+func (a *emulatorEnv) DecodeArgument(_ []byte, _ cadence.Type) (cadence.Value, error) {
+	panic("implement DecodeArgument")
+}
+
+func (a *emulatorEnv) GetCurrentBlockHeight() (uint64, error) {
+	panic("implement GetCurrentBlockHeight")
+}
+
+func (a *emulatorEnv) GetBlockAtHeight(_ uint64) (block runtime.Block, exists bool, err error) {
+	panic("implement GetBlockAtHeight")
+}
+
+func (a *emulatorEnv) UnsafeRandom() (uint64, error) {
+	panic("implement UnsafeRandom")
+}
+
+func (a *emulatorEnv) VerifySignature(_ []byte, _ string, _ []byte, _ []byte, _ runtime.SignatureAlgorithm, _ runtime.HashAlgorithm) (bool, error) {
+	panic("implement VerifySignature")
+}
+
+func (a *emulatorEnv) Hash(_ []byte, _ string, _ runtime.HashAlgorithm) ([]byte, error) {
+	panic("implement Hash")
+}
+
+func (a *emulatorEnv) GetAccountBalance(_ common.Address) (value uint64, err error) {
+	panic("implement GetAccountBalance")
+}
+
+func (a *emulatorEnv) GetAccountAvailableBalance(_ common.Address) (value uint64, err error) {
+	panic("implement GetAccountAvailableBalance")
+}
+
+func (a *emulatorEnv) GetStorageUsed(_ runtime.Address) (value uint64, err error) {
+	panic("implement GetStorageUsed")
+}
+
+func (a *emulatorEnv) GetStorageCapacity(_ runtime.Address) (value uint64, err error) {
+	panic("implement GetStorageCapacity")
+}
+
+func (a *emulatorEnv) ImplementationDebugLog(_ string) error {
+	panic("implement ImplementationDebugLog")
+}
+
+func (a *emulatorEnv) AllocateStorageIndex(owner []byte) (atree.StorageIndex, error) {
+	panic("implement AllocateStorageIndex")
+}
+
+func (e *emulatorEnv) GetAccountContractNames(address runtime.Address) ([]string, error) {
+	panic("implement GetAccountContractNames")
 }

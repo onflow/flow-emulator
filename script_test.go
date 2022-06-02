@@ -33,7 +33,9 @@ func TestExecuteScript(t *testing.T) {
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
-	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+	signer, err := b.ServiceKey().Signer()
+	assert.NoError(t, err)
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	assert.NoError(t, err)
 
 	callScript := generateGetCounterCountScript(counterAddress, b.ServiceKey().Address)
