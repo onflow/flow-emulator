@@ -586,7 +586,7 @@ func (b *Backend) GetAccountStorage(address sdk.Address) (*emulator.AccountStora
 		WithField("address", address).
 		Debugf("👤  GetAccountStorage called")
 
-	return b.GetAccountStorage(address)
+	return b.emulator.GetAccountStorage(address)
 }
 
 func (b *Backend) GetLatestProtocolStateSnapshot(_ context.Context) ([]byte, error) {

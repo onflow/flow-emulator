@@ -92,7 +92,12 @@ func deployContract(b *emulator.Blockchain, name string, contract []byte) error 
 		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
 		SetPayer(serviceAddress)
 
-	err = tx.SignEnvelope(serviceAddress, serviceKey.Index, serviceKey.Signer())
+	signer, err := serviceKey.Signer()
+	if err != nil {
+		return err
+	}
+
+	err = tx.SignEnvelope(serviceAddress, serviceKey.Index, signer)
 	if err != nil {
 		return err
 	}
