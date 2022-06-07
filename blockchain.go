@@ -984,8 +984,10 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 }
 
 func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, error) {
+	program := programs.NewEmptyPrograms()
 	env := &emulatorEnv{
-		View: b.pendingBlock.ledgerView,
+		view:    b.pendingBlock.ledgerView,
+		program: program,
 	}
 
 	ctx := runtime.Context{
@@ -994,7 +996,14 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		PredeclaredValues: nil,
 	}
 
-	return NewAccountStorage(address, b.vm.Runtime.Storage(ctx))
+	store, inter, err := b.vm.Runtime.Storage(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	account, err := b.vm.GetAccount(b.vmCtx, flowgo.BytesToAddress(address.Bytes()), b.pendingBlock.ledgerView, nil)
+
+	return NewAccountStorage(address, account, store, inter)
 }
 
 // ExecuteAndCommitBlock is a utility that combines ExecuteBlock with CommitBlock.
@@ -1247,7 +1256,8 @@ var _ runtime.Interface = &emulatorEnv{}
 
 // emulatorEnv implements runtime.Interface solely for the purpose of extracting state from a delta
 type emulatorEnv struct {
-	View state.View
+	view    state.View
+	program *programs.Programs
 }
 
 func (a *emulatorEnv) ResourceOwnerChanged(interpreter *interpreter.Interpreter, resource *interpreter.CompositeValue, oldOwner common.Address, newOwner common.Address) {
@@ -1291,15 +1301,17 @@ func (a *emulatorEnv) GetCode(_ runtime.Location) ([]byte, error) {
 }
 
 func (a *emulatorEnv) GetProgram(location runtime.Location) (*interpreter.Program, error) {
-	panic("implement GetProgram")
+	p, _, _ := a.program.Get(location)
+	return p, nil
 }
 
 func (a *emulatorEnv) SetProgram(location runtime.Location, program *interpreter.Program) error {
-	panic("implement SetProgram")
+	a.program.Set(location, program, nil)
+	return nil
 }
 
 func (a *emulatorEnv) GetValue(owner, key []byte) (value []byte, err error) {
-	return a.View.Get(string(owner), "", string(key))
+	return a.view.Get(string(owner), "", string(key))
 }
 
 func (a *emulatorEnv) SetValue(_, _, _ []byte) (err error) {
@@ -1336,7 +1348,7 @@ func (a *emulatorEnv) UpdateAccountContractCode(_ runtime.Address, _ string, _ [
 
 func (a *emulatorEnv) GetAccountContractCode(address runtime.Address, name string) (code []byte, err error) {
 	addr := string(flowgo.BytesToAddress(address.Bytes()).Bytes())
-	v, _ := a.View.Get(addr, addr, state.ContractKey(name))
+	v, _ := a.view.Get(addr, addr, state.ContractKey(name))
 	return v, nil
 }
 
