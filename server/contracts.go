@@ -6,13 +6,14 @@ import (
 	"path/filepath"
 	"regexp"
 
-	emulator "github.com/onflow/flow-emulator"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go/fvm"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-nft/lib/go/contracts"
 	fusd "github.com/onflow/fusd/lib/go/contracts"
+
+	emulator "github.com/onflow/flow-emulator"
 )
 
 var (
@@ -92,7 +93,12 @@ func deployContract(b *emulator.Blockchain, name string, contract []byte) error 
 		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
 		SetPayer(serviceAddress)
 
-	err = tx.SignEnvelope(serviceAddress, serviceKey.Index, serviceKey.Signer())
+	signer, err := serviceKey.Signer()
+	if err != nil {
+		return err
+	}
+
+	err = tx.SignEnvelope(serviceAddress, serviceKey.Index, signer)
 	if err != nil {
 		return err
 	}
