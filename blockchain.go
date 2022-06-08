@@ -1109,7 +1109,12 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, contracts []tem
 		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
 		SetPayer(serviceAddress)
 
-	err = tx.SignEnvelope(serviceAddress, serviceKey.Index, serviceKey.Signer())
+	signer, err := serviceKey.Signer()
+	if err != nil {
+		return sdk.Address{}, err
+	}
+
+	err = tx.SignEnvelope(serviceAddress, serviceKey.Index, signer)
 	if err != nil {
 		return sdk.Address{}, err
 	}
