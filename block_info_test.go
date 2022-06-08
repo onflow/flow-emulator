@@ -60,8 +60,11 @@ func TestBlockInfo(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		require.NoError(t, err)
