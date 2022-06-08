@@ -48,9 +48,11 @@ func TestCollections(t *testing.T) {
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
 
-		s, err := b.ServiceKey().Signer()
-		err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, s)
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		tx2 := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
@@ -58,9 +60,6 @@ func TestCollections(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
-
-		signer, err := b.ServiceKey().Signer()
-		require.NoError(t, err)
 
 		err = tx2.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		require.NoError(t, err)

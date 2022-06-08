@@ -82,8 +82,11 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		// Create empty transaction (no required fields)
 		tx := flow.NewTransaction()
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		// Submit tx
 		err = b.AddTransaction(*tx)
@@ -103,8 +106,11 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.IsType(t, err, &emulator.IncompleteTransactionError{})
@@ -668,8 +674,11 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
 
-		err = tx.SignPayload(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignPayload(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -704,11 +713,14 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(nonExistentAccountAddress)
 
-		err = tx.SignPayload(nonExistentAccountAddress, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		err = tx.SignPayload(nonExistentAccountAddress, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -734,7 +746,8 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		// use key that does not exist on service account
 		invalidKey, _ := crypto.GeneratePrivateKey(crypto.ECDSA_P256,
 			[]byte("invalid key invalid key invalid key invalid key invalid key invalid key"))
-		invalidSigner := crypto.NewNaiveSigner(invalidKey, crypto.SHA3_256)
+		invalidSigner, err := crypto.NewNaiveSigner(invalidKey, crypto.SHA3_256)
+		require.NoError(t, err)
 
 		tx := flow.NewTransaction().
 			SetScript([]byte(addTwoScript)).
@@ -744,7 +757,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 			AddAuthorizer(b.ServiceKey().Address)
 
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, invalidSigner)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -852,8 +865,11 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(accountAddressB)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -901,8 +917,11 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 		err = tx.SignPayload(accountAddressB, 0, signerB)
 		assert.NoError(t, err)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		require.NoError(t, err)
@@ -1087,8 +1106,11 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 			err = tx.AddArgument(tt.arg)
 			assert.NoError(t, err)
 
-			err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-			assert.NoError(t, err)
+			signer, err := b.ServiceKey().Signer()
+			require.NoError(t, err)
+
+			err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+			require.NoError(t, err)
 
 			err = b.AddTransaction(*tx)
 			assert.NoError(t, err)
@@ -1124,8 +1146,11 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 		err = tx.AddArgument(cadence.NewInt(x))
 		assert.NoError(t, err)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -1166,8 +1191,11 @@ func TestSubmitTransaction_ProposerSequence(t *testing.T) {
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -1210,8 +1238,11 @@ func TestSubmitTransaction_ProposerSequence(t *testing.T) {
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -1249,8 +1280,11 @@ func TestGetTransaction(t *testing.T) {
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
-	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-	assert.NoError(t, err)
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
 
 	err = b.AddTransaction(*tx1)
 	assert.NoError(t, err)
@@ -1292,8 +1326,11 @@ func TestGetTransactionResult(t *testing.T) {
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
-	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-	assert.NoError(t, err)
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
 
 	result, err := b.GetTransactionResult(tx.ID())
 	assert.NoError(t, err)
@@ -1489,8 +1526,11 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address)
 
-	err = createAccountTx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-	assert.NoError(t, err)
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = createAccountTx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
 
 	err = b.AddTransaction(*createAccountTx)
 	assert.NoError(t, err)
