@@ -73,7 +73,7 @@ type ServiceKey struct {
 	Weight         int
 }
 
-func (s ServiceKey) Signer() sdkcrypto.Signer {
+func (s ServiceKey) Signer() (sdkcrypto.Signer, error) {
 	return sdkcrypto.NewInMemorySigner(s.PrivateKey, s.HashAlgo)
 }
 
