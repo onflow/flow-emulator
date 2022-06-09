@@ -1250,7 +1250,6 @@ github.com/olekukonko/tablewriter v0.0.1/go.mod h1:vsDQFd/mU46D+Z4whnwzcISnGGzXW
 github.com/olekukonko/tablewriter v0.0.2-0.20190409134802-7e037d187b0c/go.mod h1:vsDQFd/mU46D+Z4whnwzcISnGGzXWMclvtLoiIKAKIo=
 github.com/onflow/atree v0.3.0/go.mod h1:tSPKjdmbNOQyVrSvcxKZG8+EDL4jdjoJBGAjNVk8zkA=
 github.com/onflow/atree v0.3.0/go.mod h1:tSPKjdmbNOQyVrSvcxKZG8+EDL4jdjoJBGAjNVk8zkA=
-github.com/onflow/atree v0.3.1-0.20220519142403-b0077ba343ec/go.mod h1:ujKt3moaqv8Cv236rYpSoxNpHzNUy4Wih0U4GPvPZ1g=
 github.com/onflow/atree v0.3.1-0.20220531231935-525fbc26f40a h1:ldQ7U2iddVJCwJA2ckK7y6AdH4INzxOSu2VnejkcBro=
 github.com/onflow/atree v0.3.1-0.20220531231935-525fbc26f40a/go.mod h1:PZESmRR4bI/w/9nEDCqRoWxBq/jFNUEzkfypHf0j8cw=
 github.com/onflow/flow v0.2.4/go.mod h1:lzyAYmbu1HfkZ9cfnL5/sjrrsnJiUU8fRL26CqLP7+c=

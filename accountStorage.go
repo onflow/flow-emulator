@@ -1,7 +1,6 @@
 package emulator
 
 import (
-	"encoding/json"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
@@ -14,21 +13,6 @@ type StorageItem map[string]cadence.Value
 
 func (s StorageItem) Get(key string) cadence.Value {
 	return s[key]
-}
-
-func (s StorageItem) MarshalJSON() ([]byte, error) {
-	serialized := make(map[string]interface{})
-	for k, v := range s {
-		if link, ok := v.(cadence.Link); ok {
-			serialized[k] = map[string]string{
-				"type":   link.Type().ID(),
-				"target": link.TargetPath.String(),
-			}
-		} else {
-			serialized[k] = v.String()
-		}
-	}
-	return json.Marshal(serialized)
 }
 
 // NewAccountStorage creates an instance of the storage that holds the values for each storage path.

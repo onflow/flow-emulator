@@ -1269,7 +1269,7 @@ func (a *emulatorEnv) MeterMemory(usage common.MemoryUsage) error {
 }
 
 func (a *emulatorEnv) MeterComputation(operationType common.ComputationKind, intensity uint) error {
-	panic("implement me")
+	return nil
 }
 
 func (a *emulatorEnv) ValidatePublicKey(key *runtime.PublicKey) error {
@@ -1292,8 +1292,30 @@ func (a *emulatorEnv) BLSAggregatePublicKeys(keys []*runtime.PublicKey) (*runtim
 	panic("implement me")
 }
 
-func (a *emulatorEnv) ResolveLocation(_ []runtime.Identifier, _ runtime.Location) ([]runtime.ResolvedLocation, error) {
-	panic("implement ResolveLocation")
+func (a *emulatorEnv) ResolveLocation(identifiers []runtime.Identifier, location runtime.Location) ([]runtime.ResolvedLocation, error) {
+	addressLocation, isAddress := location.(common.AddressLocation)
+	if !isAddress {
+		return []runtime.ResolvedLocation{
+			{
+				Location:    location,
+				Identifiers: identifiers,
+			},
+		}, nil
+	}
+
+	resolvedLocations := make([]runtime.ResolvedLocation, len(identifiers))
+	for i := range resolvedLocations {
+		identifier := identifiers[i]
+		resolvedLocations[i] = runtime.ResolvedLocation{
+			Location: common.AddressLocation{
+				Address: addressLocation.Address,
+				Name:    identifier.Identifier,
+			},
+			Identifiers: []runtime.Identifier{identifier},
+		}
+	}
+
+	return resolvedLocations, nil
 }
 
 func (a *emulatorEnv) GetCode(_ runtime.Location) ([]byte, error) {
