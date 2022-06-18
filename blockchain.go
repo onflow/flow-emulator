@@ -19,6 +19,7 @@ import (
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
+	"github.com/onflow/cadence/runtime/interpreter"
 	sdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
@@ -1022,7 +1023,10 @@ func (b *Blockchain) ResetPendingBlock() error {
 }
 
 // ExecuteScript executes a read-only script against the world state and returns the result.
-func (b *Blockchain) ExecuteScript(script []byte, arguments [][]byte) (*types.ScriptResult, error) {
+func (b *Blockchain) ExecuteScript(
+	script []byte,
+	arguments [][]byte,
+) (*types.ScriptResult, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -1034,7 +1038,11 @@ func (b *Blockchain) ExecuteScript(script []byte, arguments [][]byte) (*types.Sc
 	return b.ExecuteScriptAtBlock(script, arguments, latestBlock.Header.Height)
 }
 
-func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) (*types.ScriptResult, error) {
+func (b *Blockchain) ExecuteScriptAtBlock(
+	script []byte,
+	arguments [][]byte,
+	blockHeight uint64,
+) (*types.ScriptResult, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -1223,4 +1231,8 @@ func (b *Blockchain) testAlternativeHashAlgo(sig flowgo.TransactionSignature, ms
 	}
 
 	return nil
+}
+
+func (b *Blockchain) SetDebugger(debugger *interpreter.Debugger) {
+	b.vm.Runtime.SetDebugger(debugger)
 }

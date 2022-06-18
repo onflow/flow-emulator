@@ -47,6 +47,7 @@ type EmulatorServer struct {
 	admin      graceland.Routine
 	rest       graceland.Routine
 	blocks     graceland.Routine
+	debugger   graceland.Routine
 	blockchain *emulator.Blockchain
 }
 
@@ -81,6 +82,7 @@ type Config struct {
 	GRPCPort                  int
 	GRPCDebug                 bool
 	AdminPort                 int
+	DebuggerPort              int
 	RESTPort                  int
 	RESTDebug                 bool
 	HTTPHeaders               []HTTPHeader
@@ -161,6 +163,8 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		return nil
 	}
 
+	debugger := NewDebugger(logger, be, conf.DebuggerPort)
+
 	server := &EmulatorServer{
 		logger:     logger,
 		config:     conf,
@@ -171,6 +175,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		rest:       restServer,
 		admin:      nil,
 		blockchain: blockchain,
+		debugger:   debugger,
 	}
 
 	server.admin = NewAdminServer(server, be, &store, grpcServer, livenessTicker, conf.AdminPort, conf.HTTPHeaders)
@@ -208,6 +213,11 @@ func (s *EmulatorServer) Start() {
 		WithField("port", s.config.AdminPort).
 		Infof("🌱  Starting admin server on port %d", s.config.AdminPort)
 	s.group.Add(s.admin)
+
+	s.logger.
+		WithField("port", s.config.DebuggerPort).
+		Infof("🌱  Starting debugger on port %d", s.config.DebuggerPort)
+	s.group.Add(s.debugger)
 
 	// only start blocks ticker if it exists
 	if s.blocks != nil {
