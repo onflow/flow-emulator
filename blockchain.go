@@ -1143,7 +1143,10 @@ func (b *Blockchain) ResetPendingBlock() error {
 }
 
 // ExecuteScript executes a read-only script against the world state and returns the result.
-func (b *Blockchain) ExecuteScript(script []byte, arguments [][]byte) (*types.ScriptResult, error) {
+func (b *Blockchain) ExecuteScript(
+	script []byte,
+	arguments [][]byte,
+) (*types.ScriptResult, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -1155,7 +1158,11 @@ func (b *Blockchain) ExecuteScript(script []byte, arguments [][]byte) (*types.Sc
 	return b.ExecuteScriptAtBlock(script, arguments, latestBlock.Header.Height)
 }
 
-func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) (*types.ScriptResult, error) {
+func (b *Blockchain) ExecuteScriptAtBlock(
+	script []byte,
+	arguments [][]byte,
+	blockHeight uint64,
+) (*types.ScriptResult, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -1340,4 +1347,8 @@ func (b *Blockchain) testAlternativeHashAlgo(sig flowgo.TransactionSignature, ms
 	}
 
 	return nil
+}
+
+func (b *Blockchain) SetDebugger(debugger *interpreter.Debugger) {
+	b.vm.Runtime.SetDebugger(debugger)
 }

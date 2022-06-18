@@ -8,6 +8,7 @@ require (
 	github.com/go-git/go-git/v5 v5.5.2
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang/mock v1.6.0
+	github.com/google/go-dap v0.6.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
