@@ -4,12 +4,18 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/google/go-dap"
+	"github.com/onflow/cadence/runtime/ast"
+	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
+	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/sirupsen/logrus"
 
+	emulator "github.com/onflow/flow-emulator"
 	"github.com/onflow/flow-emulator/server/backend"
 )
 
@@ -29,8 +35,10 @@ type debugSession struct {
 	sendQueue chan dap.Message
 	sendWg    sync.WaitGroup
 	// debugger is the current
-	debugger *interpreter.Debugger
-	stop     *interpreter.Stop
+	debugger       *interpreter.Debugger
+	stop           *interpreter.Stop
+	code           string
+	scriptLocation common.ScriptLocation
 }
 
 // sendFromQueue is to be run in a separate goroutine to listen
@@ -96,7 +104,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		var args map[string]any
 		_ = json.Unmarshal(request.Arguments, &args)
 
-		program, ok := args["program"]
+		programArg, ok := args["program"]
 		if !ok {
 			ds.send(newDAPErrorResponse(
 				request.Seq,
@@ -108,13 +116,17 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 			))
 			break
 		}
-		code := []byte(program.(string))
+		ds.code = programArg.(string)
+		codeBytes := []byte(ds.code)
+
+		scriptID := emulator.ComputeScriptID(codeBytes)
+		ds.scriptLocation = scriptID[:]
 
 		go func() {
 			// TODO: add support for arguments
 			// TODO: add support for transactions. requires automine
 
-			result, err := ds.backend.ExecuteScriptAtLatestBlock(context.Background(), code, nil)
+			result, err := ds.backend.ExecuteScriptAtLatestBlock(context.Background(), codeBytes, nil)
 
 			var outputBody dap.OutputEventBody
 			if err != nil {
@@ -165,7 +177,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 			Body: dap.ThreadsResponseBody{
 				Threads: []dap.Thread{
 					{
-						Id:   0,
+						Id:   1,
 						Name: "Emulator",
 					},
 				},
@@ -187,29 +199,46 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 			Body: dap.StoppedEventBody{
 				Reason:            "pause",
 				AllThreadsStopped: true,
+				ThreadId:          1,
 			},
 		})
 
 	case *dap.StackTraceRequest:
 
-		// TODO:
-
-		startPos := ds.stop.Statement.StartPosition()
-		endPos := ds.stop.Statement.EndPosition(nil)
+		stackFrames := ds.stackFrames()
 
 		ds.send(&dap.StackTraceResponse{
 			Response: newDAPSuccessResponse(request.Seq, request.Command),
 			Body: dap.StackTraceResponseBody{
-				StackFrames: []dap.StackFrame{
-					{
-						Line:      startPos.Line,
-						Column:    startPos.Column + 1,
-						EndLine:   endPos.Line,
-						EndColumn: endPos.Column + 1,
-					},
-				},
+				StackFrames: stackFrames,
 			},
 		})
+
+	case *dap.SourceRequest:
+		path := request.Arguments.Source.Path
+
+		code := ds.pathCode(path)
+
+		if code == "" {
+			ds.send(newDAPErrorResponse(
+				request.Seq,
+				request.Command,
+				dap.ErrorMessage{
+					Format: "unknown source: {path}",
+					Variables: map[string]string{
+						"path": path,
+					},
+				},
+			))
+		} else {
+			ds.send(&dap.SourceResponse{
+				Response: newDAPSuccessResponse(request.Seq, request.Command),
+				Body: dap.SourceResponseBody{
+					Content: code,
+				},
+			})
+		}
+
 	case *dap.ContinueRequest:
 		ds.stop = nil
 		ds.debugger.Continue()
@@ -226,6 +255,89 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		//   to a request that implies that execution continues, e.g. ‘launch’ or ‘continue’.
 		//   It is only necessary to send a ‘continued’ event if there was no previous request that implied this.
 	}
+}
+
+func (ds *debugSession) stackFrames() []dap.StackFrame {
+	invocations := ds.stop.Interpreter.CallStack.Invocations
+
+	stackFrames := make([]dap.StackFrame, 0, len(invocations))
+
+	location := ds.stop.Interpreter.Location
+	astRange := ast.NewRangeFromPositioned(nil, ds.stop.Statement)
+
+	startPos := astRange.StartPosition()
+	endPos := astRange.EndPosition(nil)
+
+	stackFrames = append(
+		stackFrames,
+		dap.StackFrame{
+			Source: dap.Source{
+				Path: locationPath(location),
+			},
+			Line:      startPos.Line,
+			Column:    startPos.Column + 1,
+			EndLine:   endPos.Line,
+			EndColumn: endPos.Column + 2,
+		},
+	)
+
+	for i := len(invocations) - 1; i >= 0; i-- {
+		invocation := invocations[i]
+
+		locationRange := invocation.GetLocationRange()
+
+		location := locationRange.Location
+		if location == nil {
+			continue
+		}
+
+		startPos := locationRange.Range.StartPosition()
+		endPos := locationRange.Range.EndPosition(nil)
+
+		stackFrames = append(
+			stackFrames,
+			dap.StackFrame{
+				Source: dap.Source{
+					Path: locationPath(location),
+				},
+				Line:      startPos.Line,
+				Column:    startPos.Column + 1,
+				EndLine:   endPos.Line,
+				EndColumn: endPos.Column + 2,
+			},
+		)
+	}
+	return stackFrames
+}
+
+func (ds *debugSession) pathCode(path string) string {
+	// TODO: extend, add support for transactions
+
+	location, err := pathLocation(path)
+	if err != nil {
+		return ""
+	}
+
+	if common.LocationsMatch(location, ds.scriptLocation) {
+		return ds.code
+	}
+
+	if addressLocation, ok := location.(common.AddressLocation); ok {
+		var account *sdk.Account
+		account, err = ds.backend.GetEmulator().GetAccount(sdk.Address(addressLocation.Address))
+		if err != nil {
+			return ""
+		}
+
+		contract, ok := account.Contracts[addressLocation.Name]
+		if !ok {
+			return ""
+		}
+
+		return string(contract)
+	}
+
+	return ""
 }
 
 func newDAPEvent(event string) dap.Event {
@@ -261,4 +373,21 @@ func newDAPErrorResponse(requestSeq int, command string, message dap.ErrorMessag
 			Error: message,
 		},
 	}
+}
+
+func locationPath(location common.Location) string {
+	return fmt.Sprintf("%s.cdc", location.ID())
+}
+
+func pathLocation(path string) (common.Location, error) {
+	basename := strings.TrimSuffix(path, ".cdc")
+	// TODO: improve. use type ID decoding to decode location. add required fake qualified identifier
+	if strings.Count(basename, ".") < 3 {
+		basename += "._"
+	}
+	location, _, err := common.DecodeTypeID(nil, basename)
+	if err != nil {
+		return nil, err
+	}
+	return location, nil
 }
