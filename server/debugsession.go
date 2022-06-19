@@ -297,6 +297,33 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		//   Please note: a debug adapter is not expected to send this event in response
 		//   to a request that implies that execution continues, e.g. ‘launch’ or ‘continue’.
 		//   It is only necessary to send a ‘continued’ event if there was no previous request that implied this.
+
+	case *dap.EvaluateRequest:
+		variableName := request.Arguments.Expression
+
+		activation := ds.debugger.CurrentActivation(ds.stop.Interpreter)
+		variable := activation.Find(variableName)
+		if variable == nil {
+			ds.send(newDAPErrorResponse(
+				request.Seq,
+				request.Command,
+				dap.ErrorMessage{
+					Format: "unknown variable: {name}",
+					Variables: map[string]string{
+						"name": variableName,
+					},
+				},
+			))
+			break
+		}
+		value := variable.GetValue()
+
+		ds.send(&dap.EvaluateResponse{
+			Response: newDAPSuccessResponse(request.Seq, request.Command),
+			Body: dap.EvaluateResponseBody{
+				Result: value.String(),
+			},
+		})
 	}
 }
 
