@@ -1067,8 +1067,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 		return nil, err
 	}
 
-	hasher := hash.NewSHA3_256()
-	scriptID := sdk.HashToID(hasher.ComputeHash(script))
+	scriptID := ComputeScriptID(script)
 
 	events, err := sdkconvert.FlowEventsToSDK(scriptProc.Events)
 	if err != nil {
@@ -1091,6 +1090,11 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 		Logs:     scriptProc.Logs,
 		Events:   events,
 	}, nil
+}
+
+func ComputeScriptID(script []byte) sdk.Identifier {
+	hasher := hash.NewSHA3_256()
+	return sdk.HashToID(hasher.ComputeHash(script))
 }
 
 // CreateAccount submits a transaction to create a new account with the given
