@@ -38,6 +38,7 @@ type Debugger struct {
 	listener net.Listener
 	quit     chan interface{}
 	wg       sync.WaitGroup
+	stopOnce sync.Once
 }
 
 func NewDebugger(logger *logrus.Logger, backend *backend.Backend, port int) *Debugger {
@@ -113,6 +114,8 @@ func (d *Debugger) handleConnection(conn net.Conn) {
 }
 
 func (d *Debugger) Stop() {
-	close(d.quit)
-	d.listener.Close()
+	d.stopOnce.Do(func() {
+		close(d.quit)
+		d.listener.Close()
+	})
 }
