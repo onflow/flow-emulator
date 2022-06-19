@@ -119,8 +119,15 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		ds.code = programArg.(string)
 		codeBytes := []byte(ds.code)
 
+		stopOnEntryArg, _ := args["stopOnEntry"]
+		stopOnEntry, _ := stopOnEntryArg.(bool)
+
 		scriptID := emulator.ComputeScriptID(codeBytes)
 		ds.scriptLocation = scriptID[:]
+
+		if stopOnEntry {
+			ds.debugger.RequestPause()
+		}
 
 		go func() {
 			// TODO: add support for arguments
@@ -165,6 +172,22 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		ds.send(&dap.LaunchResponse{
 			Response: newDAPSuccessResponse(request.Seq, request.Command),
 		})
+
+		if stopOnEntry {
+			// TODO: might be exit
+
+			stop := <-ds.debugger.Stops()
+			ds.stop = &stop
+
+			ds.send(&dap.StoppedEvent{
+				Event: newDAPEvent("stopped"),
+				Body: dap.StoppedEventBody{
+					Reason:            "pause",
+					AllThreadsStopped: true,
+					ThreadId:          1,
+				},
+			})
+		}
 
 	case *dap.ConfigurationDoneRequest:
 		ds.send(&dap.ConfigurationDoneResponse{
