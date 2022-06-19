@@ -226,6 +226,26 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 			},
 		})
 
+	case *dap.NextRequest:
+		ds.send(&dap.NextResponse{
+			Response: newDAPSuccessResponse(request.Seq, request.Command),
+		})
+		ds.step()
+
+	case *dap.StepInRequest:
+		// TODO: handled as step request for now
+		ds.send(&dap.StepInResponse{
+			Response: newDAPSuccessResponse(request.Seq, request.Command),
+		})
+		ds.step()
+
+	case *dap.StepOutRequest:
+		// TODO: handled as step request for now
+		ds.send(&dap.StepOutResponse{
+			Response: newDAPSuccessResponse(request.Seq, request.Command),
+		})
+		ds.step()
+
 	case *dap.StackTraceRequest:
 
 		stackFrames := ds.stackFrames()
@@ -361,6 +381,22 @@ func (ds *debugSession) pathCode(path string) string {
 	}
 
 	return ""
+}
+
+func (ds *debugSession) step() {
+	stop := ds.debugger.Next()
+	ds.stop = &stop
+
+	// TODO: might be exit
+
+	ds.send(&dap.StoppedEvent{
+		Event: newDAPEvent("stopped"),
+		Body: dap.StoppedEventBody{
+			Reason:            "step",
+			AllThreadsStopped: true,
+			ThreadId:          1,
+		},
+	})
 }
 
 func newDAPEvent(event string) dap.Event {
