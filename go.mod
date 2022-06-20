@@ -13,8 +13,8 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v0.24.2-0.20220617223839-1e47007b350a
-	github.com/onflow/flow-go v0.25.13-0.20220619024708-9e5071895d28
+	github.com/onflow/cadence v0.24.2-0.20220620002209-20db6768cc93
+	github.com/onflow/flow-go v0.25.13-0.20220620015338-ffd9adc3c821
 	github.com/onflow/flow-go-sdk v0.26.1
 	github.com/onflow/flow-go/crypto v0.24.3
 	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20220606143647-47126d1009e2
@@ -37,6 +37,7 @@ require (
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bits-and-blooms/bitset v1.2.2 // indirect
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
