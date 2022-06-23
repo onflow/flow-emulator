@@ -1,11 +1,14 @@
 package emulator_test
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"testing"
 
 	convert "github.com/onflow/flow-emulator/convert/sdk"
+	"github.com/rs/zerolog"
 
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime/common"
@@ -1671,4 +1674,53 @@ func TestInfiniteTransaction(t *testing.T) {
 	assert.NoError(t, err)
 
 	require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
+}
+
+func TestSubmitTransactionWithCustomLogger(t *testing.T) {
+
+	t.Parallel()
+	var memlog bytes.Buffer
+	memlogWrite := bufio.NewWriter(&memlog)
+	logger := zerolog.New(memlogWrite).Level(zerolog.DebugLevel)
+
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+		emulator.WithLogger(logger),
+	)
+	require.NoError(t, err)
+
+	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
+
+	tx1 := flow.NewTransaction().
+		SetScript([]byte(addTwoScript)).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+		SetPayer(b.ServiceKey().Address).
+		AddAuthorizer(b.ServiceKey().Address)
+
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
+
+	// Submit tx1
+	err = b.AddTransaction(*tx1)
+	assert.NoError(t, err)
+
+	// Execute tx1
+	result, err := b.ExecuteNextTransaction()
+	assert.NoError(t, err)
+	assertTransactionSucceeded(t, result)
+
+	_, err = b.CommitBlock()
+	assert.NoError(t, err)
+
+	// tx1 status becomes TransactionStatusSealed
+	tx1Result, err := b.GetTransactionResult(tx1.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, flow.TransactionStatusSealed, tx1Result.Status)
+
+	assert.NoError(t, err)
+	assert.Contains(t, string(memlog.Bytes()), "computationIntensities")
 }
