@@ -3,8 +3,10 @@ package emulator_test
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 
 	convert "github.com/onflow/flow-emulator/convert/sdk"
@@ -1721,6 +1723,30 @@ func TestSubmitTransactionWithCustomLogger(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, flow.TransactionStatusSealed, tx1Result.Status)
 
+	var meter Meter
+	scanner := bufio.NewScanner(&memlog)
+	for scanner.Scan() {
+		txt := scanner.Text()
+		if strings.Contains(txt, "transaction execution data") {
+			err = json.Unmarshal([]byte(txt), &meter)
+		}
+	}
+
 	assert.NoError(t, err)
-	assert.Contains(t, string(memlog.Bytes()), "computationIntensities")
+	assert.Equal(t, uint(1), meter.ComputationIntensities[common.ComputationKindLoop])
+	assert.Equal(t, 8, meter.ComputationUsed)
 }
+
+type Meter struct {
+	Level                  string                        `json:"level"`
+	TxHash                 string                        `json:"txHash"`
+	LedgerInteractionUsed  int                           `json:"ledgerInteractionUsed"`
+	ComputationUsed        int                           `json:"computationUsed"`
+	MemoryUsed             int                           `json:"memoryUsed"`
+	ComputationIntensities MeteredComputationIntensities `json:"computationIntensities"`
+	MemoryIntensities      MeteredMemoryIntensities      `json:"memoryIntensities"`
+	Message                string                        `json:"message"`
+}
+
+type MeteredComputationIntensities map[common.ComputationKind]uint
+type MeteredMemoryIntensities map[common.MemoryKind]uint
