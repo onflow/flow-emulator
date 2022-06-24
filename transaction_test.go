@@ -1734,19 +1734,16 @@ func TestSubmitTransactionWithCustomLogger(t *testing.T) {
 	}
 
 	assert.NoError(t, err)
-	assert.Equal(t, uint(1), meter.ComputationIntensities[common.ComputationKindLoop])
-	assert.Equal(t, 8, meter.ComputationUsed)
+	assert.Equal(t, `{LedgerInteractionUsed:9373 ComputationUsed:18 MemoryUsed:0 ComputationIntensities:map[Statement:10 Loop:1 FunctionInvocation:8 CreateCompositeValue:2 TransferCompositeValue:3 CreateArrayValue:4 TransferArrayValue:446 CreateDictionaryValue:1 ComputationKind(2005):1 ComputationKind(2006):1 ComputationKind(2007):1 ComputationKind(2008):1 ComputationKind(2011):2 ComputationKind(2015):2 ComputationKind(2017):2 ComputationKind(2020):4760 ComputationKind(2022):1 ComputationKind(2025):3 ComputationKind(2026):1621 ComputationKind(2027):1] MemoryIntensities:map[]}`, fmt.Sprintf("%+v", meter))
+
 }
 
 type Meter struct {
-	Level                  string                        `json:"level"`
-	TxHash                 string                        `json:"txHash"`
 	LedgerInteractionUsed  int                           `json:"ledgerInteractionUsed"`
 	ComputationUsed        int                           `json:"computationUsed"`
 	MemoryUsed             int                           `json:"memoryUsed"`
 	ComputationIntensities MeteredComputationIntensities `json:"computationIntensities"`
 	MemoryIntensities      MeteredMemoryIntensities      `json:"memoryIntensities"`
-	Message                string                        `json:"message"`
 }
 
 type MeteredComputationIntensities map[common.ComputationKind]uint
