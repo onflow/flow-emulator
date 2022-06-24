@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"testing"
 
@@ -1682,7 +1683,7 @@ func TestSubmitTransactionWithCustomLogger(t *testing.T) {
 
 	t.Parallel()
 	var memlog bytes.Buffer
-	memlogWrite := bufio.NewWriter(&memlog)
+	memlogWrite := io.Writer(&memlog)
 	logger := zerolog.New(memlogWrite).Level(zerolog.DebugLevel)
 
 	b, err := emulator.NewBlockchain(
