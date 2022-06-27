@@ -35,10 +35,14 @@ type debugSession struct {
 	sendQueue chan dap.Message
 	sendWg    sync.WaitGroup
 	// debugger is the current
-	debugger       *interpreter.Debugger
-	stop           *interpreter.Stop
-	code           string
-	scriptLocation common.ScriptLocation
+	debugger          *interpreter.Debugger
+	stop              *interpreter.Stop
+	code              string
+	scriptLocation    common.ScriptLocation
+	stopOnEntry       bool
+	configurationDone bool
+	launchRequested   bool
+	launched          bool
 }
 
 // sendFromQueue is to be run in a separate goroutine to listen
@@ -85,17 +89,59 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		ds.backend.SetDebugger(debugger)
 
 		ds.send(&dap.InitializeResponse{
-			Response: newDAPSuccessResponse(request.Seq, request.Command),
+			Response: newDAPSuccessResponse(request.GetRequest()),
 			Body: dap.Capabilities{
 				SupportsConfigurationDoneRequest: true,
-				ExceptionBreakpointFilters:       []dap.ExceptionBreakpointsFilter{},
-				AdditionalModuleColumns:          []dap.ColumnDescriptor{},
-				SupportedChecksumAlgorithms:      []dap.ChecksumAlgorithm{},
 			},
 		})
 
 		ds.send(&dap.InitializedEvent{
 			Event: newDAPEvent("initialized"),
+		})
+
+	case *dap.SetBreakpointsRequest:
+		path := request.Arguments.Source.Path
+		location, err := pathLocation(path)
+		if err != nil {
+			ds.send(newDAPErrorResponse(
+				request.Seq,
+				request.Command,
+				dap.ErrorMessage{
+					Format: "cannot add breakpoints for path: {path}",
+					Variables: map[string]string{
+						"path": path,
+					},
+				},
+			))
+			break
+		}
+
+		ds.debugger.ClearBreakpointsForLocation(location)
+
+		requestBreakpoints := request.Arguments.Breakpoints
+
+		responseBreakpoints := make([]dap.Breakpoint, 0, len(requestBreakpoints))
+
+		for _, requestBreakpoint := range requestBreakpoints {
+			ds.debugger.AddBreakpoint(location, uint(requestBreakpoint.Line))
+
+			responseBreakpoints = append(
+				responseBreakpoints,
+				dap.Breakpoint{
+					Source: dap.Source{
+						Path: request.Arguments.Source.Path,
+					},
+					// TODO:
+					Verified: true,
+				},
+			)
+		}
+
+		ds.send(&dap.SetBreakpointsResponse{
+			Response: newDAPSuccessResponse(request.GetRequest()),
+			Body: dap.SetBreakpointsResponseBody{
+				Breakpoints: responseBreakpoints,
+			},
 		})
 
 	case *dap.LaunchRequest:
@@ -117,86 +163,37 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 			break
 		}
 		ds.code = programArg.(string)
-		codeBytes := []byte(ds.code)
 
 		stopOnEntryArg, _ := args["stopOnEntry"]
-		stopOnEntry, _ := stopOnEntryArg.(bool)
+		ds.stopOnEntry, _ = stopOnEntryArg.(bool)
 
-		scriptID := emulator.ComputeScriptID(codeBytes)
-		ds.scriptLocation = scriptID[:]
+		scriptID := emulator.ComputeScriptID([]byte(ds.code))
+		ds.scriptLocation = common.ScriptLocation(scriptID)
 
-		if stopOnEntry {
-			ds.debugger.RequestPause()
-		}
-
-		go func() {
-			// TODO: add support for arguments
-			// TODO: add support for transactions. requires automine
-
-			result, err := ds.backend.ExecuteScriptAtLatestBlock(context.Background(), codeBytes, nil)
-
-			var outputBody dap.OutputEventBody
-			if err != nil {
-				outputBody = dap.OutputEventBody{
-					Category: "stderr",
-					Output:   err.Error(),
-				}
-			} else {
-				outputBody = dap.OutputEventBody{
-					Category: "stdout",
-					Output:   string(result),
-				}
-			}
-			ds.send(&dap.OutputEvent{
-				Event: newDAPEvent("output"),
-				Body:  outputBody,
-			})
-
-			var exitCode int
-			if err != nil {
-				exitCode = 1
-			}
-
-			ds.send(&dap.ExitedEvent{
-				Event: newDAPEvent("exited"),
-				Body: dap.ExitedEventBody{
-					ExitCode: exitCode,
-				},
-			})
-
-			ds.send(&dap.TerminatedEvent{
-				Event: newDAPEvent("terminated"),
-			})
-		}()
+		ds.launchRequested = true
 
 		ds.send(&dap.LaunchResponse{
-			Response: newDAPSuccessResponse(request.Seq, request.Command),
+			Response: newDAPSuccessResponse(request.GetRequest()),
 		})
 
-		if stopOnEntry {
-			// TODO: might be exit
-
-			stop := <-ds.debugger.Stops()
-			ds.stop = &stop
-
-			ds.send(&dap.StoppedEvent{
-				Event: newDAPEvent("stopped"),
-				Body: dap.StoppedEventBody{
-					Reason:            "pause",
-					AllThreadsStopped: true,
-					ThreadId:          1,
-				},
-			})
+		if ds.configurationDone && !ds.launched {
+			ds.run()
 		}
 
 	case *dap.ConfigurationDoneRequest:
+		ds.configurationDone = true
+
+		if ds.launchRequested && !ds.launched {
+			ds.run()
+		}
+
 		ds.send(&dap.ConfigurationDoneResponse{
-			Response: newDAPSuccessResponse(request.Seq, request.Command),
+			Response: newDAPSuccessResponse(request.GetRequest()),
 		})
 
 	case *dap.ThreadsRequest:
 		ds.send(&dap.ThreadsResponse{
-			Response: newDAPSuccessResponse(request.Seq, request.Command),
+			Response: newDAPSuccessResponse(request.GetRequest()),
 			Body: dap.ThreadsResponseBody{
 				Threads: []dap.Thread{
 					{
@@ -208,50 +205,42 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		})
 
 	case *dap.PauseRequest:
+		ds.debugger.RequestPause()
+
 		ds.send(&dap.PauseResponse{
-			Response: newDAPSuccessResponse(request.Seq, request.Command),
-		})
-
-		stop := ds.debugger.Pause()
-		ds.stop = &stop
-
-		// TODO: might be exit
-
-		ds.send(&dap.StoppedEvent{
-			Event: newDAPEvent("stopped"),
-			Body: dap.StoppedEventBody{
-				Reason:            "pause",
-				AllThreadsStopped: true,
-				ThreadId:          1,
-			},
+			Response: newDAPSuccessResponse(request.GetRequest()),
 		})
 
 	case *dap.NextRequest:
-		ds.send(&dap.NextResponse{
-			Response: newDAPSuccessResponse(request.Seq, request.Command),
-		})
 		ds.step()
+
+		ds.send(&dap.NextResponse{
+			Response: newDAPSuccessResponse(request.GetRequest()),
+		})
 
 	case *dap.StepInRequest:
 		// TODO: handled as step request for now
-		ds.send(&dap.StepInResponse{
-			Response: newDAPSuccessResponse(request.Seq, request.Command),
-		})
 		ds.step()
+
+		ds.send(&dap.StepInResponse{
+			Response: newDAPSuccessResponse(request.GetRequest()),
+		})
 
 	case *dap.StepOutRequest:
 		// TODO: handled as step request for now
-		ds.send(&dap.StepOutResponse{
-			Response: newDAPSuccessResponse(request.Seq, request.Command),
-		})
 		ds.step()
 
+		ds.send(&dap.StepOutResponse{
+			Response: newDAPSuccessResponse(request.GetRequest()),
+		})
+
 	case *dap.StackTraceRequest:
+		// TODO: reply with error if ds.stop == nil
 
 		stackFrames := ds.stackFrames()
 
 		ds.send(&dap.StackTraceResponse{
-			Response: newDAPSuccessResponse(request.Seq, request.Command),
+			Response: newDAPSuccessResponse(request.GetRequest()),
 			Body: dap.StackTraceResponseBody{
 				StackFrames: stackFrames,
 			},
@@ -275,7 +264,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 			))
 		} else {
 			ds.send(&dap.SourceResponse{
-				Response: newDAPSuccessResponse(request.Seq, request.Command),
+				Response: newDAPSuccessResponse(request.GetRequest()),
 				Body: dap.SourceResponseBody{
 					Content: code,
 				},
@@ -287,7 +276,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		ds.debugger.Continue()
 
 		ds.send(&dap.ContinueResponse{
-			Response: newDAPSuccessResponse(request.Seq, request.Command),
+			Response: newDAPSuccessResponse(request.GetRequest()),
 			Body: dap.ContinueResponseBody{
 				AllThreadsContinued: true,
 			},
@@ -299,6 +288,8 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		//   It is only necessary to send a ‘continued’ event if there was no previous request that implied this.
 
 	case *dap.EvaluateRequest:
+		// TODO: reply with error if ds.stop == nil
+
 		variableName := request.Arguments.Expression
 
 		activation := ds.debugger.CurrentActivation(ds.stop.Interpreter)
@@ -319,9 +310,55 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		value := variable.GetValue()
 
 		ds.send(&dap.EvaluateResponse{
-			Response: newDAPSuccessResponse(request.Seq, request.Command),
+			Response: newDAPSuccessResponse(request.GetRequest()),
 			Body: dap.EvaluateResponseBody{
 				Result: value.String(),
+			},
+		})
+
+	case *dap.ScopesRequest:
+		// TODO: return more fine-grained scopes
+
+		ds.send(&dap.ScopesResponse{
+			Response: newDAPSuccessResponse(request.GetRequest()),
+			Body: dap.ScopesResponseBody{
+				Scopes: []dap.Scope{
+					{
+						Name:               "Variables",
+						PresentationHint:   "locals",
+						VariablesReference: 1,
+					},
+				},
+			},
+		})
+
+	case *dap.VariablesRequest:
+		// TODO: reply with error if ds.stop == nil
+
+		inter := ds.stop.Interpreter
+
+		activation := ds.debugger.CurrentActivation(inter)
+
+		functionValues := activation.FunctionValues()
+
+		variables := make([]dap.Variable, 0, len(functionValues))
+
+		for name, variable := range functionValues {
+			value := variable.GetValue()
+			variables = append(
+				variables,
+				dap.Variable{
+					Name:  name,
+					Value: value.String(),
+					Type:  value.StaticType(inter).String(),
+				},
+			)
+		}
+
+		ds.send(&dap.VariablesResponse{
+			Response: newDAPSuccessResponse(request.GetRequest()),
+			Body: dap.VariablesResponseBody{
+				Variables: variables,
 			},
 		})
 	}
@@ -388,7 +425,7 @@ func (ds *debugSession) pathCode(path string) string {
 		return ""
 	}
 
-	if common.LocationsMatch(location, ds.scriptLocation) {
+	if location == ds.scriptLocation {
 		return ds.code
 	}
 
@@ -411,19 +448,81 @@ func (ds *debugSession) pathCode(path string) string {
 }
 
 func (ds *debugSession) step() {
-	stop := ds.debugger.Next()
-	ds.stop = &stop
+	ds.debugger.RequestPause()
+	ds.debugger.Continue()
+}
 
-	// TODO: might be exit
+func (ds *debugSession) run() {
+	if ds.stopOnEntry {
+		ds.debugger.RequestPause()
+	}
 
-	ds.send(&dap.StoppedEvent{
-		Event: newDAPEvent("stopped"),
-		Body: dap.StoppedEventBody{
-			Reason:            "step",
-			AllThreadsStopped: true,
-			ThreadId:          1,
-		},
-	})
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+
+			case stop := <-ds.debugger.Stops():
+				ds.stop = &stop
+
+				ds.send(&dap.StoppedEvent{
+					Event: newDAPEvent("stopped"),
+					Body: dap.StoppedEventBody{
+						Reason:            "pause",
+						AllThreadsStopped: true,
+						ThreadId:          1,
+					},
+				})
+			}
+		}
+	}()
+
+	go func() {
+		// TODO: add support for arguments
+		// TODO: add support for transactions. requires automine
+
+		result, err := ds.backend.ExecuteScriptAtLatestBlock(context.Background(), []byte(ds.code), nil)
+		cancel()
+
+		var outputBody dap.OutputEventBody
+		if err != nil {
+			outputBody = dap.OutputEventBody{
+				Category: "stderr",
+				Output:   err.Error(),
+			}
+		} else {
+			outputBody = dap.OutputEventBody{
+				Category: "stdout",
+				Output:   string(result),
+			}
+		}
+
+		ds.send(&dap.OutputEvent{
+			Event: newDAPEvent("output"),
+			Body:  outputBody,
+		})
+
+		var exitCode int
+		if err != nil {
+			exitCode = 1
+		}
+
+		ds.send(&dap.ExitedEvent{
+			Event: newDAPEvent("exited"),
+			Body: dap.ExitedEventBody{
+				ExitCode: exitCode,
+			},
+		})
+
+		ds.send(&dap.TerminatedEvent{
+			Event: newDAPEvent("terminated"),
+		})
+	}()
+
+	ds.launched = true
 }
 
 func newDAPEvent(event string) dap.Event {
@@ -448,8 +547,8 @@ func newDAPResponse(requestSeq int, command string, success bool) dap.Response {
 	}
 }
 
-func newDAPSuccessResponse(requestSeq int, command string) dap.Response {
-	return newDAPResponse(requestSeq, command, true)
+func newDAPSuccessResponse(request *dap.Request) dap.Response {
+	return newDAPResponse(request.Seq, request.Command, true)
 }
 
 func newDAPErrorResponse(requestSeq int, command string, message dap.ErrorMessage) *dap.ErrorResponse {
