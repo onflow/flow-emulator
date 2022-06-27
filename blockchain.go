@@ -16,10 +16,9 @@ import (
 	"sync"
 	"time"
 
-	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
-
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
+	"github.com/onflow/cadence/runtime/common"
 	sdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
@@ -28,7 +27,9 @@ import (
 	"github.com/onflow/flow-go/crypto/hash"
 	"github.com/onflow/flow-go/engine/execution/state/delta"
 	"github.com/onflow/flow-go/fvm"
+	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
+	"github.com/onflow/flow-go/fvm/meter"
 	"github.com/onflow/flow-go/fvm/programs"
 	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -72,7 +73,7 @@ type ServiceKey struct {
 	Weight         int
 }
 
-func (s ServiceKey) Signer() sdkcrypto.Signer {
+func (s ServiceKey) Signer() (sdkcrypto.Signer, error) {
 	return sdkcrypto.NewInMemorySigner(s.PrivateKey, s.HashAlgo)
 }
 
@@ -490,8 +491,24 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 		)
 	}
 	if conf.TransactionFeesEnabled {
+		// This enables variable transaction fees AND execution effort metering
+		// as described in Variable Transaction Fees: Execution Effort FLIP: https://github.com/onflow/flow/pull/753)
+		// TODO: In the future this should be an injectable parameter. For now this is hard coded
+		// as this is the first iteration of variable execution fees.
 		options = append(options,
-			fvm.WithTransactionFee(fvm.DefaultTransactionFees),
+			fvm.WithTransactionFee(fvm.BootstrapProcedureFeeParameters{
+				SurgeFactor:         cadence.UFix64(100_000_000), // 1.0
+				InclusionEffortCost: cadence.UFix64(100),         // 1E-6
+				ExecutionEffortCost: cadence.UFix64(499_000_000), // 4.99
+			}),
+			fvm.WithExecutionEffortWeights(map[common.ComputationKind]uint64{
+				common.ComputationKindStatement:          1569,
+				common.ComputationKindLoop:               1569,
+				common.ComputationKindFunctionInvocation: 1569,
+				meter.ComputationKindGetValue:            808,
+				meter.ComputationKindCreateAccount:       2837670,
+				meter.ComputationKindSetValue:            765,
+			}),
 		)
 	}
 	return fvm.Bootstrap(
@@ -1082,14 +1099,22 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, contracts []tem
 		return sdk.Address{}, err
 	}
 
-	tx := templates.CreateAccount(publicKeys, contracts, serviceAddress)
+	tx, err := templates.CreateAccount(publicKeys, contracts, serviceAddress)
+	if err != nil {
+		return sdk.Address{}, err
+	}
 
 	tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetReferenceBlockID(sdk.Identifier(latestBlock.ID())).
 		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
 		SetPayer(serviceAddress)
 
-	err = tx.SignEnvelope(serviceAddress, serviceKey.Index, serviceKey.Signer())
+	signer, err := serviceKey.Signer()
+	if err != nil {
+		return sdk.Address{}, err
+	}
+
+	err = tx.SignEnvelope(serviceAddress, serviceKey.Index, signer)
 	if err != nil {
 		return sdk.Address{}, err
 	}

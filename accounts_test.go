@@ -83,8 +83,11 @@ func TestGetAccount(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		require.NoError(t, err)
@@ -122,18 +125,22 @@ func TestCreateAccount(t *testing.T) {
 
 		accountKey := accountKeys.New()
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			[]*flow.AccountKey{accountKey},
 			nil,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		require.NoError(t, err)
@@ -163,18 +170,22 @@ func TestCreateAccount(t *testing.T) {
 
 		accountKey := accountKeys.New()
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			[]*flow.AccountKey{accountKey},
 			nil,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		require.NoError(t, err)
@@ -204,18 +215,22 @@ func TestCreateAccount(t *testing.T) {
 		accountKeyA := accountKeys.New()
 		accountKeyB := accountKeys.New()
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			[]*flow.AccountKey{accountKeyA, accountKeyB},
 			nil,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		require.NoError(t, err)
@@ -253,18 +268,22 @@ func TestCreateAccount(t *testing.T) {
 			},
 		}
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			[]*flow.AccountKey{accountKeyA, accountKeyB},
 			contracts,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		require.NoError(t, err)
@@ -325,18 +344,22 @@ func TestCreateAccount(t *testing.T) {
 			},
 		}
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			[]*flow.AccountKey{accountKey},
 			contracts,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		require.NoError(t, err)
@@ -376,18 +399,22 @@ func TestCreateAccount(t *testing.T) {
 			},
 		}
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			nil,
 			contracts,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -427,18 +454,22 @@ func TestCreateAccount(t *testing.T) {
 			},
 		}
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			[]*flow.AccountKey{accountKey},
 			contracts,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -479,18 +510,22 @@ func TestCreateAccount(t *testing.T) {
 		accountKey := accountKeys.New()
 		accountKey.SetHashAlgo(crypto.SHA3_384) // SHA3_384 is invalid for ECDSA_P256
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			[]*flow.AccountKey{accountKey},
 			nil,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -514,18 +549,22 @@ func TestCreateAccount(t *testing.T) {
 			},
 		}
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			nil,
 			contracts,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -549,18 +588,22 @@ func TestCreateAccount(t *testing.T) {
 			},
 		}
 
-		tx := templates.CreateAccount(
+		tx, err := templates.CreateAccount(
 			nil,
 			contracts,
 			b.ServiceKey().Address,
 		)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -586,14 +629,18 @@ func TestAddAccountKey(t *testing.T) {
 
 		newAccountKey, newSigner := accountKeys.NewWithSigner()
 
-		tx1 := templates.AddAccountKey(b.ServiceKey().Address, newAccountKey)
+		tx1, err := templates.AddAccountKey(b.ServiceKey().Address, newAccountKey)
+		assert.NoError(t, err)
 
 		tx1.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx1)
 		assert.NoError(t, err)
@@ -639,14 +686,18 @@ func TestAddAccountKey(t *testing.T) {
 		accountKey := accountKeys.New()
 		accountKey.SetHashAlgo(crypto.SHA3_384) // SHA3_384 is invalid for ECDSA_P256
 
-		tx := templates.AddAccountKey(b.ServiceKey().Address, accountKey)
+		tx, err := templates.AddAccountKey(b.ServiceKey().Address, accountKey)
+		assert.NoError(t, err)
 
 		tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -671,7 +722,7 @@ func TestRemoveAccountKey(t *testing.T) {
 	newAccountKey, newSigner := accountKeys.NewWithSigner()
 
 	// create transaction that adds public key to account keys
-	tx1 := templates.AddAccountKey(b.ServiceKey().Address, newAccountKey)
+	tx1, err := templates.AddAccountKey(b.ServiceKey().Address, newAccountKey)
 	assert.NoError(t, err)
 
 	// create transaction that adds public key to account keys
@@ -680,8 +731,11 @@ func TestRemoveAccountKey(t *testing.T) {
 		SetPayer(b.ServiceKey().Address)
 
 	// sign with service key
-	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-	assert.NoError(t, err)
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
 
 	// submit tx1 (should succeed)
 	err = b.AddTransaction(*tx1)
@@ -709,7 +763,7 @@ func TestRemoveAccountKey(t *testing.T) {
 		SetPayer(b.ServiceKey().Address)
 
 	// sign with service key
-	err = tx2.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+	err = tx2.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	assert.NoError(t, err)
 
 	// submit tx2 (should succeed)
@@ -739,7 +793,7 @@ func TestRemoveAccountKey(t *testing.T) {
 		SetPayer(b.ServiceKey().Address)
 
 	// sign with service key (that has been removed)
-	err = tx3.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+	err = tx3.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	assert.NoError(t, err)
 
 	// submit tx3 (should fail)
@@ -862,8 +916,11 @@ func TestUpdateAccountCode(t *testing.T) {
 		err = tx.SignPayload(accountAddressB, 0, signerB)
 		assert.NoError(t, err)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		require.NoError(t, err)
@@ -917,8 +974,11 @@ func TestUpdateAccountCode(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
-		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -984,8 +1044,11 @@ func TestImportAccountCode(t *testing.T) {
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address)
 
-	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-	assert.NoError(t, err)
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
 
 	err = b.AddTransaction(*tx)
 	assert.NoError(t, err)
@@ -1062,8 +1125,11 @@ func TestAccountAccess(t *testing.T) {
 	err = tx.SignPayload(address1, 0, signer1)
 	assert.NoError(t, err)
 
-	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-	assert.NoError(t, err)
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
 
 	err = b.AddTransaction(*tx)
 	require.NoError(t, err)
@@ -1112,10 +1178,10 @@ func TestAccountAccess(t *testing.T) {
 		SetPayer(b.ServiceKey().Address)
 
 	err = tx.SignPayload(address2, 0, signer2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-	assert.NoError(t, err)
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
 
 	err = b.AddTransaction(*tx)
 	require.NoError(t, err)

@@ -599,6 +599,21 @@ func (b *Backend) DisableAutoMine() {
 	b.automine = false
 }
 
+func (b *Backend) GetTransactionResultByIndex(context.Context, flowgo.Identifier, uint32) (*access.TransactionResult, error) {
+	// TODO: implement
+	panic("GetTransactionResultByIndex not implemented")
+}
+
+func (b *Backend) GetTransactionsByBlockID(ctx context.Context, id flowgo.Identifier) ([]*flowgo.TransactionBody, error) {
+	// TODO: implement
+	panic("GetTransactionsByBlockID not implemented")
+}
+
+func (b *Backend) GetTransactionResultsByBlockID(ctx context.Context, id flowgo.Identifier) ([]*access.TransactionResult, error) {
+	// TODO: implement
+	panic("GetTransactionResultsByBlockID not implemented")
+}
+
 func printTransactionResult(logger *logrus.Logger, result *types.TransactionResult) {
 	if result.Succeeded() {
 		logger.

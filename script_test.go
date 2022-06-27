@@ -6,8 +6,8 @@ import (
 
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
-	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/flow-go-sdk"
+	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,8 +33,11 @@ func TestExecuteScript(t *testing.T) {
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
-	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-	assert.NoError(t, err)
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
 
 	callScript := generateGetCounterCountScript(counterAddress, b.ServiceKey().Address)
 
@@ -162,10 +165,5 @@ func TestInfiniteScript(t *testing.T) {
 	result, err := b.ExecuteScript([]byte(code), nil)
 	require.NoError(t, err)
 
-	require.ErrorAs(t,
-		result.Error,
-		&runtime.ComputationLimitExceededError{
-			Limit: limit,
-		},
-	)
+	require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
 }

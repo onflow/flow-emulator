@@ -18,10 +18,10 @@ export DOCKER_BUILDKIT := 1
 install-tools:
 	mkdir -p ${GOPATH}; \
 	cd ${GOPATH}; \
-	GO111MODULE=on go get github.com/golang/mock/mockgen@v1.3.1; \
-	GO111MODULE=on go get github.com/axw/gocov/gocov; \
-	GO111MODULE=on go get github.com/matm/gocov-html; \
-	GO111MODULE=on go get github.com/sanderhahn/gozip/cmd/gozip;
+	GO111MODULE=on go install github.com/golang/mock/mockgen@v1.6.0; \
+	GO111MODULE=on go install github.com/axw/gocov/gocov@latest; \
+	GO111MODULE=on go install github.com/matm/gocov-html@latest; \
+	GO111MODULE=on go install github.com/sanderhahn/gozip/cmd/gozip@latest;
 
 .PHONY: test
 test:

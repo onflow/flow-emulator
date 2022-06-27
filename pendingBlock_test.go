@@ -31,7 +31,10 @@ func setupPendingBlockTests(t *testing.T) (
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
-	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	require.NoError(t, err)
 
 	tx2 := flow.NewTransaction().
@@ -41,7 +44,7 @@ func setupPendingBlockTests(t *testing.T) (
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
-	err = tx2.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+	err = tx2.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	require.NoError(t, err)
 
 	invalid := flow.NewTransaction().
@@ -51,7 +54,7 @@ func setupPendingBlockTests(t *testing.T) (
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
-	err = invalid.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
+	err = invalid.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	require.NoError(t, err)
 
 	return b, tx1, tx2, invalid
@@ -311,8 +314,11 @@ func TestPendingBlockCommit(t *testing.T) {
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
 
-		err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		// Add tx1 to pending block
 		err = b.AddTransaction(*tx1)
@@ -340,8 +346,11 @@ func TestPendingBlockCommit(t *testing.T) {
 			SetPayer(b.ServiceKey().Address).
 			AddAuthorizer(b.ServiceKey().Address)
 
-		err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().Signer())
-		assert.NoError(t, err)
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
 
 		// Add tx1 to pending block
 		err = b.AddTransaction(*tx1)
