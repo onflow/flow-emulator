@@ -247,12 +247,11 @@ func TestLedger(t *testing.T) {
 		var blockHeight uint64 = 1
 
 		const owner = ""
-		const controller = ""
 		const key = "foo"
 		expected := []byte("bar")
 
 		d := delta.NewDelta()
-		d.Set(owner, controller, key, expected)
+		d.Set(owner, key, expected)
 
 		t.Run("should get able to set ledger", func(t *testing.T) {
 			err := store.InsertLedgerDelta(blockHeight, d)
@@ -261,7 +260,7 @@ func TestLedger(t *testing.T) {
 
 		t.Run("should be to get set ledger", func(t *testing.T) {
 			gotLedger := store.LedgerViewByHeight(blockHeight)
-			actual, err := gotLedger.Get(owner, controller, key)
+			actual, err := gotLedger.Get(owner, key)
 			assert.NoError(t, err)
 			assert.Equal(t, expected, actual)
 		})
@@ -278,7 +277,6 @@ func TestLedger(t *testing.T) {
 		}()
 
 		const owner = ""
-		const controller = ""
 
 		// Create a list of ledgers, where the ledger at index i has
 		// keys (i+2)-1->(i+2)+1 set to value i-1.
@@ -288,7 +286,7 @@ func TestLedger(t *testing.T) {
 			d := delta.NewDelta()
 			for j := i - 1; j <= i+1; j++ {
 				key := fmt.Sprintf("%d", j)
-				d.Set(owner, controller, key, []byte{byte(i - 1)})
+				d.Set(owner, key, []byte{byte(i - 1)})
 			}
 			deltas = append(deltas, d)
 		}
@@ -310,7 +308,7 @@ func TestLedger(t *testing.T) {
 		t.Run("should version the first written block", func(t *testing.T) {
 			gotLedger := store.LedgerViewByHeight(1)
 			for i := 1; i <= 3; i++ {
-				val, err := gotLedger.Get(owner, controller, fmt.Sprintf("%d", i))
+				val, err := gotLedger.Get(owner, fmt.Sprintf("%d", i))
 				assert.NoError(t, err)
 				assert.Equal(t, []byte{byte(1)}, val)
 			}
@@ -322,13 +320,13 @@ func TestLedger(t *testing.T) {
 				gotLedger := store.LedgerViewByHeight(uint64(block))
 				// The keys 1->N-1 are defined in previous blocks
 				for i := 1; i < block; i++ {
-					val, err := gotLedger.Get(owner, controller, fmt.Sprintf("%d", i))
+					val, err := gotLedger.Get(owner, fmt.Sprintf("%d", i))
 					assert.NoError(t, err)
 					assert.Equal(t, []byte{byte(i)}, val)
 				}
 				// The keys N->N+2 are defined in the queried block
 				for i := block; i <= block+2; i++ {
-					val, err := gotLedger.Get(owner, controller, fmt.Sprintf("%d", i))
+					val, err := gotLedger.Get(owner, fmt.Sprintf("%d", i))
 					assert.NoError(t, err)
 					assert.Equal(t, []byte{byte(block)}, val)
 				}
@@ -465,13 +463,12 @@ func TestPersistence(t *testing.T) {
 	events := []flowgo.Event{event}
 
 	const owner = ""
-	const controller = ""
 	const key = "foo"
 
 	expected := []byte("bar")
 
 	d := delta.NewDelta()
-	d.Set(owner, controller, key, expected)
+	d.Set(owner, key, expected)
 
 	// insert some stuff to to the store
 	err := store.StoreBlock(block)
@@ -505,7 +502,7 @@ func TestPersistence(t *testing.T) {
 	assert.Equal(t, events, gotEvents)
 
 	gotLedger := store.LedgerViewByHeight(block.Header.Height)
-	actual, err := gotLedger.Get(owner, controller, "foo")
+	actual, err := gotLedger.Get(owner, "foo")
 	assert.NoError(t, err)
 	assert.Equal(t, expected, actual)
 }
@@ -524,12 +521,11 @@ func benchmarkInsertLedgerDelta(b *testing.B, nKeys int) {
 	defer store.Close()
 
 	const owner = ""
-	const controller = ""
 
 	ledger := delta.NewDelta()
 	for i := 0; i < nKeys; i++ {
 		key := fmt.Sprintf("%d", i)
-		ledger.Set(owner, controller, key, []byte{byte(i)})
+		ledger.Set(owner, key, []byte{byte(i)})
 	}
 
 	b.StartTimer()
@@ -609,7 +605,6 @@ func BenchmarkLedgerDiskUsage(b *testing.B) {
 	defer store.Close()
 
 	const owner = ""
-	const controller = ""
 
 	b.StartTimer()
 	var lastDBSize int64
@@ -617,7 +612,7 @@ func BenchmarkLedgerDiskUsage(b *testing.B) {
 		ledger := delta.NewDelta()
 		for j := 0; j < 100; j++ {
 			key := fmt.Sprintf("%d-%d", i, j)
-			ledger.Set(owner, controller, key, []byte{byte(i), byte(j)})
+			ledger.Set(owner, key, []byte{byte(i), byte(j)})
 		}
 		if err := store.InsertLedgerDelta(uint64(i), ledger); err != nil {
 			b.Fatal(err)

@@ -128,14 +128,12 @@ func TestChangelog(t *testing.T) {
 
 	var (
 		key1 = flow.RegisterID{
-			Owner:      "",
-			Controller: "",
-			Key:        "key1",
+			Owner: "",
+			Key:   "key1",
 		}
 		key2 = flow.RegisterID{
-			Owner:      "",
-			Controller: "",
-			Key:        "key2",
+			Owner: "",
+			Key:   "key2",
 		}
 	)
 
