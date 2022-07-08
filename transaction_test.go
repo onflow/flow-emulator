@@ -1,11 +1,17 @@
 package emulator_test
 
 import (
+	"bufio"
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"strings"
 	"testing"
 
 	convert "github.com/onflow/flow-emulator/convert/sdk"
+	"github.com/rs/zerolog"
 
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime/common"
@@ -1672,3 +1678,77 @@ func TestInfiniteTransaction(t *testing.T) {
 
 	require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
 }
+
+func TestSubmitTransactionWithCustomLogger(t *testing.T) {
+
+	t.Parallel()
+	var memlog bytes.Buffer
+	memlogWrite := io.Writer(&memlog)
+	logger := zerolog.New(memlogWrite).Level(zerolog.DebugLevel)
+
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+		emulator.WithLogger(logger),
+	)
+	require.NoError(t, err)
+
+	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
+
+	tx1 := flow.NewTransaction().
+		SetScript([]byte(addTwoScript)).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+		SetPayer(b.ServiceKey().Address).
+		AddAuthorizer(b.ServiceKey().Address)
+
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
+
+	// Submit tx1
+	err = b.AddTransaction(*tx1)
+	assert.NoError(t, err)
+
+	// Execute tx1
+	result, err := b.ExecuteNextTransaction()
+	assert.NoError(t, err)
+	assertTransactionSucceeded(t, result)
+
+	_, err = b.CommitBlock()
+	assert.NoError(t, err)
+
+	// tx1 status becomes TransactionStatusSealed
+	tx1Result, err := b.GetTransactionResult(tx1.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, flow.TransactionStatusSealed, tx1Result.Status)
+
+	var meter Meter
+	scanner := bufio.NewScanner(&memlog)
+	for scanner.Scan() {
+		txt := scanner.Text()
+		if strings.Contains(txt, "transaction execution data") {
+			err = json.Unmarshal([]byte(txt), &meter)
+		}
+	}
+
+	assert.NoError(t, err)
+	assert.Greater(t, meter.LedgerInteractionUsed, 0)
+	assert.Greater(t, meter.ComputationUsed, 0)
+	assert.Equal(t, meter.MemoryUsed, 0) // this will change with the new emulator version I think
+	assert.Greater(t, len(meter.ComputationIntensities), 0)
+	assert.Equal(t, len(meter.MemoryIntensities), 0) // this will change with the new emulator version I think
+
+}
+
+type Meter struct {
+	LedgerInteractionUsed  int                           `json:"ledgerInteractionUsed"`
+	ComputationUsed        int                           `json:"computationUsed"`
+	MemoryUsed             int                           `json:"memoryUsed"`
+	ComputationIntensities MeteredComputationIntensities `json:"computationIntensities"`
+	MemoryIntensities      MeteredMemoryIntensities      `json:"memoryIntensities"`
+}
+
+type MeteredComputationIntensities map[common.ComputationKind]uint
+type MeteredMemoryIntensities map[common.MemoryKind]uint
