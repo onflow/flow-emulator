@@ -232,7 +232,7 @@ func (s *Store) insertTransactionResult(txID flowgo.Identifier, result types.Sto
 }
 
 func (s *Store) LedgerViewByHeight(blockHeight uint64) *delta.View {
-	return delta.NewView(func(owner, controller, key string) (value flowgo.RegisterValue, err error) {
+	return delta.NewView(func(owner, key string) (value flowgo.RegisterValue, err error) {
 
 		// Ledger.Get writes (!), so acquire a write lock!
 		s.mu.Lock()
@@ -243,7 +243,7 @@ func (s *Store) LedgerViewByHeight(blockHeight uint64) *delta.View {
 			return nil, nil
 		}
 
-		return ledger.Get(owner, controller, key)
+		return ledger.Get(owner, key)
 	})
 }
 
@@ -276,7 +276,7 @@ func (s *Store) insertLedgerDelta(blockHeight uint64, delta delta.Delta) error {
 	ids, values := delta.RegisterUpdates()
 	for i, value := range values {
 		key := ids[i]
-		err := newLedger.Set(key.Owner, key.Controller, key.Key, value)
+		err := newLedger.Set(key.Owner, key.Key, value)
 		if err != nil {
 			return err
 		}
