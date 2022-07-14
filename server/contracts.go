@@ -6,13 +6,14 @@ import (
 	"path/filepath"
 	"regexp"
 
-	emulator "github.com/onflow/flow-emulator"
 	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go/fvm"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-nft/lib/go/contracts"
 	fusd "github.com/onflow/fusd/lib/go/contracts"
+
+	emulator "github.com/onflow/flow-emulator"
 )
 
 var (
@@ -30,7 +31,7 @@ func deployContracts(b *emulator.Blockchain) ([]DeployDescription, error) {
 	ftAddress := flow.HexToAddress(fvm.FungibleTokenAddress(b.GetChain()).Hex())
 	serviceAddress := b.ServiceKey().Address
 
-	nftContract := loadContract("NFTStorefront.cdc", map[string]flow.Address{
+	nftStorefrontContract := loadContract("NFTStorefront.cdc", map[string]flow.Address{
 		"FungibleToken":    ftAddress,
 		"NonFungibleToken": serviceAddress,
 	})
@@ -40,32 +41,62 @@ func deployContracts(b *emulator.Blockchain) ([]DeployDescription, error) {
 		description string
 		source      []byte
 	}{
-		{"FUSD", "💵  FUSD contract", fusd.FUSD(ftAddress.String())},
-		{"NonFungibleToken", "✨   NFT contract", contracts.NonFungibleToken()},
-		{"ExampleNFT", "✨   NFT contract", contracts.ExampleNFT(serviceAddress.Hex())},
-		{"NFTStorefront", "✨   NFT contract", nftContract},
+		{
+			name:        "FUSD",
+			description: "💵  FUSD contract",
+			source:      fusd.FUSD(ftAddress.String()),
+		},
+		{
+			name:        "NonFungibleToken",
+			description: "✨   NFT contract",
+			source:      contracts.NonFungibleToken(),
+		},
+		{
+			name:        "MetadataViews",
+			description: "✨   Metadata views contract",
+			source:      contracts.MetadataViews(ftAddress, serviceAddress),
+		},
+		{
+			name:        "ExampleNFT",
+			description: "✨   Example NFT contract",
+			source:      contracts.ExampleNFT(serviceAddress, serviceAddress),
+		},
+		{
+			name:        "NFTStorefront",
+			description: "✨   NFT Storefront contract",
+			source:      nftStorefrontContract,
+		},
 	}
 
 	for _, c := range toDeploy {
 		err := deployContract(b, c.name, c.source)
 		if err != nil {
-			return []DeployDescription{}, err
+			return nil, err
 		}
 	}
 
 	serviceAcct, err := b.GetAccount(serviceAddress)
 	if err != nil {
-		return []DeployDescription{}, err
+		return nil, err
 	}
 
-	addresses := make([]DeployDescription, 0)
+	deployDescriptions := make([]DeployDescription, 0)
 	for _, c := range toDeploy {
-		if _, err := serviceAcct.Contracts[c.name]; err {
-			addresses = append(addresses, DeployDescription{c.name, serviceAddress, c.description})
+		_, ok := serviceAcct.Contracts[c.name]
+		if !ok {
+			continue
 		}
+		deployDescriptions = append(
+			deployDescriptions,
+			DeployDescription{
+				name:        c.name,
+				address:     serviceAddress,
+				description: c.description,
+			},
+		)
 	}
 
-	return addresses, nil
+	return deployDescriptions, nil
 }
 
 func deployContract(b *emulator.Blockchain, name string, contract []byte) error {

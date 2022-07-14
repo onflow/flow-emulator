@@ -1,6 +1,6 @@
 module github.com/onflow/flow-emulator
 
-go 1.16
+go 1.18
 
 require (
 	github.com/dgraph-io/badger/v2 v2.2007.4
@@ -12,12 +12,11 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/atree v0.3.1-0.20220531231935-525fbc26f40a
-	github.com/onflow/cadence v0.24.0
+	github.com/onflow/cadence v0.21.3-0.20220601002855-8b113c539a2c
 	github.com/onflow/flow-go v0.26.2
 	github.com/onflow/flow-go-sdk v0.24.1-0.20220513205729-d1f58d47c4e3
 	github.com/onflow/flow-go/crypto v0.24.3
-	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20210915191154-12ee8c507a0e
+	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20220606143647-47126d1009e2
 	github.com/onflow/flow/protobuf/go/flow v0.3.1
 	github.com/onflow/fusd/lib/go/contracts v0.0.0-20211021081023-ae9de8fb2c7e
 	github.com/opentracing/opentracing-go v1.2.0
@@ -28,10 +27,6 @@ require (
 	github.com/rs/zerolog v1.26.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.3.0
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.5
 	google.golang.org/grpc v1.45.0
 )
-
-replace github.com/onflow/cadence => /Users/dapper/Dev/cadence
-
-replace github.com/onflow/flow-go-sdk => /Users/dapper/Dev/flow-go-sdk

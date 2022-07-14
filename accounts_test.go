@@ -84,10 +84,10 @@ func TestGetAccount(t *testing.T) {
 			SetPayer(b.ServiceKey().Address)
 
 		signer, err := b.ServiceKey().Signer()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		require.NoError(t, err)
@@ -137,9 +137,10 @@ func TestCreateAccount(t *testing.T) {
 			SetPayer(b.ServiceKey().Address)
 
 		signer, err := b.ServiceKey().Signer()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		require.NoError(t, err)
@@ -181,9 +182,10 @@ func TestCreateAccount(t *testing.T) {
 			SetPayer(b.ServiceKey().Address)
 
 		signer, err := b.ServiceKey().Signer()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		require.NoError(t, err)
@@ -225,9 +227,10 @@ func TestCreateAccount(t *testing.T) {
 			SetPayer(b.ServiceKey().Address)
 
 		signer, err := b.ServiceKey().Signer()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		require.NoError(t, err)
@@ -277,9 +280,10 @@ func TestCreateAccount(t *testing.T) {
 			SetPayer(b.ServiceKey().Address)
 
 		signer, err := b.ServiceKey().Signer()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		require.NoError(t, err)
@@ -352,9 +356,10 @@ func TestCreateAccount(t *testing.T) {
 			SetPayer(b.ServiceKey().Address)
 
 		signer, err := b.ServiceKey().Signer()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		require.NoError(t, err)
@@ -406,9 +411,10 @@ func TestCreateAccount(t *testing.T) {
 			SetPayer(b.ServiceKey().Address)
 
 		signer, err := b.ServiceKey().Signer()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -460,9 +466,10 @@ func TestCreateAccount(t *testing.T) {
 			SetPayer(b.ServiceKey().Address)
 
 		signer, err := b.ServiceKey().Signer()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -515,9 +522,10 @@ func TestCreateAccount(t *testing.T) {
 			SetPayer(b.ServiceKey().Address)
 
 		signer, err := b.ServiceKey().Signer()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -553,9 +561,10 @@ func TestCreateAccount(t *testing.T) {
 			SetPayer(b.ServiceKey().Address)
 
 		signer, err := b.ServiceKey().Signer()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -591,9 +600,10 @@ func TestCreateAccount(t *testing.T) {
 			SetPayer(b.ServiceKey().Address)
 
 		signer, err := b.ServiceKey().Signer()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -627,9 +637,10 @@ func TestAddAccountKey(t *testing.T) {
 			SetPayer(b.ServiceKey().Address)
 
 		signer, err := b.ServiceKey().Signer()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx1)
 		assert.NoError(t, err)
@@ -683,9 +694,10 @@ func TestAddAccountKey(t *testing.T) {
 			SetPayer(b.ServiceKey().Address)
 
 		signer, err := b.ServiceKey().Signer()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -720,9 +732,10 @@ func TestRemoveAccountKey(t *testing.T) {
 
 	// sign with service key
 	signer, err := b.ServiceKey().Signer()
-	assert.NoError(t, err)
+	require.NoError(t, err)
+
 	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// submit tx1 (should succeed)
 	err = b.AddTransaction(*tx1)
@@ -908,9 +921,10 @@ func TestUpdateAccountCode(t *testing.T) {
 		assert.NoError(t, err)
 
 		signer, err := b.ServiceKey().Signer()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		require.NoError(t, err)
@@ -965,9 +979,10 @@ func TestUpdateAccountCode(t *testing.T) {
 			SetPayer(b.ServiceKey().Address)
 
 		signer, err := b.ServiceKey().Signer()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)
@@ -1034,9 +1049,10 @@ func TestImportAccountCode(t *testing.T) {
 		SetPayer(b.ServiceKey().Address)
 
 	signer, err := b.ServiceKey().Signer()
-	assert.NoError(t, err)
+	require.NoError(t, err)
+
 	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = b.AddTransaction(*tx)
 	assert.NoError(t, err)
@@ -1114,9 +1130,10 @@ func TestAccountAccess(t *testing.T) {
 	assert.NoError(t, err)
 
 	signer, err := b.ServiceKey().Signer()
-	assert.NoError(t, err)
+	require.NoError(t, err)
+
 	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = b.AddTransaction(*tx)
 	require.NoError(t, err)
@@ -1165,12 +1182,12 @@ func TestAccountAccess(t *testing.T) {
 		SetPayer(b.ServiceKey().Address)
 
 	err = tx.SignPayload(address2, 0, signer2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	signer, err = b.ServiceKey().Signer()
 	assert.NoError(t, err)
 	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = b.AddTransaction(*tx)
 	require.NoError(t, err)

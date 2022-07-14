@@ -92,9 +92,10 @@ func TestEventEmitted(t *testing.T) {
 			SetPayer(b.ServiceKey().Address)
 
 		signer, err := b.ServiceKey().Signer()
-		assert.NoError(t, err)
+		require.NoError(t, err)
+
 		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = b.AddTransaction(*tx)
 		assert.NoError(t, err)

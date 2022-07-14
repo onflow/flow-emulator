@@ -216,7 +216,7 @@ pub contract NFTStorefront {
             //  result.isInstance(self.getDetails().nftType): "token has wrong type"
             assert(ref.isInstance(self.getDetails().nftType), message: "token has wrong type")
             assert(ref.id == self.getDetails().nftID, message: "token has wrong ID")
-            return ref as &NonFungibleToken.NFT
+            return  (ref as &NonFungibleToken.NFT?)!
         }
 
         // getDetails
@@ -439,7 +439,7 @@ pub contract NFTStorefront {
         //
         pub fun borrowListing(listingResourceID: UInt64): &Listing{ListingPublic}? {
             if self.listings[listingResourceID] != nil {
-                return &self.listings[listingResourceID] as! &Listing{ListingPublic}
+                return &self.listings[listingResourceID] as &Listing{ListingPublic}?
             } else {
                 return nil
             }

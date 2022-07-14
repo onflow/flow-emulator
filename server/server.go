@@ -37,16 +37,17 @@ import (
 //
 // The server wraps an emulated blockchain instance with the Access API gRPC handlers.
 type EmulatorServer struct {
-	logger   *logrus.Logger
-	config   *Config
-	backend  *backend.Backend
-	group    *graceland.Group
-	liveness graceland.Routine
-	storage  graceland.Routine
-	grpc     graceland.Routine
-	admin    graceland.Routine
-	rest     graceland.Routine
-	blocks   graceland.Routine
+	logger     *logrus.Logger
+	config     *Config
+	backend    *backend.Backend
+	group      *graceland.Group
+	liveness   graceland.Routine
+	storage    graceland.Routine
+	grpc       graceland.Routine
+	admin      graceland.Routine
+	rest       graceland.Routine
+	blocks     graceland.Routine
+	blockchain *emulator.Blockchain
 }
 
 const (
@@ -161,14 +162,15 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	}
 
 	server := &EmulatorServer{
-		logger:   logger,
-		config:   conf,
-		backend:  be,
-		storage:  store,
-		liveness: livenessTicker,
-		grpc:     grpcServer,
-		rest:     restServer,
-		admin:    nil,
+		logger:     logger,
+		config:     conf,
+		backend:    be,
+		storage:    store,
+		liveness:   livenessTicker,
+		grpc:       grpcServer,
+		rest:       restServer,
+		admin:      nil,
+		blockchain: blockchain,
 	}
 
 	server.admin = NewAdminServer(server, be, &store, grpcServer, livenessTicker, conf.AdminPort, conf.HTTPHeaders)

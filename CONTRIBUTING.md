@@ -40,41 +40,11 @@ make test
 
 To build the container locally, use `make docker-build` from the root of this repository.
 
-Images are automatically built and pushed to `gcr.io/flow-container-registry/emulator` via [Team City](https://ci.eng.dapperlabs.com/project/Flow_FlowGo_FlowEmulator) on any push to master, i.e. Pull Request merge
-
-## Deployment
-
-The emulator is currently being deployed via [Team City](https://ci.eng.dapperlabs.com/project/Flow_FlowGo_FlowEmulator)
-All commands relating to the deployment process live in the `Makefile` in this directory
-
-The deployment has a persistent volume and should keep state persistent.
-The deployment file for the Ingress/Service/Deployment combo, and the
-Persistent Volume Claim are located in the k8s folder.
-
-#### From a Kubernetes Pod
-
-If you are in the same namespace (flow), you can simply access the service via it's service name, e.g. `flow-emulator-v1`.
-If you are in a different namespace, you will need to use a [Service without selectors](https://kubernetes.io/docs/concepts/services-networking/service/#services-without-selectors)
-e.g.
-
-```yaml
-kind: Service
-apiVersion: v1
-metadata:
-  name: flow-emulator-v1
-  namespace: YOUR_NAMESPACE
-spec:
-  type: ExternalName
-  externalName: flow-emulator-v1.flow.svc.cluster.local
-  ports:
-      protocol: TCP
-      port: 3569
-      targetPort: 3569
-```
+Images are automatically built and pushed to `gcr.io/flow-container-registry/emulator` on any push to master, i.e. Pull Request merge
 
 ### Creating your own deployment
 
-Our current deployment settings are available in the [k8s](cmd/emulator/k8s) sub directory, if you'd like to setup the emulator in your own Kubernetes cluster. We are using the `Traefik` Ingress controller, but if that is not needed for your purposes, that can be removed, along with any corresponding annotations in the deployment file.
+Kubernetes deployment settings are available in the [k8s](cmd/emulator/k8s) sub directory, if you'd like to setup the emulator in your own Kubernetes cluster. We are using the `Traefik` Ingress controller, but if that is not needed for your purposes, that can be removed, along with any corresponding annotations in the deployment file.
 
 If not using Kubernetes, you can run the Docker container independently. Make sure to run the Docker container with the gRPC port exposed (default is `3569`). Metrics are also available on port `8080` on the `/metrics` endpoint.
 

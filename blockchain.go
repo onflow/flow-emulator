@@ -142,6 +142,7 @@ type config struct {
 	TransactionFeesEnabled    bool
 	MinimumStorageReservation cadence.UFix64
 	StorageMBPerFLOW          cadence.UFix64
+	Logger                    zerolog.Logger
 }
 
 func (conf config) GetStore() storage.Store {
@@ -194,11 +195,21 @@ var defaultConfig = func() config {
 		StorageMBPerFLOW:          fvm.DefaultStorageMBPerFLOW,
 		TransactionExpiry:         0, // TODO: replace with sensible default
 		StorageLimitEnabled:       true,
+		Logger:                    zerolog.Nop(),
 	}
 }()
 
 // Option is a function applying a change to the emulator config.
 type Option func(*config)
+
+//WithLogger sets the logger
+func WithLogger(
+	logger zerolog.Logger,
+) Option {
+	return func(c *config) {
+		c.Logger = logger
+	}
+}
 
 // WithServicePublicKey sets the service key from a public key.
 func WithServicePublicKey(
@@ -365,7 +376,7 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 	vm := fvm.NewVirtualMachine(rt)
 
 	ctx := fvm.NewContext(
-		zerolog.Nop(),
+		conf.Logger,
 		fvm.WithChain(conf.GetChainID().Chain()),
 		fvm.WithBlocks(blocks),
 		fvm.WithRestrictedDeployment(false),
@@ -1136,7 +1147,7 @@ func (b *Blockchain) CreateAccount(publicKeys []*sdk.AccountKey, contracts []tem
 		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
 		SetPayer(serviceAddress)
 
-	signer, err := b.ServiceKey().Signer()
+	signer, err := serviceKey.Signer()
 	if err != nil {
 		return sdk.Address{}, err
 	}
