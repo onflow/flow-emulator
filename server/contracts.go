@@ -52,6 +52,11 @@ func deployContracts(b *emulator.Blockchain) ([]DeployDescription, error) {
 			description: "✨   NFT Storefront contract v2",
 			source:      nftstorefront.NFTStorefront(2, ftAddress.String(), serviceAddress.String()),
 		},
+		{
+			name:        "NFTStorefront",
+			description: "✨   NFT Storefront contract",
+			source:      nftstorefront.NFTStorefront(1, ftAddress.String(), serviceAddress.String()),
+		},
 	}
 
 	for _, c := range toDeploy {

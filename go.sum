@@ -599,10 +599,8 @@ github.com/onflow/flow/protobuf/go/flow v0.3.1 h1:4I8ykG6naR3n8Or6eXrZDaGVaoztb3
 github.com/onflow/flow/protobuf/go/flow v0.3.1/go.mod h1:gQxYqCfkI8lpnKsmIjwtN2mV/N2PIwc1I+RUK4HPIc8=
 github.com/onflow/fusd/lib/go/contracts v0.0.0-20211021081023-ae9de8fb2c7e h1:RHaXPHvWCy3VM62+HTyu6DYq5T8rrK1gxxqogKuJ4S4=
 github.com/onflow/fusd/lib/go/contracts v0.0.0-20211021081023-ae9de8fb2c7e/go.mod h1:CRX9eXtc9zHaRVTW1Xh4Cf5pZgKkQuu1NuSEVyHXr/0=
-github.com/onflow/nft-storefront v0.0.0-20220713130733-3737cb8fedb9 h1:iJyF/kew0BtBqjn/ttv16wnfl/Ks5oE/1xX+uJx5IdQ=
-github.com/onflow/nft-storefront v0.0.0-20220713130733-3737cb8fedb9/go.mod h1:Bp2PiIjPjXRX+5iXjk/4aop5AXGGSEo6rdfLXE02kXE=
-github.com/onflow/nft-storefront v0.0.0-20220714145723-2c5bf0b494ce h1:Rui0KzbMKlAE+jTAr/+QFN5jNMhT+dbjMQwUecbPy1s=
-github.com/onflow/nft-storefront v0.0.0-20220714145723-2c5bf0b494ce/go.mod h1:Bp2PiIjPjXRX+5iXjk/4aop5AXGGSEo6rdfLXE02kXE=
+github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20220714152909-cd7b6cba423a h1:Q54Ebmetui8F8wnJygNU1I2YA5P873Iy0dYmAbOxgrE=
+github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20220714152909-cd7b6cba423a/go.mod h1:hgo3BRWjz8NzfbQjYwrim2/dX7fOrQjVJPzh+o7KlsE=
 github.com/onflow/sdks v0.4.4 h1:aJPGJJLAN+mlBWAQxsyuJXeRRMFeLwU6Mp4e/YL6bdU=
 github.com/onflow/sdks v0.4.4/go.mod h1:F0dj0EyHC55kknLkeD10js4mo14yTdMotnWMslPirrU=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
@@ -749,8 +747,8 @@ github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/stretchr/testify v1.7.5 h1:s5PTfem8p8EbKQOctVV53k6jCJt3UX4IEJzwh+C324Q=
-github.com/stretchr/testify v1.7.5/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
+github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
+github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/subosito/gotenv v1.2.0 h1:Slr1R9HxAlEKefgq5jn9U+DnETlIUa6HfgEzj0g5d7s=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/supranational/blst v0.3.4 h1:iZE9lBMoywK2uy2U/5hDOvobQk9FnOQ2wNlu9GmRCoA=

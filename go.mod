@@ -19,6 +19,7 @@ require (
 	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20220606143647-47126d1009e2
 	github.com/onflow/flow/protobuf/go/flow v0.3.1
 	github.com/onflow/fusd/lib/go/contracts v0.0.0-20211021081023-ae9de8fb2c7e
+	github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20220714152909-cd7b6cba423a
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.12.1
 	github.com/psiemens/graceland v1.0.0
@@ -26,7 +27,7 @@ require (
 	github.com/rs/zerolog v1.26.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.3.0
-	github.com/stretchr/testify v1.7.5
+	github.com/stretchr/testify v1.8.0
 	google.golang.org/grpc v1.45.0
 )
 
@@ -81,7 +82,6 @@ require (
 	github.com/onflow/flow-core-contracts/lib/go/contracts v0.11.2-0.20220620142725-49b5accb2a84 // indirect
 	github.com/onflow/flow-core-contracts/lib/go/templates v0.11.2-0.20220513155751-c4c1f8d59f83 // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v0.5.0 // indirect
-	github.com/onflow/nft-storefront v0.0.0-20220714145723-2c5bf0b494ce // indirect
 	github.com/onflow/sdks v0.4.4 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
