@@ -579,10 +579,11 @@ func insertTransactionResult(txID flowgo.Identifier, result types.StorableTransa
 }
 
 func (s *Store) LedgerViewByHeight(blockHeight uint64) *delta.View {
-	return delta.NewView(func(owner, key string) (value flowgo.RegisterValue, err error) {
+	return delta.NewView(func(owner, controller, key string) (value flowgo.RegisterValue, err error) {
 		id := flowgo.RegisterID{
-			Owner: owner,
-			Key:   key,
+			Owner:      owner,
+			Controller: controller,
+			Key:        key,
 		}
 
 		//return types.NewLedgerView(func(key string) (value []byte, err error) {
