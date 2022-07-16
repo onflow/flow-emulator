@@ -21,9 +21,9 @@ package server
 import (
 	"context"
 	"fmt"
+	emulator "github.com/onflow/flow-emulator"
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-go/engine/access/rest"
-	"github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
 	"net"
 	"net/http"
@@ -47,13 +47,13 @@ func (r *RestServer) Stop() {
 	_ = r.server.Shutdown(context.Background())
 }
 
-func NewRestServer(be *backend.Backend, port int, debug bool) (*RestServer, error) {
+func NewRestServer(be *backend.Backend, blockchain *emulator.Blockchain, port int, debug bool) (*RestServer, error) {
 	logger := zerolog.Logger{}
 	if debug {
 		logger = zerolog.New(os.Stdout)
 	}
 
-	srv, err := rest.NewServer(backend.NewAdapter(be), "127.0.0.1:3333", logger, flow.Emulator.Chain())
+	srv, err := rest.NewServer(backend.NewAdapter(be), "127.0.0.1:3333", logger, blockchain.GetChain())
 	if err != nil {
 		return nil, err
 	}

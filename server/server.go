@@ -156,8 +156,8 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	be := configureBackend(logger, conf, blockchain)
 
 	livenessTicker := NewLivenessTicker(conf.LivenessCheckTolerance)
-	grpcServer := NewGRPCServer(logger, be, conf.GRPCPort, conf.GRPCDebug)
-	restServer, err := NewRestServer(be, conf.RESTPort, conf.RESTDebug)
+	grpcServer := NewGRPCServer(logger, be, blockchain, conf.GRPCPort, conf.GRPCDebug)
+	restServer, err := NewRestServer(be, blockchain, conf.RESTPort, conf.RESTDebug)
 	if err != nil {
 		logger.WithError(err).Error("❗  Failed to startup REST API")
 		return nil
