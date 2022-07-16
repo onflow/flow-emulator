@@ -108,6 +108,8 @@ type Config struct {
 	LivenessCheckTolerance time.Duration
 	// Whether to deploy some extra Flow contracts when emulator starts
 	WithContracts bool
+	// Simple Addresses (monolithic) for blockchain ( 0x1, 0x2, etc )
+	SimpleAddresses bool
 }
 
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
@@ -254,6 +256,13 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithMinimumStorageReservation(conf.MinimumStorageReservation),
 		emulator.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
+	}
+
+	if conf.SimpleAddresses {
+		options = append(
+			options,
+			emulator.WithSimpleAddresses(),
+		)
 	}
 
 	if conf.ServicePrivateKey != nil {
