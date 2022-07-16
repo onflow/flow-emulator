@@ -23,10 +23,10 @@ import (
 	"net"
 
 	grpcprometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	emulator "github.com/onflow/flow-emulator"
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-go/access"
 	legacyaccess "github.com/onflow/flow-go/access/legacy"
+	"github.com/onflow/flow-go/model/flow"
 	accessproto "github.com/onflow/flow/protobuf/go/flow/access"
 	legacyaccessproto "github.com/onflow/flow/protobuf/go/flow/legacy/access"
 	"github.com/sirupsen/logrus"
@@ -40,13 +40,12 @@ type GRPCServer struct {
 	grpcServer *grpc.Server
 }
 
-func NewGRPCServer(logger *logrus.Logger, b *backend.Backend, blockchain *emulator.Blockchain, port int, debug bool) *GRPCServer {
+func NewGRPCServer(logger *logrus.Logger, b *backend.Backend, chain flow.Chain, port int, debug bool) *GRPCServer {
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpcprometheus.StreamServerInterceptor),
 		grpc.UnaryInterceptor(grpcprometheus.UnaryServerInterceptor),
 	)
 
-	chain := blockchain.GetChain()
 	adaptedBackend := backend.NewAdapter(b)
 
 	legacyaccessproto.RegisterAccessAPIServer(grpcServer, legacyaccess.NewHandler(adaptedBackend, chain))
