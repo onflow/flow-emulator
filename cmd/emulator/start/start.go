@@ -125,6 +125,10 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 			}
 
 			serviceAddress := sdk.ServiceAddress(sdk.Emulator)
+			if conf.SimpleAddresses {
+				serviceAddress = sdk.HexToAddress("0x1")
+			}
+
 			serviceFields := logrus.Fields{
 				"serviceAddress":  serviceAddress.Hex(),
 				"servicePubKey":   hex.EncodeToString(servicePublicKey.Encode()),
