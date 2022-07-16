@@ -107,7 +107,8 @@ type Config struct {
 	// LivenessCheckTolerance is the time interval in which the server must respond to liveness probes.
 	LivenessCheckTolerance time.Duration
 	// Whether to deploy some extra Flow contracts when emulator starts
-	WithContracts bool
+	WithContracts             bool
+	SkipTransactionValidation bool
 }
 
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
@@ -254,6 +255,13 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithMinimumStorageReservation(conf.MinimumStorageReservation),
 		emulator.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
+	}
+
+	if conf.SkipTransactionValidation {
+		options = append(
+			options,
+			emulator.WithTransactionValidationEnabled(false),
+		)
 	}
 
 	if conf.ServicePrivateKey != nil {
