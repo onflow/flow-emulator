@@ -63,7 +63,7 @@ type Config struct {
 	TransactionMaxGasLimit    int           `default:"9999" flag:"transaction-max-gas-limit" info:"maximum gas limit for transactions"`
 	ScriptGasLimit            int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
 	WithContracts             bool          `default:"false" flag:"contracts" info:"deploy common contracts when emulator starts"`
-	SkipTransactionValidation bool          `default:"false" flag:"skip-tx-validation" info"skip verification of transaction signature(s) and proposer sequence number"`
+	SkipTransactionValidation bool          `default:"false" flag:"skip-tx-validation" info:"skip verification of transaction signature(s) and proposer sequence number"`
 }
 
 const EnvPrefix = "FLOW"
