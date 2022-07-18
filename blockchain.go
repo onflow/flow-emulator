@@ -334,9 +334,10 @@ func WithTransactionFeesEnabled(enabled bool) Option {
 	}
 }
 
-// WithTransactionValidationEnabled enables/disables transaction valudation.
+// WithTransactionValidationEnabled enables/disables transaction validation.
 //
-// If set to false transactions don't check for signatures or sequence numbers.
+// If set to false, the emulator will not verify transaction signatures or validate sequence numbers.
+//
 // The default is true.
 func WithTransactionValidationEnabled(enabled bool) Option {
 	return func(c *config) {
