@@ -108,7 +108,7 @@ type Config struct {
 	LivenessCheckTolerance time.Duration
 	// Whether to deploy some extra Flow contracts when emulator starts
 	WithContracts bool
-	// Simple Addresses (monolithic) for blockchain ( 0x1, 0x2, etc )
+	// Enable simple monotonically increasing address format (e.g. 0x1, 0x2, etc)
 	SimpleAddresses bool
 }
 
