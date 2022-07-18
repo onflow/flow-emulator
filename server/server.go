@@ -109,7 +109,7 @@ type Config struct {
 	// Whether to deploy some extra Flow contracts when emulator starts
 	WithContracts bool
 	// Enable simple monotonically increasing address format (e.g. 0x1, 0x2, etc)
-	SimpleAddresses bool
+	SimpleAddressesEnabled bool
 }
 
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
