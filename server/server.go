@@ -258,7 +258,7 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 	}
 
-	if conf.SimpleAddresses {
+	if conf.SimpleAddressesEnabled {
 		options = append(
 			options,
 			emulator.WithSimpleAddresses(),

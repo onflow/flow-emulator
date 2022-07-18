@@ -176,7 +176,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				MinimumStorageReservation: minimumStorageReservation,
 				TransactionFeesEnabled:    conf.TransactionFeesEnabled,
 				WithContracts:             conf.WithContracts,
-				SimpleAddresses:           conf.SimpleAddresses,
+				SimpleAddressesEnabled:    conf.SimpleAddresses,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
