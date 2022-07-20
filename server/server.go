@@ -108,6 +108,8 @@ type Config struct {
 	LivenessCheckTolerance time.Duration
 	// Whether to deploy some extra Flow contracts when emulator starts
 	WithContracts bool
+	// Enable simple monotonically increasing address format (e.g. 0x1, 0x2, etc)
+	SimpleAddressesEnabled bool
 }
 
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
@@ -154,8 +156,8 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	be := configureBackend(logger, conf, blockchain)
 
 	livenessTicker := NewLivenessTicker(conf.LivenessCheckTolerance)
-	grpcServer := NewGRPCServer(logger, be, conf.GRPCPort, conf.GRPCDebug)
-	restServer, err := NewRestServer(be, conf.RESTPort, conf.RESTDebug)
+	grpcServer := NewGRPCServer(logger, be, blockchain.GetChain(), conf.GRPCPort, conf.GRPCDebug)
+	restServer, err := NewRestServer(be, blockchain.GetChain(), conf.RESTPort, conf.RESTDebug)
 	if err != nil {
 		logger.WithError(err).Error("❗  Failed to startup REST API")
 		return nil
@@ -254,6 +256,13 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithMinimumStorageReservation(conf.MinimumStorageReservation),
 		emulator.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
+	}
+
+	if conf.SimpleAddressesEnabled {
+		options = append(
+			options,
+			emulator.WithSimpleAddresses(),
+		)
 	}
 
 	if conf.ServicePrivateKey != nil {
