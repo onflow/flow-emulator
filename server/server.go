@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,9 @@ type Config struct {
 	// LivenessCheckTolerance is the time interval in which the server must respond to liveness probes.
 	LivenessCheckTolerance time.Duration
 	// Whether to deploy some extra Flow contracts when emulator starts
-	WithContracts             bool
+	WithContracts bool
+	// Enable simple monotonically increasing address format (e.g. 0x1, 0x2, etc)
+	SimpleAddressesEnabled    bool
 	SkipTransactionValidation bool
 }
 
@@ -155,8 +157,8 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	be := configureBackend(logger, conf, blockchain)
 
 	livenessTicker := NewLivenessTicker(conf.LivenessCheckTolerance)
-	grpcServer := NewGRPCServer(logger, be, conf.GRPCPort, conf.GRPCDebug)
-	restServer, err := NewRestServer(be, conf.RESTPort, conf.RESTDebug)
+	grpcServer := NewGRPCServer(logger, be, blockchain.GetChain(), conf.GRPCPort, conf.GRPCDebug)
+	restServer, err := NewRestServer(be, blockchain.GetChain(), conf.RESTPort, conf.RESTDebug)
 	if err != nil {
 		logger.WithError(err).Error("❗  Failed to startup REST API")
 		return nil
@@ -261,6 +263,13 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		options = append(
 			options,
 			emulator.WithTransactionValidationEnabled(false),
+		)
+	}
+
+	if conf.SimpleAddressesEnabled {
+		options = append(
+			options,
+			emulator.WithSimpleAddresses(),
 		)
 	}
 

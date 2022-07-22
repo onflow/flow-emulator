@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,6 +126,10 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 			}
 
 			serviceAddress := sdk.ServiceAddress(sdk.Emulator)
+			if conf.SimpleAddresses {
+				serviceAddress = sdk.HexToAddress("0x1")
+			}
+
 			serviceFields := logrus.Fields{
 				"serviceAddress":  serviceAddress.Hex(),
 				"servicePubKey":   hex.EncodeToString(servicePublicKey.Encode()),
@@ -174,6 +178,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				TransactionFeesEnabled:    conf.TransactionFeesEnabled,
 				WithContracts:             conf.WithContracts,
 				SkipTransactionValidation: conf.SkipTransactionValidation,
+				SimpleAddressesEnabled:    conf.SimpleAddresses,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
