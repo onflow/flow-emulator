@@ -583,6 +583,8 @@ github.com/onflow/flow-ft/lib/go/contracts v0.5.0 h1:Cg4gHGVblxcejfNNG5Mfj98Wf4z
 github.com/onflow/flow-ft/lib/go/contracts v0.5.0/go.mod h1:1zoTjp1KzNnOPkyqKmWKerUyf0gciw+e6tAEt0Ks3JE=
 github.com/onflow/flow-go v0.26.14-test-synchronization.0.20220715235626-9652b94c903a h1:TfVFeXDVjRMHUm8NA6w1j+UO8JrEPfCW5OroPBDlCOY=
 github.com/onflow/flow-go v0.26.14-test-synchronization.0.20220715235626-9652b94c903a/go.mod h1:xvMFXhOGzYCFJhE3Hmq2SunGpLhjxJAAQa/mj5UdrB0=
+github.com/onflow/flow-go v0.27.0-sandboxnet h1:3X6ixsq1F3Cs23DSMy5tpSAlW/Un7fqkHzeXh3txHBY=
+github.com/onflow/flow-go v0.27.0-sandboxnet/go.mod h1:xvMFXhOGzYCFJhE3Hmq2SunGpLhjxJAAQa/mj5UdrB0=
 github.com/onflow/flow-go-sdk v0.20.0/go.mod h1:52QZyLwU3p3UZ2FXOy+sRl4JPdtvJoae1spIUBOFxA8=
 github.com/onflow/flow-go-sdk v0.24.0/go.mod h1:IoptMLPyFXWvyd9yYA6/4EmSeeozl6nJoIv4FaEMg74=
 github.com/onflow/flow-go-sdk v0.26.5-0.20220629191626-900f9f91bffc h1:7vWFaj4xPbrVdA0jGY4B/PnrD0D469crv7a8Aq79ts0=
