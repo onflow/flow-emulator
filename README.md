@@ -153,7 +153,7 @@ You can pass any environment variable by using `-e` docker flag and pass the val
 
 *Custom Configuration Example:*
 ```bash
-docker run -e FLOW_PORT=9001 -e FLOW_VERBOSE=true -e FLOW_SERVICEPUBLICKEY=<hex-encoded key> gcr.io/flow-container-registry/emulator
+docker run -e FLOW_PORT=9001 -e FLOW_VERBOSE=true -e FLOW_SERVICEPRIVATEKEY=<hex-encoded key> gcr.io/flow-container-registry/emulator
 ```
 
 To generate a service key, use the `keys generate` command in the Flow CLI.
