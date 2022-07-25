@@ -48,22 +48,22 @@ func deployContracts(b *emulator.Blockchain) ([]DeployDescription, error) {
 		},
 		{
 			name:        "NonFungibleToken",
-			description: "✨   NFT contract",
+			description: "✨  NFT contract",
 			source:      contracts.NonFungibleToken(),
 		},
 		{
 			name:        "MetadataViews",
-			description: "✨   Metadata views contract",
+			description: "✨  Metadata views contract",
 			source:      contracts.MetadataViews(ftAddress, serviceAddress),
 		},
 		{
 			name:        "ExampleNFT",
-			description: "✨   Example NFT contract",
+			description: "✨  Example NFT contract",
 			source:      contracts.ExampleNFT(serviceAddress, serviceAddress),
 		},
 		{
 			name:        "NFTStorefront",
-			description: "✨   NFT Storefront contract",
+			description: "✨  NFT Storefront contract",
 			source:      nftStorefrontContract,
 		},
 	}
