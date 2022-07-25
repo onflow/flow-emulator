@@ -11,9 +11,6 @@ UNAME := $(shell uname)
 
 GOPATH ?= $(HOME)/go
 
-# Enable docker build kit
-export DOCKER_BUILDKIT := 1
-
 .PHONY: install-tools
 install-tools:
 	mkdir -p ${GOPATH}; \
