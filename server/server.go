@@ -109,7 +109,8 @@ type Config struct {
 	// Whether to deploy some extra Flow contracts when emulator starts
 	WithContracts bool
 	// Enable simple monotonically increasing address format (e.g. 0x1, 0x2, etc)
-	SimpleAddressesEnabled bool
+	SimpleAddressesEnabled    bool
+	SkipTransactionValidation bool
 }
 
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
@@ -256,6 +257,13 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithMinimumStorageReservation(conf.MinimumStorageReservation),
 		emulator.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
+	}
+
+	if conf.SkipTransactionValidation {
+		options = append(
+			options,
+			emulator.WithTransactionValidationEnabled(false),
+		)
 	}
 
 	if conf.SimpleAddressesEnabled {
