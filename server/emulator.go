@@ -34,16 +34,16 @@ type BlockResponse struct {
 	Context string `json:"context,omitempty"`
 }
 
-type EmulatorApiServer struct {
+type EmulatorAPIServer struct {
 	router  *mux.Router
 	server  *EmulatorServer
 	backend *backend.Backend
 	storage *Storage
 }
 
-func NewEmulatorApiServer(server *EmulatorServer, backend *backend.Backend, storage *Storage) *EmulatorApiServer {
+func NewEmulatorAPIServer(server *EmulatorServer, backend *backend.Backend, storage *Storage) *EmulatorAPIServer {
 	router := mux.NewRouter().StrictSlash(true)
-	r := &EmulatorApiServer{router: router,
+	r := &EmulatorAPIServer{router: router,
 		server:  server,
 		backend: backend,
 		storage: storage,
@@ -56,11 +56,11 @@ func NewEmulatorApiServer(server *EmulatorServer, backend *backend.Backend, stor
 	return r
 }
 
-func (m EmulatorApiServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.router.ServeHTTP(w, r)
 }
 
-func (m EmulatorApiServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	m.backend.CommitBlock()
 
@@ -84,7 +84,7 @@ func (m EmulatorApiServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (m EmulatorApiServer) Snapshot(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) Snapshot(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(r)
 	name := vars["name"]
@@ -132,7 +132,7 @@ func (m EmulatorApiServer) Snapshot(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (m EmulatorApiServer) Storage(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) Storage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(r)
 	address := vars["address"]
