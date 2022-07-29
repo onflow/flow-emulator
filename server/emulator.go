@@ -51,7 +51,6 @@ func NewEmulatorApiServer(server *EmulatorServer, backend *backend.Backend, stor
 
 	router.HandleFunc("/emulator/newBlock", r.CommitBlock)
 	router.HandleFunc("/emulator/snapshot/{name}", r.Snapshot)
-
 	router.HandleFunc("/emulator/storages/{address}", r.Storage)
 
 	return r
