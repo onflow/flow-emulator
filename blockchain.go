@@ -13,6 +13,7 @@ package emulator
 import (
 	"errors"
 	"fmt"
+	"go.opentelemetry.io/otel/attribute"
 	"math"
 	"sync"
 	"time"
@@ -36,7 +37,6 @@ import (
 	"github.com/onflow/flow-go/fvm/programs"
 	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
-	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/convert"
@@ -1290,7 +1290,7 @@ func (a *storageInspectionInterface) ValidatePublicKey(key *runtime.PublicKey) e
 	panic("implement me")
 }
 
-func (a *storageInspectionInterface) RecordTrace(operation string, location common.Location, duration time.Duration, logs []opentracing.LogRecord) {
+func (a *storageInspectionInterface) RecordTrace(operation string, location common.Location, duration time.Duration, attrs []attribute.KeyValue) {
 	panic("implement me")
 }
 
@@ -1347,7 +1347,7 @@ func (a *storageInspectionInterface) SetProgram(location runtime.Location, progr
 }
 
 func (a *storageInspectionInterface) GetValue(owner, key []byte) (value []byte, err error) {
-	return a.view.Get(string(owner), "", string(key))
+	return a.view.Get(string(owner), string(key))
 }
 
 func (a *storageInspectionInterface) SetValue(_, _, _ []byte) (err error) {
@@ -1384,7 +1384,7 @@ func (a *storageInspectionInterface) UpdateAccountContractCode(_ runtime.Address
 
 func (a *storageInspectionInterface) GetAccountContractCode(address runtime.Address, name string) (code []byte, err error) {
 	addr := string(flowgo.BytesToAddress(address.Bytes()).Bytes())
-	v, _ := a.view.Get(addr, addr, state.ContractKey(name))
+	v, _ := a.view.Get(addr, state.ContractKey(name))
 	return v, nil
 }
 
