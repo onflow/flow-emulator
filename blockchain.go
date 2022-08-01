@@ -13,10 +13,11 @@ package emulator
 import (
 	"errors"
 	"fmt"
-	"go.opentelemetry.io/otel/attribute"
 	"math"
 	"sync"
 	"time"
+
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/onflow/atree"
 	"github.com/onflow/cadence"
@@ -1034,6 +1035,9 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 	}
 
 	account, err := b.vm.GetAccount(b.vmCtx, flowgo.BytesToAddress(address.Bytes()), b.pendingBlock.ledgerView, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return NewAccountStorage(address, account, store, inter)
 }
