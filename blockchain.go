@@ -1018,6 +1018,7 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 
 func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, error) {
 	program := programs.NewEmptyPrograms()
+
 	env := &storageInspectionInterface{
 		view:    b.pendingBlock.ledgerView,
 		program: program,
@@ -1034,7 +1035,7 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		return nil, err
 	}
 
-	account, err := b.vm.GetAccount(b.vmCtx, flowgo.BytesToAddress(address.Bytes()), b.pendingBlock.ledgerView, nil)
+	account, err := b.vm.GetAccount(b.vmCtx, flowgo.BytesToAddress(address.Bytes()), b.pendingBlock.ledgerView, program)
 	if err != nil {
 		return nil, err
 	}
