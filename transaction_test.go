@@ -734,7 +734,8 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		assert.EqualError(t, result.Error, fmt.Sprintf("[Error Code: 1201] account not found for address %s", nonExistentAccountAddress.String()))
+		var sigErr *fvmerrors.AccountNotFoundError
+		assert.True(t, errors.As(result.Error, &sigErr))
 	})
 
 	t.Run("Invalid key", func(t *testing.T) {
