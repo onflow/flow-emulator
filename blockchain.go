@@ -17,13 +17,9 @@ import (
 	"sync"
 	"time"
 
-	"go.opentelemetry.io/otel/attribute"
-
-	"github.com/onflow/atree"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
-	"github.com/onflow/cadence/runtime/interpreter"
 	sdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
@@ -1019,9 +1015,24 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, error) {
 	program := programs.NewEmptyPrograms()
 
-	env := &storageInspectionInterface{
-		view:    b.pendingBlock.ledgerView,
-		program: program,
+	env, err := fvm.NewTransactionEnvironment(
+		b.vmCtx,
+		b.vm,
+		state.NewStateHolder(
+			state.NewState(
+				b.pendingBlock.ledgerView,
+				meter.NewMeter(math.MaxUint64, math.MaxUint64),
+				state.WithMaxKeySizeAllowed(b.vmCtx.MaxStateKeySize),
+				state.WithMaxValueSizeAllowed(b.vmCtx.MaxStateValueSize),
+				state.WithMaxInteractionSizeAllowed(b.vmCtx.MaxStateInteractionSize),
+			),
+		),
+		programs.NewEmptyPrograms(),
+		flowgo.NewTransactionBody(),
+		0,
+		nil)
+	if err != nil {
+		return nil, err
 	}
 
 	ctx := runtime.Context{
@@ -1287,213 +1298,4 @@ func (b *Blockchain) testAlternativeHashAlgo(sig flowgo.TransactionSignature, ms
 	}
 
 	return nil
-}
-
-var _ runtime.Interface = &storageInspectionInterface{}
-
-// storageInspectionInterface implements runtime.Interface solely for the purpose of inspecting the storage of an account.
-//
-// To inspect the account storage we need to access the runtime storage API which requires the runtime.Context that in turn
-// requires the interface which is implemented bellow with only the methods actually needed to access the storage.
-type storageInspectionInterface struct {
-	view    state.View
-	program *programs.Programs
-}
-
-func (a *storageInspectionInterface) ResourceOwnerChanged(interpreter *interpreter.Interpreter, resource *interpreter.CompositeValue, oldOwner common.Address, newOwner common.Address) {
-	panic("implement me")
-}
-
-func (a *storageInspectionInterface) MeterMemory(usage common.MemoryUsage) error {
-	return nil
-}
-
-func (a *storageInspectionInterface) MeterComputation(operationType common.ComputationKind, intensity uint) error {
-	return nil
-}
-
-func (a *storageInspectionInterface) ValidatePublicKey(key *runtime.PublicKey) error {
-	panic("implement me")
-}
-
-func (a *storageInspectionInterface) RecordTrace(operation string, location common.Location, duration time.Duration, attrs []attribute.KeyValue) {
-	panic("implement me")
-}
-
-func (a *storageInspectionInterface) BLSVerifyPOP(pk *runtime.PublicKey, s []byte) (bool, error) {
-	panic("implement me")
-}
-
-func (a *storageInspectionInterface) BLSAggregateSignatures(sigs [][]byte) ([]byte, error) {
-	panic("implement me")
-}
-
-func (a *storageInspectionInterface) BLSAggregatePublicKeys(keys []*runtime.PublicKey) (*runtime.PublicKey, error) {
-	panic("implement me")
-}
-
-func (a *storageInspectionInterface) ResolveLocation(identifiers []runtime.Identifier, location runtime.Location) ([]runtime.ResolvedLocation, error) {
-	addressLocation, isAddress := location.(common.AddressLocation)
-	if !isAddress {
-		return []runtime.ResolvedLocation{
-			{
-				Location:    location,
-				Identifiers: identifiers,
-			},
-		}, nil
-	}
-
-	resolvedLocations := make([]runtime.ResolvedLocation, len(identifiers))
-	for i := range resolvedLocations {
-		identifier := identifiers[i]
-		resolvedLocations[i] = runtime.ResolvedLocation{
-			Location: common.AddressLocation{
-				Address: addressLocation.Address,
-				Name:    identifier.Identifier,
-			},
-			Identifiers: []runtime.Identifier{identifier},
-		}
-	}
-
-	return resolvedLocations, nil
-}
-
-func (a *storageInspectionInterface) GetCode(_ runtime.Location) ([]byte, error) {
-	panic("implement GetCode")
-}
-
-func (a *storageInspectionInterface) GetProgram(location runtime.Location) (*interpreter.Program, error) {
-	p, _, _ := a.program.Get(location)
-	return p, nil
-}
-
-func (a *storageInspectionInterface) SetProgram(location runtime.Location, program *interpreter.Program) error {
-	a.program.Set(location, program, nil)
-	return nil
-}
-
-func (a *storageInspectionInterface) GetValue(owner, key []byte) (value []byte, err error) {
-	return a.view.Get(string(owner), string(key))
-}
-
-func (a *storageInspectionInterface) SetValue(_, _, _ []byte) (err error) {
-	panic("implement SetValue")
-}
-
-func (a *storageInspectionInterface) CreateAccount(_ runtime.Address) (address runtime.Address, err error) {
-	panic("implement CreateAccount")
-}
-
-func (a *storageInspectionInterface) AddEncodedAccountKey(_ runtime.Address, _ []byte) error {
-	panic("implement AddEncodedAccountKey")
-}
-
-func (a *storageInspectionInterface) RevokeEncodedAccountKey(_ runtime.Address, _ int) (publicKey []byte, err error) {
-	panic("implement RevokeEncodedAccountKey")
-}
-
-func (a *storageInspectionInterface) AddAccountKey(_ runtime.Address, _ *runtime.PublicKey, _ runtime.HashAlgorithm, _ int) (*runtime.AccountKey, error) {
-	panic("implement AddAccountKey")
-}
-
-func (a *storageInspectionInterface) GetAccountKey(_ runtime.Address, _ int) (*runtime.AccountKey, error) {
-	panic("implement GetAccountKey")
-}
-
-func (a *storageInspectionInterface) RevokeAccountKey(_ runtime.Address, _ int) (*runtime.AccountKey, error) {
-	panic("implement RevokeAccountKey")
-}
-
-func (a *storageInspectionInterface) UpdateAccountContractCode(_ runtime.Address, _ string, _ []byte) (err error) {
-	panic("implement UpdateAccountContractCode")
-}
-
-func (a *storageInspectionInterface) GetAccountContractCode(address runtime.Address, name string) (code []byte, err error) {
-	addr := string(flowgo.BytesToAddress(address.Bytes()).Bytes())
-	v, _ := a.view.Get(addr, state.ContractKey(name))
-	return v, nil
-}
-
-func (a *storageInspectionInterface) RemoveAccountContractCode(_ runtime.Address, _ string) (err error) {
-	panic("implement RemoveAccountContractCode")
-}
-
-func (a *storageInspectionInterface) GetSigningAccounts() ([]runtime.Address, error) {
-	panic("implement GetSigningAccounts")
-}
-
-func (a *storageInspectionInterface) ProgramLog(_ string) error {
-	panic("implement ProgramLog")
-}
-
-func (a *storageInspectionInterface) EmitEvent(_ cadence.Event) error {
-	panic("implement EmitEvent")
-}
-
-func (a *storageInspectionInterface) ValueExists(_, _ []byte) (exists bool, err error) {
-	panic("implement ValueExists")
-}
-
-func (a *storageInspectionInterface) GenerateUUID() (uint64, error) {
-	panic("implement GenerateUUID")
-}
-
-func (a *storageInspectionInterface) GetComputationLimit() uint64 {
-	return math.MaxUint64
-}
-
-func (a *storageInspectionInterface) SetComputationUsed(_ uint64) error {
-	return nil
-}
-
-func (a *storageInspectionInterface) DecodeArgument(_ []byte, _ cadence.Type) (cadence.Value, error) {
-	panic("implement DecodeArgument")
-}
-
-func (a *storageInspectionInterface) GetCurrentBlockHeight() (uint64, error) {
-	panic("implement GetCurrentBlockHeight")
-}
-
-func (a *storageInspectionInterface) GetBlockAtHeight(_ uint64) (block runtime.Block, exists bool, err error) {
-	panic("implement GetBlockAtHeight")
-}
-
-func (a *storageInspectionInterface) UnsafeRandom() (uint64, error) {
-	panic("implement UnsafeRandom")
-}
-
-func (a *storageInspectionInterface) VerifySignature(_ []byte, _ string, _ []byte, _ []byte, _ runtime.SignatureAlgorithm, _ runtime.HashAlgorithm) (bool, error) {
-	panic("implement VerifySignature")
-}
-
-func (a *storageInspectionInterface) Hash(_ []byte, _ string, _ runtime.HashAlgorithm) ([]byte, error) {
-	panic("implement Hash")
-}
-
-func (a *storageInspectionInterface) GetAccountBalance(_ common.Address) (value uint64, err error) {
-	panic("implement GetAccountBalance")
-}
-
-func (a *storageInspectionInterface) GetAccountAvailableBalance(_ common.Address) (value uint64, err error) {
-	panic("implement GetAccountAvailableBalance")
-}
-
-func (a *storageInspectionInterface) GetStorageUsed(_ runtime.Address) (value uint64, err error) {
-	panic("implement GetStorageUsed")
-}
-
-func (a *storageInspectionInterface) GetStorageCapacity(_ runtime.Address) (value uint64, err error) {
-	panic("implement GetStorageCapacity")
-}
-
-func (a *storageInspectionInterface) ImplementationDebugLog(_ string) error {
-	panic("implement ImplementationDebugLog")
-}
-
-func (a *storageInspectionInterface) AllocateStorageIndex(owner []byte) (atree.StorageIndex, error) {
-	panic("implement AllocateStorageIndex")
-}
-
-func (e *storageInspectionInterface) GetAccountContractNames(address runtime.Address) ([]string, error) {
-	panic("implement GetAccountContractNames")
 }
