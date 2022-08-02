@@ -12,7 +12,6 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/atree v0.4.0
 	github.com/onflow/cadence v0.24.2-0.20220725233315-443ea529bed1
 	github.com/onflow/flow-go v0.26.14-test-synchronization.0.20220801105506-320bb18569ff
 	github.com/onflow/flow-go-sdk v0.26.5
@@ -28,7 +27,6 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.5.0
 	github.com/stretchr/testify v1.8.0
-	go.opentelemetry.io/otel v1.8.0
 	google.golang.org/grpc v1.46.2
 )
 
@@ -83,6 +81,7 @@ require (
 	github.com/multiformats/go-multibase v0.0.3 // indirect
 	github.com/multiformats/go-multihash v0.1.0 // indirect
 	github.com/multiformats/go-varint v0.0.6 // indirect
+	github.com/onflow/atree v0.4.0 // indirect
 	github.com/onflow/flow-core-contracts/lib/go/contracts v0.11.2-0.20220720151516-797b149ceaaa // indirect
 	github.com/onflow/flow-core-contracts/lib/go/templates v0.11.2-0.20220720151516-797b149ceaaa // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v0.5.0 // indirect
@@ -112,6 +111,7 @@ require (
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	github.com/zeebo/blake3 v0.2.3 // indirect
+	go.opentelemetry.io/otel v1.8.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.8.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.8.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.8.0 // indirect
