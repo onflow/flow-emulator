@@ -1,22 +1,22 @@
-<br />
+<br/>
 <p align="center">
   <a href="https://docs.onflow.org/emulator/">
-    <img src="./emulator-banner.svg" alt="Logo" width="410" height="auto">
+    <img src="./emulator-banner.svg" alt="Logo" width="410" height="auto" />
   </a>
-
   <p align="center">
     <i>The Flow Emulator is a lightweight tool that emulates the behaviour of the real Flow network.</i>
-    <br />
+    <br/>
     <a href="https://docs.onflow.org/emulator/"><strong>Read the docs»</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/onflow/flow-emulator/issues">Report Bug</a>
+    <br/>
+    <br/>
+    <a href="https://g thub.com/onflow/flow-emulator/issues">Report Bug</a>
     ·
     <a href="https://github.com/onflow/flow-emulator/blob/master/CONTRIBUTING.md">Contribute</a>
   </p>
 </p>
-<br />
-<br />
+
+<br/>
+<br/>
 
 
 ### The Emulator
@@ -61,7 +61,7 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--storage-limit`             | `FLOW_STORAGELIMITENABLED`    | `true`         | Enable [account storage limit](https://docs.onflow.org/cadence/language/accounts/#storage-limit)                                                                                                                                                    |
 | `--storage-per-flow`          | `FLOW_STORAGEMBPERFLOW`       |                | Specify size of the storage in MB for each FLOW in account balance. Default value from the flow-go                                                                                                                                                  |
 | `--min-account-balance`       | `FLOW_MINIMUMACCOUNTBALANCE`  |                | Specify minimum balance the account must have. Default value from the flow-go                                                                                                                                                                       |
-| `--transaction-fees`          | `FLOW_TRANSACTIONFEESENABLED` | `false`        | Enable variable transaction fees and execution effort metering <br> as decribed in [Variable Transaction Fees: Execution Effort](https://github.com/onflow/flow/pull/753)   FLIP                                                                    |
+| `--transaction-fees`          | `FLOW_TRANSACTIONFEESENABLED` | `false`        | Enable variable transaction fees and execution effort metering <br/> as decribed in [Variable Transaction Fees: Execution Effort](https://github.com/onflow/flow/pull/753)   FLIP                                                                    |
 | `--transaction-max-gas-limit` | `FLOW_TRANSACTIONMAXGASLIMIT` | `9999`         | Maximum [gas limit for transactions](https://docs.onflow.org/flow-go-sdk/building-transactions/#gas-limit)                                                                                                                                          |
 | `--script-gas-limit`          | `FLOW_SCRIPTGASLIMIT`         | `100000`       | Specify gas limit for script execution                                                                                                                                                                                                              |
 

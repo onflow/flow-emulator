@@ -13,6 +13,7 @@ package emulator
 import (
 	"errors"
 	"fmt"
+	"math"
 	"sync"
 	"time"
 
@@ -127,18 +128,19 @@ func GenerateDefaultServiceKey(
 
 // config is a set of configuration options for an emulated blockchain.
 type config struct {
-	ServiceKey                ServiceKey
-	Store                     storage.Store
-	SimpleAddresses           bool
-	GenesisTokenSupply        cadence.UFix64
-	TransactionMaxGasLimit    uint64
-	ScriptGasLimit            uint64
-	TransactionExpiry         uint
-	StorageLimitEnabled       bool
-	TransactionFeesEnabled    bool
-	MinimumStorageReservation cadence.UFix64
-	StorageMBPerFLOW          cadence.UFix64
-	Logger                    zerolog.Logger
+	ServiceKey                   ServiceKey
+	Store                        storage.Store
+	SimpleAddresses              bool
+	GenesisTokenSupply           cadence.UFix64
+	TransactionMaxGasLimit       uint64
+	ScriptGasLimit               uint64
+	TransactionExpiry            uint
+	StorageLimitEnabled          bool
+	TransactionFeesEnabled       bool
+	MinimumStorageReservation    cadence.UFix64
+	StorageMBPerFLOW             cadence.UFix64
+	Logger                       zerolog.Logger
+	TransactionValidationEnabled bool
 }
 
 func (conf config) GetStore() storage.Store {
@@ -181,17 +183,18 @@ var defaultConfig = func() config {
 	}
 
 	return config{
-		ServiceKey:                DefaultServiceKey(),
-		Store:                     nil,
-		SimpleAddresses:           false,
-		GenesisTokenSupply:        genesisTokenSupply,
-		ScriptGasLimit:            defaultScriptGasLimit,
-		TransactionMaxGasLimit:    defaultTransactionMaxGasLimit,
-		MinimumStorageReservation: fvm.DefaultMinimumStorageReservation,
-		StorageMBPerFLOW:          fvm.DefaultStorageMBPerFLOW,
-		TransactionExpiry:         0, // TODO: replace with sensible default
-		StorageLimitEnabled:       true,
-		Logger:                    zerolog.Nop(),
+		ServiceKey:                   DefaultServiceKey(),
+		Store:                        nil,
+		SimpleAddresses:              false,
+		GenesisTokenSupply:           genesisTokenSupply,
+		ScriptGasLimit:               defaultScriptGasLimit,
+		TransactionMaxGasLimit:       defaultTransactionMaxGasLimit,
+		MinimumStorageReservation:    fvm.DefaultMinimumStorageReservation,
+		StorageMBPerFLOW:             fvm.DefaultStorageMBPerFLOW,
+		TransactionExpiry:            0, // TODO: replace with sensible default
+		StorageLimitEnabled:          true,
+		Logger:                       zerolog.Nop(),
+		TransactionValidationEnabled: true,
 	}
 }()
 
@@ -332,6 +335,17 @@ func WithTransactionFeesEnabled(enabled bool) Option {
 	}
 }
 
+// WithTransactionValidationEnabled enables/disables transaction validation.
+//
+// If set to false, the emulator will not verify transaction signatures or validate sequence numbers.
+//
+// The default is true.
+func WithTransactionValidationEnabled(enabled bool) Option {
+	return func(c *config) {
+		c.TransactionValidationEnabled = enabled
+	}
+}
+
 // NewBlockchain instantiates a new emulated blockchain with the provided options.
 func NewBlockchain(opts ...Option) (*Blockchain, error) {
 
@@ -371,8 +385,7 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 
 	vm := fvm.NewVirtualMachine(rt)
 
-	ctx := fvm.NewContext(
-		conf.Logger,
+	fvmOptions := []fvm.Option{
 		fvm.WithChain(conf.GetChainID().Chain()),
 		fvm.WithBlocks(blocks),
 		fvm.WithRestrictedDeployment(false),
@@ -380,6 +393,15 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 		fvm.WithCadenceLogging(true),
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
+	}
+
+	if !conf.TransactionValidationEnabled {
+		fvmOptions = append(fvmOptions, fvm.WithTransactionProcessors(fvm.NewTransactionInvoker(zerolog.Nop())))
+	}
+
+	ctx := fvm.NewContext(
+		conf.Logger,
+		fvmOptions...,
 	)
 
 	return vm, ctx, nil
@@ -988,6 +1010,48 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	b.pendingBlock = newPendingBlock(block, ledgerView)
 
 	return block, nil
+}
+
+func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, error) {
+	program := programs.NewEmptyPrograms()
+
+	env, err := fvm.NewTransactionEnvironment(
+		b.vmCtx,
+		b.vm,
+		state.NewStateHolder(
+			state.NewState(
+				b.pendingBlock.ledgerView,
+				meter.NewMeter(math.MaxUint64, math.MaxUint64),
+				state.WithMaxKeySizeAllowed(b.vmCtx.MaxStateKeySize),
+				state.WithMaxValueSizeAllowed(b.vmCtx.MaxStateValueSize),
+				state.WithMaxInteractionSizeAllowed(math.MaxUint64),
+			),
+		),
+		programs.NewEmptyPrograms(),
+		flowgo.NewTransactionBody(),
+		0,
+		nil)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := runtime.Context{
+		Interface:         env,
+		Location:          nil,
+		PredeclaredValues: nil,
+	}
+
+	store, inter, err := b.vm.Runtime.Storage(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	account, err := b.vm.GetAccount(b.vmCtx, flowgo.BytesToAddress(address.Bytes()), b.pendingBlock.ledgerView, program)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewAccountStorage(address, account, store, inter)
 }
 
 // ExecuteAndCommitBlock is a utility that combines ExecuteBlock with CommitBlock.

@@ -44,6 +44,8 @@ func setupPendingBlockTests(t *testing.T) (
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
+	signer, err = b.ServiceKey().Signer()
+	assert.NoError(t, err)
 	err = tx2.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	require.NoError(t, err)
 
@@ -54,6 +56,8 @@ func setupPendingBlockTests(t *testing.T) (
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
+	signer, err = b.ServiceKey().Signer()
+	assert.NoError(t, err)
 	err = invalid.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	require.NoError(t, err)
 
