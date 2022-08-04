@@ -1024,7 +1024,7 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 				meter.NewMeter(math.MaxUint64, math.MaxUint64),
 				state.WithMaxKeySizeAllowed(b.vmCtx.MaxStateKeySize),
 				state.WithMaxValueSizeAllowed(b.vmCtx.MaxStateValueSize),
-				state.WithMaxInteractionSizeAllowed(b.vmCtx.MaxStateInteractionSize),
+				state.WithMaxInteractionSizeAllowed(math.MaxUint64),
 			),
 		),
 		programs.NewEmptyPrograms(),
