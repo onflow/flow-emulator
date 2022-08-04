@@ -13,6 +13,7 @@ package emulator
 import (
 	"errors"
 	"fmt"
+	"math"
 	"sync"
 	"time"
 
@@ -1009,6 +1010,48 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	b.pendingBlock = newPendingBlock(block, ledgerView)
 
 	return block, nil
+}
+
+func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, error) {
+	program := programs.NewEmptyPrograms()
+
+	env, err := fvm.NewTransactionEnvironment(
+		b.vmCtx,
+		b.vm,
+		state.NewStateHolder(
+			state.NewState(
+				b.pendingBlock.ledgerView,
+				meter.NewMeter(math.MaxUint64, math.MaxUint64),
+				state.WithMaxKeySizeAllowed(b.vmCtx.MaxStateKeySize),
+				state.WithMaxValueSizeAllowed(b.vmCtx.MaxStateValueSize),
+				state.WithMaxInteractionSizeAllowed(math.MaxUint64),
+			),
+		),
+		programs.NewEmptyPrograms(),
+		flowgo.NewTransactionBody(),
+		0,
+		nil)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := runtime.Context{
+		Interface:         env,
+		Location:          nil,
+		PredeclaredValues: nil,
+	}
+
+	store, inter, err := b.vm.Runtime.Storage(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	account, err := b.vm.GetAccount(b.vmCtx, flowgo.BytesToAddress(address.Bytes()), b.pendingBlock.ledgerView, program)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewAccountStorage(address, account, store, inter)
 }
 
 // ExecuteAndCommitBlock is a utility that combines ExecuteBlock with CommitBlock.

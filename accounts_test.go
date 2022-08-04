@@ -763,6 +763,8 @@ func TestRemoveAccountKey(t *testing.T) {
 		SetPayer(b.ServiceKey().Address)
 
 	// sign with service key
+	signer, err = b.ServiceKey().Signer()
+	assert.NoError(t, err)
 	err = tx2.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	assert.NoError(t, err)
 
@@ -793,6 +795,8 @@ func TestRemoveAccountKey(t *testing.T) {
 		SetPayer(b.ServiceKey().Address)
 
 	// sign with service key (that has been removed)
+	signer, err = b.ServiceKey().Signer()
+	assert.NoError(t, err)
 	err = tx3.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	assert.NoError(t, err)
 
@@ -1180,6 +1184,8 @@ func TestAccountAccess(t *testing.T) {
 	err = tx.SignPayload(address2, 0, signer2)
 	require.NoError(t, err)
 
+	signer, err = b.ServiceKey().Signer()
+	assert.NoError(t, err)
 	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	require.NoError(t, err)
 

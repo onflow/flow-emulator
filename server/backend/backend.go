@@ -581,6 +581,14 @@ func (b *Backend) executeScriptAtBlock(script []byte, arguments [][]byte, blockH
 	return valueBytes, nil
 }
 
+func (b *Backend) GetAccountStorage(address sdk.Address) (*emulator.AccountStorage, error) {
+	b.logger.
+		WithField("address", address).
+		Debugf("👤  GetAccountStorage called")
+
+	return b.emulator.GetAccountStorage(address)
+}
+
 func (b *Backend) GetLatestProtocolStateSnapshot(_ context.Context) ([]byte, error) {
 	panic("implement me")
 }
