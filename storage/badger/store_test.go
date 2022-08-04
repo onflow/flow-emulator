@@ -248,7 +248,6 @@ func TestLedger(t *testing.T) {
 
 		const owner = ""
 		const key = "foo"
-		const controller = ""
 		expected := []byte("bar")
 
 		d := delta.NewDelta()
@@ -278,7 +277,6 @@ func TestLedger(t *testing.T) {
 		}()
 
 		const owner = ""
-		const controller = ""
 
 		// Create a list of ledgers, where the ledger at index i has
 		// keys (i+2)-1->(i+2)+1 set to value i-1.
@@ -465,7 +463,6 @@ func TestPersistence(t *testing.T) {
 	events := []flowgo.Event{event}
 
 	const owner = ""
-	const controller = ""
 	const key = "foo"
 
 	expected := []byte("bar")
@@ -524,7 +521,6 @@ func benchmarkInsertLedgerDelta(b *testing.B, nKeys int) {
 	defer store.Close()
 
 	const owner = ""
-	const controller = ""
 
 	ledger := delta.NewDelta()
 	for i := 0; i < nKeys; i++ {
@@ -609,7 +605,6 @@ func BenchmarkLedgerDiskUsage(b *testing.B) {
 	defer store.Close()
 
 	const owner = ""
-	const controller = ""
 
 	b.StartTimer()
 	var lastDBSize int64
