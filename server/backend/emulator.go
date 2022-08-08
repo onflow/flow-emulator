@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 package backend
 
 import (
+	emulator "github.com/onflow/flow-emulator"
 	sdk "github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
@@ -43,4 +44,5 @@ type Emulator interface {
 	GetEventsByHeight(blockHeight uint64, eventType string) ([]sdk.Event, error)
 	ExecuteScript(script []byte, arguments [][]byte) (*types.ScriptResult, error)
 	ExecuteScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) (*types.ScriptResult, error)
+	GetAccountStorage(address sdk.Address) (*emulator.AccountStorage, error)
 }

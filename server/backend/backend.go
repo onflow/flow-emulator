@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -579,6 +579,14 @@ func (b *Backend) executeScriptAtBlock(script []byte, arguments [][]byte, blockH
 	}
 
 	return valueBytes, nil
+}
+
+func (b *Backend) GetAccountStorage(address sdk.Address) (*emulator.AccountStorage, error) {
+	b.logger.
+		WithField("address", address).
+		Debugf("👤  GetAccountStorage called")
+
+	return b.emulator.GetAccountStorage(address)
 }
 
 func (b *Backend) GetLatestProtocolStateSnapshot(_ context.Context) ([]byte, error) {

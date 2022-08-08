@@ -734,7 +734,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		var sigErr *fvmerrors.InvalidProposalSignatureError
+		var sigErr *fvmerrors.AccountNotFoundError
 		assert.True(t, errors.As(result.Error, &sigErr))
 	})
 

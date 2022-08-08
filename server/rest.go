@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2020 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,13 +47,13 @@ func (r *RestServer) Stop() {
 	_ = r.server.Shutdown(context.Background())
 }
 
-func NewRestServer(be *backend.Backend, port int, debug bool) (*RestServer, error) {
+func NewRestServer(be *backend.Backend, chain flow.Chain, port int, debug bool) (*RestServer, error) {
 	logger := zerolog.Logger{}
 	if debug {
 		logger = zerolog.New(os.Stdout)
 	}
 
-	srv, err := rest.NewServer(backend.NewAdapter(be), "127.0.0.1:3333", logger, flow.Emulator.Chain())
+	srv, err := rest.NewServer(backend.NewAdapter(be), "127.0.0.1:3333", logger, chain)
 	if err != nil {
 		return nil, err
 	}

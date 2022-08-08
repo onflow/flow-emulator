@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,10 @@ import (
 	"encoding/json"
 	"net/http"
 
+	fvmerrors "github.com/onflow/flow-go/fvm/errors"
+
+	"github.com/onflow/flow-go-sdk"
+
 	"github.com/gorilla/mux"
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-emulator/storage/badger"
@@ -33,16 +37,16 @@ type BlockResponse struct {
 	Context string `json:"context,omitempty"`
 }
 
-type EmulatorApiServer struct {
+type EmulatorAPIServer struct {
 	router  *mux.Router
 	server  *EmulatorServer
 	backend *backend.Backend
 	storage *Storage
 }
 
-func NewEmulatorApiServer(server *EmulatorServer, backend *backend.Backend, storage *Storage) *EmulatorApiServer {
+func NewEmulatorAPIServer(server *EmulatorServer, backend *backend.Backend, storage *Storage) *EmulatorAPIServer {
 	router := mux.NewRouter().StrictSlash(true)
-	r := &EmulatorApiServer{router: router,
+	r := &EmulatorAPIServer{router: router,
 		server:  server,
 		backend: backend,
 		storage: storage,
@@ -50,15 +54,16 @@ func NewEmulatorApiServer(server *EmulatorServer, backend *backend.Backend, stor
 
 	router.HandleFunc("/emulator/newBlock", r.CommitBlock)
 	router.HandleFunc("/emulator/snapshot/{name}", r.Snapshot)
+	router.HandleFunc("/emulator/storages/{address}", r.Storage)
 
 	return r
 }
 
-func (m EmulatorApiServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.router.ServeHTTP(w, r)
 }
 
-func (m EmulatorApiServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	m.backend.CommitBlock()
 
@@ -82,7 +87,7 @@ func (m EmulatorApiServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (m EmulatorApiServer) Snapshot(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) Snapshot(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(r)
 	name := vars["name"]
@@ -128,4 +133,28 @@ func (m EmulatorApiServer) Snapshot(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
+}
+
+func (m EmulatorAPIServer) Storage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	vars := mux.Vars(r)
+	address := vars["address"]
+
+	addr := flow.HexToAddress(address)
+
+	storage, err := m.backend.GetAccountStorage(addr)
+	if err != nil {
+		if fvmerrors.IsAccountNotFoundError(err) {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(storage)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
