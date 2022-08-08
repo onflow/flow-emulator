@@ -8,6 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	emulator "github.com/onflow/flow-emulator"
 	types "github.com/onflow/flow-emulator/types"
 	flow "github.com/onflow/flow-go-sdk"
 	flow0 "github.com/onflow/flow-go/model/flow"
@@ -169,6 +170,21 @@ func (m *MockEmulator) GetAccountAtBlock(arg0 flow.Address, arg1 uint64) (*flow.
 func (mr *MockEmulatorMockRecorder) GetAccountAtBlock(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountAtBlock", reflect.TypeOf((*MockEmulator)(nil).GetAccountAtBlock), arg0, arg1)
+}
+
+// GetAccountStorage mocks base method.
+func (m *MockEmulator) GetAccountStorage(arg0 flow.Address) (*emulator.AccountStorage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountStorage", arg0)
+	ret0, _ := ret[0].(*emulator.AccountStorage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountStorage indicates an expected call of GetAccountStorage.
+func (mr *MockEmulatorMockRecorder) GetAccountStorage(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountStorage", reflect.TypeOf((*MockEmulator)(nil).GetAccountStorage), arg0)
 }
 
 // GetBlockByHeight mocks base method.

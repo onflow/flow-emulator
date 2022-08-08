@@ -71,7 +71,7 @@ func NewAdminServer(
 	mux.Handle("/", wrappedHandler(wrappedServer, headers))
 
 	// register API handler
-	mux.Handle(EmulatorApiPath, NewEmulatorApiServer(emulatorServer, backend, storage))
+	mux.Handle(EmulatorApiPath, NewEmulatorAPIServer(emulatorServer, backend, storage))
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
