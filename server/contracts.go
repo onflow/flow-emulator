@@ -3,7 +3,7 @@ package server
 import (
 	"fmt"
 	emulator "github.com/onflow/flow-emulator"
-	"github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go/fvm"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -14,12 +14,12 @@ import (
 
 type DeployDescription struct {
 	name        string
-	address     flow.Address
+	address     flowsdk.Address
 	description string
 }
 
 func deployContracts(b *emulator.Blockchain) ([]DeployDescription, error) {
-	ftAddress := flow.HexToAddress(fvm.FungibleTokenAddress(b.GetChain()).Hex())
+	ftAddress := flowsdk.HexToAddress(fvm.FungibleTokenAddress(b.GetChain()).Hex())
 	serviceAddress := b.ServiceKey().Address
 
 	toDeploy := []struct {
@@ -110,7 +110,7 @@ func deployContract(b *emulator.Blockchain, name string, contract []byte) error 
 	})
 
 	tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
-		SetReferenceBlockID(flow.Identifier(latestBlock.ID())).
+		SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID())).
 		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
 		SetPayer(serviceAddress)
 

@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -44,7 +44,7 @@ func TestBlockInfo(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("works as transaction", func(t *testing.T) {
-		tx := flow.NewTransaction().
+		tx := flowsdk.NewTransaction().
 			SetScript([]byte(`
 				transaction {
 					execute {

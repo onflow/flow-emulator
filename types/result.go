@@ -22,7 +22,7 @@ import (
 	"fmt"
 
 	"github.com/onflow/cadence"
-	"github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go/crypto/hash"
 	flowgo "github.com/onflow/flow-go/model/flow"
 )
@@ -36,11 +36,11 @@ type StorableTransactionResult struct {
 
 // A TransactionResult is the result of executing a transaction.
 type TransactionResult struct {
-	TransactionID   flow.Identifier
+	TransactionID   flowsdk.Identifier
 	ComputationUsed uint64
 	Error           error
 	Logs            []string
-	Events          []flow.Event
+	Events          []flowsdk.Event
 	Debug           *TransactionResultDebug
 }
 
@@ -95,11 +95,11 @@ func NewTransactionInvalidSignature(
 
 // A ScriptResult is the result of executing a script.
 type ScriptResult struct {
-	ScriptID flow.Identifier
+	ScriptID flowsdk.Identifier
 	Value    cadence.Value
 	Error    error
 	Logs     []string
-	Events   []flow.Event
+	Events   []flowsdk.Event
 }
 
 // Succeeded returns true if the script executed without errors.

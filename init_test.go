@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/onflow/cadence"
-	"github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
@@ -35,7 +35,7 @@ func TestInitialization(t *testing.T) {
 
 		b, _ := emulator.NewBlockchain(emulator.WithStore(store))
 
-		serviceAcct, err := b.GetAccount(flow.ServiceAddress(flow.Emulator))
+		serviceAcct, err := b.GetAccount(flowsdk.ServiceAddress(flowsdk.Emulator))
 		require.NoError(t, err)
 
 		assert.NotNil(t, serviceAcct)
@@ -94,7 +94,7 @@ func TestInitialization(t *testing.T) {
 			counterAddress,
 		)
 
-		tx := flow.NewTransaction().
+		tx := flowsdk.NewTransaction().
 			SetScript([]byte(script)).
 			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).

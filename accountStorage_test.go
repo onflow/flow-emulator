@@ -20,7 +20,7 @@ package emulator
 import (
 	"testing"
 
-	"github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,7 +39,7 @@ func TestStorageTransaction(t *testing.T) {
 
 	accountKeys := test.AccountKeyGenerator()
 	accountKey, signer := accountKeys.NewWithSigner()
-	accountAddress, err := b.CreateAccount([]*flow.AccountKey{accountKey}, nil)
+	accountAddress, err := b.CreateAccount([]*flowsdk.AccountKey{accountKey}, nil)
 	assert.NoError(t, err)
 
 	const code = `transaction {
@@ -51,7 +51,7 @@ func TestStorageTransaction(t *testing.T) {
    		}
     `
 
-	tx1 := flow.NewTransaction().
+	tx1 := flowsdk.NewTransaction().
 		SetScript([]byte(code)).
 		SetGasLimit(limit).
 		SetProposalKey(accountAddress, 0, 0).

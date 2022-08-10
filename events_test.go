@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/onflow/cadence"
-	"github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 
 	emulator "github.com/onflow/flow-emulator"
 )
@@ -70,7 +70,7 @@ func TestEventEmitted(t *testing.T) {
 		publicKey := b.ServiceKey().AccountKey()
 
 		address, err := b.CreateAccount(
-			[]*flow.AccountKey{publicKey},
+			[]*flowsdk.AccountKey{publicKey},
 			accountContracts,
 		)
 		assert.NoError(t, err)
@@ -85,7 +85,7 @@ func TestEventEmitted(t *testing.T) {
 			}
 		`, address.Hex()))
 
-		tx := flow.NewTransaction().
+		tx := flowsdk.NewTransaction().
 			SetScript(script).
 			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -122,7 +122,7 @@ func TestEventEmitted(t *testing.T) {
 
 		decodedEvent := actualEvent.Value
 
-		expectedID := flow.Event{TransactionID: tx.ID(), EventIndex: 0}.ID()
+		expectedID := flowsdk.Event{TransactionID: tx.ID(), EventIndex: 0}.ID()
 
 		assert.Equal(t, string(expectedType), actualEvent.Type)
 		assert.Equal(t, expectedID, actualEvent.ID())
