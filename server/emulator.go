@@ -24,7 +24,7 @@ import (
 
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 
-	"github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 
 	"github.com/gorilla/mux"
 	"github.com/onflow/flow-emulator/server/backend"
@@ -140,7 +140,7 @@ func (m EmulatorAPIServer) Storage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["address"]
 
-	addr := flow.HexToAddress(address)
+	addr := flowsdk.HexToAddress(address)
 
 	storage, err := m.backend.GetAccountStorage(addr)
 	if err != nil {

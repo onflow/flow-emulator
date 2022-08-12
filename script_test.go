@@ -6,7 +6,7 @@ import (
 
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
-	"github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +26,7 @@ func TestExecuteScript(t *testing.T) {
 
 	addTwoScript, counterAddress := deployAndGenerateAddTwoScript(t, b)
 
-	tx := flow.NewTransaction().
+	tx := flowsdk.NewTransaction().
 		SetScript([]byte(addTwoScript)).
 		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).

@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go-sdk/test"
@@ -126,7 +126,7 @@ func TestCreateAccount(t *testing.T) {
 		accountKey := accountKeys.New()
 
 		tx, err := templates.CreateAccount(
-			[]*flow.AccountKey{accountKey},
+			[]*flowsdk.AccountKey{accountKey},
 			nil,
 			b.ServiceKey().Address,
 		)
@@ -171,7 +171,7 @@ func TestCreateAccount(t *testing.T) {
 		accountKey := accountKeys.New()
 
 		tx, err := templates.CreateAccount(
-			[]*flow.AccountKey{accountKey},
+			[]*flowsdk.AccountKey{accountKey},
 			nil,
 			b.ServiceKey().Address,
 		)
@@ -216,7 +216,7 @@ func TestCreateAccount(t *testing.T) {
 		accountKeyB := accountKeys.New()
 
 		tx, err := templates.CreateAccount(
-			[]*flow.AccountKey{accountKeyA, accountKeyB},
+			[]*flowsdk.AccountKey{accountKeyA, accountKeyB},
 			nil,
 			b.ServiceKey().Address,
 		)
@@ -269,7 +269,7 @@ func TestCreateAccount(t *testing.T) {
 		}
 
 		tx, err := templates.CreateAccount(
-			[]*flow.AccountKey{accountKeyA, accountKeyB},
+			[]*flowsdk.AccountKey{accountKeyA, accountKeyB},
 			contracts,
 			b.ServiceKey().Address,
 		)
@@ -345,7 +345,7 @@ func TestCreateAccount(t *testing.T) {
 		}
 
 		tx, err := templates.CreateAccount(
-			[]*flow.AccountKey{accountKey},
+			[]*flowsdk.AccountKey{accountKey},
 			contracts,
 			b.ServiceKey().Address,
 		)
@@ -455,7 +455,7 @@ func TestCreateAccount(t *testing.T) {
 		}
 
 		tx, err := templates.CreateAccount(
-			[]*flow.AccountKey{accountKey},
+			[]*flowsdk.AccountKey{accountKey},
 			contracts,
 			b.ServiceKey().Address,
 		)
@@ -481,11 +481,11 @@ func TestCreateAccount(t *testing.T) {
 		block, err := b.CommitBlock()
 		require.NoError(t, err)
 
-		events, err := b.GetEventsByHeight(block.Header.Height, flow.EventAccountCreated)
+		events, err := b.GetEventsByHeight(block.Header.Height, flowsdk.EventAccountCreated)
 		require.NoError(t, err)
 		require.Len(t, events, 1)
 
-		accountEvent := flow.AccountCreatedEvent(events[0])
+		accountEvent := flowsdk.AccountCreatedEvent(events[0])
 
 		account, err := b.GetAccount(accountEvent.Address())
 		assert.NoError(t, err)
@@ -511,7 +511,7 @@ func TestCreateAccount(t *testing.T) {
 		accountKey.SetHashAlgo(crypto.SHA3_384) // SHA3_384 is invalid for ECDSA_P256
 
 		tx, err := templates.CreateAccount(
-			[]*flow.AccountKey{accountKey},
+			[]*flowsdk.AccountKey{accountKey},
 			nil,
 			b.ServiceKey().Address,
 		)
@@ -657,7 +657,7 @@ func TestAddAccountKey(t *testing.T) {
 		var newKeyID = 1 // new key with have ID 1
 		var newKeySequenceNum uint64 = 0
 
-		tx2 := flow.NewTransaction().
+		tx2 := flowsdk.NewTransaction().
 			SetScript(script).
 			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, newKeyID, newKeySequenceNum).
@@ -890,7 +890,7 @@ func TestUpdateAccountCode(t *testing.T) {
 		}
 
 		accountAddressB, err := b.CreateAccount(
-			[]*flow.AccountKey{accountKeyB},
+			[]*flowsdk.AccountKey{accountKeyB},
 			contracts,
 		)
 		require.NoError(t, err)
@@ -956,7 +956,7 @@ func TestUpdateAccountCode(t *testing.T) {
 		}
 
 		accountAddressB, err := b.CreateAccount(
-			[]*flow.AccountKey{accountKeyB},
+			[]*flowsdk.AccountKey{accountKeyB},
 			contracts,
 		)
 		require.NoError(t, err)
@@ -1042,7 +1042,7 @@ func TestImportAccountCode(t *testing.T) {
 		}
 	`, address))
 
-	tx := flow.NewTransaction().
+	tx := flowsdk.NewTransaction().
 		SetScript(script).
 		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -1095,7 +1095,7 @@ func TestAccountAccess(t *testing.T) {
 	accountKey1, signer1 := accountKeys.NewWithSigner()
 
 	address1, err := b.CreateAccount(
-		[]*flow.AccountKey{accountKey1},
+		[]*flowsdk.AccountKey{accountKey1},
 		accountContracts,
 	)
 	assert.NoError(t, err)
@@ -1150,7 +1150,7 @@ func TestAccountAccess(t *testing.T) {
 	accountKey2, signer2 := accountKeys.NewWithSigner()
 
 	address2, err := b.CreateAccount(
-		[]*flow.AccountKey{accountKey2},
+		[]*flowsdk.AccountKey{accountKey2},
 		nil,
 	)
 	assert.NoError(t, err)
