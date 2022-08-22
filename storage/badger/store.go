@@ -42,10 +42,9 @@ import (
 // persistent key-value store.
 type Store struct {
 	db              *badger.DB
+	config          Config
 	ledgerChangeLog changelog
 	dbGitRepository *git.Repository
-	path            string
-	badgerOptions   badger.Options
 }
 
 var _ storage.Store = &Store{}
@@ -93,17 +92,22 @@ func defaultSignature(name, email string) *object.Signature {
 //prevents git commits when emulator running
 //ignoring error here but it is not critical to operation
 func (s *Store) lockGit() {
-	lockPath := fmt.Sprintf("%s/.git/index.lock", s.path)
+	lockPath := fmt.Sprintf("%s/.git/index.lock", s.config.DBPath)
 	_ = ioutil.WriteFile(lockPath, []byte("emulatorLock"), 0755)
 }
 
 //ignoring error here but it is not critical to operation
 func (s *Store) unlockGit() {
-	lockPath := fmt.Sprintf("%s/.git/index.lock", s.path)
+	lockPath := fmt.Sprintf("%s/.git/index.lock", s.config.DBPath)
 	_ = os.Remove(lockPath)
 }
 
 func (s *Store) JumpToContext(context string) error {
+
+	if !s.config.Snapshot {
+		return fmt.Errorf("Snapshot option is not enabled")
+	}
+
 	s.unlockGit()
 	defer s.lockGit()
 	err := s.db.Close()
@@ -138,7 +142,7 @@ func (s *Store) JumpToContext(context string) error {
 			return err
 		}
 
-		s.badgerOptions.Logger.Infof("Created a new state snapshot with the name '%s'", context)
+		s.config.Logger.Infof("Created a new state snapshot with the name '%s'", context)
 
 	} else {
 
@@ -160,11 +164,11 @@ func (s *Store) JumpToContext(context string) error {
 				Commit: commit.Hash,
 			})
 		}
-		s.badgerOptions.Logger.Infof("Switched to snapshot with name '%s'", context)
+		s.config.Logger.Infof("Switched to snapshot with name '%s'", context)
 
 	}
 
-	s.db, err = badger.Open(s.badgerOptions)
+	s.db, err = badger.Open(s.config.BadgerOptions)
 	if err != nil {
 		return fmt.Errorf("could not open database: %w", err)
 	}
@@ -186,7 +190,7 @@ func (s *Store) newCommit(message string) error {
 		return err
 	}
 
-	err = filepath.Walk(s.path, func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(s.config.DBPath, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
@@ -238,15 +242,15 @@ func (s *Store) openRepository(directory string) (*git.Repository, error) {
 
 // New returns a new Badger Store.
 func New(opts ...Opt) (*Store, error) {
-	badgerOptions := getBadgerOptions(opts...)
-	badgerOptions.BypassLockGuard = true
-	db, err := badger.Open(badgerOptions)
+	config := getBadgerConfig(opts...)
+	config.BadgerOptions.BypassLockGuard = true
+	db, err := badger.Open(config.BadgerOptions)
 	if err != nil {
 		return nil, fmt.Errorf("could not open database: %w", err)
 	}
 	_ = db.Sync()
 
-	store := &Store{db, newChangelog(), nil, badgerOptions.Dir, badgerOptions}
+	store := &Store{db: db, config: config, ledgerChangeLog: newChangelog()}
 	if err = store.setup(); err != nil {
 		return nil, err
 	}
@@ -257,25 +261,27 @@ func New(opts ...Opt) (*Store, error) {
 // setups git, setup sets up in-memory indexes and prepares the store for use.
 func (s *Store) setup() error {
 
-	dbgit, err := s.openRepository(s.path)
-	s.dbGitRepository = dbgit
-	if err != nil {
-		return err
-	}
+	if s.config.Snapshot {
+		dbgit, err := s.openRepository(s.config.DBPath)
+		s.dbGitRepository = dbgit
+		if err != nil {
+			return err
+		}
 
-	w, _ := dbgit.Worktree()
-	r, _ := dbgit.Head()
-	if r != nil {
-		_ = w.Reset(&git.ResetOptions{
-			Mode:   git.HardReset,
-			Commit: r.Hash(),
-		})
+		w, _ := dbgit.Worktree()
+		r, _ := dbgit.Head()
+		if r != nil {
+			_ = w.Reset(&git.ResetOptions{
+				Mode:   git.HardReset,
+				Commit: r.Hash(),
+			})
+		}
+		err = s.newCommit("Emulator Started New Session")
+		if err != nil {
+			return err
+		}
+		s.lockGit()
 	}
-	err = s.newCommit("Emulator Started New Session")
-	if err != nil {
-		return err
-	}
-	s.lockGit()
 
 	s.db.RLock()
 	defer s.db.RUnlock()
@@ -496,8 +502,12 @@ func (s *Store) CommitBlock(
 	if err != nil {
 		return err
 	}
-	err = s.newCommit(message)
-	return err
+
+	if s.config.Snapshot {
+		return s.newCommit(message)
+	}
+
+	return nil
 }
 
 func (s *Store) CollectionByID(colID flowgo.Identifier) (col flowgo.LightCollection, err error) {
@@ -731,12 +741,13 @@ func (s *Store) Close() error {
 	if err != nil {
 		return err
 	}
-	err = s.newCommit("Emulator Ended Session")
-	if err != nil {
-		return err
+
+	if s.config.Snapshot {
+		defer s.unlockGit()
+		return s.newCommit("Emulator Ended Session")
 	}
-	s.unlockGit()
-	return err
+
+	return nil
 }
 
 // Sync syncs database content to disk.

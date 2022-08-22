@@ -53,6 +53,7 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--rest-debug`                | `FLOW_RESTDEBUG`              | `false`        | Enable REST API debugging output                                                                                                                                                                                                                    |
 | `--grpc-debug`                | `FLOW_GRPCDEBUG`              | `false`        | Enable gRPC server reflection for debugging with grpc_cli                                                                                                                                                                                           |
 | `--persist`                   | `FLOW_PERSIST`                | false          | Enable persistence of the state between restarts                                                                                                                                                                                                    |
+| `--snapshot`                   | `FLOW_SNAPSHOT`                | false          | Enable snapshot support ( this option automatically enables persistence )                                                                                                                                                                                                   |
 | `--dbpath`                    | `FLOW_DBPATH`                 | `./flowdb`     | Specify path for the database file persisting the state                                                                                                                                                                                             |
 | `--simple-addresses`          | `FLOW_SIMPLEADDRESSES`        | `false`        | Use sequential addresses starting with `0x1`                                                                                                                                                                                                        |
 | `--token-supply`              | `FLOW_TOKENSUPPLY`            | `1000000000.0` | Initial FLOW token supply                                                                                                                                                                                                                           |
@@ -122,9 +123,9 @@ It's possible to manage emulator state by using the admin API. You can at any po
 create a new named snapshot of the state and then at any later point revert emulator
 state to that reference.
 
-In order to use the state management functionality you need to run the emulator with persistent state:
+In order to use the state management functionality you need to run the emulator with `--snapshot` flags:
 ```bash
-flow emulator --persist
+flow emulator --snapshot
 ```
 
 Create a new snapshot by doing an HTTP request:
@@ -133,7 +134,10 @@ GET http://localhost:8080/emulator/snapshot/{name}
 ```
 *Please note the example above uses the default admin API port*
 
-At any later point you can reload to that snapshot by executing the same HTTP request as before.
+This option automatically enables `--persist` flag. 
+
+At any later point you can reload to that snapshot by executing the same HTTP request as before. 
+
 You need to use the same value for `name` parameter.
 
 The snapshot functionality is a great tool for testing where you can first initialize

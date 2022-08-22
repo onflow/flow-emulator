@@ -98,6 +98,7 @@ type Config struct {
 	TransactionMaxGasLimit    uint64
 	ScriptGasLimit            uint64
 	Persist                   bool
+	Snapshot                  bool
 	// DBPath is the path to the Badger database on disk.
 	DBPath string
 	// DBGCInterval is the time interval at which to garbage collect the Badger value log.
@@ -239,8 +240,8 @@ func (s *EmulatorServer) Stop() {
 }
 
 func configureStorage(logger *logrus.Logger, conf *Config) (storage Storage, err error) {
-	if conf.Persist {
-		return NewBadgerStorage(logger, conf.DBPath, conf.DBGCInterval, conf.DBGCDiscardRatio)
+	if conf.Persist || conf.Snapshot {
+		return NewBadgerStorage(logger, conf.DBPath, conf.DBGCInterval, conf.DBGCDiscardRatio, conf.Snapshot)
 	}
 
 	return NewMemoryStorage(), nil

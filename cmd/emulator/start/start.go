@@ -52,6 +52,7 @@ type Config struct {
 	GRPCDebug                 bool          `default:"false" flag:"grpc-debug" info:"enable gRPC server reflection for debugging with grpc_cli"`
 	RESTDebug                 bool          `default:"false" flag:"rest-debug" info:"enable REST API debugging output"`
 	Persist                   bool          `default:"false" flag:"persist" info:"enable persistent storage"`
+	Snapshot                  bool          `default:"false" flag:"snapshot" info:"enable snapshots for emulator (this setting also automatically turns on persistent storage)"`
 	DBPath                    string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
 	SimpleAddresses           bool          `default:"false" flag:"simple-addresses" info:"use sequential addresses starting with 0x01"`
 	TokenSupply               string        `default:"1000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
@@ -162,6 +163,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				ServiceKeySigAlgo:         serviceKeySigAlgo,
 				ServiceKeyHashAlgo:        serviceKeyHashAlgo,
 				Persist:                   conf.Persist,
+				Snapshot:                  conf.Snapshot,
 				DBPath:                    conf.DBPath,
 				GenesisTokenSupply:        parseCadenceUFix64(conf.TokenSupply, "token-supply"),
 				TransactionMaxGasLimit:    uint64(conf.TransactionMaxGasLimit),
