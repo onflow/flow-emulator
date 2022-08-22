@@ -68,9 +68,7 @@ type Config struct {
 
 const EnvPrefix = "FLOW"
 
-var (
-	conf Config
-)
+var conf Config
 
 type serviceKeyFunc func(
 	init bool,
@@ -96,14 +94,11 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 
 			logger := initLogger()
 
-			if len(conf.ServicePublicKey) > 0 {
-				checkKeyAlgorithms(serviceKeySigAlgo, serviceKeyHashAlgo)
+			if conf.ServicePublicKey != "" {
+				logger.Warnf("❗  Providing '--public-key' is deprecated, provide the '--private-key' only.")
+			}
 
-				servicePublicKey, err = crypto.DecodePublicKeyHex(serviceKeySigAlgo, conf.ServicePublicKey)
-				if err != nil {
-					Exit(1, err.Error())
-				}
-			} else if len(conf.ServicePrivateKey) > 0 {
+			if conf.ServicePrivateKey != "" {
 				checkKeyAlgorithms(serviceKeySigAlgo, serviceKeyHashAlgo)
 
 				servicePrivateKey, err = crypto.DecodePrivateKeyHex(serviceKeySigAlgo, conf.ServicePrivateKey)
@@ -112,7 +107,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				}
 
 				servicePublicKey = servicePrivateKey.PublicKey()
-			} else {
+			} else { // if we don't provide any config values use the serviceKeyFunc to obtain the key
 				servicePrivateKey, serviceKeySigAlgo, serviceKeyHashAlgo = getServiceKey(
 					conf.Init,
 					serviceKeySigAlgo,

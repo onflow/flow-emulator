@@ -47,7 +47,6 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--block-time`, `-b`          | `FLOW_BLOCKTIME`              | `0`            | Time between sealed blocks. Valid units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`                                                                                                                                                               |
 | `--contracts`                 | `FLOW_WITHCONTRACTS`          | `false`        | Start with contracts like [FUSD](https://github.com/onflow/fusd), [NFT](https://github.com/onflow/flow-nft/blob/master/contracts/NonFungibleToken.cdc) and an [NFT Marketplace](https://github.com/onflow/nft-storefront), when the emulator starts |
 | `--service-priv-key`          | `FLOW_SERVICEPRIVATEKEY`      | random         | Private key used for the [service account](https://docs.onflow.org/flow-token/concepts/#flow-service-account)                                                                                                                                       |
-| `--service-pub-key`           | `FLOW_SERVICEPUBLICKEY`       | random         | Public key used for the [service account](https://docs.onflow.org/flow-token/concepts/#flow-service-account)                                                                                                                                        |
 | `--service-sig-algo`          | `FLOW_SERVICEKEYSIGALGO`      | `ECDSA_P256`   | Service account key [signature algorithm](https://docs.onflow.org/cadence/language/crypto/#signing-algorithms)                                                                                                                                      |
 | `--service-hash-algo`         | `FLOW_SERVICEKEYHASHALGO`     | `SHA3_256`     | Service account key [hash algorithm](https://docs.onflow.org/cadence/language/crypto/#hashing)                                                                                                                                                      |
 | `--init`                      | `FLOW_INIT`                   | `false`        | Generate and set a new [service account](https://docs.onflow.org/flow-token/concepts/#flow-service-account)                                                                                                                                         |
@@ -154,7 +153,7 @@ You can pass any environment variable by using `-e` docker flag and pass the val
 
 *Custom Configuration Example:*
 ```bash
-docker run -e FLOW_PORT=9001 -e FLOW_VERBOSE=true -e FLOW_SERVICEPUBLICKEY=<hex-encoded key> gcr.io/flow-container-registry/emulator
+docker run -e FLOW_PORT=9001 -e FLOW_VERBOSE=true -e FLOW_SERVICEPRIVATEKEY=<hex-encoded key> gcr.io/flow-container-registry/emulator
 ```
 
 To generate a service key, use the `keys generate` command in the Flow CLI.
