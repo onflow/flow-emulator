@@ -1,22 +1,22 @@
-<br/>
+<br />
 <p align="center">
   <a href="https://docs.onflow.org/emulator/">
-    <img src="./emulator-banner.svg" alt="Logo" width="410" height="auto" />
+    <img src="./emulator-banner.svg" alt="Logo" width="410" height="auto">
   </a>
+
   <p align="center">
     <i>The Flow Emulator is a lightweight tool that emulates the behaviour of the real Flow network.</i>
-    <br/>
+    <br />
     <a href="https://docs.onflow.org/emulator/"><strong>Read the docs»</strong></a>
-    <br/>
-    <br/>
-    <a href="https://g thub.com/onflow/flow-emulator/issues">Report Bug</a>
+    <br />
+    <br />
+    <a href="https://github.com/onflow/flow-emulator/issues">Report Bug</a>
     ·
     <a href="https://github.com/onflow/flow-emulator/blob/master/CONTRIBUTING.md">Contribute</a>
   </p>
 </p>
-
-<br/>
-<br/>
+<br />
+<br />
 
 
 ### The Emulator
@@ -25,14 +25,14 @@ The emulator exposes a gRPC server that implements the Flow Access API, which is
 
 ### The Flowser Emulator Explorer
 
-There is also a block explorer GUI for the emulator, that will help you speed up development when using the emulator. 
+There is also a block explorer GUI for the emulator, that will help you speed up development when using the emulator.
 - [Flowser GitHub Repository](https://github.com/onflowser/flowser)
 - [Flowser Documentation](https://github.com/onflowser/flowser#-contents)
 
 # Running
 
 ## Configuration
-The Flow Emulator can be run in different modes and settings, all of them are described in the table bellow. 
+The Flow Emulator can be run in different modes and settings, all of them are described in the table bellow.
 
 Please note that if you will run the emulator using the Flow CLI you must use flags to pass configuration values
 and if you plan to run the emulator with Docker you must use the environment variables (Env) to pass configuration values.
@@ -47,7 +47,6 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--block-time`, `-b`          | `FLOW_BLOCKTIME`              | `0`            | Time between sealed blocks. Valid units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`                                                                                                                                                               |
 | `--contracts`                 | `FLOW_WITHCONTRACTS`          | `false`        | Start with contracts like [FUSD](https://github.com/onflow/fusd), [NFT](https://github.com/onflow/flow-nft/blob/master/contracts/NonFungibleToken.cdc) and an [NFT Marketplace](https://github.com/onflow/nft-storefront), when the emulator starts |
 | `--service-priv-key`          | `FLOW_SERVICEPRIVATEKEY`      | random         | Private key used for the [service account](https://docs.onflow.org/flow-token/concepts/#flow-service-account)                                                                                                                                       |
-| `--service-pub-key`           | `FLOW_SERVICEPUBLICKEY`       | random         | Public key used for the [service account](https://docs.onflow.org/flow-token/concepts/#flow-service-account)                                                                                                                                        |
 | `--service-sig-algo`          | `FLOW_SERVICEKEYSIGALGO`      | `ECDSA_P256`   | Service account key [signature algorithm](https://docs.onflow.org/cadence/language/crypto/#signing-algorithms)                                                                                                                                      |
 | `--service-hash-algo`         | `FLOW_SERVICEKEYHASHALGO`     | `SHA3_256`     | Service account key [hash algorithm](https://docs.onflow.org/cadence/language/crypto/#hashing)                                                                                                                                                      |
 | `--init`                      | `FLOW_INIT`                   | `false`        | Generate and set a new [service account](https://docs.onflow.org/flow-token/concepts/#flow-service-account)                                                                                                                                         |
@@ -62,7 +61,7 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--storage-limit`             | `FLOW_STORAGELIMITENABLED`    | `true`         | Enable [account storage limit](https://docs.onflow.org/cadence/language/accounts/#storage-limit)                                                                                                                                                    |
 | `--storage-per-flow`          | `FLOW_STORAGEMBPERFLOW`       |                | Specify size of the storage in MB for each FLOW in account balance. Default value from the flow-go                                                                                                                                                  |
 | `--min-account-balance`       | `FLOW_MINIMUMACCOUNTBALANCE`  |                | Specify minimum balance the account must have. Default value from the flow-go                                                                                                                                                                       |
-| `--transaction-fees`          | `FLOW_TRANSACTIONFEESENABLED` | `false`        | Enable variable transaction fees and execution effort metering <br/> as decribed in [Variable Transaction Fees: Execution Effort](https://github.com/onflow/flow/pull/753)   FLIP                                                                    |
+| `--transaction-fees`          | `FLOW_TRANSACTIONFEESENABLED` | `false`        | Enable variable transaction fees and execution effort metering <br> as decribed in [Variable Transaction Fees: Execution Effort](https://github.com/onflow/flow/pull/753)   FLIP                                                                    |
 | `--transaction-max-gas-limit` | `FLOW_TRANSACTIONMAXGASLIMIT` | `9999`         | Maximum [gas limit for transactions](https://docs.onflow.org/flow-go-sdk/building-transactions/#gas-limit)                                                                                                                                          |
 | `--script-gas-limit`          | `FLOW_SCRIPTGASLIMIT`         | `100000`       | Specify gas limit for script execution                                                                                                                                                                                                              |
 
@@ -76,8 +75,8 @@ Follow [these steps](https://docs.onflow.org/flow-cli/install/) to install the F
 
 ### Starting the server
 
-Starting the emulator by using Flow CLI also leverages CLI configuration file `flow.json`. 
-You can use the `flow.json` to specify the service account which will be reused between restarts. 
+Starting the emulator by using Flow CLI also leverages CLI configuration file `flow.json`.
+You can use the `flow.json` to specify the service account which will be reused between restarts.
 Read more about CLI configuration [here](https://docs.onflow.org/flow-cli/configuration/).
 
 You can start the emulator with the Flow CLI:
@@ -120,16 +119,16 @@ account, err := blockchain.GetAccount(address)
 
 
 ## Managing emulator state
-It's possible to manage emulator state by using the admin API. You can at any point 
-create a new named snapshot of the state and then at any later point revert emulator 
-state to that reference. 
+It's possible to manage emulator state by using the admin API. You can at any point
+create a new named snapshot of the state and then at any later point revert emulator
+state to that reference.
 
 In order to use the state management functionality you need to run the emulator with `--snapshot` flags:
 ```bash
 flow emulator --snapshot
 ```
 
-Create a new snapshot by doing an HTTP request: 
+Create a new snapshot by doing an HTTP request:
 ```
 GET http://localhost:8080/emulator/snapshot/{name}
 ```
@@ -138,9 +137,10 @@ GET http://localhost:8080/emulator/snapshot/{name}
 This option automatically enables `--persist` flag. 
 
 At any later point you can reload to that snapshot by executing the same HTTP request as before. 
+
 You need to use the same value for `name` parameter.
 
-The snapshot functionality is a great tool for testing where you can first initialize 
+The snapshot functionality is a great tool for testing where you can first initialize
 a base snapshot with seed values, execute the test and then revert to that initialized state.
 
 ## Running the emulator with Docker
@@ -152,12 +152,12 @@ Docker builds for the emulator are automatically built and pushed to
 docker run gcr.io/flow-container-registry/emulator
 ```
 
-The full list of environment variables can be found [here](#configuration). 
+The full list of environment variables can be found [here](#configuration).
 You can pass any environment variable by using `-e` docker flag and pass the valid value.
 
 *Custom Configuration Example:*
 ```bash
-docker run -e FLOW_PORT=9001 -e FLOW_VERBOSE=true -e FLOW_SERVICEPUBLICKEY=<hex-encoded key> gcr.io/flow-container-registry/emulator
+docker run -e FLOW_PORT=9001 -e FLOW_VERBOSE=true -e FLOW_SERVICEPRIVATEKEY=<hex-encoded key> gcr.io/flow-container-registry/emulator
 ```
 
 To generate a service key, use the `keys generate` command in the Flow CLI.
