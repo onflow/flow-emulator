@@ -67,8 +67,10 @@ func NewBadgerStorage(
 	dbPath string,
 	gcInterval time.Duration,
 	gcDiscardRatio float64,
+	snapshot bool,
 ) (*BadgerStorage, error) {
 	store, err := badger.New(
+		badger.WithSnapshot(snapshot),
 		badger.WithPath(dbPath),
 		badger.WithTruncate(true),
 	)
