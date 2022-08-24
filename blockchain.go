@@ -381,7 +381,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 }
 
 func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {
-	rt := runtime.NewInterpreterRuntime()
+	rt := runtime.NewInterpreterRuntime(runtime.Config{})
 
 	vm := fvm.NewVirtualMachine(rt)
 
@@ -1015,30 +1015,31 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, error) {
 	program := programs.NewEmptyPrograms()
 
-	env, err := fvm.NewTransactionEnvironment(
+	meterParameters := meter.DefaultParameters().
+		WithComputationLimit(math.MaxUint64).
+		WithMemoryLimit(math.MaxUint64)
+
+	stateParameters := state.DefaultParameters().
+		WithMaxKeySizeAllowed(b.vmCtx.MaxStateKeySize).
+		WithMaxValueSizeAllowed(b.vmCtx.MaxStateValueSize).
+		WithMaxInteractionSizeAllowed(math.MaxUint64).
+		WithMeterParameters(meterParameters)
+
+	env := fvm.NewTransactionEnvironment(
 		b.vmCtx,
 		b.vm,
-		state.NewStateHolder(
-			state.NewState(
-				b.pendingBlock.ledgerView,
-				meter.NewMeter(math.MaxUint64, math.MaxUint64),
-				state.WithMaxKeySizeAllowed(b.vmCtx.MaxStateKeySize),
-				state.WithMaxValueSizeAllowed(b.vmCtx.MaxStateValueSize),
-				state.WithMaxInteractionSizeAllowed(math.MaxUint64),
-			),
+		state.NewStateTransaction(
+			b.pendingBlock.ledgerView,
+			stateParameters,
 		),
 		programs.NewEmptyPrograms(),
 		flowgo.NewTransactionBody(),
 		0,
-		nil)
-	if err != nil {
-		return nil, err
-	}
+		nil,
+	)
 
 	ctx := runtime.Context{
-		Interface:         env,
-		Location:          nil,
-		PredeclaredValues: nil,
+		Interface: env,
 	}
 
 	store, inter, err := b.vm.Runtime.Storage(ctx)
