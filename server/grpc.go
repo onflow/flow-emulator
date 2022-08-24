@@ -69,7 +69,7 @@ func (g *GRPCServer) Server() *grpc.Server {
 }
 
 func (g *GRPCServer) Start() error {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", g.port))
+	lis, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", g.port))
 	if err != nil {
 		return err
 	}
