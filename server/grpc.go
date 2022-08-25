@@ -36,11 +36,12 @@ import (
 
 type GRPCServer struct {
 	logger     *logrus.Logger
+	host       string
 	port       int
 	grpcServer *grpc.Server
 }
 
-func NewGRPCServer(logger *logrus.Logger, b *backend.Backend, chain flow.Chain, port int, debug bool) *GRPCServer {
+func NewGRPCServer(logger *logrus.Logger, b *backend.Backend, chain flow.Chain, host string, port int, debug bool) *GRPCServer {
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpcprometheus.StreamServerInterceptor),
 		grpc.UnaryInterceptor(grpcprometheus.UnaryServerInterceptor),
@@ -60,6 +61,7 @@ func NewGRPCServer(logger *logrus.Logger, b *backend.Backend, chain flow.Chain, 
 	return &GRPCServer{
 		logger:     logger,
 		port:       port,
+		host:       host,
 		grpcServer: grpcServer,
 	}
 }
@@ -69,7 +71,7 @@ func (g *GRPCServer) Server() *grpc.Server {
 }
 
 func (g *GRPCServer) Start() error {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", g.port))
+	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", g.host, g.port))
 	if err != nil {
 		return err
 	}

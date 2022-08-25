@@ -21,13 +21,14 @@ package server
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/http"
+	"os"
+
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-go/engine/access/rest"
 	"github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
-	"net"
-	"net/http"
-	"os"
 )
 
 type RestServer struct {
@@ -47,7 +48,7 @@ func (r *RestServer) Stop() {
 	_ = r.server.Shutdown(context.Background())
 }
 
-func NewRestServer(be *backend.Backend, chain flow.Chain, port int, debug bool) (*RestServer, error) {
+func NewRestServer(be *backend.Backend, chain flow.Chain, host string, port int, debug bool) (*RestServer, error) {
 	logger := zerolog.Logger{}
 	if debug {
 		logger = zerolog.New(os.Stdout)
@@ -58,7 +59,7 @@ func NewRestServer(be *backend.Backend, chain flow.Chain, port int, debug bool) 
 		return nil, err
 	}
 
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
 		return nil, err
 	}
