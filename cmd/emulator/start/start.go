@@ -65,6 +65,7 @@ type Config struct {
 	ScriptGasLimit            int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
 	WithContracts             bool          `default:"false" flag:"contracts" info:"deploy common contracts when emulator starts"`
 	SkipTransactionValidation bool          `default:"false" flag:"skip-tx-validation" info:"skip verification of transaction signatures and sequence numbers"`
+	Host                      string				`default:"0.0.0.0" flag:"host" info:"host to listen on for emulator GRPC/REST/Admin servers"`
 }
 
 const EnvPrefix = "FLOW"
@@ -176,6 +177,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				WithContracts:             conf.WithContracts,
 				SkipTransactionValidation: conf.SkipTransactionValidation,
 				SimpleAddressesEnabled:    conf.SimpleAddresses,
+				Host:                      conf.Host,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)

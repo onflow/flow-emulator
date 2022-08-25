@@ -48,7 +48,7 @@ func (r *RestServer) Stop() {
 	_ = r.server.Shutdown(context.Background())
 }
 
-func NewRestServer(be *backend.Backend, chain flow.Chain, port int, debug bool) (*RestServer, error) {
+func NewRestServer(be *backend.Backend, chain flow.Chain, address string, port int, debug bool) (*RestServer, error) {
 	logger := zerolog.Logger{}
 	if debug {
 		logger = zerolog.New(os.Stdout)
@@ -59,7 +59,7 @@ func NewRestServer(be *backend.Backend, chain flow.Chain, port int, debug bool) 
 		return nil, err
 	}
 
-	l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", address, port))
 	if err != nil {
 		return nil, err
 	}

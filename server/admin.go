@@ -50,6 +50,7 @@ func NewAdminServer(
 	storage *Storage,
 	grpcServer *GRPCServer,
 	liveness *LivenessTicker,
+	address string,
 	port int,
 	headers []HTTPHeader,
 ) *HTTPServer {
@@ -74,7 +75,7 @@ func NewAdminServer(
 	mux.Handle(EmulatorApiPath, NewEmulatorAPIServer(emulatorServer, backend, storage))
 
 	httpServer := &http.Server{
-		Addr:    fmt.Sprintf("127.0.0.1:%d", port),
+		Addr:    fmt.Sprintf("%s:%d", address, port),
 		Handler: mux,
 	}
 
