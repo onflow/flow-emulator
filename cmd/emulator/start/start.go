@@ -65,7 +65,7 @@ type Config struct {
 	ScriptGasLimit            int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
 	WithContracts             bool          `default:"false" flag:"contracts" info:"deploy common contracts when emulator starts"`
 	SkipTransactionValidation bool          `default:"false" flag:"skip-tx-validation" info:"skip verification of transaction signatures and sequence numbers"`
-	Host                      string				`default:"0.0.0.0" flag:"host" info:"host to listen on for emulator GRPC/REST/Admin servers"`
+	Host                      string        `default:"127.0.0.1" flag:"host" info:"host to listen on for emulator GRPC/REST/Admin servers"`
 }
 
 const EnvPrefix = "FLOW"
