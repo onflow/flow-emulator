@@ -1682,6 +1682,7 @@ func TestInfiniteTransaction(t *testing.T) {
 func TestSubmitTransactionWithCustomLogger(t *testing.T) {
 
 	t.Parallel()
+
 	var memlog bytes.Buffer
 	memlogWrite := io.Writer(&memlog)
 	logger := zerolog.New(memlogWrite).Level(zerolog.DebugLevel)
@@ -1736,16 +1737,16 @@ func TestSubmitTransactionWithCustomLogger(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Greater(t, meter.LedgerInteractionUsed, 0)
 	assert.Greater(t, meter.ComputationUsed, 0)
-	assert.Equal(t, meter.MemoryUsed, 0) // this will change with the new emulator version I think
+	assert.Greater(t, meter.MemoryEstimate, 0)
 	assert.Greater(t, len(meter.ComputationIntensities), 0)
-	assert.Equal(t, len(meter.MemoryIntensities), 0) // this will change with the new emulator version I think
+	assert.Greater(t, len(meter.MemoryIntensities), 0)
 
 }
 
 type Meter struct {
 	LedgerInteractionUsed  int                           `json:"ledgerInteractionUsed"`
 	ComputationUsed        int                           `json:"computationUsed"`
-	MemoryUsed             int                           `json:"memoryUsed"`
+	MemoryEstimate         int                           `json:"memoryEstimate"`
 	ComputationIntensities MeteredComputationIntensities `json:"computationIntensities"`
 	MemoryIntensities      MeteredMemoryIntensities      `json:"memoryIntensities"`
 }
