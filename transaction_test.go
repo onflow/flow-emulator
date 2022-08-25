@@ -1682,6 +1682,7 @@ func TestInfiniteTransaction(t *testing.T) {
 func TestSubmitTransactionWithCustomLogger(t *testing.T) {
 
 	t.Parallel()
+
 	var memlog bytes.Buffer
 	memlogWrite := io.Writer(&memlog)
 	logger := zerolog.New(memlogWrite).Level(zerolog.DebugLevel)

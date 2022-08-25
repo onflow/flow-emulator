@@ -201,7 +201,7 @@ var defaultConfig = func() config {
 // Option is a function applying a change to the emulator config.
 type Option func(*config)
 
-//WithLogger sets the logger
+// WithLogger sets the logger
 func WithLogger(
 	logger zerolog.Logger,
 ) Option {
@@ -1015,15 +1015,10 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, error) {
 	program := programs.NewEmptyPrograms()
 
-	meterParameters := meter.DefaultParameters().
-		WithComputationLimit(math.MaxUint64).
-		WithMemoryLimit(math.MaxUint64)
-
 	stateParameters := state.DefaultParameters().
 		WithMaxKeySizeAllowed(b.vmCtx.MaxStateKeySize).
 		WithMaxValueSizeAllowed(b.vmCtx.MaxStateValueSize).
-		WithMaxInteractionSizeAllowed(math.MaxUint64).
-		WithMeterParameters(meterParameters)
+		WithMaxInteractionSizeAllowed(math.MaxUint64)
 
 	env := fvm.NewTransactionEnvironment(
 		b.vmCtx,
