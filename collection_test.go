@@ -3,7 +3,7 @@ package emulator_test
 import (
 	"testing"
 
-	"github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,7 +41,7 @@ func TestCollections(t *testing.T) {
 
 		addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
-		tx1 := flow.NewTransaction().
+		tx1 := flowsdk.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -54,7 +54,7 @@ func TestCollections(t *testing.T) {
 		err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 		require.NoError(t, err)
 
-		tx2 := flow.NewTransaction().
+		tx2 := flowsdk.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -65,7 +65,7 @@ func TestCollections(t *testing.T) {
 		require.NoError(t, err)
 
 		// generate a list of transactions
-		transactions := []*flow.Transaction{tx1, tx2}
+		transactions := []*flowsdk.Transaction{tx1, tx2}
 
 		// add all transactions to block
 		for _, tx := range transactions {

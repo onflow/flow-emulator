@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import (
 	"net"
 
 	grpcprometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-go/access"
 	legacyaccess "github.com/onflow/flow-go/access/legacy"
 	"github.com/onflow/flow-go/model/flow"
@@ -31,23 +32,21 @@ import (
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-
-	"github.com/onflow/flow-emulator/server/backend"
 )
 
 type GRPCServer struct {
 	logger     *logrus.Logger
+	host       string
 	port       int
 	grpcServer *grpc.Server
 }
 
-func NewGRPCServer(logger *logrus.Logger, b *backend.Backend, port int, debug bool) *GRPCServer {
+func NewGRPCServer(logger *logrus.Logger, b *backend.Backend, chain flow.Chain, host string, port int, debug bool) *GRPCServer {
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpcprometheus.StreamServerInterceptor),
 		grpc.UnaryInterceptor(grpcprometheus.UnaryServerInterceptor),
 	)
 
-	chain := flow.Emulator.Chain()
 	adaptedBackend := backend.NewAdapter(b)
 
 	legacyaccessproto.RegisterAccessAPIServer(grpcServer, legacyaccess.NewHandler(adaptedBackend, chain))
@@ -62,6 +61,7 @@ func NewGRPCServer(logger *logrus.Logger, b *backend.Backend, port int, debug bo
 	return &GRPCServer{
 		logger:     logger,
 		port:       port,
+		host:       host,
 		grpcServer: grpcServer,
 	}
 }
@@ -71,7 +71,7 @@ func (g *GRPCServer) Server() *grpc.Server {
 }
 
 func (g *GRPCServer) Start() error {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", g.port))
+	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", g.host, g.port))
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,7 +41,7 @@ func TestCommitBlock(t *testing.T) {
 
 	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
-	tx1 := flow.NewTransaction().
+	tx1 := flowsdk.NewTransaction().
 		SetScript([]byte(addTwoScript)).
 		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -60,9 +60,9 @@ func TestCommitBlock(t *testing.T) {
 
 	tx1Result, err := b.GetTransactionResult(tx1.ID())
 	assert.NoError(t, err)
-	assert.Equal(t, flow.TransactionStatusPending, tx1Result.Status)
+	assert.Equal(t, flowsdk.TransactionStatusPending, tx1Result.Status)
 
-	tx2 := flow.NewTransaction().
+	tx2 := flowsdk.NewTransaction().
 		SetScript([]byte(`transaction { execute { panic("revert!") } }`)).
 		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -81,7 +81,7 @@ func TestCommitBlock(t *testing.T) {
 
 	tx2Result, err := b.GetTransactionResult(tx2.ID())
 	assert.NoError(t, err)
-	assert.Equal(t, flow.TransactionStatusPending, tx2Result.Status)
+	assert.Equal(t, flowsdk.TransactionStatusPending, tx2Result.Status)
 
 	// Execute tx1
 	result, err := b.ExecuteNextTransaction()
@@ -100,12 +100,12 @@ func TestCommitBlock(t *testing.T) {
 	// tx1 status becomes TransactionStatusSealed
 	tx1Result, err = b.GetTransactionResult(tx1.ID())
 	require.NoError(t, err)
-	assert.Equal(t, flow.TransactionStatusSealed, tx1Result.Status)
+	assert.Equal(t, flowsdk.TransactionStatusSealed, tx1Result.Status)
 
 	// tx2 status also becomes TransactionStatusSealed, even though it is reverted
 	tx2Result, err = b.GetTransactionResult(tx2.ID())
 	require.NoError(t, err)
-	assert.Equal(t, flow.TransactionStatusSealed, tx2Result.Status)
+	assert.Equal(t, flowsdk.TransactionStatusSealed, tx2Result.Status)
 	assert.Error(t, tx2Result.Error)
 }
 
@@ -130,7 +130,7 @@ func TestBlockView(t *testing.T) {
 	// create a few blocks, each with one transaction
 	for i := 0; i < nBlocks; i++ {
 
-		tx := flow.NewTransaction().
+		tx := flowsdk.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).

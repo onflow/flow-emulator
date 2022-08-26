@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ package emulator
 import (
 	"fmt"
 
-	"github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -51,7 +51,7 @@ func (e *BlockNotFoundByHeightError) Error() string {
 
 // A BlockNotFoundByIDError indicates that a block with the specified ID could not be found.
 type BlockNotFoundByIDError struct {
-	ID flow.Identifier
+	ID flowsdk.Identifier
 }
 
 func (e *BlockNotFoundByIDError) isNotFoundError()      {}
@@ -63,7 +63,7 @@ func (e *BlockNotFoundByIDError) Error() string {
 
 // A CollectionNotFoundError indicates that a collection could not be found.
 type CollectionNotFoundError struct {
-	ID flow.Identifier
+	ID flowsdk.Identifier
 }
 
 func (e *CollectionNotFoundError) isNotFoundError() {}

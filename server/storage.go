@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,8 +67,10 @@ func NewBadgerStorage(
 	dbPath string,
 	gcInterval time.Duration,
 	gcDiscardRatio float64,
+	snapshot bool,
 ) (*BadgerStorage, error) {
 	store, err := badger.New(
+		badger.WithSnapshot(snapshot),
 		badger.WithPath(dbPath),
 		badger.WithTruncate(true),
 	)

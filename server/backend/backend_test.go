@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
-	"github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/test"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -163,7 +163,7 @@ func TestBackend(t *testing.T) {
 			randomBlock := flowgo.Block{Header: &flowgo.Header{Height: rand.Uint64()}}
 
 			emu.EXPECT().
-				GetBlockByID(flow.Identifier(randomBlock.ID())).
+				GetBlockByID(flowsdk.Identifier(randomBlock.ID())).
 				Return(&randomBlock, nil).
 				Times(1)
 
@@ -177,7 +177,7 @@ func TestBackend(t *testing.T) {
 
 			value, err := backend.ExecuteScriptAtBlockID(
 				context.Background(),
-				flow.Identifier(randomBlock.ID()),
+				flowsdk.Identifier(randomBlock.ID()),
 				script,
 				nil,
 			)
@@ -222,7 +222,7 @@ func TestBackend(t *testing.T) {
 
 			emu.EXPECT().
 				GetEventsByHeight(gomock.Any(), gomock.Any()).
-				Return([]flow.Event{}, nil).
+				Return([]flowsdk.Event{}, nil).
 				Times(0)
 
 			_, err := backend.GetEventsForHeightRange(context.Background(), eventType, startHeight, endHeight)
@@ -277,7 +277,7 @@ func TestBackend(t *testing.T) {
 		backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 			events := test.EventGenerator()
 
-			eventsToReturn := []flow.Event{
+			eventsToReturn := []flowsdk.Event{
 				events.New(),
 				events.New(),
 			}
@@ -338,7 +338,7 @@ func TestBackend(t *testing.T) {
 		backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 			events := test.EventGenerator()
 
-			eventsToReturn := []flow.Event{
+			eventsToReturn := []flowsdk.Event{
 				events.New(),
 				events.New(),
 			}
@@ -460,11 +460,11 @@ func TestBackend(t *testing.T) {
 			requestedBlock := flowgo.Block{Header: &flowgo.Header{Height: rand.Uint64(), ParentID: parentID}}
 
 			emu.EXPECT().
-				GetBlockByID(flow.Identifier(requestedBlock.ID())).
+				GetBlockByID(flowsdk.Identifier(requestedBlock.ID())).
 				Return(&requestedBlock, nil).
 				Times(1)
 
-			header, err := backend.GetBlockHeaderByID(context.Background(), flow.Identifier(requestedBlock.ID()))
+			header, err := backend.GetBlockHeaderByID(context.Background(), flowsdk.Identifier(requestedBlock.ID()))
 			assert.NoError(t, err)
 
 			assert.Equal(t, requestedBlock.Header.Height, header.Height)
@@ -515,11 +515,11 @@ func TestBackend(t *testing.T) {
 
 	t.Run("SendTransaction", backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 
-		var actualTx flow.Transaction
+		var actualTx flowsdk.Transaction
 
 		emu.EXPECT().
 			AddTransaction(gomock.Any()).
-			DoAndReturn(func(tx flow.Transaction) error {
+			DoAndReturn(func(tx flowsdk.Transaction) error {
 				actualTx = tx
 				return nil
 			}).
@@ -545,7 +545,7 @@ func TestBackend(t *testing.T) {
 			expectedTx := test.TransactionGenerator().New()
 
 			// remove payer to make transaction invalid
-			expectedTx.Payer = flow.Address{}
+			expectedTx.Payer = flowsdk.Address{}
 
 			err := backend.SendTransaction(context.Background(), *expectedTx)
 			require.Error(t, err)
@@ -562,7 +562,7 @@ func TestBackend(t *testing.T) {
 		backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
 			events := test.EventGenerator()
 
-			eventsToReturn := []flow.Event{
+			eventsToReturn := []flowsdk.Event{
 				events.New(),
 				events.New(),
 			}
@@ -575,11 +575,11 @@ func TestBackend(t *testing.T) {
 			}
 
 			emu.EXPECT().
-				GetBlockByID(flow.Identifier(blocks[0].ID())).
+				GetBlockByID(flowsdk.Identifier(blocks[0].ID())).
 				Return(&blocks[0], nil)
 
 			emu.EXPECT().
-				GetBlockByID(flow.Identifier(blocks[1].ID())).
+				GetBlockByID(flowsdk.Identifier(blocks[1].ID())).
 				Return(&blocks[1], nil)
 
 			emu.EXPECT().
@@ -590,9 +590,9 @@ func TestBackend(t *testing.T) {
 				GetEventsByHeight(blocks[1].Header.Height, eventType).
 				Return(eventsToReturn, nil)
 
-			blockIDs := make([]flow.Identifier, len(blocks))
+			blockIDs := make([]flowsdk.Identifier, len(blocks))
 			for i, b := range blocks {
-				blockIDs[i] = flow.Identifier(b.ID())
+				blockIDs[i] = flowsdk.Identifier(b.ID())
 			}
 
 			results, err := backend.GetEventsForBlockIDs(context.Background(),
@@ -624,9 +624,9 @@ func TestBackend(t *testing.T) {
 				{Header: &flowgo.Header{Height: 2}},
 			}
 
-			blockIDs := make([]flow.Identifier, len(blocks))
+			blockIDs := make([]flowsdk.Identifier, len(blocks))
 			for i, b := range blocks {
-				blockIDs[i] = flow.Identifier(b.ID())
+				blockIDs[i] = flowsdk.Identifier(b.ID())
 			}
 
 			_, err := backend.GetEventsForBlockIDs(context.Background(),
@@ -659,11 +659,11 @@ func TestBackendAutoMine(t *testing.T) {
 	// disable automine flag at the end of the test
 	defer backend.DisableAutoMine()
 
-	var actualTx flow.Transaction
+	var actualTx flowsdk.Transaction
 
 	emu.EXPECT().
 		AddTransaction(gomock.Any()).
-		DoAndReturn(func(tx flow.Transaction) error {
+		DoAndReturn(func(tx flowsdk.Transaction) error {
 			actualTx = tx
 			return nil
 		}).

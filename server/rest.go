@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2020 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,14 @@ package server
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/http"
+	"os"
+
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-go/engine/access/rest"
 	"github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
-	"net"
-	"net/http"
-	"os"
 )
 
 type RestServer struct {
@@ -47,18 +48,18 @@ func (r *RestServer) Stop() {
 	_ = r.server.Shutdown(context.Background())
 }
 
-func NewRestServer(be *backend.Backend, port int, debug bool) (*RestServer, error) {
+func NewRestServer(be *backend.Backend, chain flow.Chain, host string, port int, debug bool) (*RestServer, error) {
 	logger := zerolog.Logger{}
 	if debug {
 		logger = zerolog.New(os.Stdout)
 	}
 
-	srv, err := rest.NewServer(backend.NewAdapter(be), "127.0.0.1:3333", logger, flow.Emulator.Chain())
+	srv, err := rest.NewServer(backend.NewAdapter(be), "127.0.0.1:3333", logger, chain)
 	if err != nil {
 		return nil, err
 	}
 
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
 		return nil, err
 	}

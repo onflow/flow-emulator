@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ func NewAdminServer(
 	storage *Storage,
 	grpcServer *GRPCServer,
 	liveness *LivenessTicker,
+	host string,
 	port int,
 	headers []HTTPHeader,
 ) *HTTPServer {
@@ -71,10 +72,10 @@ func NewAdminServer(
 	mux.Handle("/", wrappedHandler(wrappedServer, headers))
 
 	// register API handler
-	mux.Handle(EmulatorApiPath, NewEmulatorApiServer(emulatorServer, backend, storage))
+	mux.Handle(EmulatorApiPath, NewEmulatorAPIServer(emulatorServer, backend, storage))
 
 	httpServer := &http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
+		Addr:    fmt.Sprintf("%s:%d", host, port),
 		Handler: mux,
 	}
 

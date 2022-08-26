@@ -5,84 +5,83 @@
 package mocks
 
 import (
-	reflect "reflect"
-
 	gomock "github.com/golang/mock/gomock"
-	interpreter "github.com/onflow/cadence/runtime/interpreter"
+	flow_emulator "github.com/onflow/flow-emulator"
 	types "github.com/onflow/flow-emulator/types"
-	flow "github.com/onflow/flow-go-sdk"
-	flow0 "github.com/onflow/flow-go/model/flow"
+	flow_go_sdk "github.com/onflow/flow-go-sdk"
+	flow "github.com/onflow/flow-go/model/flow"
+	reflect "reflect"
 )
 
-// MockEmulator is a mock of Emulator interface.
+// MockEmulator is a mock of Emulator interface
 type MockEmulator struct {
 	ctrl     *gomock.Controller
 	recorder *MockEmulatorMockRecorder
 }
 
-// MockEmulatorMockRecorder is the mock recorder for MockEmulator.
+// MockEmulatorMockRecorder is the mock recorder for MockEmulator
 type MockEmulatorMockRecorder struct {
 	mock *MockEmulator
 }
 
-// NewMockEmulator creates a new mock instance.
+// NewMockEmulator creates a new mock instance
 func NewMockEmulator(ctrl *gomock.Controller) *MockEmulator {
 	mock := &MockEmulator{ctrl: ctrl}
 	mock.recorder = &MockEmulatorMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use.
+// EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockEmulator) EXPECT() *MockEmulatorMockRecorder {
 	return m.recorder
 }
 
-// AddTransaction mocks base method.
-func (m *MockEmulator) AddTransaction(arg0 flow.Transaction) error {
+// AddTransaction mocks base method
+func (m *MockEmulator) AddTransaction(arg0 flow_go_sdk.Transaction) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddTransaction", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// AddTransaction indicates an expected call of AddTransaction.
+// AddTransaction indicates an expected call of AddTransaction
 func (mr *MockEmulatorMockRecorder) AddTransaction(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTransaction", reflect.TypeOf((*MockEmulator)(nil).AddTransaction), arg0)
 }
 
-// CommitBlock mocks base method.
-func (m *MockEmulator) CommitBlock() (*flow0.Block, error) {
+// CommitBlock mocks base method
+func (m *MockEmulator) CommitBlock() (*flow.Block, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CommitBlock")
-	ret0, _ := ret[0].(*flow0.Block)
+	ret0, _ := ret[0].(*flow.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CommitBlock indicates an expected call of CommitBlock.
+// CommitBlock indicates an expected call of CommitBlock
 func (mr *MockEmulatorMockRecorder) CommitBlock() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitBlock", reflect.TypeOf((*MockEmulator)(nil).CommitBlock))
 }
 
-// ExecuteAndCommitBlock mocks base method.
-func (m *MockEmulator) ExecuteAndCommitBlock() (*flow0.Block, []*types.TransactionResult, error) {
+// ExecuteAndCommitBlock mocks base method
+func (m *MockEmulator) ExecuteAndCommitBlock() (*flow.Block, []*types.TransactionResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ExecuteAndCommitBlock")
-	ret0, _ := ret[0].(*flow0.Block)
+	ret0, _ := ret[0].(*flow.Block)
 	ret1, _ := ret[1].([]*types.TransactionResult)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
 
-// ExecuteAndCommitBlock indicates an expected call of ExecuteAndCommitBlock.
+// ExecuteAndCommitBlock indicates an expected call of ExecuteAndCommitBlock
 func (mr *MockEmulatorMockRecorder) ExecuteAndCommitBlock() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteAndCommitBlock", reflect.TypeOf((*MockEmulator)(nil).ExecuteAndCommitBlock))
 }
 
-// ExecuteBlock mocks base method.
+// ExecuteBlock mocks base method
 func (m *MockEmulator) ExecuteBlock() ([]*types.TransactionResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ExecuteBlock")
@@ -91,13 +90,13 @@ func (m *MockEmulator) ExecuteBlock() ([]*types.TransactionResult, error) {
 	return ret0, ret1
 }
 
-// ExecuteBlock indicates an expected call of ExecuteBlock.
+// ExecuteBlock indicates an expected call of ExecuteBlock
 func (mr *MockEmulatorMockRecorder) ExecuteBlock() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteBlock", reflect.TypeOf((*MockEmulator)(nil).ExecuteBlock))
 }
 
-// ExecuteNextTransaction mocks base method.
+// ExecuteNextTransaction mocks base method
 func (m *MockEmulator) ExecuteNextTransaction() (*types.TransactionResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ExecuteNextTransaction")
@@ -106,13 +105,13 @@ func (m *MockEmulator) ExecuteNextTransaction() (*types.TransactionResult, error
 	return ret0, ret1
 }
 
-// ExecuteNextTransaction indicates an expected call of ExecuteNextTransaction.
+// ExecuteNextTransaction indicates an expected call of ExecuteNextTransaction
 func (mr *MockEmulatorMockRecorder) ExecuteNextTransaction() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteNextTransaction", reflect.TypeOf((*MockEmulator)(nil).ExecuteNextTransaction))
 }
 
-// ExecuteScript mocks base method.
+// ExecuteScript mocks base method
 func (m *MockEmulator) ExecuteScript(arg0 []byte, arg1 [][]byte) (*types.ScriptResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ExecuteScript", arg0, arg1)
@@ -121,13 +120,13 @@ func (m *MockEmulator) ExecuteScript(arg0 []byte, arg1 [][]byte) (*types.ScriptR
 	return ret0, ret1
 }
 
-// ExecuteScript indicates an expected call of ExecuteScript.
+// ExecuteScript indicates an expected call of ExecuteScript
 func (mr *MockEmulatorMockRecorder) ExecuteScript(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteScript", reflect.TypeOf((*MockEmulator)(nil).ExecuteScript), arg0, arg1)
 }
 
-// ExecuteScriptAtBlock mocks base method.
+// ExecuteScriptAtBlock mocks base method
 func (m *MockEmulator) ExecuteScriptAtBlock(arg0 []byte, arg1 [][]byte, arg2 uint64) (*types.ScriptResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ExecuteScriptAtBlock", arg0, arg1, arg2)
@@ -136,155 +135,158 @@ func (m *MockEmulator) ExecuteScriptAtBlock(arg0 []byte, arg1 [][]byte, arg2 uin
 	return ret0, ret1
 }
 
-// ExecuteScriptAtBlock indicates an expected call of ExecuteScriptAtBlock.
+// ExecuteScriptAtBlock indicates an expected call of ExecuteScriptAtBlock
 func (mr *MockEmulatorMockRecorder) ExecuteScriptAtBlock(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteScriptAtBlock", reflect.TypeOf((*MockEmulator)(nil).ExecuteScriptAtBlock), arg0, arg1, arg2)
 }
 
-// GetAccount mocks base method.
-func (m *MockEmulator) GetAccount(arg0 flow.Address) (*flow.Account, error) {
+// GetAccount mocks base method
+func (m *MockEmulator) GetAccount(arg0 flow_go_sdk.Address) (*flow_go_sdk.Account, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAccount", arg0)
-	ret0, _ := ret[0].(*flow.Account)
+	ret0, _ := ret[0].(*flow_go_sdk.Account)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetAccount indicates an expected call of GetAccount.
+// GetAccount indicates an expected call of GetAccount
 func (mr *MockEmulatorMockRecorder) GetAccount(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccount", reflect.TypeOf((*MockEmulator)(nil).GetAccount), arg0)
 }
 
-// GetAccountAtBlock mocks base method.
-func (m *MockEmulator) GetAccountAtBlock(arg0 flow.Address, arg1 uint64) (*flow.Account, error) {
+// GetAccountAtBlock mocks base method
+func (m *MockEmulator) GetAccountAtBlock(arg0 flow_go_sdk.Address, arg1 uint64) (*flow_go_sdk.Account, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAccountAtBlock", arg0, arg1)
-	ret0, _ := ret[0].(*flow.Account)
+	ret0, _ := ret[0].(*flow_go_sdk.Account)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetAccountAtBlock indicates an expected call of GetAccountAtBlock.
+// GetAccountAtBlock indicates an expected call of GetAccountAtBlock
 func (mr *MockEmulatorMockRecorder) GetAccountAtBlock(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountAtBlock", reflect.TypeOf((*MockEmulator)(nil).GetAccountAtBlock), arg0, arg1)
 }
 
-// GetBlockByHeight mocks base method.
-func (m *MockEmulator) GetBlockByHeight(arg0 uint64) (*flow0.Block, error) {
+// GetAccountStorage mocks base method
+func (m *MockEmulator) GetAccountStorage(arg0 flow_go_sdk.Address) (*flow_emulator.AccountStorage, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBlockByHeight", arg0)
-	ret0, _ := ret[0].(*flow0.Block)
+	ret := m.ctrl.Call(m, "GetAccountStorage", arg0)
+	ret0, _ := ret[0].(*flow_emulator.AccountStorage)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetBlockByHeight indicates an expected call of GetBlockByHeight.
+// GetAccountStorage indicates an expected call of GetAccountStorage
+func (mr *MockEmulatorMockRecorder) GetAccountStorage(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountStorage", reflect.TypeOf((*MockEmulator)(nil).GetAccountStorage), arg0)
+}
+
+// GetBlockByHeight mocks base method
+func (m *MockEmulator) GetBlockByHeight(arg0 uint64) (*flow.Block, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBlockByHeight", arg0)
+	ret0, _ := ret[0].(*flow.Block)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBlockByHeight indicates an expected call of GetBlockByHeight
 func (mr *MockEmulatorMockRecorder) GetBlockByHeight(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockByHeight", reflect.TypeOf((*MockEmulator)(nil).GetBlockByHeight), arg0)
 }
 
-// GetBlockByID mocks base method.
-func (m *MockEmulator) GetBlockByID(arg0 flow.Identifier) (*flow0.Block, error) {
+// GetBlockByID mocks base method
+func (m *MockEmulator) GetBlockByID(arg0 flow_go_sdk.Identifier) (*flow.Block, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBlockByID", arg0)
-	ret0, _ := ret[0].(*flow0.Block)
+	ret0, _ := ret[0].(*flow.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetBlockByID indicates an expected call of GetBlockByID.
+// GetBlockByID indicates an expected call of GetBlockByID
 func (mr *MockEmulatorMockRecorder) GetBlockByID(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockByID", reflect.TypeOf((*MockEmulator)(nil).GetBlockByID), arg0)
 }
 
-// GetCollection mocks base method.
-func (m *MockEmulator) GetCollection(arg0 flow.Identifier) (*flow.Collection, error) {
+// GetCollection mocks base method
+func (m *MockEmulator) GetCollection(arg0 flow_go_sdk.Identifier) (*flow_go_sdk.Collection, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCollection", arg0)
-	ret0, _ := ret[0].(*flow.Collection)
+	ret0, _ := ret[0].(*flow_go_sdk.Collection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetCollection indicates an expected call of GetCollection.
+// GetCollection indicates an expected call of GetCollection
 func (mr *MockEmulatorMockRecorder) GetCollection(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCollection", reflect.TypeOf((*MockEmulator)(nil).GetCollection), arg0)
 }
 
-// GetEventsByHeight mocks base method.
-func (m *MockEmulator) GetEventsByHeight(arg0 uint64, arg1 string) ([]flow.Event, error) {
+// GetEventsByHeight mocks base method
+func (m *MockEmulator) GetEventsByHeight(arg0 uint64, arg1 string) ([]flow_go_sdk.Event, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEventsByHeight", arg0, arg1)
-	ret0, _ := ret[0].([]flow.Event)
+	ret0, _ := ret[0].([]flow_go_sdk.Event)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetEventsByHeight indicates an expected call of GetEventsByHeight.
+// GetEventsByHeight indicates an expected call of GetEventsByHeight
 func (mr *MockEmulatorMockRecorder) GetEventsByHeight(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventsByHeight", reflect.TypeOf((*MockEmulator)(nil).GetEventsByHeight), arg0, arg1)
 }
 
-// GetLatestBlock mocks base method.
-func (m *MockEmulator) GetLatestBlock() (*flow0.Block, error) {
+// GetLatestBlock mocks base method
+func (m *MockEmulator) GetLatestBlock() (*flow.Block, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLatestBlock")
-	ret0, _ := ret[0].(*flow0.Block)
+	ret0, _ := ret[0].(*flow.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetLatestBlock indicates an expected call of GetLatestBlock.
+// GetLatestBlock indicates an expected call of GetLatestBlock
 func (mr *MockEmulatorMockRecorder) GetLatestBlock() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestBlock", reflect.TypeOf((*MockEmulator)(nil).GetLatestBlock))
 }
 
-// GetTransaction mocks base method.
-func (m *MockEmulator) GetTransaction(arg0 flow.Identifier) (*flow.Transaction, error) {
+// GetTransaction mocks base method
+func (m *MockEmulator) GetTransaction(arg0 flow_go_sdk.Identifier) (*flow_go_sdk.Transaction, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTransaction", arg0)
-	ret0, _ := ret[0].(*flow.Transaction)
+	ret0, _ := ret[0].(*flow_go_sdk.Transaction)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetTransaction indicates an expected call of GetTransaction.
+// GetTransaction indicates an expected call of GetTransaction
 func (mr *MockEmulatorMockRecorder) GetTransaction(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransaction", reflect.TypeOf((*MockEmulator)(nil).GetTransaction), arg0)
 }
 
-// GetTransactionResult mocks base method.
-func (m *MockEmulator) GetTransactionResult(arg0 flow.Identifier) (*flow.TransactionResult, error) {
+// GetTransactionResult mocks base method
+func (m *MockEmulator) GetTransactionResult(arg0 flow_go_sdk.Identifier) (*flow_go_sdk.TransactionResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTransactionResult", arg0)
-	ret0, _ := ret[0].(*flow.TransactionResult)
+	ret0, _ := ret[0].(*flow_go_sdk.TransactionResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetTransactionResult indicates an expected call of GetTransactionResult.
+// GetTransactionResult indicates an expected call of GetTransactionResult
 func (mr *MockEmulatorMockRecorder) GetTransactionResult(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionResult", reflect.TypeOf((*MockEmulator)(nil).GetTransactionResult), arg0)
-}
-
-// SetDebugger mocks base method.
-func (m *MockEmulator) SetDebugger(arg0 *interpreter.Debugger) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetDebugger", arg0)
-}
-
-// SetDebugger indicates an expected call of SetDebugger.
-func (mr *MockEmulatorMockRecorder) SetDebugger(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetDebugger", reflect.TypeOf((*MockEmulator)(nil).SetDebugger), arg0)
 }

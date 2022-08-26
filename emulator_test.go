@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,7 @@ import (
 	"testing"
 
 	"github.com/onflow/cadence"
-	"github.com/onflow/flow-go-sdk"
-	sdk "github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -60,7 +59,7 @@ const counterScript = `
 
 // generateAddTwoToCounterScript generates a script that increments a counter.
 // If no counter exists, it is created.
-func generateAddTwoToCounterScript(counterAddress flow.Address) string {
+func generateAddTwoToCounterScript(counterAddress flowsdk.Address) string {
 	return fmt.Sprintf(
 		`
             import 0x%s
@@ -81,7 +80,7 @@ func generateAddTwoToCounterScript(counterAddress flow.Address) string {
 	)
 }
 
-func deployAndGenerateAddTwoScript(t *testing.T, b *emulator.Blockchain) (string, flow.Address) {
+func deployAndGenerateAddTwoScript(t *testing.T, b *emulator.Blockchain) (string, flowsdk.Address) {
 	contracts := []templates.Contract{
 		{
 			Name:   "Counting",
@@ -98,7 +97,7 @@ func deployAndGenerateAddTwoScript(t *testing.T, b *emulator.Blockchain) (string
 	return generateAddTwoToCounterScript(counterAddress), counterAddress
 }
 
-func generateGetCounterCountScript(counterAddress flow.Address, accountAddress flow.Address) string {
+func generateGetCounterCountScript(counterAddress flowsdk.Address, accountAddress flowsdk.Address) string {
 	return fmt.Sprintf(
 		`
             import 0x%s
@@ -118,7 +117,7 @@ func assertTransactionSucceeded(t *testing.T, result *types.TransactionResult) {
 	}
 }
 
-func lastCreatedAccount(b *emulator.Blockchain, result *types.TransactionResult) (*sdk.Account, error) {
+func lastCreatedAccount(b *emulator.Blockchain, result *types.TransactionResult) (*flowsdk.Account, error) {
 	address, err := lastCreatedAccountAddress(result)
 	if err != nil {
 		return nil, err
@@ -127,12 +126,12 @@ func lastCreatedAccount(b *emulator.Blockchain, result *types.TransactionResult)
 	return b.GetAccount(address)
 }
 
-func lastCreatedAccountAddress(result *types.TransactionResult) (sdk.Address, error) {
+func lastCreatedAccountAddress(result *types.TransactionResult) (flowsdk.Address, error) {
 	for _, event := range result.Events {
-		if event.Type == sdk.EventAccountCreated {
-			return sdk.Address(event.Value.Fields[0].(cadence.Address)), nil
+		if event.Type == flowsdk.EventAccountCreated {
+			return flowsdk.Address(event.Value.Fields[0].(cadence.Address)), nil
 		}
 	}
 
-	return sdk.Address{}, fmt.Errorf("no account created in this result")
+	return flowsdk.Address{}, fmt.Errorf("no account created in this result")
 }

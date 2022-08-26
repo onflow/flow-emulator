@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,8 @@ func TestMemstore(t *testing.T) {
 
 	const blockHeight = 0
 	key := flowgo.RegisterID{
-		Owner:      "",
-		Controller: "",
-		Key:        "foo",
+		Owner: "",
+		Key:   "foo",
 	}
 	value := flowgo.RegisterEntry{
 		Key:   key,
@@ -63,7 +62,7 @@ func TestMemstore(t *testing.T) {
 			defer wg.Done()
 
 			view := store.LedgerViewByHeight(blockHeight)
-			actualValue, err := view.Get("", "", "foo")
+			actualValue, err := view.Get("", "foo")
 
 			require.NoError(t, err)
 			assert.Equal(t, value.Value, actualValue)
@@ -79,9 +78,8 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 
 	store := New()
 	key := flowgo.RegisterID{
-		Owner:      "",
-		Controller: "",
-		Key:        "foo",
+		Owner: "",
+		Key:   "foo",
 	}
 	value := flowgo.RegisterEntry{
 		Key:   key,
@@ -102,7 +100,7 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 	require.NoError(t, err)
 
 	// check initial value
-	register, err := store.LedgerViewByHeight(0).Get(key.Owner, key.Controller, key.Key)
+	register, err := store.LedgerViewByHeight(0).Get(key.Owner, key.Key)
 	require.NoError(t, err)
 	require.Equal(t, string(value.Value), string(register))
 
@@ -116,7 +114,7 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 	require.NoError(t, err)
 
 	// check value is nil
-	register, err = store.LedgerViewByHeight(1).Get(key.Owner, key.Controller, key.Key)
+	register, err = store.LedgerViewByHeight(1).Get(key.Owner, key.Key)
 	require.NoError(t, err)
 	require.Equal(t, string(nilValue.Value), string(register))
 }

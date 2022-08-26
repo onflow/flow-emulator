@@ -25,14 +25,14 @@ The emulator exposes a gRPC server that implements the Flow Access API, which is
 
 ### The Flowser Emulator Explorer
 
-There is also a block explorer GUI for the emulator, that will help you speed up development when using the emulator. 
+There is also a block explorer GUI for the emulator, that will help you speed up development when using the emulator.
 - [Flowser GitHub Repository](https://github.com/onflowser/flowser)
 - [Flowser Documentation](https://github.com/onflowser/flowser#-contents)
 
 # Running
 
 ## Configuration
-The Flow Emulator can be run in different modes and settings, all of them are described in the table bellow. 
+The Flow Emulator can be run in different modes and settings, all of them are described in the table bellow.
 
 Please note that if you will run the emulator using the Flow CLI you must use flags to pass configuration values
 and if you plan to run the emulator with Docker you must use the environment variables (Env) to pass configuration values.
@@ -78,8 +78,8 @@ Follow [these steps](https://docs.onflow.org/flow-cli/install/) to install the F
 
 ### Starting the server
 
-Starting the emulator by using Flow CLI also leverages CLI configuration file `flow.json`. 
-You can use the `flow.json` to specify the service account which will be reused between restarts. 
+Starting the emulator by using Flow CLI also leverages CLI configuration file `flow.json`.
+You can use the `flow.json` to specify the service account which will be reused between restarts.
 Read more about CLI configuration [here](https://docs.onflow.org/flow-cli/configuration/).
 
 You can start the emulator with the Flow CLI:
@@ -122,25 +122,28 @@ account, err := blockchain.GetAccount(address)
 
 
 ## Managing emulator state
-It's possible to manage emulator state by using the admin API. You can at any point 
-create a new named snapshot of the state and then at any later point revert emulator 
-state to that reference. 
+It's possible to manage emulator state by using the admin API. You can at any point
+create a new named snapshot of the state and then at any later point revert emulator
+state to that reference.
 
-In order to use the state management functionality you need to run the emulator with persistent state:
+In order to use the state management functionality you need to run the emulator with `--snapshot` flags:
 ```bash
-flow emulator --persist
+flow emulator --snapshot
 ```
 
-Create a new snapshot by doing an HTTP request: 
+Create a new snapshot by doing an HTTP request:
 ```
 GET http://localhost:8080/emulator/snapshot/{name}
 ```
 *Please note the example above uses the default admin API port*
 
+This option automatically enables `--persist` flag. 
+
 At any later point you can reload to that snapshot by executing the same HTTP request as before. 
+
 You need to use the same value for `name` parameter.
 
-The snapshot functionality is a great tool for testing where you can first initialize 
+The snapshot functionality is a great tool for testing where you can first initialize
 a base snapshot with seed values, execute the test and then revert to that initialized state.
 
 ## Running the emulator with Docker
@@ -152,7 +155,7 @@ Docker builds for the emulator are automatically built and pushed to
 docker run gcr.io/flow-container-registry/emulator
 ```
 
-The full list of environment variables can be found [here](#configuration). 
+The full list of environment variables can be found [here](#configuration).
 You can pass any environment variable by using `-e` docker flag and pass the valid value.
 
 *Custom Configuration Example:*

@@ -3,7 +3,7 @@ package emulator_test
 import (
 	"testing"
 
-	"github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,9 +13,9 @@ import (
 
 func setupPendingBlockTests(t *testing.T) (
 	*emulator.Blockchain,
-	*flow.Transaction,
-	*flow.Transaction,
-	*flow.Transaction,
+	*flowsdk.Transaction,
+	*flowsdk.Transaction,
+	*flowsdk.Transaction,
 ) {
 	b, err := emulator.NewBlockchain(
 		emulator.WithStorageLimitEnabled(false),
@@ -24,7 +24,7 @@ func setupPendingBlockTests(t *testing.T) (
 
 	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
-	tx1 := flow.NewTransaction().
+	tx1 := flowsdk.NewTransaction().
 		SetScript([]byte(addTwoScript)).
 		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -37,23 +37,27 @@ func setupPendingBlockTests(t *testing.T) (
 	err = tx1.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	require.NoError(t, err)
 
-	tx2 := flow.NewTransaction().
+	tx2 := flowsdk.NewTransaction().
 		SetScript([]byte(addTwoScript)).
 		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber+1).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
+	signer, err = b.ServiceKey().Signer()
+	assert.NoError(t, err)
 	err = tx2.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	require.NoError(t, err)
 
-	invalid := flow.NewTransaction().
+	invalid := flowsdk.NewTransaction().
 		SetScript([]byte(`transaction { execute { panic("revert!") } }`)).
 		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
+	signer, err = b.ServiceKey().Signer()
+	assert.NoError(t, err)
 	err = invalid.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
 	require.NoError(t, err)
 
@@ -307,7 +311,7 @@ func TestPendingBlockCommit(t *testing.T) {
 	addTwoScript, _ := deployAndGenerateAddTwoScript(t, b)
 
 	t.Run("CommitBlock", func(t *testing.T) {
-		tx1 := flow.NewTransaction().
+		tx1 := flowsdk.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -339,7 +343,7 @@ func TestPendingBlockCommit(t *testing.T) {
 	})
 
 	t.Run("ExecuteAndCommitBlock", func(t *testing.T) {
-		tx1 := flow.NewTransaction().
+		tx1 := flowsdk.NewTransaction().
 			SetScript([]byte(addTwoScript)).
 			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).

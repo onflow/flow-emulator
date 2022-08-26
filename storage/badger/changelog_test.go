@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,14 +128,12 @@ func TestChangelog(t *testing.T) {
 
 	var (
 		key1 = flow.RegisterID{
-			Owner:      "",
-			Controller: "",
-			Key:        "key1",
+			Owner: "",
+			Key:   "key1",
 		}
 		key2 = flow.RegisterID{
-			Owner:      "",
-			Controller: "",
-			Key:        "key2",
+			Owner: "",
+			Key:   "key2",
 		}
 	)
 

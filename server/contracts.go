@@ -1,40 +1,27 @@
 package server
 
 import (
-	"embed"
 	"fmt"
-	"path/filepath"
-	"regexp"
 
-	"github.com/onflow/flow-go-sdk"
+	emulator "github.com/onflow/flow-emulator"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go/fvm"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-nft/lib/go/contracts"
 	fusd "github.com/onflow/fusd/lib/go/contracts"
-
-	emulator "github.com/onflow/flow-emulator"
-)
-
-var (
-	//go:embed contracts
-	emContracts embed.FS
+	nftstorefront "github.com/onflow/nft-storefront/lib/go/contracts"
 )
 
 type DeployDescription struct {
 	name        string
-	address     flow.Address
+	address     flowsdk.Address
 	description string
 }
 
 func deployContracts(b *emulator.Blockchain) ([]DeployDescription, error) {
-	ftAddress := flow.HexToAddress(fvm.FungibleTokenAddress(b.GetChain()).Hex())
+	ftAddress := flowsdk.HexToAddress(fvm.FungibleTokenAddress(b.GetChain()).Hex())
 	serviceAddress := b.ServiceKey().Address
-
-	nftStorefrontContract := loadContract("NFTStorefront.cdc", map[string]flow.Address{
-		"FungibleToken":    ftAddress,
-		"NonFungibleToken": serviceAddress,
-	})
 
 	toDeploy := []struct {
 		name        string
@@ -48,23 +35,28 @@ func deployContracts(b *emulator.Blockchain) ([]DeployDescription, error) {
 		},
 		{
 			name:        "NonFungibleToken",
-			description: "✨   NFT contract",
+			description: "✨  NFT contract",
 			source:      contracts.NonFungibleToken(),
 		},
 		{
 			name:        "MetadataViews",
-			description: "✨   Metadata views contract",
+			description: "✨  Metadata views contract",
 			source:      contracts.MetadataViews(ftAddress, serviceAddress),
 		},
 		{
 			name:        "ExampleNFT",
-			description: "✨   Example NFT contract",
+			description: "✨  Example NFT contract",
 			source:      contracts.ExampleNFT(serviceAddress, serviceAddress),
+		},
+		{
+			name:        "NFTStorefrontV2",
+			description: "✨   NFT Storefront contract v2",
+			source:      nftstorefront.NFTStorefront(2, ftAddress.String(), serviceAddress.String()),
 		},
 		{
 			name:        "NFTStorefront",
 			description: "✨   NFT Storefront contract",
-			source:      nftStorefrontContract,
+			source:      nftstorefront.NFTStorefront(1, ftAddress.String(), serviceAddress.String()),
 		},
 	}
 
@@ -119,7 +111,7 @@ func deployContract(b *emulator.Blockchain, name string, contract []byte) error 
 	})
 
 	tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
-		SetReferenceBlockID(flow.Identifier(latestBlock.ID())).
+		SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID())).
 		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
 		SetPayer(serviceAddress)
 
@@ -149,15 +141,4 @@ func deployContract(b *emulator.Blockchain, name string, contract []byte) error 
 	}
 
 	return nil
-}
-
-func loadContract(name string, replacements map[string]flow.Address) []byte {
-	contractFile, _ := emContracts.ReadFile(filepath.Join("contracts", name))
-	code := string(contractFile)
-
-	for name, realAddress := range replacements {
-		placeholder := regexp.MustCompile(fmt.Sprintf(`"[^"\s].*/%s.cdc"`, name))
-		code = placeholder.ReplaceAllString(code, fmt.Sprintf("0x%s", realAddress.String()))
-	}
-	return []byte(code)
 }

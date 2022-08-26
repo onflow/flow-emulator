@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,10 +100,9 @@ func ledgerKey(blockHeight uint64) []byte {
 }
 
 func ledgerChangelogKey(registerID flowgo.RegisterID) []byte {
-	return []byte(fmt.Sprintf("%s-%s-%s-%s",
+	return []byte(fmt.Sprintf("%s-%s-%s",
 		ledgerChangelogKeyPrefix,
 		registerID.Owner,
-		registerID.Controller,
 		registerID.Key))
 }
 
@@ -115,14 +114,26 @@ func ledgerValueKey(registerID flowgo.RegisterID, blockHeight uint64) []byte {
 // changelog key.
 func registerIDFromLedgerChangelogKey(key []byte) (flowgo.RegisterID, error) {
 	registerString := strings.TrimPrefix(string(key), ledgerChangelogKeyPrefix+"-")
-	parts := strings.SplitN(registerString, "-", 3)
-	if len(parts) < 3 {
+
+	c := strings.Count(registerString, "-")
+	if c == 3 { // old format
+		parts := strings.SplitN(registerString, "-", 3)
+		if len(parts) < 3 {
+			return flowgo.RegisterID{}, fmt.Errorf("failed to parse register ID from %s", string(key))
+		}
+		return flowgo.RegisterID{
+			Owner: parts[0],
+			Key:   parts[2], // skip the controller
+		}, nil
+	}
+	// else is the new format
+	parts := strings.SplitN(registerString, "-", 2)
+	if len(parts) < 2 {
 		return flowgo.RegisterID{}, fmt.Errorf("failed to parse register ID from %s", string(key))
 	}
 
 	return flowgo.RegisterID{
-		Owner:      parts[0],
-		Controller: parts[1],
-		Key:        parts[2],
+		Owner: parts[0],
+		Key:   parts[1],
 	}, nil
 }

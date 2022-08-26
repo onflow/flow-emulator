@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,22 +30,28 @@ type Config struct {
 	DBPath string
 	// Truncate whether to truncate the write log to remove corrupt data.
 	Truncate bool
+	// Allow git snapshots.
+	Snapshot bool
+	// Badger options to open DB
+	BadgerOptions badger.Options
 }
 
-// getBadgerOptions returns a Badger Options object defining the current
-// configuration. It starts with the defaultConfig, applies any options
+// getBadgerconfig returns configuration object with  options and
+// a Badger Options object defining the current  configuration.
+// It starts with the defaultConfig, applies any options
 // to it, then merges with the Badger default options.
-func getBadgerOptions(opts ...Opt) badger.Options {
+
+func getBadgerConfig(opts ...Opt) Config {
 	conf := defaultConfig
 	for _, applyOption := range opts {
 		applyOption(&conf)
 	}
 
-	badgerOptions := badger.DefaultOptions(conf.DBPath)
-	badgerOptions.Logger = conf.Logger
-	badgerOptions.Truncate = conf.Truncate
+	conf.BadgerOptions = badger.DefaultOptions(conf.DBPath)
+	conf.BadgerOptions.Logger = conf.Logger
+	conf.BadgerOptions.Truncate = conf.Truncate
 
-	return badgerOptions
+	return conf
 }
 
 // noopLogger implements the badger.Logger interface and discards all logs.
@@ -58,8 +64,9 @@ func (noopLogger) Debugf(string, ...interface{})   {}
 
 // The default config to use when instantiating a Badger store.
 var defaultConfig = Config{
-	Logger: noopLogger{},
-	DBPath: "./flowdb",
+	Logger:   noopLogger{},
+	DBPath:   "./flowdb",
+	Snapshot: false,
 }
 
 type Opt func(*Config)
@@ -69,7 +76,11 @@ func WithPath(path string) Opt {
 		c.DBPath = path
 	}
 }
-
+func WithSnapshot(enabled bool) Opt {
+	return func(c *Config) {
+		c.Snapshot = enabled
+	}
+}
 func WithLogger(logger badger.Logger) Opt {
 	return func(c *Config) {
 		c.Logger = logger

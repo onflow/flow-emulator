@@ -11,9 +11,6 @@ UNAME := $(shell uname)
 
 GOPATH ?= $(HOME)/go
 
-# Enable docker build kit
-export DOCKER_BUILDKIT := 1
-
 .PHONY: install-tools
 install-tools:
 	mkdir -p ${GOPATH}; \
@@ -55,7 +52,7 @@ ci: install-tools test check-tidy test coverage check-headers
 
 .PHONY: install-linter
 install-linter:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.29.0
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.46.0
 
 .PHONY: lint
 lint:
