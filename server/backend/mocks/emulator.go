@@ -5,6 +5,12 @@
 package mocks
 
 import (
+	gomock "github.com/golang/mock/gomock"
+	interpreter "github.com/onflow/cadence/runtime/interpreter"
+	flow_emulator "github.com/onflow/flow-emulator"
+	types "github.com/onflow/flow-emulator/types"
+	flow_go_sdk "github.com/onflow/flow-go-sdk"
+	flow "github.com/onflow/flow-go/model/flow"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -293,13 +299,11 @@ func (mr *MockEmulatorMockRecorder) GetTransactionResult(arg0 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionResult", reflect.TypeOf((*MockEmulator)(nil).GetTransactionResult), arg0)
 }
 
-// SetDebugger mocks base method.
 func (m *MockEmulator) SetDebugger(arg0 *interpreter.Debugger) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetDebugger", arg0)
 }
 
-// SetDebugger indicates an expected call of SetDebugger.
 func (mr *MockEmulatorMockRecorder) SetDebugger(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetDebugger", reflect.TypeOf((*MockEmulator)(nil).SetDebugger), arg0)
