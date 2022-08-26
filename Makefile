@@ -58,6 +58,11 @@ install-linter:
 lint:
 	golangci-lint run -v ./...
 
+.PHONY: fix-lint
+fix-lint:
+	golangci-lint run -v --fix ./...
+
+
 .PHONY: check-headers
 check-headers:
 	@./check-headers.sh
