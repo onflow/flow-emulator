@@ -54,6 +54,7 @@ type Config struct {
 	Init                      bool          `default:"false" flag:"init" info:"whether to initialize a new account profile"`
 	GRPCDebug                 bool          `default:"false" flag:"grpc-debug" info:"enable gRPC server reflection for debugging with grpc_cli"`
 	RESTDebug                 bool          `default:"false" flag:"rest-debug" info:"enable REST API debugging output"`
+	Snapshot                  bool          `default:"false" flag:"snapshot" info:"enable snapshots for emulator (this setting also automatically turns on persistent storage)"`
 	Persist                   bool          `default:"false" flag:"persist" info:"enable persistent storage"`
 	Snapshot                  bool          `default:"false" flag:"snapshot" info:"enable snapshots for emulator (this setting also automatically turns on persistent storage)"`
 	DBPath                    string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
