@@ -1309,5 +1309,5 @@ func (b *Blockchain) testAlternativeHashAlgo(sig flowgo.TransactionSignature, ms
 }
 
 func (b *Blockchain) SetDebugger(debugger *interpreter.Debugger) {
-	b.vm.Runtime.DefaultConfig.SetDebugger(debugger)
+	b.vm.Runtime.SetDebugger(debugger)
 }
