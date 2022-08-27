@@ -164,7 +164,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		}
 		ds.code = programArg.(string)
 
-		stopOnEntryArg, _ := args["stopOnEntry"]
+		stopOnEntryArg := args["stopOnEntry"]
 		ds.stopOnEntry, _ = stopOnEntryArg.(bool)
 
 		scriptID := emulator.ComputeScriptID([]byte(ds.code))
