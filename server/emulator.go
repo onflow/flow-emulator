@@ -120,13 +120,14 @@ func (m EmulatorAPIServer) Snapshot(w http.ResponseWriter, r *http.Request) {
 			Context: name,
 		}
 
-		err = json.NewEncoder(w).Encode(blockResponse)
+		bytes, err := json.Marshal(blockResponse)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(bytes)
 
 	default:
 		m.server.logger.Error("State management only available with badger storage")
