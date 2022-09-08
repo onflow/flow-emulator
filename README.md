@@ -67,6 +67,7 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--with-contracts`              | `FLOW_WITHCONTRACTS`             | `false`        | Deploy common contracts when emulator starts                                                                                                                                                                                                        |
 | `--skip-transaction-validation` | `FLOW_SKIPTRANSACTIONVALIDATION` | `false`        | Skip verification of transaction signatures and sequence numbers                                                                                                                                                                                    |
 | `--host`                        | `FLOW_HOST`                      | `127.0.0.1`    | Host to listen on for emulator GRPC/REST/Admin servers                                                                                                                                                                                              |
+| `--chain-id`                    | `FLOW_CHAINID`                   | `emulator`    | Chain to emulate for address generation.  Valid values are: 'emulator', 'testnet', 'mainnet'                                                                                                                                                         |
 
 ## Running the emulator with the Flow CLI
 

@@ -11,8 +11,6 @@ import (
 
 func TestExecuteScript(t *testing.T) {
 
-	t.Parallel()
-
 	server := NewEmulatorServer(logrus.New(), &Config{})
 
 	const code = `
@@ -28,8 +26,6 @@ func TestExecuteScript(t *testing.T) {
 }
 
 func TestExecuteScriptImportingContracts(t *testing.T) {
-
-	t.Parallel()
 
 	conf := &Config{
 		WithContracts: true,
@@ -59,8 +55,6 @@ func TestExecuteScriptImportingContracts(t *testing.T) {
 }
 
 func TestCustomChainID(t *testing.T) {
-
-	t.Parallel()
 
 	conf := &Config{
 		WithContracts: true,
