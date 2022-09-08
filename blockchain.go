@@ -1024,6 +1024,7 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 
 func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, error) {
 	program := programs.NewEmptyPrograms()
+	view := b.pendingBlock.ledgerView.NewChild()
 
 	stateParameters := state.DefaultParameters().
 		WithMaxKeySizeAllowed(b.vmCtx.MaxStateKeySize).
@@ -1034,7 +1035,7 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		b.vmCtx,
 		b.vm,
 		state.NewStateTransaction(
-			b.pendingBlock.ledgerView,
+			view,
 			stateParameters,
 		),
 		programs.NewEmptyPrograms(),
@@ -1052,7 +1053,7 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		return nil, err
 	}
 
-	account, err := b.vm.GetAccount(b.vmCtx, flowgo.BytesToAddress(address.Bytes()), b.pendingBlock.ledgerView, program)
+	account, err := b.vm.GetAccount(b.vmCtx, flowgo.BytesToAddress(address.Bytes()), view, program)
 	if err != nil {
 		return nil, err
 	}
