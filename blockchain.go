@@ -386,6 +386,7 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 	vm := fvm.NewVirtualMachine(rt)
 
 	fvmOptions := []fvm.Option{
+		fvm.WithLogger(conf.Logger),
 		fvm.WithChain(conf.GetChainID().Chain()),
 		fvm.WithBlocks(blocks),
 		fvm.WithRestrictedDeployment(false),
@@ -396,11 +397,10 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 	}
 
 	if !conf.TransactionValidationEnabled {
-		fvmOptions = append(fvmOptions, fvm.WithTransactionProcessors(fvm.NewTransactionInvoker(zerolog.Nop())))
+		fvmOptions = append(fvmOptions, fvm.WithTransactionProcessors(fvm.NewTransactionInvoker()))
 	}
 
 	ctx := fvm.NewContext(
-		conf.Logger,
 		fvmOptions...,
 	)
 
