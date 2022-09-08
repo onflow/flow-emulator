@@ -141,6 +141,7 @@ type config struct {
 	StorageMBPerFLOW             cadence.UFix64
 	Logger                       zerolog.Logger
 	TransactionValidationEnabled bool
+	ChainID                      flowgo.ChainID
 }
 
 func (conf config) GetStore() storage.Store {
@@ -159,7 +160,7 @@ func (conf config) GetChainID() flowgo.ChainID {
 		return flowgo.MonotonicEmulator
 	}
 
-	return flowgo.Emulator
+	return conf.ChainID
 }
 
 func (conf config) GetServiceKey() ServiceKey {
@@ -195,6 +196,7 @@ var defaultConfig = func() config {
 		StorageLimitEnabled:          true,
 		Logger:                       zerolog.Nop(),
 		TransactionValidationEnabled: true,
+		ChainID:                      flowgo.Emulator,
 	}
 }()
 
@@ -343,6 +345,14 @@ func WithTransactionFeesEnabled(enabled bool) Option {
 func WithTransactionValidationEnabled(enabled bool) Option {
 	return func(c *config) {
 		c.TransactionValidationEnabled = enabled
+	}
+}
+
+// WithChainID sets chain type for address generation
+// The default is emulator.
+func WithChainID(chainID flowgo.ChainID) Option {
+	return func(c *config) {
+		c.ChainID = chainID
 	}
 }
 

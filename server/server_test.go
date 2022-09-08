@@ -82,3 +82,17 @@ func TestExecuteScriptImportingContracts(t *testing.T) {
 	require.NoError(t, err)
 
 }
+
+func TestCustomChainID(t *testing.T) {
+
+	conf := &Config{
+		WithContracts: true,
+		ChainID:       "flow-mainnet",
+	}
+
+	server := NewEmulatorServer(logrus.New(), conf)
+
+	serviceAccount := server.blockchain.ServiceKey().Address.Hex()
+
+	require.Equal(t, serviceAccount, "e467b9dd11fa00df")
+}
