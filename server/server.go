@@ -25,6 +25,7 @@ import (
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/fvm"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/psiemens/graceland"
 	"github.com/sirupsen/logrus"
 
@@ -113,7 +114,9 @@ type Config struct {
 	SimpleAddressesEnabled    bool
 	SkipTransactionValidation bool
 	// Host listen on for the emulator servers (REST/GRPC/Admin)
-	Host                      string
+	Host string
+	//Chain to emulation
+	ChainID flowgo.ChainID
 }
 
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
@@ -260,6 +263,7 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithMinimumStorageReservation(conf.MinimumStorageReservation),
 		emulator.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
+		emulator.WithChainID(conf.ChainID),
 	}
 
 	if conf.SkipTransactionValidation {
@@ -333,6 +337,10 @@ func sanitizeConfig(conf *Config) *Config {
 
 	if conf.LivenessCheckTolerance == 0 {
 		conf.LivenessCheckTolerance = defaultLivenessCheckTolerance
+	}
+
+	if conf.ChainID == "" {
+		conf.ChainID = flowgo.Emulator
 	}
 
 	return conf

@@ -28,6 +28,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.5.0
 	github.com/stretchr/testify v1.8.0
+	golang.org/x/tools v0.1.11
 	google.golang.org/grpc v1.46.2
 )
 
