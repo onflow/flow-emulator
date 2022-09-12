@@ -22,11 +22,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -41,10 +43,14 @@ type HTTPHeader struct {
 }
 
 type HTTPServer struct {
+	logger     *logrus.Logger
+	host       string
+	port       int
 	httpServer *http.Server
 }
 
 func NewAdminServer(
+	logger *logrus.Logger,
 	emulatorServer *EmulatorServer,
 	backend *backend.Backend,
 	storage *Storage,
@@ -80,12 +86,24 @@ func NewAdminServer(
 	}
 
 	return &HTTPServer{
+		logger:     logger,
+		host:       host,
+		port:       port,
 		httpServer: httpServer,
 	}
 }
 
 func (h *HTTPServer) Start() error {
-	err := h.httpServer.ListenAndServe()
+	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", h.host, h.port))
+	if err != nil {
+		return err
+	}
+
+	h.logger.
+		WithField("port", h.port).
+		Infof("✅  Started admin server on port %d", h.port)
+
+	err = h.httpServer.Serve(lis)
 	if errors.Is(err, http.ErrServerClosed) {
 		return nil
 	}

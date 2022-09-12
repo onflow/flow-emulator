@@ -60,8 +60,8 @@ func NewGRPCServer(logger *logrus.Logger, b *backend.Backend, chain flow.Chain, 
 
 	return &GRPCServer{
 		logger:     logger,
-		port:       port,
 		host:       host,
+		port:       port,
 		grpcServer: grpcServer,
 	}
 }
@@ -76,7 +76,16 @@ func (g *GRPCServer) Start() error {
 		return err
 	}
 
-	return g.grpcServer.Serve(lis)
+	g.logger.
+		WithField("port", g.port).
+		Infof("✅  Started gRPC server on port %d", g.port)
+
+	err = g.grpcServer.Serve(lis)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (g *GRPCServer) Stop() {
