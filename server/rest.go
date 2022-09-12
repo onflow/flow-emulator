@@ -29,14 +29,22 @@ import (
 	"github.com/onflow/flow-go/engine/access/rest"
 	"github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
+	"github.com/sirupsen/logrus"
 )
 
 type RestServer struct {
+	logger   *logrus.Logger
+	host     string
+	port     int
 	server   *http.Server
 	listener net.Listener
 }
 
 func (r *RestServer) Start() error {
+	r.logger.
+		WithField("port", r.port).
+		Infof("✅  Started REST API server on port %d", r.port)
+
 	err := r.server.Serve(r.listener)
 	if err != nil {
 		return err
@@ -48,13 +56,14 @@ func (r *RestServer) Stop() {
 	_ = r.server.Shutdown(context.Background())
 }
 
-func NewRestServer(be *backend.Backend, chain flow.Chain, host string, port int, debug bool) (*RestServer, error) {
-	logger := zerolog.Logger{}
+func NewRestServer(logger *logrus.Logger, be *backend.Backend, chain flow.Chain, host string, port int, debug bool) (*RestServer, error) {
+
+	debug_logger := zerolog.Logger{}
 	if debug {
-		logger = zerolog.New(os.Stdout)
+		debug_logger = zerolog.New(os.Stdout)
 	}
 
-	srv, err := rest.NewServer(backend.NewAdapter(be), "127.0.0.1:3333", logger, chain)
+	srv, err := rest.NewServer(backend.NewAdapter(be), "127.0.0.1:3333", debug_logger, chain)
 	if err != nil {
 		return nil, err
 	}
@@ -65,6 +74,9 @@ func NewRestServer(be *backend.Backend, chain flow.Chain, host string, port int,
 	}
 
 	return &RestServer{
+		logger:   logger,
+		host:     host,
+		port:     port,
 		server:   srv,
 		listener: l,
 	}, nil
