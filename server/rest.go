@@ -58,7 +58,7 @@ func (r *RestServer) Stop() {
 
 func NewRestServer(logger *logrus.Logger, be *backend.Backend, chain flow.Chain, host string, port int, debug bool) (*RestServer, error) {
 
-	debug_logger := zerolog.Logger{}
+	debugLogger := zerolog.Logger{}
 	if debug {
 		debug_logger = zerolog.New(os.Stdout)
 	}
