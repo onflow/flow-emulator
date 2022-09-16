@@ -673,10 +673,12 @@ func printScriptResult(logger *logrus.Logger, result *types.ScriptResult) {
 	if result.Succeeded() {
 		logger.
 			WithField("scriptID", result.ScriptID.String()).
+			WithField("computationUsed", result.ComputationUsed).
 			Info("⭐  Script executed")
 	} else {
 		logger.
 			WithField("scriptID", result.ScriptID.String()).
+			WithField("computationUsed", result.ComputationUsed).
 			Warn("❗  Script reverted")
 	}
 

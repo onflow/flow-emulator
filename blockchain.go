@@ -1159,11 +1159,12 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blo
 	}
 
 	return &types.ScriptResult{
-		ScriptID: scriptID,
-		Value:    convertedValue,
-		Error:    scriptError,
-		Logs:     scriptProc.Logs,
-		Events:   events,
+		ScriptID:        scriptID,
+		Value:           convertedValue,
+		Error:           scriptError,
+		Logs:            scriptProc.Logs,
+		Events:          events,
+		ComputationUsed: scriptProc.GasUsed,
 	}, nil
 }
 
