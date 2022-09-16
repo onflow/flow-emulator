@@ -268,6 +268,10 @@ func (s *EmulatorServer) Stop() {
 }
 
 func configureStorage(logger *logrus.Logger, conf *Config) (storage Storage, err error) {
+	if conf.RedisURL != "" {
+		return NewRedisStorage(conf.RedisURL)
+	}
+
 	return NewBadgerStorage(logger, conf.DBPath, conf.DBGCInterval, conf.DBGCDiscardRatio, conf.Snapshot, conf.Persist)
 }
 
@@ -283,10 +287,6 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		emulator.WithChainID(conf.ChainID),
-	}
-
-	if conf.RedisURL != "" {
-		emulator.WithRedisURL(conf.RedisURL)
 	}
 
 	if conf.SkipTransactionValidation {

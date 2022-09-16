@@ -55,10 +55,10 @@ type Store struct {
 }
 
 // New returns a new in-memory Store implementation.
-func New(url string) *Store {
+func New(url string) (*Store, error) {
 	options, err := redis.ParseURL(url)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	rdb := redis.NewClient(options)
@@ -69,7 +69,7 @@ func New(url string) *Store {
 	}
 	s.blockHeight, _ = s.getInt("blockHeight", "latest")
 
-	return s
+	return s, nil
 }
 
 func (s *Store) get(store string, key any) ([]byte, error) {

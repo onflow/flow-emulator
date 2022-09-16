@@ -42,7 +42,6 @@ import (
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/badger"
 	"github.com/onflow/flow-emulator/storage/memstore"
-	"github.com/onflow/flow-emulator/storage/redis"
 	"github.com/onflow/flow-emulator/types"
 )
 
@@ -366,14 +365,6 @@ func WithTransactionValidationEnabled(enabled bool) Option {
 func WithChainID(chainID flowgo.ChainID) Option {
 	return func(c *config) {
 		c.ChainID = chainID
-	}
-}
-
-// WithRedisURL sets storage backend to redis-server
-// The default is emulator.
-func WithRedisURL(url string) Option {
-	return func(c *config) {
-		c.Store = redis.New(url)
 	}
 }
 

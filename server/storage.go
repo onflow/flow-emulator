@@ -58,8 +58,12 @@ type RedisStorage struct {
 	store *redis.Store
 }
 
-func NewRedisStorage(url string) *RedisStorage {
-	return &RedisStorage{store: redis.New(url)}
+func NewRedisStorage(url string) (*RedisStorage, error) {
+	rdb, err := redis.New(url)
+	if err != nil {
+		return nil, err
+	}
+	return &RedisStorage{store: rdb}, nil
 }
 
 func (s *RedisStorage) Start() error {
