@@ -27,11 +27,49 @@ import (
 
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/badger"
+	"github.com/onflow/flow-emulator/storage/memstore"
+	"github.com/onflow/flow-emulator/storage/redis"
 )
 
 type Storage interface {
 	graceland.Routine
 	Store() storage.Store
+}
+
+type MemoryStorage struct {
+	store *memstore.Store
+}
+
+func NewMemoryStorage() *MemoryStorage {
+	return &MemoryStorage{store: memstore.New()}
+}
+
+func (s *MemoryStorage) Start() error {
+	return nil
+}
+
+func (s *MemoryStorage) Stop() {}
+
+func (s *MemoryStorage) Store() storage.Store {
+	return s.store
+}
+
+type RedisStorage struct {
+	store *redis.Store
+}
+
+func NewRedisStorage(url string) *RedisStorage {
+	return &RedisStorage{store: redis.New(url)}
+}
+
+func (s *RedisStorage) Start() error {
+	return nil
+}
+
+func (s *RedisStorage) Stop() {}
+
+func (s *RedisStorage) Store() storage.Store {
+	return s.store
 }
 
 type BadgerStorage struct {

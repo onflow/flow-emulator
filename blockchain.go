@@ -41,6 +41,8 @@ import (
 	sdkconvert "github.com/onflow/flow-emulator/convert/sdk"
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/badger"
+	"github.com/onflow/flow-emulator/storage/memstore"
+	"github.com/onflow/flow-emulator/storage/redis"
 	"github.com/onflow/flow-emulator/types"
 )
 
@@ -367,6 +369,14 @@ func WithChainID(chainID flowgo.ChainID) Option {
 	}
 }
 
+// WithRedisURL sets storage backend to redis-server
+// The default is emulator.
+func WithRedisURL(url string) Option {
+	return func(c *config) {
+		c.Store = redis.New(url)
+	}
+}
+
 // NewBlockchain instantiates a new emulated blockchain with the provided options.
 func NewBlockchain(opts ...Option) (*Blockchain, error) {
 
@@ -455,7 +465,6 @@ func configureNewLedger(
 	ctx fvm.Context,
 ) (*flowgo.Block, *delta.View, error) {
 	genesisLedgerView := store.LedgerViewByHeight(0)
-
 	err := bootstrapLedger(
 		vm,
 		ctx,
@@ -644,6 +653,7 @@ func (b *Blockchain) GetBlockByID(id sdk.Identifier) (*flowgo.Block, error) {
 
 // GetBlockByHeight gets a block by height.
 func (b *Blockchain) GetBlockByHeight(height uint64) (*flowgo.Block, error) {
+	fmt.Println("getBlockByHeight")
 	block, err := b.getBlockByHeight(height)
 	if err != nil {
 		return nil, err

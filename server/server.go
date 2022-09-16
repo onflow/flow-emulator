@@ -118,6 +118,8 @@ type Config struct {
 	Host string
 	//Chain to emulation
 	ChainID flowgo.ChainID
+	//Redis URL for redis storage backend
+	RedisURL string
 }
 
 type listener interface {
@@ -281,6 +283,10 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		emulator.WithChainID(conf.ChainID),
+	}
+
+	if conf.RedisURL != "" {
+		emulator.WithRedisURL(conf.RedisURL)
 	}
 
 	if conf.SkipTransactionValidation {
