@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package badger_test
+package storage_test
 
 import (
 	"context"
@@ -447,192 +447,6 @@ func TestEventsByHeight(t *testing.T) {
 	})
 }
 
-func TestPersistence(t *testing.T) {
-
-	t.Parallel()
-
-	store, dir := setupStore(t)
-	defer func() {
-		require.NoError(t, store.Close())
-		require.NoError(t, os.RemoveAll(dir))
-	}()
-
-	block := &flowgo.Block{Header: &flowgo.Header{Height: 1}}
-	tx := unittest.TransactionFixture()
-
-	event, _ := convert.SDKEventToFlow(test.EventGenerator().New())
-	events := []flowgo.Event{event}
-
-	const owner = ""
-	const key = "foo"
-
-	expected := []byte("bar")
-
-	d := delta.NewDelta()
-	d.Set(owner, key, expected)
-
-	// insert some stuff to to the store
-	err := store.StoreBlock(context.Background(), block)
-	assert.NoError(t, err)
-	err = store.InsertTransaction(context.Background(), tx)
-	assert.NoError(t, err)
-	err = store.InsertEvents(context.Background(), block.Header.Height, events)
-	assert.NoError(t, err)
-	err = store.InsertLedgerDelta(context.Background(), block.Header.Height, d)
-	assert.NoError(t, err)
-
-	// close the store
-	err = store.Close()
-	assert.NoError(t, err)
-
-	// create a new store with the same database directory
-	store, err = badger.New(badger.WithPath(dir))
-	require.NoError(t, err)
-
-	// should be able to retrieve what we stored
-	gotBlock, err := store.LatestBlock(context.Background())
-	assert.NoError(t, err)
-	assert.Equal(t, *block, gotBlock)
-
-	gotTx, err := store.TransactionByID(context.Background(), tx.ID())
-	assert.NoError(t, err)
-	assert.Equal(t, tx.ID(), gotTx.ID())
-
-	gotEvents, err := store.EventsByHeight(context.Background(), block.Header.Height, "")
-	assert.NoError(t, err)
-	assert.Equal(t, events, gotEvents)
-
-	gotLedger := store.LedgerViewByHeight(context.Background(), block.Header.Height)
-	actual, err := gotLedger.Get(owner, "foo")
-	assert.NoError(t, err)
-	assert.Equal(t, expected, actual)
-}
-
-func benchmarkInsertLedgerDelta(b *testing.B, nKeys int) {
-	b.StopTimer()
-	dir, err := ioutil.TempDir("", "badger-test")
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
-	store, err := badger.New(badger.WithPath(dir))
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer store.Close()
-
-	const owner = ""
-
-	ledger := delta.NewDelta()
-	for i := 0; i < nKeys; i++ {
-		key := fmt.Sprintf("%d", i)
-		ledger.Set(owner, key, []byte{byte(i)})
-	}
-
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		if err := store.InsertLedgerDelta(context.Background(), 1, ledger); err != nil {
-			b.Fatal(err)
-		}
-	}
-}
-
-func BenchmarkInsertLedgerDelta1(b *testing.B)    { benchmarkInsertLedgerDelta(b, 1) }
-func BenchmarkInsertLedgerDelta10(b *testing.B)   { benchmarkInsertLedgerDelta(b, 10) }
-func BenchmarkInsertLedgerDelta100(b *testing.B)  { benchmarkInsertLedgerDelta(b, 100) }
-func BenchmarkInsertLedgerDelta1000(b *testing.B) { benchmarkInsertLedgerDelta(b, 1000) }
-
-func BenchmarkBlockDiskUsage(b *testing.B) {
-	b.StopTimer()
-	dir, err := ioutil.TempDir("", "badger-test")
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
-	store, err := badger.New(badger.WithPath(dir))
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer store.Close()
-
-	ids := test.IdentifierGenerator()
-
-	b.StartTimer()
-	var lastDBSize int64
-	for i := 0; i < b.N; i++ {
-		block := &flowgo.Block{
-			Header: &flowgo.Header{
-				Height:   uint64(i),
-				ParentID: flowgo.Identifier(ids.New()),
-			},
-			Payload: &flowgo.Payload{
-				Guarantees: []*flowgo.CollectionGuarantee{
-					{
-						CollectionID: flowgo.Identifier(ids.New()),
-					},
-				},
-			},
-		}
-		if err := store.StoreBlock(context.Background(), block); err != nil {
-			b.Fatal(err)
-		}
-
-		if err := store.Sync(); err != nil {
-			b.Fatal(err)
-		}
-
-		size, err := dirSize(dir)
-		if err != nil {
-			b.Fatal(err)
-		}
-
-		dbSizeIncrease := size - lastDBSize
-		b.ReportMetric(float64(dbSizeIncrease), "db_size_increase_bytes/op")
-		lastDBSize = size
-	}
-}
-
-func BenchmarkLedgerDiskUsage(b *testing.B) {
-	b.StopTimer()
-	dir, err := ioutil.TempDir("", "badger-test")
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
-	store, err := badger.New(badger.WithPath(dir))
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer store.Close()
-
-	const owner = ""
-
-	b.StartTimer()
-	var lastDBSize int64
-	for i := 0; i < b.N; i++ {
-		ledger := delta.NewDelta()
-		for j := 0; j < 100; j++ {
-			key := fmt.Sprintf("%d-%d", i, j)
-			ledger.Set(owner, key, []byte{byte(i), byte(j)})
-		}
-		if err := store.InsertLedgerDelta(context.Background(), uint64(i), ledger); err != nil {
-			b.Fatal(err)
-		}
-		if err := store.Sync(); err != nil {
-			b.Fatal(err)
-		}
-
-		size, err := dirSize(dir)
-		if err != nil {
-			b.Fatal(err)
-		}
-
-		dbSizeIncrease := size - lastDBSize
-		b.ReportMetric(float64(dbSizeIncrease), "db_size_increase_bytes/op")
-		lastDBSize = size
-	}
-}
-
 // setupStore creates a temporary directory for the Badger and creates a
 // badger.Store instance. The caller is responsible for closing the store
 // and deleting the temporary directory.
@@ -640,7 +454,7 @@ func setupStore(t *testing.T) (*badger.Store, string) {
 	dir, err := ioutil.TempDir("", "badger-test")
 	require.NoError(t, err)
 
-	store, err := badger.New(badger.WithPath(dir))
+	store, err := badger.New()
 	require.NoError(t, err)
 
 	return store, dir

@@ -11,6 +11,7 @@
 package emulator
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -41,7 +42,6 @@ import (
 	sdkconvert "github.com/onflow/flow-emulator/convert/sdk"
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/badger"
-	"github.com/onflow/flow-emulator/storage/memstore"
 	"github.com/onflow/flow-emulator/types"
 )
 
@@ -434,7 +434,7 @@ func configureLedger(
 	vm *fvm.VirtualMachine,
 	ctx fvm.Context,
 ) (*flowgo.Block, *delta.View, error) {
-	latestBlock, err := store.LatestBlock()
+	latestBlock, err := store.LatestBlock(context.Background())
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			// storage is empty, bootstrap new ledger state
@@ -455,7 +455,7 @@ func configureNewLedger(
 	vm *fvm.VirtualMachine,
 	ctx fvm.Context,
 ) (*flowgo.Block, *delta.View, error) {
-	genesisLedgerView := store.LedgerViewByHeight(0)
+	genesisLedgerView := store.LedgerViewByHeight(context.Background(), 0)
 	err := bootstrapLedger(
 		vm,
 		ctx,
@@ -470,6 +470,7 @@ func configureNewLedger(
 	genesis := flowgo.Genesis(conf.GetChainID())
 
 	err = store.CommitBlock(
+		context.Background(),
 		*genesis,
 		nil,
 		nil,
@@ -482,7 +483,7 @@ func configureNewLedger(
 	}
 
 	// get empty ledger view
-	ledgerView := store.LedgerViewByHeight(0)
+	ledgerView := store.LedgerViewByHeight(context.Background(), 0)
 
 	return genesis, ledgerView, nil
 }
@@ -491,7 +492,7 @@ func configureExistingLedger(
 	latestBlock *flowgo.Block,
 	store storage.Store,
 ) (*flowgo.Block, *delta.View, error) {
-	latestLedgerView := store.LedgerViewByHeight(latestBlock.Header.Height)
+	latestLedgerView := store.LedgerViewByHeight(context.Background(), latestBlock.Header.Height)
 
 	return latestBlock, latestLedgerView, nil
 }
@@ -620,7 +621,7 @@ func (b *Blockchain) PendingBlockTimestamp() time.Time {
 
 // GetLatestBlock gets the latest sealed block.
 func (b *Blockchain) GetLatestBlock() (*flowgo.Block, error) {
-	block, err := b.storage.LatestBlock()
+	block, err := b.storage.LatestBlock(context.Background())
 	if err != nil {
 		return nil, &StorageError{err}
 	}
@@ -630,7 +631,7 @@ func (b *Blockchain) GetLatestBlock() (*flowgo.Block, error) {
 
 // GetBlockByID gets a block by ID.
 func (b *Blockchain) GetBlockByID(id sdk.Identifier) (*flowgo.Block, error) {
-	block, err := b.storage.BlockByID(sdkconvert.SDKIdentifierToFlow(id))
+	block, err := b.storage.BlockByID(context.Background(), sdkconvert.SDKIdentifierToFlow(id))
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return nil, &BlockNotFoundByIDError{ID: id}
@@ -644,7 +645,6 @@ func (b *Blockchain) GetBlockByID(id sdk.Identifier) (*flowgo.Block, error) {
 
 // GetBlockByHeight gets a block by height.
 func (b *Blockchain) GetBlockByHeight(height uint64) (*flowgo.Block, error) {
-	fmt.Println("getBlockByHeight")
 	block, err := b.getBlockByHeight(height)
 	if err != nil {
 		return nil, err
@@ -654,7 +654,7 @@ func (b *Blockchain) GetBlockByHeight(height uint64) (*flowgo.Block, error) {
 }
 
 func (b *Blockchain) getBlockByHeight(height uint64) (*flowgo.Block, error) {
-	block, err := b.storage.BlockByHeight(height)
+	block, err := b.storage.BlockByHeight(context.Background(), height)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return nil, &BlockNotFoundByHeightError{Height: height}
@@ -673,7 +673,7 @@ func (b *Blockchain) GetCollection(colID sdk.Identifier) (*sdk.Collection, error
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	col, err := b.storage.CollectionByID(sdkconvert.SDKIdentifierToFlow(colID))
+	col, err := b.storage.CollectionByID(context.Background(), sdkconvert.SDKIdentifierToFlow(colID))
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return nil, &CollectionNotFoundError{ID: colID}
@@ -701,7 +701,7 @@ func (b *Blockchain) GetTransaction(id sdk.Identifier) (*sdk.Transaction, error)
 		return &pendingSDKTx, nil
 	}
 
-	tx, err := b.storage.TransactionByID(txID)
+	tx, err := b.storage.TransactionByID(context.Background(), txID)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return nil, &TransactionNotFoundError{ID: txID}
@@ -725,7 +725,7 @@ func (b *Blockchain) GetTransactionResult(ID sdk.Identifier) (*sdk.TransactionRe
 		}, nil
 	}
 
-	storedResult, err := b.storage.TransactionResultByID(txID)
+	storedResult, err := b.storage.TransactionResultByID(context.Background(), txID)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return &sdk.TransactionResult{
@@ -784,7 +784,6 @@ func (b *Blockchain) getAccount(address flowgo.Address) (*flowgo.Account, error)
 	if err != nil {
 		return nil, err
 	}
-
 	return b.getAccountAtBlock(address, latestBlock.Header.Height)
 }
 
@@ -826,7 +825,7 @@ func (b *Blockchain) getAccountAtBlock(address flowgo.Address, blockHeight uint6
 
 // GetEventsByHeight returns the events in the block at the given height, optionally filtered by type.
 func (b *Blockchain) GetEventsByHeight(blockHeight uint64, eventType string) ([]sdk.Event, error) {
-	flowEvents, err := b.storage.EventsByHeight(blockHeight, eventType)
+	flowEvents, err := b.storage.EventsByHeight(context.Background(), blockHeight, eventType)
 	if err != nil {
 		return nil, err
 	}
@@ -861,7 +860,7 @@ func (b *Blockchain) addTransaction(sdkTx sdk.Transaction) error {
 		return &DuplicateTransactionError{TxID: tx.ID()}
 	}
 
-	_, err := b.storage.TransactionByID(tx.ID())
+	_, err := b.storage.TransactionByID(context.Background(), tx.ID())
 	if err == nil {
 		// Found the transaction, this is a duplicate
 		return &DuplicateTransactionError{TxID: tx.ID()}
@@ -1019,12 +1018,12 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	events := b.pendingBlock.Events()
 
 	// commit the pending block to storage
-	err = b.storage.CommitBlock(*block, collections, transactions, transactionResults, ledgerDelta, events)
+	err = b.storage.CommitBlock(context.Background(), *block, collections, transactions, transactionResults, ledgerDelta, events)
 	if err != nil {
 		return nil, err
 	}
 
-	ledgerView := b.storage.LedgerViewByHeight(block.Header.Height)
+	ledgerView := b.storage.LedgerViewByHeight(context.Background(), block.Header.Height)
 
 	// reset pending block using current block and ledger state
 	b.pendingBlock = newPendingBlock(block, ledgerView)
@@ -1136,12 +1135,12 @@ func (b *Blockchain) ResetPendingBlock() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	latestBlock, err := b.storage.LatestBlock()
+	latestBlock, err := b.storage.LatestBlock(context.Background())
 	if err != nil {
 		return &StorageError{err}
 	}
 
-	latestLedgerView := b.storage.LedgerViewByHeight(latestBlock.Header.Height)
+	latestLedgerView := b.storage.LedgerViewByHeight(context.Background(), latestBlock.Header.Height)
 
 	// reset pending block using latest committed block and ledger state
 	b.pendingBlock = newPendingBlock(&latestBlock, latestLedgerView)
@@ -1171,7 +1170,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blo
 		return nil, err
 	}
 
-	requestedLedgerView := b.storage.LedgerViewByHeight(requestedBlock.Header.Height)
+	requestedLedgerView := b.storage.LedgerViewByHeight(context.Background(), requestedBlock.Header.Height)
 
 	header := requestedBlock.Header
 

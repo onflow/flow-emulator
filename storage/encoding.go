@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package badger
+package storage
 
 import (
 	"fmt"
@@ -71,8 +71,12 @@ func decodeTransactionResult(result *types.StorableTransactionResult, from []byt
 	return cbor.Unmarshal(from, result)
 }
 
-func encodeUint64(v uint64) ([]byte, error) {
-	return em.Marshal(v)
+func encodeUint64(v uint64) []byte {
+	bytes, err := em.Marshal(v)
+	if err != nil { // bluesign: it should be able to encode all uint64
+		panic(err)
+	}
+	return bytes
 }
 
 func decodeUint64(v *uint64, from []byte) error {
@@ -83,14 +87,14 @@ func encodeEvent(event flowgo.Event) ([]byte, error) {
 	return em.Marshal(event)
 }
 
+func encodeEvents(events []flowgo.Event) ([]byte, error) {
+	return em.Marshal(events)
+}
+
 func decodeEvent(event *flowgo.Event, from []byte) error {
 	return cbor.Unmarshal(from, event)
 }
 
-func encodeChangelist(clist changelist) ([]byte, error) {
-	return em.Marshal(clist.blocks)
-}
-
-func decodeChangelist(clist *changelist, from []byte) error {
-	return cbor.Unmarshal(from, &clist.blocks)
+func decodeEvents(events *[]flowgo.Event, from []byte) error {
+	return cbor.Unmarshal(from, events)
 }
