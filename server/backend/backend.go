@@ -221,13 +221,17 @@ func (b *Backend) SendTransaction(ctx context.Context, tx sdk.Transaction) error
 				fvmerrors.InvalidEnvelopeSignatureError,
 				fvmerrors.InvalidPayloadSignatureError,
 				fvmerrors.InvalidProposalSignatureError,
-				fvmerrors.AccountNotFoundError,
 				fvmerrors.AccountPublicKeyNotFoundError,
 				fvmerrors.InvalidProposalSeqNumberError,
 				fvmerrors.InvalidAddressError:
 
 				return status.Error(codes.InvalidArgument, err.Error())
+
 			default:
+				if fvmerrors.IsAccountNotFoundError(err) {
+					return status.Error(codes.InvalidArgument, err.Error())
+				}
+
 				return status.Error(codes.Internal, err.Error())
 			}
 		default:
