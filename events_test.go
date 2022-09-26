@@ -39,7 +39,7 @@ func TestEventEmitted(t *testing.T) {
 
 		result, err := b.ExecuteScript(script, nil)
 		assert.NoError(t, err)
-		require.Error(t, result.Error)
+		require.NoError(t, result.Error)
 		require.Empty(t, result.Events)
 	})
 

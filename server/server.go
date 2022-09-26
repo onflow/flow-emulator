@@ -25,6 +25,7 @@ import (
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/fvm"
+	"github.com/onflow/flow-go/fvm/environment"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/psiemens/graceland"
 	"github.com/sirupsen/logrus"
@@ -141,7 +142,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		"FlowServiceAccount": chain.ServiceAddress().HexWithPrefix(),
 		"FlowToken":          fvm.FlowTokenAddress(chain).HexWithPrefix(),
 		"FungibleToken":      fvm.FungibleTokenAddress(chain).HexWithPrefix(),
-		"FlowFees":           fvm.FlowFeesAddress(chain).HexWithPrefix(),
+		"FlowFees":           environment.FlowFeesAddress(chain).HexWithPrefix(),
 		"FlowStorageFees":    chain.ServiceAddress().HexWithPrefix(),
 	}
 	for contract, address := range contracts {
