@@ -23,7 +23,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	redis "github.com/go-redis/redis/v8"
-
 	"github.com/onflow/flow-emulator/storage"
 )
 
@@ -40,13 +39,15 @@ func New(url string) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	s := &Store{
+	fmt.Println(options)
+	store := &Store{
 		options: options,
 		rdb:     redis.NewClient(options),
 	}
+	store.DataBackend = store
+	store.KeysBackend = &storage.StorageBackendKeysImpl{}
 
-	return s, nil
+	return store, nil
 }
 
 func (s *Store) GetBackend() storage.StorageBackendData {
@@ -56,6 +57,9 @@ func (s *Store) GetBackend() storage.StorageBackendData {
 func (s *Store) GetBytes(ctx context.Context, store string, key []byte) ([]byte, error) {
 	val, err := s.rdb.Get(ctx, fmt.Sprintf("%s_%s", store, hex.EncodeToString(key))).Result()
 	if err != nil {
+		if err == redis.Nil {
+			return nil, storage.ErrNotFound
+		}
 		return nil, err
 	}
 	rawBytes, err := hex.DecodeString(val)
@@ -103,13 +107,15 @@ func (s *Store) GetBytesAtVersion(ctx context.Context, store string, key []byte,
 	).Result()
 
 	if err != nil {
+		if err == redis.Nil {
+			return nil, storage.ErrNotFound
+		}
 		return nil, err
 	}
 
 	if len(val) == 0 {
 		return nil, storage.ErrNotFound
 	}
-
 	rawBytes, err := hex.DecodeString(val[0])
 	if err != nil {
 		return nil, err
