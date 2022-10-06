@@ -23,7 +23,7 @@ import (
 )
 
 type FlowError struct {
-	FlowError fvmerrors.Error
+	FlowError fvmerrors.CodedError
 }
 
 func (f *FlowError) Error() string {
