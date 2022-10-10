@@ -512,7 +512,7 @@ func bootstrapLedger(
 
 	bootstrap := configureBootstrapProcedure(conf, flowAccountKey, conf.GenesisTokenSupply)
 
-	err := vm.Run(ctx, bootstrap, ledger, programs.NewEmptyPrograms())
+	err := vm.Run(ctx, bootstrap, ledger)
 	if err != nil {
 		return err
 	}
@@ -804,7 +804,6 @@ func (b *Blockchain) getAccountAtBlock(address flowgo.Address, blockHeight uint6
 		b.vmCtx,
 		address,
 		b.storage.LedgerViewByHeight(blockHeight),
-		programs.NewEmptyPrograms(),
 	)
 
 	if fvmerrors.IsAccountNotFoundError(err) {
@@ -946,7 +945,7 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 		) (*fvm.TransactionProcedure, error) {
 			tx := fvm.Transaction(txBody, txIndex)
 
-			err := b.vm.Run(ctx, tx, ledgerView, programs.NewEmptyPrograms())
+			err := b.vm.Run(ctx, tx, ledgerView)
 			if err != nil {
 				return nil, err
 			}
@@ -1023,7 +1022,6 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 }
 
 func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, error) {
-	program := programs.NewEmptyPrograms()
 	view := b.pendingBlock.ledgerView.NewChild()
 
 	stateParameters := state.DefaultParameters().
@@ -1053,7 +1051,7 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		return nil, err
 	}
 
-	account, err := b.vm.GetAccount(b.vmCtx, flowgo.BytesToAddress(address.Bytes()), view, program)
+	account, err := b.vm.GetAccount(b.vmCtx, flowgo.BytesToAddress(address.Bytes()), view)
 	if err != nil {
 		return nil, err
 	}
@@ -1136,7 +1134,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blo
 
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
 
-	err = b.vm.Run(blockContext, scriptProc, requestedLedgerView, programs.NewEmptyPrograms())
+	err = b.vm.Run(blockContext, scriptProc, requestedLedgerView)
 	if err != nil {
 		return nil, err
 	}
