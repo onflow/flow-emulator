@@ -27,7 +27,6 @@ import (
 
 	emulator "github.com/onflow/flow-emulator"
 	"github.com/onflow/flow-emulator/types"
-	"github.com/onflow/flow-emulator/utils/unittest"
 )
 
 func TestSubmitTransaction(t *testing.T) {
@@ -692,7 +691,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, fvmerrors.AccountAuthorizationError{}, result.Error)
+		assert.True(t, fvmerrors.HasErrorCode(result.Error, fvmerrors.ErrCodeAccountAuthorizationError))
 	})
 
 	t.Run("Invalid account", func(t *testing.T) {
@@ -770,8 +769,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		var sigErr fvmerrors.InvalidProposalSignatureError
-		assert.ErrorAs(t, result.Error, &sigErr)
+		assert.True(t, fvmerrors.HasErrorCode(result.Error, fvmerrors.ErrCodeInvalidProposalSignatureError))
 	})
 
 	t.Run("Key weights", func(t *testing.T) {
@@ -825,7 +823,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 			result, err := b.ExecuteNextTransaction()
 			assert.NoError(t, err)
 
-			unittest.AssertFVMErrorType(t, fvmerrors.AccountAuthorizationError{}, result.Error)
+			assert.True(t, fvmerrors.HasErrorCode(result.Error, fvmerrors.ErrCodeAccountAuthorizationError))
 		})
 
 		t.Run("Sufficient key weight", func(t *testing.T) {
@@ -882,7 +880,7 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, fvmerrors.AccountAuthorizationError{}, result.Error)
+		assert.True(t, fvmerrors.HasErrorCode(result.Error, fvmerrors.ErrCodeAccountAuthorizationError))
 	})
 
 	t.Run("Multiple payload signers", func(t *testing.T) {

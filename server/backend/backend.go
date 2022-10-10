@@ -215,15 +215,14 @@ func (b *Backend) SendTransaction(ctx context.Context, tx sdk.Transaction) error
 		case *emulator.DuplicateTransactionError:
 			return status.Error(codes.InvalidArgument, err.Error())
 		case *types.FlowError:
-			// TODO - confirm these
-			switch t.FlowError.(type) {
-			case fvmerrors.AccountAuthorizationError,
-				fvmerrors.InvalidEnvelopeSignatureError,
-				fvmerrors.InvalidPayloadSignatureError,
-				fvmerrors.InvalidProposalSignatureError,
-				fvmerrors.AccountPublicKeyNotFoundError,
-				fvmerrors.InvalidProposalSeqNumberError,
-				fvmerrors.InvalidAddressError:
+			switch t.FlowError.Code() {
+			case fvmerrors.ErrCodeAccountAuthorizationError,
+				fvmerrors.ErrCodeInvalidEnvelopeSignatureError,
+				fvmerrors.ErrCodeInvalidPayloadSignatureError,
+				fvmerrors.ErrCodeInvalidProposalSignatureError,
+				fvmerrors.ErrCodeAccountPublicKeyNotFoundError,
+				fvmerrors.ErrCodeInvalidProposalSeqNumberError,
+				fvmerrors.ErrCodeInvalidAddressError:
 
 				return status.Error(codes.InvalidArgument, err.Error())
 

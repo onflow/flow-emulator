@@ -123,7 +123,6 @@ type Config struct {
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
 func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	conf = sanitizeConfig(conf)
-
 	store, err := configureStorage(logger, conf)
 	if err != nil {
 		logger.WithError(err).Error("❗  Failed to configure storage")
@@ -246,11 +245,7 @@ func (s *EmulatorServer) Stop() {
 }
 
 func configureStorage(logger *logrus.Logger, conf *Config) (storage Storage, err error) {
-	if conf.Persist || conf.Snapshot {
-		return NewBadgerStorage(logger, conf.DBPath, conf.DBGCInterval, conf.DBGCDiscardRatio, conf.Snapshot)
-	}
-
-	return NewMemoryStorage(), nil
+	return NewBadgerStorage(logger, conf.DBPath, conf.DBGCInterval, conf.DBGCDiscardRatio, conf.Snapshot, conf.Persist)
 }
 
 func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchain, error) {
