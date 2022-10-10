@@ -539,7 +539,7 @@ func TestBackend(t *testing.T) {
 
 			emu.EXPECT().
 				AddTransaction(gomock.Any()).
-				Return(&types.FlowError{FlowError: fvmerrors.AccountAuthorizationError{}}).
+				Return(&types.FlowError{FlowError: fvmerrors.NewAccountAuthorizationErrorf(flowgo.EmptyAddress, "")}).
 				Times(1)
 
 			expectedTx := test.TransactionGenerator().New()

@@ -1258,20 +1258,15 @@ func convertToSealedResults(
 
 // debugSignatureError tries to unwrap error to the root and test for invalid hashing algorithms
 func (b *Blockchain) debugSignatureError(err error, tx *flowgo.TransactionBody) *types.TransactionResultDebug {
-	var sigErr fvmerrors.InvalidProposalSignatureError
-	if !errors.As(err, &sigErr) {
-		return nil
-	}
-
-	switch errors.Unwrap(sigErr).(type) {
-	case fvmerrors.InvalidEnvelopeSignatureError:
+	if fvmerrors.HasErrorCode(err, fvmerrors.ErrCodeInvalidEnvelopeSignatureError) {
 		for _, sig := range tx.EnvelopeSignatures {
 			debug := b.testAlternativeHashAlgo(sig, tx.EnvelopeMessage())
 			if debug != nil {
 				return debug
 			}
 		}
-	case fvmerrors.InvalidPayloadSignatureError:
+	}
+	if fvmerrors.HasErrorCode(err, fvmerrors.ErrCodeInvalidPayloadSignatureError) {
 		for _, sig := range tx.PayloadSignatures {
 			debug := b.testAlternativeHashAlgo(sig, tx.PayloadMessage())
 			if debug != nil {
