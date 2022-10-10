@@ -34,6 +34,8 @@ type Config struct {
 	Snapshot bool
 	// Badger options to open DB
 	BadgerOptions badger.Options
+	// In Memory
+	InMemory bool
 }
 
 // getBadgerconfig returns configuration object with  options and
@@ -47,10 +49,15 @@ func getBadgerConfig(opts ...Opt) Config {
 		applyOption(&conf)
 	}
 
-	conf.BadgerOptions = badger.DefaultOptions(conf.DBPath)
+	if conf.InMemory {
+		conf.BadgerOptions = badger.DefaultOptions("")
+	} else {
+		conf.BadgerOptions = badger.DefaultOptions(conf.DBPath)
+	}
+
 	conf.BadgerOptions.Logger = conf.Logger
 	conf.BadgerOptions.Truncate = conf.Truncate
-
+	conf.BadgerOptions.InMemory = conf.InMemory
 	return conf
 }
 
@@ -67,6 +74,7 @@ var defaultConfig = Config{
 	Logger:   noopLogger{},
 	DBPath:   "./flowdb",
 	Snapshot: false,
+	InMemory: true,
 }
 
 type Opt func(*Config)
@@ -74,11 +82,13 @@ type Opt func(*Config)
 func WithPath(path string) Opt {
 	return func(c *Config) {
 		c.DBPath = path
+		c.InMemory = false
 	}
 }
 func WithSnapshot(enabled bool) Opt {
 	return func(c *Config) {
 		c.Snapshot = enabled
+		c.InMemory = false
 	}
 }
 func WithLogger(logger badger.Logger) Opt {
@@ -90,5 +100,11 @@ func WithLogger(logger badger.Logger) Opt {
 func WithTruncate(trunc bool) Opt {
 	return func(c *Config) {
 		c.Truncate = trunc
+	}
+}
+
+func WithPersist(persist bool) Opt {
+	return func(c *Config) {
+		c.InMemory = !persist
 	}
 }
