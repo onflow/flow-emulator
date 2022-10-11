@@ -391,9 +391,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 }
 
 func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {
-	rt := runtime.NewInterpreterRuntime(runtime.Config{})
-
-	vm := fvm.NewVirtualMachine(rt)
+	vm := fvm.NewVirtualMachine()
 
 	fvmOptions := []fvm.Option{
 		fvm.WithLogger(conf.Logger),
@@ -1031,8 +1029,7 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 
 	env := fvm.NewTransactionEnvironment(
 		b.vmCtx,
-		b.vm,
-		state.NewStateTransaction(
+		state.NewTransactionState(
 			view,
 			stateParameters,
 		),
@@ -1042,11 +1039,13 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		nil,
 	)
 
+	r := b.vmCtx.Borrow(env)
+	defer b.vmCtx.Return(r)
 	ctx := runtime.Context{
 		Interface: env,
 	}
 
-	store, inter, err := b.vm.Runtime.Storage(ctx)
+	store, inter, err := r.Storage(ctx)
 	if err != nil {
 		return nil, err
 	}
