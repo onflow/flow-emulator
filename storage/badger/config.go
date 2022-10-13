@@ -19,6 +19,8 @@
 package badger
 
 import (
+	"fmt"
+
 	"github.com/dgraph-io/badger/v2"
 )
 
@@ -79,9 +81,12 @@ var defaultConfig = Config{
 
 type Opt func(*Config)
 
-func WithPath(path string) Opt {
+func WithPath(path string, name string) Opt {
 	return func(c *Config) {
 		c.DBPath = path
+		if name != "" {
+			c.DBPath = fmt.Sprintf("%s/%s", c.DBPath, name)
+		}
 		c.InMemory = false
 	}
 }
