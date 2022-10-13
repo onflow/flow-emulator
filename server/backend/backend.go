@@ -42,9 +42,11 @@ import (
 // Backend wraps an emulated blockchain and implements the RPC handlers
 // required by the Access API.
 type Backend struct {
-	logger   *logrus.Logger
-	emulator Emulator
-	automine bool
+	logger         *logrus.Logger
+	emulator       Emulator
+	emulators      map[string]Emulator
+	automine       bool
+	createEmulator func(string) (*emulator.Blockchain, error)
 }
 
 // SetEmulator hotswaps emulator for state management.
@@ -52,13 +54,35 @@ func (b *Backend) SetEmulator(emulator Emulator) {
 	b.emulator = emulator
 }
 
+func (b *Backend) SetEmulatorCreator(creator func(name string) (*emulator.Blockchain, error)) {
+	b.createEmulator = creator
+}
+
+func (b *Backend) SwitchEmulator(name string) error {
+	emulator, ok := b.emulators[name]
+	if ok {
+		b.emulator = emulator
+		return nil
+	}
+	emulator, err := b.createEmulator(name)
+	if err != nil {
+		return err
+	}
+	b.emulators[name] = emulator
+	b.emulator = emulator
+	return nil
+}
+
 // New returns a new backend.
 func New(logger *logrus.Logger, emulator Emulator) *Backend {
-	return &Backend{
-		logger:   logger,
-		emulator: emulator,
-		automine: false,
+	backend := &Backend{
+		logger:    logger,
+		emulator:  emulator,
+		emulators: make(map[string]Emulator),
+		automine:  false,
 	}
+	backend.emulators[""] = emulator
+	return backend
 }
 
 func (b *Backend) Ping(ctx context.Context) error {
