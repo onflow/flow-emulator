@@ -38,6 +38,8 @@ type Config struct {
 	BadgerOptions badger.Options
 	// In Memory
 	InMemory bool
+	// Tenant Name (for multitenant)
+	Name string
 }
 
 // getBadgerconfig returns configuration object with  options and
@@ -54,6 +56,9 @@ func getBadgerConfig(opts ...Opt) Config {
 	if conf.InMemory {
 		conf.BadgerOptions = badger.DefaultOptions("")
 	} else {
+		if conf.Name != "" {
+			conf.BadgerOptions = badger.DefaultOptions(fmt.Sprintf("%s/%s", conf.DBPath, conf.Name))
+		}
 		conf.BadgerOptions = badger.DefaultOptions(conf.DBPath)
 	}
 
@@ -81,15 +86,19 @@ var defaultConfig = Config{
 
 type Opt func(*Config)
 
-func WithPath(path string, name string) Opt {
+func WithPath(path string) Opt {
 	return func(c *Config) {
 		c.DBPath = path
-		if name != "" {
-			c.DBPath = fmt.Sprintf("%s/%s", c.DBPath, name)
-		}
 		c.InMemory = false
 	}
 }
+
+func WithName(name string) Opt {
+	return func(c *Config) {
+		c.Name = name
+	}
+}
+
 func WithSnapshot(enabled bool) Opt {
 	return func(c *Config) {
 		c.Snapshot = enabled
