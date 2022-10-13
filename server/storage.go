@@ -45,6 +45,7 @@ type BadgerStorage struct {
 
 func NewBadgerStorage(
 	logger *logrus.Logger,
+	name string,
 	dbPath string,
 	gcInterval time.Duration,
 	gcDiscardRatio float64,
@@ -54,7 +55,7 @@ func NewBadgerStorage(
 ) (*BadgerStorage, error) {
 	store, err := badger.New(
 		badger.WithSnapshot(snapshot),
-		badger.WithPath(dbPath),
+		badger.WithPath(dbPath, name),
 		badger.WithTruncate(true),
 		badger.WithPersist(persist),
 	)
