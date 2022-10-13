@@ -115,6 +115,10 @@ func (h *HTTPServer) Stop() {
 	_ = h.httpServer.Shutdown(context.Background())
 }
 
+func (h *HTTPServer) Server() *http.Server {
+	return h.httpServer
+}
+
 func wrappedHandler(wrappedServer *grpcweb.WrappedGrpcServer, headers []HTTPHeader) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		setResponseHeaders(&res, headers)
