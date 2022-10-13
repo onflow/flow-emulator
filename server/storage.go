@@ -55,7 +55,8 @@ func NewBadgerStorage(
 ) (*BadgerStorage, error) {
 	store, err := badger.New(
 		badger.WithSnapshot(snapshot),
-		badger.WithPath(dbPath, name),
+		badger.WithPath(dbPath),
+		badger.WithName(name),
 		badger.WithTruncate(true),
 		badger.WithPersist(persist),
 	)
