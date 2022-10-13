@@ -120,19 +120,19 @@ type Config struct {
 	ChainID flowgo.ChainID
 }
 
-// NewEmulatorServer creates a new instance of a Flow Emulator server.
-func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
+func prepareBlockchain(logger *logrus.Logger, conf *Config) (*emulator.Blockchain, Storage, error) {
+
 	conf = sanitizeConfig(conf)
 	store, err := configureStorage(logger, conf)
 	if err != nil {
 		logger.WithError(err).Error("❗  Failed to configure storage")
-		return nil
+		return nil, nil, err
 	}
 
 	blockchain, err := configureBlockchain(conf, store.Store())
 	if err != nil {
 		logger.WithError(err).Error("❗  Failed to configure emulated blockchain")
-		return nil
+		return nil, nil, err
 	}
 
 	chain := blockchain.GetChain()
@@ -160,6 +160,17 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		}
 	}
 
+	return blockchain, store, nil
+
+}
+
+// NewEmulatorServer creates a new instance of a Flow Emulator server.
+func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
+
+	blockchain, store, err := prepareBlockchain(logger, conf)
+	if err != nil {
+		return nil
+	}
 	be := configureBackend(logger, conf, blockchain)
 
 	livenessTicker := NewLivenessTicker(conf.LivenessCheckTolerance)
