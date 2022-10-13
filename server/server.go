@@ -20,6 +20,7 @@ package server
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/onflow/cadence"
@@ -120,10 +121,29 @@ type Config struct {
 	ChainID flowgo.ChainID
 }
 
-func prepareBlockchain(logger *logrus.Logger, conf *Config) (*emulator.Blockchain, Storage, error) {
+type TenantHandler struct {
+	originalHandler http.Handler
+	backend         *backend.Backend
+}
+
+func (t *TenantHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	emulator := r.Header.Get("Emulator")
+	_ = t.backend.SwitchEmulator(emulator)
+	t.originalHandler.ServeHTTP(w, r)
+}
+
+func applyTenantHandler(server *http.Server, backend *backend.Backend) {
+	handler := &TenantHandler{
+		originalHandler: server.Handler,
+		backend:         backend,
+	}
+	server.Handler = handler
+}
+
+func prepareBlockchain(logger *logrus.Logger, conf *Config, name string) (*emulator.Blockchain, Storage, error) {
 
 	conf = sanitizeConfig(conf)
-	store, err := configureStorage(logger, conf)
+	store, err := configureStorage(logger, conf, name)
 	if err != nil {
 		logger.WithError(err).Error("❗  Failed to configure storage")
 		return nil, nil, err
@@ -167,19 +187,22 @@ func prepareBlockchain(logger *logrus.Logger, conf *Config) (*emulator.Blockchai
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
 func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 
-	blockchain, store, err := prepareBlockchain(logger, conf)
+	blockchain, store, err := prepareBlockchain(logger, conf, "")
 	if err != nil {
 		return nil
 	}
+
 	be := configureBackend(logger, conf, blockchain)
 
 	livenessTicker := NewLivenessTicker(conf.LivenessCheckTolerance)
 	grpcServer := NewGRPCServer(logger, be, blockchain.GetChain(), conf.Host, conf.GRPCPort, conf.GRPCDebug)
+
 	restServer, err := NewRestServer(logger, be, blockchain.GetChain(), conf.Host, conf.RESTPort, conf.RESTDebug)
 	if err != nil {
 		logger.WithError(err).Error("❗  Failed to startup REST API")
 		return nil
 	}
+	applyTenantHandler(restServer.Server(), be)
 
 	server := &EmulatorServer{
 		logger:     logger,
@@ -194,6 +217,18 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	}
 
 	server.admin = NewAdminServer(logger, server, be, &store, grpcServer, livenessTicker, conf.Host, conf.AdminPort, conf.HTTPHeaders)
+	createBlockchain := func(name string) (*emulator.Blockchain, error) {
+		blockchain, store, err := prepareBlockchain(logger, conf, name)
+		if err != nil {
+			return nil, err
+		}
+		server.group.Add(store)
+		go func() {
+			_ = store.Start()
+		}()
+		return blockchain, nil
+	}
+	be.SetEmulatorCreator(createBlockchain)
 
 	// only create blocks ticker if block time > 0
 	if conf.BlockTime > 0 {
@@ -255,8 +290,8 @@ func (s *EmulatorServer) Stop() {
 	s.logger.Info("🛑  Server stopped")
 }
 
-func configureStorage(logger *logrus.Logger, conf *Config) (storage Storage, err error) {
-	return NewBadgerStorage(logger, conf.DBPath, conf.DBGCInterval, conf.DBGCDiscardRatio, conf.Snapshot, conf.Persist)
+func configureStorage(logger *logrus.Logger, conf *Config, name string) (storage Storage, err error) {
+	return NewBadgerStorage(logger, name, conf.DBPath, conf.DBGCInterval, conf.DBGCDiscardRatio, conf.Snapshot, conf.Persist)
 }
 
 func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchain, error) {
