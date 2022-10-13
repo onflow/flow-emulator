@@ -95,11 +95,12 @@ func NewTransactionInvalidSignature(
 
 // A ScriptResult is the result of executing a script.
 type ScriptResult struct {
-	ScriptID flowsdk.Identifier
-	Value    cadence.Value
-	Error    error
-	Logs     []string
-	Events   []flowsdk.Event
+	ScriptID        flowsdk.Identifier
+	Value           cadence.Value
+	Error           error
+	Logs            []string
+	Events          []flowsdk.Event
+	ComputationUsed uint64
 }
 
 // Succeeded returns true if the script executed without errors.

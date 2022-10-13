@@ -40,7 +40,7 @@ import (
 	"github.com/onflow/flow-emulator/convert"
 	sdkconvert "github.com/onflow/flow-emulator/convert/sdk"
 	"github.com/onflow/flow-emulator/storage"
-	"github.com/onflow/flow-emulator/storage/memstore"
+	"github.com/onflow/flow-emulator/storage/badger"
 	"github.com/onflow/flow-emulator/types"
 )
 
@@ -142,16 +142,17 @@ type config struct {
 	StorageMBPerFLOW             cadence.UFix64
 	Logger                       zerolog.Logger
 	TransactionValidationEnabled bool
+	ChainID                      flowgo.ChainID
 }
 
 func (conf config) GetStore() storage.Store {
-	// if no store is specified, use a memstore
-	// NOTE: we don't initialize this in defaultConfig because otherwise the same
-	// memstore is shared between Blockchain instances
 	if conf.Store == nil {
-		return memstore.New()
+		store, err := badger.New(badger.WithPersist(false))
+		if err != nil {
+			panic("Cannot initialize memory storage")
+		}
+		conf.Store = store
 	}
-
 	return conf.Store
 }
 
@@ -160,7 +161,7 @@ func (conf config) GetChainID() flowgo.ChainID {
 		return flowgo.MonotonicEmulator
 	}
 
-	return flowgo.Emulator
+	return conf.ChainID
 }
 
 func (conf config) GetServiceKey() ServiceKey {
@@ -196,6 +197,7 @@ var defaultConfig = func() config {
 		StorageLimitEnabled:          true,
 		Logger:                       zerolog.Nop(),
 		TransactionValidationEnabled: true,
+		ChainID:                      flowgo.Emulator,
 	}
 }()
 
@@ -347,6 +349,14 @@ func WithTransactionValidationEnabled(enabled bool) Option {
 	}
 }
 
+// WithChainID sets chain type for address generation
+// The default is emulator.
+func WithChainID(chainID flowgo.ChainID) Option {
+	return func(c *config) {
+		c.ChainID = chainID
+	}
+}
+
 // NewBlockchain instantiates a new emulated blockchain with the provided options.
 func NewBlockchain(opts ...Option) (*Blockchain, error) {
 
@@ -382,11 +392,10 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 }
 
 func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {
-	rt := runtime.NewInterpreterRuntime(runtime.Config{})
-
-	vm := fvm.NewVirtualMachine(rt)
+	vm := fvm.NewVirtualMachine()
 
 	fvmOptions := []fvm.Option{
+		fvm.WithLogger(conf.Logger),
 		fvm.WithChain(conf.GetChainID().Chain()),
 		fvm.WithBlocks(blocks),
 		fvm.WithRestrictedDeployment(false),
@@ -397,11 +406,10 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 	}
 
 	if !conf.TransactionValidationEnabled {
-		fvmOptions = append(fvmOptions, fvm.WithTransactionProcessors(fvm.NewTransactionInvoker(zerolog.Nop())))
+		fvmOptions = append(fvmOptions, fvm.WithTransactionProcessors(fvm.NewTransactionInvoker()))
 	}
 
 	ctx := fvm.NewContext(
-		conf.Logger,
 		fvmOptions...,
 	)
 
@@ -503,7 +511,7 @@ func bootstrapLedger(
 
 	bootstrap := configureBootstrapProcedure(conf, flowAccountKey, conf.GenesisTokenSupply)
 
-	err := vm.Run(ctx, bootstrap, ledger, programs.NewEmptyPrograms())
+	err := vm.Run(ctx, bootstrap, ledger)
 	if err != nil {
 		return err
 	}
@@ -795,7 +803,6 @@ func (b *Blockchain) getAccountAtBlock(address flowgo.Address, blockHeight uint6
 		b.vmCtx,
 		address,
 		b.storage.LedgerViewByHeight(blockHeight),
-		programs.NewEmptyPrograms(),
 	)
 
 	if fvmerrors.IsAccountNotFoundError(err) {
@@ -937,7 +944,7 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 		) (*fvm.TransactionProcedure, error) {
 			tx := fvm.Transaction(txBody, txIndex)
 
-			err := b.vm.Run(ctx, tx, ledgerView, programs.NewEmptyPrograms())
+			err := b.vm.Run(ctx, tx, ledgerView)
 			if err != nil {
 				return nil, err
 			}
@@ -1014,7 +1021,7 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 }
 
 func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, error) {
-	program := programs.NewEmptyPrograms()
+	view := b.pendingBlock.ledgerView.NewChild()
 
 	stateParameters := state.DefaultParameters().
 		WithMaxKeySizeAllowed(b.vmCtx.MaxStateKeySize).
@@ -1023,9 +1030,8 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 
 	env := fvm.NewTransactionEnvironment(
 		b.vmCtx,
-		b.vm,
-		state.NewStateTransaction(
-			b.pendingBlock.ledgerView,
+		state.NewTransactionState(
+			view,
 			stateParameters,
 		),
 		programs.NewEmptyPrograms(),
@@ -1034,16 +1040,18 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		nil,
 	)
 
+	r := b.vmCtx.Borrow(env)
+	defer b.vmCtx.Return(r)
 	ctx := runtime.Context{
 		Interface: env,
 	}
 
-	store, inter, err := b.vm.Runtime.Storage(ctx)
+	store, inter, err := r.Storage(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	account, err := b.vm.GetAccount(b.vmCtx, flowgo.BytesToAddress(address.Bytes()), b.pendingBlock.ledgerView, program)
+	account, err := b.vm.GetAccount(b.vmCtx, flowgo.BytesToAddress(address.Bytes()), view)
 	if err != nil {
 		return nil, err
 	}
@@ -1133,7 +1141,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
 
-	err = b.vm.Run(blockContext, scriptProc, requestedLedgerView, programs.NewEmptyPrograms())
+	err = b.vm.Run(blockContext, scriptProc, requestedLedgerView)
 	if err != nil {
 		return nil, err
 	}
@@ -1155,11 +1163,12 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 	}
 
 	return &types.ScriptResult{
-		ScriptID: scriptID,
-		Value:    convertedValue,
-		Error:    scriptError,
-		Logs:     scriptProc.Logs,
-		Events:   events,
+		ScriptID:        scriptID,
+		Value:           convertedValue,
+		Error:           scriptError,
+		Logs:            scriptProc.Logs,
+		Events:          events,
+		ComputationUsed: scriptProc.GasUsed,
 	}, nil
 }
 
@@ -1258,20 +1267,15 @@ func convertToSealedResults(
 
 // debugSignatureError tries to unwrap error to the root and test for invalid hashing algorithms
 func (b *Blockchain) debugSignatureError(err error, tx *flowgo.TransactionBody) *types.TransactionResultDebug {
-	var sigErr *fvmerrors.InvalidProposalSignatureError
-	if !errors.As(err, &sigErr) {
-		return nil
-	}
-
-	switch errors.Unwrap(sigErr).(type) {
-	case *fvmerrors.InvalidEnvelopeSignatureError:
+	if fvmerrors.HasErrorCode(err, fvmerrors.ErrCodeInvalidEnvelopeSignatureError) {
 		for _, sig := range tx.EnvelopeSignatures {
 			debug := b.testAlternativeHashAlgo(sig, tx.EnvelopeMessage())
 			if debug != nil {
 				return debug
 			}
 		}
-	case *fvmerrors.InvalidPayloadSignatureError:
+	}
+	if fvmerrors.HasErrorCode(err, fvmerrors.ErrCodeInvalidPayloadSignatureError) {
 		for _, sig := range tx.PayloadSignatures {
 			debug := b.testAlternativeHashAlgo(sig, tx.PayloadMessage())
 			if debug != nil {

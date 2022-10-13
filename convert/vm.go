@@ -43,7 +43,7 @@ func VMTransactionResultToEmulator(tp *fvm.TransactionProcedure) (*types.Transac
 	}, nil
 }
 
-func VMErrorToEmulator(vmError fvmerrors.Error) error {
+func VMErrorToEmulator(vmError fvmerrors.CodedError) error {
 	if vmError == nil {
 		return nil
 	}

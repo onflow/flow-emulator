@@ -28,6 +28,8 @@ import (
 
 	"github.com/onflow/cadence"
 	sdk "github.com/onflow/flow-go-sdk"
+	flowgo "github.com/onflow/flow-go/model/flow"
+
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/fvm"
 	"github.com/psiemens/sconfig"
@@ -68,6 +70,7 @@ type Config struct {
 	WithContracts             bool          `default:"false" flag:"contracts" info:"deploy common contracts when emulator starts"`
 	SkipTransactionValidation bool          `default:"false" flag:"skip-tx-validation" info:"skip verification of transaction signatures and sequence numbers"`
 	Host                      string        `default:"127.0.0.1" flag:"host" info:"host to listen on for emulator GRPC/REST/Admin servers"`
+	ChainID                   string        `default:"emulator" flag:"chain-id" info:"chain to emulate for address generation. Valid values are: 'emulator', 'testnet', 'mainnet'"`
 }
 
 const EnvPrefix = "FLOW"
@@ -126,7 +129,12 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				logger.SetLevel(logrus.DebugLevel)
 			}
 
-			serviceAddress := sdk.ServiceAddress(sdk.Emulator)
+			flowChainID, err := getSDKChainID(conf.ChainID)
+			if err != nil {
+				Exit(1, err.Error())
+			}
+
+			serviceAddress := sdk.ServiceAddress(sdk.ChainID(flowChainID))
 			if conf.SimpleAddresses {
 				serviceAddress = sdk.HexToAddress("0x1")
 			}
@@ -183,6 +191,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				SkipTransactionValidation: conf.SkipTransactionValidation,
 				SimpleAddressesEnabled:    conf.SimpleAddresses,
 				Host:                      conf.Host,
+				ChainID:                   flowChainID,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
@@ -243,6 +252,19 @@ func parseCadenceUFix64(value string, valueName string) cadence.UFix64 {
 	}
 
 	return tokenSupply
+}
+
+func getSDKChainID(chainID string) (flowgo.ChainID, error) {
+	switch chainID {
+	case "emulator":
+		return flowgo.Emulator, nil
+	case "testnet":
+		return flowgo.Testnet, nil
+	case "mainnet":
+		return flowgo.Testnet, nil
+	default:
+		return "", fmt.Errorf("Invalid ChainID %s, valid values are: emulator, testnet, mainnet", chainID)
+	}
 }
 
 func checkKeyAlgorithms(sigAlgo crypto.SignatureAlgorithm, hashAlgo crypto.HashAlgorithm) {

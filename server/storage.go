@@ -27,30 +27,11 @@ import (
 
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/badger"
-	"github.com/onflow/flow-emulator/storage/memstore"
 )
 
 type Storage interface {
 	graceland.Routine
 	Store() storage.Store
-}
-
-type MemoryStorage struct {
-	store *memstore.Store
-}
-
-func NewMemoryStorage() *MemoryStorage {
-	return &MemoryStorage{store: memstore.New()}
-}
-
-func (s *MemoryStorage) Start() error {
-	return nil
-}
-
-func (s *MemoryStorage) Stop() {}
-
-func (s *MemoryStorage) Store() storage.Store {
-	return s.store
 }
 
 type BadgerStorage struct {
@@ -68,11 +49,14 @@ func NewBadgerStorage(
 	gcInterval time.Duration,
 	gcDiscardRatio float64,
 	snapshot bool,
+	persist bool,
+
 ) (*BadgerStorage, error) {
 	store, err := badger.New(
 		badger.WithSnapshot(snapshot),
 		badger.WithPath(dbPath),
 		badger.WithTruncate(true),
+		badger.WithPersist(persist),
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to initialize Badger store")

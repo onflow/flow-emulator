@@ -220,19 +220,22 @@ func (b *Backend) SendTransaction(ctx context.Context, tx sdk.Transaction) error
 		case *emulator.DuplicateTransactionError:
 			return status.Error(codes.InvalidArgument, err.Error())
 		case *types.FlowError:
-			// TODO - confirm these
-			switch t.FlowError.(type) {
-			case *fvmerrors.AccountAuthorizationError,
-				*fvmerrors.InvalidEnvelopeSignatureError,
-				*fvmerrors.InvalidPayloadSignatureError,
-				*fvmerrors.InvalidProposalSignatureError,
-				*fvmerrors.AccountNotFoundError,
-				*fvmerrors.AccountPublicKeyNotFoundError,
-				*fvmerrors.InvalidProposalSeqNumberError,
-				*fvmerrors.InvalidAddressError:
+			switch t.FlowError.Code() {
+			case fvmerrors.ErrCodeAccountAuthorizationError,
+				fvmerrors.ErrCodeInvalidEnvelopeSignatureError,
+				fvmerrors.ErrCodeInvalidPayloadSignatureError,
+				fvmerrors.ErrCodeInvalidProposalSignatureError,
+				fvmerrors.ErrCodeAccountPublicKeyNotFoundError,
+				fvmerrors.ErrCodeInvalidProposalSeqNumberError,
+				fvmerrors.ErrCodeInvalidAddressError:
 
 				return status.Error(codes.InvalidArgument, err.Error())
+
 			default:
+				if fvmerrors.IsAccountNotFoundError(err) {
+					return status.Error(codes.InvalidArgument, err.Error())
+				}
+
 				return status.Error(codes.Internal, err.Error())
 			}
 		default:
@@ -686,10 +689,12 @@ func printScriptResult(logger *logrus.Logger, result *types.ScriptResult) {
 	if result.Succeeded() {
 		logger.
 			WithField("scriptID", result.ScriptID.String()).
+			WithField("computationUsed", result.ComputationUsed).
 			Info("⭐  Script executed")
 	} else {
 		logger.
 			WithField("scriptID", result.ScriptID.String()).
+			WithField("computationUsed", result.ComputationUsed).
 			Warn("❗  Script reverted")
 	}
 

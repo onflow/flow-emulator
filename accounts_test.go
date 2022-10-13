@@ -19,7 +19,6 @@
 package emulator_test
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 
@@ -33,7 +32,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	emulator "github.com/onflow/flow-emulator"
-	"github.com/onflow/flow-emulator/utils/unittest"
 )
 
 const testContract = "pub contract Test {}"
@@ -807,8 +805,9 @@ func TestRemoveAccountKey(t *testing.T) {
 	result, err = b.ExecuteNextTransaction()
 	assert.NoError(t, err)
 
-	var sigErr *fvmerrors.InvalidProposalSignatureError
-	assert.True(t, errors.As(result.Error, &sigErr))
+	var sigErr fvmerrors.CodedError
+	assert.ErrorAs(t, result.Error, &sigErr)
+	assert.True(t, fvmerrors.HasErrorCode(result.Error, fvmerrors.ErrCodeInvalidProposalSignatureError))
 
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
@@ -990,7 +989,7 @@ func TestUpdateAccountCode(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		unittest.AssertFVMErrorType(t, &fvmerrors.AccountAuthorizationError{}, result.Error)
+		assert.True(t, fvmerrors.HasErrorCode(result.Error, fvmerrors.ErrCodeAccountAuthorizationError))
 
 		_, err = b.CommitBlock()
 		assert.NoError(t, err)

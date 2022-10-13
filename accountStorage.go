@@ -54,7 +54,7 @@ func NewAccountStorage(
 		values := make(StorageItem)
 		k, v := iterator.Next()
 		for v != nil {
-			exportedValue, err := runtime.ExportValue(v, inter, nil)
+			exportedValue, err := runtime.ExportValue(v, inter, interpreter.EmptyLocationRange)
 			if err != nil {
 				continue // just skip errored value
 			}

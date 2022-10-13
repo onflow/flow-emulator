@@ -25,6 +25,8 @@ import (
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/fvm"
+	"github.com/onflow/flow-go/fvm/environment"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/psiemens/graceland"
 	"github.com/sirupsen/logrus"
 
@@ -115,13 +117,14 @@ type Config struct {
 	SimpleAddressesEnabled    bool
 	SkipTransactionValidation bool
 	// Host listen on for the emulator servers (REST/GRPC/Admin)
-	Host                      string
+	Host string
+	//Chain to emulation
+	ChainID flowgo.ChainID
 }
 
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
 func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	conf = sanitizeConfig(conf)
-
 	store, err := configureStorage(logger, conf)
 	if err != nil {
 		logger.WithError(err).Error("❗  Failed to configure storage")
@@ -140,7 +143,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		"FlowServiceAccount": chain.ServiceAddress().HexWithPrefix(),
 		"FlowToken":          fvm.FlowTokenAddress(chain).HexWithPrefix(),
 		"FungibleToken":      fvm.FungibleTokenAddress(chain).HexWithPrefix(),
-		"FlowFees":           fvm.FlowFeesAddress(chain).HexWithPrefix(),
+		"FlowFees":           environment.FlowFeesAddress(chain).HexWithPrefix(),
 		"FlowStorageFees":    chain.ServiceAddress().HexWithPrefix(),
 	}
 	for contract, address := range contracts {
@@ -163,7 +166,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 
 	livenessTicker := NewLivenessTicker(conf.LivenessCheckTolerance)
 	grpcServer := NewGRPCServer(logger, be, blockchain.GetChain(), conf.Host, conf.GRPCPort, conf.GRPCDebug)
-	restServer, err := NewRestServer(be, blockchain.GetChain(), conf.Host, conf.RESTPort, conf.RESTDebug)
+	restServer, err := NewRestServer(logger, be, blockchain.GetChain(), conf.Host, conf.RESTPort, conf.RESTDebug)
 	if err != nil {
 		logger.WithError(err).Error("❗  Failed to startup REST API")
 		return nil
@@ -184,7 +187,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		debugger:   debugger,
 	}
 
-	server.admin = NewAdminServer(server, be, &store, grpcServer, livenessTicker, conf.Host, conf.AdminPort, conf.HTTPHeaders)
+	server.admin = NewAdminServer(logger, server, be, &store, grpcServer, livenessTicker, conf.Host, conf.AdminPort, conf.HTTPHeaders)
 
 	// only create blocks ticker if block time > 0
 	if conf.BlockTime > 0 {
@@ -252,11 +255,7 @@ func (s *EmulatorServer) Stop() {
 }
 
 func configureStorage(logger *logrus.Logger, conf *Config) (storage Storage, err error) {
-	if conf.Persist || conf.Snapshot {
-		return NewBadgerStorage(logger, conf.DBPath, conf.DBGCInterval, conf.DBGCDiscardRatio, conf.Snapshot)
-	}
-
-	return NewMemoryStorage(), nil
+	return NewBadgerStorage(logger, conf.DBPath, conf.DBGCInterval, conf.DBGCDiscardRatio, conf.Snapshot, conf.Persist)
 }
 
 func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchain, error) {
@@ -270,6 +269,7 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithMinimumStorageReservation(conf.MinimumStorageReservation),
 		emulator.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
+		emulator.WithChainID(conf.ChainID),
 	}
 
 	if conf.SkipTransactionValidation {
@@ -343,6 +343,10 @@ func sanitizeConfig(conf *Config) *Config {
 
 	if conf.LivenessCheckTolerance == 0 {
 		conf.LivenessCheckTolerance = defaultLivenessCheckTolerance
+	}
+
+	if conf.ChainID == "" {
+		conf.ChainID = flowgo.Emulator
 	}
 
 	return conf
