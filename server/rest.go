@@ -56,6 +56,9 @@ func (r *RestServer) Stop() {
 	_ = r.server.Shutdown(context.Background())
 }
 
+func (r *RestServer) Server() *http.Server {
+	return r.server
+}
 func NewRestServer(logger *logrus.Logger, be *backend.Backend, chain flow.Chain, host string, port int, debug bool) (*RestServer, error) {
 
 	debugLogger := zerolog.Logger{}
