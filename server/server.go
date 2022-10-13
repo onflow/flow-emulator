@@ -132,7 +132,7 @@ func (t *TenantHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	t.originalHandler.ServeHTTP(w, r)
 }
 
-func applyTenantHandler(server *http.Server, backend *backend.Backend) {
+func wrapWithTenantHandler(server *http.Server, backend *backend.Backend) {
 	handler := &TenantHandler{
 		originalHandler: server.Handler,
 		backend:         backend,
@@ -202,7 +202,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		logger.WithError(err).Error("❗  Failed to startup REST API")
 		return nil
 	}
-	applyTenantHandler(restServer.Server(), be)
+	wrapWithTenantHandler(restServer.Server(), be)
 
 	server := &EmulatorServer{
 		logger:     logger,
@@ -216,7 +216,10 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		blockchain: blockchain,
 	}
 
-	server.admin = NewAdminServer(logger, server, be, &store, grpcServer, livenessTicker, conf.Host, conf.AdminPort, conf.HTTPHeaders)
+	adminServer := NewAdminServer(logger, server, be, &store, grpcServer, livenessTicker, conf.Host, conf.AdminPort, conf.HTTPHeaders)
+	wrapWithTenantHandler(adminServer.Server(), be)
+	server.admin = adminServer
+
 	createBlockchain := func(name string) (*emulator.Blockchain, error) {
 		blockchain, store, err := prepareBlockchain(logger, conf, name)
 		if err != nil {

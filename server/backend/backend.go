@@ -54,10 +54,12 @@ func (b *Backend) SetEmulator(emulator Emulator) {
 	b.emulator = emulator
 }
 
+// Allows backend to create emulator on demand
 func (b *Backend) SetEmulatorCreator(creator func(name string) (*emulator.Blockchain, error)) {
 	b.createEmulator = creator
 }
 
+// Switches active blockchain for current request
 func (b *Backend) SwitchEmulator(name string) error {
 	emulator, ok := b.emulators[name]
 	if ok {
