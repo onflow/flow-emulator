@@ -20,6 +20,7 @@ import (
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
+	"github.com/onflow/cadence/runtime/interpreter"
 	sdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
@@ -1055,7 +1056,37 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		return nil, err
 	}
 
-	return NewAccountStorage(address, account, store, inter)
+	extractStorage := func(path common.PathDomain) StorageItem {
+		storageMap := store.GetStorageMap(
+			common.MustBytesToAddress(address.Bytes()),
+			path.Identifier(),
+			false)
+		if storageMap == nil {
+			return nil
+		}
+
+		iterator := storageMap.Iterator(nil)
+		values := make(StorageItem)
+		k, v := iterator.Next()
+		for v != nil {
+			exportedValue, err := runtime.ExportValue(v, inter, interpreter.EmptyLocationRange)
+			if err != nil {
+				continue // just skip errored value
+			}
+
+			values[k] = exportedValue
+			k, v = iterator.Next()
+		}
+		return values
+	}
+
+	return NewAccountStorage(
+		account,
+		address,
+		extractStorage(common.PathDomainPrivate),
+		extractStorage(common.PathDomainPublic),
+		extractStorage(common.PathDomainStorage),
+	)
 }
 
 // ExecuteAndCommitBlock is a utility that combines ExecuteBlock with CommitBlock.
