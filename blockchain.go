@@ -813,7 +813,7 @@ func (b *Blockchain) getAccountAtBlock(address flowgo.Address, blockHeight uint6
 	account, err := b.vm.GetAccount(
 		b.vmCtx,
 		address,
-		b.storage.LedgerViewByHeight(blockHeight),
+		b.storage.LedgerViewByHeight(context.Background(), blockHeight),
 	)
 
 	if fvmerrors.IsAccountNotFoundError(err) {
