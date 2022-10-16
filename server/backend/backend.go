@@ -47,6 +47,8 @@ type Backend struct {
 	automine bool
 }
 
+var _ access.API = &Backend{}
+
 // SetEmulator hotswaps emulator for state management.
 func (b *Backend) SetEmulator(emulator Emulator) {
 	b.emulator = emulator
@@ -111,9 +113,9 @@ func (b *Backend) GetBlockHeaderByHeight(
 // GetBlockHeaderByID gets a block header by ID.
 func (b *Backend) GetBlockHeaderByID(
 	ctx context.Context,
-	id sdk.Identifier,
+	id flowgo.Identifier,
 ) (*flowgo.Header, error) {
-	block, err := b.emulator.GetBlockByID(id)
+	block, err := b.emulator.GetBlockByID(convert.FlowIdentifierToSDK(id))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -168,9 +170,9 @@ func (b *Backend) GetBlockByHeight(
 // GetBlockByHeight gets a block by ID.
 func (b *Backend) GetBlockByID(
 	ctx context.Context,
-	id sdk.Identifier,
+	id flowgo.Identifier,
 ) (*flowgo.Block, error) {
-	block, err := b.emulator.GetBlockByID(id)
+	block, err := b.emulator.GetBlockByID(convert.FlowIdentifierToSDK(id))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -188,9 +190,10 @@ func (b *Backend) GetBlockByID(
 // GetCollectionByID gets a collection by ID.
 func (b *Backend) GetCollectionByID(
 	ctx context.Context,
-	id sdk.Identifier,
-) (*sdk.Collection, error) {
-	col, err := b.emulator.GetCollection(id)
+	id flowgo.Identifier,
+) (*flowgo.LightCollection, error) {
+
+	col, err := b.emulator.GetCollection(convert.FlowIdentifierToSDK(id))
 	if err != nil {
 		switch err.(type) {
 		case emulator.NotFoundError:
@@ -199,17 +202,16 @@ func (b *Backend) GetCollectionByID(
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 	}
-
 	b.logger.
-		WithField("colID", id.Hex()).
+		WithField("colID", id.String()).
 		Debugf("📚  GetCollectionByID called")
 
-	return col, nil
+	return convert.SDKCollectionToFlow(col), nil
 }
 
 // SendTransaction submits a transaction to the network.
-func (b *Backend) SendTransaction(ctx context.Context, tx sdk.Transaction) error {
-	err := b.emulator.AddTransaction(tx)
+func (b *Backend) SendTransaction(ctx context.Context, tx *flowgo.TransactionBody) error {
+	err := b.emulator.AddTransaction(convert.FlowTransactionToSDK(*tx))
 	if err != nil {
 		switch t := err.(type) {
 		case *emulator.DuplicateTransactionError:
@@ -239,7 +241,7 @@ func (b *Backend) SendTransaction(ctx context.Context, tx sdk.Transaction) error
 	} else {
 		b.logger.
 			WithField("txID", tx.ID().String()).
-			Debug("️✉️   Transaction submitted")
+			Debug(`✉️   Transaction submitted`)
 	}
 
 	if b.automine {
@@ -252,9 +254,9 @@ func (b *Backend) SendTransaction(ctx context.Context, tx sdk.Transaction) error
 // GetTransaction gets a transaction by ID.
 func (b *Backend) GetTransaction(
 	ctx context.Context,
-	id sdk.Identifier,
-) (*sdk.Transaction, error) {
-	tx, err := b.emulator.GetTransaction(id)
+	id flowgo.Identifier,
+) (*flowgo.TransactionBody, error) {
+	tx, err := b.emulator.GetTransaction(convert.FlowIdentifierToSDK(id))
 	if err != nil {
 		switch err.(type) {
 		case emulator.NotFoundError:
@@ -268,15 +270,16 @@ func (b *Backend) GetTransaction(
 		WithField("txID", id.String()).
 		Debugf("💵  GetTransaction called")
 
-	return tx, nil
+	return convert.SDKTransactionToFlow(*tx), nil
+
 }
 
 // GetTransactionResult gets a transaction by ID.
 func (b *Backend) GetTransactionResult(
 	ctx context.Context,
-	id sdk.Identifier,
-) (*sdk.TransactionResult, error) {
-	result, err := b.emulator.GetTransactionResult(id)
+	id flowgo.Identifier,
+) (*access.TransactionResult, error) {
+	result, err := b.emulator.GetTransactionResult(convert.FlowIdentifierToSDK(id))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -285,41 +288,56 @@ func (b *Backend) GetTransactionResult(
 		WithField("txID", id.String()).
 		Debugf("📝  GetTransactionResult called")
 
-	return result, nil
+	flowResult, err := convert.SDKTransactionResultToFlow(result)
+	if err != nil {
+		return nil, err
+	}
+
+	return flowResult, nil
 }
 
 // GetAccount returns an account by address at the latest sealed block.
 func (b *Backend) GetAccount(
 	ctx context.Context,
-	address sdk.Address,
-) (*sdk.Account, error) {
+	address flowgo.Address,
+) (*flowgo.Account, error) {
 	b.logger.
 		WithField("address", address).
 		Debugf("👤  GetAccount called")
 
-	account, err := b.getAccount(address)
+	account, err := b.getAccount(convert.FlowAddressToSDK(address))
 	if err != nil {
 		return nil, err
 	}
 
-	return account, nil
+	flowAccount, err := convert.SDKAccountToFlow(account)
+	if err != nil {
+		return nil, err
+	}
+
+	return flowAccount, nil
 }
 
 // GetAccountAtLatestBlock returns an account by address at the latest sealed block.
 func (b *Backend) GetAccountAtLatestBlock(
 	ctx context.Context,
-	address sdk.Address,
-) (*sdk.Account, error) {
+	address flowgo.Address,
+) (*flowgo.Account, error) {
 	b.logger.
 		WithField("address", address).
 		Debugf("👤  GetAccountAtLatestBlock called")
 
-	account, err := b.getAccount(address)
+	account, err := b.getAccount(convert.FlowAddressToSDK(address))
 	if err != nil {
 		return nil, err
 	}
 
-	return account, nil
+	flowAccount, err := convert.SDKAccountToFlow(account)
+	if err != nil {
+		return nil, err
+	}
+
+	return flowAccount, nil
 }
 
 func (b *Backend) getAccount(address sdk.Address) (*sdk.Account, error) {
@@ -338,15 +356,15 @@ func (b *Backend) getAccount(address sdk.Address) (*sdk.Account, error) {
 
 func (b *Backend) GetAccountAtBlockHeight(
 	ctx context.Context,
-	address sdk.Address,
+	address flowgo.Address,
 	height uint64,
-) (*sdk.Account, error) {
+) (*flowgo.Account, error) {
 	b.logger.
 		WithField("address", address).
 		WithField("height", height).
 		Debugf("👤  GetAccountAtBlockHeight called")
 
-	account, err := b.emulator.GetAccountAtBlock(address, height)
+	account, err := b.emulator.GetAccountAtBlock(convert.FlowAddressToSDK(address), height)
 	if err != nil {
 		switch err.(type) {
 		case emulator.NotFoundError:
@@ -356,7 +374,12 @@ func (b *Backend) GetAccountAtBlockHeight(
 		}
 	}
 
-	return account, nil
+	flowAccount, err := convert.SDKAccountToFlow(account)
+	if err != nil {
+		return nil, err
+	}
+
+	return flowAccount, nil
 }
 
 // ExecuteScriptAtLatestBlock executes a script at a the latest block
@@ -392,7 +415,7 @@ func (b *Backend) ExecuteScriptAtBlockHeight(
 // ExecuteScriptAtBlockID executes a script at a specific block ID
 func (b *Backend) ExecuteScriptAtBlockID(
 	ctx context.Context,
-	blockID sdk.Identifier,
+	blockID flowgo.Identifier,
 	script []byte,
 	arguments [][]byte,
 ) ([]byte, error) {
@@ -400,7 +423,7 @@ func (b *Backend) ExecuteScriptAtBlockID(
 		WithField("blockID", blockID).
 		Debugf("👤  ExecuteScriptAtBlockID called")
 
-	block, err := b.emulator.GetBlockByID(blockID)
+	block, err := b.emulator.GetBlockByID(convert.FlowIdentifierToSDK(blockID))
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -485,7 +508,7 @@ func (b *Backend) GetEventsForHeightRange(
 func (b *Backend) GetEventsForBlockIDs(
 	ctx context.Context,
 	eventType string,
-	blockIDs []sdk.Identifier,
+	blockIDs []flowgo.Identifier,
 ) ([]flowgo.BlockEvents, error) {
 
 	err := validateEventType(eventType)
@@ -497,7 +520,7 @@ func (b *Backend) GetEventsForBlockIDs(
 	eventCount := 0
 
 	for _, blockID := range blockIDs {
-		block, err := b.emulator.GetBlockByID(blockID)
+		block, err := b.emulator.GetBlockByID(convert.FlowIdentifierToSDK(blockID))
 		if err != nil {
 			switch err.(type) {
 			case emulator.NotFoundError:
@@ -597,6 +620,10 @@ func (b *Backend) GetLatestProtocolStateSnapshot(_ context.Context) ([]byte, err
 }
 
 func (b *Backend) GetExecutionResultForBlockID(_ context.Context, _ flowgo.Identifier) (*flowgo.ExecutionResult, error) {
+	return nil, nil
+}
+
+func (b *Backend) GetExecutionResultByID(ctx context.Context, id flowgo.Identifier) (*flowgo.ExecutionResult, error) {
 	return nil, nil
 }
 
