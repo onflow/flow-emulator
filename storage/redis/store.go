@@ -39,7 +39,6 @@ func New(url string) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(options)
 	store := &Store{
 		options: options,
 		rdb:     redis.NewClient(options),
