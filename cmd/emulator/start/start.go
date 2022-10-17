@@ -69,7 +69,7 @@ type Config struct {
 	SkipTransactionValidation bool          `default:"false" flag:"skip-tx-validation" info:"skip verification of transaction signatures and sequence numbers"`
 	Host                      string        `default:"127.0.0.1" flag:"host" info:"host to listen on for emulator GRPC/REST/Admin servers"`
 	ChainID                   string        `default:"emulator" flag:"chain-id" info:"chain to emulate for address generation. Valid values are: 'emulator', 'testnet', 'mainnet'"`
-	RedisURL                  string        `default:"" flag:"redis-url" info:"redis-server URL for persisting redis storage backend"`
+	RedisURL                  string        `default:"" flag:"redis-url" info:"redis-server URL for persisting redis storage backend ( redis://[[username:]password@]host[:port][/database] ) "`
 }
 
 const EnvPrefix = "FLOW"
