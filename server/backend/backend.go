@@ -592,6 +592,11 @@ func (b *Backend) CommitBlock() {
 	}).Debugf("📦  Block #%d committed", block.Header.Height)
 }
 
+type ScriptResultWithLogs struct {
+	types.ScriptResult
+	Logs []string
+}
+
 // executeScriptAtBlock is a helper for executing a script at a specific block
 func (b *Backend) executeScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) ([]byte, error) {
 	result, err := b.emulator.ExecuteScriptAtBlock(script, arguments, blockHeight)
@@ -605,7 +610,10 @@ func (b *Backend) executeScriptAtBlock(script []byte, arguments [][]byte, blockH
 		return nil, result.Error
 	}
 
-	valueBytes, err := jsoncdc.Encode(result.Value)
+	valueBytes, err := json.Marshal(ScriptResultWithLogs{
+		ScriptResult: *result,
+		Logs:         result.Logs,
+	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
