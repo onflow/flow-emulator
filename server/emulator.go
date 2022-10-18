@@ -20,6 +20,7 @@ package server
 
 import (
 	"encoding/json"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"net/http"
 
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
@@ -55,6 +56,7 @@ func NewEmulatorAPIServer(server *EmulatorServer, backend *backend.Backend, stor
 	router.HandleFunc("/emulator/newBlock", r.CommitBlock)
 	router.HandleFunc("/emulator/snapshot/{name}", r.Snapshot)
 	router.HandleFunc("/emulator/storages/{address}", r.Storage)
+	router.HandleFunc("/emulator/logs/{txId}", r.Logs)
 
 	return r
 }
@@ -84,6 +86,20 @@ func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+}
+
+func (m EmulatorAPIServer) Logs(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	vars := mux.Vars(r)
+	txId := vars["txId"]
+
+	res, err := json.Marshal(m.backend.GetLogs(txId)
+	if err != nil {
+		m.server.logger.Error("Can't marshal logs")
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(res)
 }
 
 func (m EmulatorAPIServer) Snapshot(w http.ResponseWriter, r *http.Request) {
