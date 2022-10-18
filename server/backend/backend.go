@@ -21,11 +21,11 @@ package backend
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/logrusorgru/aurora"
-	jsoncdc "github.com/onflow/cadence/encoding/json"
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go/access"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
@@ -45,6 +45,7 @@ type Backend struct {
 	logger   *logrus.Logger
 	emulator Emulator
 	automine bool
+	logs     map[string][]string
 }
 
 var _ access.API = &Backend{}
@@ -60,6 +61,7 @@ func New(logger *logrus.Logger, emulator Emulator) *Backend {
 		logger:   logger,
 		emulator: emulator,
 		automine: false,
+		logs:     make(map[string][]string),
 	}
 }
 
@@ -576,6 +578,10 @@ func (b *Backend) CommitBlock() {
 
 	for _, result := range results {
 		printTransactionResult(b.logger, result)
+
+		// Store logs on Backend instance, so we could fetch it later
+		txId := result.TransactionID.String()
+		b.logs[txId] = result.Logs
 	}
 
 	blockID := block.ID()
@@ -650,6 +656,14 @@ func (b *Backend) GetTransactionsByBlockID(ctx context.Context, id flowgo.Identi
 func (b *Backend) GetTransactionResultsByBlockID(ctx context.Context, id flowgo.Identifier) ([]*access.TransactionResult, error) {
 	// TODO: implement
 	panic("GetTransactionResultsByBlockID not implemented")
+}
+
+func (b *Backend) GetLogs(id string) []string {
+	logs := b.logs[id]
+	if logs == nil {
+		logs = []string{}
+	}
+	return logs
 }
 
 func printTransactionResult(logger *logrus.Logger, result *types.TransactionResult) {
