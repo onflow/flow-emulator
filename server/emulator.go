@@ -20,7 +20,6 @@ package server
 
 import (
 	"encoding/json"
-	flowgo "github.com/onflow/flow-go/model/flow"
 	"net/http"
 
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
