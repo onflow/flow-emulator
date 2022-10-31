@@ -23,13 +23,13 @@ import (
 
 	"github.com/onflow/flow-go/access"
 
-	"github.com/onflow/flow-go/fvm"
+	"github.com/onflow/flow-go/fvm/environment"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/onflow/flow-emulator/storage"
 )
 
-var _ fvm.Blocks = &blocks{}
+var _ environment.Blocks = &blocks{}
 var _ access.Blocks = &blocks{}
 
 type blocks struct {
@@ -67,6 +67,6 @@ func (b *blocks) FinalizedHeader() (*flowgo.Header, error) {
 }
 
 func (b *blocks) ByHeightFrom(height uint64, header *flowgo.Header) (*flowgo.Header, error) {
-	return fvm.NewBlockFinder(b.headers).
+	return environment.NewBlockFinder(b.headers).
 		ByHeightFrom(height, header)
 }
