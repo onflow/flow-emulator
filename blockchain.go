@@ -30,8 +30,8 @@ import (
 	"github.com/onflow/flow-go/engine/execution/state/delta"
 	"github.com/onflow/flow-go/fvm"
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
+	"github.com/onflow/flow-go/fvm/environment"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
-	"github.com/onflow/flow-go/fvm/meter"
 	"github.com/onflow/flow-go/fvm/programs"
 	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -547,9 +547,9 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 				common.ComputationKindStatement:          1569,
 				common.ComputationKindLoop:               1569,
 				common.ComputationKindFunctionInvocation: 1569,
-				meter.ComputationKindGetValue:            808,
-				meter.ComputationKindCreateAccount:       2837670,
-				meter.ComputationKindSetValue:            765,
+				environment.ComputationKindGetValue:      808,
+				environment.ComputationKindCreateAccount: 2837670,
+				environment.ComputationKindSetValue:      765,
 			}),
 		)
 	}
@@ -1028,13 +1028,19 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		WithMaxValueSizeAllowed(b.vmCtx.MaxStateValueSize).
 		WithMaxInteractionSizeAllowed(math.MaxUint64)
 
+	txnPrograms, err := programs.NewEmptyBlockPrograms().
+		NewTransactionPrograms(0, 0)
+	if err != nil {
+		return nil, err
+	}
+
 	env := fvm.NewTransactionEnvironment(
 		b.vmCtx,
 		state.NewTransactionState(
 			view,
 			stateParameters,
 		),
-		programs.NewEmptyPrograms(),
+		txnPrograms,
 		flowgo.NewTransactionBody(),
 		0,
 		nil,
