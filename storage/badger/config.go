@@ -82,6 +82,9 @@ type Opt func(*Config)
 func WithPath(path string) Opt {
 	return func(c *Config) {
 		c.DBPath = path
+		if path != "" {
+			c.InMemory = false
+		}
 	}
 }
 func WithSnapshot(enabled bool) Opt {
