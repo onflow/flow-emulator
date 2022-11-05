@@ -82,13 +82,12 @@ type Opt func(*Config)
 func WithPath(path string) Opt {
 	return func(c *Config) {
 		c.DBPath = path
-		c.InMemory = false
 	}
 }
 func WithSnapshot(enabled bool) Opt {
 	return func(c *Config) {
 		c.Snapshot = enabled
-		c.InMemory = false
+		c.InMemory = c.InMemory && !enabled
 	}
 }
 func WithLogger(logger badger.Logger) Opt {
@@ -105,6 +104,6 @@ func WithTruncate(trunc bool) Opt {
 
 func WithPersist(persist bool) Opt {
 	return func(c *Config) {
-		c.InMemory = !persist
+		c.InMemory = c.InMemory && !persist
 	}
 }
