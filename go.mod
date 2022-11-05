@@ -13,9 +13,9 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v0.29.0-stable-cadence
-	github.com/onflow/flow-go v0.28.1-0.20221102214617-b55a1eda4e4f
-	github.com/onflow/flow-go-sdk v0.29.0
+	github.com/onflow/cadence v0.29.0-stable-cadence-2
+	github.com/onflow/flow-go v0.28.1-0.20221105000816-127438ecc360
+	github.com/onflow/flow-go-sdk v0.29.1-0.20221105000544-8bd53e2edb8a
 	github.com/onflow/flow-go/crypto v0.24.4
 	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20220727161549-d59b1e547ac4
 	github.com/onflow/flow/protobuf/go/flow v0.3.1
