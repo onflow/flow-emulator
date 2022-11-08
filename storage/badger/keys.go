@@ -107,7 +107,7 @@ func ledgerChangelogKey(registerID flowgo.RegisterID) []byte {
 }
 
 func ledgerValueKey(registerID flowgo.RegisterID, blockHeight uint64) []byte {
-	return []byte(fmt.Sprintf("%s-%s-%032d", ledgerValueKeyPrefix, registerID.String(), blockHeight))
+	return []byte(fmt.Sprintf("%s-%x/%x-%032d", ledgerValueKeyPrefix, registerID.Owner, registerID.Key, blockHeight))
 }
 
 // registerIDFromLedgerChangelogKey recovers the register ID from a ledger
