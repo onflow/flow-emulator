@@ -267,9 +267,10 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 
 		require.Error(t, result.Error)
 
-		assert.IsType(t, &types.FlowError{}, result.Error)
-		assert.IsType(t, fvmerrors.InvalidProposalSeqNumberError{}, result.Error.(*types.FlowError).FlowError)
-		assert.Equal(t, invalidSequenceNumber, result.Error.(*types.FlowError).FlowError.(fvmerrors.InvalidProposalSeqNumberError).ProvidedSeqNumber())
+		var flowErr *types.FlowError
+		require.ErrorAs(t, result.Error, &flowErr)
+
+		assert.True(t, fvmerrors.HasErrorCode(flowErr.FlowError, fvmerrors.ErrCodeInvalidProposalSeqNumberError))
 	})
 
 	const expiry = 10
