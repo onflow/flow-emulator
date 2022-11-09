@@ -33,19 +33,23 @@ import (
 )
 
 type RestServer struct {
-	logger   *logrus.Logger
-	host     string
-	port     int
-	server   *http.Server
-	listener net.Listener
+	logger *logrus.Logger
+	host   string
+	port   int
+	server *http.Server
 }
 
 func (r *RestServer) Start() error {
+	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", r.host, r.port))
+	if err != nil {
+		return err
+	}
+
 	r.logger.
 		WithField("port", r.port).
 		Infof("✅  Started REST API server on port %d", r.port)
 
-	err := r.server.Serve(r.listener)
+	err = r.server.Serve(l)
 	if err != nil {
 		return err
 	}
@@ -68,16 +72,10 @@ func NewRestServer(logger *logrus.Logger, be *backend.Backend, chain flow.Chain,
 		return nil, err
 	}
 
-	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", host, port))
-	if err != nil {
-		return nil, err
-	}
-
 	return &RestServer{
-		logger:   logger,
-		host:     host,
-		port:     port,
-		server:   srv,
-		listener: l,
+		logger: logger,
+		host:   host,
+		port:   port,
+		server: srv,
 	}, nil
 }
