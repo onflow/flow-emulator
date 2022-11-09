@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -268,8 +269,10 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		require.Error(t, result.Error)
 
 		assert.IsType(t, &types.FlowError{}, result.Error)
-		assert.IsType(t, fvmerrors.InvalidProposalSeqNumberError{}, result.Error.(*types.FlowError).FlowError)
-		assert.Equal(t, invalidSequenceNumber, result.Error.(*types.FlowError).FlowError.(fvmerrors.InvalidProposalSeqNumberError).ProvidedSeqNumber())
+		seqErr := fvmerrors.InvalidProposalSeqNumberError{}
+		ok := errors.As(result.Error, &seqErr)
+		assert.True(t, ok)
+		assert.Equal(t, invalidSequenceNumber, seqErr.ProvidedSeqNumber())
 	})
 
 	const expiry = 10
