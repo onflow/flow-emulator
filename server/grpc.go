@@ -47,8 +47,10 @@ func NewGRPCServer(logger *logrus.Logger, b *backend.Backend, chain flow.Chain, 
 		grpc.UnaryInterceptor(grpcprometheus.UnaryServerInterceptor),
 	)
 
-	legacyaccessproto.RegisterAccessAPIServer(grpcServer, legacyaccess.NewHandler(b, chain))
-	accessproto.RegisterAccessAPIServer(grpcServer, access.NewHandler(b, chain))
+	adaptedBackend := backend.NewAdapter(b)
+
+	legacyaccessproto.RegisterAccessAPIServer(grpcServer, legacyaccess.NewHandler(adaptedBackend, chain))
+	accessproto.RegisterAccessAPIServer(grpcServer, access.NewHandler(adaptedBackend, chain))
 
 	grpcprometheus.Register(grpcServer)
 

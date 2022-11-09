@@ -39,8 +39,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	emulator "github.com/onflow/flow-emulator"
-	convert "github.com/onflow/flow-emulator/convert/sdk"
-
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-emulator/server/backend/mocks"
 	"github.com/onflow/flow-emulator/types"
@@ -165,7 +163,7 @@ func TestBackend(t *testing.T) {
 			randomBlock := flowgo.Block{Header: &flowgo.Header{Height: rand.Uint64()}}
 
 			emu.EXPECT().
-				GetBlockByID(convert.FlowIdentifierToSDK(randomBlock.ID())).
+				GetBlockByID(flowsdk.Identifier(randomBlock.ID())).
 				Return(&randomBlock, nil).
 				Times(1)
 
@@ -179,7 +177,7 @@ func TestBackend(t *testing.T) {
 
 			value, err := backend.ExecuteScriptAtBlockID(
 				context.Background(),
-				flowgo.Identifier(randomBlock.ID()),
+				flowsdk.Identifier(randomBlock.ID()),
 				script,
 				nil,
 			)
@@ -202,11 +200,10 @@ func TestBackend(t *testing.T) {
 				Return(expectedAccount, nil).
 				Times(1)
 
-			actualAccount, err := backend.GetAccountAtLatestBlock(context.Background(), convert.SDKAddressToFlow(expectedAccount.Address))
+			actualAccount, err := backend.GetAccountAtLatestBlock(context.Background(), expectedAccount.Address)
 			require.NoError(t, err)
 
-			expected, _ := convert.SDKAccountToFlow(expectedAccount)
-			assert.Equal(t, *expected, *actualAccount)
+			assert.Equal(t, *expectedAccount, *actualAccount)
 		}),
 	)
 
@@ -459,7 +456,6 @@ func TestBackend(t *testing.T) {
 	t.Run(
 		"GetBlockHeaderAtBlockID",
 		backendTest(func(t *testing.T, backend *backend.Backend, emu *mocks.MockEmulator) {
-
 			parentID := flowgo.Block{Header: &flowgo.Header{Height: rand.Uint64()}}.ID()
 			requestedBlock := flowgo.Block{Header: &flowgo.Header{Height: rand.Uint64(), ParentID: parentID}}
 
@@ -468,7 +464,7 @@ func TestBackend(t *testing.T) {
 				Return(&requestedBlock, nil).
 				Times(1)
 
-			header, err := backend.GetBlockHeaderByID(context.Background(), flowgo.Identifier(requestedBlock.ID()))
+			header, err := backend.GetBlockHeaderByID(context.Background(), flowsdk.Identifier(requestedBlock.ID()))
 			assert.NoError(t, err)
 
 			assert.Equal(t, requestedBlock.Header.Height, header.Height)
@@ -487,7 +483,7 @@ func TestBackend(t *testing.T) {
 				Return(nil, &emulator.TransactionNotFoundError{}).
 				Times(1)
 
-			tx, err := backend.GetTransaction(context.Background(), convert.SDKIdentifierToFlow(txID))
+			tx, err := backend.GetTransaction(context.Background(), txID)
 			require.Error(t, err)
 
 			grpcError, ok := status.FromError(err)
@@ -510,11 +506,10 @@ func TestBackend(t *testing.T) {
 				Return(&expectedTx, nil).
 				Times(1)
 
-			actualTx, err := backend.GetTransactionResult(context.Background(), convert.SDKIdentifierToFlow(txID))
+			actualTx, err := backend.GetTransactionResult(context.Background(), txID)
 			require.NoError(t, err)
 
-			expected, _ := convert.SDKTransactionResultToFlow(&expectedTx)
-			assert.Equal(t, expected, actualTx)
+			assert.Equal(t, expectedTx, *actualTx)
 		}),
 	)
 
@@ -530,13 +525,12 @@ func TestBackend(t *testing.T) {
 			}).
 			Times(1)
 
-		expectedTx := *test.TransactionGenerator().New()
-		err := backend.SendTransaction(context.Background(),
-			convert.SDKTransactionToFlow(expectedTx),
-		)
+		expectedTx := test.TransactionGenerator().New()
+
+		err := backend.SendTransaction(context.Background(), *expectedTx)
 		require.NoError(t, err)
 
-		assert.Equal(t, expectedTx, actualTx)
+		assert.Equal(t, *expectedTx, actualTx)
 	}))
 
 	t.Run(
@@ -551,9 +545,9 @@ func TestBackend(t *testing.T) {
 			expectedTx := test.TransactionGenerator().New()
 
 			// remove payer to make transaction invalid
-			expectedTx.Payer = convert.FlowAddressToSDK(flowgo.Address{})
+			expectedTx.Payer = flowsdk.Address{}
 
-			err := backend.SendTransaction(context.Background(), convert.SDKTransactionToFlow(*expectedTx))
+			err := backend.SendTransaction(context.Background(), *expectedTx)
 			require.Error(t, err)
 
 			grpcError, ok := status.FromError(err)
@@ -596,9 +590,9 @@ func TestBackend(t *testing.T) {
 				GetEventsByHeight(blocks[1].Header.Height, eventType).
 				Return(eventsToReturn, nil)
 
-			blockIDs := make([]flowgo.Identifier, len(blocks))
+			blockIDs := make([]flowsdk.Identifier, len(blocks))
 			for i, b := range blocks {
-				blockIDs[i] = flowgo.Identifier(b.ID())
+				blockIDs[i] = flowsdk.Identifier(b.ID())
 			}
 
 			results, err := backend.GetEventsForBlockIDs(context.Background(),
@@ -630,9 +624,9 @@ func TestBackend(t *testing.T) {
 				{Header: &flowgo.Header{Height: 2}},
 			}
 
-			blockIDs := make([]flowgo.Identifier, len(blocks))
+			blockIDs := make([]flowsdk.Identifier, len(blocks))
 			for i, b := range blocks {
-				blockIDs[i] = flowgo.Identifier(b.ID())
+				blockIDs[i] = flowsdk.Identifier(b.ID())
 			}
 
 			_, err := backend.GetEventsForBlockIDs(context.Background(),
@@ -686,7 +680,7 @@ func TestBackendAutoMine(t *testing.T) {
 
 	expectedTx := test.TransactionGenerator().New()
 
-	err := backend.SendTransaction(context.Background(), convert.SDKTransactionToFlow(*expectedTx))
+	err := backend.SendTransaction(context.Background(), *expectedTx)
 	require.NoError(t, err)
 
 	assert.Equal(t, *expectedTx, actualTx)
