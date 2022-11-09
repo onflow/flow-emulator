@@ -47,6 +47,7 @@ type HTTPServer struct {
 	host       string
 	port       int
 	httpServer *http.Server
+	listener   net.Listener
 }
 
 func NewAdminServer(
@@ -93,17 +94,28 @@ func NewAdminServer(
 	}
 }
 
-func (h *HTTPServer) Start() error {
+func (h *HTTPServer) Listen() error {
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", h.host, h.port))
 	if err != nil {
 		return err
+	}
+
+	h.listener = lis
+	return nil
+}
+
+func (h *HTTPServer) Start() error {
+	if h.listener == nil {
+		if err := h.Listen(); err != nil {
+			return err
+		}
 	}
 
 	h.logger.
 		WithField("port", h.port).
 		Infof("✅  Started admin server on port %d", h.port)
 
-	err = h.httpServer.Serve(lis)
+	err := h.httpServer.Serve(h.listener)
 	if errors.Is(err, http.ErrServerClosed) {
 		return nil
 	}

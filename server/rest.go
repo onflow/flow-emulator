@@ -33,23 +33,34 @@ import (
 )
 
 type RestServer struct {
-	logger *logrus.Logger
-	host   string
-	port   int
-	server *http.Server
+	logger   *logrus.Logger
+	host     string
+	port     int
+	server   *http.Server
+	listener net.Listener
 }
 
-func (r *RestServer) Start() error {
+func (r *RestServer) Listen() error {
 	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", r.host, r.port))
 	if err != nil {
 		return err
+	}
+	r.listener = l
+	return nil
+}
+
+func (r *RestServer) Start() error {
+	if r.listener == nil {
+		if err := r.Listen(); err != nil {
+			return err
+		}
 	}
 
 	r.logger.
 		WithField("port", r.port).
 		Infof("✅  Started REST API server on port %d", r.port)
 
-	err = r.server.Serve(l)
+	err := r.server.Serve(r.listener)
 	if err != nil {
 		return err
 	}
