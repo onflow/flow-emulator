@@ -1028,8 +1028,8 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		WithMaxValueSizeAllowed(b.vmCtx.MaxStateValueSize).
 		WithMaxInteractionSizeAllowed(math.MaxUint64)
 
-	txnPrograms, err := programs.NewEmptyBlockPrograms().
-		NewTransactionPrograms(0, 0)
+	txnPrograms, err := programs.NewEmptyDerivedBlockData().
+		NewDerivedTransactionData(0, 0)
 	if err != nil {
 		return nil, err
 	}
