@@ -43,7 +43,6 @@ type EmulatorServer struct {
 	config     *Config
 	backend    *backend.Backend
 	group      *graceland.Group
-	listeners  []listener
 	liveness   graceland.Routine
 	storage    graceland.Routine
 	grpc       *GRPCServer
@@ -202,12 +201,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 // After this non-blocking function executes we can treat the
 // emulator server as ready.
 func (s *EmulatorServer) Listen() error {
-	s.listeners = make([]listener, 0)
-	s.listeners = append(s.listeners, s.grpc)
-	s.listeners = append(s.listeners, s.rest)
-	s.listeners = append(s.listeners, s.admin)
-
-	for _, lis := range s.listeners {
+	for _, lis := range []listener{s.grpc, s.rest, s.admin} {
 		err := lis.Listen()
 		if err != nil { // fail quick
 			return err
