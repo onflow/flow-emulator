@@ -138,6 +138,7 @@ type config struct {
 	TransactionExpiry            uint
 	StorageLimitEnabled          bool
 	TransactionFeesEnabled       bool
+	ContractRemovalRestricted    bool
 	MinimumStorageReservation    cadence.UFix64
 	StorageMBPerFLOW             cadence.UFix64
 	Logger                       zerolog.Logger
@@ -338,6 +339,15 @@ func WithTransactionFeesEnabled(enabled bool) Option {
 	}
 }
 
+// WithContractRemovalRestricted restricts/allows removal of already deployed contracts.
+//
+// The default is provided by on-chain value.
+func WithContractRemovalRestricted(restricted bool) Option {
+	return func(c *config) {
+		c.ContractRemovalRestricted = restricted
+	}
+}
+
 // WithTransactionValidationEnabled enables/disables transaction validation.
 //
 // If set to false, the emulator will not verify transaction signatures or validate sequence numbers.
@@ -398,7 +408,8 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 		fvm.WithLogger(conf.Logger),
 		fvm.WithChain(conf.GetChainID().Chain()),
 		fvm.WithBlocks(blocks),
-		fvm.WithRestrictedDeployment(false),
+		fvm.WithContractDeploymentRestricted(false),
+		fvm.WithContractRemovalRestricted(conf.ContractRemovalRestricted),
 		fvm.WithGasLimit(conf.ScriptGasLimit),
 		fvm.WithCadenceLogging(true),
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
