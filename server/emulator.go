@@ -92,7 +92,7 @@ func (m EmulatorAPIServer) Logs(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	txId := vars["txId"]
 
-	res, err := json.Marshal(m.backend.GetLogs(txId)
+	res, err := json.Marshal(m.backend.GetLogs(txId))
 	if err != nil {
 		m.server.logger.Error("Can't marshal logs")
 	}
