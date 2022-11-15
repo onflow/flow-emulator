@@ -71,7 +71,7 @@ func decodeTransactionResult(result *types.StorableTransactionResult, from []byt
 	return cbor.Unmarshal(from, result)
 }
 
-func encodeUint64(v uint64) []byte {
+func mustEncodeUint64(v uint64) []byte {
 	bytes, err := em.Marshal(v)
 	if err != nil { // bluesign: it should be able to encode all uint64
 		panic(err)

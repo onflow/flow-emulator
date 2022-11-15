@@ -22,13 +22,13 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	redis "github.com/go-redis/redis/v8"
+	"github.com/go-redis/redis/v8"
 	"github.com/onflow/flow-emulator/storage"
 )
 
 // Store implements the Store interface
 type Store struct {
-	storage.StoreImpl
+	storage.DefaultStore
 	options *redis.Options
 	rdb     *redis.Client
 }
@@ -43,14 +43,11 @@ func New(url string) (*Store, error) {
 		options: options,
 		rdb:     redis.NewClient(options),
 	}
-	store.DataBackend = store
-	store.KeysBackend = &storage.StorageBackendKeysImpl{}
+	store.DataSetter = store
+	store.DataGetter = store
+	store.KeyGenerator = &storage.DefaultKeyGenerator{}
 
 	return store, nil
-}
-
-func (s *Store) GetBackend() storage.StorageBackendData {
-	return s
 }
 
 func (s *Store) GetBytes(ctx context.Context, store string, key []byte) ([]byte, error) {

@@ -39,7 +39,7 @@ import (
 // Store is an embedded storage implementation using Badger as the underlying
 // persistent key-value store.
 type Store struct {
-	storage.StoreImpl
+	storage.DefaultStore
 	config          Config
 	db              *badger.DB
 	dbGitRepository *git.Repository
@@ -64,8 +64,9 @@ func New(opts ...Opt) (*Store, error) {
 	}
 	_ = db.Sync()
 	store := &Store{db: db, config: config}
-	store.DataBackend = store
-	store.KeysBackend = &storage.StorageBackendKeysImpl{}
+	store.DataGetter = store
+	store.DataSetter = store
+	store.KeyGenerator = &storage.DefaultKeyGenerator{}
 	if err = store.setup(); err != nil {
 		return nil, err
 	}
@@ -94,9 +95,6 @@ func getTx(txn *badger.Txn) func([]byte) ([]byte, error) {
 		val := make([]byte, item.ValueSize())
 		return item.ValueCopy(val)
 	}
-}
-func (s *Store) GetBackend() storage.StorageBackendData {
-	return s
 }
 
 func (s *Store) GetBytes(ctx context.Context, store string, key []byte) (result []byte, err error) {
