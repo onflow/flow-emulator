@@ -15,7 +15,7 @@ require (
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v0.28.0
-	github.com/onflow/flow-go v0.26.14-test-synchronization.0.20221012204608-ed91c80fee2b
+	github.com/onflow/flow-go v0.28.1-0.20221114195106-8bf6b00e6fbd
 	github.com/onflow/flow-go-sdk v0.29.0
 	github.com/onflow/flow-go/crypto v0.24.4
 	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20220727161549-d59b1e547ac4
@@ -23,7 +23,7 @@ require (
 	github.com/onflow/fusd/lib/go/contracts v0.0.0-20211021081023-ae9de8fb2c7e
 	github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20220714155620-011db20fe754
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.12.1
+	github.com/prometheus/client_golang v1.13.0
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
 	github.com/rs/zerolog v1.26.1
@@ -69,14 +69,14 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/ipfs/go-cid v0.2.0 // indirect
+	github.com/ipfs/go-cid v0.3.2 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/go-bindata v3.23.0+incompatible // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
-	github.com/klauspost/compress v1.15.1 // indirect
-	github.com/klauspost/cpuid/v2 v2.1.0 // indirect
+	github.com/klauspost/compress v1.15.10 // indirect
+	github.com/klauspost/cpuid/v2 v2.1.1 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
-	github.com/libp2p/go-libp2p v0.22.0 // indirect
+	github.com/libp2p/go-libp2p v0.23.3 // indirect
 	github.com/libp2p/go-openssl v0.1.0 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mattn/go-pointer v0.0.1 // indirect
@@ -85,11 +85,11 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
-	github.com/multiformats/go-base32 v0.0.4 // indirect
+	github.com/multiformats/go-base32 v0.1.0 // indirect
 	github.com/multiformats/go-base36 v0.1.0 // indirect
-	github.com/multiformats/go-multiaddr v0.6.0 // indirect
+	github.com/multiformats/go-multiaddr v0.7.0 // indirect
 	github.com/multiformats/go-multibase v0.1.1 // indirect
-	github.com/multiformats/go-multicodec v0.5.0 // indirect
+	github.com/multiformats/go-multicodec v0.6.0 // indirect
 	github.com/multiformats/go-multihash v0.2.1 // indirect
 	github.com/multiformats/go-varint v0.0.6 // indirect
 	github.com/onflow/atree v0.4.0 // indirect
@@ -132,7 +132,8 @@ require (
 	go.opentelemetry.io/proto/otlp v0.18.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
-	golang.org/x/net v0.0.0-20220812174116-3211cb980234 // indirect
+	golang.org/x/exp v0.0.0-20220916125017-b168a2c6b86b // indirect
+	golang.org/x/net v0.0.0-20220920183852-bf014ff85ad5 // indirect
 	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect

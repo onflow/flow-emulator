@@ -150,7 +150,7 @@ Docker builds for the emulator are automatically built and pushed to
 `gcr.io/flow-container-registry/emulator`, tagged by commit and semantic version. You can also build the image locally.
 
 ```bash
-docker run gcr.io/flow-container-registry/emulator
+docker run -p 3569:3569 -p 8080:8080 -e FLOW_HOST=0.0.0.0 gcr.io/flow-container-registry/emulator
 ```
 
 The full list of environment variables can be found [here](#configuration). 
@@ -158,7 +158,7 @@ You can pass any environment variable by using `-e` docker flag and pass the val
 
 *Custom Configuration Example:*
 ```bash
-docker run -e FLOW_PORT=9001 -e FLOW_VERBOSE=true -e FLOW_SERVICEPRIVATEKEY=<hex-encoded key> gcr.io/flow-container-registry/emulator
+docker run -p 3569:3569 -p 8080:8080 -e FLOW_HOST=0.0.0.0 -e FLOW_PORT=9001 -e FLOW_VERBOSE=true -e FLOW_SERVICEPRIVATEKEY=<hex-encoded key> gcr.io/flow-container-registry/emulator
 ```
 
 To generate a service key, use the `keys generate` command in the Flow CLI.

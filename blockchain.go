@@ -30,8 +30,8 @@ import (
 	"github.com/onflow/flow-go/engine/execution/state/delta"
 	"github.com/onflow/flow-go/fvm"
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
+	"github.com/onflow/flow-go/fvm/environment"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
-	"github.com/onflow/flow-go/fvm/meter"
 	"github.com/onflow/flow-go/fvm/programs"
 	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -138,6 +138,7 @@ type config struct {
 	TransactionExpiry            uint
 	StorageLimitEnabled          bool
 	TransactionFeesEnabled       bool
+	ContractRemovalRestricted    bool
 	MinimumStorageReservation    cadence.UFix64
 	StorageMBPerFLOW             cadence.UFix64
 	Logger                       zerolog.Logger
@@ -338,6 +339,15 @@ func WithTransactionFeesEnabled(enabled bool) Option {
 	}
 }
 
+// WithContractRemovalRestricted restricts/allows removal of already deployed contracts.
+//
+// The default is provided by on-chain value.
+func WithContractRemovalRestricted(restricted bool) Option {
+	return func(c *config) {
+		c.ContractRemovalRestricted = restricted
+	}
+}
+
 // WithTransactionValidationEnabled enables/disables transaction validation.
 //
 // If set to false, the emulator will not verify transaction signatures or validate sequence numbers.
@@ -398,7 +408,8 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 		fvm.WithLogger(conf.Logger),
 		fvm.WithChain(conf.GetChainID().Chain()),
 		fvm.WithBlocks(blocks),
-		fvm.WithRestrictedDeployment(false),
+		fvm.WithContractDeploymentRestricted(false),
+		fvm.WithContractRemovalRestricted(conf.ContractRemovalRestricted),
 		fvm.WithGasLimit(conf.ScriptGasLimit),
 		fvm.WithCadenceLogging(true),
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
@@ -547,9 +558,9 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 				common.ComputationKindStatement:          1569,
 				common.ComputationKindLoop:               1569,
 				common.ComputationKindFunctionInvocation: 1569,
-				meter.ComputationKindGetValue:            808,
-				meter.ComputationKindCreateAccount:       2837670,
-				meter.ComputationKindSetValue:            765,
+				environment.ComputationKindGetValue:      808,
+				environment.ComputationKindCreateAccount: 2837670,
+				environment.ComputationKindSetValue:      765,
 			}),
 		)
 	}
@@ -1028,13 +1039,19 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		WithMaxValueSizeAllowed(b.vmCtx.MaxStateValueSize).
 		WithMaxInteractionSizeAllowed(math.MaxUint64)
 
+	txnPrograms, err := programs.NewEmptyDerivedBlockData().
+		NewDerivedTransactionData(0, 0)
+	if err != nil {
+		return nil, err
+	}
+
 	env := fvm.NewTransactionEnvironment(
 		b.vmCtx,
 		state.NewTransactionState(
 			view,
 			stateParameters,
 		),
-		programs.NewEmptyPrograms(),
+		txnPrograms,
 		flowgo.NewTransactionBody(),
 		0,
 		nil,
@@ -1056,7 +1073,37 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		return nil, err
 	}
 
-	return NewAccountStorage(address, account, store, inter)
+	extractStorage := func(path common.PathDomain) StorageItem {
+		storageMap := store.GetStorageMap(
+			common.MustBytesToAddress(address.Bytes()),
+			path.Identifier(),
+			false)
+		if storageMap == nil {
+			return nil
+		}
+
+		iterator := storageMap.Iterator(nil)
+		values := make(StorageItem)
+		k, v := iterator.Next()
+		for v != nil {
+			exportedValue, err := runtime.ExportValue(v, inter, interpreter.EmptyLocationRange)
+			if err != nil {
+				continue // just skip errored value
+			}
+
+			values[k] = exportedValue
+			k, v = iterator.Next()
+		}
+		return values
+	}
+
+	return NewAccountStorage(
+		account,
+		address,
+		extractStorage(common.PathDomainPrivate),
+		extractStorage(common.PathDomainPublic),
+		extractStorage(common.PathDomainStorage),
+	)
 }
 
 // ExecuteAndCommitBlock is a utility that combines ExecuteBlock with CommitBlock.

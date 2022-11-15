@@ -84,7 +84,6 @@ func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 }
 
 func (m EmulatorAPIServer) Snapshot(w http.ResponseWriter, r *http.Request) {
