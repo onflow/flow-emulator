@@ -39,6 +39,7 @@ type GRPCServer struct {
 	host       string
 	port       int
 	grpcServer *grpc.Server
+	listener   net.Listener
 }
 
 func NewGRPCServer(logger *logrus.Logger, b *backend.Backend, chain flow.Chain, host string, port int, debug bool) *GRPCServer {
@@ -68,17 +69,27 @@ func (g *GRPCServer) Server() *grpc.Server {
 	return g.grpcServer
 }
 
-func (g *GRPCServer) Start() error {
+func (g *GRPCServer) Listen() error {
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", g.host, g.port))
 	if err != nil {
 		return err
+	}
+	g.listener = lis
+	return nil
+}
+
+func (g *GRPCServer) Start() error {
+	if g.listener == nil {
+		if err := g.Listen(); err != nil {
+			return err
+		}
 	}
 
 	g.logger.
 		WithField("port", g.port).
 		Infof("✅  Started gRPC server on port %d", g.port)
 
-	err = g.grpcServer.Serve(lis)
+	err := g.grpcServer.Serve(g.listener)
 	if err != nil {
 		return err
 	}
