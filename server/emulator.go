@@ -55,6 +55,8 @@ func NewEmulatorAPIServer(server *EmulatorServer, backend *backend.Backend, stor
 
 	router.HandleFunc("/emulator/newBlock", r.CommitBlock)
 	router.HandleFunc("/emulator/snapshot/{name}", r.Snapshot)
+	router.HandleFunc("/emulator/snapshots", r.SnapshotList)
+
 	router.HandleFunc("/emulator/storages/{address}", r.Storage)
 
 	return r
@@ -84,6 +86,25 @@ func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+}
+func (m EmulatorAPIServer) SnapshotList(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	badgerStore := (*m.storage).Store().(*badger.Store)
+	contexts, err := badgerStore.ListContexts()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	bytes, err := json.Marshal(contexts)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(bytes)
 
 }
 
