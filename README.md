@@ -144,6 +144,11 @@ You need to use the same value for `name` parameter.
 The snapshot functionality is a great tool for testing where you can first initialize 
 a base snapshot with seed values, execute the test and then revert to that initialized state.
 
+You can list existing snapshots with:
+```
+GET http://localhost:8080/emulator/snapshots
+```
+
 ## Running the emulator with Docker
 
 Docker builds for the emulator are automatically built and pushed to
