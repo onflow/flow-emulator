@@ -101,6 +101,24 @@ func (s *Store) unlockGit() {
 	lockPath := fmt.Sprintf("%s/.git/index.lock", s.config.DBPath)
 	_ = os.Remove(lockPath)
 }
+func (s *Store) ListContexts() ([]string, error) {
+	var tags []string
+	s.unlockGit()
+	defer s.lockGit()
+	tagrefs, err := s.dbGitRepository.Tags()
+	if err != nil {
+		return tags, err
+	}
+
+	err = tagrefs.ForEach(func(t *plumbing.Reference) error {
+		tags = append(tags, t.Name().Short())
+		return nil
+	})
+	if err != nil {
+		return tags, err
+	}
+	return tags, err
+}
 
 func (s *Store) JumpToContext(context string) error {
 
