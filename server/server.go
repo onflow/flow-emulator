@@ -45,9 +45,9 @@ type EmulatorServer struct {
 	group      *graceland.Group
 	liveness   graceland.Routine
 	storage    graceland.Routine
-	grpc       graceland.Routine
-	admin      graceland.Routine
-	rest       graceland.Routine
+	grpc       *GRPCServer
+	rest       *RestServer
+	admin      *HTTPServer
 	blocks     graceland.Routine
 	blockchain *emulator.Blockchain
 }
@@ -118,6 +118,12 @@ type Config struct {
 	Host string
 	//Chain to emulation
 	ChainID flowgo.ChainID
+	//Redis URL for redis storage backend
+	RedisURL string
+}
+
+type listener interface {
+	Listen() error
 }
 
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
@@ -192,7 +198,24 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	return server
 }
 
+// Listen starts listening for incoming connections.
+//
+// After this non-blocking function executes we can treat the
+// emulator server as ready.
+func (s *EmulatorServer) Listen() error {
+	for _, lis := range []listener{s.grpc, s.rest, s.admin} {
+		err := lis.Listen()
+		if err != nil { // fail quick
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Start starts the Flow Emulator server.
+//
+// This is a blocking call that listens and starts the emulator server.
 func (s *EmulatorServer) Start() {
 	s.Stop()
 
@@ -245,6 +268,10 @@ func (s *EmulatorServer) Stop() {
 }
 
 func configureStorage(logger *logrus.Logger, conf *Config) (storage Storage, err error) {
+	if conf.RedisURL != "" {
+		return NewRedisStorage(conf.RedisURL)
+	}
+
 	return NewBadgerStorage(logger, conf.DBPath, conf.DBGCInterval, conf.DBGCDiscardRatio, conf.Snapshot, conf.Persist)
 }
 

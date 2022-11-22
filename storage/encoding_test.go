@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package badger
+package storage
 
 import (
 	"testing"
@@ -124,20 +124,4 @@ func TestEncodeEvent(t *testing.T) {
 	err = decodeEvent(&decodedEvent, data)
 	require.Nil(t, err)
 	assert.Equal(t, event, decodedEvent)
-}
-
-func TestEncodeChangelist(t *testing.T) {
-
-	t.Parallel()
-
-	var clist changelist
-	clist.add(1)
-
-	data, err := encodeChangelist(clist)
-	require.NoError(t, err)
-
-	var decodedClist changelist
-	err = decodeChangelist(&decodedClist, data)
-	require.NoError(t, err)
-	assert.Equal(t, clist, decodedClist)
 }
