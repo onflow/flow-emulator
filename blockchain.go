@@ -14,7 +14,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"sync"
 	"time"
 
@@ -1036,8 +1035,7 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 
 	stateParameters := state.DefaultParameters().
 		WithMaxKeySizeAllowed(b.vmCtx.MaxStateKeySize).
-		WithMaxValueSizeAllowed(b.vmCtx.MaxStateValueSize).
-		WithMaxInteractionSizeAllowed(math.MaxUint64)
+		WithMaxValueSizeAllowed(b.vmCtx.MaxStateValueSize)
 
 	txnPrograms, err := programs.NewEmptyDerivedBlockData().
 		NewDerivedTransactionData(0, 0)
