@@ -1045,16 +1045,14 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		return nil, err
 	}
 
-	env := fvm.NewTransactionEnvironment(
-		b.vmCtx,
+	env := environment.NewScriptEnvironment(
+		context.Background(),
+		b.vmCtx.EnvironmentParams,
 		state.NewTransactionState(
 			view,
 			stateParameters,
 		),
 		txnPrograms,
-		flowgo.NewTransactionBody(),
-		0,
-		nil,
 	)
 
 	r := b.vmCtx.Borrow(env)
