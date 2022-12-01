@@ -57,7 +57,7 @@ func badgerVersionedKey(storage string, key []byte, version uint64) []byte {
 
 func New(opts ...Opt) (*Store, error) {
 	config := getBadgerConfig(opts...)
-	config.BadgerOptions.BypassLockGuard = true
+	config.BadgerOptions.BypassLockGuard = false
 	db, err := badger.Open(config.BadgerOptions)
 	if err != nil {
 		return nil, fmt.Errorf("could not open database: %w", err)
