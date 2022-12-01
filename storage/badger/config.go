@@ -107,6 +107,6 @@ func WithTruncate(trunc bool) Opt {
 
 func WithPersist(persist bool) Opt {
 	return func(c *Config) {
-		c.InMemory = c.InMemory && !persist
+		c.InMemory = !persist
 	}
 }
