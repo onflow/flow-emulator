@@ -1,0 +1,82 @@
+name: Ensure downstream dependencies are not broken by this commit
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [ gpavlov/dependencies ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  flow-cli-main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save current timestamp to env var
+        run: |
+            echo "TIMESTAMP=$(date)" >> $GITHUB_ENV
+      
+      - name: Get Emulator sources
+        uses: actions/checkout@v3
+        with:
+          repository: onflow/flow-emulator
+          path: flow-emulator
+          ref: ${{ github.ref }}  
+
+      - name: Get flow cli sources
+        uses: actions/checkout@v3
+        with:
+          repository: onflow/flow-cli
+          path: flow-cli
+
+      ###
+
+      - uses: actions/setup-go@v1
+        with:
+          go-version: '1.19'
+      
+      - name: Install build dependencies 
+        run: |
+          sudo apt-get update -y 
+          sudo apt-get install build-essential zip cmake -y 
+
+      ###
+
+      - name: Replace imports with local sources in flow-cli project
+        run: | 
+          cd flow-cli
+          go mod edit -replace github.com/onflow/flow-emulator=../flow-emulator
+
+      - name: Build emulator
+        run: |
+          cd flow-emulator
+          go mod tidy
+          go build ./cmd/emulator
+
+      - name: Build flow-cli
+        run: |
+          cd flow-cli
+          go mod tidy
+          make versioned-binaries
+
+      - name: Copy flow binary
+        run: cp flow-cli/cmd/flow/flow-x86_64-linux- /usr/local/bin/flow && ls /usr/local/bin/flow
+
+      - name: Get Flow Version
+        run: |
+          echo Flow version:
+          flow version
+
+      - name: Upload flow-cli artifacts
+        # if: ${{ env.ACTIONS_RUNTIME_TOKEN }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: flow-cli
+          path: flow-cli/cmd/flow
+  
+      - name: Upload emulator artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: flow-emulator
+          path: flow-emulator/emulator
+
