@@ -76,6 +76,28 @@ func (s *MemoryStorage) Store() storage.Store {
 	return s.store
 }
 
+type SqliteStorage struct {
+	store *sqlite.Store
+}
+
+func NewSqliteStorage(url string) (*SqliteStorage, error) {
+	db, err := sqlite.New(url)
+	if err != nil {
+		return nil, err
+	}
+	return &SqliteStorage{store: db}, nil
+}
+
+func (s *SqliteStorage) Start() error {
+	return nil
+}
+
+func (s *SqliteStorage) Stop() {}
+
+func (s *SqliteStorage) Store() storage.Store {
+	return s.store
+}
+
 type BadgerStorage struct {
 	logger         *logrus.Logger
 	store          *badger.Store
