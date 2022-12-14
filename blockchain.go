@@ -1037,11 +1037,7 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		WithMaxKeySizeAllowed(b.vmCtx.MaxStateKeySize).
 		WithMaxValueSizeAllowed(b.vmCtx.MaxStateValueSize)
 
-	txnPrograms, err := programs.NewEmptyDerivedBlockData().
-		NewDerivedTransactionData(0, 0)
-	if err != nil {
-		return nil, err
-	}
+	txnPrograms := programs.NewEmptyPrograms()
 
 	env := environment.NewScriptEnvironment(
 		context.Background(),
