@@ -72,10 +72,17 @@ func (b *Backend) GetNetworkParameters(ctx context.Context) access.NetworkParame
 }
 
 // GetLatestBlockHeader gets the latest sealed block header.
-func (b *Backend) GetLatestBlockHeader(ctx context.Context, isSealed bool) (*flowgo.Header, error) {
+func (b *Backend) GetLatestBlockHeader(
+	_ context.Context,
+	_ bool,
+) (
+	*flowgo.Header,
+	flowgo.BlockStatus,
+	error,
+) {
 	block, err := b.emulator.GetLatestBlock()
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, flowgo.BlockStatusUnknown, status.Error(codes.Internal, err.Error())
 	}
 
 	blockID := block.ID()
@@ -85,17 +92,22 @@ func (b *Backend) GetLatestBlockHeader(ctx context.Context, isSealed bool) (*flo
 		"blockID":     hex.EncodeToString(blockID[:]),
 	}).Debug("🎁  GetLatestBlockHeader called")
 
-	return block.Header, nil
+	// TODO: return proper block status
+	return block.Header, flowgo.BlockStatusUnknown, nil
 }
 
 // GetBlockHeaderByHeight gets a block header by height.
 func (b *Backend) GetBlockHeaderByHeight(
-	ctx context.Context,
+	_ context.Context,
 	height uint64,
-) (*flowgo.Header, error) {
+) (
+	*flowgo.Header,
+	flowgo.BlockStatus,
+	error,
+) {
 	block, err := b.emulator.GetBlockByHeight(height)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, flowgo.BlockStatusUnknown, status.Error(codes.Internal, err.Error())
 	}
 
 	blockID := block.ID()
@@ -105,17 +117,22 @@ func (b *Backend) GetBlockHeaderByHeight(
 		"blockID":     hex.EncodeToString(blockID[:]),
 	}).Debug("🎁  GetBlockHeaderByHeight called")
 
-	return block.Header, nil
+	// TODO: return proper block status
+	return block.Header, flowgo.BlockStatusUnknown, nil
 }
 
 // GetBlockHeaderByID gets a block header by ID.
 func (b *Backend) GetBlockHeaderByID(
-	ctx context.Context,
+	_ context.Context,
 	id sdk.Identifier,
-) (*flowgo.Header, error) {
+) (
+	*flowgo.Header,
+	flowgo.BlockStatus,
+	error,
+) {
 	block, err := b.emulator.GetBlockByID(id)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, flowgo.BlockStatusUnknown, status.Error(codes.Internal, err.Error())
 	}
 
 	blockID := block.ID()
@@ -125,14 +142,22 @@ func (b *Backend) GetBlockHeaderByID(
 		"blockID":     hex.EncodeToString(blockID[:]),
 	}).Debug("🎁  GetBlockHeaderByID called")
 
-	return block.Header, nil
+	// TODO: return proper block status
+	return block.Header, flowgo.BlockStatusUnknown, nil
 }
 
 // GetLatestBlock gets the latest sealed block.
-func (b *Backend) GetLatestBlock(ctx context.Context, isSealed bool) (*flowgo.Block, error) {
+func (b *Backend) GetLatestBlock(
+	_ context.Context,
+	_ bool,
+) (
+	*flowgo.Block,
+	flowgo.BlockStatus,
+	error,
+) {
 	block, err := b.emulator.GetLatestBlock()
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, flowgo.BlockStatusUnknown, status.Error(codes.Internal, err.Error())
 	}
 
 	blockID := block.ID()
@@ -142,17 +167,22 @@ func (b *Backend) GetLatestBlock(ctx context.Context, isSealed bool) (*flowgo.Bl
 		"blockID":     hex.EncodeToString(blockID[:]),
 	}).Debug("🎁  GetLatestBlock called")
 
-	return block, nil
+	// TODO: return proper block status
+	return block, flowgo.BlockStatusUnknown, nil
 }
 
 // GetBlockByHeight gets a block by height.
 func (b *Backend) GetBlockByHeight(
 	ctx context.Context,
 	height uint64,
-) (*flowgo.Block, error) {
+) (
+	*flowgo.Block,
+	flowgo.BlockStatus,
+	error,
+) {
 	block, err := b.emulator.GetBlockByHeight(height)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, flowgo.BlockStatusUnknown, status.Error(codes.Internal, err.Error())
 	}
 
 	blockID := block.ID()
@@ -162,17 +192,22 @@ func (b *Backend) GetBlockByHeight(
 		"blockID":     hex.EncodeToString(blockID[:]),
 	}).Debug("🎁  GetBlockByHeight called")
 
-	return block, nil
+	// TODO: return proper block status
+	return block, flowgo.BlockStatusUnknown, nil
 }
 
-// GetBlockByHeight gets a block by ID.
+// GetBlockByID gets a block by ID.
 func (b *Backend) GetBlockByID(
-	ctx context.Context,
+	_ context.Context,
 	id sdk.Identifier,
-) (*flowgo.Block, error) {
+) (
+	*flowgo.Block,
+	flowgo.BlockStatus,
+	error,
+) {
 	block, err := b.emulator.GetBlockByID(id)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, flowgo.BlockStatusUnknown, status.Error(codes.Internal, err.Error())
 	}
 
 	blockID := block.ID()
@@ -182,12 +217,13 @@ func (b *Backend) GetBlockByID(
 		"blockID":     hex.EncodeToString(blockID[:]),
 	}).Debug("🎁  GetBlockByID called")
 
-	return block, nil
+	// TODO: return proper block status
+	return block, flowgo.BlockStatusUnknown, nil
 }
 
 // GetCollectionByID gets a collection by ID.
 func (b *Backend) GetCollectionByID(
-	ctx context.Context,
+	_ context.Context,
 	id sdk.Identifier,
 ) (*sdk.Collection, error) {
 	col, err := b.emulator.GetCollection(id)

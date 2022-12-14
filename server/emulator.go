@@ -27,6 +27,7 @@ import (
 	flowsdk "github.com/onflow/flow-go-sdk"
 
 	"github.com/gorilla/mux"
+
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-emulator/storage/badger"
 )
@@ -67,7 +68,7 @@ func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	m.backend.CommitBlock()
 
-	header, err := m.backend.GetLatestBlockHeader(r.Context(), true)
+	header, _, err := m.backend.GetLatestBlockHeader(r.Context(), true)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
