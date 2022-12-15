@@ -47,27 +47,27 @@ func (a *Adapter) GetNetworkParameters(ctx context.Context) access.NetworkParame
 	return a.backend.GetNetworkParameters(ctx)
 }
 
-func (a *Adapter) GetLatestBlockHeader(ctx context.Context, isSealed bool) (*flowgo.Header, error) {
+func (a *Adapter) GetLatestBlockHeader(ctx context.Context, isSealed bool) (*flowgo.Header, flowgo.BlockStatus, error) {
 	return a.backend.GetLatestBlockHeader(ctx, isSealed)
 }
 
-func (a *Adapter) GetBlockHeaderByHeight(ctx context.Context, height uint64) (*flowgo.Header, error) {
+func (a *Adapter) GetBlockHeaderByHeight(ctx context.Context, height uint64) (*flowgo.Header, flowgo.BlockStatus, error) {
 	return a.backend.GetBlockHeaderByHeight(ctx, height)
 }
 
-func (a *Adapter) GetBlockHeaderByID(ctx context.Context, id flowgo.Identifier) (*flowgo.Header, error) {
+func (a *Adapter) GetBlockHeaderByID(ctx context.Context, id flowgo.Identifier) (*flowgo.Header, flowgo.BlockStatus, error) {
 	return a.backend.GetBlockHeaderByID(ctx, convert.FlowIdentifierToSDK(id))
 }
 
-func (a *Adapter) GetLatestBlock(ctx context.Context, isSealed bool) (*flowgo.Block, error) {
+func (a *Adapter) GetLatestBlock(ctx context.Context, isSealed bool) (*flowgo.Block, flowgo.BlockStatus , error) {
 	return a.backend.GetLatestBlock(ctx, isSealed)
 }
 
-func (a *Adapter) GetBlockByHeight(ctx context.Context, height uint64) (*flowgo.Block, error) {
+func (a *Adapter) GetBlockByHeight(ctx context.Context, height uint64) (*flowgo.Block, flowgo.BlockStatus, error) {
 	return a.backend.GetBlockByHeight(ctx, height)
 }
 
-func (a *Adapter) GetBlockByID(ctx context.Context, id flowgo.Identifier) (*flowgo.Block, error) {
+func (a *Adapter) GetBlockByID(ctx context.Context, id flowgo.Identifier) (*flowgo.Block, flowgo.BlockStatus, error) {
 	return a.backend.GetBlockByID(ctx, convert.FlowIdentifierToSDK(id))
 }
 

@@ -77,7 +77,7 @@ func TestStorageTransaction(t *testing.T) {
 	require.NotNil(t, accountStorage.Public.Get("publicTest"))
 	require.NotNil(t, accountStorage.Storage.Get("storageTest"))
 	require.NotNil(t, accountStorage.Private.Get("privateTest"))
-	assert.Equal(t, accountStorage.Public.Get("publicTest").String(), `Link<&String>(/storage/storageTest)`)
+	assert.Equal(t, accountStorage.Public.Get("publicTest").String(), `PathLink<&String>(/storage/storageTest)`)
 	assert.Equal(t, accountStorage.Storage.Get("storageTest").String(), `"storage value"`)
-	assert.Equal(t, accountStorage.Private.Get("privateTest").String(), `Link<&String>(/storage/storageTest)`)
+	assert.Equal(t, accountStorage.Private.Get("privateTest").String(), `PathLink<&String>(/storage/storageTest)`)
 }
