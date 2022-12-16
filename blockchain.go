@@ -138,7 +138,7 @@ type config struct {
 	TransactionExpiry            uint
 	StorageLimitEnabled          bool
 	TransactionFeesEnabled       bool
-	ContractRemovalRestricted    bool
+	ContractRemovalEnabled       bool
 	MinimumStorageReservation    cadence.UFix64
 	StorageMBPerFLOW             cadence.UFix64
 	Logger                       zerolog.Logger
@@ -339,12 +339,12 @@ func WithTransactionFeesEnabled(enabled bool) Option {
 	}
 }
 
-// WithContractRemovalRestricted restricts/allows removal of already deployed contracts.
+// WithContractRemovalEnabled restricts/allows removal of already deployed contracts.
 //
 // The default is provided by on-chain value.
-func WithContractRemovalRestricted(restricted bool) Option {
+func WithContractRemovalEnabled(enabled bool) Option {
 	return func(c *config) {
-		c.ContractRemovalRestricted = restricted
+		c.ContractRemovalEnabled = enabled
 	}
 }
 
@@ -409,7 +409,7 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 		fvm.WithChain(conf.GetChainID().Chain()),
 		fvm.WithBlocks(blocks),
 		fvm.WithContractDeploymentRestricted(false),
-		fvm.WithContractRemovalRestricted(conf.ContractRemovalRestricted),
+		fvm.WithContractRemovalRestricted(!conf.ContractRemovalEnabled),
 		fvm.WithGasLimit(conf.ScriptGasLimit),
 		fvm.WithCadenceLogging(true),
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
