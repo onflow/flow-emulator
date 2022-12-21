@@ -15,8 +15,8 @@ require (
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v0.30.0
-	github.com/onflow/flow-go v0.28.1-0.20221214175701-076c0fd2a2f9
-	github.com/onflow/flow-go-sdk v0.30.0
+	github.com/onflow/flow-go v0.28.1-0.20221221193734-f45a2fea0667
+	github.com/onflow/flow-go-sdk v0.30.1-0.20221214233640-37e11b82ac05
 	github.com/onflow/flow-go/crypto v0.24.4
 	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20220727161549-d59b1e547ac4
 	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20221130185733-92eb85ead310
@@ -60,9 +60,13 @@ require (
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-test/deep v1.0.8 // indirect
+	github.com/go-webauthn/revoke v0.1.6 // indirect
+	github.com/go-webauthn/webauthn v0.5.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/google/go-tpm v0.3.3 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -107,8 +111,8 @@ require (
 	github.com/multiformats/go-multihash v0.2.1 // indirect
 	github.com/multiformats/go-varint v0.0.6 // indirect
 	github.com/onflow/atree v0.4.0 // indirect
-	github.com/onflow/flow-core-contracts/lib/go/contracts v0.11.2-0.20221205150827-c68044a2505c // indirect
-	github.com/onflow/flow-core-contracts/lib/go/templates v0.11.2-0.20221205150827-c68044a2505c // indirect
+	github.com/onflow/flow-core-contracts/lib/go/contracts v0.11.2-0.20221214150253-cb74e7764c12 // indirect
+	github.com/onflow/flow-core-contracts/lib/go/templates v0.11.2-0.20221214150253-cb74e7764c12 // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v0.5.0 // indirect
 	github.com/onflow/sdks v0.4.4 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
