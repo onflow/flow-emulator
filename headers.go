@@ -19,6 +19,7 @@
 package emulator
 
 import (
+	"context"
 	"errors"
 
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -52,7 +53,7 @@ func (h headers) Store(_ *flowgo.Header) error {
 }
 
 func (h headers) ByBlockID(blockID flowgo.Identifier) (*flowgo.Header, error) {
-	block, err := h.blockchain.storage.BlockByID(blockID)
+	block, err := h.blockchain.storage.BlockByID(context.Background(), blockID)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +61,7 @@ func (h headers) ByBlockID(blockID flowgo.Identifier) (*flowgo.Header, error) {
 }
 
 func (h headers) ByHeight(height uint64) (*flowgo.Header, error) {
-	block, err := h.blockchain.storage.BlockByHeight(height)
+	block, err := h.blockchain.storage.BlockByHeight(context.Background(), height)
 	if err != nil {
 		return nil, err
 	}

@@ -16,9 +16,10 @@
  * limitations under the License.
  */
 
-package badger_test
+package storage_test
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -61,21 +62,21 @@ func TestBlocks(t *testing.T) {
 	t.Run("should return error for not found", func(t *testing.T) {
 		t.Run("BlockByID", func(t *testing.T) {
 			freshId := test.IdentifierGenerator().New()
-			_, err := store.BlockByID(flowgo.Identifier(freshId))
+			_, err := store.BlockByID(context.Background(), flowgo.Identifier(freshId))
 			if assert.Error(t, err) {
 				assert.Equal(t, storage.ErrNotFound, err)
 			}
 		})
 
 		t.Run("BlockByHeight", func(t *testing.T) {
-			_, err := store.BlockByHeight(block1.Header.Height)
+			_, err := store.BlockByHeight(context.Background(), block1.Header.Height)
 			if assert.Error(t, err) {
 				assert.Equal(t, storage.ErrNotFound, err)
 			}
 		})
 
 		t.Run("LatestBlock", func(t *testing.T) {
-			_, err := store.LatestBlock()
+			_, err := store.LatestBlock(context.Background())
 			if assert.Error(t, err) {
 				assert.Equal(t, storage.ErrNotFound, err)
 			}
@@ -83,40 +84,40 @@ func TestBlocks(t *testing.T) {
 	})
 
 	t.Run("should be able to insert block", func(t *testing.T) {
-		err := store.StoreBlock(block1)
+		err := store.StoreBlock(context.Background(), block1)
 		assert.NoError(t, err)
 	})
 
 	// insert block 1
-	err := store.StoreBlock(block1)
+	err := store.StoreBlock(context.Background(), block1)
 	assert.NoError(t, err)
 
 	t.Run("should be able to get inserted block", func(t *testing.T) {
 		t.Run("BlockByHeight", func(t *testing.T) {
-			block, err := store.BlockByHeight(block1.Header.Height)
+			block, err := store.BlockByHeight(context.Background(), block1.Header.Height)
 			assert.NoError(t, err)
 			assert.Equal(t, block1, block)
 		})
 
 		t.Run("BlockByID", func(t *testing.T) {
-			block, err := store.BlockByID(block1.ID())
+			block, err := store.BlockByID(context.Background(), block1.ID())
 			assert.NoError(t, err)
 			assert.Equal(t, block1, block)
 		})
 
 		t.Run("LatestBlock", func(t *testing.T) {
-			block, err := store.LatestBlock()
+			block, err := store.LatestBlock(context.Background())
 			assert.NoError(t, err)
 			assert.Equal(t, *block1, block)
 		})
 	})
 
 	// insert block 2
-	err = store.StoreBlock(block2)
+	err = store.StoreBlock(context.Background(), block2)
 	assert.NoError(t, err)
 
 	t.Run("Latest block should update", func(t *testing.T) {
-		block, err := store.LatestBlock()
+		block, err := store.LatestBlock(context.Background())
 		assert.NoError(t, err)
 		assert.Equal(t, *block2, block)
 	})
@@ -144,18 +145,18 @@ func TestCollections(t *testing.T) {
 	}
 
 	t.Run("should return error for not found", func(t *testing.T) {
-		_, err := store.CollectionByID(col.ID())
+		_, err := store.CollectionByID(context.Background(), col.ID())
 		if assert.Error(t, err) {
 			assert.Equal(t, storage.ErrNotFound, err)
 		}
 	})
 
 	t.Run("should be able to insert collection", func(t *testing.T) {
-		err := store.InsertCollection(col)
+		err := store.InsertCollection(context.Background(), col)
 		assert.NoError(t, err)
 
 		t.Run("should be able to get inserted collection", func(t *testing.T) {
-			storedCol, err := store.CollectionByID(col.ID())
+			storedCol, err := store.CollectionByID(context.Background(), col.ID())
 			require.NoError(t, err)
 			assert.Equal(t, col, storedCol)
 		})
@@ -175,18 +176,18 @@ func TestTransactions(t *testing.T) {
 	tx := unittest.TransactionFixture()
 
 	t.Run("should return error for not found", func(t *testing.T) {
-		_, err := store.TransactionByID(tx.ID())
+		_, err := store.TransactionByID(context.Background(), tx.ID())
 		if assert.Error(t, err) {
 			assert.Equal(t, storage.ErrNotFound, err)
 		}
 	})
 
 	t.Run("should be able to insert tx", func(t *testing.T) {
-		err := store.InsertTransaction(tx)
+		err := store.InsertTransaction(context.Background(), tx)
 		assert.NoError(t, err)
 
 		t.Run("should be able to get inserted tx", func(t *testing.T) {
-			storedTx, err := store.TransactionByID(tx.ID())
+			storedTx, err := store.TransactionByID(context.Background(), tx.ID())
 			require.NoError(t, err)
 			assert.Equal(t, tx.ID(), storedTx.ID())
 		})
@@ -210,7 +211,7 @@ func TestTransactionResults(t *testing.T) {
 	t.Run("should return error for not found", func(t *testing.T) {
 		txID := flowgo.Identifier(ids.New())
 
-		_, err := store.TransactionResultByID(txID)
+		_, err := store.TransactionResultByID(context.Background(), txID)
 		if assert.Error(t, err) {
 			assert.Equal(t, storage.ErrNotFound, err)
 		}
@@ -219,11 +220,11 @@ func TestTransactionResults(t *testing.T) {
 	t.Run("should be able to insert result", func(t *testing.T) {
 		txID := flowgo.Identifier(ids.New())
 
-		err := store.InsertTransactionResult(txID, result)
+		err := store.InsertTransactionResult(context.Background(), txID, result)
 		assert.NoError(t, err)
 
 		t.Run("should be able to get inserted result", func(t *testing.T) {
-			storedResult, err := store.TransactionResultByID(txID)
+			storedResult, err := store.TransactionResultByID(context.Background(), txID)
 			require.NoError(t, err)
 			assert.Equal(t, result, storedResult)
 		})
@@ -254,12 +255,12 @@ func TestLedger(t *testing.T) {
 		d.Set(owner, key, expected)
 
 		t.Run("should get able to set ledger", func(t *testing.T) {
-			err := store.InsertLedgerDelta(blockHeight, d)
+			err := store.InsertLedgerDelta(context.Background(), blockHeight, d)
 			assert.NoError(t, err)
 		})
 
 		t.Run("should be to get set ledger", func(t *testing.T) {
-			gotLedger := store.LedgerViewByHeight(blockHeight)
+			gotLedger := store.LedgerViewByHeight(context.Background(), blockHeight)
 			actual, err := gotLedger.Get(owner, key)
 			assert.NoError(t, err)
 			assert.Equal(t, expected, actual)
@@ -300,13 +301,13 @@ func TestLedger(t *testing.T) {
 		// The combined state at block N looks like:
 		// {1: 1, 2: 2, 3: 3, ..., N+1: N, N+2: N}
 		for i, ledger := range deltas {
-			err := store.InsertLedgerDelta(uint64(i+1), ledger)
+			err := store.InsertLedgerDelta(context.Background(), uint64(i+1), ledger)
 			require.NoError(t, err)
 		}
 
 		// View at block 1 should have keys 1, 2, 3
 		t.Run("should version the first written block", func(t *testing.T) {
-			gotLedger := store.LedgerViewByHeight(1)
+			gotLedger := store.LedgerViewByHeight(context.Background(), 1)
 			for i := 1; i <= 3; i++ {
 				val, err := gotLedger.Get(owner, fmt.Sprintf("%d", i))
 				assert.NoError(t, err)
@@ -317,7 +318,7 @@ func TestLedger(t *testing.T) {
 		// View at block N should have values 1->N+2
 		t.Run("should version all blocks", func(t *testing.T) {
 			for block := 2; block < totalBlocks; block++ {
-				gotLedger := store.LedgerViewByHeight(uint64(block))
+				gotLedger := store.LedgerViewByHeight(context.Background(), uint64(block))
 				// The keys 1->N-1 are defined in previous blocks
 				for i := 1; i < block; i++ {
 					val, err := gotLedger.Get(owner, fmt.Sprintf("%d", i))
@@ -353,11 +354,11 @@ func TestInsertEvents(t *testing.T) {
 
 		var blockHeight uint64 = 1
 
-		err := store.InsertEvents(blockHeight, events)
+		err := store.InsertEvents(context.Background(), blockHeight, events)
 		assert.NoError(t, err)
 
 		t.Run("should be able to get inserted events", func(t *testing.T) {
-			gotEvents, err := store.EventsByHeight(blockHeight, "")
+			gotEvents, err := store.EventsByHeight(context.Background(), blockHeight, "")
 			assert.NoError(t, err)
 			assert.Equal(t, events, gotEvents)
 		})
@@ -403,27 +404,27 @@ func TestEventsByHeight(t *testing.T) {
 		allEvents[i] = event
 	}
 
-	err := store.InsertEvents(nonEmptyBlockHeight, allEvents)
+	err := store.InsertEvents(context.Background(), nonEmptyBlockHeight, allEvents)
 	assert.NoError(t, err)
 
-	err = store.InsertEvents(emptyBlockHeight, nil)
+	err = store.InsertEvents(context.Background(), emptyBlockHeight, nil)
 	assert.NoError(t, err)
 
 	t.Run("should be able to query by block", func(t *testing.T) {
 		t.Run("non-empty block", func(t *testing.T) {
-			events, err := store.EventsByHeight(nonEmptyBlockHeight, "")
+			events, err := store.EventsByHeight(context.Background(), nonEmptyBlockHeight, "")
 			assert.NoError(t, err)
 			assert.Equal(t, allEvents, events)
 		})
 
 		t.Run("empty block", func(t *testing.T) {
-			events, err := store.EventsByHeight(emptyBlockHeight, "")
+			events, err := store.EventsByHeight(context.Background(), emptyBlockHeight, "")
 			assert.NoError(t, err)
 			assert.Empty(t, events)
 		})
 
 		t.Run("non-existent block", func(t *testing.T) {
-			events, err := store.EventsByHeight(nonExistentBlockHeight, "")
+			events, err := store.EventsByHeight(context.Background(), nonExistentBlockHeight, "")
 			assert.NoError(t, err)
 			assert.Empty(t, events)
 		})
@@ -432,204 +433,18 @@ func TestEventsByHeight(t *testing.T) {
 	t.Run("should be able to query by event type", func(t *testing.T) {
 		t.Run("type=A, block=1", func(t *testing.T) {
 			// should be one event type=1 in block 1
-			events, err := store.EventsByHeight(nonEmptyBlockHeight, "A")
+			events, err := store.EventsByHeight(context.Background(), nonEmptyBlockHeight, "A")
 			assert.NoError(t, err)
 			assert.Equal(t, eventsA, events)
 		})
 
 		t.Run("type=B, block=1", func(t *testing.T) {
 			// should be 0 type=2 events here
-			events, err := store.EventsByHeight(nonEmptyBlockHeight, "B")
+			events, err := store.EventsByHeight(context.Background(), nonEmptyBlockHeight, "B")
 			assert.NoError(t, err)
 			assert.Equal(t, eventsB, events)
 		})
 	})
-}
-
-func TestPersistence(t *testing.T) {
-
-	t.Parallel()
-
-	store, dir := setupStore(t)
-	defer func() {
-		require.NoError(t, store.Close())
-		require.NoError(t, os.RemoveAll(dir))
-	}()
-
-	block := &flowgo.Block{Header: &flowgo.Header{Height: 1}}
-	tx := unittest.TransactionFixture()
-
-	event, _ := convert.SDKEventToFlow(test.EventGenerator().New())
-	events := []flowgo.Event{event}
-
-	const owner = ""
-	const key = "foo"
-
-	expected := []byte("bar")
-
-	d := delta.NewDelta()
-	d.Set(owner, key, expected)
-
-	// insert some stuff to to the store
-	err := store.StoreBlock(block)
-	assert.NoError(t, err)
-	err = store.InsertTransaction(tx)
-	assert.NoError(t, err)
-	err = store.InsertEvents(block.Header.Height, events)
-	assert.NoError(t, err)
-	err = store.InsertLedgerDelta(block.Header.Height, d)
-	assert.NoError(t, err)
-
-	// close the store
-	err = store.Close()
-	assert.NoError(t, err)
-
-	// create a new store with the same database directory
-	store, err = badger.New(badger.WithPath(dir))
-	require.NoError(t, err)
-
-	// should be able to retrieve what we stored
-	gotBlock, err := store.LatestBlock()
-	assert.NoError(t, err)
-	assert.Equal(t, *block, gotBlock)
-
-	gotTx, err := store.TransactionByID(tx.ID())
-	assert.NoError(t, err)
-	assert.Equal(t, tx.ID(), gotTx.ID())
-
-	gotEvents, err := store.EventsByHeight(block.Header.Height, "")
-	assert.NoError(t, err)
-	assert.Equal(t, events, gotEvents)
-
-	gotLedger := store.LedgerViewByHeight(block.Header.Height)
-	actual, err := gotLedger.Get(owner, "foo")
-	assert.NoError(t, err)
-	assert.Equal(t, expected, actual)
-}
-
-func benchmarkInsertLedgerDelta(b *testing.B, nKeys int) {
-	b.StopTimer()
-	dir, err := ioutil.TempDir("", "badger-test")
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
-	store, err := badger.New(badger.WithPath(dir))
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer store.Close()
-
-	const owner = ""
-
-	ledger := delta.NewDelta()
-	for i := 0; i < nKeys; i++ {
-		key := fmt.Sprintf("%d", i)
-		ledger.Set(owner, key, []byte{byte(i)})
-	}
-
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		if err := store.InsertLedgerDelta(1, ledger); err != nil {
-			b.Fatal(err)
-		}
-	}
-}
-
-func BenchmarkInsertLedgerDelta1(b *testing.B)    { benchmarkInsertLedgerDelta(b, 1) }
-func BenchmarkInsertLedgerDelta10(b *testing.B)   { benchmarkInsertLedgerDelta(b, 10) }
-func BenchmarkInsertLedgerDelta100(b *testing.B)  { benchmarkInsertLedgerDelta(b, 100) }
-func BenchmarkInsertLedgerDelta1000(b *testing.B) { benchmarkInsertLedgerDelta(b, 1000) }
-
-func BenchmarkBlockDiskUsage(b *testing.B) {
-	b.StopTimer()
-	dir, err := ioutil.TempDir("", "badger-test")
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
-	store, err := badger.New(badger.WithPath(dir))
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer store.Close()
-
-	ids := test.IdentifierGenerator()
-
-	b.StartTimer()
-	var lastDBSize int64
-	for i := 0; i < b.N; i++ {
-		block := &flowgo.Block{
-			Header: &flowgo.Header{
-				Height:   uint64(i),
-				ParentID: flowgo.Identifier(ids.New()),
-			},
-			Payload: &flowgo.Payload{
-				Guarantees: []*flowgo.CollectionGuarantee{
-					{
-						CollectionID: flowgo.Identifier(ids.New()),
-					},
-				},
-			},
-		}
-		if err := store.StoreBlock(block); err != nil {
-			b.Fatal(err)
-		}
-
-		if err := store.Sync(); err != nil {
-			b.Fatal(err)
-		}
-
-		size, err := dirSize(dir)
-		if err != nil {
-			b.Fatal(err)
-		}
-
-		dbSizeIncrease := size - lastDBSize
-		b.ReportMetric(float64(dbSizeIncrease), "db_size_increase_bytes/op")
-		lastDBSize = size
-	}
-}
-
-func BenchmarkLedgerDiskUsage(b *testing.B) {
-	b.StopTimer()
-	dir, err := ioutil.TempDir("", "badger-test")
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
-	store, err := badger.New(badger.WithPath(dir))
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer store.Close()
-
-	const owner = ""
-
-	b.StartTimer()
-	var lastDBSize int64
-	for i := 0; i < b.N; i++ {
-		ledger := delta.NewDelta()
-		for j := 0; j < 100; j++ {
-			key := fmt.Sprintf("%d-%d", i, j)
-			ledger.Set(owner, key, []byte{byte(i), byte(j)})
-		}
-		if err := store.InsertLedgerDelta(uint64(i), ledger); err != nil {
-			b.Fatal(err)
-		}
-		if err := store.Sync(); err != nil {
-			b.Fatal(err)
-		}
-
-		size, err := dirSize(dir)
-		if err != nil {
-			b.Fatal(err)
-		}
-
-		dbSizeIncrease := size - lastDBSize
-		b.ReportMetric(float64(dbSizeIncrease), "db_size_increase_bytes/op")
-		lastDBSize = size
-	}
 }
 
 // setupStore creates a temporary directory for the Badger and creates a
@@ -639,7 +454,7 @@ func setupStore(t *testing.T) (*badger.Store, string) {
 	dir, err := ioutil.TempDir("", "badger-test")
 	require.NoError(t, err)
 
-	store, err := badger.New(badger.WithPath(dir))
+	store, err := badger.New()
 	require.NoError(t, err)
 
 	return store, dir

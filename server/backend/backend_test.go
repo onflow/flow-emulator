@@ -424,7 +424,7 @@ func TestBackend(t *testing.T) {
 				Return(&latestBlock, nil).
 				Times(1)
 
-			header, err := backend.GetLatestBlockHeader(context.Background(), false)
+			header, _, err := backend.GetLatestBlockHeader(context.Background(), false)
 			assert.NoError(t, err)
 
 			assert.Equal(t, latestBlock.Header.Height, header.Height)
@@ -444,7 +444,7 @@ func TestBackend(t *testing.T) {
 				Return(&requestedBlock, nil).
 				Times(1)
 
-			header, err := backend.GetBlockHeaderByHeight(context.Background(), requestedBlock.Header.Height)
+			header, _, err := backend.GetBlockHeaderByHeight(context.Background(), requestedBlock.Header.Height)
 			assert.NoError(t, err)
 
 			assert.Equal(t, requestedBlock.Header.Height, header.Height)
@@ -464,7 +464,7 @@ func TestBackend(t *testing.T) {
 				Return(&requestedBlock, nil).
 				Times(1)
 
-			header, err := backend.GetBlockHeaderByID(context.Background(), flowsdk.Identifier(requestedBlock.ID()))
+			header, _, err := backend.GetBlockHeaderByID(context.Background(), flowsdk.Identifier(requestedBlock.ID()))
 			assert.NoError(t, err)
 
 			assert.Equal(t, requestedBlock.Header.Height, header.Height)

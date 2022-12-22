@@ -19,6 +19,7 @@
 package emulator
 
 import (
+	"context"
 	"errors"
 
 	"github.com/onflow/flow-go/access"
@@ -45,7 +46,7 @@ func newBlocks(b *Blockchain) *blocks {
 }
 
 func (b *blocks) HeaderByID(id flowgo.Identifier) (*flowgo.Header, error) {
-	block, err := b.blockchain.storage.BlockByID(id)
+	block, err := b.blockchain.storage.BlockByID(context.Background(), id)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return nil, nil
@@ -58,7 +59,7 @@ func (b *blocks) HeaderByID(id flowgo.Identifier) (*flowgo.Header, error) {
 }
 
 func (b *blocks) FinalizedHeader() (*flowgo.Header, error) {
-	block, err := b.blockchain.storage.LatestBlock()
+	block, err := b.blockchain.storage.LatestBlock(context.Background())
 	if err != nil {
 		return nil, err
 	}
