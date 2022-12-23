@@ -146,31 +146,29 @@ func (m EmulatorAPIServer) SnapshotJump(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	name := vars["name"]
 
-	switch (*m.storage).Store().(type) {
-	case *badger.Store:
-		badgerStore := (*m.storage).Store().(*badger.Store)
-		contexts, err := badgerStore.ListContexts()
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		if !slices.Contains(contexts, name) {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-
-		err = badgerStore.JumpToContext(name, false)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		m.reloadBlockchainFromSnapshot(name, badgerStore, w)
-
-	default:
+	badgerStore, isBadger := (*m.storage).Store().(*badger.Store)
+	if !isBadger {
 		m.server.logger.Error("State management only available with badger storage")
 		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
+	contexts, err := badgerStore.ListContexts()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if !slices.Contains(contexts, name) {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	err = badgerStore.JumpToContext(name, false)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	m.reloadBlockchainFromSnapshot(name, badgerStore, w)
 
 }
 
@@ -182,31 +180,28 @@ func (m EmulatorAPIServer) SnapshotCreate(w http.ResponseWriter, r *http.Request
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	switch (*m.storage).Store().(type) {
-	case *badger.Store:
-		badgerStore := (*m.storage).Store().(*badger.Store)
-		contexts, err := badgerStore.ListContexts()
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		if slices.Contains(contexts, name) {
-			w.WriteHeader(http.StatusConflict)
-			return
-		}
-		err = badgerStore.JumpToContext(name, true)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		m.reloadBlockchainFromSnapshot(name, badgerStore, w)
-
-	default:
+	badgerStore, isBadger := (*m.storage).Store().(*badger.Store)
+	if !isBadger {
 		m.server.logger.Error("State management only available with badger storage")
 		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
+	contexts, err := badgerStore.ListContexts()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if slices.Contains(contexts, name) {
+		w.WriteHeader(http.StatusConflict)
+		return
+	}
+	err = badgerStore.JumpToContext(name, true)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	m.reloadBlockchainFromSnapshot(name, badgerStore, w)
 
 }
 
