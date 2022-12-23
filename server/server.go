@@ -118,6 +118,8 @@ type Config struct {
 	Host string
 	//Chain to emulation
 	ChainID flowgo.ChainID
+	//Redis URL for redis storage backend
+	RedisURL string
 }
 
 type listener interface {
@@ -266,6 +268,10 @@ func (s *EmulatorServer) Stop() {
 }
 
 func configureStorage(logger *logrus.Logger, conf *Config) (storage Storage, err error) {
+	if conf.RedisURL != "" {
+		return NewRedisStorage(conf.RedisURL)
+	}
+
 	return NewBadgerStorage(logger, conf.DBPath, conf.DBGCInterval, conf.DBGCDiscardRatio, conf.Snapshot, conf.Persist)
 }
 
