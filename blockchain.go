@@ -14,7 +14,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/onflow/flow-emulator/storage/badger"
 	"sync"
 	"time"
 
@@ -41,6 +40,7 @@ import (
 	"github.com/onflow/flow-emulator/convert"
 	sdkconvert "github.com/onflow/flow-emulator/convert/sdk"
 	"github.com/onflow/flow-emulator/storage"
+	"github.com/onflow/flow-emulator/storage/badger"
 	"github.com/onflow/flow-emulator/types"
 )
 
