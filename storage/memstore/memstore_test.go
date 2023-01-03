@@ -19,6 +19,7 @@
 package memstore
 
 import (
+	"context"
 	"sync"
 	"testing"
 
@@ -37,18 +38,14 @@ func TestMemstore(t *testing.T) {
 		Owner: "",
 		Key:   "foo",
 	}
-	value := flowgo.RegisterEntry{
-		Key:   key,
-		Value: []byte("bar"),
-	}
-
+	value := []byte("bar")
 	store := New()
 
 	err := store.UnsafeInsertLedgerDelta(
 		blockHeight,
 		delta.Delta{
-			Data: map[string]flowgo.RegisterEntry{
-				key.String(): value,
+			Data: map[flowgo.RegisterID]flowgo.RegisterValue{
+				key: value,
 			},
 		},
 	)
@@ -61,11 +58,11 @@ func TestMemstore(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			view := store.LedgerViewByHeight(blockHeight)
+			view := store.LedgerViewByHeight(context.Background(), blockHeight)
 			actualValue, err := view.Get("", "foo")
 
 			require.NoError(t, err)
-			assert.Equal(t, value.Value, actualValue)
+			assert.Equal(t, value, actualValue)
 		}()
 	}
 
@@ -81,40 +78,35 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 		Owner: "",
 		Key:   "foo",
 	}
-	value := flowgo.RegisterEntry{
-		Key:   key,
-		Value: []byte("bar"),
-	}
-	nilValue := flowgo.RegisterEntry{
-		Key:   key,
-		Value: nil,
-	}
+	value := []byte("bar")
+	var nilByte []byte
+	nilValue := nilByte
 
 	// set initial value
 	err := store.insertLedgerDelta(0,
 		delta.Delta{
-			Data: map[string]flowgo.RegisterEntry{
-				key.String(): value,
+			Data: map[flowgo.RegisterID]flowgo.RegisterValue{
+				key: value,
 			},
 		})
 	require.NoError(t, err)
 
 	// check initial value
-	register, err := store.LedgerViewByHeight(0).Get(key.Owner, key.Key)
+	register, err := store.LedgerViewByHeight(context.Background(), 0).Get(key.Owner, key.Key)
 	require.NoError(t, err)
-	require.Equal(t, string(value.Value), string(register))
+	require.Equal(t, string(value), string(register))
 
 	// set value to nil
 	err = store.insertLedgerDelta(1,
 		delta.Delta{
-			Data: map[string]flowgo.RegisterEntry{
-				key.String(): nilValue,
+			Data: map[flowgo.RegisterID]flowgo.RegisterValue{
+				key: nilValue,
 			},
 		})
 	require.NoError(t, err)
 
 	// check value is nil
-	register, err = store.LedgerViewByHeight(1).Get(key.Owner, key.Key)
+	register, err = store.LedgerViewByHeight(context.Background(), 1).Get(key.Owner, key.Key)
 	require.NoError(t, err)
-	require.Equal(t, string(nilValue.Value), string(register))
+	require.Equal(t, string(nilValue), string(register))
 }
