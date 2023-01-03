@@ -40,7 +40,7 @@ import (
 	"github.com/onflow/flow-emulator/convert"
 	sdkconvert "github.com/onflow/flow-emulator/convert/sdk"
 	"github.com/onflow/flow-emulator/storage"
-	"github.com/onflow/flow-emulator/storage/badger"
+	"github.com/onflow/flow-emulator/storage/memstore"
 	"github.com/onflow/flow-emulator/types"
 )
 
@@ -147,13 +147,13 @@ type config struct {
 }
 
 func (conf config) GetStore() storage.Store {
+	// if no store is specified, use a memstore
+	// NOTE: we don't initialize this in defaultConfig because otherwise the same
+	// memstore is shared between Blockchain instances
 	if conf.Store == nil {
-		store, err := badger.New(badger.WithPersist(false))
-		if err != nil {
-			panic("Cannot initialize memory storage")
-		}
-		conf.Store = store
+		return memstore.New()
 	}
+
 	return conf.Store
 }
 
