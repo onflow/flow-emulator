@@ -41,7 +41,6 @@ import (
 	"github.com/onflow/flow-emulator/convert"
 	sdkconvert "github.com/onflow/flow-emulator/convert/sdk"
 	"github.com/onflow/flow-emulator/storage"
-	"github.com/onflow/flow-emulator/storage/memstore"
 	"github.com/onflow/flow-emulator/types"
 )
 
@@ -154,9 +153,7 @@ func (conf config) GetStore() storage.Store {
 			panic("Cannot initialize memory storage")
 		}
 		conf.Store = store
-		return memstore.New()
 	}
-
 	return conf.Store
 }
 
