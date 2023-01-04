@@ -714,8 +714,14 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 
 		nonExistentAccountAddress := addresses.Address()
 
+		script := []byte(`
+		  transaction {
+		    prepare(signer: AuthAccount) {}
+		  }
+		`)
+
 		tx := flowsdk.NewTransaction().
-			SetScript([]byte(`transaction { execute { } }`)).
+			SetScript(script).
 			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address).

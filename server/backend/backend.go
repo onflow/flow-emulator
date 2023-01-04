@@ -675,7 +675,7 @@ func printTransactionResult(logger *logrus.Logger, result *types.TransactionResu
 	}
 
 	for _, log := range result.Logs {
-		logger.Debugf(
+		logger.Infof(
 			"%s %s",
 			logPrefix("LOG", result.TransactionID, aurora.BlueFg),
 			log,
