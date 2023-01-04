@@ -716,7 +716,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 
 		script := []byte(`
 		  transaction {
-		    prepare(signer: AuthAccount) {}
+		    prepare() {}
 		  }
 		`)
 
