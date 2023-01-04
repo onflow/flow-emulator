@@ -716,7 +716,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 
 		script := []byte(`
 		  transaction {
-		    prepare() {}
+		    prepare(signer: AuthAccount) {}
 		  }
 		`)
 
@@ -743,6 +743,54 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.True(t, fvmerrors.IsAccountNotFoundError(result.Error))
+	})
+
+	t.Run("Mismatched authorizer count", func(t *testing.T) {
+
+		t.Parallel()
+
+		b, err := emulator.NewBlockchain()
+		require.NoError(t, err)
+
+		addresses := flowsdk.NewAddressGenerator(flowsdk.Emulator)
+		for {
+			_, err := b.GetAccount(addresses.NextAddress())
+			if err != nil {
+				break
+			}
+		}
+
+		nonExistentAccountAddress := addresses.Address()
+
+		script := []byte(`
+		  transaction {
+		    prepare() {}
+		  }
+		`)
+
+		tx := flowsdk.NewTransaction().
+			SetScript(script).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address).
+			AddAuthorizer(nonExistentAccountAddress)
+
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignPayload(nonExistentAccountAddress, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
+
+		err = b.AddTransaction(*tx)
+		assert.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+
+		assert.ErrorContains(t, result.Error, "authorizer count mismatch")
 	})
 
 	t.Run("Invalid key", func(t *testing.T) {
