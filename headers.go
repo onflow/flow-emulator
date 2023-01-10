@@ -32,6 +32,10 @@ type headers struct {
 	blockchain *Blockchain
 }
 
+func (h headers) BatchRemoveChunkBlockIndexByChunkID(_ flowgo.Identifier, _ storage.BatchStorage) error {
+	panic("should not be called")
+}
+
 func (h headers) IndexByChunkID(_, _ flowgo.Identifier) error {
 	panic("should not be called")
 }

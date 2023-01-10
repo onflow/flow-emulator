@@ -14,9 +14,9 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v0.31.0
-	github.com/onflow/flow-go v0.29.1
-	github.com/onflow/flow-go-sdk v0.31.0
+	github.com/onflow/cadence v0.31.2
+	github.com/onflow/flow-go v0.28.1-0.20230110053724-eb549a9d362f
+	github.com/onflow/flow-go-sdk v0.31.2
 	github.com/onflow/flow-go/crypto v0.24.4
 	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20220727161549-d59b1e547ac4
 	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20221202093946-932d1c70e288
@@ -107,8 +107,8 @@ require (
 	github.com/multiformats/go-multihash v0.2.1 // indirect
 	github.com/multiformats/go-varint v0.0.6 // indirect
 	github.com/onflow/atree v0.4.0 // indirect
-	github.com/onflow/flow-core-contracts/lib/go/contracts v0.11.2-0.20221214150253-cb74e7764c12 // indirect
-	github.com/onflow/flow-core-contracts/lib/go/templates v0.11.2-0.20221214150253-cb74e7764c12 // indirect
+	github.com/onflow/flow-core-contracts/lib/go/contracts v0.11.2-0.20221216161720-c1b31d5a4722 // indirect
+	github.com/onflow/flow-core-contracts/lib/go/templates v0.11.2-0.20221216161720-c1b31d5a4722 // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v0.5.0 // indirect
 	github.com/onflow/sdks v0.4.4 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
