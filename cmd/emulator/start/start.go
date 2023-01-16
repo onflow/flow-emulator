@@ -192,6 +192,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				ChainID:                   flowChainID,
 				RedisURL:                  conf.RedisURL,
 				ContractRemovalEnabled:    conf.ContractRemovalEnabled,
+				SqliteURL:                 conf.SqliteURL,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
