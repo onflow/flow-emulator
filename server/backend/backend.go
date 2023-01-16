@@ -646,19 +646,77 @@ func (b *Backend) DisableAutoMine() {
 	b.automine = false
 }
 
-func (b *Backend) GetTransactionResultByIndex(context.Context, flowgo.Identifier, uint32) (*access.TransactionResult, error) {
-	// TODO: implement
-	panic("GetTransactionResultByIndex not implemented")
+func (b *Backend) GetTransactionResultByIndex(ctx context.Context, id flowgo.Identifier, index uint32) (*access.TransactionResult, error) {
+	results, err := b.GetTransactionResultsByBlockID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if uint32(len(results)) <= index {
+		return nil, status.Error(codes.NotFound, "TransactionResult not found")
+	}
+	return results[index], nil
 }
 
-func (b *Backend) GetTransactionsByBlockID(ctx context.Context, id flowgo.Identifier) ([]*flowgo.TransactionBody, error) {
-	// TODO: implement
-	panic("GetTransactionsByBlockID not implemented")
+func (b *Backend) GetTransactionsByBlockID(ctx context.Context, id flowgo.Identifier) (result []*flowgo.TransactionBody, err error) {
+	block, err := b.emulator.GetBlockByID(convert.FlowIdentifierToSDK(id))
+	if err != nil {
+		switch err.(type) {
+		case emulator.NotFoundError:
+			return nil, status.Error(codes.NotFound, err.Error())
+		default:
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+
+	collectionIDs := block.Payload.Index().CollectionIDs
+
+	for _, collectionID := range collectionIDs {
+		collection, err := b.GetCollectionByID(ctx, convert.FlowIdentifierToSDK(collectionID))
+		if err != nil {
+			return nil, err
+		}
+		for _, transactionID := range collection.TransactionIDs {
+			transaction, err := b.GetTransaction(ctx, transactionID)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, convert.SDKTransactionToFlow(*transaction))
+		}
+	}
+	return result, nil
 }
 
-func (b *Backend) GetTransactionResultsByBlockID(ctx context.Context, id flowgo.Identifier) ([]*access.TransactionResult, error) {
-	// TODO: implement
-	panic("GetTransactionResultsByBlockID not implemented")
+func (b *Backend) GetTransactionResultsByBlockID(ctx context.Context, id flowgo.Identifier) (result []*access.TransactionResult, err error) {
+	block, err := b.emulator.GetBlockByID(convert.FlowIdentifierToSDK(id))
+	if err != nil {
+		switch err.(type) {
+		case emulator.NotFoundError:
+			return nil, status.Error(codes.NotFound, err.Error())
+		default:
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+
+	collectionIDs := block.Payload.Index().CollectionIDs
+
+	for _, collectionID := range collectionIDs {
+		collection, err := b.GetCollectionByID(ctx, convert.FlowIdentifierToSDK(collectionID))
+		if err != nil {
+			return nil, err
+		}
+		for _, transactionID := range collection.TransactionIDs {
+			transactionResult, err := b.GetTransactionResult(ctx, transactionID)
+			if err != nil {
+				return nil, err
+			}
+			accessResult, err := convert.SDKTransactionResultToFlow(transactionResult)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, accessResult)
+		}
+	}
+	return result, nil
 }
 
 func printTransactionResult(logger *logrus.Logger, result *types.TransactionResult) {
