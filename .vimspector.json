@@ -1,0 +1,14 @@
+{
+  "configurations": {
+    "run": {
+      "adapter": "vscode-go",
+      "configuration": {
+         "request": "launch",
+        "program": "/Users/bluesign/flow/flow-emulator/cmd/emulator/main.go",
+        "args": ["--snapshot", "--sqlite-url=snap.sql"] ,
+        "mode": "debug",
+        "dlvToolPath": "/Users/bluesign/go/bin/dlv"     
+      }
+    }
+  }
+}
