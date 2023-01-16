@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/dgraph-io/badger/v2 v2.2007.4
 	github.com/fxamacker/cbor/v2 v2.4.1-0.20220515183430-ad2eae63303f
+	github.com/glebarez/go-sqlite v1.20.3
 	github.com/go-git/go-git/v5 v5.5.2
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang/mock v1.6.0
@@ -51,7 +52,7 @@ require (
 	github.com/dgraph-io/ristretto v0.0.3-0.20200630154024-f66de99634de // indirect
 	github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/dustin/go-humanize v1.0.0 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ef-ds/deque v1.0.4 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/ethereum/go-ethereum v1.9.13 // indirect
@@ -93,7 +94,7 @@ require (
 	github.com/libp2p/go-openssl v0.1.0 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.16 // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mattn/go-pointer v0.0.1 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
@@ -121,6 +122,7 @@ require (
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20230126093431-47fa9a501578 // indirect
 	github.com/rivo/uniseg v0.2.1-0.20211004051800-57c86be7915a // indirect
 	github.com/rs/cors v1.8.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
@@ -156,7 +158,7 @@ require (
 	golang.org/x/crypto v0.3.0 // indirect
 	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
-	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -167,5 +169,9 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/blake3 v1.1.7 // indirect
+	modernc.org/libc v1.22.2 // indirect
+	modernc.org/mathutil v1.5.0 // indirect
+	modernc.org/memory v1.5.0 // indirect
+	modernc.org/sqlite v1.20.3 // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
 )

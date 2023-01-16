@@ -29,6 +29,7 @@ import (
 	"github.com/onflow/flow-emulator/storage/badger"
 	"github.com/onflow/flow-emulator/storage/memstore"
 	"github.com/onflow/flow-emulator/storage/redis"
+	"github.com/onflow/flow-emulator/storage/sqlite"
 )
 
 type Storage interface {
