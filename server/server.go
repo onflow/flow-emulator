@@ -20,6 +20,7 @@ package server
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/onflow/cadence"
@@ -280,6 +281,7 @@ func configureStorage(logger *logrus.Logger, conf *Config) (storage Storage, err
 		return NewSqliteStorage(conf.SqliteURL)
 	}
 	if conf.Snapshot {
+		_ = os.Mkdir(conf.DBPath, os.ModePerm)
 		return NewSqliteStorage(fmt.Sprintf("%s/snapshot.sqlite", conf.DBPath))
 	}
 
