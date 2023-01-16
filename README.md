@@ -87,8 +87,9 @@ Read more about CLI configuration [here](https://docs.onflow.org/flow-cli/config
 You can start the emulator with the Flow CLI:
 
 ```shell script
-flow emulator --init
+flow emulator
 ```
+You need to make sure the configuration `flow.json` exists, or create it beforehand using the `flow init` command.
 
 ### Using the emulator in a project
 
