@@ -122,6 +122,8 @@ type Config struct {
 	ChainID flowgo.ChainID
 	//Redis URL for redis storage backend
 	RedisURL string
+	//Sqlite URL for sqlite storage backend
+	SqliteURL string
 }
 
 type listener interface {
@@ -273,6 +275,12 @@ func (s *EmulatorServer) Stop() {
 func configureStorage(logger *logrus.Logger, conf *Config) (storage Storage, err error) {
 	if conf.RedisURL != "" {
 		return NewRedisStorage(conf.RedisURL)
+	}
+	if conf.SqliteURL != "" {
+		return NewSqliteStorage(conf.SqliteURL)
+	}
+	if conf.Snapshot {
+		return NewSqliteStorage(fmt.Sprintf("%s/snapshot.sqlite", conf.DBPath))
 	}
 
 	return NewBadgerStorage(logger, conf.DBPath, conf.DBGCInterval, conf.DBGCDiscardRatio, conf.Snapshot, conf.Persist)
