@@ -95,8 +95,9 @@ func (s *Store) GetBytesAtVersion(ctx context.Context, store string, key []byte,
 		rawBytes, err := hex.DecodeString(value)
 		if err != nil {
 			return nil, err
+		} else {
+			return rawBytes, nil
 		}
-		return rawBytes, nil
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
