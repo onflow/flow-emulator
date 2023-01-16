@@ -206,8 +206,26 @@ func (s *Store) unlockGit() {
 	lockPath := fmt.Sprintf("%s/.git/index.lock", s.config.DBPath)
 	_ = os.Remove(lockPath)
 }
+func (s *Store) ListContexts() ([]string, error) {
+	var tags []string
+	s.unlockGit()
+	defer s.lockGit()
+	tagrefs, err := s.dbGitRepository.Tags()
+	if err != nil {
+		return tags, err
+	}
 
-func (s *Store) JumpToContext(context string) error {
+	err = tagrefs.ForEach(func(t *plumbing.Reference) error {
+		tags = append(tags, t.Name().Short())
+		return nil
+	})
+	if err != nil {
+		return tags, err
+	}
+	return tags, err
+}
+
+func (s *Store) JumpToContext(context string, createIfNotExists bool) error {
 
 	if !s.config.Snapshot {
 		return fmt.Errorf("Snapshot option is not enabled")
@@ -233,6 +251,9 @@ func (s *Store) JumpToContext(context string) error {
 
 	// checkout branch ( first branch name is actually context name )
 	err = w.Checkout(&git.CheckoutOptions{Create: false, Force: true, Branch: b})
+	if err != nil && !createIfNotExists {
+		return err
+	}
 
 	if err != nil {
 		// branch doesn't exist, it means we need to create it ( first branch is named after context )
