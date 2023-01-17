@@ -632,7 +632,7 @@ func (b *Backend) GetLatestProtocolStateSnapshot(_ context.Context) ([]byte, err
 	panic("implement me")
 }
 
-func (b *Backend) GetExecutionResultForBlockID(_ context.Context, _ flowgo.Identifier) (*flowgo.ExecutionResult, error) {
+func (b *Backend) GetExecutionResultForBlockID(_ context.Context, _ sdk.Identifier) (*flowgo.ExecutionResult, error) {
 	return nil, nil
 }
 
@@ -646,7 +646,7 @@ func (b *Backend) DisableAutoMine() {
 	b.automine = false
 }
 
-func (b *Backend) GetTransactionResultByIndex(ctx context.Context, id flowgo.Identifier, index uint32) (*access.TransactionResult, error) {
+func (b *Backend) GetTransactionResultByIndex(ctx context.Context, id sdk.Identifier, index uint32) (*sdk.TransactionResult, error) {
 	results, err := b.GetTransactionResultsByBlockID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -657,8 +657,8 @@ func (b *Backend) GetTransactionResultByIndex(ctx context.Context, id flowgo.Ide
 	return results[index], nil
 }
 
-func (b *Backend) GetTransactionsByBlockID(ctx context.Context, id flowgo.Identifier) (result []*flowgo.TransactionBody, err error) {
-	block, err := b.emulator.GetBlockByID(convert.FlowIdentifierToSDK(id))
+func (b *Backend) GetTransactionsByBlockID(ctx context.Context, id sdk.Identifier) (result []*sdk.Transaction, err error) {
+	block, err := b.emulator.GetBlockByID(id)
 	if err != nil {
 		switch err.(type) {
 		case emulator.NotFoundError:
@@ -680,14 +680,14 @@ func (b *Backend) GetTransactionsByBlockID(ctx context.Context, id flowgo.Identi
 			if err != nil {
 				return nil, err
 			}
-			result = append(result, convert.SDKTransactionToFlow(*transaction))
+			result = append(result, transaction)
 		}
 	}
 	return result, nil
 }
 
-func (b *Backend) GetTransactionResultsByBlockID(ctx context.Context, id flowgo.Identifier) (result []*access.TransactionResult, err error) {
-	block, err := b.emulator.GetBlockByID(convert.FlowIdentifierToSDK(id))
+func (b *Backend) GetTransactionResultsByBlockID(ctx context.Context, id sdk.Identifier) (result []*sdk.TransactionResult, err error) {
+	block, err := b.emulator.GetBlockByID(id)
 	if err != nil {
 		switch err.(type) {
 		case emulator.NotFoundError:
@@ -709,11 +709,7 @@ func (b *Backend) GetTransactionResultsByBlockID(ctx context.Context, id flowgo.
 			if err != nil {
 				return nil, err
 			}
-			accessResult, err := convert.SDKTransactionResultToFlow(transactionResult)
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, accessResult)
+			result = append(result, transactionResult)
 		}
 	}
 	return result, nil
