@@ -1041,6 +1041,7 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 
 	env := environment.NewScriptEnvironment(
 		context.Background(),
+		b.vmCtx.TracerSpan,
 		b.vmCtx.EnvironmentParams,
 		state.NewTransactionState(
 			view,
