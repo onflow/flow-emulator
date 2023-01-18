@@ -70,11 +70,11 @@ func (h headers) ByHeight(height uint64) (*flowgo.Header, error) {
 
 // BlockIDByHeight returns the block ID that is finalized at the given height.
 func (h headers) BlockIDByHeight(height uint64) (flowgo.Identifier, error) {
-	h, err := h.ByHeight(height)
+	header, err := h.ByHeight(height)
 	if err != nil {
 		return flowgo.ZeroID, err
 	}
-	return h.ID()
+	return header.ID()
 }
 
 func (h headers) ByParentID(_ flowgo.Identifier) ([]*flowgo.Header, error) {
