@@ -66,7 +66,7 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--script-gas-limit`            | `FLOW_SCRIPTGASLIMIT`            | `100000`       | Specify gas limit for script execution                                                                                                                                                                                                              |
 | `--with-contracts`              | `FLOW_WITHCONTRACTS`             | `false`        | Deploy common contracts when emulator starts                                                                                                                                                                                                        |
 | `--skip-transaction-validation` | `FLOW_SKIPTRANSACTIONVALIDATION` | `false`        | Skip verification of transaction signatures and sequence numbers                                                                                                                                                                                    |
-| `--host`                        | `FLOW_HOST`                      | `127.0.0.1`    | Host to listen on for emulator GRPC/REST/Admin servers                                                                                                                                                                                              |
+| `--host`                        | `FLOW_HOST`                      | ` `    | Host to listen on for emulator GRPC/REST/Admin servers  (default: all interfaces)                                                                                                                                                                                            |
 | `--chain-id`                    | `FLOW_CHAINID`                   | `emulator`    | Chain to emulate for address generation.  Valid values are: 'emulator', 'testnet', 'mainnet'                                                                                                                                                         |
 | `--redis-url`                     | `FLOW_REDIS_URL`                   | ''          | Redis-server URL for persisting redis storage backend ( `redis://[[username:]password@]host[:port][/database]` )                                                                                                                                                                                                    |
 
@@ -147,6 +147,11 @@ You need to use the same value for `name` parameter.
 
 The snapshot functionality is a great tool for testing where you can first initialize
 a base snapshot with seed values, execute the test and then revert to that initialized state.
+
+You can list existing snapshots with:
+```
+GET http://localhost:8080/emulator/snapshots
+```
 
 ## Running the emulator with Docker
 
