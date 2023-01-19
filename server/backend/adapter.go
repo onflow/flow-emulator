@@ -21,10 +21,15 @@ package backend
 import (
 	"context"
 
+	jsoncdc "github.com/onflow/cadence/encoding/json"
+	emulator "github.com/onflow/flow-emulator"
+	"github.com/onflow/flow-emulator/types"
 	"github.com/onflow/flow-go/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
-	convert "github.com/onflow/flow-emulator/convert/sdk"
+	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var _ access.API = &Adapter{}
@@ -32,107 +37,125 @@ var _ access.API = &Adapter{}
 // Adapter wraps the emulator backend to be compatible with access.API.
 type Adapter struct {
 	backend *Backend
+	logger  *logrus.Logger
+}
+
+func convertError(err error) error {
+	if err != nil {
+		switch err.(type) {
+		case emulator.InvalidArgumentError:
+			return status.Error(codes.InvalidArgument, err.Error())
+		case emulator.NotFoundError:
+			return status.Error(codes.NotFound, err.Error())
+		default:
+			return status.Error(codes.Internal, err.Error())
+		}
+	}
+	return nil
 }
 
 // NewAdapter returns a new backend adapter.
-func NewAdapter(backend *Backend) *Adapter {
-	return &Adapter{backend: backend}
+func NewAdapter(logger *logrus.Logger, backend *Backend) *Adapter {
+	return &Adapter{
+		backend: backend,
+		logger:  logger,
+	}
 }
 
 func (a *Adapter) Ping(ctx context.Context) error {
-	return a.backend.Ping(ctx)
+	return convertError(a.backend.Emulator().Ping())
 }
 
 func (a *Adapter) GetNetworkParameters(ctx context.Context) access.NetworkParameters {
-	return a.backend.GetNetworkParameters(ctx)
+	return a.backend.Emulator().GetNetworkParameters()
 }
 
 func (a *Adapter) GetLatestBlockHeader(ctx context.Context, isSealed bool) (*flowgo.Header, flowgo.BlockStatus, error) {
-	return a.backend.GetLatestBlockHeader(ctx, isSealed)
+	block, blockStatus, err := a.backend.Emulator().GetLatestBlock()
+	if err != nil {
+		return nil, flowgo.BlockStatusUnknown, convertError(err)
+	}
+	return block.Header, blockStatus, nil
 }
 
 func (a *Adapter) GetBlockHeaderByHeight(ctx context.Context, height uint64) (*flowgo.Header, flowgo.BlockStatus, error) {
-	return a.backend.GetBlockHeaderByHeight(ctx, height)
+	block, blockStatus, err := a.backend.Emulator().GetBlockByHeight(height)
+	if err != nil {
+		return nil, flowgo.BlockStatusUnknown, convertError(err)
+	}
+	return block.Header, blockStatus, nil
 }
 
 func (a *Adapter) GetBlockHeaderByID(ctx context.Context, id flowgo.Identifier) (*flowgo.Header, flowgo.BlockStatus, error) {
-	return a.backend.GetBlockHeaderByID(ctx, convert.FlowIdentifierToSDK(id))
+	block, blockStatus, err := a.backend.Emulator().GetBlockByID(id)
+	if err != nil {
+		return nil, flowgo.BlockStatusUnknown, convertError(err)
+	}
+	return block.Header, blockStatus, nil
 }
 
-func (a *Adapter) GetLatestBlock(ctx context.Context, isSealed bool) (*flowgo.Block, flowgo.BlockStatus , error) {
-	return a.backend.GetLatestBlock(ctx, isSealed)
+func (a *Adapter) GetLatestBlock(ctx context.Context, isSealed bool) (*flowgo.Block, flowgo.BlockStatus, error) {
+	block, blockStatus, err := a.backend.Emulator().GetLatestBlock()
+	if err != nil {
+		return nil, flowgo.BlockStatusUnknown, convertError(err)
+	}
+	return block, blockStatus, nil
 }
 
 func (a *Adapter) GetBlockByHeight(ctx context.Context, height uint64) (*flowgo.Block, flowgo.BlockStatus, error) {
-	return a.backend.GetBlockByHeight(ctx, height)
+	block, blockStatus, err := a.backend.Emulator().GetBlockByHeight(height)
+	if err != nil {
+		return nil, flowgo.BlockStatusUnknown, convertError(err)
+	}
+	return block, blockStatus, nil
 }
 
 func (a *Adapter) GetBlockByID(ctx context.Context, id flowgo.Identifier) (*flowgo.Block, flowgo.BlockStatus, error) {
-	return a.backend.GetBlockByID(ctx, convert.FlowIdentifierToSDK(id))
+	block, blockStatus, err := a.backend.Emulator().GetBlockByID(id)
+	if err != nil {
+		return nil, flowgo.BlockStatusUnknown, convertError(err)
+	}
+	return block, blockStatus, nil
 }
 
 func (a *Adapter) GetCollectionByID(ctx context.Context, id flowgo.Identifier) (*flowgo.LightCollection, error) {
-	collection, err := a.backend.GetCollectionByID(ctx, convert.FlowIdentifierToSDK(id))
+	collection, err := a.backend.Emulator().GetCollectionByID(id)
 	if err != nil {
-		return nil, err
+		return nil, convertError(err)
 	}
-
-	return convert.SDKCollectionToFlow(collection), nil
-}
-
-func (a *Adapter) SendTransaction(ctx context.Context, tx *flowgo.TransactionBody) error {
-	return a.backend.SendTransaction(ctx, convert.FlowTransactionToSDK(*tx))
+	return collection, nil
 }
 
 func (a *Adapter) GetTransaction(ctx context.Context, id flowgo.Identifier) (*flowgo.TransactionBody, error) {
-	tx, err := a.backend.GetTransaction(ctx, convert.FlowIdentifierToSDK(id))
+	tx, err := a.backend.Emulator().GetTransaction(id)
 	if err != nil {
-		return nil, err
+		return nil, convertError(err)
 	}
-
-	return convert.SDKTransactionToFlow(*tx), nil
+	return tx, nil
 }
 
 func (a *Adapter) GetTransactionResult(ctx context.Context, id flowgo.Identifier) (*access.TransactionResult, error) {
-	result, err := a.backend.GetTransactionResult(ctx, convert.FlowIdentifierToSDK(id))
+	result, err := a.backend.Emulator().GetTransactionResult(id)
 	if err != nil {
-		return nil, err
+		return nil, convertError(err)
 	}
-
-	flowResult, err := convert.SDKTransactionResultToFlow(result)
-	if err != nil {
-		return nil, err
-	}
-
-	return flowResult, nil
+	return result, nil
 }
 
 func (a *Adapter) GetAccount(ctx context.Context, address flowgo.Address) (*flowgo.Account, error) {
-	account, err := a.backend.GetAccount(ctx, convert.FlowAddressToSDK(address))
+	account, err := a.backend.Emulator().GetAccount(address)
 	if err != nil {
-		return nil, err
+		return nil, convertError(err)
 	}
-
-	flowAccount, err := convert.SDKAccountToFlow(account)
-	if err != nil {
-		return nil, err
-	}
-
-	return flowAccount, nil
+	return account, nil
 }
 
 func (a *Adapter) GetAccountAtLatestBlock(ctx context.Context, address flowgo.Address) (*flowgo.Account, error) {
-	account, err := a.backend.GetAccountAtLatestBlock(ctx, convert.FlowAddressToSDK(address))
+	account, err := a.GetAccount(ctx, address)
 	if err != nil {
-		return nil, err
+		return nil, convertError(err)
 	}
-
-	flowAccount, err := convert.SDKAccountToFlow(account)
-	if err != nil {
-		return nil, err
-	}
-
-	return flowAccount, nil
+	return account, nil
 }
 
 func (a *Adapter) GetAccountAtBlockHeight(
@@ -140,17 +163,28 @@ func (a *Adapter) GetAccountAtBlockHeight(
 	address flowgo.Address,
 	height uint64,
 ) (*flowgo.Account, error) {
-	account, err := a.backend.GetAccountAtBlockHeight(ctx, convert.FlowAddressToSDK(address), height)
+	account, err := a.backend.Emulator().GetAccountAtBlockHeight(address, height)
 	if err != nil {
-		return nil, err
+		return nil, convertError(err)
+	}
+	return account, nil
+}
+
+func convertScriptResult(result *types.ScriptResult, err error) ([]byte, error) {
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	flowAccount, err := convert.SDKAccountToFlow(account)
-	if err != nil {
-		return nil, err
+	if !result.Succeeded() {
+		return nil, result.Error
 	}
 
-	return flowAccount, nil
+	valueBytes, err := jsoncdc.Encode(result.Value)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return valueBytes, nil
 }
 
 func (a *Adapter) ExecuteScriptAtLatestBlock(
@@ -158,7 +192,7 @@ func (a *Adapter) ExecuteScriptAtLatestBlock(
 	script []byte,
 	arguments [][]byte,
 ) ([]byte, error) {
-	return a.backend.ExecuteScriptAtLatestBlock(ctx, script, arguments)
+	return convertScriptResult(a.backend.Emulator().ExecuteScript(script, arguments))
 }
 
 func (a *Adapter) ExecuteScriptAtBlockHeight(
@@ -167,7 +201,7 @@ func (a *Adapter) ExecuteScriptAtBlockHeight(
 	script []byte,
 	arguments [][]byte,
 ) ([]byte, error) {
-	return a.backend.ExecuteScriptAtBlockHeight(ctx, blockHeight, script, arguments)
+	return convertScriptResult(a.backend.Emulator().ExecuteScriptAtBlockHeight(script, arguments, blockHeight))
 }
 
 func (a *Adapter) ExecuteScriptAtBlockID(
@@ -176,7 +210,7 @@ func (a *Adapter) ExecuteScriptAtBlockID(
 	script []byte,
 	arguments [][]byte,
 ) ([]byte, error) {
-	return a.backend.ExecuteScriptAtBlockID(ctx, convert.FlowIdentifierToSDK(blockID), script, arguments)
+	return convertScriptResult(a.backend.Emulator().ExecuteScriptAtBlockID(script, arguments, blockID))
 }
 
 func (a *Adapter) GetEventsForHeightRange(
@@ -184,7 +218,11 @@ func (a *Adapter) GetEventsForHeightRange(
 	eventType string,
 	startHeight, endHeight uint64,
 ) ([]flowgo.BlockEvents, error) {
-	return a.backend.GetEventsForHeightRange(ctx, eventType, startHeight, endHeight)
+	events, err := a.backend.Emulator().GetEventsForHeightRange(eventType, startHeight, endHeight)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	return events, nil
 }
 
 func (a *Adapter) GetEventsForBlockIDs(
@@ -192,15 +230,19 @@ func (a *Adapter) GetEventsForBlockIDs(
 	eventType string,
 	blockIDs []flowgo.Identifier,
 ) ([]flowgo.BlockEvents, error) {
-	return a.backend.GetEventsForBlockIDs(ctx, eventType, convert.FlowIdentifiersToSDK(blockIDs))
+	events, err := a.backend.Emulator().GetEventsForBlockIDs(eventType, blockIDs)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	return events, nil
 }
 
 func (a *Adapter) GetLatestProtocolStateSnapshot(ctx context.Context) ([]byte, error) {
-	return a.backend.GetLatestProtocolStateSnapshot(ctx)
+	return nil, nil
 }
 
 func (a *Adapter) GetExecutionResultForBlockID(ctx context.Context, blockID flowgo.Identifier) (*flowgo.ExecutionResult, error) {
-	return a.backend.GetExecutionResultForBlockID(ctx, blockID)
+	return nil, nil
 }
 
 func (a *Adapter) GetExecutionResultByID(ctx context.Context, id flowgo.Identifier) (*flowgo.ExecutionResult, error) {
@@ -208,13 +250,29 @@ func (a *Adapter) GetExecutionResultByID(ctx context.Context, id flowgo.Identifi
 }
 
 func (a *Adapter) GetTransactionResultByIndex(ctx context.Context, blockID flowgo.Identifier, index uint32) (*access.TransactionResult, error) {
-	return a.backend.GetTransactionResultByIndex(ctx, blockID, index)
+	result, err := a.backend.Emulator().GetTransactionResultByIndex(blockID, index)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	return result, nil
 }
 
 func (a *Adapter) GetTransactionsByBlockID(ctx context.Context, blockID flowgo.Identifier) ([]*flowgo.TransactionBody, error) {
-	return a.backend.GetTransactionsByBlockID(ctx, blockID)
+	result, err := a.backend.Emulator().GetTransactionsByBlockID(blockID)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	return result, nil
 }
 
 func (a *Adapter) GetTransactionResultsByBlockID(ctx context.Context, blockID flowgo.Identifier) ([]*access.TransactionResult, error) {
-	return a.backend.GetTransactionResultsByBlockID(ctx, blockID)
+	result, err := a.backend.Emulator().GetTransactionResultsByBlockID(blockID)
+	if err != nil {
+		return nil, convertError(err)
+	}
+	return result, nil
+}
+
+func (a *Adapter) SendTransaction(ctx context.Context, tx *flowgo.TransactionBody) error {
+	return convertError(a.backend.Emulator().SendTransaction(tx))
 }

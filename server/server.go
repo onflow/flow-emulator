@@ -142,6 +142,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		return nil
 	}
 
+	blockchain.SetLogger(logger)
 	chain := blockchain.GetChain()
 
 	contracts := map[string]string{
@@ -167,7 +168,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		}
 	}
 
-	be := configureBackend(logger, conf, blockchain)
+	be := configureBackend(conf, blockchain)
 
 	livenessTicker := NewLivenessTicker(conf.LivenessCheckTolerance)
 	grpcServer := NewGRPCServer(logger, be, blockchain.GetChain(), conf.Host, conf.GRPCPort, conf.GRPCDebug)
@@ -324,11 +325,11 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 	return blockchain, nil
 }
 
-func configureBackend(logger *logrus.Logger, conf *Config, blockchain *emulator.Blockchain) *backend.Backend {
-	b := backend.New(logger, blockchain)
+func configureBackend(conf *Config, blockchain *emulator.Blockchain) *backend.Backend {
+	b := backend.New(blockchain)
 
 	if conf.BlockTime == 0 {
-		b.EnableAutoMine()
+		blockchain.EnableAutoMine()
 	}
 
 	return b

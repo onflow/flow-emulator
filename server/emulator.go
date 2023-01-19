@@ -24,7 +24,7 @@ import (
 
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 
-	flowsdk "github.com/onflow/flow-go-sdk"
+	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/gorilla/mux"
 
@@ -71,17 +71,17 @@ func (m EmulatorAPIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	m.backend.CommitBlock()
+	m.backend.Emulator().CommitBlock()
 
-	header, _, err := m.backend.GetLatestBlockHeader(r.Context(), true)
+	block, _, err := m.backend.Emulator().GetLatestBlock()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	blockResponse := &BlockResponse{
-		Height:  int(header.Height),
-		BlockId: header.ID().String(),
+		Height:  int(block.Header.Height),
+		BlockId: block.Header.ID().String(),
 	}
 
 	err = json.NewEncoder(w).Encode(blockResponse)
@@ -119,7 +119,7 @@ func (m EmulatorAPIServer) reloadBlockchainFromSnapshot(name string, badgerStore
 	}
 
 	m.backend.SetEmulator(blockchain)
-	block, err := blockchain.GetLatestBlock()
+	block, _, err := blockchain.GetLatestBlock()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -211,9 +211,9 @@ func (m EmulatorAPIServer) Storage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["address"]
 
-	addr := flowsdk.HexToAddress(address)
+	addr := flowgo.HexToAddress(address)
 
-	storage, err := m.backend.GetAccountStorage(addr)
+	storage, err := m.backend.Emulator().GetAccountStorage(addr)
 	if err != nil {
 		if fvmerrors.IsAccountNotFoundError(err) {
 			w.WriteHeader(http.StatusNotFound)

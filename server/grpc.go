@@ -42,13 +42,13 @@ type GRPCServer struct {
 	listener   net.Listener
 }
 
-func NewGRPCServer(logger *logrus.Logger, b *backend.Backend, chain flow.Chain, host string, port int, debug bool) *GRPCServer {
+func NewGRPCServer(logger *logrus.Logger, be *backend.Backend, chain flow.Chain, host string, port int, debug bool) *GRPCServer {
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpcprometheus.StreamServerInterceptor),
 		grpc.UnaryInterceptor(grpcprometheus.UnaryServerInterceptor),
 	)
 
-	adaptedBackend := backend.NewAdapter(b)
+	adaptedBackend := backend.NewAdapter(logger, be)
 
 	legacyaccessproto.RegisterAccessAPIServer(grpcServer, legacyaccess.NewHandler(adaptedBackend, chain))
 	accessproto.RegisterAccessAPIServer(grpcServer, access.NewHandler(adaptedBackend, chain))

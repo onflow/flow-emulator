@@ -32,15 +32,14 @@ import (
 	"github.com/onflow/flow-go-sdk/test"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	flowgo "github.com/onflow/flow-go/model/flow"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	emulator "github.com/onflow/flow-emulator"
+	"github.com/onflow/flow-emulator/mocks"
 	"github.com/onflow/flow-emulator/server/backend"
-	"github.com/onflow/flow-emulator/server/backend/mocks"
 	"github.com/onflow/flow-emulator/types"
 )
 
@@ -50,7 +49,7 @@ func backendTest(f func(t *testing.T, backend *backend.Backend, emu *mocks.MockE
 		defer mockCtrl.Finish()
 
 		emu := mocks.NewMockEmulator(mockCtrl)
-		back := backend.New(logrus.New(), emu)
+		back := backend.New(emu)
 
 		f(t, back, emu)
 	}
@@ -79,11 +78,11 @@ func TestBackend(t *testing.T) {
 
 			emu.EXPECT().
 				GetLatestBlock().
-				Return(&latestBlock, nil).
+				Return(&latestBlock, flowgo.BlockStatusSealed, nil).
 				Times(1)
 
 			emu.EXPECT().
-				ExecuteScriptAtBlock(script, nil, latestBlock.Header.Height).
+				ExecuteScriptAtBlockHeight(script, nil, latestBlock.Header.Height).
 				Return(&types.ScriptResult{
 					Value: expectedValue,
 					Error: nil,
@@ -110,11 +109,11 @@ func TestBackend(t *testing.T) {
 
 			emu.EXPECT().
 				GetLatestBlock().
-				Return(&latestBlock, nil).
+				Return(&latestBlock, flowgo.BlockStatusSealed, nil).
 				Times(1)
 
 			emu.EXPECT().
-				ExecuteScriptAtBlock(script, nil, latestBlock.Header.Height).
+				ExecuteScriptAtBlockHeight(script, nil, latestBlock.Header.Height).
 				Return(&types.ScriptResult{
 					Value: nil,
 					Error: scriptErr,
@@ -137,7 +136,7 @@ func TestBackend(t *testing.T) {
 			expectedValue := cadence.NewInt(rand.Int())
 
 			emu.EXPECT().
-				ExecuteScriptAtBlock(script, nil, blockHeight).
+				ExecuteScriptAtBlockHeight(script, nil, blockHeight).
 				Return(&types.ScriptResult{
 					Value: expectedValue,
 					Error: nil,
@@ -168,7 +167,7 @@ func TestBackend(t *testing.T) {
 				Times(1)
 
 			emu.EXPECT().
-				ExecuteScriptAtBlock(script, nil, randomBlock.Header.Height).
+				ExecuteScriptAtBlockHeight(script, nil, randomBlock.Header.Height).
 				Return(&types.ScriptResult{
 					Value: expectedValue,
 					Error: nil,
@@ -218,7 +217,7 @@ func TestBackend(t *testing.T) {
 
 			emu.EXPECT().
 				GetLatestBlock().
-				Return(&latestBlock, nil)
+				Return(&latestBlock, flowgo.BlockStatusSealed, nil)
 
 			emu.EXPECT().
 				GetEventsByHeight(gomock.Any(), gomock.Any()).
@@ -245,7 +244,7 @@ func TestBackend(t *testing.T) {
 
 			emu.EXPECT().
 				GetLatestBlock().
-				Return(&latestBlock, nil)
+				Return(&latestBlock, flowgo.BlockStatusSealed, nil)
 
 			emu.EXPECT().
 				GetBlockByHeight(startBlock.Header.Height).
@@ -296,15 +295,15 @@ func TestBackend(t *testing.T) {
 
 			emu.EXPECT().
 				GetLatestBlock().
-				Return(&latestBlock, nil)
+				Return(&latestBlock, flowgo.BlockStatusSealed, nil)
 
 			emu.EXPECT().
 				GetBlockByHeight(blocks[0].Header.Height).
-				Return(&blocks[0], nil)
+				Return(&blocks[0], flowgo.BlockStatusSealed, nil)
 
 			emu.EXPECT().
 				GetBlockByHeight(blocks[1].Header.Height).
-				Return(&blocks[1], nil)
+				Return(&blocks[1], flowgo.BlockStatusSealed, nil)
 
 			emu.EXPECT().
 				GetEventsByHeight(blocks[0].Header.Height, eventType).
@@ -328,7 +327,7 @@ func TestBackend(t *testing.T) {
 			for i, block := range results {
 				assert.Len(t, block.Events, 2)
 				assert.Equal(t, block.BlockID, blocks[i].ID())
-				assert.Equal(t, block.BlockHeight, blocks[i].Header.Height)
+				assert.Equal(t, block.Height, blocks[i].Header.Height)
 			}
 		}),
 	)
@@ -359,15 +358,15 @@ func TestBackend(t *testing.T) {
 
 			emu.EXPECT().
 				GetLatestBlock().
-				Return(&latestBlock, nil)
+				Return(&latestBlock, flowgo.BlockStatusSealed, nil)
 
 			emu.EXPECT().
 				GetBlockByHeight(blocks[0].Header.Height).
-				Return(&blocks[0], nil)
+				Return(&blocks[0], flowgo.BlockStatusSealed, nil)
 
 			emu.EXPECT().
 				GetBlockByHeight(blocks[1].Header.Height).
-				Return(&blocks[1], nil)
+				Return(&blocks[1], flowgo.BlockStatusSealed, nil)
 
 			emu.EXPECT().
 				GetEventsByHeight(blocks[0].Header.Height, eventType).
@@ -391,7 +390,7 @@ func TestBackend(t *testing.T) {
 			for i, block := range results {
 				assert.Len(t, block.Events, 2)
 				assert.Equal(t, block.BlockID, blocks[i].ID())
-				assert.Equal(t, block.BlockHeight, blocks[i].Header.Height)
+				assert.Equal(t, block.Height, blocks[i].Header.Height)
 			}
 		}),
 	)
@@ -421,14 +420,14 @@ func TestBackend(t *testing.T) {
 
 			emu.EXPECT().
 				GetLatestBlock().
-				Return(&latestBlock, nil).
+				Return(&latestBlock, flowgo.BlockStatusSealed, nil).
 				Times(1)
 
 			header, _, err := backend.GetLatestBlockHeader(context.Background(), false)
 			assert.NoError(t, err)
 
 			assert.Equal(t, latestBlock.Header.Height, header.Height)
-			assert.Equal(t, latestBlock.ID(), header.ID())
+			assert.Equal(t, latestBlock.ID(), header.ID)
 			assert.Equal(t, latestBlock.Header.ParentID, header.ParentID)
 		}),
 	)
@@ -448,7 +447,7 @@ func TestBackend(t *testing.T) {
 			assert.NoError(t, err)
 
 			assert.Equal(t, requestedBlock.Header.Height, header.Height)
-			assert.Equal(t, requestedBlock.ID(), header.ID())
+			assert.Equal(t, requestedBlock.ID(), header.ID)
 			assert.Equal(t, requestedBlock.Header.ParentID, header.ParentID)
 		}),
 	)
@@ -468,7 +467,7 @@ func TestBackend(t *testing.T) {
 			assert.NoError(t, err)
 
 			assert.Equal(t, requestedBlock.Header.Height, header.Height)
-			assert.Equal(t, requestedBlock.ID(), header.ID())
+			assert.Equal(t, requestedBlock.ID(), header.ID)
 			assert.Equal(t, requestedBlock.Header.ParentID, header.ParentID)
 		}),
 	)
@@ -576,11 +575,11 @@ func TestBackend(t *testing.T) {
 
 			emu.EXPECT().
 				GetBlockByID(flowsdk.Identifier(blocks[0].ID())).
-				Return(&blocks[0], nil)
+				Return(&blocks[0], flowgo.BlockStatusSealed, nil)
 
 			emu.EXPECT().
 				GetBlockByID(flowsdk.Identifier(blocks[1].ID())).
-				Return(&blocks[1], nil)
+				Return(&blocks[1], flowgo.BlockStatusSealed, nil)
 
 			emu.EXPECT().
 				GetEventsByHeight(blocks[0].Header.Height, eventType).
@@ -608,7 +607,7 @@ func TestBackend(t *testing.T) {
 			for i, block := range results {
 				assert.Len(t, block.Events, 2)
 				assert.Equal(t, block.BlockID, blocks[i].ID())
-				assert.Equal(t, block.BlockHeight, blocks[i].Header.Height)
+				assert.Equal(t, block.Height, blocks[i].Header.Height)
 			}
 		}),
 	)
@@ -652,7 +651,7 @@ func TestBackendAutoMine(t *testing.T) {
 
 	emu := mocks.NewMockEmulator(mockCtrl)
 
-	backend := backend.New(logrus.New(), emu)
+	backend := backend.New(emu)
 
 	// enable automine flag
 	backend.EnableAutoMine()

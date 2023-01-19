@@ -31,6 +31,7 @@ require (
 	github.com/spf13/cobra v1.5.0
 	github.com/stretchr/testify v1.8.0
 	golang.org/x/exp v0.0.0-20221126150942-6ab00d035af9
+	golang.org/x/tools v0.2.0
 	google.golang.org/grpc v1.46.2
 )
 

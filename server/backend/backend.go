@@ -20,55 +20,61 @@ package backend
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
-	"strings"
 
-	"github.com/logrusorgru/aurora"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	sdk "github.com/onflow/flow-go-sdk"
-	"github.com/onflow/flow-go/access"
-	fvmerrors "github.com/onflow/flow-go/fvm/errors"
-	flowgo "github.com/onflow/flow-go/model/flow"
-	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	emulator "github.com/onflow/flow-emulator"
 	convert "github.com/onflow/flow-emulator/convert/sdk"
-	"github.com/onflow/flow-emulator/types"
 )
 
-// Backend wraps an emulated blockchain and implements the RPC handlers
-// required by the Access API.
-type Backend struct {
-	logger   *logrus.Logger
-	emulator Emulator
-	automine bool
-}
+//sdk missing blockStatus
+type BlockStatus int
 
-// SetEmulator hotswaps emulator for state management.
-func (b *Backend) SetEmulator(emulator Emulator) {
-	b.emulator = emulator
+const (
+	// BlockStatusUnknown indicates that the block status is not known.
+	BlockStatusUnknown BlockStatus = iota
+	// BlockStatusFinalized is the status of a finalized block.
+	BlockStatusFinalized
+	// BlockStatusSealed is the status of a sealed block.
+	BlockStatusSealed
+)
+
+// Backend wraps an emulated blockchain and makes it flow-go-sdk compatible
+type Backend struct {
+	emulator emulator.Emulator
 }
 
 // New returns a new backend.
-func New(logger *logrus.Logger, emulator Emulator) *Backend {
+func New(emulator emulator.Emulator) *Backend {
 	return &Backend{
-		logger:   logger,
 		emulator: emulator,
-		automine: false,
 	}
+}
+
+func (b *Backend) SetEmulator(emulator emulator.Emulator) {
+	b.emulator = emulator
+}
+
+func (b *Backend) Emulator() emulator.Emulator {
+	return b.emulator
+}
+
+func (b *Backend) EnableAutoMine() {
+	b.emulator.EnableAutoMine()
+}
+
+func (b *Backend) DisableAutoMine() {
+	b.emulator.DisableAutoMine()
 }
 
 func (b *Backend) Ping(ctx context.Context) error {
-	return nil
+	return b.emulator.Ping()
 }
 
-func (b *Backend) GetNetworkParameters(ctx context.Context) access.NetworkParameters {
-	return access.NetworkParameters{
-		ChainID: flowgo.Emulator,
-	}
+func (b *Backend) GetChainID(ctx context.Context) sdk.ChainID {
+	return sdk.ChainID(b.emulator.GetNetworkParameters().ChainID)
 }
 
 // GetLatestBlockHeader gets the latest sealed block header.
@@ -76,24 +82,24 @@ func (b *Backend) GetLatestBlockHeader(
 	_ context.Context,
 	_ bool,
 ) (
-	*flowgo.Header,
-	flowgo.BlockStatus,
+	*sdk.BlockHeader,
+	BlockStatus,
 	error,
 ) {
-	block, err := b.emulator.GetLatestBlock()
+	block, _, err := b.emulator.GetLatestBlock()
 	if err != nil {
-		return nil, flowgo.BlockStatusUnknown, status.Error(codes.Internal, err.Error())
+		return nil, BlockStatusUnknown, err
 	}
 
-	blockID := block.ID()
-
-	b.logger.WithFields(logrus.Fields{
-		"blockHeight": block.Header.Height,
-		"blockID":     hex.EncodeToString(blockID[:]),
-	}).Debug("🎁  GetLatestBlockHeader called")
+	blockHeader := sdk.BlockHeader{
+		ID:        sdk.Identifier(block.ID()),
+		ParentID:  sdk.Identifier(block.Header.ParentID),
+		Height:    block.Header.Height,
+		Timestamp: block.Header.Timestamp,
+	}
 
 	// this should always return latest sealed block
-	return block.Header, flowgo.BlockStatusSealed, nil
+	return &blockHeader, BlockStatusSealed, nil
 }
 
 // GetBlockHeaderByHeight gets a block header by height.
@@ -101,24 +107,24 @@ func (b *Backend) GetBlockHeaderByHeight(
 	_ context.Context,
 	height uint64,
 ) (
-	*flowgo.Header,
-	flowgo.BlockStatus,
+	*sdk.BlockHeader,
+	BlockStatus,
 	error,
 ) {
-	block, err := b.emulator.GetBlockByHeight(height)
+	block, _, err := b.emulator.GetBlockByHeight(height)
 	if err != nil {
-		return nil, flowgo.BlockStatusUnknown, status.Error(codes.Internal, err.Error())
+		return nil, BlockStatusUnknown, err
 	}
 
-	blockID := block.ID()
-
-	b.logger.WithFields(logrus.Fields{
-		"blockHeight": block.Header.Height,
-		"blockID":     hex.EncodeToString(blockID[:]),
-	}).Debug("🎁  GetBlockHeaderByHeight called")
+	blockHeader := sdk.BlockHeader{
+		ID:        sdk.Identifier(block.ID()),
+		ParentID:  sdk.Identifier(block.Header.ParentID),
+		Height:    block.Header.Height,
+		Timestamp: block.Header.Timestamp,
+	}
 
 	// As we don't fork the chain in emulator, and finalize and seal at the same time, this can only be Sealed
-	return block.Header, flowgo.BlockStatusSealed, nil
+	return &blockHeader, BlockStatusSealed, nil
 }
 
 // GetBlockHeaderByID gets a block header by ID.
@@ -126,24 +132,23 @@ func (b *Backend) GetBlockHeaderByID(
 	_ context.Context,
 	id sdk.Identifier,
 ) (
-	*flowgo.Header,
-	flowgo.BlockStatus,
+	*sdk.BlockHeader,
+	BlockStatus,
 	error,
 ) {
-	block, err := b.emulator.GetBlockByID(id)
+	block, _, err := b.emulator.GetBlockByID(convert.SDKIdentifierToFlow(id))
 	if err != nil {
-		return nil, flowgo.BlockStatusUnknown, status.Error(codes.Internal, err.Error())
+		return nil, BlockStatusUnknown, err
 	}
 
-	blockID := block.ID()
-
-	b.logger.WithFields(logrus.Fields{
-		"blockHeight": block.Header.Height,
-		"blockID":     hex.EncodeToString(blockID[:]),
-	}).Debug("🎁  GetBlockHeaderByID called")
-
+	blockHeader := sdk.BlockHeader{
+		ID:        sdk.Identifier(block.ID()),
+		ParentID:  sdk.Identifier(block.Header.ParentID),
+		Height:    block.Header.Height,
+		Timestamp: block.Header.Timestamp,
+	}
 	// As we don't fork the chain in emulator, and finalize and seal at the same time, this can only be Sealed
-	return block.Header, flowgo.BlockStatusSealed, nil
+	return &blockHeader, BlockStatusSealed, nil
 }
 
 // GetLatestBlock gets the latest sealed block.
@@ -151,24 +156,26 @@ func (b *Backend) GetLatestBlock(
 	_ context.Context,
 	_ bool,
 ) (
-	*flowgo.Block,
-	flowgo.BlockStatus,
+	*sdk.Block,
+	BlockStatus,
 	error,
 ) {
-	block, err := b.emulator.GetLatestBlock()
+	flowBlock, _, err := b.emulator.GetLatestBlock()
 	if err != nil {
-		return nil, flowgo.BlockStatusUnknown, status.Error(codes.Internal, err.Error())
+		return nil, BlockStatusUnknown, err
 	}
 
-	blockID := block.ID()
-
-	b.logger.WithFields(logrus.Fields{
-		"blockHeight": block.Header.Height,
-		"blockID":     hex.EncodeToString(blockID[:]),
-	}).Debug("🎁  GetLatestBlock called")
-
+	block := sdk.Block{
+		BlockHeader: sdk.BlockHeader{
+			ID:        sdk.Identifier(flowBlock.ID()),
+			ParentID:  sdk.Identifier(flowBlock.Header.ParentID),
+			Height:    flowBlock.Header.Height,
+			Timestamp: flowBlock.Header.Timestamp,
+		},
+		BlockPayload: sdk.BlockPayload{},
+	}
 	// As we don't fork the chain in emulator, and finalize and seal at the same time, this can only be Sealed
-	return block, flowgo.BlockStatusSealed, nil
+	return &block, BlockStatusSealed, nil
 }
 
 // GetBlockByHeight gets a block by height.
@@ -176,24 +183,27 @@ func (b *Backend) GetBlockByHeight(
 	ctx context.Context,
 	height uint64,
 ) (
-	*flowgo.Block,
-	flowgo.BlockStatus,
+	*sdk.Block,
+	BlockStatus,
 	error,
 ) {
-	block, err := b.emulator.GetBlockByHeight(height)
+	flowBlock, _, err := b.emulator.GetBlockByHeight(height)
 	if err != nil {
-		return nil, flowgo.BlockStatusUnknown, status.Error(codes.Internal, err.Error())
+		return nil, BlockStatusUnknown, err
 	}
 
-	blockID := block.ID()
-
-	b.logger.WithFields(logrus.Fields{
-		"blockHeight": block.Header.Height,
-		"blockID":     hex.EncodeToString(blockID[:]),
-	}).Debug("🎁  GetBlockByHeight called")
+	block := sdk.Block{
+		BlockHeader: sdk.BlockHeader{
+			ID:        sdk.Identifier(flowBlock.ID()),
+			ParentID:  sdk.Identifier(flowBlock.Header.ParentID),
+			Height:    flowBlock.Header.Height,
+			Timestamp: flowBlock.Header.Timestamp,
+		},
+		BlockPayload: sdk.BlockPayload{},
+	}
 
 	// As we don't fork the chain in emulator, and finalize and seal at the same time, this can only be Sealed
-	return block, flowgo.BlockStatusSealed, nil
+	return &block, BlockStatusSealed, nil
 }
 
 // GetBlockByID gets a block by ID.
@@ -201,24 +211,27 @@ func (b *Backend) GetBlockByID(
 	_ context.Context,
 	id sdk.Identifier,
 ) (
-	*flowgo.Block,
-	flowgo.BlockStatus,
+	*sdk.Block,
+	BlockStatus,
 	error,
 ) {
-	block, err := b.emulator.GetBlockByID(id)
+	flowBlock, _, err := b.emulator.GetBlockByID(convert.SDKIdentifierToFlow(id))
 	if err != nil {
-		return nil, flowgo.BlockStatusUnknown, status.Error(codes.Internal, err.Error())
+		return nil, BlockStatusUnknown, err
 	}
 
-	blockID := block.ID()
-
-	b.logger.WithFields(logrus.Fields{
-		"blockHeight": block.Header.Height,
-		"blockID":     hex.EncodeToString(blockID[:]),
-	}).Debug("🎁  GetBlockByID called")
+	block := sdk.Block{
+		BlockHeader: sdk.BlockHeader{
+			ID:        sdk.Identifier(flowBlock.ID()),
+			ParentID:  sdk.Identifier(flowBlock.Header.ParentID),
+			Height:    flowBlock.Header.Height,
+			Timestamp: flowBlock.Header.Timestamp,
+		},
+		BlockPayload: sdk.BlockPayload{},
+	}
 
 	// As we don't fork the chain in emulator, and finalize and seal at the same time, this can only be Sealed
-	return block, flowgo.BlockStatusSealed, nil
+	return &block, BlockStatusSealed, nil
 }
 
 // GetCollectionByID gets a collection by ID.
@@ -226,63 +239,20 @@ func (b *Backend) GetCollectionByID(
 	_ context.Context,
 	id sdk.Identifier,
 ) (*sdk.Collection, error) {
-	col, err := b.emulator.GetCollection(id)
+	col, err := b.emulator.GetCollectionByID(convert.SDKIdentifierToFlow(id))
 	if err != nil {
-		switch err.(type) {
-		case emulator.NotFoundError:
-			return nil, status.Error(codes.NotFound, err.Error())
-		default:
-			return nil, status.Error(codes.Internal, err.Error())
-		}
+		return nil, err
 	}
 
-	b.logger.
-		WithField("colID", id.Hex()).
-		Debugf("📚  GetCollectionByID called")
+	sdkCol := convert.FlowLightCollectionToSDK(*col)
 
-	return col, nil
+	return &sdkCol, nil
 }
 
 // SendTransaction submits a transaction to the network.
 func (b *Backend) SendTransaction(ctx context.Context, tx sdk.Transaction) error {
-	err := b.emulator.AddTransaction(tx)
-	if err != nil {
-		switch t := err.(type) {
-		case *emulator.DuplicateTransactionError:
-			return status.Error(codes.InvalidArgument, err.Error())
-		case *types.FlowError:
-			switch t.FlowError.Code() {
-			case fvmerrors.ErrCodeAccountAuthorizationError,
-				fvmerrors.ErrCodeInvalidEnvelopeSignatureError,
-				fvmerrors.ErrCodeInvalidPayloadSignatureError,
-				fvmerrors.ErrCodeInvalidProposalSignatureError,
-				fvmerrors.ErrCodeAccountPublicKeyNotFoundError,
-				fvmerrors.ErrCodeInvalidProposalSeqNumberError,
-				fvmerrors.ErrCodeInvalidAddressError:
-
-				return status.Error(codes.InvalidArgument, err.Error())
-
-			default:
-				if fvmerrors.IsAccountNotFoundError(err) {
-					return status.Error(codes.InvalidArgument, err.Error())
-				}
-
-				return status.Error(codes.Internal, err.Error())
-			}
-		default:
-			return status.Error(codes.Internal, err.Error())
-		}
-	} else {
-		b.logger.
-			WithField("txID", tx.ID().String()).
-			Debug(`✉️   Transaction submitted`) //" was messing up vim syntax highlighting
-	}
-
-	if b.automine {
-		b.CommitBlock()
-	}
-
-	return nil
+	flowTx := convert.SDKTransactionToFlow(tx)
+	return b.emulator.SendTransaction(flowTx)
 }
 
 // GetTransaction gets a transaction by ID.
@@ -290,21 +260,14 @@ func (b *Backend) GetTransaction(
 	ctx context.Context,
 	id sdk.Identifier,
 ) (*sdk.Transaction, error) {
-	tx, err := b.emulator.GetTransaction(id)
+	tx, err := b.emulator.GetTransaction(convert.SDKIdentifierToFlow(id))
 	if err != nil {
-		switch err.(type) {
-		case emulator.NotFoundError:
-			return nil, status.Error(codes.NotFound, err.Error())
-		default:
-			return nil, status.Error(codes.Internal, err.Error())
-		}
+		return nil, err
 	}
 
-	b.logger.
-		WithField("txID", id.String()).
-		Debugf("💵  GetTransaction called")
+	sdkTx := convert.FlowTransactionToSDK(*tx)
+	return &sdkTx, nil
 
-	return tx, nil
 }
 
 // GetTransactionResult gets a transaction by ID.
@@ -312,16 +275,25 @@ func (b *Backend) GetTransactionResult(
 	ctx context.Context,
 	id sdk.Identifier,
 ) (*sdk.TransactionResult, error) {
-	result, err := b.emulator.GetTransactionResult(id)
+	result, err := b.emulator.GetTransactionResult(convert.SDKIdentifierToFlow(id))
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, err
 	}
 
-	b.logger.
-		WithField("txID", id.String()).
-		Debugf("📝  GetTransactionResult called")
+	events, err := convert.FlowEventsToSDK(result.Events)
+	if err != nil {
+		return nil, err
+	}
 
-	return result, nil
+	sdkResult := sdk.TransactionResult{
+		Status:        sdk.TransactionStatus(result.Status),
+		Error:         fmt.Errorf(result.ErrorMessage), //TODO: bluesign: fix this
+		Events:        events,
+		TransactionID: sdk.Identifier(result.TransactionID),
+		BlockHeight:   result.BlockHeight,
+		BlockID:       sdk.Identifier(result.BlockID),
+	}
+	return &sdkResult, nil
 }
 
 // GetAccount returns an account by address at the latest sealed block.
@@ -329,10 +301,6 @@ func (b *Backend) GetAccount(
 	ctx context.Context,
 	address sdk.Address,
 ) (*sdk.Account, error) {
-	b.logger.
-		WithField("address", address).
-		Debugf("👤  GetAccount called")
-
 	account, err := b.getAccount(address)
 	if err != nil {
 		return nil, err
@@ -346,9 +314,6 @@ func (b *Backend) GetAccountAtLatestBlock(
 	ctx context.Context,
 	address sdk.Address,
 ) (*sdk.Account, error) {
-	b.logger.
-		WithField("address", address).
-		Debugf("👤  GetAccountAtLatestBlock called")
 
 	account, err := b.getAccount(address)
 	if err != nil {
@@ -359,17 +324,16 @@ func (b *Backend) GetAccountAtLatestBlock(
 }
 
 func (b *Backend) getAccount(address sdk.Address) (*sdk.Account, error) {
-	account, err := b.emulator.GetAccount(address)
+	account, err := b.emulator.GetAccount(convert.SDKAddressToFlow(address))
 	if err != nil {
-		switch err.(type) {
-		case emulator.NotFoundError:
-			return nil, status.Error(codes.NotFound, err.Error())
-		default:
-			return nil, status.Error(codes.Internal, err.Error())
-		}
+		return nil, err
 	}
 
-	return account, nil
+	sdkAccount, err := convert.FlowAccountToSDK(*account)
+	if err != nil {
+		return nil, err
+	}
+	return &sdkAccount, nil
 }
 
 func (b *Backend) GetAccountAtBlockHeight(
@@ -377,22 +341,18 @@ func (b *Backend) GetAccountAtBlockHeight(
 	address sdk.Address,
 	height uint64,
 ) (*sdk.Account, error) {
-	b.logger.
-		WithField("address", address).
-		WithField("height", height).
-		Debugf("👤  GetAccountAtBlockHeight called")
 
-	account, err := b.emulator.GetAccountAtBlock(address, height)
+	account, err := b.emulator.GetAccountAtBlockHeight(convert.SDKAddressToFlow(address), height)
 	if err != nil {
-		switch err.(type) {
-		case emulator.NotFoundError:
-			return nil, status.Error(codes.NotFound, err.Error())
-		default:
-			return nil, status.Error(codes.Internal, err.Error())
-		}
+		return nil, err
 	}
 
-	return account, nil
+	sdkAccount, err := convert.FlowAccountToSDK(*account)
+	if err != nil {
+		return nil, err
+	}
+	return &sdkAccount, nil
+
 }
 
 // ExecuteScriptAtLatestBlock executes a script at a the latest block
@@ -401,11 +361,10 @@ func (b *Backend) ExecuteScriptAtLatestBlock(
 	script []byte,
 	arguments [][]byte,
 ) ([]byte, error) {
-	b.logger.Debugf("👤  ExecuteScriptAtLatestBlock called")
 
-	block, err := b.emulator.GetLatestBlock()
+	block, _, err := b.emulator.GetLatestBlock()
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, err
 	}
 
 	return b.executeScriptAtBlock(script, arguments, block.Header.Height)
@@ -418,9 +377,6 @@ func (b *Backend) ExecuteScriptAtBlockHeight(
 	script []byte,
 	arguments [][]byte,
 ) ([]byte, error) {
-	b.logger.
-		WithField("blockHeight", blockHeight).
-		Debugf("👤  ExecuteScriptAtBlockHeight called")
 
 	return b.executeScriptAtBlock(script, arguments, blockHeight)
 }
@@ -432,181 +388,21 @@ func (b *Backend) ExecuteScriptAtBlockID(
 	script []byte,
 	arguments [][]byte,
 ) ([]byte, error) {
-	b.logger.
-		WithField("blockID", blockID).
-		Debugf("👤  ExecuteScriptAtBlockID called")
 
-	block, err := b.emulator.GetBlockByID(blockID)
+	block, _, err := b.emulator.GetBlockByID(convert.SDKIdentifierToFlow(blockID))
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, err
 	}
 
 	return b.executeScriptAtBlock(script, arguments, block.Header.Height)
 }
 
-// GetEventsForHeightRange returns events matching a query.
-func (b *Backend) GetEventsForHeightRange(
-	ctx context.Context,
-	eventType string,
-	startHeight, endHeight uint64,
-) ([]flowgo.BlockEvents, error) {
-
-	err := validateEventType(eventType)
-	if err != nil {
-		return nil, err
-	}
-
-	latestBlock, err := b.emulator.GetLatestBlock()
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	// if end height is not set, use latest block height
-	// if end height is higher than latest, use latest
-	if endHeight == 0 || endHeight > latestBlock.Header.Height {
-		endHeight = latestBlock.Header.Height
-	}
-
-	// check for invalid queries
-	if startHeight > endHeight {
-		return nil, status.Error(codes.InvalidArgument, "invalid query: start block must be <= end block")
-	}
-
-	results := make([]flowgo.BlockEvents, 0)
-	eventCount := 0
-
-	for height := startHeight; height <= endHeight; height++ {
-		block, err := b.emulator.GetBlockByHeight(height)
-		if err != nil {
-			switch err.(type) {
-			case emulator.NotFoundError:
-				return nil, status.Error(codes.NotFound, err.Error())
-			default:
-				return nil, status.Error(codes.Internal, err.Error())
-			}
-		}
-
-		events, err := b.emulator.GetEventsByHeight(height, eventType)
-		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-
-		flowEvents, err := convert.SDKEventsToFlow(events)
-		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-
-		result := flowgo.BlockEvents{
-			BlockID:        block.ID(),
-			BlockHeight:    block.Header.Height,
-			BlockTimestamp: block.Header.Timestamp,
-			Events:         flowEvents,
-		}
-
-		results = append(results, result)
-		eventCount += len(events)
-	}
-
-	b.logger.WithFields(logrus.Fields{
-		"eventType":   eventType,
-		"startHeight": startHeight,
-		"endHeight":   endHeight,
-		"eventCount":  eventCount,
-	}).Debugf("🎁  GetEventsForHeightRange called")
-
-	return results, nil
-}
-
-// GetEventsForBlockIDs returns events matching a set of block IDs.
-func (b *Backend) GetEventsForBlockIDs(
-	ctx context.Context,
-	eventType string,
-	blockIDs []sdk.Identifier,
-) ([]flowgo.BlockEvents, error) {
-
-	err := validateEventType(eventType)
-	if err != nil {
-		return nil, err
-	}
-
-	results := make([]flowgo.BlockEvents, 0)
-	eventCount := 0
-
-	for _, blockID := range blockIDs {
-		block, err := b.emulator.GetBlockByID(blockID)
-		if err != nil {
-			switch err.(type) {
-			case emulator.NotFoundError:
-				return nil, status.Error(codes.NotFound, err.Error())
-			default:
-				return nil, status.Error(codes.Internal, err.Error())
-			}
-		}
-
-		events, err := b.emulator.GetEventsByHeight(block.Header.Height, eventType)
-		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-
-		flowEvents, err := convert.SDKEventsToFlow(events)
-		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-
-		result := flowgo.BlockEvents{
-			BlockID:        block.ID(),
-			BlockHeight:    block.Header.Height,
-			BlockTimestamp: block.Header.Timestamp,
-			Events:         flowEvents,
-		}
-
-		results = append(results, result)
-		eventCount += len(events)
-	}
-
-	b.logger.WithFields(logrus.Fields{
-		"eventType":  eventType,
-		"eventCount": eventCount,
-	}).Debugf("🎁  GetEventsForBlockIDs called")
-
-	return results, nil
-}
-
-func validateEventType(eventType string) error {
-	if len(strings.TrimSpace(eventType)) == 0 {
-		return status.Error(codes.InvalidArgument, "invalid query: eventType must not be empty")
-	}
-	return nil
-}
-
-// CommitBlock executes the current pending transactions and commits the results in a new block.
-func (b *Backend) CommitBlock() {
-	block, results, err := b.emulator.ExecuteAndCommitBlock()
-	if err != nil {
-		b.logger.WithError(err).Error("Failed to commit block")
-		return
-	}
-
-	for _, result := range results {
-		printTransactionResult(b.logger, result)
-	}
-
-	blockID := block.ID()
-
-	b.logger.WithFields(logrus.Fields{
-		"blockHeight": block.Header.Height,
-		"blockID":     hex.EncodeToString(blockID[:]),
-	}).Debugf("📦  Block #%d committed", block.Header.Height)
-}
-
 // executeScriptAtBlock is a helper for executing a script at a specific block
 func (b *Backend) executeScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) ([]byte, error) {
-	result, err := b.emulator.ExecuteScriptAtBlock(script, arguments, blockHeight)
+	result, err := b.emulator.ExecuteScriptAtBlockHeight(script, arguments, blockHeight)
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, err
 	}
-
-	printScriptResult(b.logger, result)
 
 	if !result.Succeeded() {
 		return nil, result.Error
@@ -614,133 +410,136 @@ func (b *Backend) executeScriptAtBlock(script []byte, arguments [][]byte, blockH
 
 	valueBytes, err := jsoncdc.Encode(result.Value)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, err
 	}
 
 	return valueBytes, nil
 }
 
 func (b *Backend) GetAccountStorage(address sdk.Address) (*emulator.AccountStorage, error) {
-	b.logger.
-		WithField("address", address).
-		Debugf("👤  GetAccountStorage called")
-
-	return b.emulator.GetAccountStorage(address)
+	return b.emulator.GetAccountStorage(convert.SDKAddressToFlow(address))
 }
 
 func (b *Backend) GetLatestProtocolStateSnapshot(_ context.Context) ([]byte, error) {
-	panic("implement me")
-}
-
-func (b *Backend) GetExecutionResultForBlockID(_ context.Context, _ flowgo.Identifier) (*flowgo.ExecutionResult, error) {
 	return nil, nil
 }
 
-// EnableAutoMine enables the automine flag.
-func (b *Backend) EnableAutoMine() {
-	b.automine = true
+func (b *Backend) GetExecutionResultForBlockID(_ context.Context, _ sdk.Identifier) (*sdk.ExecutionResult, error) {
+	return nil, nil
 }
 
-// DisableAutoMine disables the automine flag.
-func (b *Backend) DisableAutoMine() {
-	b.automine = false
-}
-
-func (b *Backend) GetTransactionResultByIndex(context.Context, flowgo.Identifier, uint32) (*access.TransactionResult, error) {
-	// TODO: implement
-	panic("GetTransactionResultByIndex not implemented")
-}
-
-func (b *Backend) GetTransactionsByBlockID(ctx context.Context, id flowgo.Identifier) ([]*flowgo.TransactionBody, error) {
-	// TODO: implement
-	panic("GetTransactionsByBlockID not implemented")
-}
-
-func (b *Backend) GetTransactionResultsByBlockID(ctx context.Context, id flowgo.Identifier) ([]*access.TransactionResult, error) {
-	// TODO: implement
-	panic("GetTransactionResultsByBlockID not implemented")
-}
-
-func printTransactionResult(logger *logrus.Logger, result *types.TransactionResult) {
-	if result.Succeeded() {
-		logger.
-			WithField("txID", result.TransactionID.String()).
-			WithField("computationUsed", result.ComputationUsed).
-			Info("⭐  Transaction executed")
-	} else {
-		logger.
-			WithField("txID", result.TransactionID.String()).
-			WithField("computationUsed", result.ComputationUsed).
-			Warn("❗  Transaction reverted")
+func (b *Backend) GetTransactionResultByIndex(ctx context.Context, id sdk.Identifier, index uint32) (*sdk.TransactionResult, error) {
+	result, err := b.emulator.GetTransactionResultByIndex(convert.SDKIdentifierToFlow(id), index)
+	if err != nil {
+		return nil, err
 	}
 
-	for _, log := range result.Logs {
-		logger.Infof(
-			"%s %s",
-			logPrefix("LOG", result.TransactionID, aurora.BlueFg),
-			log,
-		)
+	events, err := convert.FlowEventsToSDK(result.Events)
+	if err != nil {
+		return nil, err
 	}
 
-	for _, event := range result.Events {
-		logger.Debugf(
-			"%s %s",
-			logPrefix("EVT", result.TransactionID, aurora.GreenFg),
-			event,
-		)
+	sdkResult := sdk.TransactionResult{
+		Status:        sdk.TransactionStatus(result.Status),
+		Error:         fmt.Errorf(result.ErrorMessage), //TODO: bluesign: fix this
+		Events:        events,
+		TransactionID: sdk.Identifier(result.TransactionID),
+		BlockHeight:   result.BlockHeight,
+		BlockID:       sdk.Identifier(result.BlockID),
 	}
 
-	if !result.Succeeded() {
-		logger.Warnf(
-			"%s %s",
-			logPrefix("ERR", result.TransactionID, aurora.RedFg),
-			result.Error.Error(),
-		)
+	return &sdkResult, nil
 
-		if result.Debug != nil {
-			for k, v := range result.Debug.Meta {
-				logger.WithField(k, v)
-			}
-			logger.Debug(
-				fmt.Sprintf("%s %s", "❗  Transaction Signature Error", result.Debug.Message),
-			)
+}
+
+func (b *Backend) GetTransactionsByBlockID(ctx context.Context, id sdk.Identifier) (result []*sdk.Transaction, err error) {
+	transactions, err := b.emulator.GetTransactionsByBlockID(convert.SDKIdentifierToFlow(id))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, transaction := range transactions {
+		sdkTransaction := convert.FlowTransactionToSDK(*transaction)
+		result = append(result, &sdkTransaction)
+
+	}
+	return result, nil
+}
+
+func (b *Backend) GetTransactionResultsByBlockID(ctx context.Context, id sdk.Identifier) (result []*sdk.TransactionResult, err error) {
+	transactionResults, err := b.emulator.GetTransactionResultsByBlockID(convert.SDKIdentifierToFlow(id))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, transactionResult := range transactionResults {
+		events, err := convert.FlowEventsToSDK(transactionResult.Events)
+		if err != nil {
+			return nil, err
 		}
+
+		sdkResult := sdk.TransactionResult{
+			Status:        sdk.TransactionStatus(transactionResult.Status),
+			Error:         fmt.Errorf(transactionResult.ErrorMessage), //TODO: bluesign: fix this
+			Events:        events,
+			TransactionID: sdk.Identifier(transactionResult.TransactionID),
+			BlockHeight:   transactionResult.BlockHeight,
+			BlockID:       sdk.Identifier(transactionResult.BlockID),
+		}
+		result = append(result, &sdkResult)
+
 	}
+	return result, nil
 }
 
-func printScriptResult(logger *logrus.Logger, result *types.ScriptResult) {
-	if result.Succeeded() {
-		logger.
-			WithField("scriptID", result.ScriptID.String()).
-			WithField("computationUsed", result.ComputationUsed).
-			Info("⭐  Script executed")
-	} else {
-		logger.
-			WithField("scriptID", result.ScriptID.String()).
-			WithField("computationUsed", result.ComputationUsed).
-			Warn("❗  Script reverted")
+func (b *Backend) GetEventsForBlockIDs(ctx context.Context, eventType string, blockIDs []sdk.Identifier) (result []*sdk.BlockEvents, err error) {
+	flowBlockEvents, err := b.emulator.GetEventsForBlockIDs(eventType, convert.SDKIdentifiersToFlow(blockIDs))
+	if err != nil {
+		return nil, err
 	}
 
-	for _, log := range result.Logs {
-		logger.Debugf(
-			"%s %s",
-			logPrefix("LOG", result.ScriptID, aurora.BlueFg),
-			log,
-		)
+	for _, flowBlockEvent := range flowBlockEvents {
+		sdkEvents, err := convert.FlowEventsToSDK(flowBlockEvent.Events)
+		if err != nil {
+			return nil, err
+		}
+
+		sdkBlockEvents := &sdk.BlockEvents{
+			BlockID:        sdk.Identifier(flowBlockEvent.BlockID),
+			Height:         flowBlockEvent.BlockHeight,
+			BlockTimestamp: flowBlockEvent.BlockTimestamp,
+			Events:         sdkEvents,
+		}
+
+		result = append(result, sdkBlockEvents)
+
 	}
 
-	if !result.Succeeded() {
-		logger.Warnf(
-			"%s %s",
-			logPrefix("ERR", result.ScriptID, aurora.RedFg),
-			result.Error.Error(),
-		)
-	}
+	return result, nil
 }
 
-func logPrefix(prefix string, id sdk.Identifier, color aurora.Color) string {
-	prefix = aurora.Colorize(prefix, color|aurora.BoldFm).String()
-	shortID := fmt.Sprintf("[%s]", id.String()[:6])
-	shortID = aurora.Colorize(shortID, aurora.FaintFm).String()
-	return fmt.Sprintf("%s %s", prefix, shortID)
+func (b *Backend) GetEventsForHeightRange(ctx context.Context, eventType string, startHeight, endHeight uint64) (result []*sdk.BlockEvents, err error) {
+	flowBlockEvents, err := b.emulator.GetEventsForHeightRange(eventType, startHeight, endHeight)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, flowBlockEvent := range flowBlockEvents {
+		sdkEvents, err := convert.FlowEventsToSDK(flowBlockEvent.Events)
+		if err != nil {
+			return nil, err
+		}
+
+		sdkBlockEvents := &sdk.BlockEvents{
+			BlockID:        sdk.Identifier(flowBlockEvent.BlockID),
+			Height:         flowBlockEvent.BlockHeight,
+			BlockTimestamp: flowBlockEvent.BlockTimestamp,
+			Events:         sdkEvents,
+		}
+
+		result = append(result, sdkBlockEvents)
+
+	}
+
+	return result, nil
 }
