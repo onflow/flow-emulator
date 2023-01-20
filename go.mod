@@ -28,7 +28,7 @@ require (
 	github.com/psiemens/sconfig v0.1.0
 	github.com/rs/zerolog v1.28.0
 	github.com/sirupsen/logrus v1.8.1
-	github.com/spf13/cobra v1.5.0
+	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.0
 	golang.org/x/exp v0.0.0-20221126150942-6ab00d035af9
 	google.golang.org/grpc v1.46.2
@@ -70,7 +70,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/go-block-format v0.0.3 // indirect
 	github.com/ipfs/go-cid v0.3.2 // indirect
