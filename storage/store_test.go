@@ -34,7 +34,7 @@ import (
 
 	convert "github.com/onflow/flow-emulator/convert/sdk"
 	"github.com/onflow/flow-emulator/storage"
-	"github.com/onflow/flow-emulator/storage/badger"
+	"github.com/onflow/flow-emulator/storage/sqlite"
 	"github.com/onflow/flow-emulator/utils/unittest"
 )
 
@@ -450,14 +450,14 @@ func TestEventsByHeight(t *testing.T) {
 // setupStore creates a temporary directory for the Badger and creates a
 // badger.Store instance. The caller is responsible for closing the store
 // and deleting the temporary directory.
-func setupStore(t *testing.T) (*badger.Store, string) {
-	dir, err := ioutil.TempDir("", "badger-test")
+func setupStore(t *testing.T) (*sqlite.Store, string) {
+	file, err := ioutil.TempFile("", "sqlite-test")
 	require.NoError(t, err)
 
-	store, err := badger.New()
+	store, err := sqlite.New(file.Name())
 	require.NoError(t, err)
 
-	return store, dir
+	return store, file.Name()
 }
 
 // Returns the size of a directory and all contents
