@@ -66,7 +66,7 @@ func (b *blocks) FinalizedHeader() (*flowgo.Header, error) {
 }
 
 func (b *blocks) ByHeightFrom(height uint64, header *flowgo.Header) (*flowgo.Header, error) {
-	block, err := b.blockchain.storage.BlockByHeight(height)
+	block, err := b.blockchain.storage.BlockByHeight(context.Background(), height)
 	if err != nil {
 		return nil, err
 	}

@@ -44,7 +44,6 @@ import (
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/badger"
 	"github.com/onflow/flow-emulator/types"
-	"github.com/onflow/flow-go/fvm/tracing"
 )
 
 // Blockchain emulates the functionality of the Flow blockchain.

@@ -132,7 +132,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 			responseBreakpoints = append(
 				responseBreakpoints,
 				dap.Breakpoint{
-					Source: dap.Source{
+					Source: &dap.Source{
 						Path: request.Arguments.Source.Path,
 					},
 					// TODO:
@@ -375,7 +375,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 }
 
 func (ds *debugSession) stackFrames() []dap.StackFrame {
-	invocations := ds.stop.Interpreter.CallStack.Invocations
+	invocations := ds.stop.Interpreter.CallStack()
 
 	stackFrames := make([]dap.StackFrame, 0, len(invocations))
 
