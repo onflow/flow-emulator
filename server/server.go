@@ -285,7 +285,7 @@ func configureStorage(logger *logrus.Logger, conf *Config) (storage Storage, err
 		return NewSqliteStorage(fmt.Sprintf("%s/snapshot.sqlite", conf.DBPath))
 	}
 
-	return NewBadgerStorage(logger, conf.DBPath, conf.DBGCInterval, conf.DBGCDiscardRatio, conf.Snapshot, conf.Persist)
+	return NewSqliteStorage(":memory:")
 }
 
 func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchain, error) {
