@@ -3,8 +3,10 @@ package server
 import (
 	"bufio"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 
@@ -15,7 +17,7 @@ import (
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/sirupsen/logrus"
 
-	emulator "github.com/onflow/flow-emulator"
+	"github.com/onflow/flow-emulator"
 	"github.com/onflow/flow-emulator/server/backend"
 )
 
@@ -38,7 +40,8 @@ type debugSession struct {
 	debugger          *interpreter.Debugger
 	stop              *interpreter.Stop
 	code              string
-	scriptLocation    common.ScriptLocation
+	scriptLocation    common.StringLocation
+	scriptID          string
 	stopOnEntry       bool
 	configurationDone bool
 	launchRequested   bool
@@ -86,6 +89,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 
 		debugger := interpreter.NewDebugger()
 		ds.debugger = debugger
+
 		ds.backend.SetDebugger(debugger)
 
 		ds.send(&dap.InitializeResponse{
@@ -162,13 +166,13 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 			))
 			break
 		}
-		ds.code = programArg.(string)
-
+		b, _ := os.ReadFile(programArg.(string))
+		ds.code = string(b)
 		stopOnEntryArg := args["stopOnEntry"]
 		ds.stopOnEntry, _ = stopOnEntryArg.(bool)
-
 		scriptID := emulator.ComputeScriptID([]byte(ds.code))
-		ds.scriptLocation = common.ScriptLocation(scriptID)
+		ds.scriptID = hex.EncodeToString(scriptID[:])
+		ds.scriptLocation = common.StringLocation(programArg.(string))
 
 		ds.launchRequested = true
 
@@ -335,6 +339,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 	case *dap.VariablesRequest:
 		// TODO: reply with error if ds.stop == nil
 
+		//TODO:@bluesign: global functions showing up in variables, when in interface
 		inter := ds.stop.Interpreter
 
 		activation := ds.debugger.CurrentActivation(inter)
@@ -342,9 +347,14 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		functionValues := activation.FunctionValues()
 
 		variables := make([]dap.Variable, 0, len(functionValues))
+		location := ds.stop.Interpreter.Location
 
 		for name, variable := range functionValues {
+			if location.String() == ds.scriptID && name == "self" {
+				continue
+			}
 			value := variable.GetValue()
+			print(name)
 			variables = append(
 				variables,
 				dap.Variable{
@@ -375,11 +385,15 @@ func (ds *debugSession) stackFrames() []dap.StackFrame {
 	startPos := astRange.StartPosition()
 	endPos := astRange.EndPosition(nil)
 
+	locationString := locationPath(location)
+	if location.String() == ds.scriptID {
+		locationString = ds.scriptLocation.String()
+	}
 	stackFrames = append(
 		stackFrames,
 		dap.StackFrame{
 			Source: dap.Source{
-				Path: locationPath(location),
+				Path: locationString,
 			},
 			Line:      startPos.Line,
 			Column:    startPos.Column + 1,
@@ -391,21 +405,25 @@ func (ds *debugSession) stackFrames() []dap.StackFrame {
 	for i := len(invocations) - 1; i >= 0; i-- {
 		invocation := invocations[i]
 
-		locationRange := invocation.GetLocationRange()
+		locationRange := invocation.LocationRange
 
 		location := locationRange.Location
 		if location == nil {
 			continue
 		}
 
-		startPos := locationRange.Range.StartPosition()
-		endPos := locationRange.Range.EndPosition(nil)
+		startPos := locationRange.StartPosition()
+		endPos := locationRange.EndPosition(nil)
 
+		locationString := locationPath(location)
+		if location.String() == ds.scriptID {
+			locationString = ds.scriptLocation.String()
+		}
 		stackFrames = append(
 			stackFrames,
 			dap.StackFrame{
 				Source: dap.Source{
-					Path: locationPath(location),
+					Path: locationString,
 				},
 				Line:      startPos.Line,
 				Column:    startPos.Column + 1,
@@ -561,12 +579,15 @@ func newDAPErrorResponse(requestSeq int, command string, message dap.ErrorMessag
 }
 
 func locationPath(location common.Location) string {
-	return fmt.Sprintf("%s.cdc", location.ID())
+	return fmt.Sprintf("%s.cdc", location.String())
 }
 
 func pathLocation(path string) (common.Location, error) {
 	basename := strings.TrimSuffix(path, ".cdc")
 	// TODO: improve. use type ID decoding to decode location. add required fake qualified identifier
+
+	//TODO: @bluesign: check this
+	basename = "A." + basename
 	if strings.Count(basename, ".") < 3 {
 		basename += "._"
 	}
