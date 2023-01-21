@@ -3,7 +3,6 @@ package emulator_test
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"testing"
 
 	"github.com/onflow/cadence"
@@ -15,7 +14,7 @@ import (
 
 	emulator "github.com/onflow/flow-emulator"
 	convert "github.com/onflow/flow-emulator/convert/sdk"
-	"github.com/onflow/flow-emulator/storage/badger"
+	"github.com/onflow/flow-emulator/storage/sqlite"
 )
 
 func TestInitialization(t *testing.T) {
@@ -26,10 +25,9 @@ func TestInitialization(t *testing.T) {
 
 		t.Parallel()
 
-		dir, err := ioutil.TempDir("", "badger-test")
+		file, err := ioutil.TempFile("", "sqlite-test")
 		require.Nil(t, err)
-		defer os.RemoveAll(dir)
-		store, err := badger.New(badger.WithPath(dir))
+		store, err := sqlite.New(file.Name())
 		require.Nil(t, err)
 		defer store.Close()
 
@@ -54,10 +52,9 @@ func TestInitialization(t *testing.T) {
 
 		t.Parallel()
 
-		dir, err := ioutil.TempDir("", "badger-test")
+		file, err := ioutil.TempFile("", "sqlite-test")
 		require.Nil(t, err)
-		defer os.RemoveAll(dir)
-		store, err := badger.New(badger.WithPath(dir))
+		store, err := sqlite.New(file.Name())
 		require.Nil(t, err)
 		defer store.Close()
 
