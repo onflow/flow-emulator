@@ -29,7 +29,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/onflow/flow-emulator/server/backend"
-	"github.com/onflow/flow-emulator/storage/badger"
+	"github.com/onflow/flow-emulator/storage"
 	"golang.org/x/exp/slices"
 )
 
@@ -93,14 +93,14 @@ func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 }
 func (m EmulatorAPIServer) SnapshotList(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	badgerStore := (*m.storage).Store().(*badger.Store)
-	contexts, err := badgerStore.ListContexts()
+	snapshotProvider := (*m.storage).Store().(storage.SnapshotProvider)
+	snapshots, err := snapshotProvider.ListSnapshots()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	bytes, err := json.Marshal(contexts)
+	bytes, err := json.Marshal(snapshots)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -111,8 +111,8 @@ func (m EmulatorAPIServer) SnapshotList(w http.ResponseWriter, r *http.Request) 
 
 }
 
-func (m EmulatorAPIServer) reloadBlockchainFromSnapshot(name string, badgerStore *badger.Store, w http.ResponseWriter) {
-	blockchain, err := configureBlockchain(m.server.config, badgerStore)
+func (m EmulatorAPIServer) reloadBlockchainFromSnapshot(name string, snapshotProvider storage.Store, w http.ResponseWriter) {
+	blockchain, err := configureBlockchain(m.server.config, snapshotProvider)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -147,29 +147,29 @@ func (m EmulatorAPIServer) SnapshotJump(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	name := vars["name"]
 
-	badgerStore, isBadger := (*m.storage).Store().(*badger.Store)
-	if !isBadger {
-		m.server.logger.Error("State management only available with badger storage")
+	snapshotProvider, isSnapshotProvider := (*m.storage).Store().(storage.SnapshotProvider)
+	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
+		m.server.logger.Error("State management is not available with current storage backend")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	contexts, err := badgerStore.ListContexts()
+	snapshots, err := snapshotProvider.ListSnapshots()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if !slices.Contains(contexts, name) {
+	if !slices.Contains(snapshots, name) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	err = badgerStore.JumpToContext(name, false)
+	err = snapshotProvider.JumpToSnapshot(name, false)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	m.reloadBlockchainFromSnapshot(name, badgerStore, w)
+	m.reloadBlockchainFromSnapshot(name, (*m.storage).Store(), w)
 
 }
 
@@ -181,28 +181,28 @@ func (m EmulatorAPIServer) SnapshotCreate(w http.ResponseWriter, r *http.Request
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	badgerStore, isBadger := (*m.storage).Store().(*badger.Store)
-	if !isBadger {
-		m.server.logger.Error("State management only available with badger storage")
+	snapshotProvider, isSnapshotProvider := (*m.storage).Store().(storage.SnapshotProvider)
+	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
+		m.server.logger.Error("State management is not available with current storage backend")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	contexts, err := badgerStore.ListContexts()
+	snapshots, err := snapshotProvider.ListSnapshots()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if slices.Contains(contexts, name) {
+	if slices.Contains(snapshots, name) {
 		w.WriteHeader(http.StatusConflict)
 		return
 	}
-	err = badgerStore.JumpToContext(name, true)
+	err = snapshotProvider.JumpToSnapshot(name, true)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	m.reloadBlockchainFromSnapshot(name, badgerStore, w)
+	m.reloadBlockchainFromSnapshot(name, (*m.storage).Store(), w)
 
 }
 
@@ -213,7 +213,7 @@ func (m EmulatorAPIServer) Storage(w http.ResponseWriter, r *http.Request) {
 
 	addr := flowsdk.HexToAddress(address)
 
-	storage, err := m.backend.GetAccountStorage(addr)
+	accountStorage, err := m.backend.GetAccountStorage(addr)
 	if err != nil {
 		if fvmerrors.IsAccountNotFoundError(err) {
 			w.WriteHeader(http.StatusNotFound)
@@ -223,7 +223,7 @@ func (m EmulatorAPIServer) Storage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(storage)
+	err = json.NewEncoder(w).Encode(accountStorage)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
