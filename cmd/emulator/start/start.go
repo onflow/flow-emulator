@@ -33,7 +33,7 @@ import (
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/fvm"
 	"github.com/psiemens/sconfig"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 
 	"github.com/onflow/flow-emulator/server"
@@ -100,10 +100,10 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 			serviceKeySigAlgo = crypto.StringToSignatureAlgorithm(conf.ServiceKeySigAlgo)
 			serviceKeyHashAlgo = crypto.StringToHashAlgorithm(conf.ServiceKeyHashAlgo)
 
-			logger := initLogger()
+			logger := initLogger(conf.Verbose)
 
 			if conf.ServicePublicKey != "" {
-				logger.Warnf("❗  Providing '--public-key' is deprecated, provide the '--private-key' only.")
+				logger.Warn().Msg("❗  Providing '--public-key' is deprecated, provide the '--private-key' only.")
 			}
 
 			if conf.ServicePrivateKey != "" {
@@ -124,10 +124,6 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				servicePublicKey = servicePrivateKey.PublicKey()
 			}
 
-			if conf.Verbose {
-				logger.SetLevel(logrus.DebugLevel)
-			}
-
 			flowChainID, err := getSDKChainID(conf.ChainID)
 			if err != nil {
 				Exit(1, err.Error())
@@ -138,18 +134,18 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				serviceAddress = sdk.HexToAddress("0x1")
 			}
 
-			serviceFields := logrus.Fields{
+			serviceFields := map[string]any{
 				"serviceAddress":  serviceAddress.Hex(),
 				"servicePubKey":   hex.EncodeToString(servicePublicKey.Encode()),
-				"serviceSigAlgo":  serviceKeySigAlgo,
-				"serviceHashAlgo": serviceKeyHashAlgo,
+				"serviceSigAlgo":  serviceKeySigAlgo.String(),
+				"serviceHashAlgo": serviceKeyHashAlgo.String(),
 			}
 
 			if servicePrivateKey != nil {
 				serviceFields["servicePrivKey"] = hex.EncodeToString(servicePrivateKey.Encode())
 			}
 
-			logger.WithFields(serviceFields).Infof("⚙️   Using service account 0x%s", serviceAddress.Hex())
+			logger.Info().Fields(serviceFields).Msgf("⚙️   Using service account 0x%s", serviceAddress.Hex())
 
 			minimumStorageReservation := fvm.DefaultMinimumStorageReservation
 			if conf.MinimumAccountBalance != "" {
@@ -209,19 +205,30 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 	return cmd
 }
 
-func initLogger() *logrus.Logger {
-	var logger = logrus.New()
+func initLogger(verbose bool) *zerolog.Logger {
+
+	level := zerolog.InfoLevel
+	if verbose {
+		level = zerolog.DebugLevel
+	}
+	zerolog.MessageFieldName = "msg"
 
 	switch strings.ToLower(conf.LogFormat) {
 	case "json":
-		logger.Formatter = new(logrus.JSONFormatter)
+		logger := zerolog.New(os.Stdout).With().Timestamp().Logger().Level(level)
+		return &logger
 	default:
-		logger.Formatter = new(logrus.TextFormatter)
+		writer := zerolog.ConsoleWriter{Out: os.Stdout}
+		writer.FormatMessage = func(i interface{}) string {
+			if i == nil {
+				return ""
+			}
+			return fmt.Sprintf("%-44s", i)
+		}
+		logger := zerolog.New(writer).With().Timestamp().Logger().Level(level)
+		return &logger
 	}
 
-	logger.Out = os.Stdout
-
-	return logger
 }
 
 func initConfig(cmd *cobra.Command) {

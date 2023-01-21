@@ -29,7 +29,7 @@ import (
 	"github.com/onflow/flow-go/fvm/environment"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/psiemens/graceland"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 
 	emulator "github.com/onflow/flow-emulator"
 	"github.com/onflow/flow-emulator/server/backend"
@@ -40,7 +40,7 @@ import (
 //
 // The server wraps an emulated blockchain instance with the Access API gRPC handlers.
 type EmulatorServer struct {
-	logger     *logrus.Logger
+	logger     *zerolog.Logger
 	config     *Config
 	backend    *backend.Backend
 	group      *graceland.Group
@@ -132,18 +132,18 @@ type listener interface {
 }
 
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
-func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
+func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	conf = sanitizeConfig(conf)
 
 	store, err := configureStorage(logger, conf)
 	if err != nil {
-		logger.WithError(err).Error("❗  Failed to configure storage")
+		logger.Error().Err(err).Msg("❗  Failed to configure storage")
 		return nil
 	}
 
 	blockchain, err := configureBlockchain(conf, store.Store())
 	if err != nil {
-		logger.WithError(err).Error("❗  Failed to configure emulated blockchain")
+		logger.Err(err).Msg("❗  Failed to configure emulated blockchain")
 		return nil
 	}
 
@@ -157,18 +157,18 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		"FlowStorageFees":    chain.ServiceAddress().HexWithPrefix(),
 	}
 	for contract, address := range contracts {
-		logger.WithFields(logrus.Fields{contract: address}).Infof("📜  Flow contract")
+		logger.Info().Fields(map[string]any{contract: address}).Msg("📜  Flow contract")
 	}
 
 	if conf.WithContracts {
 		deployments, err := deployContracts(blockchain)
 		if err != nil {
-			logger.WithError(err).Error("❗  Failed to deploy contracts")
+			logger.Error().Err(err).Msg("❗  Failed to deploy contracts")
 		}
 
 		for _, contract := range deployments {
-			logger.WithFields(logrus.Fields{
-				contract.name: fmt.Sprintf("0x%s", contract.address.Hex())}).Infof(contract.description)
+			logger.Info().Fields(map[string]any{
+				contract.name: fmt.Sprintf("0x%s", contract.address.Hex())}).Msg(contract.description)
 		}
 	}
 
@@ -178,7 +178,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	grpcServer := NewGRPCServer(logger, be, blockchain.GetChain(), conf.Host, conf.GRPCPort, conf.GRPCDebug)
 	restServer, err := NewRestServer(logger, be, blockchain.GetChain(), conf.Host, conf.RESTPort, conf.RESTDebug)
 	if err != nil {
-		logger.WithError(err).Error("❗  Failed to startup REST API")
+		logger.Error().Err(err).Msg("❗  Failed to startup REST API")
 		return nil
 	}
 
@@ -232,19 +232,19 @@ func (s *EmulatorServer) Start() {
 	}
 	s.group.Add(s.liveness)
 
-	s.logger.
-		WithField("port", s.config.GRPCPort).
-		Infof("🌱  Starting gRPC server on port %d", s.config.GRPCPort)
+	s.logger.Info().
+		Int("port", s.config.GRPCPort).
+		Msgf("🌱  Starting gRPC server on port %d", s.config.GRPCPort)
 	s.group.Add(s.grpc)
 
-	s.logger.
-		WithField("port", s.config.RESTPort).
-		Infof("🌱  Starting REST API on port %d", s.config.RESTPort)
+	s.logger.Info().
+		Int("port", s.config.RESTPort).
+		Msgf("🌱  Starting REST API on port %d", s.config.RESTPort)
 	s.group.Add(s.rest)
 
-	s.logger.
-		WithField("port", s.config.AdminPort).
-		Infof("🌱  Starting admin server on port %d", s.config.AdminPort)
+	s.logger.Info().
+		Int("port", s.config.AdminPort).
+		Msgf("🌱  Starting admin server on port %d", s.config.AdminPort)
 	s.group.Add(s.admin)
 
 	// only start blocks ticker if it exists
@@ -257,7 +257,7 @@ func (s *EmulatorServer) Start() {
 
 	err := s.group.Start()
 	if err != nil {
-		s.logger.WithError(err).Error("❗  Server error")
+		s.logger.Error().Err(err).Msg("❗  Server error")
 	}
 
 	s.Stop()
@@ -270,7 +270,7 @@ func (s *EmulatorServer) Stop() {
 
 	s.group.Stop()
 
-	s.logger.Info("🛑  Server stopped")
+	s.logger.Info().Msg("🛑  Server stopped")
 }
 
 func configureStorage(logger *logrus.Logger, conf *Config) (storageProvider Storage, err error) {
@@ -372,7 +372,7 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 	return blockchain, nil
 }
 
-func configureBackend(logger *logrus.Logger, conf *Config, blockchain *emulator.Blockchain) *backend.Backend {
+func configureBackend(logger *zerolog.Logger, conf *Config, blockchain *emulator.Blockchain) *backend.Backend {
 	b := backend.New(logger, blockchain)
 
 	if conf.BlockTime == 0 {

@@ -152,9 +152,15 @@ func (m EmulatorAPIServer) SnapshotJump(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	name := vars["name"]
 
+<<<<<<< HEAD
 	snapshotProvider, isSnapshotProvider := (*m.storage).Store().(storage.SnapshotProvider)
 	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
 		m.server.logger.Error("State management is not available with current storage backend")
+=======
+	badgerStore, isBadger := (*m.storage).Store().(*badger.Store)
+	if !isBadger {
+		m.server.logger.Error().Msg("State management only available with badger storage")
+>>>>>>> cb516f5 (change logrus to zerolog)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

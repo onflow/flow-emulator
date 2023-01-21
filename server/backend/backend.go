@@ -30,7 +30,7 @@ import (
 	"github.com/onflow/flow-go/access"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	flowgo "github.com/onflow/flow-go/model/flow"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -42,7 +42,7 @@ import (
 // Backend wraps an emulated blockchain and implements the RPC handlers
 // required by the Access API.
 type Backend struct {
-	logger   *logrus.Logger
+	logger   *zerolog.Logger
 	emulator Emulator
 	automine bool
 }
@@ -53,7 +53,7 @@ func (b *Backend) SetEmulator(emulator Emulator) {
 }
 
 // New returns a new backend.
-func New(logger *logrus.Logger, emulator Emulator) *Backend {
+func New(logger *zerolog.Logger, emulator Emulator) *Backend {
 	return &Backend{
 		logger:   logger,
 		emulator: emulator,
@@ -87,10 +87,10 @@ func (b *Backend) GetLatestBlockHeader(
 
 	blockID := block.ID()
 
-	b.logger.WithFields(logrus.Fields{
+	b.logger.Debug().Fields(map[string]any{
 		"blockHeight": block.Header.Height,
 		"blockID":     hex.EncodeToString(blockID[:]),
-	}).Debug("🎁  GetLatestBlockHeader called")
+	}).Msg("🎁  GetLatestBlockHeader called")
 
 	// this should always return latest sealed block
 	return block.Header, flowgo.BlockStatusSealed, nil
@@ -112,10 +112,10 @@ func (b *Backend) GetBlockHeaderByHeight(
 
 	blockID := block.ID()
 
-	b.logger.WithFields(logrus.Fields{
+	b.logger.Debug().Fields(map[string]any{
 		"blockHeight": block.Header.Height,
 		"blockID":     hex.EncodeToString(blockID[:]),
-	}).Debug("🎁  GetBlockHeaderByHeight called")
+	}).Msg("🎁  GetBlockHeaderByHeight called")
 
 	// As we don't fork the chain in emulator, and finalize and seal at the same time, this can only be Sealed
 	return block.Header, flowgo.BlockStatusSealed, nil
@@ -137,10 +137,10 @@ func (b *Backend) GetBlockHeaderByID(
 
 	blockID := block.ID()
 
-	b.logger.WithFields(logrus.Fields{
+	b.logger.Debug().Fields(map[string]any{
 		"blockHeight": block.Header.Height,
 		"blockID":     hex.EncodeToString(blockID[:]),
-	}).Debug("🎁  GetBlockHeaderByID called")
+	}).Msg("🎁  GetBlockHeaderByID called")
 
 	// As we don't fork the chain in emulator, and finalize and seal at the same time, this can only be Sealed
 	return block.Header, flowgo.BlockStatusSealed, nil
@@ -162,10 +162,10 @@ func (b *Backend) GetLatestBlock(
 
 	blockID := block.ID()
 
-	b.logger.WithFields(logrus.Fields{
+	b.logger.Debug().Fields(map[string]any{
 		"blockHeight": block.Header.Height,
 		"blockID":     hex.EncodeToString(blockID[:]),
-	}).Debug("🎁  GetLatestBlock called")
+	}).Msg("🎁  GetLatestBlock called")
 
 	// As we don't fork the chain in emulator, and finalize and seal at the same time, this can only be Sealed
 	return block, flowgo.BlockStatusSealed, nil
@@ -187,10 +187,10 @@ func (b *Backend) GetBlockByHeight(
 
 	blockID := block.ID()
 
-	b.logger.WithFields(logrus.Fields{
+	b.logger.Debug().Fields(map[string]any{
 		"blockHeight": block.Header.Height,
 		"blockID":     hex.EncodeToString(blockID[:]),
-	}).Debug("🎁  GetBlockByHeight called")
+	}).Msg("🎁  GetBlockByHeight called")
 
 	// As we don't fork the chain in emulator, and finalize and seal at the same time, this can only be Sealed
 	return block, flowgo.BlockStatusSealed, nil
@@ -212,10 +212,10 @@ func (b *Backend) GetBlockByID(
 
 	blockID := block.ID()
 
-	b.logger.WithFields(logrus.Fields{
+	b.logger.Debug().Fields(map[string]any{
 		"blockHeight": block.Header.Height,
 		"blockID":     hex.EncodeToString(blockID[:]),
-	}).Debug("🎁  GetBlockByID called")
+	}).Msg("🎁  GetBlockByID called")
 
 	// As we don't fork the chain in emulator, and finalize and seal at the same time, this can only be Sealed
 	return block, flowgo.BlockStatusSealed, nil
@@ -236,9 +236,9 @@ func (b *Backend) GetCollectionByID(
 		}
 	}
 
-	b.logger.
-		WithField("colID", id.Hex()).
-		Debugf("📚  GetCollectionByID called")
+	b.logger.Debug().
+		Str("colID", id.Hex()).
+		Msgf("📚  GetCollectionByID called")
 
 	return col, nil
 }
@@ -273,9 +273,9 @@ func (b *Backend) SendTransaction(ctx context.Context, tx sdk.Transaction) error
 			return status.Error(codes.Internal, err.Error())
 		}
 	} else {
-		b.logger.
-			WithField("txID", tx.ID().String()).
-			Debug(`✉️   Transaction submitted`) //" was messing up vim syntax highlighting
+		b.logger.Debug().
+			Str("txID", tx.ID().String()).
+			Msg(`✉️   Transaction submitted`) //" was messing up vim syntax highlighting
 	}
 
 	if b.automine {
@@ -300,9 +300,9 @@ func (b *Backend) GetTransaction(
 		}
 	}
 
-	b.logger.
-		WithField("txID", id.String()).
-		Debugf("💵  GetTransaction called")
+	b.logger.Debug().
+		Str("txID", id.String()).
+		Msg("💵  GetTransaction called")
 
 	return tx, nil
 }
@@ -317,9 +317,9 @@ func (b *Backend) GetTransactionResult(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	b.logger.
-		WithField("txID", id.String()).
-		Debugf("📝  GetTransactionResult called")
+	b.logger.Debug().
+		Str("txID", id.String()).
+		Msg("📝  GetTransactionResult called")
 
 	return result, nil
 }
@@ -329,9 +329,9 @@ func (b *Backend) GetAccount(
 	ctx context.Context,
 	address sdk.Address,
 ) (*sdk.Account, error) {
-	b.logger.
-		WithField("address", address).
-		Debugf("👤  GetAccount called")
+	b.logger.Debug().
+		Stringer("address", address).
+		Msg("👤  GetAccount called")
 
 	account, err := b.getAccount(address)
 	if err != nil {
@@ -346,9 +346,9 @@ func (b *Backend) GetAccountAtLatestBlock(
 	ctx context.Context,
 	address sdk.Address,
 ) (*sdk.Account, error) {
-	b.logger.
-		WithField("address", address).
-		Debugf("👤  GetAccountAtLatestBlock called")
+	b.logger.Debug().
+		Stringer("address", address).
+		Msg("👤  GetAccountAtLatestBlock called")
 
 	account, err := b.getAccount(address)
 	if err != nil {
@@ -377,10 +377,10 @@ func (b *Backend) GetAccountAtBlockHeight(
 	address sdk.Address,
 	height uint64,
 ) (*sdk.Account, error) {
-	b.logger.
-		WithField("address", address).
-		WithField("height", height).
-		Debugf("👤  GetAccountAtBlockHeight called")
+	b.logger.Debug().
+		Stringer("address", address).
+		Uint64("height", height).
+		Msg("👤  GetAccountAtBlockHeight called")
 
 	account, err := b.emulator.GetAccountAtBlock(address, height)
 	if err != nil {
@@ -401,7 +401,7 @@ func (b *Backend) ExecuteScriptAtLatestBlock(
 	script []byte,
 	arguments [][]byte,
 ) ([]byte, error) {
-	b.logger.Debugf("👤  ExecuteScriptAtLatestBlock called")
+	b.logger.Debug().Msg("👤  ExecuteScriptAtLatestBlock called")
 
 	block, err := b.emulator.GetLatestBlock()
 	if err != nil {
@@ -418,9 +418,9 @@ func (b *Backend) ExecuteScriptAtBlockHeight(
 	script []byte,
 	arguments [][]byte,
 ) ([]byte, error) {
-	b.logger.
-		WithField("blockHeight", blockHeight).
-		Debugf("👤  ExecuteScriptAtBlockHeight called")
+	b.logger.Debug().
+		Uint64("blockHeight", blockHeight).
+		Msg("👤  ExecuteScriptAtBlockHeight called")
 
 	return b.executeScriptAtBlock(script, arguments, blockHeight)
 }
@@ -432,9 +432,9 @@ func (b *Backend) ExecuteScriptAtBlockID(
 	script []byte,
 	arguments [][]byte,
 ) ([]byte, error) {
-	b.logger.
-		WithField("blockID", blockID).
-		Debugf("👤  ExecuteScriptAtBlockID called")
+	b.logger.Debug().
+		Stringer("blockID", blockID).
+		Msg("👤  ExecuteScriptAtBlockID called")
 
 	block, err := b.emulator.GetBlockByID(blockID)
 	if err != nil {
@@ -507,12 +507,12 @@ func (b *Backend) GetEventsForHeightRange(
 		eventCount += len(events)
 	}
 
-	b.logger.WithFields(logrus.Fields{
+	b.logger.Debug().Fields(map[string]any{
 		"eventType":   eventType,
 		"startHeight": startHeight,
 		"endHeight":   endHeight,
 		"eventCount":  eventCount,
-	}).Debugf("🎁  GetEventsForHeightRange called")
+	}).Msg("🎁  GetEventsForHeightRange called")
 
 	return results, nil
 }
@@ -564,10 +564,10 @@ func (b *Backend) GetEventsForBlockIDs(
 		eventCount += len(events)
 	}
 
-	b.logger.WithFields(logrus.Fields{
+	b.logger.Debug().Fields(map[string]any{
 		"eventType":  eventType,
 		"eventCount": eventCount,
-	}).Debugf("🎁  GetEventsForBlockIDs called")
+	}).Msg("🎁  GetEventsForBlockIDs called")
 
 	return results, nil
 }
@@ -583,7 +583,7 @@ func validateEventType(eventType string) error {
 func (b *Backend) CommitBlock() {
 	block, results, err := b.emulator.ExecuteAndCommitBlock()
 	if err != nil {
-		b.logger.WithError(err).Error("Failed to commit block")
+		b.logger.Error().Err(err).Msg("Failed to commit block")
 		return
 	}
 
@@ -593,10 +593,10 @@ func (b *Backend) CommitBlock() {
 
 	blockID := block.ID()
 
-	b.logger.WithFields(logrus.Fields{
+	b.logger.Debug().Fields(map[string]any{
 		"blockHeight": block.Header.Height,
 		"blockID":     hex.EncodeToString(blockID[:]),
-	}).Debugf("📦  Block #%d committed", block.Header.Height)
+	}).Msgf("📦  Block #%d committed", block.Header.Height)
 }
 
 // executeScriptAtBlock is a helper for executing a script at a specific block
@@ -621,9 +621,9 @@ func (b *Backend) executeScriptAtBlock(script []byte, arguments [][]byte, blockH
 }
 
 func (b *Backend) GetAccountStorage(address sdk.Address) (*emulator.AccountStorage, error) {
-	b.logger.
-		WithField("address", address).
-		Debugf("👤  GetAccountStorage called")
+	b.logger.Debug().
+		Stringer("address", address).
+		Msg("👤  GetAccountStorage called")
 
 	return b.emulator.GetAccountStorage(address)
 }
@@ -661,21 +661,21 @@ func (b *Backend) GetTransactionResultsByBlockID(ctx context.Context, id flowgo.
 	panic("GetTransactionResultsByBlockID not implemented")
 }
 
-func printTransactionResult(logger *logrus.Logger, result *types.TransactionResult) {
+func printTransactionResult(logger *zerolog.Logger, result *types.TransactionResult) {
 	if result.Succeeded() {
-		logger.
-			WithField("txID", result.TransactionID.String()).
-			WithField("computationUsed", result.ComputationUsed).
-			Info("⭐  Transaction executed")
+		logger.Info().
+			Str("txID", result.TransactionID.String()).
+			Uint64("computationUsed", result.ComputationUsed).
+			Msg("⭐  Transaction executed")
 	} else {
-		logger.
-			WithField("txID", result.TransactionID.String()).
-			WithField("computationUsed", result.ComputationUsed).
-			Warn("❗  Transaction reverted")
+		logger.Warn().
+			Str("txID", result.TransactionID.String()).
+			Uint64("computationUsed", result.ComputationUsed).
+			Msg("❗  Transaction reverted")
 	}
 
 	for _, log := range result.Logs {
-		logger.Infof(
+		logger.Info().Msgf(
 			"%s %s",
 			logPrefix("LOG", result.TransactionID, aurora.BlueFg),
 			log,
@@ -683,7 +683,7 @@ func printTransactionResult(logger *logrus.Logger, result *types.TransactionResu
 	}
 
 	for _, event := range result.Events {
-		logger.Debugf(
+		logger.Debug().Msgf(
 			"%s %s",
 			logPrefix("EVT", result.TransactionID, aurora.GreenFg),
 			event,
@@ -691,38 +691,33 @@ func printTransactionResult(logger *logrus.Logger, result *types.TransactionResu
 	}
 
 	if !result.Succeeded() {
-		logger.Warnf(
+		logger.Warn().Msgf(
 			"%s %s",
 			logPrefix("ERR", result.TransactionID, aurora.RedFg),
 			result.Error.Error(),
 		)
 
 		if result.Debug != nil {
-			for k, v := range result.Debug.Meta {
-				logger.WithField(k, v)
-			}
-			logger.Debug(
-				fmt.Sprintf("%s %s", "❗  Transaction Signature Error", result.Debug.Message),
-			)
+			logger.Debug().Fields(result.Debug.Meta).Msgf("%s %s", "❗  Transaction Signature Error", result.Debug.Message)
 		}
 	}
 }
 
-func printScriptResult(logger *logrus.Logger, result *types.ScriptResult) {
+func printScriptResult(logger *zerolog.Logger, result *types.ScriptResult) {
 	if result.Succeeded() {
-		logger.
-			WithField("scriptID", result.ScriptID.String()).
-			WithField("computationUsed", result.ComputationUsed).
-			Info("⭐  Script executed")
+		logger.Info().
+			Str("scriptID", result.ScriptID.String()).
+			Uint64("computationUsed", result.ComputationUsed).
+			Msg("⭐  Script executed")
 	} else {
-		logger.
-			WithField("scriptID", result.ScriptID.String()).
-			WithField("computationUsed", result.ComputationUsed).
-			Warn("❗  Script reverted")
+		logger.Warn().
+			Str("scriptID", result.ScriptID.String()).
+			Uint64("computationUsed", result.ComputationUsed).
+			Msg("❗  Script reverted")
 	}
 
 	for _, log := range result.Logs {
-		logger.Debugf(
+		logger.Debug().Msgf(
 			"%s %s",
 			logPrefix("LOG", result.ScriptID, aurora.BlueFg),
 			log,
@@ -730,7 +725,7 @@ func printScriptResult(logger *logrus.Logger, result *types.ScriptResult) {
 	}
 
 	if !result.Succeeded() {
-		logger.Warnf(
+		logger.Warn().Msgf(
 			"%s %s",
 			logPrefix("ERR", result.ScriptID, aurora.RedFg),
 			result.Error.Error(),
