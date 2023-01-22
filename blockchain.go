@@ -65,7 +65,9 @@ type Blockchain struct {
 
 	serviceKey ServiceKey
 
-	cadenceRuntime runtime.Runtime
+	cadenceRuntime  runtime.Runtime
+	currentCode     string
+	currentScriptID string
 }
 
 type ServiceKey struct {
@@ -592,6 +594,10 @@ func configureTransactionValidator(conf config, blocks *blocks) *access.Transact
 	)
 }
 
+func (b *Blockchain) CurrentScript() (string, string) {
+	return b.currentScriptID, b.currentCode
+}
+
 // ServiceKey returns the service private key for this blockchain.
 func (b *Blockchain) ServiceKey() ServiceKey {
 	serviceAccount, err := b.getAccount(sdkconvert.SDKAddressToFlow(b.serviceKey.Address))
@@ -963,7 +969,8 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 			txBody *flowgo.TransactionBody,
 		) (*fvm.TransactionProcedure, error) {
 			tx := fvm.Transaction(txBody, txIndex)
-
+			b.currentCode = string(txBody.Script)
+			b.currentScriptID = tx.ID.String()
 			err := b.vm.Run(ctx, tx, ledgerView)
 			if err != nil {
 				return nil, err
@@ -1193,6 +1200,8 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 			})))
 
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
+	b.currentCode = string(script)
+	b.currentScriptID = scriptProc.ID.String()
 
 	err = b.vm.Run(blockContext, scriptProc, requestedLedgerView)
 	if err != nil {

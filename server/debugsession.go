@@ -150,6 +150,16 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 			},
 		})
 
+	case *dap.AttachRequest:
+		ds.targetDepth = 1
+		ds.stopOnEntry = true
+		ds.run()
+		ds.backend.SetDebugger(ds.debugger)
+
+		ds.send(&dap.LaunchResponse{
+			Response: newDAPSuccessResponse(request.GetRequest()),
+		})
+
 	case *dap.LaunchRequest:
 		// TODO: only allow one program at a time
 
@@ -506,7 +516,11 @@ func (ds *debugSession) stackFrames() []dap.StackFrame {
 }
 
 func (ds *debugSession) pathCode(path string) string {
-	// TODO: extend, add support for transactions
+	basename := strings.TrimSuffix(path, ".cdc")
+	runningScriptID, runningCode := ds.backend.GetEmulator().(*emulator.Blockchain).CurrentScript()
+	if basename == runningScriptID {
+		return runningCode
+	}
 
 	location, err := pathLocation(path)
 	if err != nil {
@@ -556,7 +570,6 @@ func (ds *debugSession) run() {
 			case stop := <-ds.debugger.Stops():
 				ds.stop = &stop
 				depth := len(ds.stop.Interpreter.CallStack())
-				fmt.Println("depth:", depth, "targetDepth:", ds.targetDepth)
 				if ds.targetDepth == -1 || depth <= ds.targetDepth {
 					ds.send(&dap.StoppedEvent{
 						Event: newDAPEvent("stopped"),
@@ -574,48 +587,49 @@ func (ds *debugSession) run() {
 		}
 	}()
 
-	go func() {
-		// TODO: add support for arguments
-		// TODO: add support for transactions. requires automine
+	if ds.code != "" {
+		go func() {
+			// TODO: add support for arguments
+			// TODO: add support for transactions. requires automine
 
-		result, err := ds.backend.ExecuteScriptAtLatestBlock(context.Background(), []byte(ds.code), nil)
-		cancel()
+			result, err := ds.backend.ExecuteScriptAtLatestBlock(context.Background(), []byte(ds.code), nil)
+			cancel()
 
-		var outputBody dap.OutputEventBody
-		if err != nil {
-			outputBody = dap.OutputEventBody{
-				Category: "stderr",
-				Output:   err.Error(),
+			var outputBody dap.OutputEventBody
+			if err != nil {
+				outputBody = dap.OutputEventBody{
+					Category: "stderr",
+					Output:   err.Error(),
+				}
+			} else {
+				outputBody = dap.OutputEventBody{
+					Category: "stdout",
+					Output:   string(result),
+				}
 			}
-		} else {
-			outputBody = dap.OutputEventBody{
-				Category: "stdout",
-				Output:   string(result),
+
+			ds.send(&dap.OutputEvent{
+				Event: newDAPEvent("output"),
+				Body:  outputBody,
+			})
+
+			var exitCode int
+			if err != nil {
+				exitCode = 1
 			}
-		}
 
-		ds.send(&dap.OutputEvent{
-			Event: newDAPEvent("output"),
-			Body:  outputBody,
-		})
+			ds.send(&dap.ExitedEvent{
+				Event: newDAPEvent("exited"),
+				Body: dap.ExitedEventBody{
+					ExitCode: exitCode,
+				},
+			})
 
-		var exitCode int
-		if err != nil {
-			exitCode = 1
-		}
-
-		ds.send(&dap.ExitedEvent{
-			Event: newDAPEvent("exited"),
-			Body: dap.ExitedEventBody{
-				ExitCode: exitCode,
-			},
-		})
-
-		ds.send(&dap.TerminatedEvent{
-			Event: newDAPEvent("terminated"),
-		})
-	}()
-
+			ds.send(&dap.TerminatedEvent{
+				Event: newDAPEvent("terminated"),
+			})
+		}()
+	}
 	ds.launched = true
 }
 

@@ -32,13 +32,14 @@ import (
 )
 
 type Debugger struct {
-	logger   *logrus.Logger
-	backend  *backend.Backend
-	port     int
-	listener net.Listener
-	quit     chan interface{}
-	wg       sync.WaitGroup
-	stopOnce sync.Once
+	logger     *logrus.Logger
+	backend    *backend.Backend
+	port       int
+	listener   net.Listener
+	quit       chan interface{}
+	wg         sync.WaitGroup
+	stopOnce   sync.Once
+	activeCode string
 }
 
 func NewDebugger(logger *logrus.Logger, backend *backend.Backend, port int) *Debugger {
