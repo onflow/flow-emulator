@@ -340,8 +340,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 	case *dap.VariablesRequest:
 		// TODO: reply with error if ds.stop == nil
 		vr := request.Arguments.VariablesReference
-		fmt.Println(vr)
-		// vr : 0 -> locals
+
 		inter := ds.stop.Interpreter
 		activation := ds.debugger.CurrentActivation(inter)
 		functionValues := activation.FunctionValues()
@@ -353,10 +352,12 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 			parent := ds.variables[vr].(*interpreter.CompositeValue)
 
 			parent.ForEachField(nil, func(fieldName string, fieldValue interpreter.Value) {
-				variables = append(
-					variables,
-					ds.cadenceValueToDap(fieldName, fieldValue, inter),
-				)
+				variable := ds.cadenceValueToDap(fieldName, fieldValue, inter)
+				if variable != nil {
+					variables = append(
+						variables,
+						*variable)
+				}
 			})
 
 		} else {
@@ -365,14 +366,19 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 			ds.variables = make(map[int]interpreter.Value, 0)
 
 			for name, variable := range functionValues {
+				//TODO: need to handle in cadence I guess
 				if location.String() == ds.scriptID && name == "self" {
 					continue
 				}
 				value := variable.GetValue()
-				variables = append(
-					variables,
-					ds.cadenceValueToDap(name, value, inter),
-				)
+
+				variable := ds.cadenceValueToDap(name, value, inter)
+				if variable != nil {
+					variables = append(
+						variables,
+						*variable)
+				}
+
 			}
 		}
 
@@ -385,9 +391,25 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 	}
 }
 
-func (ds *debugSession) cadenceValueToDap(name string, value interpreter.Value, inter *interpreter.Interpreter) dap.Variable {
+func (ds *debugSession) cadenceValueToDap(name string, value interpreter.Value, inter *interpreter.Interpreter) *dap.Variable {
 	reference := 0
 
+	//globalFunction (BLS and RLP still has problem)
+	_, isHostFunction := value.(*interpreter.HostFunctionValue)
+	if isHostFunction {
+		return nil
+	}
+	//before expresssions for Post conditions
+	if name[0] == 0 {
+		return nil
+	}
+	//check resource destroyed
+	if value.IsResourceKinded(inter) {
+		rv := value.(interpreter.ResourceKindedValue)
+		if rv.IsDestroyed() {
+			return nil
+		}
+	}
 	_, isComposite := value.(*interpreter.CompositeValue)
 	if isComposite {
 		reference = ds.variableHandleCounter
@@ -395,7 +417,7 @@ func (ds *debugSession) cadenceValueToDap(name string, value interpreter.Value, 
 		ds.variableHandleCounter++
 	}
 
-	return dap.Variable{
+	return &dap.Variable{
 		Name:           name,
 		Value:          value.String(),
 		Type:           value.StaticType(inter).String(),
