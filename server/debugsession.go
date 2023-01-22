@@ -240,6 +240,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		})
 
 	case *dap.StepInRequest:
+		ds.targetDepth = -1
 		ds.step()
 
 		ds.send(&dap.StepInResponse{
@@ -360,21 +361,61 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		inter := ds.stop.Interpreter
 		activation := ds.debugger.CurrentActivation(inter)
 		functionValues := activation.FunctionValues()
-		variables := make([]dap.Variable, 0, len(functionValues))
+		variables := make([]dap.Variable, 0)
 		location := ds.stop.Interpreter.Location
 
 		if vr < 10000 {
 			//variable child request
-			parent := ds.variables[vr].(*interpreter.CompositeValue)
 
-			parent.ForEachField(nil, func(fieldName string, fieldValue interpreter.Value) {
-				variable := ds.cadenceValueToDap(fieldName, fieldValue, inter)
-				if variable != nil {
-					variables = append(
-						variables,
-						*variable)
+			//composite
+			composite, isComposite := ds.variables[vr].(*interpreter.CompositeValue)
+			if isComposite {
+				composite.ForEachField(nil, func(fieldName string, fieldValue interpreter.Value) {
+					variable := ds.cadenceValueToDap(fieldName, fieldValue, inter)
+					if variable != nil {
+						variables = append(
+							variables,
+							*variable)
+					}
+				})
+			}
+
+			//array
+			array, isArray := ds.variables[vr].(*interpreter.ArrayValue)
+			if isArray {
+				it := array.Iterator(inter)
+				i := 0
+				for {
+					arrayValue := it.Next(inter)
+					if arrayValue == nil {
+						break
+					}
+
+					variable := ds.cadenceValueToDap(fmt.Sprintf("[%d]", i), arrayValue, inter)
+					if variable != nil {
+						variables = append(
+							variables,
+							*variable)
+					}
+					i = i + 1
 				}
-			})
+			}
+
+			//dictionary
+			dictionary, isDictionary := ds.variables[vr].(*interpreter.DictionaryValue)
+			if isDictionary {
+				dictionary.Iterate(nil, func(key, value interpreter.Value) bool {
+					variable := ds.cadenceValueToDap(key.String(), value, inter)
+					if variable != nil {
+						variables = append(
+							variables,
+							*variable)
+					}
+
+					return true
+				})
+
+			}
 
 		} else {
 			//locals request
@@ -435,7 +476,10 @@ func (ds *debugSession) cadenceValueToDap(name string, value interpreter.Value, 
 	}
 
 	_, isComposite := value.(*interpreter.CompositeValue)
-	if isComposite {
+	_, isArray := value.(*interpreter.ArrayValue)
+	_, isDictionary := value.(*interpreter.DictionaryValue)
+
+	if isArray || isDictionary || isComposite {
 		reference = ds.variableHandleCounter
 		ds.variables[reference] = value
 		ds.variableHandleCounter++
