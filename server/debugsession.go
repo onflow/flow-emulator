@@ -554,7 +554,7 @@ func (ds *debugSession) step() {
 	ds.debugger.Continue()
 }
 
-func (ds *debugSession) run() {
+func (ds *debugSession) run() context.CancelFunc {
 	if ds.stopOnEntry {
 		ds.debugger.RequestPause()
 	}
@@ -631,6 +631,7 @@ func (ds *debugSession) run() {
 		}()
 	}
 	ds.launched = true
+	return cancel
 }
 
 func newDAPEvent(event string) dap.Event {
