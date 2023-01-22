@@ -730,21 +730,18 @@ func pathLocation(path string) (common.Location, error) {
 
 	basename := strings.TrimSuffix(path, ".cdc")
 
-	location, _, err := common.DecodeTypeID(nil, "s."+basename)
-	if err == nil && location != nil {
-		return location, nil
-	}
+	if strings.Count(basename, ".") == 0 {
+		location, _, err := common.DecodeTypeID(nil, "s."+basename)
+		if err == nil && location != nil {
+			return location, nil
+		}
 
-	location, _, err = common.DecodeTypeID(nil, "t."+basename)
-	if err == nil && location != nil {
-		return location, nil
 	}
-
 	if strings.Count(basename, ".") < 3 {
 		basename += "._"
 	}
 	basename = "A." + basename
-	location, _, err = common.DecodeTypeID(nil, basename)
+	location, _, err := common.DecodeTypeID(nil, basename)
 	if err != nil {
 		return nil, err
 	}
