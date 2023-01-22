@@ -370,6 +370,10 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 				if location.String() == ds.scriptID && name == "self" {
 					continue
 				}
+				if name == "BLS" || name == "RLP" {
+					continue
+				}
+
 				value := variable.GetValue()
 
 				variable := ds.cadenceValueToDap(name, value, inter)
@@ -392,7 +396,10 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 }
 
 func (ds *debugSession) cadenceValueToDap(name string, value interpreter.Value, inter *interpreter.Interpreter) *dap.Variable {
+	//defaults
 	reference := 0
+	kind := "property"
+	visibility := "private"
 
 	//globalFunction (BLS and RLP still has problem)
 	_, isHostFunction := value.(*interpreter.HostFunctionValue)
@@ -410,6 +417,7 @@ func (ds *debugSession) cadenceValueToDap(name string, value interpreter.Value, 
 			return nil
 		}
 	}
+
 	_, isComposite := value.(*interpreter.CompositeValue)
 	if isComposite {
 		reference = ds.variableHandleCounter
@@ -423,8 +431,8 @@ func (ds *debugSession) cadenceValueToDap(name string, value interpreter.Value, 
 		Type:           value.StaticType(inter).String(),
 		NamedVariables: 10,
 		PresentationHint: dap.VariablePresentationHint{
-			Kind:       "class",
-			Visibility: "public",
+			Kind:       kind,
+			Visibility: visibility,
 		},
 		VariablesReference: reference,
 	}
