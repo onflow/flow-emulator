@@ -47,6 +47,7 @@ type debugSession struct {
 	configurationDone bool
 	launchRequested   bool
 	launched          bool
+	targetDepth       int
 }
 
 // sendFromQueue is to be run in a separate goroutine to listen
@@ -169,6 +170,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		}
 		b, _ := os.ReadFile(programArg.(string))
 		ds.code = string(b)
+		ds.targetDepth = -1
 		stopOnEntryArg := args["stopOnEntry"]
 		ds.stopOnEntry, _ = stopOnEntryArg.(bool)
 		scriptID := emulator.ComputeScriptID([]byte(ds.code))
@@ -217,14 +219,17 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		})
 
 	case *dap.NextRequest:
+
+		currentDepth := len(ds.stop.Interpreter.CallStack())
+		ds.targetDepth = currentDepth
+
 		ds.step()
 
-		ds.send(&dap.NextResponse{
+		ds.send(&dap.StepOutResponse{
 			Response: newDAPSuccessResponse(request.GetRequest()),
 		})
 
 	case *dap.StepInRequest:
-		// TODO: handled as step request for now
 		ds.step()
 
 		ds.send(&dap.StepInResponse{
@@ -232,9 +237,10 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		})
 
 	case *dap.StepOutRequest:
-		// TODO: handled as step request for now
-		ds.step()
+		currentDepth := len(ds.stop.Interpreter.CallStack())
+		ds.targetDepth = currentDepth - 1
 
+		ds.step()
 		ds.send(&dap.StepOutResponse{
 			Response: newDAPSuccessResponse(request.GetRequest()),
 		})
@@ -549,15 +555,21 @@ func (ds *debugSession) run() {
 
 			case stop := <-ds.debugger.Stops():
 				ds.stop = &stop
+				depth := len(ds.stop.Interpreter.CallStack())
+				fmt.Println("depth:", depth, "targetDepth:", ds.targetDepth)
+				if ds.targetDepth == -1 || depth <= ds.targetDepth {
+					ds.send(&dap.StoppedEvent{
+						Event: newDAPEvent("stopped"),
+						Body: dap.StoppedEventBody{
+							Reason:            "pause",
+							AllThreadsStopped: true,
+							ThreadId:          1,
+						},
+					})
+				} else {
+					ds.step()
+				}
 
-				ds.send(&dap.StoppedEvent{
-					Event: newDAPEvent("stopped"),
-					Body: dap.StoppedEventBody{
-						Reason:            "pause",
-						AllThreadsStopped: true,
-						ThreadId:          1,
-					},
-				})
 			}
 		}
 	}()
