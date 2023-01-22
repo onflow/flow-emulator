@@ -85,6 +85,7 @@ func (ds *debugSession) send(message dap.Message) {
 
 func (ds *debugSession) dispatchRequest(request dap.Message) {
 	switch request := request.(type) {
+
 	case *dap.InitializeRequest:
 
 		// TODO: only allow one debug session at a time
@@ -107,6 +108,11 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 
 	case *dap.SetBreakpointsRequest:
 		path := request.Arguments.Source.Path
+
+		if path == ds.scriptLocation.String() {
+			path = ds.scriptID
+		}
+
 		location, err := pathLocation(path)
 		if err != nil {
 			ds.send(newDAPErrorResponse(
@@ -614,6 +620,9 @@ func (ds *debugSession) run() context.CancelFunc {
 			case stop := <-ds.debugger.Stops():
 				ds.stop = &stop
 				depth := len(ds.stop.Interpreter.CallStack())
+
+				//TODO: check stop reason breakpoint
+
 				if ds.targetDepth == -1 || depth <= ds.targetDepth {
 					ds.send(&dap.StoppedEvent{
 						Event: newDAPEvent("stopped"),
@@ -718,15 +727,24 @@ func locationPath(location common.Location) string {
 }
 
 func pathLocation(path string) (common.Location, error) {
-	basename := strings.TrimSuffix(path, ".cdc")
-	// TODO: improve. use type ID decoding to decode location. add required fake qualified identifier
 
-	//TODO: @bluesign: check this
-	basename = "A." + basename
+	basename := strings.TrimSuffix(path, ".cdc")
+
+	location, _, err := common.DecodeTypeID(nil, "s."+basename)
+	if err == nil && location != nil {
+		return location, nil
+	}
+
+	location, _, err = common.DecodeTypeID(nil, "t."+basename)
+	if err == nil && location != nil {
+		return location, nil
+	}
+
 	if strings.Count(basename, ".") < 3 {
 		basename += "._"
 	}
-	location, _, err := common.DecodeTypeID(nil, basename)
+	basename = "A." + basename
+	location, _, err = common.DecodeTypeID(nil, basename)
 	if err != nil {
 		return nil, err
 	}
