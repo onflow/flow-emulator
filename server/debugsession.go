@@ -22,10 +22,11 @@ import (
 )
 
 type debugSession struct {
-	logger     *logrus.Logger
-	backend    *backend.Backend
-	readWriter *bufio.ReadWriter
-
+	logger                *logrus.Logger
+	backend               *backend.Backend
+	readWriter            *bufio.ReadWriter
+	variables             map[int]interpreter.Value
+	variableHandleCounter int
 	// sendQueue is used to capture messages from multiple request
 	// processing goroutines while writing them to the client connection
 	// from a single goroutine via sendFromQueue.
@@ -330,7 +331,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 					{
 						Name:               "Variables",
 						PresentationHint:   "locals",
-						VariablesReference: 1,
+						VariablesReference: 10000,
 					},
 				},
 			},
@@ -338,31 +339,41 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 
 	case *dap.VariablesRequest:
 		// TODO: reply with error if ds.stop == nil
-
-		//TODO:@bluesign: global functions showing up in variables, when in interface
+		vr := request.Arguments.VariablesReference
+		fmt.Println(vr)
+		// vr : 0 -> locals
 		inter := ds.stop.Interpreter
-
 		activation := ds.debugger.CurrentActivation(inter)
-
 		functionValues := activation.FunctionValues()
-
 		variables := make([]dap.Variable, 0, len(functionValues))
 		location := ds.stop.Interpreter.Location
 
-		for name, variable := range functionValues {
-			if location.String() == ds.scriptID && name == "self" {
-				continue
+		if vr < 10000 {
+			//variable child request
+			parent := ds.variables[vr].(*interpreter.CompositeValue)
+
+			parent.ForEachField(nil, func(fieldName string, fieldValue interpreter.Value) {
+				variables = append(
+					variables,
+					ds.cadenceValueToDap(fieldName, fieldValue, inter),
+				)
+			})
+
+		} else {
+			//locals request
+			ds.variableHandleCounter = 1
+			ds.variables = make(map[int]interpreter.Value, 0)
+
+			for name, variable := range functionValues {
+				if location.String() == ds.scriptID && name == "self" {
+					continue
+				}
+				value := variable.GetValue()
+				variables = append(
+					variables,
+					ds.cadenceValueToDap(name, value, inter),
+				)
 			}
-			value := variable.GetValue()
-			print(name)
-			variables = append(
-				variables,
-				dap.Variable{
-					Name:  name,
-					Value: value.String(),
-					Type:  value.StaticType(inter).String(),
-				},
-			)
 		}
 
 		ds.send(&dap.VariablesResponse{
@@ -371,6 +382,29 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 				Variables: variables,
 			},
 		})
+	}
+}
+
+func (ds *debugSession) cadenceValueToDap(name string, value interpreter.Value, inter *interpreter.Interpreter) dap.Variable {
+	reference := 0
+
+	_, isComposite := value.(*interpreter.CompositeValue)
+	if isComposite {
+		reference = ds.variableHandleCounter
+		ds.variables[reference] = value
+		ds.variableHandleCounter++
+	}
+
+	return dap.Variable{
+		Name:           name,
+		Value:          value.String(),
+		Type:           value.StaticType(inter).String(),
+		NamedVariables: 10,
+		PresentationHint: dap.VariablePresentationHint{
+			Kind:       "class",
+			Visibility: "public",
+		},
+		VariablesReference: reference,
 	}
 }
 
