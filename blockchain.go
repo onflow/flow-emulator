@@ -21,6 +21,7 @@ import (
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
+	"github.com/onflow/flow-go-sdk"
 	sdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
@@ -769,6 +770,30 @@ func (b *Blockchain) GetTransactionResult(ID sdk.Identifier) (*sdk.TransactionRe
 }
 
 // GetAccount returns the account for the given address.
+func (b *Blockchain) GetAccountByIndex(index uint) (*sdk.Account, error) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	generator := flow.NewAddressGenerator(sdk.ChainID(b.vmCtx.Chain.ChainID()))
+
+	generator.SetIndex(index)
+
+	flowAddress := sdkconvert.SDKAddressToFlow(generator.Address())
+
+	account, err := b.getAccount(flowAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	sdkAccount, err := sdkconvert.FlowAccountToSDK(*account)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sdkAccount, nil
+}
+
+// GetAccount returns the account for the given address.
 func (b *Blockchain) GetAccount(address sdk.Address) (*sdk.Account, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
@@ -1045,6 +1070,16 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	b.pendingBlock = newPendingBlock(block, ledgerView)
 
 	return block, nil
+}
+func (b *Blockchain) GetAccountStorageByIndex(index uint) (*AccountStorage, error) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	generator := flow.NewAddressGenerator(sdk.ChainID(b.vmCtx.Chain.ChainID()))
+
+	generator.SetIndex(index)
+
+	return b.GetAccountStorage(generator.Address())
 }
 
 func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, error) {

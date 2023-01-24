@@ -42,9 +42,12 @@ type Emulator interface {
 	GetTransaction(txID sdk.Identifier) (*sdk.Transaction, error)
 	GetTransactionResult(txID sdk.Identifier) (*sdk.TransactionResult, error)
 	GetAccount(address sdk.Address) (*sdk.Account, error)
+	GetAccountByIndex(uint) (*sdk.Account, error)
+
 	GetAccountAtBlock(address sdk.Address, blockHeight uint64) (*sdk.Account, error)
 	GetEventsByHeight(blockHeight uint64, eventType string) ([]sdk.Event, error)
 	ExecuteScript(script []byte, arguments [][]byte) (*types.ScriptResult, error)
 	ExecuteScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) (*types.ScriptResult, error)
 	GetAccountStorage(address sdk.Address) (*emulator.AccountStorage, error)
+	GetAccountStorageByIndex(uint) (*emulator.AccountStorage, error)
 }

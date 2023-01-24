@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/google/go-dap"
+	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime/ast"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
@@ -25,7 +26,7 @@ type debugSession struct {
 	logger                *logrus.Logger
 	backend               *backend.Backend
 	readWriter            *bufio.ReadWriter
-	variables             map[int]interpreter.Value
+	variables             map[int]any
 	variableHandleCounter int
 	// sendQueue is used to capture messages from multiple request
 	// processing goroutines while writing them to the client connection
@@ -356,6 +357,11 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 						PresentationHint:   "locals",
 						VariablesReference: 10000,
 					},
+					{
+						Name:               "Storage",
+						PresentationHint:   "registers",
+						VariablesReference: 20000,
+					},
 				},
 			},
 		})
@@ -370,63 +376,173 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		variables := make([]dap.Variable, 0)
 		location := ds.stop.Interpreter.Location
 
+		fmt.Println(vr)
 		if vr < 10000 {
 			//variable child request
+			value := ds.variables[vr]
 
-			//composite
-			composite, isComposite := ds.variables[vr].(*interpreter.CompositeValue)
-			if isComposite {
-				composite.ForEachField(nil, func(fieldName string, fieldValue interpreter.Value) {
-					variable := ds.cadenceValueToDap(fieldName, fieldValue, inter)
-					if variable != nil {
-						variables = append(
-							variables,
-							*variable)
-					}
-				})
-			}
+			cadenceValue, isCadenceValue := value.(cadence.Value)
+			if isCadenceValue {
 
-			//array
-			array, isArray := ds.variables[vr].(*interpreter.ArrayValue)
-			if isArray {
-				it := array.Iterator(inter)
-				i := 0
-				for {
-					arrayValue := it.Next(inter)
-					if arrayValue == nil {
-						break
+				resourceValue, isResource := cadenceValue.(cadence.Resource)
+				if isResource {
+					for i, field := range resourceValue.ResourceType.Fields {
+						variable := ds.cadenceValueToDap(field.Identifier, resourceValue.Fields[i])
+						if variable != nil {
+							variables = append(
+								variables,
+								*variable)
+						}
+
+					}
+				}
+
+				structValue, isStruct := cadenceValue.(cadence.Struct)
+				if isStruct {
+					for i, field := range structValue.StructType.Fields {
+						variable := ds.cadenceValueToDap(field.Identifier, structValue.Fields[i])
+						if variable != nil {
+							variables = append(
+								variables,
+								*variable)
+						}
+
 					}
 
-					variable := ds.cadenceValueToDap(fmt.Sprintf("[%d]", i), arrayValue, inter)
-					if variable != nil {
-						variables = append(
-							variables,
-							*variable)
+				}
+
+				//array
+				arrayValue, isArray := cadenceValue.(cadence.Array)
+				if isArray {
+					i := 0
+					for _, value := range arrayValue.Values {
+						variable := ds.cadenceValueToDap(fmt.Sprintf("[%d]", i), value)
+						if variable != nil {
+							variables = append(
+								variables,
+								*variable)
+						}
+						i = i + 1
 					}
-					i = i + 1
+				}
+
+				//dictionary
+				dictionaryValue, isDictionary := cadenceValue.(cadence.Dictionary)
+				if isDictionary {
+					for _, pair := range dictionaryValue.Pairs {
+						variable := ds.cadenceValueToDap(pair.Key.String(), pair.Value)
+						if variable != nil {
+							variables = append(
+								variables,
+								*variable)
+						}
+
+					}
+				}
+
+			} else {
+
+				//composite
+				composite, isComposite := ds.variables[vr].(*interpreter.CompositeValue)
+				if isComposite {
+					composite.ForEachField(nil, func(fieldName string, fieldValue interpreter.Value) {
+						variable := ds.interpreterValueToDap(fieldName, fieldValue, inter)
+						if variable != nil {
+							variables = append(
+								variables,
+								*variable)
+						}
+					})
+				}
+
+				//array
+				array, isArray := ds.variables[vr].(*interpreter.ArrayValue)
+				if isArray {
+					it := array.Iterator(inter)
+					i := 0
+					for {
+						arrayValue := it.Next(inter)
+						if arrayValue == nil {
+							break
+						}
+
+						variable := ds.interpreterValueToDap(fmt.Sprintf("[%d]", i), arrayValue, inter)
+						if variable != nil {
+							variables = append(
+								variables,
+								*variable)
+						}
+						i = i + 1
+					}
+				}
+
+				//dictionary
+				dictionary, isDictionary := ds.variables[vr].(*interpreter.DictionaryValue)
+				if isDictionary {
+					dictionary.Iterate(nil, func(key, value interpreter.Value) bool {
+						variable := ds.interpreterValueToDap(key.String(), value, inter)
+						if variable != nil {
+							variables = append(
+								variables,
+								*variable)
+						}
+
+						return true
+					})
+
 				}
 			}
 
-			//dictionary
-			dictionary, isDictionary := ds.variables[vr].(*interpreter.DictionaryValue)
-			if isDictionary {
-				dictionary.Iterate(nil, func(key, value interpreter.Value) bool {
-					variable := ds.cadenceValueToDap(key.String(), value, inter)
-					if variable != nil {
-						variables = append(
-							variables,
-							*variable)
+		} else if vr >= 20000 {
+
+			//storage request
+			if vr == 20000 {
+				//show accounts
+				var index int = 1
+				for {
+					fmt.Println(index)
+
+					account, err := ds.backend.GetEmulator().GetAccountByIndex(uint(index))
+					if err != nil {
+						fmt.Println(err)
+						break
 					}
+					variable := &dap.Variable{
+						Name:  account.Address.String(),
+						Value: "FlowAccount",
+						Type:  "FlowAccount",
+						PresentationHint: dap.VariablePresentationHint{
+							Kind:       "class",
+							Visibility: "public",
+						},
+						VariablesReference: vr + index,
+					}
+					index++
+					variables = append(
+						variables,
+						*variable)
 
-					return true
-				})
+				}
+			} else {
+				//show single account storage
+				index := vr - 20000
+				account, err := ds.backend.GetEmulator().GetAccountStorageByIndex(uint(index))
+				if err == nil {
+					for key, value := range account.Storage {
+						variable := ds.cadenceValueToDap(fmt.Sprintf("storage/%s", key), value)
 
+						if variable != nil {
+							variables = append(
+								variables,
+								*variable)
+						}
+					}
+				}
 			}
-
-		} else {
+		} else if vr >= 10000 {
 			//locals request
 			ds.variableHandleCounter = 1
-			ds.variables = make(map[int]interpreter.Value, 0)
+			ds.variables = make(map[int]any, 0)
 
 			for name, variable := range functionValues {
 				//TODO: need to handle in cadence I guess
@@ -439,7 +555,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 
 				value := variable.GetValue()
 
-				variable := ds.cadenceValueToDap(name, value, inter)
+				variable := ds.interpreterValueToDap(name, value, inter)
 				if variable != nil {
 					variables = append(
 						variables,
@@ -457,8 +573,37 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		})
 	}
 }
+func (ds *debugSession) cadenceValueToDap(name string, value cadence.Value) *dap.Variable {
+	//defaults
+	reference := 0
+	kind := "property"
+	visibility := "private"
 
-func (ds *debugSession) cadenceValueToDap(name string, value interpreter.Value, inter *interpreter.Interpreter) *dap.Variable {
+	_, isDictionary := value.(cadence.Dictionary)
+	_, isArray := value.(cadence.Array)
+	_, isResource := value.(cadence.Resource)
+	_, isStruct := value.(cadence.Struct)
+	isComposite := isResource || isStruct
+
+	if isArray || isDictionary || isComposite {
+		reference = ds.variableHandleCounter
+		ds.variables[reference] = value
+		ds.variableHandleCounter++
+	}
+
+	return &dap.Variable{
+		Name:  name,
+		Value: value.String(),
+		Type:  value.Type().ID(),
+		PresentationHint: dap.VariablePresentationHint{
+			Kind:       kind,
+			Visibility: visibility,
+		},
+		VariablesReference: reference,
+	}
+}
+
+func (ds *debugSession) interpreterValueToDap(name string, value interpreter.Value, inter *interpreter.Interpreter) *dap.Variable {
 	//defaults
 	reference := 0
 	kind := "property"
@@ -492,10 +637,9 @@ func (ds *debugSession) cadenceValueToDap(name string, value interpreter.Value, 
 	}
 
 	return &dap.Variable{
-		Name:           name,
-		Value:          value.String(),
-		Type:           value.StaticType(inter).String(),
-		NamedVariables: 10,
+		Name:  name,
+		Value: value.String(),
+		Type:  value.StaticType(inter).String(),
 		PresentationHint: dap.VariablePresentationHint{
 			Kind:       kind,
 			Visibility: visibility,
