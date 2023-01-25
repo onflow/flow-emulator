@@ -29,7 +29,9 @@ import (
 
 // Emulator defines the method set of an emulated blockchain.
 type Emulator interface {
-	SetDebugger(debugger *interpreter.Debugger)
+	GetDebugger() *interpreter.Debugger
+	EndDebugging()
+
 	AddTransaction(tx sdk.Transaction) error
 	ExecuteNextTransaction() (*types.TransactionResult, error)
 	ExecuteBlock() ([]*types.TransactionResult, error)
@@ -41,6 +43,8 @@ type Emulator interface {
 	GetCollection(colID sdk.Identifier) (*sdk.Collection, error)
 	GetTransaction(txID sdk.Identifier) (*sdk.Transaction, error)
 	GetTransactionResult(txID sdk.Identifier) (*sdk.TransactionResult, error)
+	//for debugger
+	GetAccountUnsafe(address sdk.Address) (*sdk.Account, error)
 	GetAccount(address sdk.Address) (*sdk.Account, error)
 	GetAccountByIndex(uint) (*sdk.Account, error)
 

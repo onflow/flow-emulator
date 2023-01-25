@@ -91,10 +91,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 
 		// TODO: only allow one debug session at a time
 
-		debugger := interpreter.NewDebugger()
-		ds.debugger = debugger
-
-		ds.backend.SetDebugger(debugger)
+		ds.debugger = ds.backend.GetEmulator().GetDebugger()
 
 		ds.send(&dap.InitializeResponse{
 			Response: newDAPSuccessResponse(request.GetRequest()),
@@ -157,11 +154,18 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 			},
 		})
 
+	case *dap.DisconnectRequest:
+		ds.debugger.Continue()
+		ds.backend.GetEmulator().EndDebugging()
+		ds.send(&dap.DisconnectResponse{
+			Response: newDAPSuccessResponse(request.GetRequest()),
+		})
+
 	case *dap.AttachRequest:
 		ds.targetDepth = 1
 		ds.stopOnEntry = true
+		ds.debugger = ds.backend.GetEmulator().GetDebugger()
 		ds.run()
-		ds.backend.SetDebugger(ds.debugger)
 
 		ds.send(&dap.LaunchResponse{
 			Response: newDAPSuccessResponse(request.GetRequest()),
@@ -322,28 +326,28 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		variableName := request.Arguments.Expression
 
 		activation := ds.debugger.CurrentActivation(ds.stop.Interpreter)
-		variable := activation.Find(variableName)
-		if variable == nil {
-			ds.send(newDAPErrorResponse(
-				request.Seq,
-				request.Command,
-				dap.ErrorMessage{
-					Format: "unknown variable: {name}",
-					Variables: map[string]string{
-						"name": variableName,
-					},
-				},
-			))
-			break
-		}
-		value := variable.GetValue()
 
-		ds.send(&dap.EvaluateResponse{
-			Response: newDAPSuccessResponse(request.GetRequest()),
-			Body: dap.EvaluateResponseBody{
-				Result: value.String(),
+		variable := activation.Find(variableName)
+		if variable != nil {
+			value := variable.GetValue()
+			ds.send(&dap.EvaluateResponse{
+				Response: newDAPSuccessResponse(request.GetRequest()),
+				Body: dap.EvaluateResponseBody{
+					Result: value.String(),
+				},
+			})
+		}
+
+		ds.send(newDAPErrorResponse(
+			request.Seq,
+			request.Command,
+			dap.ErrorMessage{
+				Format: "unknown variable: {name}",
+				Variables: map[string]string{
+					"name": variableName,
+				},
 			},
-		})
+		))
 
 	case *dap.ScopesRequest:
 		// TODO: return more fine-grained scopes
@@ -368,6 +372,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 
 	case *dap.VariablesRequest:
 		// TODO: reply with error if ds.stop == nil
+
 		vr := request.Arguments.VariablesReference
 
 		inter := ds.stop.Interpreter
@@ -376,7 +381,6 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		variables := make([]dap.Variable, 0)
 		location := ds.stop.Interpreter.Location
 
-		fmt.Println(vr)
 		if vr < 10000 {
 			//variable child request
 			value := ds.variables[vr]
@@ -500,11 +504,9 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 				//show accounts
 				var index int = 1
 				for {
-					fmt.Println(index)
 
 					account, err := ds.backend.GetEmulator().GetAccountByIndex(uint(index))
 					if err != nil {
-						fmt.Println(err)
 						break
 					}
 					variable := &dap.Variable{
@@ -603,7 +605,7 @@ func (ds *debugSession) cadenceValueToDap(name string, value cadence.Value) *dap
 	}
 }
 
-func (ds *debugSession) interpreterValueToDap(name string, value interpreter.Value, inter *interpreter.Interpreter) *dap.Variable {
+func (ds *debugSession) interpreterValueToDap(name string, value interpreter.Value, inter *interpreter.Interpreter) (result *dap.Variable) {
 	//defaults
 	reference := 0
 	kind := "property"
@@ -626,9 +628,29 @@ func (ds *debugSession) interpreterValueToDap(name string, value interpreter.Val
 		}
 	}
 
+	refPrefix := ""
+	storageRef, isStorageRef := value.(*interpreter.StorageReferenceValue)
+	if isStorageRef {
+		value = *storageRef.ReferencedValue(inter)
+		refPrefix = "&"
+	}
+
 	_, isComposite := value.(*interpreter.CompositeValue)
 	_, isArray := value.(*interpreter.ArrayValue)
 	_, isDictionary := value.(*interpreter.DictionaryValue)
+
+	for {
+		reference, isReference := value.(*interpreter.EphemeralReferenceValue)
+		if !isReference {
+			break
+		}
+		inter.SharedState.Config.InvalidatedResourceValidationEnabled = false
+		value = *reference.ReferencedValue(inter, interpreter.EmptyLocationRange)
+		inter.SharedState.Config.InvalidatedResourceValidationEnabled = true
+		refPrefix = refPrefix + "&"
+	}
+
+	variableType := fmt.Sprintf("%s%s", refPrefix, value.StaticType(inter).String())
 
 	if isArray || isDictionary || isComposite {
 		reference = ds.variableHandleCounter
@@ -636,10 +658,15 @@ func (ds *debugSession) interpreterValueToDap(name string, value interpreter.Val
 		ds.variableHandleCounter++
 	}
 
+	defer func() {
+		if r := recover(); r != nil {
+			result = nil
+		}
+	}()
 	return &dap.Variable{
 		Name:  name,
 		Value: value.String(),
-		Type:  value.StaticType(inter).String(),
+		Type:  variableType,
 		PresentationHint: dap.VariablePresentationHint{
 			Kind:       kind,
 			Visibility: visibility,
@@ -727,7 +754,7 @@ func (ds *debugSession) pathCode(path string) string {
 
 	if addressLocation, ok := location.(common.AddressLocation); ok {
 		var account *sdk.Account
-		account, err = ds.backend.GetEmulator().GetAccount(sdk.Address(addressLocation.Address))
+		account, err = ds.backend.GetEmulator().GetAccountUnsafe(sdk.Address(addressLocation.Address))
 		if err != nil {
 			return ""
 		}
@@ -749,6 +776,7 @@ func (ds *debugSession) step() {
 }
 
 func (ds *debugSession) run() context.CancelFunc {
+	ds.debugger = ds.backend.GetEmulator().GetDebugger()
 	if ds.stopOnEntry {
 		ds.debugger.RequestPause()
 	}
@@ -825,7 +853,11 @@ func (ds *debugSession) run() context.CancelFunc {
 			ds.send(&dap.TerminatedEvent{
 				Event: newDAPEvent("terminated"),
 			})
+
+			ds.backend.GetEmulator().EndDebugging()
+
 		}()
+
 	}
 	ds.launched = true
 	return cancel

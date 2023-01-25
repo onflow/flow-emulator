@@ -26,7 +26,6 @@ import (
 
 	"github.com/logrusorgru/aurora"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
-	"github.com/onflow/cadence/runtime/interpreter"
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go/access"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
@@ -668,10 +667,6 @@ func (b *Backend) GetTransactionsByBlockID(ctx context.Context, id flowgo.Identi
 func (b *Backend) GetTransactionResultsByBlockID(ctx context.Context, id flowgo.Identifier) ([]*access.TransactionResult, error) {
 	// TODO: implement
 	panic("GetTransactionResultsByBlockID not implemented")
-}
-
-func (b *Backend) SetDebugger(debugger *interpreter.Debugger) {
-	b.emulator.SetDebugger(debugger)
 }
 
 func printTransactionResult(logger *logrus.Logger, result *types.TransactionResult) {

@@ -34,6 +34,7 @@ import (
 	"github.com/onflow/flow-go/fvm/environment"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/programs"
+	//fvmruntime "github.com/onflow/flow-go/fvm/runtime"
 	reusableRuntime "github.com/onflow/flow-go/fvm/runtime"
 	"github.com/onflow/flow-go/fvm/state"
 	"github.com/onflow/flow-go/fvm/tracing"
@@ -66,9 +67,10 @@ type Blockchain struct {
 
 	serviceKey ServiceKey
 
-	cadenceRuntime  runtime.Runtime
-	currentCode     string
-	currentScriptID string
+	debugger               *interpreter.Debugger
+	activeDebuggingSession bool
+	currentCode            string
+	currentScriptID        string
 }
 
 type ServiceKey struct {
@@ -383,17 +385,20 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		opt(&conf)
 	}
 
+	debugger := interpreter.NewDebugger()
+
 	b := &Blockchain{
-		storage:        conf.GetStore(),
-		serviceKey:     conf.GetServiceKey(),
-		cadenceRuntime: runtime.NewInterpreterRuntime(runtime.Config{}),
+		storage:                conf.GetStore(),
+		serviceKey:             conf.GetServiceKey(),
+		debugger:               debugger,
+		activeDebuggingSession: false,
 	}
 
 	var err error
 
 	blocks := newBlocks(b)
 
-	b.vm, b.vmCtx, err = configureFVM(conf, blocks)
+	b.vm, b.vmCtx, err = configureFVM(b, conf, blocks)
 	if err != nil {
 		return nil, err
 	}
@@ -409,7 +414,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	return b, nil
 }
 
-func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {
+func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {
 	vm := fvm.NewVirtualMachine()
 
 	fvmOptions := []fvm.Option{
@@ -422,6 +427,9 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 		fvm.WithCadenceLogging(true),
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
+		fvm.WithReusableCadenceRuntimePool(
+			reusableRuntime.NewReusableCadenceRuntimePool(1, runtime.Config{Debugger: blockchain.debugger}),
+		),
 	}
 
 	if !conf.TransactionValidationEnabled {
@@ -793,6 +801,23 @@ func (b *Blockchain) GetAccountByIndex(index uint) (*sdk.Account, error) {
 	return &sdkAccount, nil
 }
 
+func (b *Blockchain) GetAccountUnsafe(address sdk.Address) (*sdk.Account, error) {
+
+	flowAddress := sdkconvert.SDKAddressToFlow(address)
+
+	account, err := b.getAccount(flowAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	sdkAccount, err := sdkconvert.FlowAccountToSDK(*account)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sdkAccount, nil
+}
+
 // GetAccount returns the account for the given address.
 func (b *Blockchain) GetAccount(address sdk.Address) (*sdk.Account, error) {
 	b.mu.RLock()
@@ -935,10 +960,7 @@ func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 	blockContext := fvm.NewContextFromParent(
 		b.vmCtx,
 		fvm.WithBlockHeader(header),
-		fvm.WithReusableCadenceRuntimePool(
-			reusableRuntime.NewCustomReusableCadenceRuntimePool(1, func(runtime.Config) runtime.Runtime {
-				return b.cadenceRuntime
-			})))
+	)
 
 	// cannot execute a block that has already executed
 	if b.pendingBlock.ExecutionComplete() {
@@ -969,10 +991,7 @@ func (b *Blockchain) ExecuteNextTransaction() (*types.TransactionResult, error) 
 	blockContext := fvm.NewContextFromParent(
 		b.vmCtx,
 		fvm.WithBlockHeader(header),
-		fvm.WithReusableCadenceRuntimePool(
-			reusableRuntime.NewCustomReusableCadenceRuntimePool(1, func(runtime.Config) runtime.Runtime {
-				return b.cadenceRuntime
-			})))
+	)
 	return b.executeNextTransaction(blockContext)
 }
 
@@ -996,6 +1015,9 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 			tx := fvm.Transaction(txBody, txIndex)
 			b.currentCode = string(txBody.Script)
 			b.currentScriptID = tx.ID.String()
+			if b.activeDebuggingSession {
+				b.debugger.RequestPause()
+			}
 			err := b.vm.Run(ctx, tx, ledgerView)
 			if err != nil {
 				return nil, err
@@ -1229,14 +1251,14 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 	blockContext := fvm.NewContextFromParent(
 		b.vmCtx,
 		fvm.WithBlockHeader(header),
-		fvm.WithReusableCadenceRuntimePool(
-			reusableRuntime.NewCustomReusableCadenceRuntimePool(1, func(runtime.Config) runtime.Runtime {
-				return b.cadenceRuntime
-			})))
-
+	)
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
 	b.currentCode = string(script)
 	b.currentScriptID = scriptProc.ID.String()
+
+	if b.activeDebuggingSession {
+		b.debugger.RequestPause()
+	}
 
 	err = b.vm.Run(blockContext, scriptProc, requestedLedgerView)
 	if err != nil {
@@ -1409,6 +1431,11 @@ func (b *Blockchain) testAlternativeHashAlgo(sig flowgo.TransactionSignature, ms
 	return nil
 }
 
-func (b *Blockchain) SetDebugger(debugger *interpreter.Debugger) {
-	b.cadenceRuntime.SetDebugger(debugger)
+func (b *Blockchain) GetDebugger() *interpreter.Debugger {
+	b.activeDebuggingSession = true
+	return b.debugger
+}
+
+func (b *Blockchain) EndDebugging() {
+	b.activeDebuggingSession = false
 }
