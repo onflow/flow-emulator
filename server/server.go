@@ -101,6 +101,8 @@ type Config struct {
 	ScriptGasLimit            uint64
 	Persist                   bool
 	Snapshot                  bool
+	// ContractRemovalEnabled configures possible removal of contracts.
+	ContractRemovalEnabled bool
 	// DBPath is the path to the Badger database on disk.
 	DBPath string
 	// DBGCInterval is the time interval at which to garbage collect the Badger value log.
@@ -288,6 +290,7 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		emulator.WithChainID(conf.ChainID),
+		emulator.WithContractRemovalEnabled(conf.ContractRemovalEnabled),
 	}
 
 	if conf.SkipTransactionValidation {
