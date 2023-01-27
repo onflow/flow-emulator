@@ -30,9 +30,9 @@ import (
 	"github.com/onflow/flow-go/engine/execution/state/delta"
 	"github.com/onflow/flow-go/fvm"
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
+	"github.com/onflow/flow-go/fvm/derived"
 	"github.com/onflow/flow-go/fvm/environment"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
-	"github.com/onflow/flow-go/fvm/programs"
 	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
@@ -417,7 +417,10 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 	}
 
 	if !conf.TransactionValidationEnabled {
-		fvmOptions = append(fvmOptions, fvm.WithTransactionProcessors(fvm.NewTransactionInvoker()))
+		fvmOptions = append(
+			fvmOptions,
+			fvm.WithAuthorizationChecksEnabled(false),
+			fvm.WithSequenceNumberCheckAndIncrementEnabled(false))
 	}
 
 	ctx := fvm.NewContext(
@@ -1037,7 +1040,13 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		WithMaxKeySizeAllowed(b.vmCtx.MaxStateKeySize).
 		WithMaxValueSizeAllowed(b.vmCtx.MaxStateValueSize)
 
-	txnPrograms := programs.NewEmptyPrograms()
+	derivedBlockData := derived.NewEmptyDerivedBlockData()
+	derivedTxnData, err := derivedBlockData.NewSnapshotReadDerivedTransactionData(
+		derived.EndOfBlockExecutionTime,
+		derived.EndOfBlockExecutionTime)
+	if err != nil {
+		return nil, err
+	}
 
 	env := environment.NewScriptEnvironment(
 		context.Background(),
@@ -1046,7 +1055,7 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 			view,
 			stateParameters,
 		),
-		txnPrograms,
+		derivedTxnData,
 	)
 
 	r := b.vmCtx.Borrow(env)
