@@ -2,7 +2,7 @@ package emulator_test
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/onflow/cadence"
@@ -25,7 +25,7 @@ func TestInitialization(t *testing.T) {
 
 		t.Parallel()
 
-		file, err := ioutil.TempFile("", "sqlite-test")
+		file, err := os.CreateTemp("", "sqlite-test")
 		require.Nil(t, err)
 		store, err := sqlite.New(file.Name())
 		require.Nil(t, err)
@@ -52,7 +52,7 @@ func TestInitialization(t *testing.T) {
 
 		t.Parallel()
 
-		file, err := ioutil.TempFile("", "sqlite-test")
+		file, err := os.CreateTemp("", "sqlite-test")
 		require.Nil(t, err)
 		store, err := sqlite.New(file.Name())
 		require.Nil(t, err)
