@@ -93,7 +93,12 @@ func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 }
 func (m EmulatorAPIServer) SnapshotList(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	snapshotProvider := (*m.storage).Store().(storage.SnapshotProvider)
+	snapshotProvider, isSnapshotProvider := (*m.storage).Store().(storage.SnapshotProvider)
+	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
+		m.server.logger.Error("State management is not available with current storage backend")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	snapshots, err := snapshotProvider.ListSnapshots()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
