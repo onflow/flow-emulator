@@ -92,8 +92,8 @@ func (b *Backend) GetLatestBlockHeader(
 		"blockID":     hex.EncodeToString(blockID[:]),
 	}).Debug("🎁  GetLatestBlockHeader called")
 
-	// TODO: return proper block status
-	return block.Header, flowgo.BlockStatusUnknown, nil
+	// this should always return latest sealed block
+	return block.Header, flowgo.BlockStatusSealed, nil
 }
 
 // GetBlockHeaderByHeight gets a block header by height.
@@ -117,8 +117,8 @@ func (b *Backend) GetBlockHeaderByHeight(
 		"blockID":     hex.EncodeToString(blockID[:]),
 	}).Debug("🎁  GetBlockHeaderByHeight called")
 
-	// TODO: return proper block status
-	return block.Header, flowgo.BlockStatusUnknown, nil
+	// As we don't fork the chain in emulator, and finalize and seal at the same time, this can only be Sealed
+	return block.Header, flowgo.BlockStatusSealed, nil
 }
 
 // GetBlockHeaderByID gets a block header by ID.
@@ -142,8 +142,8 @@ func (b *Backend) GetBlockHeaderByID(
 		"blockID":     hex.EncodeToString(blockID[:]),
 	}).Debug("🎁  GetBlockHeaderByID called")
 
-	// TODO: return proper block status
-	return block.Header, flowgo.BlockStatusUnknown, nil
+	// As we don't fork the chain in emulator, and finalize and seal at the same time, this can only be Sealed
+	return block.Header, flowgo.BlockStatusSealed, nil
 }
 
 // GetLatestBlock gets the latest sealed block.
@@ -167,8 +167,8 @@ func (b *Backend) GetLatestBlock(
 		"blockID":     hex.EncodeToString(blockID[:]),
 	}).Debug("🎁  GetLatestBlock called")
 
-	// TODO: return proper block status
-	return block, flowgo.BlockStatusUnknown, nil
+	// As we don't fork the chain in emulator, and finalize and seal at the same time, this can only be Sealed
+	return block, flowgo.BlockStatusSealed, nil
 }
 
 // GetBlockByHeight gets a block by height.
@@ -192,8 +192,8 @@ func (b *Backend) GetBlockByHeight(
 		"blockID":     hex.EncodeToString(blockID[:]),
 	}).Debug("🎁  GetBlockByHeight called")
 
-	// TODO: return proper block status
-	return block, flowgo.BlockStatusUnknown, nil
+	// As we don't fork the chain in emulator, and finalize and seal at the same time, this can only be Sealed
+	return block, flowgo.BlockStatusSealed, nil
 }
 
 // GetBlockByID gets a block by ID.
@@ -217,8 +217,8 @@ func (b *Backend) GetBlockByID(
 		"blockID":     hex.EncodeToString(blockID[:]),
 	}).Debug("🎁  GetBlockByID called")
 
-	// TODO: return proper block status
-	return block, flowgo.BlockStatusUnknown, nil
+	// As we don't fork the chain in emulator, and finalize and seal at the same time, this can only be Sealed
+	return block, flowgo.BlockStatusSealed, nil
 }
 
 // GetCollectionByID gets a collection by ID.
@@ -275,7 +275,7 @@ func (b *Backend) SendTransaction(ctx context.Context, tx sdk.Transaction) error
 	} else {
 		b.logger.
 			WithField("txID", tx.ID().String()).
-			Debug("️✉️   Transaction submitted")
+			Debug(`✉️   Transaction submitted`) //" was messing up vim syntax highlighting
 	}
 
 	if b.automine {
@@ -675,7 +675,7 @@ func printTransactionResult(logger *logrus.Logger, result *types.TransactionResu
 	}
 
 	for _, log := range result.Logs {
-		logger.Debugf(
+		logger.Infof(
 			"%s %s",
 			logPrefix("LOG", result.TransactionID, aurora.BlueFg),
 			log,

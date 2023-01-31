@@ -78,7 +78,7 @@ func NewRestServer(logger *logrus.Logger, be *backend.Backend, chain flow.Chain,
 		debugLogger = zerolog.New(os.Stdout)
 	}
 
-	srv, err := rest.NewServer(backend.NewAdapter(be), "127.0.0.1:3333", debugLogger, chain)
+	srv, err := rest.NewServer(backend.NewAdapter(be), fmt.Sprintf("%s:3333", host), debugLogger, chain)
 	if err != nil {
 		return nil, err
 	}

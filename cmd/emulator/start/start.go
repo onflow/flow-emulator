@@ -66,8 +66,9 @@ type Config struct {
 	TransactionMaxGasLimit    int           `default:"9999" flag:"transaction-max-gas-limit" info:"maximum gas limit for transactions"`
 	ScriptGasLimit            int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
 	WithContracts             bool          `default:"false" flag:"contracts" info:"deploy common contracts when emulator starts"`
+	ContractRemovalEnabled    bool          `default:"true" flag:"contract-removal" info:"allow removal of already deployed contracts, used for updating during development"`
 	SkipTransactionValidation bool          `default:"false" flag:"skip-tx-validation" info:"skip verification of transaction signatures and sequence numbers"`
-	Host                      string        `default:"127.0.0.1" flag:"host" info:"host to listen on for emulator GRPC/REST/Admin servers"`
+	Host                      string        `default:"" flag:"host" info:"host to listen on for emulator GRPC/REST/Admin servers (default: all interfaces)"`
 	ChainID                   string        `default:"emulator" flag:"chain-id" info:"chain to emulate for address generation. Valid values are: 'emulator', 'testnet', 'mainnet'"`
 	RedisURL                  string        `default:"" flag:"redis-url" info:"redis-server URL for persisting redis storage backend ( redis://[[username:]password@]host[:port][/database] ) "`
 }
@@ -189,6 +190,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				Host:                      conf.Host,
 				ChainID:                   flowChainID,
 				RedisURL:                  conf.RedisURL,
+				ContractRemovalEnabled:    conf.ContractRemovalEnabled,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)

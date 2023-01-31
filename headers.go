@@ -32,6 +32,10 @@ type headers struct {
 	blockchain *Blockchain
 }
 
+func (h headers) BatchRemoveChunkBlockIndexByChunkID(_ flowgo.Identifier, _ storage.BatchStorage) error {
+	panic("should not be called")
+}
+
 func (h headers) IndexByChunkID(_, _ flowgo.Identifier) error {
 	panic("should not be called")
 }
@@ -66,6 +70,15 @@ func (h headers) ByHeight(height uint64) (*flowgo.Header, error) {
 		return nil, err
 	}
 	return block.Header, nil
+}
+
+// BlockIDByHeight returns the block ID that is finalized at the given height.
+func (h headers) BlockIDByHeight(height uint64) (flowgo.Identifier, error) {
+	header, err := h.ByHeight(height)
+	if err != nil {
+		return flowgo.ZeroID, err
+	}
+	return header.ID(), nil
 }
 
 func (h headers) ByParentID(_ flowgo.Identifier) ([]*flowgo.Header, error) {

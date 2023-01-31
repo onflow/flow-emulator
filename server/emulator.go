@@ -30,6 +30,7 @@ import (
 
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-emulator/storage/badger"
+	"golang.org/x/exp/slices"
 )
 
 type BlockResponse struct {
@@ -54,7 +55,11 @@ func NewEmulatorAPIServer(server *EmulatorServer, backend *backend.Backend, stor
 	}
 
 	router.HandleFunc("/emulator/newBlock", r.CommitBlock)
-	router.HandleFunc("/emulator/snapshot/{name}", r.Snapshot)
+
+	router.HandleFunc("/emulator/snapshots", r.SnapshotCreate).Methods("POST")
+	router.HandleFunc("/emulator/snapshots", r.SnapshotList).Methods("GET")
+	router.HandleFunc("/emulator/snapshots/{name}", r.SnapshotJump).Methods("PUT")
+
 	router.HandleFunc("/emulator/storages/{address}", r.Storage)
 
 	return r
@@ -86,53 +91,118 @@ func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+func (m EmulatorAPIServer) SnapshotList(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	badgerStore := (*m.storage).Store().(*badger.Store)
+	contexts, err := badgerStore.ListContexts()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
-func (m EmulatorAPIServer) Snapshot(w http.ResponseWriter, r *http.Request) {
+	bytes, err := json.Marshal(contexts)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(bytes)
+
+}
+
+func (m EmulatorAPIServer) reloadBlockchainFromSnapshot(name string, badgerStore *badger.Store, w http.ResponseWriter) {
+	blockchain, err := configureBlockchain(m.server.config, badgerStore)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	m.backend.SetEmulator(blockchain)
+	block, err := blockchain.GetLatestBlock()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	blockResponse := &BlockResponse{
+		Height:  int(block.Header.Height),
+		BlockId: block.Header.ID().String(),
+		Context: name,
+	}
+
+	bytes, err := json.Marshal(blockResponse)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(bytes)
+
+}
+
+func (m EmulatorAPIServer) SnapshotJump(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(r)
 	name := vars["name"]
 
-	switch (*m.storage).Store().(type) {
-	case *badger.Store:
-		badgerStore := (*m.storage).Store().(*badger.Store)
-		err := badgerStore.JumpToContext(name)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		blockchain, err := configureBlockchain(m.server.config, badgerStore)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		m.backend.SetEmulator(blockchain)
-		block, err := blockchain.GetLatestBlock()
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		blockResponse := &BlockResponse{
-			Height:  int(block.Header.Height),
-			BlockId: block.Header.ID().String(),
-			Context: name,
-		}
-
-		bytes, err := json.Marshal(blockResponse)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(bytes)
-
-	default:
+	badgerStore, isBadger := (*m.storage).Store().(*badger.Store)
+	if !isBadger {
 		m.server.logger.Error("State management only available with badger storage")
 		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
+	contexts, err := badgerStore.ListContexts()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if !slices.Contains(contexts, name) {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	err = badgerStore.JumpToContext(name, false)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	m.reloadBlockchainFromSnapshot(name, badgerStore, w)
+
+}
+
+func (m EmulatorAPIServer) SnapshotCreate(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	name := r.FormValue("name")
+
+	if name == "" {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	badgerStore, isBadger := (*m.storage).Store().(*badger.Store)
+	if !isBadger {
+		m.server.logger.Error("State management only available with badger storage")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	contexts, err := badgerStore.ListContexts()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if slices.Contains(contexts, name) {
+		w.WriteHeader(http.StatusConflict)
+		return
+	}
+	err = badgerStore.JumpToContext(name, true)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	m.reloadBlockchainFromSnapshot(name, badgerStore, w)
 
 }
 

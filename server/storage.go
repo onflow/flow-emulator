@@ -27,6 +27,7 @@ import (
 
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/badger"
+	"github.com/onflow/flow-emulator/storage/memstore"
 	"github.com/onflow/flow-emulator/storage/redis"
 )
 
@@ -54,6 +55,24 @@ func (s *RedisStorage) Start() error {
 func (s *RedisStorage) Stop() {}
 
 func (s *RedisStorage) Store() storage.Store {
+	return s.store
+}
+
+type MemoryStorage struct {
+	store *memstore.Store
+}
+
+func NewMemoryStorage() *MemoryStorage {
+	return &MemoryStorage{store: memstore.New()}
+}
+
+func (s *MemoryStorage) Start() error {
+	return nil
+}
+
+func (s *MemoryStorage) Stop() {}
+
+func (s *MemoryStorage) Store() storage.Store {
 	return s.store
 }
 
