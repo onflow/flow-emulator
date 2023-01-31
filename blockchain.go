@@ -1250,7 +1250,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 		return nil, err
 	}
 
-	scriptID := ComputeScriptID(script)
+	scriptID := sdk.Identifier(flowgo.MakeIDFromFingerPrint(script))
 
 	events, err := sdkconvert.FlowEventsToSDK(scriptProc.Events)
 	if err != nil {
@@ -1274,11 +1274,6 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 		Events:          events,
 		ComputationUsed: scriptProc.GasUsed,
 	}, nil
-}
-
-func ComputeScriptID(script []byte) sdk.Identifier {
-	hasher := hash.NewSHA3_256()
-	return sdk.HashToID(hasher.ComputeHash(script))
 }
 
 // CreateAccount submits a transaction to create a new account with the given

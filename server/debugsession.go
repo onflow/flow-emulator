@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-dap"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
+	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/onflow/cadence/runtime/ast"
 	"github.com/onflow/cadence/runtime/common"
@@ -206,7 +207,9 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		ds.code = string(b)
 		stopOnEntryArg := args["stopOnEntry"]
 		ds.stopOnEntry, _ = stopOnEntryArg.(bool)
-		scriptID := emulator.ComputeScriptID([]byte(ds.code))
+
+		scriptID := sdk.Identifier(flowgo.MakeIDFromFingerPrint([]byte(ds.code)))
+
 		ds.scriptID = hex.EncodeToString(scriptID[:])
 		ds.scriptLocation = common.StringLocation(programArg.(string))
 
