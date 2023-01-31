@@ -34,6 +34,7 @@ import (
 	"github.com/onflow/flow-go/fvm/environment"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/state"
+	"github.com/onflow/flow-go/fvm/tracing"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
 
@@ -1050,6 +1051,7 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 
 	env := environment.NewScriptEnvironment(
 		context.Background(),
+		tracing.NewTracerSpan(),
 		b.vmCtx.EnvironmentParams,
 		state.NewTransactionState(
 			view,
