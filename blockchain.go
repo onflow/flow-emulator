@@ -34,7 +34,6 @@ import (
 	"github.com/onflow/flow-go/fvm/environment"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/programs"
-	//fvmruntime "github.com/onflow/flow-go/fvm/runtime"
 	reusableRuntime "github.com/onflow/flow-go/fvm/runtime"
 	"github.com/onflow/flow-go/fvm/state"
 	"github.com/onflow/flow-go/fvm/tracing"
