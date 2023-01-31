@@ -23,7 +23,6 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -49,7 +48,7 @@ func (s *Store) ListSnapshots() (snapshots []string, err error) {
 	}
 
 	path := filepath.Dir(s.url)
-	files, err := ioutil.ReadDir(path)
+	files, err := os.ReadDir(path)
 	if err != nil {
 		return snapshots, err
 	}
