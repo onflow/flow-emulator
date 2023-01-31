@@ -99,9 +99,8 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 
 	case *dap.InitializeRequest:
 
-		// TODO: only allow one debug session at a time
-
-		ds.debugger = ds.backend.GetEmulator().GetDebugger()
+		// TODO:  only allow one debug session at a time
+		ds.debugger = interpreter.NewDebugger()
 
 		ds.send(&dap.InitializeResponse{
 			Response: newDAPSuccessResponse(request.GetRequest()),
@@ -167,6 +166,8 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 	case *dap.DisconnectRequest:
 		ds.debugger.Continue()
 		ds.backend.GetEmulator().EndDebugging()
+		ds.configurationDone = false
+		ds.launchRequested = false
 		ds.send(&dap.DisconnectResponse{
 			Response: newDAPSuccessResponse(request.GetRequest()),
 		})
@@ -174,7 +175,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 	case *dap.AttachRequest:
 		ds.targetDepth = 1
 		ds.stopOnEntry = true
-		ds.debugger = ds.backend.GetEmulator().GetDebugger()
+		ds.debugger = interpreter.NewDebugger()
 		ds.run()
 
 		ds.send(&dap.LaunchResponse{
@@ -183,6 +184,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 
 	case *dap.LaunchRequest:
 		// TODO: only allow one program at a time
+		ds.debugger = interpreter.NewDebugger()
 		ds.targetDepth = 1
 
 		var args map[string]any
@@ -413,9 +415,11 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 				}
 
 				value := variable.GetValue()
+
 				cadenceValue, err := runtime.ExportValue(value, inter, interpreter.EmptyLocationRange)
 				if err != nil {
-					panic(err)
+					continue
+					//	panic(err)
 				}
 				variable := ds.convertValueToDapVariable(name, cadenceValue)
 				if variable != nil {
@@ -454,17 +458,8 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 			switch value := valueRequested.(type) {
 
 			case *sdk.Account:
-				storage, err := ds.backend.GetEmulator().GetAccountStorage(value.Address)
-				if err == nil {
-					for key, value := range storage.Storage {
-						variable := ds.convertValueToDapVariable(fmt.Sprintf("storage/%s", key), value)
-						if variable != nil {
-							responseVariables = append(
-								responseVariables,
-								*variable)
-						}
-					}
-				}
+				storage := inter.SharedState.Config.Storage.GetStorageMap(common.Address(value.Address), "storage", false)
+				responseVariables = ds.convertMembersToDapVariables(inter, storage)
 
 			case interpreter.Value, cadence.Value:
 				responseVariables = ds.convertMembersToDapVariables(inter, value)
@@ -563,6 +558,23 @@ func (ds *debugSession) convertMembersToDapVariables(inter *interpreter.Interpre
 			panic(err)
 		}
 		return ds.convertCadenceValueMembersToDapVariables(cadenceValue)
+	case *interpreter.StorageMap:
+		members := make([]dap.Variable, 0)
+
+		it := value.Iterator(inter)
+		for {
+			key, value := it.Next()
+			if key == "" {
+				break
+			}
+			cadenceValue, err := runtime.ExportValue(value, inter, interpreter.EmptyLocationRange)
+			if err != nil {
+				panic(err)
+			}
+			members = append(members, *ds.convertValueToDapVariable(key, cadenceValue))
+		}
+		return members
+
 	default:
 		panic("shouldnt be")
 	}
@@ -669,7 +681,7 @@ func (ds *debugSession) step() {
 }
 
 func (ds *debugSession) run() context.CancelFunc {
-	ds.debugger = ds.backend.GetEmulator().GetDebugger()
+	ds.backend.GetEmulator().SetDebugger(ds.debugger)
 	if ds.stopOnEntry {
 		ds.debugger.RequestPause()
 	}

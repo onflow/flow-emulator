@@ -29,7 +29,7 @@ import (
 
 // Emulator defines the method set of an emulated blockchain.
 type Emulator interface {
-	GetDebugger() *interpreter.Debugger
+	SetDebugger(*interpreter.Debugger)
 	EndDebugging()
 
 	AddTransaction(tx sdk.Transaction) error
@@ -53,5 +53,4 @@ type Emulator interface {
 	ExecuteScript(script []byte, arguments [][]byte) (*types.ScriptResult, error)
 	ExecuteScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) (*types.ScriptResult, error)
 	GetAccountStorage(address sdk.Address) (*emulator.AccountStorage, error)
-	GetAccountStorageByIndex(uint) (*emulator.AccountStorage, error)
 }

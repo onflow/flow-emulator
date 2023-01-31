@@ -385,12 +385,10 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		opt(&conf)
 	}
 
-	debugger := interpreter.NewDebugger()
-
 	b := &Blockchain{
 		storage:                conf.GetStore(),
 		serviceKey:             conf.GetServiceKey(),
-		debugger:               debugger,
+		debugger:               nil,
 		activeDebuggingSession: false,
 	}
 
@@ -779,8 +777,6 @@ func (b *Blockchain) GetTransactionResult(ID sdk.Identifier) (*sdk.TransactionRe
 
 // GetAccount returns the account for the given address.
 func (b *Blockchain) GetAccountByIndex(index uint) (*sdk.Account, error) {
-	b.mu.RLock()
-	defer b.mu.RUnlock()
 
 	generator := flow.NewAddressGenerator(sdk.ChainID(b.vmCtx.Chain.ChainID()))
 
@@ -960,6 +956,9 @@ func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 	blockContext := fvm.NewContextFromParent(
 		b.vmCtx,
 		fvm.WithBlockHeader(header),
+		fvm.WithReusableCadenceRuntimePool(
+			reusableRuntime.NewReusableCadenceRuntimePool(1, runtime.Config{Debugger: b.debugger}),
+		),
 	)
 
 	// cannot execute a block that has already executed
@@ -991,6 +990,9 @@ func (b *Blockchain) ExecuteNextTransaction() (*types.TransactionResult, error) 
 	blockContext := fvm.NewContextFromParent(
 		b.vmCtx,
 		fvm.WithBlockHeader(header),
+		fvm.WithReusableCadenceRuntimePool(
+			reusableRuntime.NewReusableCadenceRuntimePool(1, runtime.Config{Debugger: b.debugger}),
+		),
 	)
 	return b.executeNextTransaction(blockContext)
 }
@@ -1015,7 +1017,7 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 			tx := fvm.Transaction(txBody, txIndex)
 			b.currentCode = string(txBody.Script)
 			b.currentScriptID = tx.ID.String()
-			if b.activeDebuggingSession {
+			if b.debugger != nil {
 				b.debugger.RequestPause()
 			}
 			err := b.vm.Run(ctx, tx, ledgerView)
@@ -1092,16 +1094,6 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	b.pendingBlock = newPendingBlock(block, ledgerView)
 
 	return block, nil
-}
-func (b *Blockchain) GetAccountStorageByIndex(index uint) (*AccountStorage, error) {
-	b.mu.RLock()
-	defer b.mu.RUnlock()
-
-	generator := flow.NewAddressGenerator(sdk.ChainID(b.vmCtx.Chain.ChainID()))
-
-	generator.SetIndex(index)
-
-	return b.GetAccountStorage(generator.Address())
 }
 
 func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, error) {
@@ -1251,15 +1243,16 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 	blockContext := fvm.NewContextFromParent(
 		b.vmCtx,
 		fvm.WithBlockHeader(header),
+		fvm.WithReusableCadenceRuntimePool(
+			reusableRuntime.NewReusableCadenceRuntimePool(1, runtime.Config{Debugger: b.debugger}),
+		),
 	)
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
 	b.currentCode = string(script)
 	b.currentScriptID = scriptProc.ID.String()
-
-	if b.activeDebuggingSession {
+	if b.debugger != nil {
 		b.debugger.RequestPause()
 	}
-
 	err = b.vm.Run(blockContext, scriptProc, requestedLedgerView)
 	if err != nil {
 		return nil, err
@@ -1431,11 +1424,10 @@ func (b *Blockchain) testAlternativeHashAlgo(sig flowgo.TransactionSignature, ms
 	return nil
 }
 
-func (b *Blockchain) GetDebugger() *interpreter.Debugger {
-	b.activeDebuggingSession = true
-	return b.debugger
+func (b *Blockchain) SetDebugger(debugger *interpreter.Debugger) {
+	b.debugger = debugger
 }
 
 func (b *Blockchain) EndDebugging() {
-	b.activeDebuggingSession = false
+	b.debugger = nil
 }
