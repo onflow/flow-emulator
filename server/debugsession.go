@@ -12,14 +12,24 @@ import (
 
 	"github.com/google/go-dap"
 	"github.com/onflow/cadence"
+	"github.com/onflow/cadence/runtime"
+
 	"github.com/onflow/cadence/runtime/ast"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/sirupsen/logrus"
 
-	"github.com/onflow/flow-emulator"
+	emulator "github.com/onflow/flow-emulator"
 	"github.com/onflow/flow-emulator/server/backend"
+)
+
+type ScopeIdentifier uint
+
+const (
+	ScopeIdentifierLocal   ScopeIdentifier = 10000
+	ScopeIdentifierGlobal  ScopeIdentifier = 10001
+	ScopeIdentifierStorage ScopeIdentifier = 10002
 )
 
 type debugSession struct {
@@ -173,6 +183,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 
 	case *dap.LaunchRequest:
 		// TODO: only allow one program at a time
+		ds.targetDepth = 1
 
 		var args map[string]any
 		_ = json.Unmarshal(request.Arguments, &args)
@@ -191,7 +202,6 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		}
 		b, _ := os.ReadFile(programArg.(string))
 		ds.code = string(b)
-		ds.targetDepth = -1
 		stopOnEntryArg := args["stopOnEntry"]
 		ds.stopOnEntry, _ = stopOnEntryArg.(bool)
 		scriptID := emulator.ComputeScriptID([]byte(ds.code))
@@ -359,12 +369,12 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 					{
 						Name:               "Variables",
 						PresentationHint:   "locals",
-						VariablesReference: 10000,
+						VariablesReference: int(ScopeIdentifierLocal),
 					},
 					{
 						Name:               "Storage",
 						PresentationHint:   "registers",
-						VariablesReference: 20000,
+						VariablesReference: int(ScopeIdentifierStorage),
 					},
 				},
 			},
@@ -372,182 +382,29 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 
 	case *dap.VariablesRequest:
 		// TODO: reply with error if ds.stop == nil
+		if ds.stop == nil {
+			ds.send(newDAPErrorResponse(request.GetRequest().GetSeq(), "", dap.ErrorMessage{}))
 
-		vr := request.Arguments.VariablesReference
+		}
+
+		variableRequested := request.Arguments.VariablesReference
+		responseVariables := make([]dap.Variable, 0)
 
 		inter := ds.stop.Interpreter
-		activation := ds.debugger.CurrentActivation(inter)
-		functionValues := activation.FunctionValues()
-		variables := make([]dap.Variable, 0)
-		location := ds.stop.Interpreter.Location
 
-		if vr < 10000 {
-			//variable child request
-			value := ds.variables[vr]
+		switch ScopeIdentifier(variableRequested) {
 
-			cadenceValue, isCadenceValue := value.(cadence.Value)
-			if isCadenceValue {
-
-				resourceValue, isResource := cadenceValue.(cadence.Resource)
-				if isResource {
-					for i, field := range resourceValue.ResourceType.Fields {
-						variable := ds.cadenceValueToDap(field.Identifier, resourceValue.Fields[i])
-						if variable != nil {
-							variables = append(
-								variables,
-								*variable)
-						}
-
-					}
-				}
-
-				structValue, isStruct := cadenceValue.(cadence.Struct)
-				if isStruct {
-					for i, field := range structValue.StructType.Fields {
-						variable := ds.cadenceValueToDap(field.Identifier, structValue.Fields[i])
-						if variable != nil {
-							variables = append(
-								variables,
-								*variable)
-						}
-
-					}
-
-				}
-
-				//array
-				arrayValue, isArray := cadenceValue.(cadence.Array)
-				if isArray {
-					i := 0
-					for _, value := range arrayValue.Values {
-						variable := ds.cadenceValueToDap(fmt.Sprintf("[%d]", i), value)
-						if variable != nil {
-							variables = append(
-								variables,
-								*variable)
-						}
-						i = i + 1
-					}
-				}
-
-				//dictionary
-				dictionaryValue, isDictionary := cadenceValue.(cadence.Dictionary)
-				if isDictionary {
-					for _, pair := range dictionaryValue.Pairs {
-						variable := ds.cadenceValueToDap(pair.Key.String(), pair.Value)
-						if variable != nil {
-							variables = append(
-								variables,
-								*variable)
-						}
-
-					}
-				}
-
-			} else {
-
-				//composite
-				composite, isComposite := ds.variables[vr].(*interpreter.CompositeValue)
-				if isComposite {
-					composite.ForEachField(nil, func(fieldName string, fieldValue interpreter.Value) {
-						variable := ds.interpreterValueToDap(fieldName, fieldValue, inter)
-						if variable != nil {
-							variables = append(
-								variables,
-								*variable)
-						}
-					})
-				}
-
-				//array
-				array, isArray := ds.variables[vr].(*interpreter.ArrayValue)
-				if isArray {
-					it := array.Iterator(inter)
-					i := 0
-					for {
-						arrayValue := it.Next(inter)
-						if arrayValue == nil {
-							break
-						}
-
-						variable := ds.interpreterValueToDap(fmt.Sprintf("[%d]", i), arrayValue, inter)
-						if variable != nil {
-							variables = append(
-								variables,
-								*variable)
-						}
-						i = i + 1
-					}
-				}
-
-				//dictionary
-				dictionary, isDictionary := ds.variables[vr].(*interpreter.DictionaryValue)
-				if isDictionary {
-					dictionary.Iterate(nil, func(key, value interpreter.Value) bool {
-						variable := ds.interpreterValueToDap(key.String(), value, inter)
-						if variable != nil {
-							variables = append(
-								variables,
-								*variable)
-						}
-
-						return true
-					})
-
-				}
-			}
-
-		} else if vr >= 20000 {
-
-			//storage request
-			if vr == 20000 {
-				//show accounts
-				var index int = 1
-				for {
-
-					account, err := ds.backend.GetEmulator().GetAccountByIndex(uint(index))
-					if err != nil {
-						break
-					}
-					variable := &dap.Variable{
-						Name:  account.Address.String(),
-						Value: "FlowAccount",
-						Type:  "FlowAccount",
-						PresentationHint: dap.VariablePresentationHint{
-							Kind:       "class",
-							Visibility: "public",
-						},
-						VariablesReference: vr + index,
-					}
-					index++
-					variables = append(
-						variables,
-						*variable)
-
-				}
-			} else {
-				//show single account storage
-				index := vr - 20000
-				account, err := ds.backend.GetEmulator().GetAccountStorageByIndex(uint(index))
-				if err == nil {
-					for key, value := range account.Storage {
-						variable := ds.cadenceValueToDap(fmt.Sprintf("storage/%s", key), value)
-
-						if variable != nil {
-							variables = append(
-								variables,
-								*variable)
-						}
-					}
-				}
-			}
-		} else if vr >= 10000 {
-			//locals request
-			ds.variableHandleCounter = 1
+		case ScopeIdentifierLocal:
+			//reset variables
+			ds.variableHandleCounter = 0
 			ds.variables = make(map[int]any, 0)
 
+			activation := ds.debugger.CurrentActivation(inter)
+			location := ds.stop.Interpreter.Location
+			functionValues := activation.FunctionValues()
+
 			for name, variable := range functionValues {
-				//TODO: need to handle in cadence I guess
+
 				if location.String() == ds.scriptID && name == "self" {
 					continue
 				}
@@ -556,122 +413,158 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 				}
 
 				value := variable.GetValue()
-
-				variable := ds.interpreterValueToDap(name, value, inter)
+				cadenceValue, err := runtime.ExportValue(value, inter, interpreter.EmptyLocationRange)
+				if err != nil {
+					panic(err)
+				}
+				variable := ds.convertValueToDapVariable(name, cadenceValue)
 				if variable != nil {
-					variables = append(
-						variables,
+					responseVariables = append(
+						responseVariables,
 						*variable)
 				}
+			}
+
+		case ScopeIdentifierStorage:
+			var index int = 1
+			for {
+				account, err := ds.backend.GetEmulator().GetAccountByIndex(uint(index))
+				if err != nil { //end of accounts
+					break
+				}
+
+				variable := &dap.Variable{
+					Name:  account.Address.String(),
+					Value: "FlowAccount",
+					Type:  "FlowAccount",
+					PresentationHint: dap.VariablePresentationHint{
+						Kind:       "class",
+						Visibility: "public",
+					},
+					VariablesReference: ds.storeVariable(account),
+				}
+				index++
+				responseVariables = append(
+					responseVariables,
+					*variable)
+			}
+
+		default:
+			valueRequested := ds.variables[variableRequested]
+			switch value := valueRequested.(type) {
+
+			case *sdk.Account:
+				storage, err := ds.backend.GetEmulator().GetAccountStorage(value.Address)
+				if err == nil {
+					for key, value := range storage.Storage {
+						variable := ds.convertValueToDapVariable(fmt.Sprintf("storage/%s", key), value)
+						if variable != nil {
+							responseVariables = append(
+								responseVariables,
+								*variable)
+						}
+					}
+				}
+
+			case interpreter.Value, cadence.Value:
+				responseVariables = ds.convertMembersToDapVariables(inter, value)
 
 			}
+
 		}
 
 		ds.send(&dap.VariablesResponse{
 			Response: newDAPSuccessResponse(request.GetRequest()),
 			Body: dap.VariablesResponseBody{
-				Variables: variables,
+				Variables: responseVariables,
 			},
 		})
 	}
 }
-func (ds *debugSession) cadenceValueToDap(name string, value cadence.Value) *dap.Variable {
-	//defaults
-	reference := 0
-	kind := "property"
-	visibility := "private"
 
-	_, isDictionary := value.(cadence.Dictionary)
-	_, isArray := value.(cadence.Array)
-	_, isResource := value.(cadence.Resource)
-	_, isStruct := value.(cadence.Struct)
-	isComposite := isResource || isStruct
-
-	if isArray || isDictionary || isComposite {
-		reference = ds.variableHandleCounter
-		ds.variables[reference] = value
-		ds.variableHandleCounter++
+func (ds *debugSession) convertValueToDapVariable(name string, value cadence.Value) *dap.Variable {
+	referenceHandle := 0
+	switch value.(type) {
+	case cadence.Dictionary, cadence.Array, cadence.Struct, cadence.Resource:
+		referenceHandle = ds.storeVariable(value)
 	}
-
 	return &dap.Variable{
 		Name:  name,
 		Value: value.String(),
 		Type:  value.Type().ID(),
 		PresentationHint: dap.VariablePresentationHint{
-			Kind:       kind,
-			Visibility: visibility,
+			Kind:       "property",
+			Visibility: "private",
 		},
-		VariablesReference: reference,
+		VariablesReference: referenceHandle,
 	}
 }
+func (ds *debugSession) storeVariable(value any) int {
+	ds.variableHandleCounter++
+	ds.variables[ds.variableHandleCounter] = value
+	return ds.variableHandleCounter
+}
 
-func (ds *debugSession) interpreterValueToDap(name string, value interpreter.Value, inter *interpreter.Interpreter) (result *dap.Variable) {
-	//defaults
-	reference := 0
-	kind := "property"
-	visibility := "private"
+func (ds *debugSession) convertCadenceValueMembersToDapVariables(cadenceValue cadence.Value) []dap.Variable {
+	members := make([]dap.Variable, 0)
 
-	//globalFunction (BLS and RLP still has problem)
-	_, isHostFunction := value.(*interpreter.HostFunctionValue)
-	if isHostFunction {
-		return nil
-	}
-	//before expresssions for Post conditions
-	if name[0] == 0 {
-		return nil
-	}
-	//check resource destroyed
-	if value.IsResourceKinded(inter) {
-		rv := value.(interpreter.ResourceKindedValue)
-		if rv.IsDestroyed() {
-			return nil
+	switch value := cadenceValue.(type) {
+	case cadence.Resource:
+		for i, field := range value.ResourceType.Fields {
+			variable := ds.convertValueToDapVariable(field.Identifier, value.Fields[i])
+			if variable != nil {
+				members = append(
+					members,
+					*variable)
+			}
+		}
+	case cadence.Struct:
+		for i, field := range value.StructType.Fields {
+			variable := ds.convertValueToDapVariable(field.Identifier, value.Fields[i])
+			if variable != nil {
+				members = append(
+					members,
+					*variable)
+			}
+		}
+
+	case cadence.Array:
+		i := 0
+		for _, element := range value.Values {
+			variable := ds.convertValueToDapVariable(fmt.Sprintf("[%d]", i), element)
+			if variable != nil {
+				members = append(
+					members,
+					*variable)
+			}
+			i = i + 1
+		}
+
+	case cadence.Dictionary:
+		for _, pair := range value.Pairs {
+			variable := ds.convertValueToDapVariable(pair.Key.String(), pair.Value)
+			if variable != nil {
+				members = append(
+					members,
+					*variable)
+			}
 		}
 	}
+	return members
+}
+func (ds *debugSession) convertMembersToDapVariables(inter *interpreter.Interpreter, someValue any) []dap.Variable {
 
-	refPrefix := ""
-	storageRef, isStorageRef := value.(*interpreter.StorageReferenceValue)
-	if isStorageRef {
-		value = *storageRef.ReferencedValue(inter)
-		refPrefix = "&"
-	}
-
-	_, isComposite := value.(*interpreter.CompositeValue)
-	_, isArray := value.(*interpreter.ArrayValue)
-	_, isDictionary := value.(*interpreter.DictionaryValue)
-
-	for {
-		reference, isReference := value.(*interpreter.EphemeralReferenceValue)
-		if !isReference {
-			break
+	switch value := someValue.(type) {
+	case cadence.Value:
+		return ds.convertCadenceValueMembersToDapVariables(value)
+	case interpreter.Value:
+		cadenceValue, err := runtime.ExportValue(value, inter, interpreter.EmptyLocationRange)
+		if err != nil {
+			panic(err)
 		}
-		inter.SharedState.Config.InvalidatedResourceValidationEnabled = false
-		value = *reference.ReferencedValue(inter, interpreter.EmptyLocationRange)
-		inter.SharedState.Config.InvalidatedResourceValidationEnabled = true
-		refPrefix = refPrefix + "&"
-	}
-
-	variableType := fmt.Sprintf("%s%s", refPrefix, value.StaticType(inter).String())
-
-	if isArray || isDictionary || isComposite {
-		reference = ds.variableHandleCounter
-		ds.variables[reference] = value
-		ds.variableHandleCounter++
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			result = nil
-		}
-	}()
-	return &dap.Variable{
-		Name:  name,
-		Value: value.String(),
-		Type:  variableType,
-		PresentationHint: dap.VariablePresentationHint{
-			Kind:       kind,
-			Visibility: visibility,
-		},
-		VariablesReference: reference,
+		return ds.convertCadenceValueMembersToDapVariables(cadenceValue)
+	default:
+		panic("shouldnt be")
 	}
 }
 
@@ -780,6 +673,8 @@ func (ds *debugSession) run() context.CancelFunc {
 	if ds.stopOnEntry {
 		ds.debugger.RequestPause()
 	}
+	ds.variableHandleCounter = 0
+	ds.variables = make(map[int]any, 0)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
