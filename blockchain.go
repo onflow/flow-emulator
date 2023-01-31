@@ -601,6 +601,16 @@ func configureTransactionValidator(conf config, blocks *blocks) *access.Transact
 	)
 }
 
+func (b *Blockchain) newFvmContextFromHeader(header *flowgo.Header) fvm.Context {
+	return fvm.NewContextFromParent(
+		b.vmCtx,
+		fvm.WithBlockHeader(header),
+		fvm.WithReusableCadenceRuntimePool(
+			reusableRuntime.NewReusableCadenceRuntimePool(1, runtime.Config{Debugger: b.debugger}),
+		),
+	)
+}
+
 func (b *Blockchain) CurrentScript() (string, string) {
 	return b.currentScriptID, b.currentCode
 }
@@ -953,13 +963,7 @@ func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 	}
 
 	header := b.pendingBlock.Block().Header
-	blockContext := fvm.NewContextFromParent(
-		b.vmCtx,
-		fvm.WithBlockHeader(header),
-		fvm.WithReusableCadenceRuntimePool(
-			reusableRuntime.NewReusableCadenceRuntimePool(1, runtime.Config{Debugger: b.debugger}),
-		),
-	)
+	blockContext := b.newFvmContextFromHeader(header)
 
 	// cannot execute a block that has already executed
 	if b.pendingBlock.ExecutionComplete() {
@@ -987,13 +991,7 @@ func (b *Blockchain) ExecuteNextTransaction() (*types.TransactionResult, error) 
 	defer b.mu.Unlock()
 
 	header := b.pendingBlock.Block().Header
-	blockContext := fvm.NewContextFromParent(
-		b.vmCtx,
-		fvm.WithBlockHeader(header),
-		fvm.WithReusableCadenceRuntimePool(
-			reusableRuntime.NewReusableCadenceRuntimePool(1, runtime.Config{Debugger: b.debugger}),
-		),
-	)
+	blockContext := b.newFvmContextFromHeader(header)
 	return b.executeNextTransaction(blockContext)
 }
 
@@ -1239,14 +1237,8 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 	requestedLedgerView := b.storage.LedgerViewByHeight(context.Background(), requestedBlock.Header.Height)
 
 	header := requestedBlock.Header
+	blockContext := b.newFvmContextFromHeader(header)
 
-	blockContext := fvm.NewContextFromParent(
-		b.vmCtx,
-		fvm.WithBlockHeader(header),
-		fvm.WithReusableCadenceRuntimePool(
-			reusableRuntime.NewReusableCadenceRuntimePool(1, runtime.Config{Debugger: b.debugger}),
-		),
-	)
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
 	b.currentCode = string(script)
 	b.currentScriptID = scriptProc.ID.String()

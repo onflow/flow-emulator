@@ -418,8 +418,8 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 
 				cadenceValue, err := runtime.ExportValue(value, inter, interpreter.EmptyLocationRange)
 				if err != nil {
-					continue
 					//	panic(err)
+					continue
 				}
 				variable := ds.convertValueToDapVariable(name, cadenceValue)
 				if variable != nil {
@@ -547,6 +547,7 @@ func (ds *debugSession) convertCadenceValueMembersToDapVariables(cadenceValue ca
 	}
 	return members
 }
+
 func (ds *debugSession) convertMembersToDapVariables(inter *interpreter.Interpreter, someValue any) []dap.Variable {
 
 	switch value := someValue.(type) {
