@@ -294,7 +294,7 @@ func configureStorage(logger *logrus.Logger, conf *Config) (storageProvider Stor
 
 	if conf.Persist {
 		if storageProvider != nil {
-			return nil, fmt.Errorf("you cannot use --persist with current configuration")
+			return nil, fmt.Errorf("you cannot use persist with current configuration")
 		}
 		_ = os.Mkdir(conf.DBPath, os.ModePerm)
 		storageProvider, err = NewSqliteStorage(conf.DBPath)
