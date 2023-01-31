@@ -21,7 +21,6 @@ package storage_test
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -447,11 +446,11 @@ func TestEventsByHeight(t *testing.T) {
 	})
 }
 
-// setupStore creates a temporary directory for the Badger and creates a
-// badger.Store instance. The caller is responsible for closing the store
+// setupStore creates a temporary file for the Sqlite and creates a
+// sqlite.Store instance. The caller is responsible for closing the store
 // and deleting the temporary directory.
 func setupStore(t *testing.T) (*sqlite.Store, string) {
-	file, err := ioutil.TempFile("", "sqlite-test")
+	file, err := os.CreateTemp("", "test.sqlite")
 	require.NoError(t, err)
 
 	store, err := sqlite.New(file.Name())

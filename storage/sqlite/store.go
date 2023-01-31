@@ -33,22 +33,27 @@ import (
 )
 
 var _ storage.SnapshotProvider = &Store{}
+var _ storage.Store = &Store{}
 
 // Store implements the Store interface
 type Store struct {
 	storage.DefaultStore
-	db  *sql.DB
-	url string
-	mu  sync.RWMutex
+	db            *sql.DB
+	url           string
+	mu            sync.RWMutex
+	snapshotNames []string
 }
 
-func (s *Store) ListSnapshots() (snapshots []string, err error) {
+func (s *Store) Snapshots() (snapshots []string, err error) {
 	if !s.SupportSnapshotsWithCurrentConfig() {
-		return []string{}, fmt.Errorf("Snapshot is not supported with memory db")
+		return []string{}, fmt.Errorf("Snapshot is not supported with current configuration")
 	}
 
-	path := filepath.Dir(s.url)
-	files, err := os.ReadDir(path)
+	if s.url == ":memory:" {
+		return s.snapshotNames, nil
+	}
+
+	files, err := os.ReadDir(s.url)
 	if err != nil {
 		return snapshots, err
 	}
@@ -69,21 +74,42 @@ func (s *Store) ListSnapshots() (snapshots []string, err error) {
 
 func (s *Store) JumpToSnapshot(snapshotName string, createIfNotExists bool) error {
 	if !s.SupportSnapshotsWithCurrentConfig() {
-		return fmt.Errorf("Snapshot is not supported with memory db")
-	}
-	path := filepath.Dir(s.url)
-	dbfile := fmt.Sprintf("%s/snapshot_%s", path, snapshotName)
-
-	_, err := os.Stat(dbfile)
-	if !createIfNotExists && os.IsNotExist(err) {
-		return fmt.Errorf("Snapshot %s does not exist", snapshotName)
+		return fmt.Errorf("Snapshot is not supported with current configuration")
 	}
 
-	if os.IsNotExist(err) {
+	var dbfile string
+	if s.url == ":memory:" {
+		dbfile = fmt.Sprintf("file:%s?mode=memory&cache=shared", snapshotName)
+		db, err := sql.Open("sqlite", dbfile)
+		if err != nil {
+			return err
+		}
+
+		result := db.QueryRow("SELECT count(name) FROM sqlite_schema WHERE type='table'")
+		var count int
+		err = result.Scan(&count)
+		if err != nil {
+			return err
+		}
+
+		if !createIfNotExists && count == 0 {
+			return fmt.Errorf("Snapshot %s does not exist", snapshotName)
+		}
+	} else {
+		dbfile = filepath.Join(s.url, fmt.Sprintf("snapshot_%s", snapshotName))
+		_, err := os.Stat(dbfile)
+		if !createIfNotExists && os.IsNotExist(err) {
+			return fmt.Errorf("Snapshot %s does not exist", snapshotName)
+		}
+	}
+
+	if createIfNotExists {
 		_, err := s.db.Exec(fmt.Sprintf("VACUUM main INTO '%s'", dbfile))
 		if err != nil {
 			return err
 		}
+		s.snapshotNames = append(s.snapshotNames, snapshotName)
+		return nil
 	}
 
 	db, err := sql.Open("sqlite", dbfile)
@@ -91,12 +117,6 @@ func (s *Store) JumpToSnapshot(snapshotName string, createIfNotExists bool) erro
 		return err
 	}
 
-	err = initdb(db)
-	if err != nil {
-		return err
-	}
-
-	//switch
 	s.db.Close()
 	s.db = db
 
@@ -104,10 +124,17 @@ func (s *Store) JumpToSnapshot(snapshotName string, createIfNotExists bool) erro
 }
 
 func (s *Store) SupportSnapshotsWithCurrentConfig() bool {
-	return s.url != ":memory:"
+	if s.url == ":memory:" {
+		return true
+	}
+	fileInfo, err := os.Stat(s.url)
+	if err != nil {
+		return false
+	}
+	return fileInfo.IsDir()
 }
 
-func initdb(db *sql.DB) error {
+func initDb(db *sql.DB) error {
 	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{})
 	if err != nil {
 		return err
@@ -127,20 +154,30 @@ CREATE TABLE IF NOT EXISTS transactionResults(key TEXT, value TEXT, version INTE
 }
 
 // New returns a new in-memory Store implementation.
-func New(url string) (*Store, error) {
+func New(url string) (store *Store, err error) {
 
-	db, err := sql.Open("sqlite", url)
+	dbUrl := url
+	if dbUrl != ":memory:" {
+		urlInfo, err := os.Stat(url)
+		if err == nil && urlInfo.IsDir() {
+			dbUrl = filepath.Join(urlInfo.Name(), "emulator.sqlite")
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	db, err := sql.Open("sqlite", dbUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	err = initdb(db)
-	fmt.Println("init", err)
+	err = initDb(db)
 	if err != nil {
 		return nil, err
 	}
 
-	store := &Store{
+	store = &Store{
 		db:  db,
 		url: url,
 	}
@@ -163,7 +200,15 @@ func (s *Store) SetBytes(ctx context.Context, store string, key []byte, value []
 func (s *Store) SetBytesWithVersion(ctx context.Context, store string, key []byte, value []byte, version uint64) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, err := s.db.Exec(fmt.Sprintf("INSERT INTO %s (key, version, value) VALUES (?, ?, ?) ON CONFLICT(key, version) DO UPDATE SET value=excluded.value", store), hex.EncodeToString(key), version, hex.EncodeToString(value))
+	_, err := s.db.Exec(
+		fmt.Sprintf(
+			"INSERT INTO %s (key, version, value) VALUES (?, ?, ?) ON CONFLICT(key, version) DO UPDATE SET value=excluded.value",
+			store,
+		),
+		hex.EncodeToString(key),
+		version,
+		hex.EncodeToString(value),
+	)
 	if err != nil {
 		return err
 	}
@@ -173,7 +218,14 @@ func (s *Store) SetBytesWithVersion(ctx context.Context, store string, key []byt
 func (s *Store) GetBytesAtVersion(ctx context.Context, store string, key []byte, version uint64) ([]byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	rows, err := s.db.Query(fmt.Sprintf("SELECT value from %s  WHERE key = ? and version <= ? order by version desc LIMIT 1", store), hex.EncodeToString(key), version)
+	rows, err := s.db.Query(
+		fmt.Sprintf(
+			"SELECT value from %s  WHERE key = ? and version <= ? order by version desc LIMIT 1",
+			store,
+		),
+		hex.EncodeToString(key),
+		version,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -196,8 +248,6 @@ func (s *Store) GetBytesAtVersion(ctx context.Context, store string, key []byte,
 	return nil, storage.ErrNotFound
 }
 func (s *Store) Close() error {
+	s.db.Close()
 	return nil
-	//s.db.Close()
 }
-
-var _ storage.Store = &Store{}

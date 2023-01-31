@@ -97,7 +97,7 @@ type Store interface {
 	EventsByHeight(ctx context.Context, blockHeight uint64, eventType string) ([]flowgo.Event, error)
 }
 type SnapshotProvider interface {
-	ListSnapshots() ([]string, error)
+	Snapshots() ([]string, error)
 	JumpToSnapshot(snapshotName string, createIfNotExists bool) error
 	SupportSnapshotsWithCurrentConfig() bool
 }
