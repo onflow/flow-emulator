@@ -21,6 +21,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -34,6 +35,9 @@ import (
 
 var _ storage.SnapshotProvider = &Store{}
 var _ storage.Store = &Store{}
+
+//go:embed createTables.sql
+var createTablesSql string
 
 // Store implements the Store interface
 type Store struct {
@@ -139,14 +143,7 @@ func initDb(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(`CREATE TABLE IF NOT EXISTS global(key TEXT, value TEXT, version INTEGER,  UNIQUE(key,version));
-CREATE TABLE IF NOT EXISTS ledger(key TEXT, value TEXT, version INTEGER,  UNIQUE(key,version));
-CREATE TABLE IF NOT EXISTS blocks(key TEXT, value TEXT, version INTEGER, UNIQUE(key,version));
-CREATE TABLE IF NOT EXISTS blockIndex(key TEXT, value TEXT, version INTEGER, UNIQUE(key,version));
-CREATE TABLE IF NOT EXISTS events(key TEXT, value TEXT, version INTEGER, UNIQUE(key,version));
-CREATE TABLE IF NOT EXISTS transactions(key TEXT, value TEXT, version INTEGER,  UNIQUE(key,version));
-CREATE TABLE IF NOT EXISTS collections(key TEXT, value TEXT, version INTEGER, UNIQUE(key,version));
-CREATE TABLE IF NOT EXISTS transactionResults(key TEXT, value TEXT, version INTEGER, UNIQUE(key,version));`)
+	_, err = tx.Exec(createTablesSql)
 	if err != nil {
 		return err
 	}
