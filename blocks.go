@@ -35,13 +35,11 @@ var _ access.Blocks = &blocks{}
 
 type blocks struct {
 	blockchain *Blockchain
-	headers    *headers
 }
 
 func newBlocks(b *Blockchain) *blocks {
 	return &blocks{
 		blockchain: b,
-		headers:    newHeaders(b),
 	}
 }
 
@@ -67,7 +65,15 @@ func (b *blocks) FinalizedHeader() (*flowgo.Header, error) {
 	return block.Header, nil
 }
 
+//We don't have to do anything complex here, as emulator does not fork the chain
 func (b *blocks) ByHeightFrom(height uint64, header *flowgo.Header) (*flowgo.Header, error) {
-	return environment.NewBlockFinder(b.headers).
-		ByHeightFrom(height, header)
+	if height > header.Height {
+		return nil, storage.ErrNotFound
+	}
+	block, err := b.blockchain.storage.BlockByHeight(context.Background(), height)
+	if err != nil {
+		return nil, err
+	}
+
+	return block.Header, nil
 }
