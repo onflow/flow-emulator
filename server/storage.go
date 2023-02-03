@@ -20,7 +20,6 @@ package server
 
 import (
 	"github.com/psiemens/graceland"
-	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/memstore"
@@ -73,62 +72,20 @@ func (s *MemoryStorage) Store() storage.Store {
 	return s.store
 }
 
-<<<<<<< HEAD
 type SqliteStorage struct {
 	store *sqlite.Store
 }
 
 func NewSqliteStorage(url string) (*SqliteStorage, error) {
 	db, err := sqlite.New(url)
-=======
-type BadgerStorage struct {
-	logger         *zerolog.Logger
-	store          *badger.Store
-	ticker         *time.Ticker
-	done           chan bool
-	gcInterval     time.Duration
-	gcDiscardRatio float64
-}
-
-func NewBadgerStorage(
-	logger *zerolog.Logger,
-	dbPath string,
-	gcInterval time.Duration,
-	gcDiscardRatio float64,
-	snapshot bool,
-	persist bool,
-) (*BadgerStorage, error) {
-	store, err := badger.New(
-		badger.WithSnapshot(snapshot),
-		badger.WithPath(dbPath),
-		badger.WithTruncate(true),
-		badger.WithPersist(persist),
-	)
->>>>>>> cb516f5 (change logrus to zerolog)
 	if err != nil {
 		return nil, err
 	}
 	return &SqliteStorage{store: db}, nil
 }
 
-<<<<<<< HEAD
 func (s *SqliteStorage) Start() error {
 	return nil
-=======
-func (s *BadgerStorage) Start() error {
-	for {
-		select {
-		case <-s.ticker.C:
-			err := s.store.RunValueLogGC(s.gcDiscardRatio)
-			if err != nil {
-				return errors.Wrap(err, "failed to perform garbage collection on Badger DB")
-			}
-
-		case <-s.done:
-			return s.store.Close()
-		}
-	}
->>>>>>> cb516f5 (change logrus to zerolog)
 }
 
 func (s *SqliteStorage) Stop() {}

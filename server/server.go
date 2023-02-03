@@ -273,7 +273,7 @@ func (s *EmulatorServer) Stop() {
 	s.logger.Info().Msg("🛑  Server stopped")
 }
 
-func configureStorage(logger *logrus.Logger, conf *Config) (storageProvider Storage, err error) {
+func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider Storage, err error) {
 
 	if conf.RedisURL != "" {
 		storageProvider, err = NewRedisStorage(conf.RedisURL)
