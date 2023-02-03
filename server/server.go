@@ -20,6 +20,7 @@ package server
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/onflow/cadence"
@@ -122,6 +123,8 @@ type Config struct {
 	ChainID flowgo.ChainID
 	//Redis URL for redis storage backend
 	RedisURL string
+	//Sqlite URL for sqlite storage backend
+	SqliteURL string
 }
 
 type listener interface {
@@ -270,12 +273,54 @@ func (s *EmulatorServer) Stop() {
 	s.logger.Info("🛑  Server stopped")
 }
 
-func configureStorage(logger *logrus.Logger, conf *Config) (storage Storage, err error) {
+func configureStorage(logger *logrus.Logger, conf *Config) (storageProvider Storage, err error) {
+
 	if conf.RedisURL != "" {
-		return NewRedisStorage(conf.RedisURL)
+		storageProvider, err = NewRedisStorage(conf.RedisURL)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return NewBadgerStorage(logger, conf.DBPath, conf.DBGCInterval, conf.DBGCDiscardRatio, conf.Snapshot, conf.Persist)
+	if conf.SqliteURL != "" {
+		if storageProvider != nil {
+			return nil, fmt.Errorf("you cannot define more than one storage")
+		}
+		storageProvider, err = NewSqliteStorage(conf.SqliteURL)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if conf.Persist {
+		if storageProvider != nil {
+			return nil, fmt.Errorf("you cannot use persist with current configuration")
+		}
+		_ = os.Mkdir(conf.DBPath, os.ModePerm)
+		storageProvider, err = NewSqliteStorage(conf.DBPath)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if storageProvider == nil {
+		storageProvider, err = NewSqliteStorage(":memory:")
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if conf.Snapshot {
+		snapshotProvider, isSnapshotProvider := storageProvider.Store().(storage.SnapshotProvider)
+		if !isSnapshotProvider {
+			return nil, fmt.Errorf("selected storage provider does not support snapshots")
+		}
+		if !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
+			return nil, fmt.Errorf("selected storage provider does not support snapshots with current configuration")
+		}
+	}
+
+	return storageProvider, err
 }
 
 func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchain, error) {
