@@ -7,12 +7,13 @@ import (
 	"testing"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 )
 
 func TestExecuteScript(t *testing.T) {
-	server := NewEmulatorServer(logrus.New(), &Config{})
+	logger := zerolog.Nop()
+	server := NewEmulatorServer(&logger, &Config{})
 	require.NotNil(t, server)
 
 	const code = `
@@ -28,7 +29,8 @@ func TestExecuteScript(t *testing.T) {
 }
 
 func TestGetStorage(t *testing.T) {
-	server := NewEmulatorServer(logrus.New(), &Config{})
+	logger := zerolog.Nop()
+	server := NewEmulatorServer(&logger, &Config{})
 	require.NotNil(t, server)
 	address := server.blockchain.ServiceKey().Address
 
@@ -60,7 +62,8 @@ func TestExecuteScriptImportingContracts(t *testing.T) {
 		WithContracts: true,
 	}
 
-	server := NewEmulatorServer(logrus.New(), conf)
+	logger := zerolog.Nop()
+	server := NewEmulatorServer(&logger, conf)
 	require.NotNil(t, server)
 	serviceAccount := server.blockchain.ServiceKey().Address.Hex()
 
@@ -89,8 +92,8 @@ func TestCustomChainID(t *testing.T) {
 		WithContracts: true,
 		ChainID:       "flow-mainnet",
 	}
-
-	server := NewEmulatorServer(logrus.New(), conf)
+	logger := zerolog.Nop()
+	server := NewEmulatorServer(&logger, conf)
 
 	serviceAccount := server.blockchain.ServiceKey().Address.Hex()
 

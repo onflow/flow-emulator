@@ -57,7 +57,7 @@ func (r TransactionResult) Reverted() bool {
 // TransactionResultDebug provides details about unsuccessful transaction execution
 type TransactionResultDebug struct {
 	Message string
-	Meta    map[string]string
+	Meta    map[string]any
 }
 
 // NewTransactionInvalidHashAlgo creates debug details for transactions with invalid hashing algorithm
@@ -81,7 +81,7 @@ func NewTransactionInvalidSignature(
 ) *TransactionResultDebug {
 	return &TransactionResultDebug{
 		Message: "",
-		Meta: map[string]string{
+		Meta: map[string]any{
 			"payer":            tx.Payer.String(),
 			"proposer":         tx.ProposalKey.Address.String(),
 			"proposerKeyIndex": fmt.Sprintf("%d", tx.ProposalKey.KeyIndex),

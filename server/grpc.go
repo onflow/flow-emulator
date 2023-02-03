@@ -29,20 +29,20 @@ import (
 	"github.com/onflow/flow-go/model/flow"
 	accessproto "github.com/onflow/flow/protobuf/go/flow/access"
 	legacyaccessproto "github.com/onflow/flow/protobuf/go/flow/legacy/access"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
 type GRPCServer struct {
-	logger     *logrus.Logger
+	logger     *zerolog.Logger
 	host       string
 	port       int
 	grpcServer *grpc.Server
 	listener   net.Listener
 }
 
-func NewGRPCServer(logger *logrus.Logger, b *backend.Backend, chain flow.Chain, host string, port int, debug bool) *GRPCServer {
+func NewGRPCServer(logger *zerolog.Logger, b *backend.Backend, chain flow.Chain, host string, port int, debug bool) *GRPCServer {
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpcprometheus.StreamServerInterceptor),
 		grpc.UnaryInterceptor(grpcprometheus.UnaryServerInterceptor),
@@ -87,9 +87,7 @@ func (g *GRPCServer) Start() error {
 		}
 	}
 
-	g.logger.
-		WithField("port", g.port).
-		Infof("✅  Started gRPC server on port %d", g.port)
+	g.logger.Info().Int("port", g.port).Msgf("✅  Started gRPC server on port %d", g.port)
 
 	err := g.grpcServer.Serve(g.listener)
 	if err != nil {

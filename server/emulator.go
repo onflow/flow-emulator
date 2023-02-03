@@ -95,7 +95,7 @@ func (m EmulatorAPIServer) SnapshotList(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	snapshotProvider, isSnapshotProvider := (*m.storage).Store().(storage.SnapshotProvider)
 	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
-		m.server.logger.Error("State management is not available with current storage backend")
+		m.server.logger.Error().Msg("State management is not available with current storage backend")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -154,7 +154,7 @@ func (m EmulatorAPIServer) SnapshotJump(w http.ResponseWriter, r *http.Request) 
 
 	snapshotProvider, isSnapshotProvider := (*m.storage).Store().(storage.SnapshotProvider)
 	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
-		m.server.logger.Error("State management is not available with current storage backend")
+		m.server.logger.Error().Msg("State management is not available with current storage backend")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -188,7 +188,7 @@ func (m EmulatorAPIServer) SnapshotCreate(w http.ResponseWriter, r *http.Request
 	}
 	snapshotProvider, isSnapshotProvider := (*m.storage).Store().(storage.SnapshotProvider)
 	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
-		m.server.logger.Error("State management is not available with current storage backend")
+		m.server.logger.Error().Msg("State management is not available with current storage backend")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
