@@ -22,10 +22,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	fvmerrors "github.com/onflow/flow-go/fvm/errors"
-
-	flowsdk "github.com/onflow/flow-go-sdk"
-
 	"github.com/gorilla/mux"
 
 	"github.com/onflow/flow-emulator/server/backend"
@@ -59,8 +55,6 @@ func NewEmulatorAPIServer(server *EmulatorServer, backend *backend.Backend, stor
 	router.HandleFunc("/emulator/snapshots", r.SnapshotCreate).Methods("POST")
 	router.HandleFunc("/emulator/snapshots", r.SnapshotList).Methods("GET")
 	router.HandleFunc("/emulator/snapshots/{name}", r.SnapshotJump).Methods("PUT")
-
-	router.HandleFunc("/emulator/storages/{address}", r.Storage)
 
 	return r
 }
@@ -209,28 +203,4 @@ func (m EmulatorAPIServer) SnapshotCreate(w http.ResponseWriter, r *http.Request
 
 	m.reloadBlockchainFromSnapshot(name, (*m.storage).Store(), w)
 
-}
-
-func (m EmulatorAPIServer) Storage(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	vars := mux.Vars(r)
-	address := vars["address"]
-
-	addr := flowsdk.HexToAddress(address)
-
-	accountStorage, err := m.backend.GetAccountStorage(addr)
-	if err != nil {
-		if fvmerrors.IsAccountNotFoundError(err) {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	err = json.NewEncoder(w).Encode(accountStorage)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
 }
