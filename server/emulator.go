@@ -44,10 +44,10 @@ type EmulatorAPIServer struct {
 	router  *mux.Router
 	server  *EmulatorServer
 	backend *backend.Backend
-	storage *Storage
+	storage storage.Store
 }
 
-func NewEmulatorAPIServer(server *EmulatorServer, backend *backend.Backend, storage *Storage) *EmulatorAPIServer {
+func NewEmulatorAPIServer(server *EmulatorServer, backend *backend.Backend, storage storage.Store) *EmulatorAPIServer {
 	router := mux.NewRouter().StrictSlash(true)
 	r := &EmulatorAPIServer{router: router,
 		server:  server,
@@ -109,7 +109,7 @@ func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 }
 func (m EmulatorAPIServer) SnapshotList(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	snapshotProvider, isSnapshotProvider := (*m.storage).Store().(storage.SnapshotProvider)
+	snapshotProvider, isSnapshotProvider := m.storage.(storage.SnapshotProvider)
 	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
 		m.server.logger.Error().Msg("State management is not available with current storage backend")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -168,7 +168,7 @@ func (m EmulatorAPIServer) SnapshotJump(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	name := vars["name"]
 
-	snapshotProvider, isSnapshotProvider := (*m.storage).Store().(storage.SnapshotProvider)
+	snapshotProvider, isSnapshotProvider := m.storage.(storage.SnapshotProvider)
 	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
 		m.server.logger.Error().Msg("State management is not available with current storage backend")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -190,7 +190,7 @@ func (m EmulatorAPIServer) SnapshotJump(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	m.reloadBlockchainFromSnapshot(name, (*m.storage).Store(), w)
+	m.reloadBlockchainFromSnapshot(name, m.storage, w)
 
 }
 
@@ -202,7 +202,7 @@ func (m EmulatorAPIServer) SnapshotCreate(w http.ResponseWriter, r *http.Request
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	snapshotProvider, isSnapshotProvider := (*m.storage).Store().(storage.SnapshotProvider)
+	snapshotProvider, isSnapshotProvider := m.storage.(storage.SnapshotProvider)
 	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
 		m.server.logger.Error().Msg("State management is not available with current storage backend")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -223,7 +223,7 @@ func (m EmulatorAPIServer) SnapshotCreate(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	m.reloadBlockchainFromSnapshot(name, (*m.storage).Store(), w)
+	m.reloadBlockchainFromSnapshot(name, m.storage, w)
 
 }
 

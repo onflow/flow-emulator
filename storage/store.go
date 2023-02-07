@@ -27,6 +27,7 @@ import (
 
 	"github.com/onflow/flow-go/engine/execution/state/delta"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/psiemens/graceland"
 
 	"github.com/onflow/flow-emulator/types"
 )
@@ -54,6 +55,7 @@ const (
 //
 // Implementations must be safe for use by multiple goroutines.
 type Store interface {
+	graceland.Routine
 	LatestBlockHeight(ctx context.Context) (uint64, error)
 
 	// LatestBlock returns the block with the highest block height.
@@ -154,6 +156,12 @@ type DefaultStore struct {
 	DataSetter
 	DataGetter
 }
+
+func (s *DefaultStore) Start() error {
+	return nil
+}
+
+func (s *DefaultStore) Stop() {}
 
 func (s *DefaultStore) LatestBlockHeight(ctx context.Context) (latestBlockHeight uint64, err error) {
 	latestBlockHeightEnc, err := s.DataGetter.GetBytes(ctx, s.KeyGenerator.Storage(globalStoreName), s.KeyGenerator.LatestBlock())

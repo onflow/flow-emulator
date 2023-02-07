@@ -68,6 +68,13 @@ func New() *Store {
 
 var _ storage.Store = &Store{}
 
+func (s *Store) Start() error {
+	return nil
+}
+
+func (s *Store) Stop() {
+}
+
 func (s *Store) LatestBlockHeight(ctx context.Context) (uint64, error) {
 	b, err := s.LatestBlock(ctx)
 	if err != nil {

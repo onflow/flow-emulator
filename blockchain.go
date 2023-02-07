@@ -42,7 +42,7 @@ import (
 	"github.com/onflow/flow-emulator/convert"
 	sdkconvert "github.com/onflow/flow-emulator/convert/sdk"
 	"github.com/onflow/flow-emulator/storage"
-	"github.com/onflow/flow-emulator/storage/sqlite"
+	"github.com/onflow/flow-emulator/storage/util"
 	"github.com/onflow/flow-emulator/types"
 )
 
@@ -155,7 +155,7 @@ type config struct {
 
 func (conf config) GetStore() storage.Store {
 	if conf.Store == nil {
-		store, err := sqlite.New(":memory:")
+		store, err := util.CreateDefaultStorage()
 		if err != nil {
 			panic("Cannot initialize memory storage")
 		}

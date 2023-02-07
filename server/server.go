@@ -35,6 +35,7 @@ import (
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-emulator/server/debugger"
 	"github.com/onflow/flow-emulator/storage"
+	"github.com/onflow/flow-emulator/storage/util"
 )
 
 // EmulatorServer is a local server that runs a Flow Emulator instance.
@@ -144,7 +145,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 		return nil
 	}
 
-	blockchain, err := configureBlockchain(conf, store.Store())
+	blockchain, err := configureBlockchain(conf, store)
 	if err != nil {
 		logger.Err(err).Msg("❗  Failed to configure emulated blockchain")
 		return nil
@@ -198,7 +199,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 		debugger:   debugger.New(logger, be, conf.DebuggerPort),
 	}
 
-	server.admin = NewAdminServer(logger, server, be, &store, grpcServer, livenessTicker, conf.Host, conf.AdminPort, conf.HTTPHeaders)
+	server.admin = NewAdminServer(logger, server, be, store, grpcServer, livenessTicker, conf.Host, conf.AdminPort, conf.HTTPHeaders)
 
 	// only create blocks ticker if block time > 0
 	if conf.BlockTime > 0 {
@@ -282,10 +283,10 @@ func (s *EmulatorServer) Stop() {
 	s.logger.Info().Msg("🛑  Server stopped")
 }
 
-func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider Storage, err error) {
+func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider storage.Store, err error) {
 
 	if conf.RedisURL != "" {
-		storageProvider, err = NewRedisStorage(conf.RedisURL)
+		storageProvider, err = util.NewRedisStorage(conf.RedisURL)
 		if err != nil {
 			return nil, err
 		}
@@ -295,7 +296,7 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider Sto
 		if storageProvider != nil {
 			return nil, fmt.Errorf("you cannot define more than one storage")
 		}
-		storageProvider, err = NewSqliteStorage(conf.SqliteURL)
+		storageProvider, err = util.NewSqliteStorage(conf.SqliteURL)
 		if err != nil {
 			return nil, err
 		}
@@ -306,21 +307,21 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider Sto
 			return nil, fmt.Errorf("you cannot use persist with current configuration")
 		}
 		_ = os.Mkdir(conf.DBPath, os.ModePerm)
-		storageProvider, err = NewSqliteStorage(conf.DBPath)
+		storageProvider, err = util.NewSqliteStorage(conf.DBPath)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if storageProvider == nil {
-		storageProvider, err = NewSqliteStorage(":memory:")
+		storageProvider, err = util.NewSqliteStorage(":memory:")
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if conf.Snapshot {
-		snapshotProvider, isSnapshotProvider := storageProvider.Store().(storage.SnapshotProvider)
+		snapshotProvider, isSnapshotProvider := storageProvider.(storage.SnapshotProvider)
 		if !isSnapshotProvider {
 			return nil, fmt.Errorf("selected storage provider does not support snapshots")
 		}
