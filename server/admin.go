@@ -28,7 +28,7 @@ import (
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 )
 
 const (
@@ -43,7 +43,7 @@ type HTTPHeader struct {
 }
 
 type HTTPServer struct {
-	logger     *logrus.Logger
+	logger     *zerolog.Logger
 	host       string
 	port       int
 	httpServer *http.Server
@@ -51,7 +51,7 @@ type HTTPServer struct {
 }
 
 func NewAdminServer(
-	logger *logrus.Logger,
+	logger *zerolog.Logger,
 	emulatorServer *EmulatorServer,
 	backend *backend.Backend,
 	storage *Storage,
@@ -111,9 +111,9 @@ func (h *HTTPServer) Start() error {
 		}
 	}
 
-	h.logger.
-		WithField("port", h.port).
-		Infof("✅  Started admin server on port %d", h.port)
+	h.logger.Info().
+		Int("port", h.port).
+		Msgf("✅  Started admin server on port %d", h.port)
 
 	err := h.httpServer.Serve(h.listener)
 	if errors.Is(err, http.ErrServerClosed) {

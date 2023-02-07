@@ -31,9 +31,9 @@ import (
 	"github.com/onflow/flow-go/engine/execution/state/delta"
 	"github.com/onflow/flow-go/fvm"
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
+	"github.com/onflow/flow-go/fvm/derived"
 	"github.com/onflow/flow-go/fvm/environment"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
-	"github.com/onflow/flow-go/fvm/programs"
 	reusableRuntime "github.com/onflow/flow-go/fvm/runtime"
 	"github.com/onflow/flow-go/fvm/state"
 	"github.com/onflow/flow-go/fvm/tracing"
@@ -43,7 +43,7 @@ import (
 	"github.com/onflow/flow-emulator/convert"
 	sdkconvert "github.com/onflow/flow-emulator/convert/sdk"
 	"github.com/onflow/flow-emulator/storage"
-	"github.com/onflow/flow-emulator/storage/badger"
+	"github.com/onflow/flow-emulator/storage/sqlite"
 	"github.com/onflow/flow-emulator/types"
 )
 
@@ -146,7 +146,7 @@ type config struct {
 	TransactionExpiry            uint
 	StorageLimitEnabled          bool
 	TransactionFeesEnabled       bool
-	ContractRemovalRestricted    bool
+	ContractRemovalEnabled       bool
 	MinimumStorageReservation    cadence.UFix64
 	StorageMBPerFLOW             cadence.UFix64
 	Logger                       zerolog.Logger
@@ -156,7 +156,7 @@ type config struct {
 
 func (conf config) GetStore() storage.Store {
 	if conf.Store == nil {
-		store, err := badger.New(badger.WithPersist(false))
+		store, err := sqlite.New(":memory:")
 		if err != nil {
 			panic("Cannot initialize memory storage")
 		}
@@ -347,12 +347,12 @@ func WithTransactionFeesEnabled(enabled bool) Option {
 	}
 }
 
-// WithContractRemovalRestricted restricts/allows removal of already deployed contracts.
+// WithContractRemovalEnabled restricts/allows removal of already deployed contracts.
 //
 // The default is provided by on-chain value.
-func WithContractRemovalRestricted(restricted bool) Option {
+func WithContractRemovalEnabled(enabled bool) Option {
 	return func(c *config) {
-		c.ContractRemovalRestricted = restricted
+		c.ContractRemovalEnabled = enabled
 	}
 }
 
@@ -419,7 +419,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithChain(conf.GetChainID().Chain()),
 		fvm.WithBlocks(blocks),
 		fvm.WithContractDeploymentRestricted(false),
-		fvm.WithContractRemovalRestricted(conf.ContractRemovalRestricted),
+		fvm.WithContractRemovalRestricted(!conf.ContractRemovalEnabled),
 		fvm.WithGasLimit(conf.ScriptGasLimit),
 		fvm.WithCadenceLogging(true),
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
@@ -430,7 +430,10 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 	}
 
 	if !conf.TransactionValidationEnabled {
-		fvmOptions = append(fvmOptions, fvm.WithTransactionProcessors(fvm.NewTransactionInvoker()))
+		fvmOptions = append(
+			fvmOptions,
+			fvm.WithAuthorizationChecksEnabled(false),
+			fvm.WithSequenceNumberCheckAndIncrementEnabled(false))
 	}
 
 	ctx := fvm.NewContext(
@@ -1100,7 +1103,13 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		WithMaxKeySizeAllowed(b.vmCtx.MaxStateKeySize).
 		WithMaxValueSizeAllowed(b.vmCtx.MaxStateValueSize)
 
-	txnPrograms := programs.NewEmptyPrograms()
+	derivedBlockData := derived.NewEmptyDerivedBlockData()
+	derivedTxnData, err := derivedBlockData.NewSnapshotReadDerivedTransactionData(
+		derived.EndOfBlockExecutionTime,
+		derived.EndOfBlockExecutionTime)
+	if err != nil {
+		return nil, err
+	}
 
 	env := environment.NewScriptEnvironment(
 		context.Background(),
@@ -1110,7 +1119,7 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 			view,
 			stateParameters,
 		),
-		txnPrograms,
+		derivedTxnData,
 	)
 
 	r := b.vmCtx.Borrow(env)

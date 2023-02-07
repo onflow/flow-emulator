@@ -20,6 +20,7 @@ package server
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/onflow/cadence"
@@ -28,7 +29,7 @@ import (
 	"github.com/onflow/flow-go/fvm/environment"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/psiemens/graceland"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 
 	emulator "github.com/onflow/flow-emulator"
 	"github.com/onflow/flow-emulator/server/backend"
@@ -39,7 +40,7 @@ import (
 //
 // The server wraps an emulated blockchain instance with the Access API gRPC handlers.
 type EmulatorServer struct {
-	logger     *logrus.Logger
+	logger     *zerolog.Logger
 	config     *Config
 	backend    *backend.Backend
 	group      *graceland.Group
@@ -103,6 +104,8 @@ type Config struct {
 	ScriptGasLimit            uint64
 	Persist                   bool
 	Snapshot                  bool
+	// ContractRemovalEnabled configures possible removal of contracts.
+	ContractRemovalEnabled bool
 	// DBPath is the path to the Badger database on disk.
 	DBPath string
 	// DBGCInterval is the time interval at which to garbage collect the Badger value log.
@@ -122,6 +125,8 @@ type Config struct {
 	ChainID flowgo.ChainID
 	//Redis URL for redis storage backend
 	RedisURL string
+	//Sqlite URL for sqlite storage backend
+	SqliteURL string
 }
 
 type listener interface {
@@ -129,18 +134,18 @@ type listener interface {
 }
 
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
-func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
+func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	conf = sanitizeConfig(conf)
 
 	store, err := configureStorage(logger, conf)
 	if err != nil {
-		logger.WithError(err).Error("❗  Failed to configure storage")
+		logger.Error().Err(err).Msg("❗  Failed to configure storage")
 		return nil
 	}
 
 	blockchain, err := configureBlockchain(conf, store.Store())
 	if err != nil {
-		logger.WithError(err).Error("❗  Failed to configure emulated blockchain")
+		logger.Err(err).Msg("❗  Failed to configure emulated blockchain")
 		return nil
 	}
 
@@ -154,18 +159,18 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 		"FlowStorageFees":    chain.ServiceAddress().HexWithPrefix(),
 	}
 	for contract, address := range contracts {
-		logger.WithFields(logrus.Fields{contract: address}).Infof("📜  Flow contract")
+		logger.Info().Fields(map[string]any{contract: address}).Msg("📜  Flow contract")
 	}
 
 	if conf.WithContracts {
 		deployments, err := deployContracts(blockchain)
 		if err != nil {
-			logger.WithError(err).Error("❗  Failed to deploy contracts")
+			logger.Error().Err(err).Msg("❗  Failed to deploy contracts")
 		}
 
 		for _, contract := range deployments {
-			logger.WithFields(logrus.Fields{
-				contract.name: fmt.Sprintf("0x%s", contract.address.Hex())}).Infof(contract.description)
+			logger.Info().Fields(map[string]any{
+				contract.name: fmt.Sprintf("0x%s", contract.address.Hex())}).Msg(contract.description)
 		}
 	}
 
@@ -175,7 +180,7 @@ func NewEmulatorServer(logger *logrus.Logger, conf *Config) *EmulatorServer {
 	grpcServer := NewGRPCServer(logger, be, blockchain.GetChain(), conf.Host, conf.GRPCPort, conf.GRPCDebug)
 	restServer, err := NewRestServer(logger, be, blockchain.GetChain(), conf.Host, conf.RESTPort, conf.RESTDebug)
 	if err != nil {
-		logger.WithError(err).Error("❗  Failed to startup REST API")
+		logger.Error().Err(err).Msg("❗  Failed to startup REST API")
 		return nil
 	}
 
@@ -232,19 +237,19 @@ func (s *EmulatorServer) Start() {
 	}
 	s.group.Add(s.liveness)
 
-	s.logger.
-		WithField("port", s.config.GRPCPort).
-		Infof("🌱  Starting gRPC server on port %d", s.config.GRPCPort)
+	s.logger.Info().
+		Int("port", s.config.GRPCPort).
+		Msgf("🌱  Starting gRPC server on port %d", s.config.GRPCPort)
 	s.group.Add(s.grpc)
 
-	s.logger.
-		WithField("port", s.config.RESTPort).
-		Infof("🌱  Starting REST API on port %d", s.config.RESTPort)
+	s.logger.Info().
+		Int("port", s.config.RESTPort).
+		Msgf("🌱  Starting REST API on port %d", s.config.RESTPort)
 	s.group.Add(s.rest)
 
-	s.logger.
-		WithField("port", s.config.AdminPort).
-		Infof("🌱  Starting admin server on port %d", s.config.AdminPort)
+	s.logger.Info().
+		Int("port", s.config.AdminPort).
+		Msgf("🌱  Starting admin server on port %d", s.config.AdminPort)
 	s.group.Add(s.admin)
 
 	s.logger.
@@ -262,7 +267,7 @@ func (s *EmulatorServer) Start() {
 
 	err := s.group.Start()
 	if err != nil {
-		s.logger.WithError(err).Error("❗  Server error")
+		s.logger.Error().Err(err).Msg("❗  Server error")
 	}
 
 	s.Stop()
@@ -275,15 +280,57 @@ func (s *EmulatorServer) Stop() {
 
 	s.group.Stop()
 
-	s.logger.Info("🛑  Server stopped")
+	s.logger.Info().Msg("🛑  Server stopped")
 }
 
-func configureStorage(logger *logrus.Logger, conf *Config) (storage Storage, err error) {
+func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider Storage, err error) {
+
 	if conf.RedisURL != "" {
-		return NewRedisStorage(conf.RedisURL)
+		storageProvider, err = NewRedisStorage(conf.RedisURL)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return NewBadgerStorage(logger, conf.DBPath, conf.DBGCInterval, conf.DBGCDiscardRatio, conf.Snapshot, conf.Persist)
+	if conf.SqliteURL != "" {
+		if storageProvider != nil {
+			return nil, fmt.Errorf("you cannot define more than one storage")
+		}
+		storageProvider, err = NewSqliteStorage(conf.SqliteURL)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if conf.Persist {
+		if storageProvider != nil {
+			return nil, fmt.Errorf("you cannot use persist with current configuration")
+		}
+		_ = os.Mkdir(conf.DBPath, os.ModePerm)
+		storageProvider, err = NewSqliteStorage(conf.DBPath)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if storageProvider == nil {
+		storageProvider, err = NewSqliteStorage(":memory:")
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if conf.Snapshot {
+		snapshotProvider, isSnapshotProvider := storageProvider.Store().(storage.SnapshotProvider)
+		if !isSnapshotProvider {
+			return nil, fmt.Errorf("selected storage provider does not support snapshots")
+		}
+		if !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
+			return nil, fmt.Errorf("selected storage provider does not support snapshots with current configuration")
+		}
+	}
+
+	return storageProvider, err
 }
 
 func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchain, error) {
@@ -298,6 +345,7 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		emulator.WithChainID(conf.ChainID),
+		emulator.WithContractRemovalEnabled(conf.ContractRemovalEnabled),
 	}
 
 	if conf.SkipTransactionValidation {
@@ -334,7 +382,7 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 	return blockchain, nil
 }
 
-func configureBackend(logger *logrus.Logger, conf *Config, blockchain *emulator.Blockchain) *backend.Backend {
+func configureBackend(logger *zerolog.Logger, conf *Config, blockchain *emulator.Blockchain) *backend.Backend {
 	b := backend.New(logger, blockchain)
 
 	if conf.BlockTime == 0 {

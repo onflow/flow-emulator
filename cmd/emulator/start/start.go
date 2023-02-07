@@ -33,7 +33,7 @@ import (
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/fvm"
 	"github.com/psiemens/sconfig"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 
 	"github.com/onflow/flow-emulator/server"
@@ -67,10 +67,12 @@ type Config struct {
 	TransactionMaxGasLimit    int           `default:"9999" flag:"transaction-max-gas-limit" info:"maximum gas limit for transactions"`
 	ScriptGasLimit            int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
 	WithContracts             bool          `default:"false" flag:"contracts" info:"deploy common contracts when emulator starts"`
+	ContractRemovalEnabled    bool          `default:"true" flag:"contract-removal" info:"allow removal of already deployed contracts, used for updating during development"`
 	SkipTransactionValidation bool          `default:"false" flag:"skip-tx-validation" info:"skip verification of transaction signatures and sequence numbers"`
 	Host                      string        `default:"" flag:"host" info:"host to listen on for emulator GRPC/REST/Admin servers (default: all interfaces)"`
 	ChainID                   string        `default:"emulator" flag:"chain-id" info:"chain to emulate for address generation. Valid values are: 'emulator', 'testnet', 'mainnet'"`
 	RedisURL                  string        `default:"" flag:"redis-url" info:"redis-server URL for persisting redis storage backend ( redis://[[username:]password@]host[:port][/database] ) "`
+	SqliteURL                 string        `default:"" flag:"sqlite-url" info:"sqlite db URL for persisting sqlite storage backend "`
 }
 
 const EnvPrefix = "FLOW"
@@ -99,10 +101,10 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 			serviceKeySigAlgo = crypto.StringToSignatureAlgorithm(conf.ServiceKeySigAlgo)
 			serviceKeyHashAlgo = crypto.StringToHashAlgorithm(conf.ServiceKeyHashAlgo)
 
-			logger := initLogger()
+			logger := initLogger(conf.Verbose)
 
 			if conf.ServicePublicKey != "" {
-				logger.Warnf("❗  Providing '--public-key' is deprecated, provide the '--private-key' only.")
+				logger.Warn().Msg("❗  Providing '--public-key' is deprecated, provide the '--private-key' only.")
 			}
 
 			if conf.ServicePrivateKey != "" {
@@ -123,10 +125,6 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				servicePublicKey = servicePrivateKey.PublicKey()
 			}
 
-			if conf.Verbose {
-				logger.SetLevel(logrus.DebugLevel)
-			}
-
 			flowChainID, err := getSDKChainID(conf.ChainID)
 			if err != nil {
 				Exit(1, err.Error())
@@ -137,18 +135,18 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				serviceAddress = sdk.HexToAddress("0x1")
 			}
 
-			serviceFields := logrus.Fields{
+			serviceFields := map[string]any{
 				"serviceAddress":  serviceAddress.Hex(),
 				"servicePubKey":   hex.EncodeToString(servicePublicKey.Encode()),
-				"serviceSigAlgo":  serviceKeySigAlgo,
-				"serviceHashAlgo": serviceKeyHashAlgo,
+				"serviceSigAlgo":  serviceKeySigAlgo.String(),
+				"serviceHashAlgo": serviceKeyHashAlgo.String(),
 			}
 
 			if servicePrivateKey != nil {
 				serviceFields["servicePrivKey"] = hex.EncodeToString(servicePrivateKey.Encode())
 			}
 
-			logger.WithFields(serviceFields).Infof("⚙️   Using service account 0x%s", serviceAddress.Hex())
+			logger.Info().Fields(serviceFields).Msgf("⚙️   Using service account 0x%s", serviceAddress.Hex())
 
 			minimumStorageReservation := fvm.DefaultMinimumStorageReservation
 			if conf.MinimumAccountBalance != "" {
@@ -191,6 +189,8 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				Host:                      conf.Host,
 				ChainID:                   flowChainID,
 				RedisURL:                  conf.RedisURL,
+				ContractRemovalEnabled:    conf.ContractRemovalEnabled,
+				SqliteURL:                 conf.SqliteURL,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
@@ -207,19 +207,30 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 	return cmd
 }
 
-func initLogger() *logrus.Logger {
-	var logger = logrus.New()
+func initLogger(verbose bool) *zerolog.Logger {
+
+	level := zerolog.InfoLevel
+	if verbose {
+		level = zerolog.DebugLevel
+	}
+	zerolog.MessageFieldName = "msg"
 
 	switch strings.ToLower(conf.LogFormat) {
 	case "json":
-		logger.Formatter = new(logrus.JSONFormatter)
+		logger := zerolog.New(os.Stdout).With().Timestamp().Logger().Level(level)
+		return &logger
 	default:
-		logger.Formatter = new(logrus.TextFormatter)
+		writer := zerolog.ConsoleWriter{Out: os.Stdout}
+		writer.FormatMessage = func(i interface{}) string {
+			if i == nil {
+				return ""
+			}
+			return fmt.Sprintf("%-44s", i)
+		}
+		logger := zerolog.New(writer).With().Timestamp().Logger().Level(level)
+		return &logger
 	}
 
-	logger.Out = os.Stdout
-
-	return logger
 }
 
 func initConfig(cmd *cobra.Command) {

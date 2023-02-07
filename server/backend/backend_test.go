@@ -32,7 +32,7 @@ import (
 	"github.com/onflow/flow-go-sdk/test"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	flowgo "github.com/onflow/flow-go/model/flow"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -50,7 +50,8 @@ func backendTest(f func(t *testing.T, backend *backend.Backend, emu *mocks.MockE
 		defer mockCtrl.Finish()
 
 		emu := mocks.NewMockEmulator(mockCtrl)
-		back := backend.New(logrus.New(), emu)
+		logger := zerolog.Nop()
+		back := backend.New(&logger, emu)
 
 		f(t, back, emu)
 	}
@@ -651,8 +652,8 @@ func TestBackendAutoMine(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	emu := mocks.NewMockEmulator(mockCtrl)
-
-	backend := backend.New(logrus.New(), emu)
+	logger := zerolog.Nop()
+	backend := backend.New(&logger, emu)
 
 	// enable automine flag
 	backend.EnableAutoMine()
