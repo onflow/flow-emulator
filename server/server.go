@@ -252,9 +252,9 @@ func (s *EmulatorServer) Start() {
 		Msgf("🌱  Starting admin server on port %d", s.config.AdminPort)
 	s.group.Add(s.admin)
 
-	s.logger.
-		WithField("port", s.config.DebuggerPort).
-		Infof("🌱  Starting debugger on port %d", s.config.DebuggerPort)
+	s.logger.Info().
+		Int("port", s.config.DebuggerPort).
+		Msgf("🌱  Starting debugger on port %d", s.config.DebuggerPort)
 	s.group.Add(s.debugger)
 
 	// only start blocks ticker if it exists

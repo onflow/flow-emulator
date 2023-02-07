@@ -26,13 +26,13 @@ import (
 	"sync"
 
 	"github.com/google/go-dap"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/server/backend"
 )
 
 type Debugger struct {
-	logger     *logrus.Logger
+	logger     *zerolog.Logger
 	backend    *backend.Backend
 	port       int
 	listener   net.Listener
@@ -42,7 +42,7 @@ type Debugger struct {
 	activeCode string
 }
 
-func NewDebugger(logger *logrus.Logger, backend *backend.Backend, port int) *Debugger {
+func NewDebugger(logger *zerolog.Logger, backend *backend.Backend, port int) *Debugger {
 	return &Debugger{
 		logger:  logger,
 		backend: backend,
@@ -75,7 +75,7 @@ func (d *Debugger) serve() {
 			case <-d.quit:
 				return
 			default:
-				d.logger.Fatal(err)
+				d.logger.Fatal().Err(err).Msg("failed to accept")
 			}
 		} else {
 			d.wg.Add(1)
@@ -105,7 +105,7 @@ func (d *Debugger) handleConnection(conn net.Conn) {
 			if err == io.EOF {
 				break
 			}
-			d.logger.Fatal("Debug Server error: ", err)
+			d.logger.Fatal().Err(err).Msg("Debug Server error")
 		}
 	}
 

@@ -14,12 +14,12 @@ import (
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/rs/zerolog"
 
 	"github.com/onflow/cadence/runtime/ast"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
 	sdk "github.com/onflow/flow-go-sdk"
-	"github.com/sirupsen/logrus"
 
 	emulator "github.com/onflow/flow-emulator"
 	"github.com/onflow/flow-emulator/server/backend"
@@ -34,7 +34,7 @@ const (
 )
 
 type debugSession struct {
-	logger                *logrus.Logger
+	logger                *zerolog.Logger
 	backend               *backend.Backend
 	readWriter            *bufio.ReadWriter
 	variables             map[int]any
@@ -67,7 +67,7 @@ type debugSession struct {
 // It will return once the channel is closed.
 func (ds *debugSession) sendFromQueue() {
 	for message := range ds.sendQueue {
-		ds.logger.Tracef("DAP response: %#+v", message)
+		ds.logger.Trace().Msgf("DAP response: %#+v", message)
 
 		_ = dap.WriteProtocolMessage(ds.readWriter.Writer, message)
 		_ = ds.readWriter.Flush()
@@ -80,7 +80,7 @@ func (ds *debugSession) handleRequest() error {
 		return err
 	}
 
-	ds.logger.Tracef("DAP request: %#+v", request)
+	ds.logger.Trace().Msgf("DAP request: %#+v", request)
 
 	ds.sendWg.Add(1)
 	go func() {
