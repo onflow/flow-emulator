@@ -59,7 +59,7 @@ func (a *Adapter) GetBlockHeaderByID(ctx context.Context, id flowgo.Identifier) 
 	return a.backend.GetBlockHeaderByID(ctx, convert.FlowIdentifierToSDK(id))
 }
 
-func (a *Adapter) GetLatestBlock(ctx context.Context, isSealed bool) (*flowgo.Block, flowgo.BlockStatus , error) {
+func (a *Adapter) GetLatestBlock(ctx context.Context, isSealed bool) (*flowgo.Block, flowgo.BlockStatus, error) {
 	return a.backend.GetLatestBlock(ctx, isSealed)
 }
 
@@ -200,7 +200,7 @@ func (a *Adapter) GetLatestProtocolStateSnapshot(ctx context.Context) ([]byte, e
 }
 
 func (a *Adapter) GetExecutionResultForBlockID(ctx context.Context, blockID flowgo.Identifier) (*flowgo.ExecutionResult, error) {
-	return a.backend.GetExecutionResultForBlockID(ctx, blockID)
+	return a.backend.GetExecutionResultForBlockID(ctx, convert.FlowIdentifierToSDK(blockID))
 }
 
 func (a *Adapter) GetExecutionResultByID(ctx context.Context, id flowgo.Identifier) (*flowgo.ExecutionResult, error) {
@@ -208,13 +208,43 @@ func (a *Adapter) GetExecutionResultByID(ctx context.Context, id flowgo.Identifi
 }
 
 func (a *Adapter) GetTransactionResultByIndex(ctx context.Context, blockID flowgo.Identifier, index uint32) (*access.TransactionResult, error) {
-	return a.backend.GetTransactionResultByIndex(ctx, blockID, index)
+	transactionResult, err := a.backend.GetTransactionResultByIndex(ctx, convert.FlowIdentifierToSDK(blockID), index)
+	if err != nil {
+		return nil, err
+	}
+	result, err := convert.SDKTransactionResultToFlow(transactionResult)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
-func (a *Adapter) GetTransactionsByBlockID(ctx context.Context, blockID flowgo.Identifier) ([]*flowgo.TransactionBody, error) {
-	return a.backend.GetTransactionsByBlockID(ctx, blockID)
+func (a *Adapter) GetTransactionsByBlockID(ctx context.Context, blockID flowgo.Identifier) (result []*flowgo.TransactionBody, err error) {
+	transactions, err := a.backend.GetTransactionsByBlockID(ctx, convert.FlowIdentifierToSDK(blockID))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, transaction := range transactions {
+		flowTransaction := convert.SDKTransactionToFlow(*transaction)
+		result = append(result, flowTransaction)
+	}
+	return result, nil
+
 }
 
-func (a *Adapter) GetTransactionResultsByBlockID(ctx context.Context, blockID flowgo.Identifier) ([]*access.TransactionResult, error) {
-	return a.backend.GetTransactionResultsByBlockID(ctx, blockID)
+func (a *Adapter) GetTransactionResultsByBlockID(ctx context.Context, blockID flowgo.Identifier) (result []*access.TransactionResult, err error) {
+	transactionResults, err := a.backend.GetTransactionResultsByBlockID(ctx, convert.FlowIdentifierToSDK(blockID))
+	if err != nil {
+		return nil, err
+	}
+	for _, transactionResult := range transactionResults {
+		flowTransactionResult, err := convert.SDKTransactionResultToFlow(transactionResult)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, flowTransactionResult)
+	}
+	return result, nil
+
 }
