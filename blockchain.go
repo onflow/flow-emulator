@@ -809,6 +809,8 @@ func (b *Blockchain) GetAccountByIndex(index uint) (*sdk.Account, error) {
 	return &sdkAccount, nil
 }
 
+// Deprecated: Needed for the debugger right now, do NOT use for other purposes.
+// TODO: refactor
 func (b *Blockchain) GetAccountUnsafe(address sdk.Address) (*sdk.Account, error) {
 
 	flowAddress := sdkconvert.SDKAddressToFlow(address)
