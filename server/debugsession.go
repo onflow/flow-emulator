@@ -425,11 +425,10 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 					continue
 				}
 				variable := ds.convertValueToDapVariable(name, cadenceValue)
-				if variable != nil {
-					responseVariables = append(
-						responseVariables,
-						*variable)
-				}
+				responseVariables = append(
+					responseVariables,
+					variable,
+				)
 			}
 
 		case ScopeIdentifierStorage:
@@ -440,7 +439,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 					break
 				}
 
-				variable := &dap.Variable{
+				variable := dap.Variable{
 					Name:  account.Address.String(),
 					Value: "FlowAccount",
 					Type:  "FlowAccount",
@@ -453,7 +452,8 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 				index++
 				responseVariables = append(
 					responseVariables,
-					*variable)
+					variable,
+				)
 			}
 
 		default:
@@ -461,12 +461,17 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 			switch value := valueRequested.(type) {
 
 			case *sdk.Account:
-				storage := inter.SharedState.Config.Storage.GetStorageMap(common.Address(value.Address), "storage", false)
-				responseVariables = ds.convertMembersToDapVariables(inter, storage)
+				storage := inter.SharedState.Config.Storage.GetStorageMap(
+					common.Address(value.Address),
+					common.PathDomainStorage.Identifier(),
+					false,
+				)
+				responseVariables = ds.convertStorageMapToDapVariables(inter, storage)
 
-			case interpreter.Value, cadence.Value:
-				responseVariables = ds.convertMembersToDapVariables(inter, value)
+			case interpreter.Value:
 
+			case cadence.Value:
+				responseVariables = ds.convertCadenceValueMembersToDapVariables(value)
 			}
 
 		}
@@ -480,13 +485,13 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 	}
 }
 
-func (ds *debugSession) convertValueToDapVariable(name string, value cadence.Value) *dap.Variable {
+func (ds *debugSession) convertValueToDapVariable(name string, value cadence.Value) dap.Variable {
 	referenceHandle := 0
 	switch value.(type) {
 	case cadence.Dictionary, cadence.Array, cadence.Struct, cadence.Resource:
 		referenceHandle = ds.storeVariable(value)
 	}
-	return &dap.Variable{
+	return dap.Variable{
 		Name:  name,
 		Value: value.String(),
 		Type:  value.Type().ID(),
@@ -497,6 +502,7 @@ func (ds *debugSession) convertValueToDapVariable(name string, value cadence.Val
 		VariablesReference: referenceHandle,
 	}
 }
+
 func (ds *debugSession) storeVariable(value any) int {
 	ds.variableHandleCounter++
 	ds.variables[ds.variableHandleCounter] = value
@@ -510,78 +516,64 @@ func (ds *debugSession) convertCadenceValueMembersToDapVariables(cadenceValue ca
 	case cadence.Resource:
 		for i, field := range value.ResourceType.Fields {
 			variable := ds.convertValueToDapVariable(field.Identifier, value.Fields[i])
-			if variable != nil {
-				members = append(
-					members,
-					*variable)
-			}
+			members = append(members, variable)
 		}
 	case cadence.Struct:
 		for i, field := range value.StructType.Fields {
 			variable := ds.convertValueToDapVariable(field.Identifier, value.Fields[i])
-			if variable != nil {
-				members = append(
-					members,
-					*variable)
-			}
+			members = append(members, variable)
 		}
 
 	case cadence.Array:
-		i := 0
-		for _, element := range value.Values {
+		for i, element := range value.Values {
 			variable := ds.convertValueToDapVariable(fmt.Sprintf("[%d]", i), element)
-			if variable != nil {
-				members = append(
-					members,
-					*variable)
-			}
-			i = i + 1
+			members = append(members, variable)
 		}
 
 	case cadence.Dictionary:
 		for _, pair := range value.Pairs {
 			variable := ds.convertValueToDapVariable(pair.Key.String(), pair.Value)
-			if variable != nil {
-				members = append(
-					members,
-					*variable)
-			}
+			members = append(members, variable)
 		}
 	}
 	return members
 }
 
-func (ds *debugSession) convertMembersToDapVariables(inter *interpreter.Interpreter, someValue any) []dap.Variable {
+func (ds *debugSession) convertInterpreterValueToDapVariables(
+	inter *interpreter.Interpreter,
+	value interpreter.Value,
+) []dap.Variable {
+	cadenceValue, err := runtime.ExportValue(value, inter, interpreter.EmptyLocationRange)
+	if err != nil {
+		panic(err)
+	}
+	return ds.convertCadenceValueMembersToDapVariables(cadenceValue)
+}
 
-	switch value := someValue.(type) {
-	case cadence.Value:
-		return ds.convertCadenceValueMembersToDapVariables(value)
-	case interpreter.Value:
+func (ds *debugSession) convertStorageMapToDapVariables(
+	inter *interpreter.Interpreter,
+	value *interpreter.StorageMap,
+) []dap.Variable {
+
+	members := make([]dap.Variable, value.Count())
+
+	it := value.Iterator(inter)
+	for {
+		key, value := it.Next()
+		if key == "" {
+			break
+		}
+
 		cadenceValue, err := runtime.ExportValue(value, inter, interpreter.EmptyLocationRange)
 		if err != nil {
 			panic(err)
 		}
-		return ds.convertCadenceValueMembersToDapVariables(cadenceValue)
-	case *interpreter.StorageMap:
-		members := make([]dap.Variable, 0)
 
-		it := value.Iterator(inter)
-		for {
-			key, value := it.Next()
-			if key == "" {
-				break
-			}
-			cadenceValue, err := runtime.ExportValue(value, inter, interpreter.EmptyLocationRange)
-			if err != nil {
-				panic(err)
-			}
-			members = append(members, *ds.convertValueToDapVariable(key, cadenceValue))
-		}
-		return members
-
-	default:
-		panic("shouldnt be")
+		variable := ds.convertValueToDapVariable(key, cadenceValue)
+		members = append(members, variable)
 	}
+
+	return members
 }
 
 func (ds *debugSession) stackFrames() []dap.StackFrame {
