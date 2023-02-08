@@ -410,6 +410,8 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 
 			for name, variable := range functionValues {
 
+				// TODO: generalize exclusion of built-ins / standard library definitions
+
 				if location.String() == ds.scriptID && name == "self" {
 					continue
 				}
