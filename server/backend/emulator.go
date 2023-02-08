@@ -43,7 +43,8 @@ type Emulator interface {
 	GetCollection(colID sdk.Identifier) (*sdk.Collection, error)
 	GetTransaction(txID sdk.Identifier) (*sdk.Transaction, error)
 	GetTransactionResult(txID sdk.Identifier) (*sdk.TransactionResult, error)
-	//for debugger
+	// Deprecated: Needed for the debugger right now, do NOT use for other purposes.
+	// TODO: refactor
 	GetAccountUnsafe(address sdk.Address) (*sdk.Account, error)
 	GetAccount(address sdk.Address) (*sdk.Account, error)
 	GetAccountByIndex(uint) (*sdk.Account, error)
