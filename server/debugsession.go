@@ -641,7 +641,9 @@ func (ds *debugSession) stackFrames() []dap.StackFrame {
 
 func (ds *debugSession) pathCode(path string) string {
 	basename := strings.TrimSuffix(path, ".cdc")
-	runningScriptID, runningCode := ds.backend.GetEmulator().(*emulator.Blockchain).CurrentScript()
+	backendEmulator := ds.backend.GetEmulator()
+
+	runningScriptID, runningCode := backendEmulator.(*emulator.Blockchain).CurrentScript()
 	if basename == runningScriptID {
 		return runningCode
 	}
@@ -657,7 +659,9 @@ func (ds *debugSession) pathCode(path string) string {
 
 	if addressLocation, ok := location.(common.AddressLocation); ok {
 		var account *sdk.Account
-		account, err = ds.backend.GetEmulator().GetAccountUnsafe(sdk.Address(addressLocation.Address))
+		address := sdk.Address(addressLocation.Address)
+		// nolint:staticcheck
+		account, err = backendEmulator.GetAccountUnsafe(address)
 		if err != nil {
 			return ""
 		}
