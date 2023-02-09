@@ -1426,5 +1426,5 @@ func (b *Blockchain) SetDebugger(debugger *interpreter.Debugger) {
 }
 
 func (b *Blockchain) EndDebugging() {
-	b.debugger = nil
+	b.SetDebugger(nil)
 }
