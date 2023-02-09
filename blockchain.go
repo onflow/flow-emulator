@@ -603,7 +603,7 @@ func configureTransactionValidator(conf config, blocks *blocks) *access.Transact
 	)
 }
 
-func (b *Blockchain) newFvmContextFromHeader(header *flowgo.Header) fvm.Context {
+func (b *Blockchain) newFVMContextFromHeader(header *flowgo.Header) fvm.Context {
 	return fvm.NewContextFromParent(
 		b.vmCtx,
 		fvm.WithBlockHeader(header),
@@ -967,7 +967,7 @@ func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 	}
 
 	header := b.pendingBlock.Block().Header
-	blockContext := b.newFvmContextFromHeader(header)
+	blockContext := b.newFVMContextFromHeader(header)
 
 	// cannot execute a block that has already executed
 	if b.pendingBlock.ExecutionComplete() {
@@ -995,7 +995,7 @@ func (b *Blockchain) ExecuteNextTransaction() (*types.TransactionResult, error) 
 	defer b.mu.Unlock()
 
 	header := b.pendingBlock.Block().Header
-	blockContext := b.newFvmContextFromHeader(header)
+	blockContext := b.newFVMContextFromHeader(header)
 	return b.executeNextTransaction(blockContext)
 }
 
@@ -1247,7 +1247,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 	requestedLedgerView := b.storage.LedgerViewByHeight(context.Background(), requestedBlock.Header.Height)
 
 	header := requestedBlock.Header
-	blockContext := b.newFvmContextFromHeader(header)
+	blockContext := b.newFVMContextFromHeader(header)
 
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
 	b.currentCode = string(script)
