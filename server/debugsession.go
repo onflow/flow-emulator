@@ -124,8 +124,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		location, err := pathLocation(path)
 		if err != nil {
 			ds.send(newDAPErrorResponse(
-				request.Seq,
-				request.Command,
+				request.Request,
 				dap.ErrorMessage{
 					Format: "cannot add breakpoints for path: {path}",
 					Variables: map[string]string{
@@ -194,8 +193,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		programArg, ok := args["program"]
 		if !ok {
 			ds.send(newDAPErrorResponse(
-				request.Seq,
-				request.Command,
+				request.Request,
 				dap.ErrorMessage{
 					Format:   "Missing program",
 					ShowUser: true,
@@ -301,8 +299,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 
 		if code == "" {
 			ds.send(newDAPErrorResponse(
-				request.Seq,
-				request.Command,
+				request.Request,
 				dap.ErrorMessage{
 					Format: "unknown source: {path}",
 					Variables: map[string]string{
@@ -354,8 +351,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 		}
 
 		ds.send(newDAPErrorResponse(
-			request.Seq,
-			request.Command,
+			request.Request,
 			dap.ErrorMessage{
 				Format: "unknown variable: {name}",
 				Variables: map[string]string{
@@ -388,8 +384,10 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 	case *dap.VariablesRequest:
 		// TODO: reply with error if ds.stop == nil
 		if ds.stop == nil {
-			ds.send(newDAPErrorResponse(request.GetRequest().GetSeq(), "", dap.ErrorMessage{}))
-
+			ds.send(newDAPErrorResponse(request.Request, dap.ErrorMessage{
+				Format: "invalid request",
+			}))
+			return
 		}
 
 		variableRequested := request.Arguments.VariablesReference
@@ -434,7 +432,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 			}
 
 		case ScopeIdentifierStorage:
-			var index int = 1
+			index := 1
 			for {
 				account, err := ds.backend.GetEmulator().GetAccountByIndex(uint(index))
 				if err != nil { //end of accounts
@@ -798,9 +796,9 @@ func newDAPSuccessResponse(request *dap.Request) dap.Response {
 	return newDAPResponse(request.Seq, request.Command, true)
 }
 
-func newDAPErrorResponse(requestSeq int, command string, message dap.ErrorMessage) *dap.ErrorResponse {
+func newDAPErrorResponse(request dap.Request, message dap.ErrorMessage) *dap.ErrorResponse {
 	return &dap.ErrorResponse{
-		Response: newDAPResponse(requestSeq, command, false),
+		Response: newDAPResponse(request.Seq, request.Command, false),
 		Body: dap.ErrorResponseBody{
 			Error: message,
 		},
