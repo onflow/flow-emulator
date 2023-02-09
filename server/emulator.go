@@ -62,6 +62,9 @@ func NewEmulatorAPIServer(server *EmulatorServer, backend *backend.Backend, stor
 
 	router.HandleFunc("/emulator/storages/{address}", r.Storage)
 
+	config := NewConfigInfo(server)
+	router.Handle("/emulator/config", config)
+
 	return r
 }
 

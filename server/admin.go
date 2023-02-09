@@ -34,7 +34,6 @@ import (
 const (
 	LivenessPath    = "/live"
 	MetricsPath     = "/metrics"
-	ConfigPath      = "/config"
 	EmulatorApiPath = "/emulator/"
 )
 
@@ -75,10 +74,6 @@ func NewAdminServer(
 
 	// register liveness handler
 	mux.Handle(LivenessPath, liveness.Handler())
-
-	// register config info handler
-	info := NewConfigInfo(emulatorServer)
-	mux.Handle(ConfigPath, info)
 
 	// register gRPC HTTP proxy
 	mux.Handle("/", wrappedHandler(wrappedServer, headers))
