@@ -62,11 +62,26 @@ func NewEmulatorAPIServer(server *EmulatorServer, backend *backend.Backend, stor
 
 	router.HandleFunc("/emulator/storages/{address}", r.Storage)
 
+	router.HandleFunc("/emulator/config", r.Config)
+
 	return r
 }
 
 func (m EmulatorAPIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.router.ServeHTTP(w, r)
+}
+
+func (m EmulatorAPIServer) Config(w http.ResponseWriter, _ *http.Request) {
+	type ConfigInfo struct {
+		ServiceKey string `json:"service_key"`
+	}
+
+	c := ConfigInfo{
+		ServiceKey: m.server.blockchain.ServiceKey().PublicKey.String(),
+	}
+
+	s, _ := json.MarshalIndent(c, "", "\t")
+	_, _ = w.Write(s)
 }
 
 func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +106,7 @@ func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
-func (m EmulatorAPIServer) SnapshotList(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) SnapshotList(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	snapshotProvider, isSnapshotProvider := (*m.storage).Store().(storage.SnapshotProvider)
 	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
