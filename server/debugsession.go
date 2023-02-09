@@ -426,7 +426,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 					//	panic(err)
 					continue
 				}
-				variable := ds.convertValueToDapVariable(name, cadenceValue)
+				variable := ds.convertValueToDAPVariable(name, cadenceValue)
 				responseVariables = append(
 					responseVariables,
 					variable,
@@ -468,12 +468,12 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 					common.PathDomainStorage.Identifier(),
 					false,
 				)
-				responseVariables = ds.convertStorageMapToDapVariables(inter, storage)
+				responseVariables = ds.convertStorageMapToDAPVariables(inter, storage)
 
 			case interpreter.Value:
 
 			case cadence.Value:
-				responseVariables = ds.convertCadenceValueMembersToDapVariables(value)
+				responseVariables = ds.convertCadenceValueMembersToDAPVariables(value)
 			}
 
 		}
@@ -487,7 +487,7 @@ func (ds *debugSession) dispatchRequest(request dap.Message) {
 	}
 }
 
-func (ds *debugSession) convertValueToDapVariable(name string, value cadence.Value) dap.Variable {
+func (ds *debugSession) convertValueToDAPVariable(name string, value cadence.Value) dap.Variable {
 	referenceHandle := 0
 	switch value.(type) {
 	case cadence.Dictionary, cadence.Array, cadence.Struct, cadence.Resource:
@@ -511,37 +511,37 @@ func (ds *debugSession) storeVariable(value any) int {
 	return ds.variableHandleCounter
 }
 
-func (ds *debugSession) convertCadenceValueMembersToDapVariables(cadenceValue cadence.Value) []dap.Variable {
+func (ds *debugSession) convertCadenceValueMembersToDAPVariables(cadenceValue cadence.Value) []dap.Variable {
 	members := make([]dap.Variable, 0)
 
 	switch value := cadenceValue.(type) {
 	case cadence.Resource:
 		for i, field := range value.ResourceType.Fields {
-			variable := ds.convertValueToDapVariable(field.Identifier, value.Fields[i])
+			variable := ds.convertValueToDAPVariable(field.Identifier, value.Fields[i])
 			members = append(members, variable)
 		}
 	case cadence.Struct:
 		for i, field := range value.StructType.Fields {
-			variable := ds.convertValueToDapVariable(field.Identifier, value.Fields[i])
+			variable := ds.convertValueToDAPVariable(field.Identifier, value.Fields[i])
 			members = append(members, variable)
 		}
 
 	case cadence.Array:
 		for i, element := range value.Values {
-			variable := ds.convertValueToDapVariable(fmt.Sprintf("[%d]", i), element)
+			variable := ds.convertValueToDAPVariable(fmt.Sprintf("[%d]", i), element)
 			members = append(members, variable)
 		}
 
 	case cadence.Dictionary:
 		for _, pair := range value.Pairs {
-			variable := ds.convertValueToDapVariable(pair.Key.String(), pair.Value)
+			variable := ds.convertValueToDAPVariable(pair.Key.String(), pair.Value)
 			members = append(members, variable)
 		}
 	}
 	return members
 }
 
-func (ds *debugSession) convertInterpreterValueToDapVariables(
+func (ds *debugSession) convertInterpreterValueToDAPVariables(
 	inter *interpreter.Interpreter,
 	value interpreter.Value,
 ) []dap.Variable {
@@ -549,10 +549,10 @@ func (ds *debugSession) convertInterpreterValueToDapVariables(
 	if err != nil {
 		panic(err)
 	}
-	return ds.convertCadenceValueMembersToDapVariables(cadenceValue)
+	return ds.convertCadenceValueMembersToDAPVariables(cadenceValue)
 }
 
-func (ds *debugSession) convertStorageMapToDapVariables(
+func (ds *debugSession) convertStorageMapToDAPVariables(
 	inter *interpreter.Interpreter,
 	value *interpreter.StorageMap,
 ) []dap.Variable {
@@ -571,7 +571,7 @@ func (ds *debugSession) convertStorageMapToDapVariables(
 			panic(err)
 		}
 
-		variable := ds.convertValueToDapVariable(key, cadenceValue)
+		variable := ds.convertValueToDAPVariable(key, cadenceValue)
 		members = append(members, variable)
 	}
 
