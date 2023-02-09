@@ -71,7 +71,7 @@ func (m EmulatorAPIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.router.ServeHTTP(w, r)
 }
 
-func (m EmulatorAPIServer) Config(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) Config(w http.ResponseWriter, _ *http.Request) {
 	type ConfigInfo struct {
 		ServiceKey string `json:"service_key"`
 	}
@@ -106,7 +106,7 @@ func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
-func (m EmulatorAPIServer) SnapshotList(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) SnapshotList(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	snapshotProvider, isSnapshotProvider := (*m.storage).Store().(storage.SnapshotProvider)
 	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
