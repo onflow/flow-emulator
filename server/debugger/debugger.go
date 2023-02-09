@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package server
+package debugger
 
 import (
 	"bufio"
@@ -42,7 +42,7 @@ type Debugger struct {
 	activeCode string
 }
 
-func NewDebugger(logger *zerolog.Logger, backend *backend.Backend, port int) *Debugger {
+func New(logger *zerolog.Logger, backend *backend.Backend, port int) *Debugger {
 	return &Debugger{
 		logger:  logger,
 		backend: backend,

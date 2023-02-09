@@ -33,6 +33,7 @@ import (
 
 	emulator "github.com/onflow/flow-emulator"
 	"github.com/onflow/flow-emulator/server/backend"
+	"github.com/onflow/flow-emulator/server/debugger"
 	"github.com/onflow/flow-emulator/storage"
 )
 
@@ -184,8 +185,6 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 		return nil
 	}
 
-	debugger := NewDebugger(logger, be, conf.DebuggerPort)
-
 	server := &EmulatorServer{
 		logger:     logger,
 		config:     conf,
@@ -196,7 +195,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 		rest:       restServer,
 		admin:      nil,
 		blockchain: blockchain,
-		debugger:   debugger,
+		debugger:   debugger.New(logger, be, conf.DebuggerPort),
 	}
 
 	server.admin = NewAdminServer(logger, server, be, &store, grpcServer, livenessTicker, conf.Host, conf.AdminPort, conf.HTTPHeaders)
