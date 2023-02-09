@@ -661,27 +661,14 @@ func (s *session) stackFrames() []dap.StackFrame {
 
 	stackFrames := make([]dap.StackFrame, 0, len(invocations))
 
-	location := s.stop.Interpreter.Location
-	astRange := ast.NewRangeFromPositioned(nil, s.stop.Statement)
+	stackFrame := s.newStackFrame(
+		s.stop.Statement,
+		s.stop.Interpreter.Location,
+	)
 
-	startPos := astRange.StartPosition()
-	endPos := astRange.EndPosition(nil)
-
-	locationString := locationPath(location)
-	if location.String() == s.scriptID {
-		locationString = s.scriptLocation.String()
-	}
 	stackFrames = append(
 		stackFrames,
-		dap.StackFrame{
-			Source: dap.Source{
-				Path: locationString,
-			},
-			Line:      startPos.Line,
-			Column:    startPos.Column + 1,
-			EndLine:   endPos.Line,
-			EndColumn: endPos.Column + 2,
-		},
+		stackFrame,
 	)
 
 	for i := len(invocations) - 1; i >= 0; i-- {
@@ -694,27 +681,35 @@ func (s *session) stackFrames() []dap.StackFrame {
 			continue
 		}
 
-		startPos := locationRange.StartPosition()
-		endPos := locationRange.EndPosition(nil)
+		stackFrame := s.newStackFrame(locationRange, location)
 
-		locationString := locationPath(location)
-		if location.String() == s.scriptID {
-			locationString = s.scriptLocation.String()
-		}
 		stackFrames = append(
 			stackFrames,
-			dap.StackFrame{
-				Source: dap.Source{
-					Path: locationString,
-				},
-				Line:      startPos.Line,
-				Column:    startPos.Column + 1,
-				EndLine:   endPos.Line,
-				EndColumn: endPos.Column + 2,
-			},
+			stackFrame,
 		)
 	}
+
 	return stackFrames
+}
+
+func (s *session) newStackFrame(x ast.HasPosition, location common.Location) dap.StackFrame {
+	startPos := x.StartPosition()
+	endPos := x.EndPosition(nil)
+
+	locationString := locationPath(location)
+	if location.String() == s.scriptID {
+		locationString = s.scriptLocation.String()
+	}
+
+	return dap.StackFrame{
+		Source: dap.Source{
+			Path: locationString,
+		},
+		Line:      startPos.Line,
+		Column:    startPos.Column + 1,
+		EndLine:   endPos.Line,
+		EndColumn: endPos.Column + 2,
+	}
 }
 
 func (s *session) pathCode(path string) string {
