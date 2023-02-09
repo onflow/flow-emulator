@@ -62,14 +62,26 @@ func NewEmulatorAPIServer(server *EmulatorServer, backend *backend.Backend, stor
 
 	router.HandleFunc("/emulator/storages/{address}", r.Storage)
 
-	config := NewConfigInfo(server)
-	router.Handle("/emulator/config", config)
+	router.HandleFunc("/emulator/config", r.Config)
 
 	return r
 }
 
 func (m EmulatorAPIServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.router.ServeHTTP(w, r)
+}
+
+func (m EmulatorAPIServer) Config(w http.ResponseWriter, r *http.Request) {
+	type ConfigInfo struct {
+		ServiceKey string `json:"service_key"`
+	}
+
+	c := ConfigInfo{
+		ServiceKey: m.server.blockchain.ServiceKey().PublicKey.String(),
+	}
+
+	s, _ := json.MarshalIndent(c, "", "\t")
+	_, _ = w.Write(s)
 }
 
 func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
