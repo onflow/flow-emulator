@@ -88,7 +88,7 @@ func (d *Debugger) serve() {
 }
 
 func (d *Debugger) handleConnection(conn net.Conn) {
-	debugSession := debugSession{
+	session := session{
 		backend: d.backend,
 		logger:  d.logger,
 		readWriter: bufio.NewReadWriter(
@@ -97,10 +97,10 @@ func (d *Debugger) handleConnection(conn net.Conn) {
 		),
 		sendQueue: make(chan dap.Message),
 	}
-	go debugSession.sendFromQueue()
+	go session.sendFromQueue()
 
 	for {
-		err := debugSession.handleRequest()
+		err := session.handleRequest()
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -109,8 +109,8 @@ func (d *Debugger) handleConnection(conn net.Conn) {
 		}
 	}
 
-	debugSession.sendWg.Wait()
-	close(debugSession.sendQueue)
+	session.sendWg.Wait()
+	close(session.sendQueue)
 	conn.Close()
 }
 
