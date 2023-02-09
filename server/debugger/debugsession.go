@@ -692,9 +692,9 @@ func (s *session) stackFrames() []dap.StackFrame {
 	return stackFrames
 }
 
-func (s *session) newStackFrame(x ast.HasPosition, location common.Location) dap.StackFrame {
-	startPos := x.StartPosition()
-	endPos := x.EndPosition(nil)
+func (s *session) newStackFrame(positioned ast.HasPosition, location common.Location) dap.StackFrame {
+	startPos := positioned.StartPosition()
+	endPos := positioned.EndPosition(nil)
 
 	locationString := locationPath(location)
 	if location.String() == s.scriptID {
