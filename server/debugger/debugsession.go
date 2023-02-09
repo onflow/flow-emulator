@@ -99,267 +99,196 @@ func (s *session) dispatchRequest(request dap.Message) {
 	switch request := request.(type) {
 
 	case *dap.InitializeRequest:
-
-		// TODO:  only allow one debug session at a time
-		s.debugger = interpreter.NewDebugger()
-
-		s.send(&dap.InitializeResponse{
-			Response: newDAPSuccessResponse(request.GetRequest()),
-			Body: dap.Capabilities{
-				SupportsConfigurationDoneRequest: true,
-			},
-		})
-
-		s.send(&dap.InitializedEvent{
-			Event: newDAPEvent("initialized"),
-		})
+		s.handleInitialize(request)
 
 	case *dap.SetBreakpointsRequest:
-		path := request.Arguments.Source.Path
+		s.handleSetBreakpointsRequest(request)
 
-		if path == s.scriptLocation.String() {
-			path = s.scriptID
-		}
+	case *dap.DisconnectRequest:
+		s.handleDisconnectRequest(request)
 
-		location, err := pathLocation(path)
-		if err != nil {
-			s.send(newDAPErrorResponse(
-				request.Request,
-				dap.ErrorMessage{
-					Format: "cannot add breakpoints for path: {path}",
-					Variables: map[string]string{
-						"path": path,
-					},
-				},
-			))
-			break
-		}
+	case *dap.AttachRequest:
+		s.handleAttachRequest(request)
 
-		s.debugger.ClearBreakpointsForLocation(location)
+	case *dap.LaunchRequest:
+		s.handleLaunchRequest(request)
 
-		requestBreakpoints := request.Arguments.Breakpoints
+	case *dap.ConfigurationDoneRequest:
+		s.handleConfigurationDoneRequest(request)
 
-		responseBreakpoints := make([]dap.Breakpoint, 0, len(requestBreakpoints))
+	case *dap.ThreadsRequest:
+		s.handleThreadsRequest(request)
 
-		for _, requestBreakpoint := range requestBreakpoints {
-			s.debugger.AddBreakpoint(location, uint(requestBreakpoint.Line))
+	case *dap.PauseRequest:
+		s.handlePauseRequest(request)
 
-			responseBreakpoints = append(
-				responseBreakpoints,
-				dap.Breakpoint{
-					Source: &dap.Source{
-						Path: request.Arguments.Source.Path,
-					},
-					// TODO:
-					Verified: true,
-				},
+	case *dap.NextRequest:
+		s.handleNextRequest(request)
+
+	case *dap.StepInRequest:
+		s.handleStepInRequest(request)
+
+	case *dap.StepOutRequest:
+		s.handleStepOutRequest(request)
+
+	case *dap.StackTraceRequest:
+		s.handleStackTraceRequest(request)
+
+	case *dap.SourceRequest:
+		s.handleSourceRequest(request)
+
+	case *dap.ContinueRequest:
+		s.handleContinueRequest(request)
+
+	case *dap.EvaluateRequest:
+		s.handleEvaluateRequest(request)
+
+	case *dap.ScopesRequest:
+		s.handleScopesRequest(request)
+
+	case *dap.VariablesRequest:
+		s.handleVariablesRequest(request)
+	}
+}
+
+func (s *session) handleVariablesRequest(request *dap.VariablesRequest) {
+	if s.stop == nil {
+		s.send(newDAPErrorResponse(request.Request, dap.ErrorMessage{
+			Format: "invalid request",
+		}))
+		return
+	}
+
+	variableRequested := request.Arguments.VariablesReference
+	responseVariables := make([]dap.Variable, 0)
+
+	inter := s.stop.Interpreter
+
+	switch ScopeIdentifier(variableRequested) {
+
+	case ScopeIdentifierLocal:
+		//reset variables
+		s.variableHandleCounter = 0
+		s.variables = make(map[int]any, 0)
+
+		activation := s.debugger.CurrentActivation(inter)
+		location := s.stop.Interpreter.Location
+		functionValues := activation.FunctionValues()
+
+		for name, variable := range functionValues {
+
+			// TODO: generalize exclusion of built-ins / standard library definitions
+
+			if location.String() == s.scriptID && name == "self" {
+				continue
+			}
+			if name == "BLS" || name == "RLP" {
+				continue
+			}
+
+			value := variable.GetValue()
+
+			cadenceValue, err := runtime.ExportValue(value, inter, interpreter.EmptyLocationRange)
+			if err != nil {
+				//	panic(err)
+				continue
+			}
+			variable := s.convertValueToDAPVariable(name, cadenceValue)
+			responseVariables = append(
+				responseVariables,
+				variable,
 			)
 		}
 
-		s.send(&dap.SetBreakpointsResponse{
-			Response: newDAPSuccessResponse(request.GetRequest()),
-			Body: dap.SetBreakpointsResponseBody{
-				Breakpoints: responseBreakpoints,
-			},
-		})
+	case ScopeIdentifierStorage:
+		index := 1
+		for {
+			account, err := s.backend.GetEmulator().GetAccountByIndex(uint(index))
+			if err != nil { //end of accounts
+				break
+			}
 
-	case *dap.DisconnectRequest:
-		s.debugger.Continue()
-		s.backend.GetEmulator().EndDebugging()
-		s.configurationDone = false
-		s.launchRequested = false
-		s.send(&dap.DisconnectResponse{
-			Response: newDAPSuccessResponse(request.GetRequest()),
-		})
-
-	case *dap.AttachRequest:
-		s.targetDepth = 1
-		s.stopOnEntry = true
-		s.debugger = interpreter.NewDebugger()
-		s.run()
-
-		s.send(&dap.LaunchResponse{
-			Response: newDAPSuccessResponse(request.GetRequest()),
-		})
-
-	case *dap.LaunchRequest:
-		// TODO: only allow one program at a time
-		s.debugger = interpreter.NewDebugger()
-		s.targetDepth = 1
-
-		var args map[string]any
-		_ = json.Unmarshal(request.Arguments, &args)
-
-		programArg, ok := args["program"]
-		if !ok {
-			s.send(newDAPErrorResponse(
-				request.Request,
-				dap.ErrorMessage{
-					Format:   "Missing program",
-					ShowUser: true,
+			variable := dap.Variable{
+				Name:  account.Address.String(),
+				Value: "FlowAccount",
+				Type:  "FlowAccount",
+				PresentationHint: dap.VariablePresentationHint{
+					Kind:       "class",
+					Visibility: "public",
 				},
-			))
-			break
-		}
-		b, _ := os.ReadFile(programArg.(string))
-		s.code = string(b)
-		stopOnEntryArg := args["stopOnEntry"]
-		s.stopOnEntry, _ = stopOnEntryArg.(bool)
-
-		scriptID := sdk.Identifier(flowgo.MakeIDFromFingerPrint([]byte(s.code)))
-
-		s.scriptID = hex.EncodeToString(scriptID[:])
-		s.scriptLocation = common.StringLocation(programArg.(string))
-
-		s.launchRequested = true
-
-		s.send(&dap.LaunchResponse{
-			Response: newDAPSuccessResponse(request.GetRequest()),
-		})
-
-		if s.configurationDone && !s.launched {
-			s.run()
+				VariablesReference: s.storeVariable(account),
+			}
+			index++
+			responseVariables = append(
+				responseVariables,
+				variable,
+			)
 		}
 
-	case *dap.ConfigurationDoneRequest:
-		s.configurationDone = true
+	default:
+		valueRequested := s.variables[variableRequested]
+		switch value := valueRequested.(type) {
 
-		if s.launchRequested && !s.launched {
-			s.run()
+		case *sdk.Account:
+			storage := inter.SharedState.Config.Storage.GetStorageMap(
+				common.Address(value.Address),
+				common.PathDomainStorage.Identifier(),
+				false,
+			)
+			responseVariables = s.convertStorageMapToDAPVariables(inter, storage)
+
+		case interpreter.Value:
+
+		case cadence.Value:
+			responseVariables = s.convertCadenceValueMembersToDAPVariables(value)
 		}
 
-		s.send(&dap.ConfigurationDoneResponse{
-			Response: newDAPSuccessResponse(request.GetRequest()),
-		})
+	}
 
-	case *dap.ThreadsRequest:
-		s.send(&dap.ThreadsResponse{
-			Response: newDAPSuccessResponse(request.GetRequest()),
-			Body: dap.ThreadsResponseBody{
-				Threads: []dap.Thread{
-					{
-						Id:   1,
-						Name: "Emulator",
-					},
+	s.send(&dap.VariablesResponse{
+		Response: newDAPSuccessResponse(request.GetRequest()),
+		Body: dap.VariablesResponseBody{
+			Variables: responseVariables,
+		},
+	})
+}
+
+func (s *session) handleScopesRequest(request *dap.ScopesRequest) {
+	// TODO: return more fine-grained scopes
+
+	s.send(&dap.ScopesResponse{
+		Response: newDAPSuccessResponse(request.GetRequest()),
+		Body: dap.ScopesResponseBody{
+			Scopes: []dap.Scope{
+				{
+					Name:               "Variables",
+					PresentationHint:   "locals",
+					VariablesReference: int(ScopeIdentifierLocal),
+				},
+				{
+					Name:               "Storage",
+					PresentationHint:   "registers",
+					VariablesReference: int(ScopeIdentifierStorage),
 				},
 			},
-		})
+		},
+	})
+}
 
-	case *dap.PauseRequest:
-		s.debugger.RequestPause()
+func (s *session) handleEvaluateRequest(request *dap.EvaluateRequest) {
+	if s.stop == nil {
+		s.send(newDAPErrorResponse(request.Request, dap.ErrorMessage{
+			Format: "invalid request",
+		}))
+		return
+	}
 
-		s.send(&dap.PauseResponse{
-			Response: newDAPSuccessResponse(request.GetRequest()),
-		})
+	variableName := request.Arguments.Expression
 
-	case *dap.NextRequest:
+	activation := s.debugger.CurrentActivation(s.stop.Interpreter)
 
-		currentDepth := len(s.stop.Interpreter.CallStack())
-		s.targetDepth = currentDepth
-
-		s.step()
-
-		s.send(&dap.StepOutResponse{
-			Response: newDAPSuccessResponse(request.GetRequest()),
-		})
-
-	case *dap.StepInRequest:
-		s.targetDepth = -1
-		s.step()
-
-		s.send(&dap.StepInResponse{
-			Response: newDAPSuccessResponse(request.GetRequest()),
-		})
-
-	case *dap.StepOutRequest:
-		currentDepth := len(s.stop.Interpreter.CallStack())
-		s.targetDepth = currentDepth - 1
-
-		s.step()
-		s.send(&dap.StepOutResponse{
-			Response: newDAPSuccessResponse(request.GetRequest()),
-		})
-
-	case *dap.StackTraceRequest:
-		if s.stop == nil {
-			s.send(newDAPErrorResponse(request.Request, dap.ErrorMessage{
-				Format: "invalid request",
-			}))
-			return
-		}
-
-		stackFrames := s.stackFrames()
-
-		s.send(&dap.StackTraceResponse{
-			Response: newDAPSuccessResponse(request.GetRequest()),
-			Body: dap.StackTraceResponseBody{
-				StackFrames: stackFrames,
-			},
-		})
-
-	case *dap.SourceRequest:
-		path := request.Arguments.Source.Path
-
-		code := s.pathCode(path)
-
-		if code == "" {
-			s.send(newDAPErrorResponse(
-				request.Request,
-				dap.ErrorMessage{
-					Format: "unknown source: {path}",
-					Variables: map[string]string{
-						"path": path,
-					},
-				},
-			))
-		} else {
-			s.send(&dap.SourceResponse{
-				Response: newDAPSuccessResponse(request.GetRequest()),
-				Body: dap.SourceResponseBody{
-					Content: code,
-				},
-			})
-		}
-
-	case *dap.ContinueRequest:
-		s.stop = nil
-		s.debugger.Continue()
-
-		s.send(&dap.ContinueResponse{
-			Response: newDAPSuccessResponse(request.GetRequest()),
-			Body: dap.ContinueResponseBody{
-				AllThreadsContinued: true,
-			},
-		})
-
-		// NOTE: ContinuedEvent not expected:
-		//   Please note: a debug adapter is not expected to send this event in response
-		//   to a request that implies that execution continues, e.g. ‘launch’ or ‘continue’.
-		//   It is only necessary to send a ‘continued’ event if there was no previous request that implied this.
-
-	case *dap.EvaluateRequest:
-		if s.stop == nil {
-			s.send(newDAPErrorResponse(request.Request, dap.ErrorMessage{
-				Format: "invalid request",
-			}))
-			return
-		}
-
-		variableName := request.Arguments.Expression
-
-		activation := s.debugger.CurrentActivation(s.stop.Interpreter)
-
-		variable := activation.Find(variableName)
-		if variable != nil {
-			value := variable.GetValue()
-			s.send(&dap.EvaluateResponse{
-				Response: newDAPSuccessResponse(request.GetRequest()),
-				Body: dap.EvaluateResponseBody{
-					Result: value.String(),
-				},
-			})
-		}
-
+	variable := activation.Find(variableName)
+	if variable == nil {
 		s.send(newDAPErrorResponse(
 			request.Request,
 			dap.ErrorMessage{
@@ -369,129 +298,271 @@ func (s *session) dispatchRequest(request dap.Message) {
 				},
 			},
 		))
+		return
+	}
 
-	case *dap.ScopesRequest:
-		// TODO: return more fine-grained scopes
+	value := variable.GetValue()
+	s.send(&dap.EvaluateResponse{
+		Response: newDAPSuccessResponse(request.GetRequest()),
+		Body: dap.EvaluateResponseBody{
+			Result: value.String(),
+		},
+	})
+}
 
-		s.send(&dap.ScopesResponse{
-			Response: newDAPSuccessResponse(request.GetRequest()),
-			Body: dap.ScopesResponseBody{
-				Scopes: []dap.Scope{
-					{
-						Name:               "Variables",
-						PresentationHint:   "locals",
-						VariablesReference: int(ScopeIdentifierLocal),
-					},
-					{
-						Name:               "Storage",
-						PresentationHint:   "registers",
-						VariablesReference: int(ScopeIdentifierStorage),
-					},
+func (s *session) handleContinueRequest(request *dap.ContinueRequest) {
+	s.stop = nil
+	s.debugger.Continue()
+
+	s.send(&dap.ContinueResponse{
+		Response: newDAPSuccessResponse(request.GetRequest()),
+		Body: dap.ContinueResponseBody{
+			AllThreadsContinued: true,
+		},
+	})
+
+	// NOTE: ContinuedEvent not expected:
+	//   Please note: a debug adapter is not expected to send this event in response
+	//   to a request that implies that execution continues, e.g. ‘launch’ or ‘continue’.
+	//   It is only necessary to send a ‘continued’ event if there was no previous request that implied this.
+
+}
+
+func (s *session) handleSourceRequest(request *dap.SourceRequest) {
+	path := request.Arguments.Source.Path
+
+	code := s.pathCode(path)
+
+	if code == "" {
+		s.send(newDAPErrorResponse(
+			request.Request,
+			dap.ErrorMessage{
+				Format: "unknown source: {path}",
+				Variables: map[string]string{
+					"path": path,
 				},
 			},
-		})
-
-	case *dap.VariablesRequest:
-		if s.stop == nil {
-			s.send(newDAPErrorResponse(request.Request, dap.ErrorMessage{
-				Format: "invalid request",
-			}))
-			return
-		}
-
-		variableRequested := request.Arguments.VariablesReference
-		responseVariables := make([]dap.Variable, 0)
-
-		inter := s.stop.Interpreter
-
-		switch ScopeIdentifier(variableRequested) {
-
-		case ScopeIdentifierLocal:
-			//reset variables
-			s.variableHandleCounter = 0
-			s.variables = make(map[int]any, 0)
-
-			activation := s.debugger.CurrentActivation(inter)
-			location := s.stop.Interpreter.Location
-			functionValues := activation.FunctionValues()
-
-			for name, variable := range functionValues {
-
-				// TODO: generalize exclusion of built-ins / standard library definitions
-
-				if location.String() == s.scriptID && name == "self" {
-					continue
-				}
-				if name == "BLS" || name == "RLP" {
-					continue
-				}
-
-				value := variable.GetValue()
-
-				cadenceValue, err := runtime.ExportValue(value, inter, interpreter.EmptyLocationRange)
-				if err != nil {
-					//	panic(err)
-					continue
-				}
-				variable := s.convertValueToDAPVariable(name, cadenceValue)
-				responseVariables = append(
-					responseVariables,
-					variable,
-				)
-			}
-
-		case ScopeIdentifierStorage:
-			index := 1
-			for {
-				account, err := s.backend.GetEmulator().GetAccountByIndex(uint(index))
-				if err != nil { //end of accounts
-					break
-				}
-
-				variable := dap.Variable{
-					Name:  account.Address.String(),
-					Value: "FlowAccount",
-					Type:  "FlowAccount",
-					PresentationHint: dap.VariablePresentationHint{
-						Kind:       "class",
-						Visibility: "public",
-					},
-					VariablesReference: s.storeVariable(account),
-				}
-				index++
-				responseVariables = append(
-					responseVariables,
-					variable,
-				)
-			}
-
-		default:
-			valueRequested := s.variables[variableRequested]
-			switch value := valueRequested.(type) {
-
-			case *sdk.Account:
-				storage := inter.SharedState.Config.Storage.GetStorageMap(
-					common.Address(value.Address),
-					common.PathDomainStorage.Identifier(),
-					false,
-				)
-				responseVariables = s.convertStorageMapToDAPVariables(inter, storage)
-
-			case interpreter.Value:
-
-			case cadence.Value:
-				responseVariables = s.convertCadenceValueMembersToDAPVariables(value)
-			}
-
-		}
-
-		s.send(&dap.VariablesResponse{
+		))
+	} else {
+		s.send(&dap.SourceResponse{
 			Response: newDAPSuccessResponse(request.GetRequest()),
-			Body: dap.VariablesResponseBody{
-				Variables: responseVariables,
+			Body: dap.SourceResponseBody{
+				Content: code,
 			},
 		})
 	}
+}
+
+func (s *session) handleStackTraceRequest(request *dap.StackTraceRequest) {
+	if s.stop == nil {
+		s.send(newDAPErrorResponse(request.Request, dap.ErrorMessage{
+			Format: "invalid request",
+		}))
+		return
+	}
+
+	stackFrames := s.stackFrames()
+
+	s.send(&dap.StackTraceResponse{
+		Response: newDAPSuccessResponse(request.GetRequest()),
+		Body: dap.StackTraceResponseBody{
+			StackFrames: stackFrames,
+		},
+	})
+}
+
+func (s *session) handleStepOutRequest(request *dap.StepOutRequest) {
+	currentDepth := len(s.stop.Interpreter.CallStack())
+	s.targetDepth = currentDepth - 1
+
+	s.step()
+
+	s.send(&dap.StepOutResponse{
+		Response: newDAPSuccessResponse(request.GetRequest()),
+	})
+}
+
+func (s *session) handleStepInRequest(request *dap.StepInRequest) {
+	s.targetDepth = -1
+
+	s.step()
+
+	s.send(&dap.StepInResponse{
+		Response: newDAPSuccessResponse(request.GetRequest()),
+	})
+}
+
+func (s *session) handleNextRequest(request *dap.NextRequest) {
+	currentDepth := len(s.stop.Interpreter.CallStack())
+	s.targetDepth = currentDepth
+
+	s.step()
+
+	s.send(&dap.NextResponse{
+		Response: newDAPSuccessResponse(request.GetRequest()),
+	})
+}
+
+func (s *session) handlePauseRequest(request *dap.PauseRequest) {
+	s.debugger.RequestPause()
+
+	s.send(&dap.PauseResponse{
+		Response: newDAPSuccessResponse(request.GetRequest()),
+	})
+}
+
+func (s *session) handleThreadsRequest(request *dap.ThreadsRequest) {
+	s.send(&dap.ThreadsResponse{
+		Response: newDAPSuccessResponse(request.GetRequest()),
+		Body: dap.ThreadsResponseBody{
+			Threads: []dap.Thread{
+				{
+					Id:   1,
+					Name: "Emulator",
+				},
+			},
+		},
+	})
+}
+
+func (s *session) handleConfigurationDoneRequest(request *dap.ConfigurationDoneRequest) {
+	s.configurationDone = true
+
+	if s.launchRequested && !s.launched {
+		s.run()
+	}
+
+	s.send(&dap.ConfigurationDoneResponse{
+		Response: newDAPSuccessResponse(request.GetRequest()),
+	})
+}
+
+func (s *session) handleLaunchRequest(request *dap.LaunchRequest) {
+	// TODO: only allow one program at a time
+	s.debugger = interpreter.NewDebugger()
+	s.targetDepth = 1
+
+	var args map[string]any
+	_ = json.Unmarshal(request.Arguments, &args)
+
+	programArg, ok := args["program"]
+	if !ok {
+		s.send(newDAPErrorResponse(
+			request.Request,
+			dap.ErrorMessage{
+				Format:   "Missing program",
+				ShowUser: true,
+			},
+		))
+		return
+	}
+
+	b, _ := os.ReadFile(programArg.(string))
+	s.code = string(b)
+	stopOnEntryArg := args["stopOnEntry"]
+	s.stopOnEntry, _ = stopOnEntryArg.(bool)
+
+	scriptID := sdk.Identifier(flowgo.MakeIDFromFingerPrint([]byte(s.code)))
+
+	s.scriptID = hex.EncodeToString(scriptID[:])
+	s.scriptLocation = common.StringLocation(programArg.(string))
+
+	s.launchRequested = true
+
+	s.send(&dap.LaunchResponse{
+		Response: newDAPSuccessResponse(request.GetRequest()),
+	})
+
+	if s.configurationDone && !s.launched {
+		s.run()
+	}
+}
+
+func (s *session) handleAttachRequest(request *dap.AttachRequest) {
+	s.targetDepth = 1
+	s.stopOnEntry = true
+	s.debugger = interpreter.NewDebugger()
+	s.run()
+
+	s.send(&dap.LaunchResponse{
+		Response: newDAPSuccessResponse(request.GetRequest()),
+	})
+}
+
+func (s *session) handleDisconnectRequest(request *dap.DisconnectRequest) {
+	s.debugger.Continue()
+	s.backend.GetEmulator().EndDebugging()
+	s.configurationDone = false
+	s.launchRequested = false
+	s.send(&dap.DisconnectResponse{
+		Response: newDAPSuccessResponse(request.GetRequest()),
+	})
+}
+
+func (s *session) handleSetBreakpointsRequest(request *dap.SetBreakpointsRequest) {
+	path := request.Arguments.Source.Path
+
+	if path == s.scriptLocation.String() {
+		path = s.scriptID
+	}
+
+	location, err := pathLocation(path)
+	if err != nil {
+		s.send(newDAPErrorResponse(
+			request.Request,
+			dap.ErrorMessage{
+				Format: "cannot add breakpoints for path: {path}",
+				Variables: map[string]string{
+					"path": path,
+				},
+			},
+		))
+		return
+	}
+
+	s.debugger.ClearBreakpointsForLocation(location)
+
+	requestBreakpoints := request.Arguments.Breakpoints
+
+	responseBreakpoints := make([]dap.Breakpoint, 0, len(requestBreakpoints))
+
+	for _, requestBreakpoint := range requestBreakpoints {
+		s.debugger.AddBreakpoint(location, uint(requestBreakpoint.Line))
+
+		responseBreakpoints = append(
+			responseBreakpoints,
+			dap.Breakpoint{
+				Source: &dap.Source{
+					Path: request.Arguments.Source.Path,
+				},
+				// TODO:
+				Verified: true,
+			},
+		)
+	}
+
+	s.send(&dap.SetBreakpointsResponse{
+		Response: newDAPSuccessResponse(request.GetRequest()),
+		Body: dap.SetBreakpointsResponseBody{
+			Breakpoints: responseBreakpoints,
+		},
+	})
+}
+
+func (s *session) handleInitialize(request *dap.InitializeRequest) {
+	// TODO: only allow one debug session at a time
+	s.debugger = interpreter.NewDebugger()
+
+	s.send(&dap.InitializeResponse{
+		Response: newDAPSuccessResponse(request.GetRequest()),
+		Body: dap.Capabilities{
+			SupportsConfigurationDoneRequest: true,
+		},
+	})
+
+	s.send(&dap.InitializedEvent{
+		Event: newDAPEvent("initialized"),
+	})
 }
 
 func (s *session) convertValueToDAPVariable(name string, value cadence.Value) dap.Variable {
