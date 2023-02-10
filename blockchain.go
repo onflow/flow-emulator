@@ -36,7 +36,6 @@ import (
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	reusableRuntime "github.com/onflow/flow-go/fvm/runtime"
 	"github.com/onflow/flow-go/fvm/state"
-	"github.com/onflow/flow-go/fvm/tracing"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
 
@@ -425,7 +424,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		fvm.WithReusableCadenceRuntimePool(
-			reusableRuntime.NewReusableCadenceRuntimePool(1, runtime.Config{Debugger: blockchain.debugger}),
+			reusableRuntime.NewReusableCadenceRuntimePool(1, runtime.Config{Debugger: blockchain.debugger}, flowgo.Emulator),
 		),
 	}
 
@@ -608,7 +607,7 @@ func (b *Blockchain) newFVMContextFromHeader(header *flowgo.Header) fvm.Context 
 		b.vmCtx,
 		fvm.WithBlockHeader(header),
 		fvm.WithReusableCadenceRuntimePool(
-			reusableRuntime.NewReusableCadenceRuntimePool(1, runtime.Config{Debugger: b.debugger}),
+			reusableRuntime.NewReusableCadenceRuntimePool(1, runtime.Config{Debugger: b.debugger}, flowgo.Emulator),
 		),
 	)
 }
@@ -1115,7 +1114,6 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 
 	env := environment.NewScriptEnvironment(
 		context.Background(),
-		tracing.NewMockTracerSpan(),
 		b.vmCtx.EnvironmentParams,
 		state.NewTransactionState(
 			view,
