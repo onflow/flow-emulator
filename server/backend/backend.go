@@ -47,6 +47,10 @@ type Backend struct {
 	automine bool
 }
 
+func (b *Backend) GetEmulator() Emulator {
+	return b.emulator
+}
+
 // SetEmulator hotswaps emulator for state management.
 func (b *Backend) SetEmulator(emulator Emulator) {
 	b.emulator = emulator
@@ -600,7 +604,11 @@ func (b *Backend) CommitBlock() {
 }
 
 // executeScriptAtBlock is a helper for executing a script at a specific block
-func (b *Backend) executeScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) ([]byte, error) {
+func (b *Backend) executeScriptAtBlock(
+	script []byte,
+	arguments [][]byte,
+	blockHeight uint64,
+) ([]byte, error) {
 	result, err := b.emulator.ExecuteScriptAtBlock(script, arguments, blockHeight)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())

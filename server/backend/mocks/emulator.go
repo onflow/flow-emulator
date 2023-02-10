@@ -8,6 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	interpreter "github.com/onflow/cadence/runtime/interpreter"
 	emulator "github.com/onflow/flow-emulator"
 	types "github.com/onflow/flow-emulator/types"
 	flow "github.com/onflow/flow-go-sdk"
@@ -64,6 +65,18 @@ func (m *MockEmulator) CommitBlock() (*flow0.Block, error) {
 func (mr *MockEmulatorMockRecorder) CommitBlock() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitBlock", reflect.TypeOf((*MockEmulator)(nil).CommitBlock))
+}
+
+// EndDebugging mocks base method.
+func (m *MockEmulator) EndDebugging() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "EndDebugging")
+}
+
+// EndDebugging indicates an expected call of EndDebugging.
+func (mr *MockEmulatorMockRecorder) EndDebugging() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EndDebugging", reflect.TypeOf((*MockEmulator)(nil).EndDebugging))
 }
 
 // ExecuteAndCommitBlock mocks base method.
@@ -172,6 +185,21 @@ func (mr *MockEmulatorMockRecorder) GetAccountAtBlock(arg0, arg1 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountAtBlock", reflect.TypeOf((*MockEmulator)(nil).GetAccountAtBlock), arg0, arg1)
 }
 
+// GetAccountByIndex mocks base method.
+func (m *MockEmulator) GetAccountByIndex(arg0 uint) (*flow.Account, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountByIndex", arg0)
+	ret0, _ := ret[0].(*flow.Account)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountByIndex indicates an expected call of GetAccountByIndex.
+func (mr *MockEmulatorMockRecorder) GetAccountByIndex(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountByIndex", reflect.TypeOf((*MockEmulator)(nil).GetAccountByIndex), arg0)
+}
+
 // GetAccountStorage mocks base method.
 func (m *MockEmulator) GetAccountStorage(arg0 flow.Address) (*emulator.AccountStorage, error) {
 	m.ctrl.T.Helper()
@@ -185,6 +213,21 @@ func (m *MockEmulator) GetAccountStorage(arg0 flow.Address) (*emulator.AccountSt
 func (mr *MockEmulatorMockRecorder) GetAccountStorage(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountStorage", reflect.TypeOf((*MockEmulator)(nil).GetAccountStorage), arg0)
+}
+
+// GetAccountUnsafe mocks base method.
+func (m *MockEmulator) GetAccountUnsafe(arg0 flow.Address) (*flow.Account, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountUnsafe", arg0)
+	ret0, _ := ret[0].(*flow.Account)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountUnsafe indicates an expected call of GetAccountUnsafe.
+func (mr *MockEmulatorMockRecorder) GetAccountUnsafe(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountUnsafe", reflect.TypeOf((*MockEmulator)(nil).GetAccountUnsafe), arg0)
 }
 
 // GetBlockByHeight mocks base method.
@@ -290,4 +333,16 @@ func (m *MockEmulator) GetTransactionResult(arg0 flow.Identifier) (*flow.Transac
 func (mr *MockEmulatorMockRecorder) GetTransactionResult(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionResult", reflect.TypeOf((*MockEmulator)(nil).GetTransactionResult), arg0)
+}
+
+// SetDebugger mocks base method.
+func (m *MockEmulator) SetDebugger(arg0 *interpreter.Debugger) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetDebugger", arg0)
+}
+
+// SetDebugger indicates an expected call of SetDebugger.
+func (mr *MockEmulatorMockRecorder) SetDebugger(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetDebugger", reflect.TypeOf((*MockEmulator)(nil).SetDebugger), arg0)
 }

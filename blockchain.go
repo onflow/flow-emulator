@@ -21,8 +21,7 @@ import (
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
-	"github.com/rs/zerolog"
-
+	"github.com/onflow/flow-go-sdk"
 	sdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
@@ -35,9 +34,11 @@ import (
 	"github.com/onflow/flow-go/fvm/derived"
 	"github.com/onflow/flow-go/fvm/environment"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
+	reusableRuntime "github.com/onflow/flow-go/fvm/runtime"
 	"github.com/onflow/flow-go/fvm/state"
 	"github.com/onflow/flow-go/fvm/tracing"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/convert"
 	sdkconvert "github.com/onflow/flow-emulator/convert/sdk"
@@ -64,6 +65,11 @@ type Blockchain struct {
 	transactionValidator *access.TransactionValidator
 
 	serviceKey ServiceKey
+
+	debugger               *interpreter.Debugger
+	activeDebuggingSession bool
+	currentCode            string
+	currentScriptID        string
 }
 
 type ServiceKey struct {
@@ -379,15 +385,17 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	}
 
 	b := &Blockchain{
-		storage:    conf.GetStore(),
-		serviceKey: conf.GetServiceKey(),
+		storage:                conf.GetStore(),
+		serviceKey:             conf.GetServiceKey(),
+		debugger:               nil,
+		activeDebuggingSession: false,
 	}
 
 	var err error
 
 	blocks := newBlocks(b)
 
-	b.vm, b.vmCtx, err = configureFVM(conf, blocks)
+	b.vm, b.vmCtx, err = configureFVM(b, conf, blocks)
 	if err != nil {
 		return nil, err
 	}
@@ -403,7 +411,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	return b, nil
 }
 
-func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {
+func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {
 	vm := fvm.NewVirtualMachine()
 
 	fvmOptions := []fvm.Option{
@@ -416,6 +424,9 @@ func configureFVM(conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context
 		fvm.WithCadenceLogging(true),
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
+		fvm.WithReusableCadenceRuntimePool(
+			reusableRuntime.NewReusableCadenceRuntimePool(1, runtime.Config{Debugger: blockchain.debugger}),
+		),
 	}
 
 	if !conf.TransactionValidationEnabled {
@@ -592,6 +603,20 @@ func configureTransactionValidator(conf config, blocks *blocks) *access.Transact
 	)
 }
 
+func (b *Blockchain) newFVMContextFromHeader(header *flowgo.Header) fvm.Context {
+	return fvm.NewContextFromParent(
+		b.vmCtx,
+		fvm.WithBlockHeader(header),
+		fvm.WithReusableCadenceRuntimePool(
+			reusableRuntime.NewReusableCadenceRuntimePool(1, runtime.Config{Debugger: b.debugger}),
+		),
+	)
+}
+
+func (b *Blockchain) CurrentScript() (string, string) {
+	return b.currentScriptID, b.currentCode
+}
+
 // ServiceKey returns the service private key for this blockchain.
 func (b *Blockchain) ServiceKey() ServiceKey {
 	serviceAccount, err := b.getAccount(sdkconvert.SDKAddressToFlow(b.serviceKey.Address))
@@ -763,6 +788,47 @@ func (b *Blockchain) GetTransactionResult(ID sdk.Identifier) (*sdk.TransactionRe
 }
 
 // GetAccount returns the account for the given address.
+func (b *Blockchain) GetAccountByIndex(index uint) (*sdk.Account, error) {
+
+	generator := flow.NewAddressGenerator(sdk.ChainID(b.vmCtx.Chain.ChainID()))
+
+	generator.SetIndex(index)
+
+	flowAddress := sdkconvert.SDKAddressToFlow(generator.Address())
+
+	account, err := b.getAccount(flowAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	sdkAccount, err := sdkconvert.FlowAccountToSDK(*account)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sdkAccount, nil
+}
+
+// Deprecated: Needed for the debugger right now, do NOT use for other purposes.
+// TODO: refactor
+func (b *Blockchain) GetAccountUnsafe(address sdk.Address) (*sdk.Account, error) {
+
+	flowAddress := sdkconvert.SDKAddressToFlow(address)
+
+	account, err := b.getAccount(flowAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	sdkAccount, err := sdkconvert.FlowAccountToSDK(*account)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sdkAccount, nil
+}
+
+// GetAccount returns the account for the given address.
 func (b *Blockchain) GetAccount(address sdk.Address) (*sdk.Account, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
@@ -901,10 +967,7 @@ func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 	}
 
 	header := b.pendingBlock.Block().Header
-	blockContext := fvm.NewContextFromParent(
-		b.vmCtx,
-		fvm.WithBlockHeader(header),
-	)
+	blockContext := b.newFVMContextFromHeader(header)
 
 	// cannot execute a block that has already executed
 	if b.pendingBlock.ExecutionComplete() {
@@ -932,11 +995,7 @@ func (b *Blockchain) ExecuteNextTransaction() (*types.TransactionResult, error) 
 	defer b.mu.Unlock()
 
 	header := b.pendingBlock.Block().Header
-	blockContext := fvm.NewContextFromParent(
-		b.vmCtx,
-		fvm.WithBlockHeader(header),
-	)
-
+	blockContext := b.newFVMContextFromHeader(header)
 	return b.executeNextTransaction(blockContext)
 }
 
@@ -958,7 +1017,11 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 			txBody *flowgo.TransactionBody,
 		) (*fvm.TransactionProcedure, error) {
 			tx := fvm.Transaction(txBody, txIndex)
-
+			b.currentCode = string(txBody.Script)
+			b.currentScriptID = tx.ID.String()
+			if b.debugger != nil {
+				b.debugger.RequestPause()
+			}
 			err := b.vm.Run(ctx, tx, ledgerView)
 			if err != nil {
 				return nil, err
@@ -1153,7 +1216,10 @@ func (b *Blockchain) ResetPendingBlock() error {
 }
 
 // ExecuteScript executes a read-only script against the world state and returns the result.
-func (b *Blockchain) ExecuteScript(script []byte, arguments [][]byte) (*types.ScriptResult, error) {
+func (b *Blockchain) ExecuteScript(
+	script []byte,
+	arguments [][]byte,
+) (*types.ScriptResult, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -1165,7 +1231,11 @@ func (b *Blockchain) ExecuteScript(script []byte, arguments [][]byte) (*types.Sc
 	return b.ExecuteScriptAtBlock(script, arguments, latestBlock.Header.Height)
 }
 
-func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) (*types.ScriptResult, error) {
+func (b *Blockchain) ExecuteScriptAtBlock(
+	script []byte,
+	arguments [][]byte,
+	blockHeight uint64,
+) (*types.ScriptResult, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -1177,21 +1247,20 @@ func (b *Blockchain) ExecuteScriptAtBlock(script []byte, arguments [][]byte, blo
 	requestedLedgerView := b.storage.LedgerViewByHeight(context.Background(), requestedBlock.Header.Height)
 
 	header := requestedBlock.Header
-
-	blockContext := fvm.NewContextFromParent(
-		b.vmCtx,
-		fvm.WithBlockHeader(header),
-	)
+	blockContext := b.newFVMContextFromHeader(header)
 
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
-
+	b.currentCode = string(script)
+	b.currentScriptID = scriptProc.ID.String()
+	if b.debugger != nil {
+		b.debugger.RequestPause()
+	}
 	err = b.vm.Run(blockContext, scriptProc, requestedLedgerView)
 	if err != nil {
 		return nil, err
 	}
 
-	hasher := hash.NewSHA3_256()
-	scriptID := sdk.HashToID(hasher.ComputeHash(script))
+	scriptID := sdk.Identifier(flowgo.MakeIDFromFingerPrint(script))
 
 	events, err := sdkconvert.FlowEventsToSDK(scriptProc.Events)
 	if err != nil {
@@ -1350,4 +1419,12 @@ func (b *Blockchain) testAlternativeHashAlgo(sig flowgo.TransactionSignature, ms
 	}
 
 	return nil
+}
+
+func (b *Blockchain) SetDebugger(debugger *interpreter.Debugger) {
+	b.debugger = debugger
+}
+
+func (b *Blockchain) EndDebugging() {
+	b.SetDebugger(nil)
 }

@@ -33,6 +33,7 @@ import (
 
 	emulator "github.com/onflow/flow-emulator"
 	"github.com/onflow/flow-emulator/server/backend"
+	"github.com/onflow/flow-emulator/server/debugger"
 	"github.com/onflow/flow-emulator/storage"
 )
 
@@ -50,6 +51,7 @@ type EmulatorServer struct {
 	rest       *RestServer
 	admin      *HTTPServer
 	blocks     graceland.Routine
+	debugger   graceland.Routine
 	blockchain *emulator.Blockchain
 }
 
@@ -84,6 +86,7 @@ type Config struct {
 	GRPCPort                  int
 	GRPCDebug                 bool
 	AdminPort                 int
+	DebuggerPort              int
 	RESTPort                  int
 	RESTDebug                 bool
 	HTTPHeaders               []HTTPHeader
@@ -192,6 +195,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 		rest:       restServer,
 		admin:      nil,
 		blockchain: blockchain,
+		debugger:   debugger.New(logger, be, conf.DebuggerPort),
 	}
 
 	server.admin = NewAdminServer(logger, server, be, &store, grpcServer, livenessTicker, conf.Host, conf.AdminPort, conf.HTTPHeaders)
@@ -246,6 +250,11 @@ func (s *EmulatorServer) Start() {
 		Int("port", s.config.AdminPort).
 		Msgf("🌱  Starting admin server on port %d", s.config.AdminPort)
 	s.group.Add(s.admin)
+
+	s.logger.Info().
+		Int("port", s.config.DebuggerPort).
+		Msgf("🌱  Starting debugger on port %d", s.config.DebuggerPort)
+	s.group.Add(s.debugger)
 
 	// only start blocks ticker if it exists
 	if s.blocks != nil {

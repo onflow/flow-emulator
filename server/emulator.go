@@ -28,9 +28,10 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-emulator/storage"
-	"golang.org/x/exp/slices"
 )
 
 type BlockResponse struct {
