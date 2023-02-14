@@ -424,7 +424,12 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		fvm.WithReusableCadenceRuntimePool(
-			reusableRuntime.NewReusableCadenceRuntimePool(1, runtime.Config{Debugger: blockchain.debugger}, flowgo.Emulator),
+			reusableRuntime.NewReusableCadenceRuntimePool(
+				1,
+				runtime.Config{
+					Debugger:              blockchain.debugger,
+					AccountLinkingEnabled: true,
+				}),
 		),
 	}
 
@@ -607,7 +612,9 @@ func (b *Blockchain) newFVMContextFromHeader(header *flowgo.Header) fvm.Context 
 		b.vmCtx,
 		fvm.WithBlockHeader(header),
 		fvm.WithReusableCadenceRuntimePool(
-			reusableRuntime.NewReusableCadenceRuntimePool(1, runtime.Config{Debugger: b.debugger}, flowgo.Emulator),
+			reusableRuntime.NewReusableCadenceRuntimePool(
+				1,
+				runtime.Config{Debugger: b.debugger, AccountLinkingEnabled: true}),
 		),
 	)
 }
@@ -786,7 +793,7 @@ func (b *Blockchain) GetTransactionResult(ID sdk.Identifier) (*sdk.TransactionRe
 	return &result, nil
 }
 
-// GetAccount returns the account for the given address.
+// GetAccountByIndex returns the account for the given address.
 func (b *Blockchain) GetAccountByIndex(index uint) (*sdk.Account, error) {
 
 	generator := flow.NewAddressGenerator(sdk.ChainID(b.vmCtx.Chain.ChainID()))
