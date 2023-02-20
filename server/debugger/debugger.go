@@ -117,6 +117,8 @@ func (d *Debugger) handleConnection(conn net.Conn) {
 func (d *Debugger) Stop() {
 	d.stopOnce.Do(func() {
 		close(d.quit)
-		d.listener.Close()
+		if d.listener != nil {
+			d.listener.Close()
+		}
 	})
 }
