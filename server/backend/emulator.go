@@ -55,7 +55,7 @@ type Emulator interface {
 	ExecuteScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) (*types.ScriptResult, error)
 	GetAccountStorage(address sdk.Address) (*emulator.AccountStorage, error)
 
-	ListSnapshots() ([]string, error)
+	Snapshots() ([]string, error)
 	CreateSnapshot(name string) error
 	LoadSnapshot(name string) error
 }

@@ -100,7 +100,8 @@ type Store interface {
 }
 type SnapshotProvider interface {
 	Snapshots() ([]string, error)
-	JumpToSnapshot(snapshotName string, createIfNotExists bool) error
+	CreateSnapshot(snapshotName string) error
+	LoadSnapshot(snapshotName string) error
 	SupportSnapshotsWithCurrentConfig() bool
 }
 
