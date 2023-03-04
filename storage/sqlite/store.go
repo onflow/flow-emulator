@@ -99,13 +99,13 @@ func (s *Store) LoadSnapshot(name string) error {
 		}
 
 		if count == 0 {
-			return fmt.Errorf("Snapshot %s does not exist", name)
+			return fmt.Errorf("snapshot %s does not exist", name)
 		}
 	} else {
 		dbfile = filepath.Join(s.url, fmt.Sprintf("snapshot_%s", name))
 		_, err := os.Stat(dbfile)
 		if os.IsNotExist(err) {
-			return fmt.Errorf("Snapshot %s does not exist", name)
+			return fmt.Errorf("snapshot %s does not exist", name)
 		}
 	}
 
