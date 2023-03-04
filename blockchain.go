@@ -373,6 +373,26 @@ func WithChainID(chainID flowgo.ChainID) Option {
 		c.ChainID = chainID
 	}
 }
+func (b *Blockchain) ReloadBlockchain(conf config) error {
+	var err error
+
+	blocks := newBlocks(b)
+
+	b.vm, b.vmCtx, err = configureFVM(conf, blocks)
+	if err != nil {
+		return err
+	}
+
+	latestBlock, latestLedgerView, err := configureLedger(conf, b.storage, b.vm, b.vmCtx)
+	if err != nil {
+		return err
+	}
+
+	b.pendingBlock = newPendingBlock(latestBlock, latestLedgerView)
+	b.transactionValidator = configureTransactionValidator(conf, blocks)
+
+	return nil
+}
 
 // NewBlockchain instantiates a new emulated blockchain with the provided options.
 func NewBlockchain(opts ...Option) (*Blockchain, error) {
@@ -390,24 +410,36 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		activeDebuggingSession: false,
 	}
 
-	var err error
-
-	blocks := newBlocks(b)
-
-	b.vm, b.vmCtx, err = configureFVM(b, conf, blocks)
+	err := b.ReloadBlockchain(conf)
 	if err != nil {
 		return nil, err
 	}
-
-	latestBlock, latestLedgerView, err := configureLedger(conf, b.storage, b.vm, b.vmCtx)
-	if err != nil {
-		return nil, err
-	}
-
-	b.pendingBlock = newPendingBlock(latestBlock, latestLedgerView)
-	b.transactionValidator = configureTransactionValidator(conf, blocks)
-
 	return b, nil
+
+}
+
+func (b *Blockchain) ListSnapshots() ([]string, error) {
+	snapshotProvider, isSnapshotProvider := b.storage.(storage.SnapshotProvider)
+	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
+		return []string{}, fmt.Errorf("storage doesn't support snapshots")
+	}
+	return snapshotProvider.Snapshots()
+}
+
+func (b *Blockchain) CreateSnapshot(name string) error {
+	snapshotProvider, isSnapshotProvider := b.storage.(storage.SnapshotProvider)
+	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
+		return fmt.Errorf("storage doesn't support snapshots")
+	}
+	return snapshotProvider.JumpToSnapshot(name, true)
+}
+
+func (b *Blockchain) LoadSnapshot(name string) error {
+	snapshotProvider, isSnapshotProvider := b.storage.(storage.SnapshotProvider)
+	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
+		return fmt.Errorf("storage doesn't support snapshots")
+	}
+	return snapshotProvider.JumpToSnapshot(name, false)
 }
 
 func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {

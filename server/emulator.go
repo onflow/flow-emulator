@@ -44,15 +44,13 @@ type EmulatorAPIServer struct {
 	router  *mux.Router
 	server  *EmulatorServer
 	backend *backend.Backend
-	storage storage.Store
 }
 
-func NewEmulatorAPIServer(server *EmulatorServer, backend *backend.Backend, storage storage.Store) *EmulatorAPIServer {
+func NewEmulatorAPIServer(server *EmulatorServer, backend *backend.Backend) *EmulatorAPIServer {
 	router := mux.NewRouter().StrictSlash(true)
 	r := &EmulatorAPIServer{router: router,
 		server:  server,
 		backend: backend,
-		storage: storage,
 	}
 
 	router.HandleFunc("/emulator/newBlock", r.CommitBlock)
@@ -109,18 +107,8 @@ func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 }
 func (m EmulatorAPIServer) SnapshotList(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	snapshotProvider, isSnapshotProvider := m.storage.(storage.SnapshotProvider)
-	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
-		m.server.logger.Error().Msg("State management is not available with current storage backend")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	snapshots, err := snapshotProvider.Snapshots()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
 
+	m.backend.Emulator().
 	bytes, err := json.Marshal(snapshots)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
