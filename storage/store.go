@@ -61,7 +61,7 @@ type Store interface {
 	// LatestBlock returns the block with the highest block height.
 	LatestBlock(ctx context.Context) (flowgo.Block, error)
 
-	// Store stores the block. If the exactly same block is already in a storage, return successfully
+	// StoreBlock  stores the block. If the exactly same block is already in a storage, return successfully
 	StoreBlock(ctx context.Context, block *flowgo.Block) error
 
 	// BlockByID returns the block with the given hash. It is available for
