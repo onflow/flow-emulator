@@ -110,7 +110,6 @@ type KeyGenerator interface {
 	LatestBlock() []byte
 	BlockHeight(height uint64) []byte
 	Identifier(id flowgo.Identifier) []byte
-	Event(blockHeight uint64, txIndex, eventIndex uint32, eventType flowgo.EventType) []byte
 }
 
 type DataGetter interface {
@@ -140,16 +139,6 @@ func (s *DefaultKeyGenerator) BlockHeight(blockHeight uint64) []byte {
 
 func (s *DefaultKeyGenerator) Identifier(id flowgo.Identifier) []byte {
 	return []byte(fmt.Sprintf("%x", id))
-}
-
-func (s *DefaultKeyGenerator) Event(blockHeight uint64, txIndex, eventIndex uint32, eventType flowgo.EventType) []byte {
-	return []byte(fmt.Sprintf(
-		"%032d-%032d-%032d-%s",
-		blockHeight,
-		txIndex,
-		eventIndex,
-		eventType,
-	))
 }
 
 type DefaultStore struct {
