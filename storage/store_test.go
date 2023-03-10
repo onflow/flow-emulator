@@ -27,6 +27,7 @@ import (
 
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/onflow/flow-go/engine/execution/state/delta"
+	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -251,7 +252,7 @@ func TestLedger(t *testing.T) {
 		expected := []byte("bar")
 
 		d := delta.NewDelta()
-		d.Set(owner, key, expected)
+		d.Set(flow.NewRegisterID(owner, key), expected)
 
 		t.Run("should get able to set ledger", func(t *testing.T) {
 			err := store.InsertLedgerDelta(context.Background(), blockHeight, d)
@@ -260,7 +261,7 @@ func TestLedger(t *testing.T) {
 
 		t.Run("should be to get set ledger", func(t *testing.T) {
 			gotLedger := store.LedgerViewByHeight(context.Background(), blockHeight)
-			actual, err := gotLedger.Get(owner, key)
+			actual, err := gotLedger.Get(flow.NewRegisterID(owner, key))
 			assert.NoError(t, err)
 			assert.Equal(t, expected, actual)
 		})
@@ -286,7 +287,7 @@ func TestLedger(t *testing.T) {
 			d := delta.NewDelta()
 			for j := i - 1; j <= i+1; j++ {
 				key := fmt.Sprintf("%d", j)
-				d.Set(owner, key, []byte{byte(i - 1)})
+				d.Set(flow.NewRegisterID(owner, key), []byte{byte(i - 1)})
 			}
 			deltas = append(deltas, d)
 		}
@@ -308,7 +309,7 @@ func TestLedger(t *testing.T) {
 		t.Run("should version the first written block", func(t *testing.T) {
 			gotLedger := store.LedgerViewByHeight(context.Background(), 1)
 			for i := 1; i <= 3; i++ {
-				val, err := gotLedger.Get(owner, fmt.Sprintf("%d", i))
+				val, err := gotLedger.Get(flow.NewRegisterID(owner, fmt.Sprintf("%d", i)))
 				assert.NoError(t, err)
 				assert.Equal(t, []byte{byte(1)}, val)
 			}
@@ -320,13 +321,13 @@ func TestLedger(t *testing.T) {
 				gotLedger := store.LedgerViewByHeight(context.Background(), uint64(block))
 				// The keys 1->N-1 are defined in previous blocks
 				for i := 1; i < block; i++ {
-					val, err := gotLedger.Get(owner, fmt.Sprintf("%d", i))
+					val, err := gotLedger.Get(flow.NewRegisterID(owner, fmt.Sprintf("%d", i)))
 					assert.NoError(t, err)
 					assert.Equal(t, []byte{byte(i)}, val)
 				}
 				// The keys N->N+2 are defined in the queried block
 				for i := block; i <= block+2; i++ {
-					val, err := gotLedger.Get(owner, fmt.Sprintf("%d", i))
+					val, err := gotLedger.Get(flow.NewRegisterID(owner, fmt.Sprintf("%d", i)))
 					assert.NoError(t, err)
 					assert.Equal(t, []byte{byte(block)}, val)
 				}
