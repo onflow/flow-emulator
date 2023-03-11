@@ -1161,11 +1161,11 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		k, v := iterator.Next()
 		for v != nil {
 			exportedValue, err := runtime.ExportValue(v, inter, interpreter.EmptyLocationRange)
-			if err != nil {
-				continue // just skip errored value
+			// just skip errored value
+			if err == nil {
+				values[k] = exportedValue
 			}
 
-			values[k] = exportedValue
 			k, v = iterator.Next()
 		}
 		return values
