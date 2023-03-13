@@ -1108,7 +1108,7 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 			uFix64Value,
 		},
 		{
-			cadence.ConstantSizedArrayType{
+			&cadence.ConstantSizedArrayType{
 				Size:        3,
 				ElementType: cadence.IntType{},
 			},
@@ -1119,7 +1119,7 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 			}),
 		},
 		{
-			cadence.DictionaryType{
+			&cadence.DictionaryType{
 				KeyType:     cadence.StringType{},
 				ElementType: cadence.IntType{},
 			},

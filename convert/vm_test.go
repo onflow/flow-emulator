@@ -48,11 +48,13 @@ func TestVm(t *testing.T) {
 		assert.NoError(t, err)
 
 		tp := &fvm.TransactionProcedure{
-			ID:              flowgo.Identifier(idGenerator.New()),
-			Logs:            []string{"TestLog1", "TestLog2"},
-			Events:          []flowgo.Event{event1, event2},
-			ComputationUsed: 5,
-			Err:             nil,
+			ID: flowgo.Identifier(idGenerator.New()),
+			ProcedureOutput: fvm.ProcedureOutput{
+				Logs:            []string{"TestLog1", "TestLog2"},
+				Events:          []flowgo.Event{event1, event2},
+				ComputationUsed: 5,
+				Err:             nil,
+			},
 		}
 
 		tr, err := convert.VMTransactionResultToEmulator(tp)

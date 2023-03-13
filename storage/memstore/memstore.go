@@ -24,7 +24,8 @@ import (
 	"sync"
 
 	"github.com/onflow/flow-go/engine/execution/state/delta"
-	"github.com/onflow/flow-go/fvm/utils"
+	"github.com/onflow/flow-go/fvm/state"
+	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/onflow/flow-emulator/storage"
@@ -45,7 +46,7 @@ type Store struct {
 	// Transaction results by ID
 	transactionResults map[flowgo.Identifier]types.StorableTransactionResult
 	// Ledger states by block height
-	ledger map[uint64]*utils.MapLedger
+	ledger map[uint64]state.MapStorageSnapshot
 	// events by block height
 	eventsByBlockHeight map[uint64][]flowgo.Event
 	// highest block height
@@ -61,7 +62,7 @@ func New() *Store {
 		collections:         make(map[flowgo.Identifier]flowgo.LightCollection),
 		transactions:        make(map[flowgo.Identifier]flowgo.TransactionBody),
 		transactionResults:  make(map[flowgo.Identifier]types.StorableTransactionResult),
-		ledger:              make(map[uint64]*utils.MapLedger),
+		ledger:              make(map[uint64]state.MapStorageSnapshot),
 		eventsByBlockHeight: make(map[uint64][]flowgo.Event),
 	}
 }
@@ -240,20 +241,7 @@ func (s *Store) TransactionResultByID(
 }
 
 func (s *Store) LedgerViewByHeight(ctx context.Context, blockHeight uint64) *delta.View {
-	return delta.NewView(func(owner, key string) (value flowgo.RegisterValue, err error) {
-
-		// Ledger.Get writes (!), so acquire a write lock!
-		s.mu.Lock()
-		defer s.mu.Unlock()
-
-		ledger, ok := s.ledger[blockHeight]
-		if !ok {
-			return nil, nil
-		}
-
-		return ledger.Get(owner, key)
-	})
-
+	return delta.NewDeltaView(s.ledger[blockHeight])
 }
 
 func (s *Store) EventsByHeight(
@@ -301,23 +289,22 @@ func (s *Store) UnsafeInsertLedgerDelta(blockHeight uint64, delta delta.Delta) e
 }
 
 func (s *Store) insertLedgerDelta(blockHeight uint64, delta delta.Delta) error {
-	var oldLedger *utils.MapLedger
+	var oldLedger state.MapStorageSnapshot
 
 	// use empty ledger if this is the genesis block
 	if blockHeight == 0 {
-		oldLedger = utils.NewMapLedger()
+		oldLedger = state.MapStorageSnapshot{}
 	} else {
 		oldLedger = s.ledger[blockHeight-1]
 	}
 
-	newLedger := utils.NewMapLedger()
+	newLedger := state.MapStorageSnapshot{}
 
 	// copy values from the previous ledger
-	for keyString, oldValue := range oldLedger.Registers {
-		value, exists := delta.Data[keyString]
+	for keyRegister, oldValue := range oldLedger {
+		value, exists := delta.Data[keyRegister]
 		if !exists || value != nil {
-			newLedger.RegisterTouches[keyString] = struct{}{}
-			newLedger.Registers[keyString] = oldValue
+			newLedger[keyRegister] = oldValue
 		}
 	}
 
@@ -325,10 +312,7 @@ func (s *Store) insertLedgerDelta(blockHeight uint64, delta delta.Delta) error {
 	ids, values := delta.RegisterUpdates()
 	for i, value := range values {
 		key := ids[i]
-		err := newLedger.Set(key.Owner, key.Key, value)
-		if err != nil {
-			return err
-		}
+		newLedger[flow.NewRegisterID(key.Owner, key.Key)] = value
 	}
 
 	s.ledger[blockHeight] = newLedger

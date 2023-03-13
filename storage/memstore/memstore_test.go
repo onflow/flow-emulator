@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/onflow/flow-go/engine/execution/state/delta"
+	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -59,7 +60,7 @@ func TestMemstore(t *testing.T) {
 			defer wg.Done()
 
 			view := store.LedgerViewByHeight(context.Background(), blockHeight)
-			actualValue, err := view.Get("", "foo")
+			actualValue, err := view.Get(flow.NewRegisterID("", "foo"))
 
 			require.NoError(t, err)
 			assert.Equal(t, value, actualValue)
@@ -92,7 +93,7 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 	require.NoError(t, err)
 
 	// check initial value
-	register, err := store.LedgerViewByHeight(context.Background(), 0).Get(key.Owner, key.Key)
+	register, err := store.LedgerViewByHeight(context.Background(), 0).Get(flow.NewRegisterID(key.Owner, key.Key))
 	require.NoError(t, err)
 	require.Equal(t, string(value), string(register))
 
@@ -106,7 +107,7 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 	require.NoError(t, err)
 
 	// check value is nil
-	register, err = store.LedgerViewByHeight(context.Background(), 1).Get(key.Owner, key.Key)
+	register, err = store.LedgerViewByHeight(context.Background(), 1).Get(flow.NewRegisterID(key.Owner, key.Key))
 	require.NoError(t, err)
 	require.Equal(t, string(nilValue), string(register))
 }
