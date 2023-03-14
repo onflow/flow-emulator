@@ -66,6 +66,8 @@ func NewEmulatorAPIServer(server *EmulatorServer, backend *backend.Backend) *Emu
 
 	router.HandleFunc("/emulator/config", r.Config)
 
+	router.HandleFunc("/emulator/codeCoverage", r.CodeCoverage).Methods("GET")
+
 	return r
 }
 
@@ -244,6 +246,17 @@ func (m EmulatorAPIServer) Storage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = json.NewEncoder(w).Encode(accountStorage)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (m EmulatorAPIServer) CodeCoverage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	blockchain := m.server.blockchain
+
+	err := json.NewEncoder(w).Encode(blockchain.CoverageReport())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
