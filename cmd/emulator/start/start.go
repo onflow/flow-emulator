@@ -73,6 +73,7 @@ type Config struct {
 	ChainID                   string        `default:"emulator" flag:"chain-id" info:"chain to emulate for address generation. Valid values are: 'emulator', 'testnet', 'mainnet'"`
 	RedisURL                  string        `default:"" flag:"redis-url" info:"redis-server URL for persisting redis storage backend ( redis://[[username:]password@]host[:port][/database] ) "`
 	SqliteURL                 string        `default:"" flag:"sqlite-url" info:"sqlite db URL for persisting sqlite storage backend "`
+	CoverageReportingEnabled  bool          `default:"false" flag:"coverage-reporting" info:"enable Cadence code coverage reporting"`
 }
 
 const EnvPrefix = "FLOW"
@@ -191,6 +192,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				RedisURL:                  conf.RedisURL,
 				ContractRemovalEnabled:    conf.ContractRemovalEnabled,
 				SqliteURL:                 conf.SqliteURL,
+				CoverageReportingEnabled:  conf.CoverageReportingEnabled,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
