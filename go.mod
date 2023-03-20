@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/fxamacker/cbor/v2 v2.4.1-0.20220515183430-ad2eae63303f
-	github.com/glebarez/go-sqlite v1.20.3
+	github.com/glebarez/go-sqlite v1.21.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang/mock v1.6.0
 	github.com/google/go-dap v0.7.0
@@ -157,6 +157,6 @@ require (
 	modernc.org/libc v1.22.2 // indirect
 	modernc.org/mathutil v1.5.0 // indirect
 	modernc.org/memory v1.5.0 // indirect
-	modernc.org/sqlite v1.20.3 // indirect
+	modernc.org/sqlite v1.20.4 // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
 )
