@@ -65,7 +65,7 @@ func (b *blocks) FinalizedHeader() (*flowgo.Header, error) {
 	return block.Header, nil
 }
 
-//We don't have to do anything complex here, as emulator does not fork the chain
+// We don't have to do anything complex here, as emulator does not fork the chain
 func (b *blocks) ByHeightFrom(height uint64, header *flowgo.Header) (*flowgo.Header, error) {
 	if height > header.Height {
 		return nil, storage.ErrNotFound
