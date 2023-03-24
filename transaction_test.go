@@ -742,7 +742,9 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		assert.True(t, fvmerrors.IsAccountNotFoundError(result.Error))
+		assert.Error(t, result.Error)
+		// TODO(patrick): rename to IsAccountPublicKeyNotFoundError
+		assert.True(t, fvmerrors.IsAccountAccountPublicKeyNotFoundError(result.Error))
 	})
 
 	t.Run("Mismatched authorizer count", func(t *testing.T) {
