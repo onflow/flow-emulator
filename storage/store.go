@@ -25,7 +25,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/onflow/flow-go/engine/execution/state/delta"
+	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/onflow/flow-emulator/types"
@@ -77,7 +77,7 @@ type Store interface {
 		collections []*flowgo.LightCollection,
 		transactions map[flowgo.Identifier]*flowgo.TransactionBody,
 		transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
-		delta delta.Delta,
+		executionSnapshot *state.ExecutionSnapshot,
 		events []flowgo.Event,
 	) error
 
@@ -90,8 +90,12 @@ type Store interface {
 	// TransactionResultByID gets the transaction result with the given ID.
 	TransactionResultByID(ctx context.Context, transactionID flowgo.Identifier) (types.StorableTransactionResult, error)
 
-	// LedgerViewByHeight returns a view into the ledger state at a given block.
-	LedgerViewByHeight(ctx context.Context, blockHeight uint64) *delta.View
+	// LedgerByHeight returns a storage snapshot into the ledger state
+	// at a given block.
+	LedgerByHeight(
+		ctx context.Context,
+		blockHeight uint64,
+	) state.StorageSnapshot
 
 	// EventsByHeight returns the events in the block at the given height, optionally filtered by type.
 	EventsByHeight(ctx context.Context, blockHeight uint64, eventType string) ([]flowgo.Event, error)
@@ -318,11 +322,18 @@ func (s *DefaultStore) InsertEvents(ctx context.Context, blockHeight uint64, eve
 	return nil
 }
 
-func (s *DefaultStore) InsertLedgerDelta(ctx context.Context, blockHeight uint64, delta delta.Delta) error {
-	updatedIDs, updatedValues := delta.RegisterUpdates()
-	for i, registerID := range updatedIDs {
-		value := updatedValues[i]
-		err := s.DataSetter.SetBytesWithVersion(ctx, s.KeyGenerator.Storage(ledgerStoreName), []byte(registerID.String()), value, blockHeight)
+func (s *DefaultStore) InsertExecutionSnapshot(
+	ctx context.Context,
+	blockHeight uint64,
+	executionSnapshot *state.ExecutionSnapshot,
+) error {
+	for registerID, value := range executionSnapshot.WriteSet {
+		err := s.DataSetter.SetBytesWithVersion(
+			ctx,
+			s.KeyGenerator.Storage(ledgerStoreName),
+			[]byte(registerID.String()),
+			value,
+			blockHeight)
 		if err != nil {
 			return err
 		}
@@ -336,7 +347,7 @@ func (s *DefaultStore) CommitBlock(
 	collections []*flowgo.LightCollection,
 	transactions map[flowgo.Identifier]*flowgo.TransactionBody,
 	transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
-	delta delta.Delta,
+	executionSnapshot *state.ExecutionSnapshot,
 	events []flowgo.Event,
 ) error {
 
@@ -374,7 +385,10 @@ func (s *DefaultStore) CommitBlock(
 		}
 	}
 
-	err = s.InsertLedgerDelta(ctx, block.Header.Height, delta)
+	err = s.InsertExecutionSnapshot(
+		ctx,
+		block.Header.Height,
+		executionSnapshot)
 	if err != nil {
 		return err
 	}
@@ -388,24 +402,44 @@ func (s *DefaultStore) CommitBlock(
 
 }
 
-func (s *DefaultStore) LedgerViewByHeight(ctx context.Context, blockHeight uint64) *delta.View {
-	return delta.NewView(func(owner, key string) (value flowgo.RegisterValue, err error) {
-		id := flowgo.RegisterID{
-			Owner: owner,
-			Key:   key,
+type defaultStorageSnapshot struct {
+	*DefaultStore
+
+	ctx         context.Context
+	blockHeight uint64
+}
+
+func (snapshot defaultStorageSnapshot) Get(
+	id flowgo.RegisterID,
+) (
+	flowgo.RegisterValue,
+	error,
+) {
+	value, err := snapshot.GetBytesAtVersion(
+		snapshot.ctx,
+		snapshot.Storage(ledgerStoreName),
+		[]byte(id.String()),
+		snapshot.blockHeight)
+
+	if err != nil {
+		// silence not found errors
+		if errors.Is(err, ErrNotFound) {
+			return nil, nil
 		}
 
-		value, err = s.DataGetter.GetBytesAtVersion(ctx, s.KeyGenerator.Storage(ledgerStoreName), []byte(id.String()), blockHeight)
+		return nil, err
+	}
 
-		if err != nil {
-			// silence not found errors
-			if errors.Is(err, ErrNotFound) {
-				return nil, nil
-			}
+	return value, nil
+}
 
-			return nil, err
-		}
-
-		return value, nil
-	})
+func (s *DefaultStore) LedgerByHeight(
+	ctx context.Context,
+	blockHeight uint64,
+) state.StorageSnapshot {
+	return defaultStorageSnapshot{
+		DefaultStore: s,
+		ctx:          ctx,
+		blockHeight:  blockHeight,
+	}
 }
