@@ -31,12 +31,10 @@ import (
 	"github.com/onflow/flow-go/engine/execution/state/delta"
 	"github.com/onflow/flow-go/fvm"
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
-	"github.com/onflow/flow-go/fvm/derived"
 	"github.com/onflow/flow-go/fvm/environment"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	reusableRuntime "github.com/onflow/flow-go/fvm/runtime"
 	"github.com/onflow/flow-go/fvm/state"
-	"github.com/onflow/flow-go/fvm/tracing"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
 
@@ -1105,31 +1103,17 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	return block, nil
 }
 
-func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, error) {
+func (b *Blockchain) GetAccountStorage(
+	address sdk.Address,
+) (
+	*AccountStorage,
+	error,
+) {
 	view := b.pendingBlock.ledgerView.NewChild()
 
-	stateParameters := state.DefaultParameters().
-		WithMaxKeySizeAllowed(b.vmCtx.MaxStateKeySize).
-		WithMaxValueSizeAllowed(b.vmCtx.MaxStateValueSize)
-
-	derivedBlockData := derived.NewEmptyDerivedBlockData()
-	derivedTxnData, err := derivedBlockData.NewSnapshotReadDerivedTransactionData(
-		derived.EndOfBlockExecutionTime,
-		derived.EndOfBlockExecutionTime)
-	if err != nil {
-		return nil, err
-	}
-
-	env := environment.NewScriptEnvironment(
-		context.Background(),
-		tracing.NewTracerSpan(),
+	env := environment.NewScriptEnvironmentFromStorageSnapshot(
 		b.vmCtx.EnvironmentParams,
-		state.NewTransactionState(
-			view,
-			stateParameters,
-		),
-		derivedTxnData,
-	)
+		view)
 
 	r := b.vmCtx.Borrow(env)
 	defer b.vmCtx.Return(r)
@@ -1142,7 +1126,10 @@ func (b *Blockchain) GetAccountStorage(address sdk.Address) (*AccountStorage, er
 		return nil, err
 	}
 
-	account, err := b.vm.GetAccount(b.vmCtx, flowgo.BytesToAddress(address.Bytes()), view)
+	account, err := b.vm.GetAccount(
+		b.vmCtx,
+		flowgo.BytesToAddress(address.Bytes()),
+		view)
 	if err != nil {
 		return nil, err
 	}
