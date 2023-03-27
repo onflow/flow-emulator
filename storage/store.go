@@ -61,7 +61,7 @@ type Store interface {
 	// LatestBlock returns the block with the highest block height.
 	LatestBlock(ctx context.Context) (flowgo.Block, error)
 
-	// StoreBlock  stores the block. If the exactly same block is already in a storage, return successfully
+	// StoreBlock stores the block in storage. If the exactly same block is already in a storage, return successfully
 	StoreBlock(ctx context.Context, block *flowgo.Block) error
 
 	// BlockByID returns the block with the given hash. It is available for
@@ -109,6 +109,10 @@ type SnapshotProvider interface {
 	SupportSnapshotsWithCurrentConfig() bool
 }
 
+type RollbackProvider interface {
+	RollbackToBlockHeight(height uint64) error
+}
+
 type KeyGenerator interface {
 	Storage(key string) string
 	LatestBlock() []byte
@@ -149,6 +153,12 @@ type DefaultStore struct {
 	KeyGenerator
 	DataSetter
 	DataGetter
+	CurrentHeight uint64
+}
+
+func (s *DefaultStore) SetBlockHeight(height uint64) error {
+	return s.DataSetter.SetBytes(context.Background(), s.KeyGenerator.Storage(globalStoreName), s.KeyGenerator.LatestBlock(), mustEncodeUint64(height))
+
 }
 
 func (s *DefaultStore) Start() error {
@@ -180,6 +190,7 @@ func (s *DefaultStore) LatestBlock(ctx context.Context) (block flowgo.Block, err
 }
 
 func (s *DefaultStore) StoreBlock(ctx context.Context, block *flowgo.Block) error {
+	s.CurrentHeight = block.Header.Height
 
 	encBlock, err := encodeBlock(*block)
 	if err != nil {

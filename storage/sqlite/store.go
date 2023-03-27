@@ -38,6 +38,7 @@ import (
 
 var _ storage.SnapshotProvider = &Store{}
 var _ storage.Store = &Store{}
+var _ storage.RollbackProvider = &Store{}
 
 //go:embed createTables.sql
 var createTablesSql string
@@ -49,6 +50,27 @@ type Store struct {
 	url           string
 	mu            sync.RWMutex
 	snapshotNames []string
+}
+
+func (s *Store) RollbackToBlockHeight(height uint64) error {
+	tx, err := s.db.BeginTx(context.Background(), &sql.TxOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, table := range []string{"blocks", "blockIndex", "events", "transactions", "collections", "transactionResults"} {
+		_, err = tx.Exec(fmt.Sprintf(`DELETE from %s where height>%d`, table, height))
+		if err != nil {
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return s.DefaultStore.SetBlockHeight(height)
 }
 
 func (s *Store) Snapshots() (snapshots []string, err error) {
