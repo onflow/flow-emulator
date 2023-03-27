@@ -421,20 +421,28 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 
 }
 
-func (b *Blockchain) Snapshots() ([]string, error) {
+func (b *Blockchain) snapshotProvider() (storage.SnapshotProvider, error) {
 	snapshotProvider, isSnapshotProvider := b.storage.(storage.SnapshotProvider)
 	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
-		return []string{}, fmt.Errorf("storage doesn't support snapshots")
+		return nil, fmt.Errorf("storage doesn't support snapshots")
+	}
+	return snapshotProvider, nil
+}
+
+func (b *Blockchain) Snapshots() ([]string, error) {
+	snapshotProvider, err := b.snapshotProvider()
+	if err != nil {
+		return []string{}, err
 	}
 	return snapshotProvider.Snapshots()
 }
 
 func (b *Blockchain) CreateSnapshot(name string) error {
-	snapshotProvider, isSnapshotProvider := b.storage.(storage.SnapshotProvider)
-	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
-		return fmt.Errorf("storage doesn't support snapshots")
+	snapshotProvider, err := b.snapshotProvider()
+	if err != nil {
+		return err
 	}
-	err := snapshotProvider.CreateSnapshot(name)
+	err = snapshotProvider.CreateSnapshot(name)
 	if err != nil {
 		return err
 	}
@@ -442,11 +450,11 @@ func (b *Blockchain) CreateSnapshot(name string) error {
 }
 
 func (b *Blockchain) LoadSnapshot(name string) error {
-	snapshotProvider, isSnapshotProvider := b.storage.(storage.SnapshotProvider)
-	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
-		return fmt.Errorf("storage doesn't support snapshots")
+	snapshotProvider, err := b.snapshotProvider()
+	if err != nil {
+		return err
 	}
-	err := snapshotProvider.LoadSnapshot(name)
+	err = snapshotProvider.LoadSnapshot(name)
 	if err != nil {
 		return err
 	}
