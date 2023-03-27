@@ -26,7 +26,7 @@ import (
 	"testing"
 
 	"github.com/onflow/flow-go-sdk/test"
-	"github.com/onflow/flow-go/engine/execution/state/delta"
+	"github.com/onflow/flow-go/fvm/state"
 	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
@@ -251,16 +251,22 @@ func TestLedger(t *testing.T) {
 		const key = "foo"
 		expected := []byte("bar")
 
-		d := delta.NewDelta()
-		d.Set(flow.NewRegisterID(owner, key), expected)
+		executionSnapshot := &state.ExecutionSnapshot{
+			WriteSet: map[flow.RegisterID]flow.RegisterValue{
+				flow.NewRegisterID(owner, key): expected,
+			},
+		}
 
 		t.Run("should get able to set ledger", func(t *testing.T) {
-			err := store.InsertLedgerDelta(context.Background(), blockHeight, d)
+			err := store.InsertExecutionSnapshot(
+				context.Background(),
+				blockHeight,
+				executionSnapshot)
 			assert.NoError(t, err)
 		})
 
 		t.Run("should be to get set ledger", func(t *testing.T) {
-			gotLedger := store.LedgerViewByHeight(context.Background(), blockHeight)
+			gotLedger := store.LedgerByHeight(context.Background(), blockHeight)
 			actual, err := gotLedger.Get(flow.NewRegisterID(owner, key))
 			assert.NoError(t, err)
 			assert.Equal(t, expected, actual)
@@ -282,16 +288,18 @@ func TestLedger(t *testing.T) {
 		// Create a list of ledgers, where the ledger at index i has
 		// keys (i+2)-1->(i+2)+1 set to value i-1.
 		totalBlocks := 10
-		var deltas []delta.Delta
+		var snapshots []*state.ExecutionSnapshot
 		for i := 2; i < totalBlocks+2; i++ {
-			d := delta.NewDelta()
+			writeSet := map[flow.RegisterID]flow.RegisterValue{}
 			for j := i - 1; j <= i+1; j++ {
 				key := fmt.Sprintf("%d", j)
-				d.Set(flow.NewRegisterID(owner, key), []byte{byte(i - 1)})
+				writeSet[flow.NewRegisterID(owner, key)] = []byte{byte(i - 1)}
 			}
-			deltas = append(deltas, d)
+			snapshots = append(
+				snapshots,
+				&state.ExecutionSnapshot{WriteSet: writeSet})
 		}
-		require.Equal(t, totalBlocks, len(deltas))
+		require.Equal(t, totalBlocks, len(snapshots))
 
 		// Insert all the ledgers, starting with block 1.
 		// This will result in a ledger state that looks like this:
@@ -300,14 +308,17 @@ func TestLedger(t *testing.T) {
 		// ...
 		// The combined state at block N looks like:
 		// {1: 1, 2: 2, 3: 3, ..., N+1: N, N+2: N}
-		for i, ledger := range deltas {
-			err := store.InsertLedgerDelta(context.Background(), uint64(i+1), ledger)
+		for i, snapshot := range snapshots {
+			err := store.InsertExecutionSnapshot(
+				context.Background(),
+				uint64(i+1),
+				snapshot)
 			require.NoError(t, err)
 		}
 
 		// View at block 1 should have keys 1, 2, 3
 		t.Run("should version the first written block", func(t *testing.T) {
-			gotLedger := store.LedgerViewByHeight(context.Background(), 1)
+			gotLedger := store.LedgerByHeight(context.Background(), 1)
 			for i := 1; i <= 3; i++ {
 				val, err := gotLedger.Get(flow.NewRegisterID(owner, fmt.Sprintf("%d", i)))
 				assert.NoError(t, err)
@@ -318,7 +329,7 @@ func TestLedger(t *testing.T) {
 		// View at block N should have values 1->N+2
 		t.Run("should version all blocks", func(t *testing.T) {
 			for block := 2; block < totalBlocks; block++ {
-				gotLedger := store.LedgerViewByHeight(context.Background(), uint64(block))
+				gotLedger := store.LedgerByHeight(context.Background(), uint64(block))
 				// The keys 1->N-1 are defined in previous blocks
 				for i := 1; i < block; i++ {
 					val, err := gotLedger.Get(flow.NewRegisterID(owner, fmt.Sprintf("%d", i)))

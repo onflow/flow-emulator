@@ -117,9 +117,9 @@ func (b *pendingBlock) TransactionResults() map[flowgo.Identifier]IndexedTransac
 	return b.transactionResults
 }
 
-// LedgerDelta returns the ledger delta for the pending block.
-func (b *pendingBlock) LedgerDelta() delta.Delta {
-	return b.ledgerView.Delta()
+// Finalize returns the execution snapshot for the pending block.
+func (b *pendingBlock) Finalize() *state.ExecutionSnapshot {
+	return b.ledgerView.Finalize()
 }
 
 // AddTransaction adds a transaction to the pending block.

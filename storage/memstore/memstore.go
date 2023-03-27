@@ -23,9 +23,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/onflow/flow-go/engine/execution/state/delta"
 	"github.com/onflow/flow-go/fvm/state"
-	"github.com/onflow/flow-go/model/flow"
+	fvmstorage "github.com/onflow/flow-go/fvm/storage"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/onflow/flow-emulator/storage"
@@ -46,7 +45,7 @@ type Store struct {
 	// Transaction results by ID
 	transactionResults map[flowgo.Identifier]types.StorableTransactionResult
 	// Ledger states by block height
-	ledger map[uint64]state.MapStorageSnapshot
+	ledger map[uint64]fvmstorage.SnapshotTree
 	// events by block height
 	eventsByBlockHeight map[uint64][]flowgo.Event
 	// highest block height
@@ -62,7 +61,7 @@ func New() *Store {
 		collections:         make(map[flowgo.Identifier]flowgo.LightCollection),
 		transactions:        make(map[flowgo.Identifier]flowgo.TransactionBody),
 		transactionResults:  make(map[flowgo.Identifier]types.StorableTransactionResult),
-		ledger:              make(map[uint64]state.MapStorageSnapshot),
+		ledger:              make(map[uint64]fvmstorage.SnapshotTree),
 		eventsByBlockHeight: make(map[uint64][]flowgo.Event),
 	}
 }
@@ -143,7 +142,7 @@ func (s *Store) CommitBlock(
 	collections []*flowgo.LightCollection,
 	transactions map[flowgo.Identifier]*flowgo.TransactionBody,
 	transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
-	delta delta.Delta,
+	executionSnapshot *state.ExecutionSnapshot,
 	events []flowgo.Event,
 ) error {
 	s.mu.Lock()
@@ -183,7 +182,9 @@ func (s *Store) CommitBlock(
 		}
 	}
 
-	err = s.insertLedgerDelta(block.Header.Height, delta)
+	err = s.insertExecutionSnapshot(
+		block.Header.Height,
+		executionSnapshot)
 	if err != nil {
 		return err
 	}
@@ -240,8 +241,11 @@ func (s *Store) TransactionResultByID(
 
 }
 
-func (s *Store) LedgerViewByHeight(ctx context.Context, blockHeight uint64) *delta.View {
-	return delta.NewDeltaView(s.ledger[blockHeight])
+func (s *Store) LedgerByHeight(
+	ctx context.Context,
+	blockHeight uint64,
+) state.StorageSnapshot {
+	return s.ledger[blockHeight]
 }
 
 func (s *Store) EventsByHeight(
@@ -284,38 +288,13 @@ func (s *Store) insertTransactionResult(txID flowgo.Identifier, result types.Sto
 	return nil
 }
 
-func (s *Store) UnsafeInsertLedgerDelta(blockHeight uint64, delta delta.Delta) error {
-	return s.insertLedgerDelta(blockHeight, delta)
-}
+func (s *Store) insertExecutionSnapshot(
+	blockHeight uint64,
+	executionSnapshot *state.ExecutionSnapshot,
+) error {
+	oldLedger := s.ledger[blockHeight-1]
 
-func (s *Store) insertLedgerDelta(blockHeight uint64, delta delta.Delta) error {
-	var oldLedger state.MapStorageSnapshot
-
-	// use empty ledger if this is the genesis block
-	if blockHeight == 0 {
-		oldLedger = state.MapStorageSnapshot{}
-	} else {
-		oldLedger = s.ledger[blockHeight-1]
-	}
-
-	newLedger := state.MapStorageSnapshot{}
-
-	// copy values from the previous ledger
-	for keyRegister, oldValue := range oldLedger {
-		value, exists := delta.Data[keyRegister]
-		if !exists || value != nil {
-			newLedger[keyRegister] = oldValue
-		}
-	}
-
-	// write all updated values
-	ids, values := delta.RegisterUpdates()
-	for i, value := range values {
-		key := ids[i]
-		newLedger[flow.NewRegisterID(key.Owner, key.Key)] = value
-	}
-
-	s.ledger[blockHeight] = newLedger
+	s.ledger[blockHeight] = oldLedger.Append(executionSnapshot)
 
 	return nil
 }

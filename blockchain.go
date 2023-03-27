@@ -473,11 +473,10 @@ func configureNewLedger(
 	vm *fvm.VirtualMachine,
 	ctx fvm.Context,
 ) (*flowgo.Block, *delta.View, error) {
-	genesisLedgerView := store.LedgerViewByHeight(context.Background(), 0)
-	err := bootstrapLedger(
+	genesisExecutionSnapshot, err := bootstrapLedger(
 		vm,
 		ctx,
-		genesisLedgerView,
+		store.LedgerByHeight(context.Background(), 0),
 		conf,
 	)
 	if err != nil {
@@ -493,7 +492,7 @@ func configureNewLedger(
 		nil,
 		nil,
 		nil,
-		genesisLedgerView.Delta(),
+		genesisExecutionSnapshot,
 		nil,
 	)
 	if err != nil {
@@ -501,7 +500,8 @@ func configureNewLedger(
 	}
 
 	// get empty ledger view
-	ledgerView := store.LedgerViewByHeight(context.Background(), 0)
+	ledgerView := delta.NewDeltaView(
+		store.LedgerByHeight(context.Background(), 0))
 
 	return genesis, ledgerView, nil
 }
@@ -510,7 +510,8 @@ func configureExistingLedger(
 	latestBlock *flowgo.Block,
 	store storage.Store,
 ) (*flowgo.Block, *delta.View, error) {
-	latestLedgerView := store.LedgerViewByHeight(context.Background(), latestBlock.Header.Height)
+	latestLedgerView := delta.NewDeltaView(
+		store.LedgerByHeight(context.Background(), latestBlock.Header.Height))
 
 	return latestBlock, latestLedgerView, nil
 }
@@ -518,9 +519,12 @@ func configureExistingLedger(
 func bootstrapLedger(
 	vm *fvm.VirtualMachine,
 	ctx fvm.Context,
-	ledger state.View,
+	ledger state.StorageSnapshot,
 	conf config,
-) error {
+) (
+	*state.ExecutionSnapshot,
+	error,
+) {
 	accountKey := conf.GetServiceKey().AccountKey()
 	publicKey, _ := crypto.DecodePublicKey(
 		accountKey.SigAlgo,
@@ -541,12 +545,12 @@ func bootstrapLedger(
 
 	bootstrap := configureBootstrapProcedure(conf, flowAccountKey, conf.GenesisTokenSupply)
 
-	err := vm.Run(ctx, bootstrap, ledger)
+	executionSnapshot, _, err := vm.RunV2(ctx, bootstrap, ledger)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return executionSnapshot, nil
 }
 
 func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPublicKey, supply cadence.UFix64) *fvm.BootstrapProcedure {
@@ -888,7 +892,7 @@ func (b *Blockchain) getAccountAtBlock(address flowgo.Address, blockHeight uint6
 	account, err := b.vm.GetAccount(
 		b.vmCtx,
 		address,
-		b.storage.LedgerViewByHeight(context.Background(), blockHeight),
+		b.storage.LedgerByHeight(context.Background(), blockHeight),
 	)
 
 	if fvmerrors.IsAccountNotFoundError(err) {
@@ -1086,16 +1090,24 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	if err != nil {
 		return nil, err
 	}
-	ledgerDelta := b.pendingBlock.LedgerDelta()
+	executionSnapshot := b.pendingBlock.Finalize()
 	events := b.pendingBlock.Events()
 
 	// commit the pending block to storage
-	err = b.storage.CommitBlock(context.Background(), *block, collections, transactions, transactionResults, ledgerDelta, events)
+	err = b.storage.CommitBlock(
+		context.Background(),
+		*block,
+		collections,
+		transactions,
+		transactionResults,
+		executionSnapshot,
+		events)
 	if err != nil {
 		return nil, err
 	}
 
-	ledgerView := b.storage.LedgerViewByHeight(context.Background(), block.Header.Height)
+	ledgerView := delta.NewDeltaView(
+		b.storage.LedgerByHeight(context.Background(), block.Header.Height))
 
 	// reset pending block using current block and ledger state
 	b.pendingBlock = newPendingBlock(block, ledgerView)
@@ -1200,7 +1212,10 @@ func (b *Blockchain) ResetPendingBlock() error {
 		return &StorageError{err}
 	}
 
-	latestLedgerView := b.storage.LedgerViewByHeight(context.Background(), latestBlock.Header.Height)
+	latestLedgerView := delta.NewDeltaView(
+		b.storage.LedgerByHeight(
+			context.Background(),
+			latestBlock.Header.Height))
 
 	// reset pending block using latest committed block and ledger state
 	b.pendingBlock = newPendingBlock(&latestBlock, latestLedgerView)
@@ -1237,7 +1252,9 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 		return nil, err
 	}
 
-	requestedLedgerView := b.storage.LedgerViewByHeight(context.Background(), requestedBlock.Header.Height)
+	requestedLedgerSnapshot := b.storage.LedgerByHeight(
+		context.Background(),
+		requestedBlock.Header.Height)
 
 	header := requestedBlock.Header
 	blockContext := b.newFVMContextFromHeader(header)
@@ -1248,14 +1265,17 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 	if b.debugger != nil {
 		b.debugger.RequestPause()
 	}
-	err = b.vm.Run(blockContext, scriptProc, requestedLedgerView)
+	_, output, err := b.vm.RunV2(
+		blockContext,
+		scriptProc,
+		requestedLedgerSnapshot)
 	if err != nil {
 		return nil, err
 	}
 
 	scriptID := sdk.Identifier(flowgo.MakeIDFromFingerPrint(script))
 
-	events, err := sdkconvert.FlowEventsToSDK(scriptProc.Events)
+	events, err := sdkconvert.FlowEventsToSDK(output.Events)
 	if err != nil {
 		return nil, err
 	}
@@ -1263,19 +1283,19 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 	var scriptError error = nil
 	var convertedValue cadence.Value = nil
 
-	if scriptProc.Err == nil {
-		convertedValue = scriptProc.Value
+	if output.Err == nil {
+		convertedValue = output.Value
 	} else {
-		scriptError = convert.VMErrorToEmulator(scriptProc.Err)
+		scriptError = convert.VMErrorToEmulator(output.Err)
 	}
 
 	return &types.ScriptResult{
 		ScriptID:        scriptID,
 		Value:           convertedValue,
 		Error:           scriptError,
-		Logs:            scriptProc.Logs,
+		Logs:            output.Logs,
 		Events:          events,
-		ComputationUsed: scriptProc.GasUsed,
+		ComputationUsed: output.ComputationUsed,
 	}, nil
 }
 
