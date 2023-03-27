@@ -53,7 +53,7 @@ type Store struct {
 
 func (s *Store) Snapshots() (snapshots []string, err error) {
 	if !s.SupportSnapshotsWithCurrentConfig() {
-		return []string{}, fmt.Errorf("Snapshot is not supported with current configuration")
+		return []string{}, fmt.Errorf("snapshot is not supported with current configuration")
 	}
 
 	if s.url == ":memory:" {
@@ -80,7 +80,7 @@ func (s *Store) Snapshots() (snapshots []string, err error) {
 }
 func (s *Store) LoadSnapshot(name string) error {
 	if !s.SupportSnapshotsWithCurrentConfig() {
-		return fmt.Errorf("Snapshot is not supported with current configuration")
+		return fmt.Errorf("snapshot is not supported with current configuration")
 	}
 
 	var dbfile string
@@ -91,6 +91,7 @@ func (s *Store) LoadSnapshot(name string) error {
 			return err
 		}
 
+		//check if existing snapshot? (it has to have at least one table, as memorydb will automatically create any db)
 		result := db.QueryRow("SELECT count(name) FROM sqlite_schema WHERE type='table'")
 		var count int
 		err = result.Scan(&count)
@@ -122,7 +123,7 @@ func (s *Store) LoadSnapshot(name string) error {
 
 func (s *Store) CreateSnapshot(name string) error {
 	if !s.SupportSnapshotsWithCurrentConfig() {
-		return fmt.Errorf("Snapshot is not supported with current configuration")
+		return fmt.Errorf("snapshot is not supported with current configuration")
 	}
 
 	var dbfile string
@@ -133,6 +134,7 @@ func (s *Store) CreateSnapshot(name string) error {
 			return err
 		}
 
+		//check if existing snapshot? (it has to have at least one table, as memorydb will automatically create any db)
 		result := db.QueryRow("SELECT count(name) FROM sqlite_schema WHERE type='table'")
 		var count int
 		err = result.Scan(&count)
