@@ -83,16 +83,8 @@ func decodeUint64(v *uint64, from []byte) error {
 	return cbor.Unmarshal(from, v)
 }
 
-func encodeEvent(event flowgo.Event) ([]byte, error) {
-	return em.Marshal(event)
-}
-
 func encodeEvents(events []flowgo.Event) ([]byte, error) {
 	return em.Marshal(events)
-}
-
-func decodeEvent(event *flowgo.Event, from []byte) error {
-	return cbor.Unmarshal(from, event)
 }
 
 func decodeEvents(events *[]flowgo.Event, from []byte) error {

@@ -137,11 +137,19 @@ flow emulator --persist
 
 Create a new snapshot by doing an HTTP request: 
 ```
-GET http://localhost:8080/emulator/snapshot/{name}
+POST http://localhost:8080/emulator/snapshots
+
+Post Data: name={snapshot name}
+
 ```
 *Please note the example above uses the default admin API port*
 
-At any later point you can reload to that snapshot by executing the same HTTP request as before. 
+At any later point you can reload to that snapshot by executing:
+
+```
+PUT http://localhost:8080/emulator/snapshots?name={snapshot name}
+```
+
 You need to use the same value for `name` parameter.
 
 The snapshot functionality is a great tool for testing where you can first initialize 

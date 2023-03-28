@@ -67,6 +67,20 @@ func (mr *MockEmulatorMockRecorder) CommitBlock() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitBlock", reflect.TypeOf((*MockEmulator)(nil).CommitBlock))
 }
 
+// CreateSnapshot mocks base method.
+func (m *MockEmulator) CreateSnapshot(arg0 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateSnapshot", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateSnapshot indicates an expected call of CreateSnapshot.
+func (mr *MockEmulatorMockRecorder) CreateSnapshot(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSnapshot", reflect.TypeOf((*MockEmulator)(nil).CreateSnapshot), arg0)
+}
+
 // EndDebugging mocks base method.
 func (m *MockEmulator) EndDebugging() {
 	m.ctrl.T.Helper()
@@ -335,6 +349,20 @@ func (mr *MockEmulatorMockRecorder) GetTransactionResult(arg0 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionResult", reflect.TypeOf((*MockEmulator)(nil).GetTransactionResult), arg0)
 }
 
+// LoadSnapshot mocks base method.
+func (m *MockEmulator) LoadSnapshot(arg0 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LoadSnapshot", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// LoadSnapshot indicates an expected call of LoadSnapshot.
+func (mr *MockEmulatorMockRecorder) LoadSnapshot(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadSnapshot", reflect.TypeOf((*MockEmulator)(nil).LoadSnapshot), arg0)
+}
+
 // SetDebugger mocks base method.
 func (m *MockEmulator) SetDebugger(arg0 *interpreter.Debugger) {
 	m.ctrl.T.Helper()
@@ -345,4 +373,19 @@ func (m *MockEmulator) SetDebugger(arg0 *interpreter.Debugger) {
 func (mr *MockEmulatorMockRecorder) SetDebugger(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetDebugger", reflect.TypeOf((*MockEmulator)(nil).SetDebugger), arg0)
+}
+
+// Snapshots mocks base method.
+func (m *MockEmulator) Snapshots() ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Snapshots")
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Snapshots indicates an expected call of Snapshots.
+func (mr *MockEmulatorMockRecorder) Snapshots() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Snapshots", reflect.TypeOf((*MockEmulator)(nil).Snapshots))
 }

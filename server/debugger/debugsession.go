@@ -203,7 +203,7 @@ func (s *session) handleVariablesRequest(request *dap.VariablesRequest) {
 	case ScopeIdentifierStorage:
 		index := 1
 		for {
-			account, err := s.backend.GetEmulator().GetAccountByIndex(uint(index))
+			account, err := s.backend.Emulator().GetAccountByIndex(uint(index))
 			if err != nil { //end of accounts
 				break
 			}
@@ -491,7 +491,7 @@ func (s *session) handleAttachRequest(request *dap.AttachRequest) {
 
 func (s *session) handleDisconnectRequest(request *dap.DisconnectRequest) {
 	s.debugger.Continue()
-	s.backend.GetEmulator().EndDebugging()
+	s.backend.Emulator().EndDebugging()
 	s.configurationDone = false
 	s.launchRequested = false
 	s.send(&dap.DisconnectResponse{
@@ -714,7 +714,7 @@ func (s *session) newStackFrame(positioned ast.HasPosition, location common.Loca
 
 func (s *session) pathCode(path string) string {
 	basename := strings.TrimSuffix(path, ".cdc")
-	backendEmulator := s.backend.GetEmulator()
+	backendEmulator := s.backend.Emulator()
 
 	runningScriptID, runningCode := backendEmulator.(*emulator.Blockchain).CurrentScript()
 	if basename == runningScriptID {
@@ -756,7 +756,7 @@ func (s *session) step() {
 }
 
 func (s *session) run() context.CancelFunc {
-	s.backend.GetEmulator().SetDebugger(s.debugger)
+	s.backend.Emulator().SetDebugger(s.debugger)
 	if s.stopOnEntry {
 		s.debugger.RequestPause()
 	}
@@ -836,7 +836,7 @@ func (s *session) run() context.CancelFunc {
 				Event: newDAPEvent("terminated"),
 			})
 
-			s.backend.GetEmulator().EndDebugging()
+			s.backend.Emulator().EndDebugging()
 
 		}()
 

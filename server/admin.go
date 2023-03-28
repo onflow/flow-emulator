@@ -27,6 +27,7 @@ import (
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/onflow/flow-emulator/server/backend"
+	"github.com/onflow/flow-emulator/storage"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 )
@@ -54,7 +55,7 @@ func NewAdminServer(
 	logger *zerolog.Logger,
 	emulatorServer *EmulatorServer,
 	backend *backend.Backend,
-	storage *Storage,
+	storage storage.Store,
 	grpcServer *GRPCServer,
 	liveness *LivenessTicker,
 	host string,
@@ -79,7 +80,7 @@ func NewAdminServer(
 	mux.Handle("/", wrappedHandler(wrappedServer, headers))
 
 	// register API handler
-	mux.Handle(EmulatorApiPath, NewEmulatorAPIServer(emulatorServer, backend, storage))
+	mux.Handle(EmulatorApiPath, NewEmulatorAPIServer(emulatorServer, backend))
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", host, port),

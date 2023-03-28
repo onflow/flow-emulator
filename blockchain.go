@@ -41,7 +41,7 @@ import (
 	"github.com/onflow/flow-emulator/convert"
 	sdkconvert "github.com/onflow/flow-emulator/convert/sdk"
 	"github.com/onflow/flow-emulator/storage"
-	"github.com/onflow/flow-emulator/storage/sqlite"
+	"github.com/onflow/flow-emulator/storage/util"
 	"github.com/onflow/flow-emulator/types"
 )
 
@@ -68,6 +68,8 @@ type Blockchain struct {
 	activeDebuggingSession bool
 	currentCode            string
 	currentScriptID        string
+
+	conf config
 }
 
 type ServiceKey struct {
@@ -154,7 +156,7 @@ type config struct {
 
 func (conf config) GetStore() storage.Store {
 	if conf.Store == nil {
-		store, err := sqlite.New(":memory:")
+		store, err := util.CreateDefaultStorage()
 		if err != nil {
 			panic("Cannot initialize memory storage")
 		}
@@ -372,6 +374,26 @@ func WithChainID(chainID flowgo.ChainID) Option {
 		c.ChainID = chainID
 	}
 }
+func (b *Blockchain) ReloadBlockchain() error {
+	var err error
+
+	blocks := newBlocks(b)
+
+	b.vm, b.vmCtx, err = configureFVM(b, b.conf, blocks)
+	if err != nil {
+		return err
+	}
+
+	latestBlock, latestLedgerView, err := configureLedger(b.conf, b.storage, b.vm, b.vmCtx)
+	if err != nil {
+		return err
+	}
+
+	b.pendingBlock = newPendingBlock(latestBlock, latestLedgerView)
+	b.transactionValidator = configureTransactionValidator(b.conf, blocks)
+
+	return nil
+}
 
 // NewBlockchain instantiates a new emulated blockchain with the provided options.
 func NewBlockchain(opts ...Option) (*Blockchain, error) {
@@ -387,26 +409,55 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 		serviceKey:             conf.GetServiceKey(),
 		debugger:               nil,
 		activeDebuggingSession: false,
+		conf:                   conf,
 	}
 
-	var err error
-
-	blocks := newBlocks(b)
-
-	b.vm, b.vmCtx, err = configureFVM(b, conf, blocks)
+	err := b.ReloadBlockchain()
 	if err != nil {
 		return nil, err
 	}
-
-	latestBlock, latestLedgerView, err := configureLedger(conf, b.storage, b.vm, b.vmCtx)
-	if err != nil {
-		return nil, err
-	}
-
-	b.pendingBlock = newPendingBlock(latestBlock, latestLedgerView)
-	b.transactionValidator = configureTransactionValidator(conf, blocks)
-
 	return b, nil
+
+}
+
+func (b *Blockchain) snapshotProvider() (storage.SnapshotProvider, error) {
+	snapshotProvider, isSnapshotProvider := b.storage.(storage.SnapshotProvider)
+	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
+		return nil, fmt.Errorf("storage doesn't support snapshots")
+	}
+	return snapshotProvider, nil
+}
+
+func (b *Blockchain) Snapshots() ([]string, error) {
+	snapshotProvider, err := b.snapshotProvider()
+	if err != nil {
+		return []string{}, err
+	}
+	return snapshotProvider.Snapshots()
+}
+
+func (b *Blockchain) CreateSnapshot(name string) error {
+	snapshotProvider, err := b.snapshotProvider()
+	if err != nil {
+		return err
+	}
+	err = snapshotProvider.CreateSnapshot(name)
+	if err != nil {
+		return err
+	}
+	return b.ReloadBlockchain()
+}
+
+func (b *Blockchain) LoadSnapshot(name string) error {
+	snapshotProvider, err := b.snapshotProvider()
+	if err != nil {
+		return err
+	}
+	err = snapshotProvider.LoadSnapshot(name)
+	if err != nil {
+		return err
+	}
+	return b.ReloadBlockchain()
 }
 
 func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {

@@ -47,13 +47,9 @@ type Backend struct {
 	automine bool
 }
 
-func (b *Backend) GetEmulator() Emulator {
+// Emulator return emulator
+func (b *Backend) Emulator() Emulator {
 	return b.emulator
-}
-
-// SetEmulator hotswaps emulator for state management.
-func (b *Backend) SetEmulator(emulator Emulator) {
-	b.emulator = emulator
 }
 
 // New returns a new backend.

@@ -1,3 +1,6 @@
+//go:build !JS
+// +build !JS
+
 /*
  * Flow Emulator
  *
@@ -50,7 +53,7 @@ type Store struct {
 
 func (s *Store) Snapshots() (snapshots []string, err error) {
 	if !s.SupportSnapshotsWithCurrentConfig() {
-		return []string{}, fmt.Errorf("Snapshot is not supported with current configuration")
+		return []string{}, fmt.Errorf("snapshot is not supported with current configuration")
 	}
 
 	if s.url == ":memory:" {
@@ -75,20 +78,20 @@ func (s *Store) Snapshots() (snapshots []string, err error) {
 	}
 	return snapshots, nil
 }
-
-func (s *Store) JumpToSnapshot(snapshotName string, createIfNotExists bool) error {
+func (s *Store) LoadSnapshot(name string) error {
 	if !s.SupportSnapshotsWithCurrentConfig() {
-		return fmt.Errorf("Snapshot is not supported with current configuration")
+		return fmt.Errorf("snapshot is not supported with current configuration")
 	}
 
 	var dbfile string
 	if s.url == ":memory:" {
-		dbfile = fmt.Sprintf("file:%s?mode=memory&cache=shared", snapshotName)
+		dbfile = fmt.Sprintf("file:%s?mode=memory&cache=shared", name)
 		db, err := sql.Open("sqlite", dbfile)
 		if err != nil {
 			return err
 		}
 
+		//check if existing snapshot? (it has to have at least one table, as memorydb will automatically create any db)
 		result := db.QueryRow("SELECT count(name) FROM sqlite_schema WHERE type='table'")
 		var count int
 		err = result.Scan(&count)
@@ -96,24 +99,15 @@ func (s *Store) JumpToSnapshot(snapshotName string, createIfNotExists bool) erro
 			return err
 		}
 
-		if !createIfNotExists && count == 0 {
-			return fmt.Errorf("Snapshot %s does not exist", snapshotName)
+		if count == 0 {
+			return fmt.Errorf("snapshot %s does not exist", name)
 		}
 	} else {
-		dbfile = filepath.Join(s.url, fmt.Sprintf("snapshot_%s", snapshotName))
+		dbfile = filepath.Join(s.url, fmt.Sprintf("snapshot_%s", name))
 		_, err := os.Stat(dbfile)
-		if !createIfNotExists && os.IsNotExist(err) {
-			return fmt.Errorf("Snapshot %s does not exist", snapshotName)
+		if os.IsNotExist(err) {
+			return fmt.Errorf("snapshot %s does not exist", name)
 		}
-	}
-
-	if createIfNotExists {
-		_, err := s.db.Exec(fmt.Sprintf("VACUUM main INTO '%s'", dbfile))
-		if err != nil {
-			return err
-		}
-		s.snapshotNames = append(s.snapshotNames, snapshotName)
-		return nil
 	}
 
 	db, err := sql.Open("sqlite", dbfile)
@@ -124,6 +118,39 @@ func (s *Store) JumpToSnapshot(snapshotName string, createIfNotExists bool) erro
 	s.db.Close()
 	s.db = db
 
+	return nil
+}
+
+func (s *Store) CreateSnapshot(name string) error {
+	if !s.SupportSnapshotsWithCurrentConfig() {
+		return fmt.Errorf("snapshot is not supported with current configuration")
+	}
+
+	var dbfile string
+	if s.url == ":memory:" {
+		dbfile = fmt.Sprintf("file:%s?mode=memory&cache=shared", name)
+		db, err := sql.Open("sqlite", dbfile)
+		if err != nil {
+			return err
+		}
+
+		//check if existing snapshot? (it has to have at least one table, as memorydb will automatically create any db)
+		result := db.QueryRow("SELECT count(name) FROM sqlite_schema WHERE type='table'")
+		var count int
+		err = result.Scan(&count)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		dbfile = filepath.Join(s.url, fmt.Sprintf("snapshot_%s", name))
+	}
+
+	_, err := s.db.Exec(fmt.Sprintf("VACUUM main INTO '%s'", dbfile))
+	if err != nil {
+		return err
+	}
+	s.snapshotNames = append(s.snapshotNames, name)
 	return nil
 }
 

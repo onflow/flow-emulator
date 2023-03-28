@@ -19,6 +19,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -31,7 +32,6 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/onflow/flow-emulator/server/backend"
-	"github.com/onflow/flow-emulator/storage"
 )
 
 type BlockResponse struct {
@@ -44,15 +44,13 @@ type EmulatorAPIServer struct {
 	router  *mux.Router
 	server  *EmulatorServer
 	backend *backend.Backend
-	storage *Storage
 }
 
-func NewEmulatorAPIServer(server *EmulatorServer, backend *backend.Backend, storage *Storage) *EmulatorAPIServer {
+func NewEmulatorAPIServer(server *EmulatorServer, backend *backend.Backend) *EmulatorAPIServer {
 	router := mux.NewRouter().StrictSlash(true)
 	r := &EmulatorAPIServer{router: router,
 		server:  server,
 		backend: backend,
-		storage: storage,
 	}
 
 	router.HandleFunc("/emulator/newBlock", r.CommitBlock)
@@ -109,13 +107,8 @@ func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 }
 func (m EmulatorAPIServer) SnapshotList(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	snapshotProvider, isSnapshotProvider := (*m.storage).Store().(storage.SnapshotProvider)
-	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
-		m.server.logger.Error().Msg("State management is not available with current storage backend")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	snapshots, err := snapshotProvider.Snapshots()
+
+	snapshots, err := m.backend.Emulator().Snapshots()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -132,15 +125,9 @@ func (m EmulatorAPIServer) SnapshotList(w http.ResponseWriter, _ *http.Request) 
 
 }
 
-func (m EmulatorAPIServer) reloadBlockchainFromSnapshot(name string, snapshotProvider storage.Store, w http.ResponseWriter) {
-	blockchain, err := configureBlockchain(m.server.config, snapshotProvider)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+func (m EmulatorAPIServer) latestBlockResponse(name string, w http.ResponseWriter) {
 
-	m.backend.SetEmulator(blockchain)
-	block, err := blockchain.GetLatestBlock()
+	block, _, err := m.backend.GetLatestBlock(context.Background(), true)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -168,30 +155,24 @@ func (m EmulatorAPIServer) SnapshotJump(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	name := vars["name"]
 
-	snapshotProvider, isSnapshotProvider := (*m.storage).Store().(storage.SnapshotProvider)
-	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
-		m.server.logger.Error().Msg("State management is not available with current storage backend")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	snapshots, err := snapshotProvider.Snapshots()
+	snapshots, err := m.backend.Emulator().Snapshots()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	if !slices.Contains(snapshots, name) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	err = snapshotProvider.JumpToSnapshot(name, false)
+	err = m.backend.Emulator().LoadSnapshot(name)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	m.reloadBlockchainFromSnapshot(name, (*m.storage).Store(), w)
-
+	m.latestBlockResponse(name, w)
 }
 
 func (m EmulatorAPIServer) SnapshotCreate(w http.ResponseWriter, r *http.Request) {
@@ -202,29 +183,23 @@ func (m EmulatorAPIServer) SnapshotCreate(w http.ResponseWriter, r *http.Request
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	snapshotProvider, isSnapshotProvider := (*m.storage).Store().(storage.SnapshotProvider)
-	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
-		m.server.logger.Error().Msg("State management is not available with current storage backend")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	snapshots, err := snapshotProvider.Snapshots()
+	snapshots, err := m.backend.Emulator().Snapshots()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	if slices.Contains(snapshots, name) {
 		w.WriteHeader(http.StatusConflict)
 		return
 	}
-	err = snapshotProvider.JumpToSnapshot(name, true)
+
+	err = m.backend.Emulator().CreateSnapshot(name)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	m.reloadBlockchainFromSnapshot(name, (*m.storage).Store(), w)
-
+	m.latestBlockResponse(name, w)
 }
 
 func (m EmulatorAPIServer) Storage(w http.ResponseWriter, r *http.Request) {

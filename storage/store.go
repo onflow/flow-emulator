@@ -27,6 +27,7 @@ import (
 
 	"github.com/onflow/flow-go/fvm/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/psiemens/graceland"
 
 	"github.com/onflow/flow-emulator/types"
 )
@@ -54,12 +55,13 @@ const (
 //
 // Implementations must be safe for use by multiple goroutines.
 type Store interface {
+	graceland.Routine
 	LatestBlockHeight(ctx context.Context) (uint64, error)
 
 	// LatestBlock returns the block with the highest block height.
 	LatestBlock(ctx context.Context) (flowgo.Block, error)
 
-	// Store stores the block. If the exactly same block is already in a storage, return successfully
+	// StoreBlock  stores the block. If the exactly same block is already in a storage, return successfully
 	StoreBlock(ctx context.Context, block *flowgo.Block) error
 
 	// BlockByID returns the block with the given hash. It is available for
@@ -102,7 +104,8 @@ type Store interface {
 }
 type SnapshotProvider interface {
 	Snapshots() ([]string, error)
-	JumpToSnapshot(snapshotName string, createIfNotExists bool) error
+	CreateSnapshot(snapshotName string) error
+	LoadSnapshot(snapshotName string) error
 	SupportSnapshotsWithCurrentConfig() bool
 }
 
@@ -111,7 +114,6 @@ type KeyGenerator interface {
 	LatestBlock() []byte
 	BlockHeight(height uint64) []byte
 	Identifier(id flowgo.Identifier) []byte
-	Event(blockHeight uint64, txIndex, eventIndex uint32, eventType flowgo.EventType) []byte
 }
 
 type DataGetter interface {
@@ -143,21 +145,17 @@ func (s *DefaultKeyGenerator) Identifier(id flowgo.Identifier) []byte {
 	return []byte(fmt.Sprintf("%x", id))
 }
 
-func (s *DefaultKeyGenerator) Event(blockHeight uint64, txIndex, eventIndex uint32, eventType flowgo.EventType) []byte {
-	return []byte(fmt.Sprintf(
-		"%032d-%032d-%032d-%s",
-		blockHeight,
-		txIndex,
-		eventIndex,
-		eventType,
-	))
-}
-
 type DefaultStore struct {
 	KeyGenerator
 	DataSetter
 	DataGetter
 }
+
+func (s *DefaultStore) Start() error {
+	return nil
+}
+
+func (s *DefaultStore) Stop() {}
 
 func (s *DefaultStore) LatestBlockHeight(ctx context.Context) (latestBlockHeight uint64, err error) {
 	latestBlockHeightEnc, err := s.DataGetter.GetBytes(ctx, s.KeyGenerator.Storage(globalStoreName), s.KeyGenerator.LatestBlock())
