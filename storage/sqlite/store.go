@@ -246,14 +246,20 @@ func (s *Store) SetBytes(ctx context.Context, store string, key []byte, value []
 func (s *Store) SetBytesWithVersion(ctx context.Context, store string, key []byte, value []byte, version uint64) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	height := s.CurrentHeight
+	//global table has no height
+	if store == "global" {
+		height = 0
+	}
 	_, err := s.db.Exec(
 		fmt.Sprintf(
-			"INSERT INTO %s (key, version, value) VALUES (?, ?, ?) ON CONFLICT(key, version) DO UPDATE SET value=excluded.value",
+			"INSERT INTO %s (key, version, value, height) VALUES (?, ?, ?, ?) ON CONFLICT(key, version, height) DO UPDATE SET value=excluded.value",
 			store,
 		),
 		hex.EncodeToString(key),
 		version,
 		hex.EncodeToString(value),
+		height,
 	)
 	if err != nil {
 		return err

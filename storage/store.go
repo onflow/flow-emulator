@@ -157,8 +157,8 @@ type DefaultStore struct {
 }
 
 func (s *DefaultStore) SetBlockHeight(height uint64) error {
+	s.CurrentHeight = height
 	return s.DataSetter.SetBytes(context.Background(), s.KeyGenerator.Storage(globalStoreName), s.KeyGenerator.LatestBlock(), mustEncodeUint64(height))
-
 }
 
 func (s *DefaultStore) Start() error {
