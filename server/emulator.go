@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 
@@ -54,6 +55,8 @@ func NewEmulatorAPIServer(server *EmulatorServer, backend *backend.Backend) *Emu
 	}
 
 	router.HandleFunc("/emulator/newBlock", r.CommitBlock)
+
+	router.HandleFunc("/emulator/rollback", r.Rollback).Methods("POST")
 
 	router.HandleFunc("/emulator/snapshots", r.SnapshotCreate).Methods("POST")
 	router.HandleFunc("/emulator/snapshots", r.SnapshotList).Methods("GET")
@@ -105,6 +108,27 @@ func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func (m EmulatorAPIServer) Rollback(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if r.FormValue("height") == "" {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	height, err := strconv.ParseUint(r.FormValue("height"), 10, 64)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = m.backend.Emulator().RollbackToBlockHeight(height)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+}
+
 func (m EmulatorAPIServer) SnapshotList(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

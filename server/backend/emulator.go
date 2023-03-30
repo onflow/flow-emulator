@@ -58,4 +58,6 @@ type Emulator interface {
 	Snapshots() ([]string, error)
 	CreateSnapshot(name string) error
 	LoadSnapshot(name string) error
+
+	RollbackToBlockHeight(height uint64) error
 }

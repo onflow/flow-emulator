@@ -38,6 +38,7 @@ import (
 
 var _ storage.SnapshotProvider = &Store{}
 var _ storage.Store = &Store{}
+var _ storage.RollbackProvider = &Store{}
 
 //go:embed createTables.sql
 var createTablesSql string
@@ -49,6 +50,31 @@ type Store struct {
 	url           string
 	mu            sync.RWMutex
 	snapshotNames []string
+}
+
+func (s *Store) RollbackToBlockHeight(height uint64) error {
+	if s.CurrentHeight >= height {
+		return fmt.Errorf("rollback height should be less then current height")
+	}
+
+	tx, err := s.db.BeginTx(context.Background(), &sql.TxOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, table := range []string{"blocks", "blockIndex", "events", "transactions", "collections", "transactionResults"} {
+		_, err = tx.Exec(fmt.Sprintf(`DELETE from %s where height>%d`, table, height))
+		if err != nil {
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return s.DefaultStore.SetBlockHeight(height)
 }
 
 func (s *Store) Snapshots() (snapshots []string, err error) {
@@ -224,14 +250,20 @@ func (s *Store) SetBytes(ctx context.Context, store string, key []byte, value []
 func (s *Store) SetBytesWithVersion(ctx context.Context, store string, key []byte, value []byte, version uint64) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	height := s.CurrentHeight
+	//global table has no height
+	if store == "global" {
+		height = 0
+	}
 	_, err := s.db.Exec(
 		fmt.Sprintf(
-			"INSERT INTO %s (key, version, value) VALUES (?, ?, ?) ON CONFLICT(key, version) DO UPDATE SET value=excluded.value",
+			"INSERT INTO %s (key, version, value, height) VALUES (?, ?, ?, ?) ON CONFLICT(key, version, height) DO UPDATE SET value=excluded.value",
 			store,
 		),
 		hex.EncodeToString(key),
 		version,
 		hex.EncodeToString(value),
+		height,
 	)
 	if err != nil {
 		return err

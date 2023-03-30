@@ -420,6 +420,28 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 
 }
 
+func (b *Blockchain) rollbackProvider() (storage.RollbackProvider, error) {
+	rollbackProvider, isRollbackProvider := b.storage.(storage.RollbackProvider)
+	if !isRollbackProvider {
+		return nil, fmt.Errorf("storage doesn't support rollback")
+	}
+	return rollbackProvider, nil
+}
+func (b *Blockchain) RollbackToBlockHeight(height uint64) error {
+
+	rollbackProvider, err := b.rollbackProvider()
+	if err != nil {
+		return err
+	}
+
+	err = rollbackProvider.RollbackToBlockHeight(height)
+	if err != nil {
+		return err
+	}
+
+	return b.ReloadBlockchain()
+}
+
 func (b *Blockchain) snapshotProvider() (storage.SnapshotProvider, error) {
 	snapshotProvider, isSnapshotProvider := b.storage.(storage.SnapshotProvider)
 	if !isSnapshotProvider || !snapshotProvider.SupportSnapshotsWithCurrentConfig() {

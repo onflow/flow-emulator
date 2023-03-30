@@ -363,6 +363,20 @@ func (mr *MockEmulatorMockRecorder) LoadSnapshot(arg0 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadSnapshot", reflect.TypeOf((*MockEmulator)(nil).LoadSnapshot), arg0)
 }
 
+// RollbackToBlockHeight mocks base method.
+func (m *MockEmulator) RollbackToBlockHeight(arg0 uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RollbackToBlockHeight", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RollbackToBlockHeight indicates an expected call of RollbackToBlockHeight.
+func (mr *MockEmulatorMockRecorder) RollbackToBlockHeight(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RollbackToBlockHeight", reflect.TypeOf((*MockEmulator)(nil).RollbackToBlockHeight), arg0)
+}
+
 // SetDebugger mocks base method.
 func (m *MockEmulator) SetDebugger(arg0 *interpreter.Debugger) {
 	m.ctrl.T.Helper()
