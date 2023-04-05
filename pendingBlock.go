@@ -32,7 +32,7 @@ type pendingBlock struct {
 	// mapping from transaction ID to transaction result
 	transactionResults map[flowgo.Identifier]IndexedTransactionResult
 	// current working ledger, updated after each transaction execution
-	ledgerView *delta.View
+	ledgerView state.View
 	// events emitted during execution
 	events []flowgo.Event
 	// index of transaction execution
@@ -40,7 +40,10 @@ type pendingBlock struct {
 }
 
 // newPendingBlock creates a new pending block sequentially after a specified block.
-func newPendingBlock(prevBlock *flowgo.Block, ledgerView *delta.View) *pendingBlock {
+func newPendingBlock(
+	prevBlock *flowgo.Block,
+	ledgerSnapshot state.StorageSnapshot,
+) *pendingBlock {
 
 	return &pendingBlock{
 		height: prevBlock.Header.Height + 1,
@@ -52,7 +55,7 @@ func newPendingBlock(prevBlock *flowgo.Block, ledgerView *delta.View) *pendingBl
 		transactions:       make(map[flowgo.Identifier]*flowgo.TransactionBody),
 		transactionIDs:     make([]flowgo.Identifier, 0),
 		transactionResults: make(map[flowgo.Identifier]IndexedTransactionResult),
-		ledgerView:         ledgerView,
+		ledgerView:         delta.NewDeltaView(ledgerSnapshot),
 		events:             make([]flowgo.Event, 0),
 		index:              0,
 	}
@@ -167,7 +170,7 @@ func (b *pendingBlock) ExecuteNextTransaction(
 
 	b.events = append(b.events, tp.Events...)
 
-	err = b.ledgerView.MergeView(childView)
+	err = b.ledgerView.Merge(childView.Finalize())
 	if err != nil {
 		// fail fast if fatal error occurs
 		return nil, err
