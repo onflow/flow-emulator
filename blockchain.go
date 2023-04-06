@@ -1555,5 +1555,5 @@ func (b *Blockchain) CoverageReport() *runtime.CoverageReport {
 }
 
 func (b *Blockchain) ResetCoverageReport() {
-	b.coverageReportedRuntime.CoverageReport = runtime.NewCoverageReport()
+	b.coverageReportedRuntime.Reset()
 }
