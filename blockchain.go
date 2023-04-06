@@ -28,7 +28,6 @@ import (
 	"github.com/onflow/flow-go/access"
 	"github.com/onflow/flow-go/crypto"
 	"github.com/onflow/flow-go/crypto/hash"
-	"github.com/onflow/flow-go/engine/execution/state/delta"
 	"github.com/onflow/flow-go/fvm"
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
 	"github.com/onflow/flow-go/fvm/environment"
@@ -524,7 +523,11 @@ func configureLedger(
 	store storage.Store,
 	vm *fvm.VirtualMachine,
 	ctx fvm.Context,
-) (*flowgo.Block, *delta.View, error) {
+) (
+	*flowgo.Block,
+	state.StorageSnapshot,
+	error,
+) {
 	latestBlock, err := store.LatestBlock(context.Background())
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
@@ -545,7 +548,11 @@ func configureNewLedger(
 	store storage.Store,
 	vm *fvm.VirtualMachine,
 	ctx fvm.Context,
-) (*flowgo.Block, *delta.View, error) {
+) (
+	*flowgo.Block,
+	state.StorageSnapshot,
+	error,
+) {
 	genesisExecutionSnapshot, err := bootstrapLedger(
 		vm,
 		ctx,
@@ -573,20 +580,24 @@ func configureNewLedger(
 	}
 
 	// get empty ledger view
-	ledgerView := delta.NewDeltaView(
-		store.LedgerByHeight(context.Background(), 0))
+	ledger := store.LedgerByHeight(context.Background(), 0)
 
-	return genesis, ledgerView, nil
+	return genesis, ledger, nil
 }
 
 func configureExistingLedger(
 	latestBlock *flowgo.Block,
 	store storage.Store,
-) (*flowgo.Block, *delta.View, error) {
-	latestLedgerView := delta.NewDeltaView(
-		store.LedgerByHeight(context.Background(), latestBlock.Header.Height))
+) (
+	*flowgo.Block,
+	state.StorageSnapshot,
+	error,
+) {
+	latestLedger := store.LedgerByHeight(
+		context.Background(),
+		latestBlock.Header.Height)
 
-	return latestBlock, latestLedgerView, nil
+	return latestBlock, latestLedger, nil
 }
 
 func bootstrapLedger(
@@ -1179,11 +1190,12 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 		return nil, err
 	}
 
-	ledgerView := delta.NewDeltaView(
-		b.storage.LedgerByHeight(context.Background(), block.Header.Height))
+	ledger := b.storage.LedgerByHeight(
+		context.Background(),
+		block.Header.Height)
 
 	// reset pending block using current block and ledger state
-	b.pendingBlock = newPendingBlock(block, ledgerView)
+	b.pendingBlock = newPendingBlock(block, ledger)
 
 	return block, nil
 }
@@ -1285,13 +1297,12 @@ func (b *Blockchain) ResetPendingBlock() error {
 		return &StorageError{err}
 	}
 
-	latestLedgerView := delta.NewDeltaView(
-		b.storage.LedgerByHeight(
-			context.Background(),
-			latestBlock.Header.Height))
+	latestLedger := b.storage.LedgerByHeight(
+		context.Background(),
+		latestBlock.Header.Height)
 
 	// reset pending block using latest committed block and ledger state
-	b.pendingBlock = newPendingBlock(&latestBlock, latestLedgerView)
+	b.pendingBlock = newPendingBlock(&latestBlock, latestLedger)
 
 	return nil
 }
