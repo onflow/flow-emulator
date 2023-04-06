@@ -24,82 +24,67 @@ import (
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
 	"github.com/onflow/cadence/runtime/sema"
-	reusableRuntime "github.com/onflow/flow-go/fvm/runtime"
 )
 
 type CoverageReportedRuntime struct {
 	runtime.Runtime
 	runtime.Environment
 	*runtime.CoverageReport
-
-	fvmEnv reusableRuntime.Environment
 }
 
-func (crt *CoverageReportedRuntime) SetFvmEnvironment(
-	fvmEnv reusableRuntime.Environment,
-) {
-	crt.fvmEnv = fvmEnv
-}
-
-func (crt CoverageReportedRuntime) NewScriptExecutor(
+func (crr CoverageReportedRuntime) NewScriptExecutor(
 	script runtime.Script,
 	context runtime.Context,
 ) runtime.Executor {
-	context.CoverageReport = crt.CoverageReport
-	return crt.Runtime.NewScriptExecutor(script, context)
+	context.CoverageReport = crr.CoverageReport
+	return crr.Runtime.NewScriptExecutor(script, context)
 }
 
-func (crt CoverageReportedRuntime) NewTransactionExecutor(
-	script runtime.Script,
-	context runtime.Context,
-) runtime.Executor {
-	context.CoverageReport = crt.CoverageReport
-	return crt.Runtime.NewTransactionExecutor(script, context)
-}
-
-func (crt CoverageReportedRuntime) NewContractFunctionExecutor(
-	contractLocation common.AddressLocation,
-	functionName string,
-	arguments []cadence.Value,
-	argumentTypes []sema.Type,
-	context runtime.Context,
-) runtime.Executor {
-	context.CoverageReport = crt.CoverageReport
-	return crt.Runtime.NewContractFunctionExecutor(
-		contractLocation,
-		functionName,
-		arguments,
-		argumentTypes,
-		context,
-	)
-}
-
-func (crt CoverageReportedRuntime) SetDebugger(
-	debugger *interpreter.Debugger,
-) {
-	crt.Runtime.SetDebugger(debugger)
-}
-
-func (crt CoverageReportedRuntime) ExecuteScript(
+func (crr CoverageReportedRuntime) ExecuteScript(
 	script runtime.Script,
 	context runtime.Context,
 ) (
 	cadence.Value,
 	error,
 ) {
-	context.CoverageReport = crt.CoverageReport
-	return crt.Runtime.ExecuteScript(script, context)
+	context.CoverageReport = crr.CoverageReport
+	return crr.Runtime.ExecuteScript(script, context)
 }
 
-func (crt CoverageReportedRuntime) ExecuteTransaction(
+func (crr CoverageReportedRuntime) NewTransactionExecutor(
+	script runtime.Script,
+	context runtime.Context,
+) runtime.Executor {
+	context.CoverageReport = crr.CoverageReport
+	return crr.Runtime.NewTransactionExecutor(script, context)
+}
+
+func (crr CoverageReportedRuntime) ExecuteTransaction(
 	script runtime.Script,
 	context runtime.Context,
 ) error {
-	context.CoverageReport = crt.CoverageReport
-	return crt.Runtime.ExecuteTransaction(script, context)
+	context.CoverageReport = crr.CoverageReport
+	return crr.Runtime.ExecuteTransaction(script, context)
 }
 
-func (crt CoverageReportedRuntime) InvokeContractFunction(
+func (crr CoverageReportedRuntime) NewContractFunctionExecutor(
+	contractLocation common.AddressLocation,
+	functionName string,
+	arguments []cadence.Value,
+	argumentTypes []sema.Type,
+	context runtime.Context,
+) runtime.Executor {
+	context.CoverageReport = crr.CoverageReport
+	return crr.Runtime.NewContractFunctionExecutor(
+		contractLocation,
+		functionName,
+		arguments,
+		argumentTypes,
+		context,
+	)
+}
+
+func (crr CoverageReportedRuntime) InvokeContractFunction(
 	contractLocation common.AddressLocation,
 	functionName string,
 	arguments []cadence.Value,
@@ -109,8 +94,8 @@ func (crt CoverageReportedRuntime) InvokeContractFunction(
 	cadence.Value,
 	error,
 ) {
-	context.CoverageReport = crt.CoverageReport
-	return crt.Runtime.InvokeContractFunction(
+	context.CoverageReport = crr.CoverageReport
+	return crr.Runtime.InvokeContractFunction(
 		contractLocation,
 		functionName,
 		arguments,
@@ -119,21 +104,15 @@ func (crt CoverageReportedRuntime) InvokeContractFunction(
 	)
 }
 
-func (crt CoverageReportedRuntime) ParseAndCheckProgram(
+func (crr CoverageReportedRuntime) ParseAndCheckProgram(
 	source []byte,
 	context runtime.Context,
 ) (
 	*interpreter.Program,
 	error,
 ) {
-	context.CoverageReport = crt.CoverageReport
-	return crt.Runtime.ParseAndCheckProgram(source, context)
-}
-
-func (crt *CoverageReportedRuntime) SetCoverageReport(
-	coverageReport *runtime.CoverageReport,
-) {
-	crt.CoverageReport = coverageReport
+	context.CoverageReport = crr.CoverageReport
+	return crr.Runtime.ParseAndCheckProgram(source, context)
 }
 
 func (crt CoverageReportedRuntime) ReadStored(
@@ -148,7 +127,7 @@ func (crt CoverageReportedRuntime) ReadStored(
 	return crt.Runtime.ReadStored(address, path, context)
 }
 
-func (crt CoverageReportedRuntime) ReadLinked(
+func (crr CoverageReportedRuntime) ReadLinked(
 	address common.Address,
 	path cadence.Path,
 	context runtime.Context,
@@ -156,17 +135,17 @@ func (crt CoverageReportedRuntime) ReadLinked(
 	cadence.Value,
 	error,
 ) {
-	context.CoverageReport = crt.CoverageReport
-	return crt.Runtime.ReadLinked(address, path, context)
+	context.CoverageReport = crr.CoverageReport
+	return crr.Runtime.ReadLinked(address, path, context)
 }
 
-func (crt CoverageReportedRuntime) Storage(
+func (crr CoverageReportedRuntime) Storage(
 	context runtime.Context,
 ) (
 	*runtime.Storage,
 	*interpreter.Interpreter,
 	error,
 ) {
-	context.CoverageReport = crt.CoverageReport
-	return crt.Runtime.Storage(context)
+	context.CoverageReport = crr.CoverageReport
+	return crr.Runtime.Storage(context)
 }
