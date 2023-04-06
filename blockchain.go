@@ -412,12 +412,16 @@ func (b *Blockchain) ReloadBlockchain() error {
 		return err
 	}
 
-	latestBlock, latestLedgerView, err := configureLedger(b.conf, b.storage, b.vm, b.vmCtx)
+	latestBlock, latestLedger, err := configureLedger(
+		b.conf,
+		b.storage,
+		b.vm,
+		b.vmCtx)
 	if err != nil {
 		return err
 	}
 
-	b.pendingBlock = newPendingBlock(latestBlock, latestLedgerView)
+	b.pendingBlock = newPendingBlock(latestBlock, latestLedger)
 	b.transactionValidator = configureTransactionValidator(b.conf, blocks)
 
 	return nil
@@ -1156,32 +1160,23 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 		}
 	}
 
+	txnBody := b.pendingBlock.NextTransaction()
+	txnId := txnBody.ID()
+
+	b.currentCode = string(txnBody.Script)
+	b.currentScriptID = txnId.String()
+	if b.debugger != nil {
+		b.debugger.RequestPause()
+	}
+
 	// use the computer to execute the next transaction
-	tp, err := b.pendingBlock.ExecuteNextTransaction(
-		func(
-			ledgerView state.View,
-			txIndex uint32,
-			txBody *flowgo.TransactionBody,
-		) (*fvm.TransactionProcedure, error) {
-			tx := fvm.Transaction(txBody, txIndex)
-			b.currentCode = string(txBody.Script)
-			b.currentScriptID = tx.ID.String()
-			if b.debugger != nil {
-				b.debugger.RequestPause()
-			}
-			err := b.vm.Run(ctx, tx, ledgerView)
-			if err != nil {
-				return nil, err
-			}
-			return tx, nil
-		},
-	)
+	output, err := b.pendingBlock.ExecuteNextTransaction(b.vm, ctx)
 	if err != nil {
 		// fail fast if fatal error occurs
 		return nil, err
 	}
 
-	tr, err := convert.VMTransactionResultToEmulator(tp)
+	tr, err := convert.VMTransactionResultToEmulator(txnId, output)
 	if err != nil {
 		// fail fast if fatal error occurs
 		return nil, err
@@ -1189,7 +1184,7 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 
 	// if transaction error exist try to further debug what was the problem
 	if tr.Error != nil {
-		tr.Debug = b.debugSignatureError(tr.Error, tp.Transaction)
+		tr.Debug = b.debugSignatureError(tr.Error, txnBody)
 	}
 
 	return tr, nil
@@ -1515,7 +1510,7 @@ func convertToSealedResults(
 	output := make(map[flowgo.Identifier]*types.StorableTransactionResult)
 
 	for id, result := range results {
-		temp, err := convert.ToStorableResult(result.Transaction)
+		temp, err := convert.ToStorableResult(result.ProcedureOutput)
 		if err != nil {
 			return nil, err
 		}

@@ -11,8 +11,8 @@ import (
 )
 
 type IndexedTransactionResult struct {
-	Transaction *fvm.TransactionProcedure
-	Index       uint32
+	fvm.ProcedureOutput
+	Index uint32
 }
 
 // MaxViewIncrease represents the largest difference in view number between
@@ -142,8 +142,12 @@ func (b *pendingBlock) GetTransaction(txID flowgo.Identifier) *flowgo.Transactio
 	return b.transactions[txID]
 }
 
-// nextTransaction returns the next indexed transaction.
-func (b *pendingBlock) nextTransaction() *flowgo.TransactionBody {
+// NextTransaction returns the next indexed transaction.
+func (b *pendingBlock) NextTransaction() *flowgo.TransactionBody {
+	if int(b.index) > len(b.transactionIDs) {
+		return nil
+	}
+
 	txID := b.transactionIDs[b.index]
 	return b.GetTransaction(txID)
 }
@@ -153,35 +157,41 @@ func (b *pendingBlock) nextTransaction() *flowgo.TransactionBody {
 // This function uses the provided execute function to perform the actual
 // execution, then updates the pending block with the output.
 func (b *pendingBlock) ExecuteNextTransaction(
-	execute func(ledgerView state.View, txIndex uint32, tx *flowgo.TransactionBody) (*fvm.TransactionProcedure, error),
-) (*fvm.TransactionProcedure, error) {
-	tx := b.nextTransaction()
-
-	childView := b.ledgerView.NewChild()
+	vm *fvm.VirtualMachine,
+	ctx fvm.Context,
+) (
+	fvm.ProcedureOutput,
+	error,
+) {
+	txnBody := b.NextTransaction()
+	txnIndex := b.index
 
 	// increment transaction index even if transaction reverts
 	b.index++
 
-	tp, err := execute(childView, b.index, tx)
+	executionSnapshot, output, err := vm.RunV2(
+		ctx,
+		fvm.Transaction(txnBody, txnIndex),
+		b.ledgerView)
 	if err != nil {
 		// fail fast if fatal error occurs
-		return nil, err
+		return fvm.ProcedureOutput{}, err
 	}
 
-	b.events = append(b.events, tp.Events...)
+	b.events = append(b.events, output.Events...)
 
-	err = b.ledgerView.Merge(childView.Finalize())
+	err = b.ledgerView.Merge(executionSnapshot)
 	if err != nil {
 		// fail fast if fatal error occurs
-		return nil, err
+		return fvm.ProcedureOutput{}, err
 	}
 
-	b.transactionResults[tx.ID()] = IndexedTransactionResult{
-		Transaction: tp,
-		Index:       b.index,
+	b.transactionResults[txnBody.ID()] = IndexedTransactionResult{
+		ProcedureOutput: output,
+		Index:           txnIndex,
 	}
 
-	return tp, nil
+	return output, nil
 }
 
 // Events returns all events captured during the execution of the pending block.
