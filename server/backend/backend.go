@@ -732,14 +732,6 @@ func printTransactionResult(logger *zerolog.Logger, result *types.TransactionRes
 			Msg("❗  Transaction reverted")
 	}
 
-	for _, log := range result.Logs {
-		logger.Info().Msgf(
-			"%s %s",
-			logPrefix("LOG", result.TransactionID, aurora.BlueFg),
-			log,
-		)
-	}
-
 	for _, event := range result.Events {
 		logger.Debug().Msgf(
 			"%s %s",
@@ -772,14 +764,6 @@ func printScriptResult(logger *zerolog.Logger, result *types.ScriptResult) {
 			Str("scriptID", result.ScriptID.String()).
 			Uint64("computationUsed", result.ComputationUsed).
 			Msg("❗  Script reverted")
-	}
-
-	for _, log := range result.Logs {
-		logger.Debug().Msgf(
-			"%s %s",
-			logPrefix("LOG", result.ScriptID, aurora.BlueFg),
-			log,
-		)
 	}
 
 	if !result.Succeeded() {

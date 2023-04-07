@@ -145,7 +145,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 		return nil
 	}
 
-	blockchain, err := configureBlockchain(conf, store)
+	blockchain, err := configureBlockchain(logger, conf, store)
 	if err != nil {
 		logger.Err(err).Msg("❗  Failed to configure emulated blockchain")
 		return nil
@@ -333,8 +333,9 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 	return storageProvider, err
 }
 
-func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchain, error) {
+func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Store) (*emulator.Blockchain, error) {
 	options := []emulator.Option{
+		emulator.WithServerLogger(*logger),
 		emulator.WithStore(store),
 		emulator.WithGenesisTokenSupply(conf.GenesisTokenSupply),
 		emulator.WithTransactionMaxGasLimit(conf.TransactionMaxGasLimit),
