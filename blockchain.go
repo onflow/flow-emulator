@@ -499,10 +499,11 @@ type CadenceHook struct {
 }
 
 func (h CadenceHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
-	if level != zerolog.NoLevel && strings.HasPrefix(msg, "Cadence log:") {
+	const logPrefix = "Cadence log:"
+	if level != zerolog.NoLevel && strings.HasPrefix(msg, logPrefix) {
 		h.MainLogger.Info().Msg(
 			strings.Replace(msg,
-				"Cadence log:",
+				logPrefix,
 				aurora.Colorize("LOG:", aurora.BlueFg|aurora.BoldFm).String(),
 				1))
 	}
