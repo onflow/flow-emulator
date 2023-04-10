@@ -129,6 +129,8 @@ type Config struct {
 	RedisURL string
 	//Sqlite URL for sqlite storage backend
 	SqliteURL string
+	// CoverageReportingEnabled enables/disables Cadence code coverage reporting.
+	CoverageReportingEnabled bool
 }
 
 type listener interface {
@@ -346,6 +348,7 @@ func configureBlockchain(conf *Config, store storage.Store) (*emulator.Blockchai
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		emulator.WithChainID(conf.ChainID),
 		emulator.WithContractRemovalEnabled(conf.ContractRemovalEnabled),
+		emulator.WithCoverageReportingEnabled(conf.CoverageReportingEnabled),
 	}
 
 	if conf.SkipTransactionValidation {
