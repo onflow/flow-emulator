@@ -71,6 +71,8 @@ type Blockchain struct {
 	currentScriptID        string
 
 	conf config
+
+	coverageReportedRuntime *CoverageReportedRuntime
 }
 
 type ServiceKey struct {
@@ -154,6 +156,7 @@ type config struct {
 	ServerLogger                 zerolog.Logger
 	TransactionValidationEnabled bool
 	ChainID                      flowgo.ChainID
+	CoverageReportingEnabled     bool
 }
 
 func (conf config) GetStore() storage.Store {
@@ -210,6 +213,7 @@ var defaultConfig = func() config {
 		ServerLogger:                 zerolog.Nop(),
 		TransactionValidationEnabled: true,
 		ChainID:                      flowgo.Emulator,
+		CoverageReportingEnabled:     false,
 	}
 }()
 
@@ -386,6 +390,18 @@ func WithChainID(chainID flowgo.ChainID) Option {
 		c.ChainID = chainID
 	}
 }
+
+// WithCoverageReportingEnabled enables/disables Cadence code coverage reporting.
+//
+// If set to false, the emulator will not collect/expose coverage information for Cadence code.
+//
+// The default is false.
+func WithCoverageReportingEnabled(enabled bool) Option {
+	return func(c *config) {
+		c.CoverageReportingEnabled = enabled
+	}
+}
+
 func (b *Blockchain) ReloadBlockchain() error {
 	var err error
 
@@ -514,6 +530,24 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 
 	cadenceLogger := conf.Logger.Hook(CadenceHook{MainLogger: &conf.ServerLogger}).Level(zerolog.DebugLevel)
 
+	config := runtime.Config{
+		Debugger:                 blockchain.debugger,
+		AccountLinkingEnabled:    true,
+		CoverageReportingEnabled: conf.CoverageReportingEnabled,
+	}
+	coverageReportedRuntime := &CoverageReportedRuntime{
+		Runtime:        runtime.NewInterpreterRuntime(config),
+		CoverageReport: runtime.NewCoverageReport(),
+		Environment:    runtime.NewBaseInterpreterEnvironment(config),
+	}
+	customRuntimePool := reusableRuntime.NewCustomReusableCadenceRuntimePool(
+		1,
+		config,
+		func(config runtime.Config) runtime.Runtime {
+			return coverageReportedRuntime
+		},
+	)
+
 	fvmOptions := []fvm.Option{
 		fvm.WithLogger(cadenceLogger),
 		fvm.WithChain(conf.GetChainID().Chain()),
@@ -524,14 +558,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithCadenceLogging(true),
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
-		fvm.WithReusableCadenceRuntimePool(
-			reusableRuntime.NewReusableCadenceRuntimePool(
-				1,
-				runtime.Config{
-					Debugger:              blockchain.debugger,
-					AccountLinkingEnabled: true,
-				}),
-		),
+		fvm.WithReusableCadenceRuntimePool(customRuntimePool),
 	}
 
 	if !conf.TransactionValidationEnabled {
@@ -544,6 +571,8 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 	ctx := fvm.NewContext(
 		fvmOptions...,
 	)
+
+	blockchain.coverageReportedRuntime = coverageReportedRuntime
 
 	return vm, ctx, nil
 }
@@ -1549,4 +1578,16 @@ func (b *Blockchain) SetDebugger(debugger *interpreter.Debugger) {
 
 func (b *Blockchain) EndDebugging() {
 	b.SetDebugger(nil)
+}
+
+func (b *Blockchain) CoverageReport() *runtime.CoverageReport {
+	return b.coverageReportedRuntime.CoverageReport
+}
+
+func (b *Blockchain) SetCoverageReport(coverageReport *runtime.CoverageReport) {
+	b.coverageReportedRuntime.CoverageReport = coverageReport
+}
+
+func (b *Blockchain) ResetCoverageReport() {
+	b.coverageReportedRuntime.Reset()
 }
