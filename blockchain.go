@@ -14,6 +14,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/logrusorgru/aurora"
+	"strings"
 	"sync"
 	"time"
 
@@ -151,6 +153,7 @@ type config struct {
 	MinimumStorageReservation    cadence.UFix64
 	StorageMBPerFLOW             cadence.UFix64
 	Logger                       zerolog.Logger
+	ServerLogger                 zerolog.Logger
 	TransactionValidationEnabled bool
 	ChainID                      flowgo.ChainID
 	CoverageReportingEnabled     bool
@@ -207,6 +210,7 @@ var defaultConfig = func() config {
 		TransactionExpiry:            0, // TODO: replace with sensible default
 		StorageLimitEnabled:          true,
 		Logger:                       zerolog.Nop(),
+		ServerLogger:                 zerolog.Nop(),
 		TransactionValidationEnabled: true,
 		ChainID:                      flowgo.Emulator,
 		CoverageReportingEnabled:     false,
@@ -216,12 +220,21 @@ var defaultConfig = func() config {
 // Option is a function applying a change to the emulator config.
 type Option func(*config)
 
-// WithLogger sets the logger
+// WithLogger sets the fvm logger
 func WithLogger(
 	logger zerolog.Logger,
 ) Option {
 	return func(c *config) {
 		c.Logger = logger
+	}
+}
+
+// WithServerLogger sets the logger
+func WithServerLogger(
+	logger zerolog.Logger,
+) Option {
+	return func(c *config) {
+		c.ServerLogger = logger
 	}
 }
 
@@ -497,8 +510,25 @@ func (b *Blockchain) LoadSnapshot(name string) error {
 	return b.ReloadBlockchain()
 }
 
+type CadenceHook struct {
+	MainLogger *zerolog.Logger
+}
+
+func (h CadenceHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
+	const logPrefix = "Cadence log:"
+	if level != zerolog.NoLevel && strings.HasPrefix(msg, logPrefix) {
+		h.MainLogger.Info().Msg(
+			strings.Replace(msg,
+				logPrefix,
+				aurora.Colorize("LOG:", aurora.BlueFg|aurora.BoldFm).String(),
+				1))
+	}
+}
+
 func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {
 	vm := fvm.NewVirtualMachine()
+
+	cadenceLogger := conf.Logger.Hook(CadenceHook{MainLogger: &conf.ServerLogger}).Level(zerolog.DebugLevel)
 
 	config := runtime.Config{
 		Debugger:                 blockchain.debugger,
@@ -519,7 +549,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 	)
 
 	fvmOptions := []fvm.Option{
-		fvm.WithLogger(conf.Logger),
+		fvm.WithLogger(cadenceLogger),
 		fvm.WithChain(conf.GetChainID().Chain()),
 		fvm.WithBlocks(blocks),
 		fvm.WithContractDeploymentRestricted(false),
