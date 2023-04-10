@@ -47,27 +47,25 @@ func TestVm(t *testing.T) {
 		event2, err := sdkConvert.SDKEventToFlow(eventGenerator.New())
 		assert.NoError(t, err)
 
-		tp := &fvm.TransactionProcedure{
-			ID: flowgo.Identifier(idGenerator.New()),
-			ProcedureOutput: fvm.ProcedureOutput{
-				Logs:            []string{"TestLog1", "TestLog2"},
-				Events:          []flowgo.Event{event1, event2},
-				ComputationUsed: 5,
-				Err:             nil,
-			},
+		txnId := flowgo.Identifier(idGenerator.New())
+		output := fvm.ProcedureOutput{
+			Logs:            []string{"TestLog1", "TestLog2"},
+			Events:          []flowgo.Event{event1, event2},
+			ComputationUsed: 5,
+			Err:             nil,
 		}
 
-		tr, err := convert.VMTransactionResultToEmulator(tp)
+		tr, err := convert.VMTransactionResultToEmulator(txnId, output)
 		assert.NoError(t, err)
 
-		assert.Equal(t, tp.ID, flowgo.Identifier(tr.TransactionID))
-		assert.Equal(t, tp.Logs, tr.Logs)
+		assert.Equal(t, txnId, flowgo.Identifier(tr.TransactionID))
+		assert.Equal(t, output.Logs, tr.Logs)
 
-		flowEvents, err := sdkConvert.FlowEventsToSDK(tp.Events)
+		flowEvents, err := sdkConvert.FlowEventsToSDK(output.Events)
 		assert.NoError(t, err)
 		assert.Equal(t, flowEvents, tr.Events)
 
-		assert.Equal(t, tp.ComputationUsed, tr.ComputationUsed)
-		assert.Equal(t, tp.Err, tr.Error)
+		assert.Equal(t, output.ComputationUsed, tr.ComputationUsed)
+		assert.Equal(t, output.Err, tr.Error)
 	})
 }

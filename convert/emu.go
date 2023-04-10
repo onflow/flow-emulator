@@ -24,19 +24,24 @@ import (
 	"github.com/onflow/flow-emulator/types"
 )
 
-func ToStorableResult(tp *fvm.TransactionProcedure) (types.StorableTransactionResult, error) {
+func ToStorableResult(
+	output fvm.ProcedureOutput,
+) (
+	types.StorableTransactionResult,
+	error,
+) {
 	var errorCode int
 	var errorMessage string
 
-	if tp.Err != nil {
-		errorCode = int(tp.Err.Code())
-		errorMessage = tp.Err.Error()
+	if output.Err != nil {
+		errorCode = int(output.Err.Code())
+		errorMessage = output.Err.Error()
 	}
 
 	return types.StorableTransactionResult{
 		ErrorCode:    errorCode,
 		ErrorMessage: errorMessage,
-		Logs:         tp.Logs,
-		Events:       tp.Events,
+		Logs:         output.Logs,
+		Events:       output.Events,
 	}, nil
 }
