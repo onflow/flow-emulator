@@ -65,6 +65,7 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--transaction-max-gas-limit`   | `FLOW_TRANSACTIONMAXGASLIMIT`    | `9999`         | Maximum [gas limit for transactions](https://docs.onflow.org/flow-go-sdk/building-transactions/#gas-limit)                                                                                                                                          |
 | `--script-gas-limit`            | `FLOW_SCRIPTGASLIMIT`            | `100000`       | Specify gas limit for script execution                                                                                                                                                                                                              |
 | `--with-contracts`              | `FLOW_WITHCONTRACTS`             | `false`        | Deploy common contracts when emulator starts                                                                                                                                                                                                        |
+| `--coverage-reporting`        | `FLOW_COVERAGEREPORTING`     | `false`        | Enable Cadence code coverage reporting                                                                                                                                                                                                        |
 | `--skip-transaction-validation` | `FLOW_SKIPTRANSACTIONVALIDATION` | `false`        | Skip verification of transaction signatures and sequence numbers                                                                                                                                                                                    |
 | `--host`                        | `FLOW_HOST`                      | ` `    | Host to listen on for emulator GRPC/REST/Admin servers  (default: all interfaces)                                                                                                                                                                                            |
 | `--chain-id`                    | `FLOW_CHAINID`                   | `emulator`    | Chain to emulate for address generation.  Valid values are: 'emulator', 'testnet', 'mainnet'                                                                                                                                                         |
@@ -152,6 +153,23 @@ You can list existing snapshots with:
 ```
 GET http://localhost:8080/emulator/snapshots
 ```
+
+## Cadence Code Coverage
+
+The admin API includes endpoints for viewing and managing Cadence code coverage.
+
+In order to use this functionality you need to run the emulator with the respective flag which enables code coverage:
+```bash
+flow emulator --coverage-reporting
+```
+
+To view the code coverage report, visit this URL: http://localhost:8080/emulator/codeCoverage
+
+To flush/reset the collected code coverage report, run the following command:
+```bash
+curl -XPUT 'http://localhost:8080/emulator/codeCoverage/reset'
+```
+Note: The above command will reset the code coverage for all the locations, except for `A.f8d6e0586b0a20c7.FlowServiceAccount`, which is a system contract that is essential to the operations of Flow.
 
 ## Running the emulator with Docker
 
