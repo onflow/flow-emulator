@@ -7,7 +7,7 @@ require (
 	github.com/glebarez/go-sqlite v1.21.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang/mock v1.6.0
-	github.com/google/go-dap v0.7.0
+	github.com/google/go-dap v0.8.0
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/go-multierror v1.1.1
