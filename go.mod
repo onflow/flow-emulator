@@ -13,12 +13,12 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v0.38.0
-	github.com/onflow/flow-go v0.30.1-0.20230405170219-7aae6a2af471
+	github.com/onflow/cadence v0.38.1
+	github.com/onflow/flow-go v0.30.1-0.20230419183628-e1fa8dba5ec5
 	github.com/onflow/flow-go-sdk v0.40.0
 	github.com/onflow/flow-go/crypto v0.24.7
 	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20220727161549-d59b1e547ac4
-	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20221202093946-932d1c70e288
+	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20230330183547-d0dd18f6f20d
 	github.com/onflow/fusd/lib/go/contracts v0.0.0-20211021081023-ae9de8fb2c7e
 	github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20221222181731-14b90207cead
 	github.com/prometheus/client_golang v1.14.0
@@ -38,6 +38,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
@@ -96,9 +97,9 @@ require (
 	github.com/multiformats/go-multihash v0.2.1 // indirect
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/onflow/atree v0.5.0 // indirect
-	github.com/onflow/flow-core-contracts/lib/go/contracts v0.12.1 // indirect
-	github.com/onflow/flow-core-contracts/lib/go/templates v0.12.1 // indirect
-	github.com/onflow/flow-ft/lib/go/contracts v0.5.0 // indirect
+	github.com/onflow/flow-core-contracts/lib/go/contracts v1.2.3 // indirect
+	github.com/onflow/flow-core-contracts/lib/go/templates v1.2.3 // indirect
+	github.com/onflow/flow-ft/lib/go/contracts v0.7.0 // indirect
 	github.com/onflow/sdks v0.5.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
@@ -142,6 +143,7 @@ require (
 	go.uber.org/multierr v1.9.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/crypto v0.4.0 // indirect
+	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
