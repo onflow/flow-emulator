@@ -537,6 +537,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 	config := runtime.Config{
 		Debugger:                 blockchain.debugger,
 		AccountLinkingEnabled:    true,
+		AttachmentsEnabled:       true,
 		CoverageReportingEnabled: conf.CoverageReportingEnabled,
 	}
 	coverageReportedRuntime := &CoverageReportedRuntime{
