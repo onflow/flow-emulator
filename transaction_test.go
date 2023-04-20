@@ -750,7 +750,9 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 
 		t.Parallel()
 
-		b, err := emulator.NewBlockchain()
+		b, err := emulator.NewBlockchain(
+			emulator.WithTransactionValidationEnabled(false),
+		)
 		require.NoError(t, err)
 
 		addresses := flowsdk.NewAddressGenerator(flowsdk.Emulator)
