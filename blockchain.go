@@ -14,10 +14,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/logrusorgru/aurora"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/logrusorgru/aurora"
 
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
