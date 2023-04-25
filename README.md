@@ -125,6 +125,19 @@ You can then access all methods of the blockchain like so:
 account, err := blockchain.GetAccount(address) 
 ```
 
+## Rolling back state to blockheight 
+It is possible to roll back the emulator state to a specific block height. This
+feature is extremely useful for testing purposes. You can set up an account
+state, perform tests on that state, and then roll back the state to its initial
+state after each test.
+
+To roll back to a specific block height, you can utilize below HTTP request: 
+``
+POST http://localhost:8080/emulator/rollback
+
+Post Data: height={block height}
+```
+
 
 ## Managing emulator state
 It's possible to manage emulator state by using the admin API. You can at any point 

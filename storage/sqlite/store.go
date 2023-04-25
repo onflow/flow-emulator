@@ -53,7 +53,7 @@ type Store struct {
 }
 
 func (s *Store) RollbackToBlockHeight(height uint64) error {
-	if s.CurrentHeight >= height {
+	if s.CurrentHeight <= height {
 		return fmt.Errorf("rollback height should be less then current height")
 	}
 
