@@ -19,6 +19,7 @@
 package backend
 
 import (
+	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/interpreter"
 	emulator "github.com/onflow/flow-emulator"
 	sdk "github.com/onflow/flow-go-sdk"
@@ -29,8 +30,13 @@ import (
 
 // Emulator defines the method set of an emulated blockchain.
 type Emulator interface {
+	// Debugger
 	SetDebugger(*interpreter.Debugger)
 	EndDebugging()
+
+	// CoverageReport
+	CoverageReport() *runtime.CoverageReport
+	SetCoverageReport(coverageReport *runtime.CoverageReport)
 
 	AddTransaction(tx sdk.Transaction) error
 	ExecuteNextTransaction() (*types.TransactionResult, error)

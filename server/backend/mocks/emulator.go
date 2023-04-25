@@ -8,6 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	runtime "github.com/onflow/cadence/runtime"
 	interpreter "github.com/onflow/cadence/runtime/interpreter"
 	emulator "github.com/onflow/flow-emulator"
 	types "github.com/onflow/flow-emulator/types"
@@ -65,6 +66,20 @@ func (m *MockEmulator) CommitBlock() (*flow0.Block, error) {
 func (mr *MockEmulatorMockRecorder) CommitBlock() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitBlock", reflect.TypeOf((*MockEmulator)(nil).CommitBlock))
+}
+
+// CoverageReport mocks base method.
+func (m *MockEmulator) CoverageReport() *runtime.CoverageReport {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CoverageReport")
+	ret0, _ := ret[0].(*runtime.CoverageReport)
+	return ret0
+}
+
+// CoverageReport indicates an expected call of CoverageReport.
+func (mr *MockEmulatorMockRecorder) CoverageReport() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CoverageReport", reflect.TypeOf((*MockEmulator)(nil).CoverageReport))
 }
 
 // CreateSnapshot mocks base method.
@@ -375,6 +390,18 @@ func (m *MockEmulator) RollbackToBlockHeight(arg0 uint64) error {
 func (mr *MockEmulatorMockRecorder) RollbackToBlockHeight(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RollbackToBlockHeight", reflect.TypeOf((*MockEmulator)(nil).RollbackToBlockHeight), arg0)
+}
+
+// SetCoverageReport mocks base method.
+func (m *MockEmulator) SetCoverageReport(arg0 *runtime.CoverageReport) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetCoverageReport", arg0)
+}
+
+// SetCoverageReport indicates an expected call of SetCoverageReport.
+func (mr *MockEmulatorMockRecorder) SetCoverageReport(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCoverageReport", reflect.TypeOf((*MockEmulator)(nil).SetCoverageReport), arg0)
 }
 
 // SetDebugger mocks base method.
