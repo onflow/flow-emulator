@@ -23,8 +23,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/onflow/flow-go/fvm/state"
-	fvmstorage "github.com/onflow/flow-go/fvm/storage"
+	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/onflow/flow-emulator/storage"
@@ -45,7 +44,7 @@ type Store struct {
 	// Transaction results by ID
 	transactionResults map[flowgo.Identifier]types.StorableTransactionResult
 	// Ledger states by block height
-	ledger map[uint64]fvmstorage.SnapshotTree
+	ledger map[uint64]snapshot.SnapshotTree
 	// events by block height
 	eventsByBlockHeight map[uint64][]flowgo.Event
 	// highest block height
@@ -61,7 +60,7 @@ func New() *Store {
 		collections:         make(map[flowgo.Identifier]flowgo.LightCollection),
 		transactions:        make(map[flowgo.Identifier]flowgo.TransactionBody),
 		transactionResults:  make(map[flowgo.Identifier]types.StorableTransactionResult),
-		ledger:              make(map[uint64]fvmstorage.SnapshotTree),
+		ledger:              make(map[uint64]snapshot.SnapshotTree),
 		eventsByBlockHeight: make(map[uint64][]flowgo.Event),
 	}
 }
@@ -149,7 +148,7 @@ func (s *Store) CommitBlock(
 	collections []*flowgo.LightCollection,
 	transactions map[flowgo.Identifier]*flowgo.TransactionBody,
 	transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
-	executionSnapshot *state.ExecutionSnapshot,
+	executionSnapshot *snapshot.ExecutionSnapshot,
 	events []flowgo.Event,
 ) error {
 	s.mu.Lock()
@@ -251,7 +250,7 @@ func (s *Store) TransactionResultByID(
 func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
-) state.StorageSnapshot {
+) snapshot.StorageSnapshot {
 	return s.ledger[blockHeight]
 }
 
@@ -297,7 +296,7 @@ func (s *Store) insertTransactionResult(txID flowgo.Identifier, result types.Sto
 
 func (s *Store) insertExecutionSnapshot(
 	blockHeight uint64,
-	executionSnapshot *state.ExecutionSnapshot,
+	executionSnapshot *snapshot.ExecutionSnapshot,
 ) error {
 	oldLedger := s.ledger[blockHeight-1]
 
