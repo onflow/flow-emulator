@@ -26,7 +26,7 @@ import (
 	"testing"
 
 	"github.com/onflow/flow-go-sdk/test"
-	"github.com/onflow/flow-go/fvm/state"
+	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
@@ -251,7 +251,7 @@ func TestLedger(t *testing.T) {
 		const key = "foo"
 		expected := []byte("bar")
 
-		executionSnapshot := &state.ExecutionSnapshot{
+		executionSnapshot := &snapshot.ExecutionSnapshot{
 			WriteSet: map[flow.RegisterID]flow.RegisterValue{
 				flow.NewRegisterID(owner, key): expected,
 			},
@@ -288,7 +288,7 @@ func TestLedger(t *testing.T) {
 		// Create a list of ledgers, where the ledger at index i has
 		// keys (i+2)-1->(i+2)+1 set to value i-1.
 		totalBlocks := 10
-		var snapshots []*state.ExecutionSnapshot
+		var snapshots []*snapshot.ExecutionSnapshot
 		for i := 2; i < totalBlocks+2; i++ {
 			writeSet := map[flow.RegisterID]flow.RegisterValue{}
 			for j := i - 1; j <= i+1; j++ {
@@ -297,7 +297,7 @@ func TestLedger(t *testing.T) {
 			}
 			snapshots = append(
 				snapshots,
-				&state.ExecutionSnapshot{WriteSet: writeSet})
+				&snapshot.ExecutionSnapshot{WriteSet: writeSet})
 		}
 		require.Equal(t, totalBlocks, len(snapshots))
 

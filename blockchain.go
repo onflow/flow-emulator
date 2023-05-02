@@ -36,7 +36,7 @@ import (
 	"github.com/onflow/flow-go/fvm/environment"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	reusableRuntime "github.com/onflow/flow-go/fvm/runtime"
-	"github.com/onflow/flow-go/fvm/state"
+	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
 
@@ -590,7 +590,7 @@ func configureLedger(
 	ctx fvm.Context,
 ) (
 	*flowgo.Block,
-	state.StorageSnapshot,
+	snapshot.StorageSnapshot,
 	error,
 ) {
 	latestBlock, err := store.LatestBlock(context.Background())
@@ -615,7 +615,7 @@ func configureNewLedger(
 	ctx fvm.Context,
 ) (
 	*flowgo.Block,
-	state.StorageSnapshot,
+	snapshot.StorageSnapshot,
 	error,
 ) {
 	genesisExecutionSnapshot, err := bootstrapLedger(
@@ -655,7 +655,7 @@ func configureExistingLedger(
 	store storage.Store,
 ) (
 	*flowgo.Block,
-	state.StorageSnapshot,
+	snapshot.StorageSnapshot,
 	error,
 ) {
 	latestLedger := store.LedgerByHeight(
@@ -668,10 +668,10 @@ func configureExistingLedger(
 func bootstrapLedger(
 	vm *fvm.VirtualMachine,
 	ctx fvm.Context,
-	ledger state.StorageSnapshot,
+	ledger snapshot.StorageSnapshot,
 	conf config,
 ) (
-	*state.ExecutionSnapshot,
+	*snapshot.ExecutionSnapshot,
 	error,
 ) {
 	accountKey := conf.GetServiceKey().AccountKey()
@@ -694,7 +694,7 @@ func bootstrapLedger(
 
 	bootstrap := configureBootstrapProcedure(conf, flowAccountKey, conf.GenesisTokenSupply)
 
-	executionSnapshot, _, err := vm.RunV2(ctx, bootstrap, ledger)
+	executionSnapshot, _, err := vm.Run(ctx, bootstrap, ledger)
 	if err != nil {
 		return nil, err
 	}
@@ -1257,7 +1257,7 @@ func (b *Blockchain) GetAccountStorage(
 	*AccountStorage,
 	error,
 ) {
-	view := b.pendingBlock.ledgerView.NewChild()
+	view := b.pendingBlock.ledgerState.NewChild()
 
 	env := environment.NewScriptEnvironmentFromStorageSnapshot(
 		b.vmCtx.EnvironmentParams,
@@ -1400,7 +1400,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 	if b.debugger != nil {
 		b.debugger.RequestPause()
 	}
-	_, output, err := b.vm.RunV2(
+	_, output, err := b.vm.Run(
 		blockContext,
 		scriptProc,
 		requestedLedgerSnapshot)

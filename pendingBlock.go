@@ -4,9 +4,9 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/onflow/flow-go/engine/execution/state/delta"
 	"github.com/onflow/flow-go/fvm"
-	"github.com/onflow/flow-go/fvm/state"
+	"github.com/onflow/flow-go/fvm/storage/snapshot"
+	"github.com/onflow/flow-go/fvm/storage/state"
 	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
@@ -32,7 +32,7 @@ type pendingBlock struct {
 	// mapping from transaction ID to transaction result
 	transactionResults map[flowgo.Identifier]IndexedTransactionResult
 	// current working ledger, updated after each transaction execution
-	ledgerView state.View
+	ledgerState *state.ExecutionState
 	// events emitted during execution
 	events []flowgo.Event
 	// index of transaction execution
@@ -42,7 +42,7 @@ type pendingBlock struct {
 // newPendingBlock creates a new pending block sequentially after a specified block.
 func newPendingBlock(
 	prevBlock *flowgo.Block,
-	ledgerSnapshot state.StorageSnapshot,
+	ledgerSnapshot snapshot.StorageSnapshot,
 ) *pendingBlock {
 
 	return &pendingBlock{
@@ -55,9 +55,11 @@ func newPendingBlock(
 		transactions:       make(map[flowgo.Identifier]*flowgo.TransactionBody),
 		transactionIDs:     make([]flowgo.Identifier, 0),
 		transactionResults: make(map[flowgo.Identifier]IndexedTransactionResult),
-		ledgerView:         delta.NewDeltaView(ledgerSnapshot),
-		events:             make([]flowgo.Event, 0),
-		index:              0,
+		ledgerState: state.NewExecutionState(
+			ledgerSnapshot,
+			state.DefaultParameters()),
+		events: make([]flowgo.Event, 0),
+		index:  0,
 	}
 }
 
@@ -121,8 +123,8 @@ func (b *pendingBlock) TransactionResults() map[flowgo.Identifier]IndexedTransac
 }
 
 // Finalize returns the execution snapshot for the pending block.
-func (b *pendingBlock) Finalize() *state.ExecutionSnapshot {
-	return b.ledgerView.Finalize()
+func (b *pendingBlock) Finalize() *snapshot.ExecutionSnapshot {
+	return b.ledgerState.Finalize()
 }
 
 // AddTransaction adds a transaction to the pending block.
@@ -169,10 +171,10 @@ func (b *pendingBlock) ExecuteNextTransaction(
 	// increment transaction index even if transaction reverts
 	b.index++
 
-	executionSnapshot, output, err := vm.RunV2(
+	executionSnapshot, output, err := vm.Run(
 		ctx,
 		fvm.Transaction(txnBody, txnIndex),
-		b.ledgerView)
+		b.ledgerState)
 	if err != nil {
 		// fail fast if fatal error occurs
 		return fvm.ProcedureOutput{}, err
@@ -180,7 +182,7 @@ func (b *pendingBlock) ExecuteNextTransaction(
 
 	b.events = append(b.events, output.Events...)
 
-	err = b.ledgerView.Merge(executionSnapshot)
+	err = b.ledgerState.Merge(executionSnapshot)
 	if err != nil {
 		// fail fast if fatal error occurs
 		return fvm.ProcedureOutput{}, err
