@@ -1810,3 +1810,94 @@ type Meter struct {
 
 type MeteredComputationIntensities map[common.ComputationKind]uint
 type MeteredMemoryIntensities map[common.MemoryKind]uint
+
+func IncrementHelper(t *testing.T, b *emulator.Blockchain, counterAddress flowsdk.Address, addTwoScript string, expected int) {
+
+	tx := flowsdk.NewTransaction().
+		SetScript([]byte(addTwoScript)).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+		SetPayer(b.ServiceKey().Address).
+		AddAuthorizer(b.ServiceKey().Address)
+
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
+
+	result, err := b.GetTransactionResult(tx.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, flowsdk.TransactionStatusUnknown, result.Status)
+	require.Empty(t, result.Events)
+
+	err = b.AddTransaction(*tx)
+	assert.NoError(t, err)
+
+	result, err = b.GetTransactionResult(tx.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, flowsdk.TransactionStatusPending, result.Status)
+	require.Empty(t, result.Events)
+
+	_, err = b.ExecuteNextTransaction()
+	assert.NoError(t, err)
+
+	result, err = b.GetTransactionResult(tx.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, flowsdk.TransactionStatusPending, result.Status)
+	require.Empty(t, result.Events)
+
+	_, err = b.CommitBlock()
+	assert.NoError(t, err)
+
+	result, err = b.GetTransactionResult(tx.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, flowsdk.TransactionStatusSealed, result.Status)
+
+	require.Len(t, result.Events, 1)
+
+	event := result.Events[0]
+
+	addr, _ := common.BytesToAddress(counterAddress.Bytes())
+	location := common.AddressLocation{
+		Address: addr,
+		Name:    "Counting",
+	}
+	eventType := location.TypeID(nil, "Counting.CountIncremented")
+
+	assert.Equal(t, tx.ID(), event.TransactionID)
+	assert.Equal(t, string(eventType), event.Type)
+	assert.Equal(t, 0, event.EventIndex)
+	assert.Equal(t, cadence.NewInt(expected), event.Value.Fields[0])
+
+}
+func TestRollbackTransaction(t *testing.T) {
+	b, err := emulator.NewBlockchain(
+		emulator.WithStorageLimitEnabled(false),
+	)
+	require.NoError(t, err)
+
+	addTwoScript, counterAddress := deployAndGenerateAddTwoScript(t, b)
+
+	blockWhenNoCounter, err := b.GetLatestBlock()
+	require.NoError(t, err)
+
+	IncrementHelper(t, b, counterAddress, addTwoScript, 2)
+	blockWhenCounterIsTwo, err := b.GetLatestBlock()
+	require.NoError(t, err)
+
+	IncrementHelper(t, b, counterAddress, addTwoScript, 4)
+
+	//try rollback
+	err = b.RollbackToBlockHeight(blockWhenCounterIsTwo.Header.Height)
+	require.NoError(t, err)
+
+	IncrementHelper(t, b, counterAddress, addTwoScript, 4)
+
+	//try rollback
+	err = b.RollbackToBlockHeight(blockWhenNoCounter.Header.Height)
+	require.NoError(t, err)
+
+	IncrementHelper(t, b, counterAddress, addTwoScript, 2)
+
+}
