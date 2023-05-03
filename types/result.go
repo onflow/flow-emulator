@@ -38,6 +38,7 @@ type StorableTransactionResult struct {
 type TransactionResult struct {
 	TransactionID   flowsdk.Identifier
 	ComputationUsed uint64
+	MemoryEstimate  uint64
 	Error           error
 	Logs            []string
 	Events          []flowsdk.Event
@@ -101,6 +102,7 @@ type ScriptResult struct {
 	Logs            []string
 	Events          []flowsdk.Event
 	ComputationUsed uint64
+	MemoryEstimate  uint64
 }
 
 // Succeeded returns true if the script executed without errors.

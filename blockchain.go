@@ -1431,6 +1431,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 		Logs:            output.Logs,
 		Events:          events,
 		ComputationUsed: output.ComputationUsed,
+		MemoryEstimate:  output.MemoryEstimate,
 	}, nil
 }
 

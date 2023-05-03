@@ -52,6 +52,7 @@ func TestVm(t *testing.T) {
 			Logs:            []string{"TestLog1", "TestLog2"},
 			Events:          []flowgo.Event{event1, event2},
 			ComputationUsed: 5,
+			MemoryEstimate:  1211,
 			Err:             nil,
 		}
 
@@ -66,6 +67,7 @@ func TestVm(t *testing.T) {
 		assert.Equal(t, flowEvents, tr.Events)
 
 		assert.Equal(t, output.ComputationUsed, tr.ComputationUsed)
+		assert.Equal(t, output.MemoryEstimate, tr.MemoryEstimate)
 		assert.Equal(t, output.Err, tr.Error)
 	})
 }

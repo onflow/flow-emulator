@@ -44,6 +44,7 @@ func VMTransactionResultToEmulator(
 	return &types.TransactionResult{
 		TransactionID:   txID,
 		ComputationUsed: output.ComputationUsed,
+		MemoryEstimate:  output.MemoryEstimate,
 		Error:           VMErrorToEmulator(output.Err),
 		Logs:            output.Logs,
 		Events:          sdkEvents,
