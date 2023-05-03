@@ -62,7 +62,7 @@ func (s *Store) RollbackToBlockHeight(height uint64) error {
 		return err
 	}
 
-	for _, table := range []string{"blocks", "blockIndex", "events", "transactions", "collections", "transactionResults"} {
+	for _, table := range []string{"ledger", "blocks", "blockIndex", "events", "transactions", "collections", "transactionResults"} {
 		_, err = tx.Exec(fmt.Sprintf(`DELETE from %s where height>%d`, table, height))
 		if err != nil {
 			return err
