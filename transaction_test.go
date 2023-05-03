@@ -1888,13 +1888,13 @@ func TestRollbackTransaction(t *testing.T) {
 
 	IncrementHelper(t, b, counterAddress, addTwoScript, 4)
 
-	//try rollback
+	//try rollback to when counter is two
 	err = b.RollbackToBlockHeight(blockWhenCounterIsTwo.Header.Height)
 	require.NoError(t, err)
 
 	IncrementHelper(t, b, counterAddress, addTwoScript, 4)
 
-	//try rollback
+	//try rollback to no counter state
 	err = b.RollbackToBlockHeight(blockWhenNoCounter.Header.Height)
 	require.NoError(t, err)
 
