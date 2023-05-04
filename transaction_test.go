@@ -1872,6 +1872,8 @@ func IncrementHelper(t *testing.T, b *emulator.Blockchain, counterAddress flowsd
 
 }
 func TestRollbackTransaction(t *testing.T) {
+	t.Parallel()
+
 	b, err := emulator.NewBlockchain(
 		emulator.WithStorageLimitEnabled(false),
 	)
