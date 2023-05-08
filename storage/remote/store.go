@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/onflow/flow-archive/api/archive"
 	"github.com/onflow/flow-emulator/storage"
+	"github.com/onflow/flow-emulator/storage/sqlite"
 	exeState "github.com/onflow/flow-go/engine/execution/state"
 	"github.com/onflow/flow-go/fvm/state"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
@@ -17,7 +18,7 @@ import (
 )
 
 type Store struct {
-	*storage.DefaultStore
+	storage.DefaultStore
 	client archive.APIClient
 }
 
@@ -30,9 +31,20 @@ func New() (*Store, error) {
 		return nil, errors.Wrap(err, "could not connect to archive node")
 	}
 
-	return &Store{
+	store := &Store{
 		client: archive.NewAPIClient(conn),
-	}, nil
+	}
+
+	memorySql, err := sqlite.New(":memory:")
+	if err != nil {
+		return nil, err
+	}
+
+	store.DataGetter = memorySql
+	store.DataSetter = memorySql
+	store.KeyGenerator = &storage.DefaultKeyGenerator{}
+
+	return store, nil
 }
 
 func (s *Store) LedgerByHeight(
