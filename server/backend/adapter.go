@@ -34,6 +34,11 @@ type Adapter struct {
 	backend *Backend
 }
 
+func (a *Adapter) GetNodeVersionInfo(ctx context.Context) (*access.NodeVersionInfo, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 // NewAdapter returns a new backend adapter.
 func NewAdapter(backend *Backend) *Adapter {
 	return &Adapter{backend: backend}
@@ -93,7 +98,7 @@ func (a *Adapter) GetTransaction(ctx context.Context, id flowgo.Identifier) (*fl
 	return convert.SDKTransactionToFlow(*tx), nil
 }
 
-func (a *Adapter) GetTransactionResult(ctx context.Context, id flowgo.Identifier) (*access.TransactionResult, error) {
+func (a *Adapter) GetTransactionResult(ctx context.Context, id flowgo.Identifier, _ flowgo.Identifier, _ flowgo.Identifier) (*access.TransactionResult, error) {
 	result, err := a.backend.GetTransactionResult(ctx, convert.FlowIdentifierToSDK(id))
 	if err != nil {
 		return nil, err
