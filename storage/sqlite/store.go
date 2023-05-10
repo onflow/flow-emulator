@@ -52,6 +52,54 @@ type Store struct {
 	snapshotNames []string
 }
 
+// New returns a new in-memory Store implementation.
+func New(url string) (store *Store, err error) {
+
+	dbUrl := url
+	if dbUrl != ":memory:" {
+		urlInfo, err := os.Stat(url)
+		if err == nil && urlInfo.IsDir() {
+			dbUrl = filepath.Join(urlInfo.Name(), "emulator.sqlite")
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	db, err := sql.Open("sqlite", dbUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	err = initDb(db)
+	if err != nil {
+		return nil, err
+	}
+
+	store = &Store{
+		db:  db,
+		url: url,
+	}
+
+	store.DataSetter = store
+	store.DataGetter = store
+	store.KeyGenerator = &storage.DefaultKeyGenerator{}
+
+	return store, nil
+}
+
+func initDb(db *sql.DB) error {
+	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{})
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(createTablesSql)
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
 func (s *Store) RollbackToBlockHeight(height uint64) error {
 	if s.CurrentHeight >= height {
 		return fmt.Errorf("rollback height should be less then current height")
@@ -189,54 +237,6 @@ func (s *Store) SupportSnapshotsWithCurrentConfig() bool {
 		return false
 	}
 	return fileInfo.IsDir()
-}
-
-func initDb(db *sql.DB) error {
-	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{})
-	if err != nil {
-		return err
-	}
-	_, err = tx.Exec(createTablesSql)
-	if err != nil {
-		return err
-	}
-	return tx.Commit()
-}
-
-// New returns a new in-memory Store implementation.
-func New(url string) (store *Store, err error) {
-
-	dbUrl := url
-	if dbUrl != ":memory:" {
-		urlInfo, err := os.Stat(url)
-		if err == nil && urlInfo.IsDir() {
-			dbUrl = filepath.Join(urlInfo.Name(), "emulator.sqlite")
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	db, err := sql.Open("sqlite", dbUrl)
-	if err != nil {
-		return nil, err
-	}
-
-	err = initDb(db)
-	if err != nil {
-		return nil, err
-	}
-
-	store = &Store{
-		db:  db,
-		url: url,
-	}
-
-	store.DataSetter = store
-	store.DataGetter = store
-	store.KeyGenerator = &storage.DefaultKeyGenerator{}
-
-	return store, nil
 }
 
 func (s *Store) GetBytes(ctx context.Context, store string, key []byte) ([]byte, error) {
