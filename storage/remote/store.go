@@ -3,6 +3,7 @@ package remote
 import (
 	"context"
 	"fmt"
+	"github.com/fxamacker/cbor/v2"
 	"github.com/onflow/flow-archive/api/archive"
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/sqlite"
@@ -53,13 +54,23 @@ func (s *Store) LatestBlock(ctx context.Context) (flowgo.Block, error) {
 		Header: &flowgo.Header{},
 	}
 
-	response, err := s.client.GetLast(ctx, &archive.GetLastRequest{})
+	heightRes, err := s.client.GetLast(ctx, &archive.GetLastRequest{})
 	if err != nil {
 		return block, err
 	}
 
-	//s.client.GetHeader() // todo we should get the whole header
-	block.Header.Height = response.Height
+	blockRes, err := s.client.GetHeader(ctx, &archive.GetHeaderRequest{Height: heightRes.Height})
+	if err != nil {
+		return block, err
+	}
+
+	var header flowgo.Header
+	err = cbor.Unmarshal(blockRes.Data, &header)
+	if err != nil {
+		return block, err
+	}
+
+	block.Header = &header
 	return block, nil
 }
 
