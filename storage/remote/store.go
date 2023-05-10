@@ -31,17 +31,18 @@ func New() (*Store, error) {
 		return nil, errors.Wrap(err, "could not connect to archive node")
 	}
 
-	store := &Store{
-		client: archive.NewAPIClient(conn),
-	}
-
 	memorySql, err := sqlite.New(":memory:")
 	if err != nil {
 		return nil, err
 	}
 
-	store.DataGetter = memorySql
-	store.DataSetter = memorySql
+	store := &Store{
+		client: archive.NewAPIClient(conn),
+		Store:  memorySql,
+	}
+
+	store.DataGetter = store
+	store.DataSetter = store
 	store.KeyGenerator = &storage.DefaultKeyGenerator{}
 
 	return store, nil
