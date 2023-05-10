@@ -35,11 +35,6 @@ type Adapter struct {
 	backend *Backend
 }
 
-func (a *Adapter) GetNodeVersionInfo(ctx context.Context) (*access.NodeVersionInfo, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 // NewAdapter returns a new backend adapter.
 func NewAdapter(backend *Backend) *Adapter {
 	return &Adapter{backend: backend}
