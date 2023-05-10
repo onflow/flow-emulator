@@ -20,6 +20,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/onflow/flow-emulator/storage/remote"
 	"os"
 	"time"
 
@@ -286,6 +287,10 @@ func (s *EmulatorServer) Stop() {
 }
 
 func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider storage.Store, err error) {
+
+	if conf.ChainID == flowgo.Mainnet || conf.ChainID == flowgo.Testnet {
+		return remote.New()
+	}
 
 	if conf.RedisURL != "" {
 		storageProvider, err = util.NewRedisStorage(conf.RedisURL)
