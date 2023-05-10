@@ -18,7 +18,7 @@ import (
 )
 
 type Store struct {
-	storage.DefaultStore
+	*sqlite.Store
 	client archive.APIClient
 }
 
@@ -67,8 +67,18 @@ func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
 ) state.StorageSnapshot {
+	_ = s.SetBlockHeight(blockHeight)
 
-	snapshot.NewReadFuncStorageSnapshot(func(id flowgo.RegisterID) (flowgo.RegisterValue, error) {
+	return snapshot.NewReadFuncStorageSnapshot(func(id flowgo.RegisterID) (flowgo.RegisterValue, error) {
+		// first try to see if we have local stored ledger
+		value, err := s.DefaultStore.GetBytesAtVersion(ctx, "ledger", []byte(id.String()), blockHeight)
+		if !errors.Is(err, storage.ErrNotFound) {
+			if err != nil {
+				return nil, err
+			}
+			return value, nil
+		}
+
 		ledgerKey := exeState.RegisterIDToKey(flowgo.RegisterID{Key: id.Key, Owner: id.Owner})
 		ledgerPath, err := pathfinder.KeyToPath(ledgerKey, complete.DefaultPathFinderVersion)
 
@@ -86,6 +96,4 @@ func (s *Store) LedgerByHeight(
 
 		return response.Values[0], nil
 	})
-
-	return nil
 }
