@@ -23,7 +23,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/onflow/flow-go/fvm/state"
+	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
@@ -41,7 +41,7 @@ func TestMemstore(t *testing.T) {
 
 	err := store.insertExecutionSnapshot(
 		blockHeight,
-		&state.ExecutionSnapshot{
+		&snapshot.ExecutionSnapshot{
 			WriteSet: map[flowgo.RegisterID]flowgo.RegisterValue{
 				key: value,
 			},
@@ -82,7 +82,7 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 	// set initial value
 	err := store.insertExecutionSnapshot(
 		0,
-		&state.ExecutionSnapshot{
+		&snapshot.ExecutionSnapshot{
 			WriteSet: map[flowgo.RegisterID]flowgo.RegisterValue{
 				key: value,
 			},
@@ -97,7 +97,7 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 	// set value to nil
 	err = store.insertExecutionSnapshot(
 		1,
-		&state.ExecutionSnapshot{
+		&snapshot.ExecutionSnapshot{
 			WriteSet: map[flowgo.RegisterID]flowgo.RegisterValue{
 				key: nilValue,
 			},

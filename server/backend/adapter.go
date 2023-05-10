@@ -20,6 +20,7 @@ package backend
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/onflow/flow-go/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -98,7 +99,15 @@ func (a *Adapter) GetTransaction(ctx context.Context, id flowgo.Identifier) (*fl
 	return convert.SDKTransactionToFlow(*tx), nil
 }
 
-func (a *Adapter) GetTransactionResult(ctx context.Context, id flowgo.Identifier, _ flowgo.Identifier, _ flowgo.Identifier) (*access.TransactionResult, error) {
+func (a *Adapter) GetTransactionResult(
+	ctx context.Context,
+	id flowgo.Identifier,
+	blockId flowgo.Identifier,
+	collectionId flowgo.Identifier,
+) (
+	*access.TransactionResult,
+	error,
+) {
 	result, err := a.backend.GetTransactionResult(ctx, convert.FlowIdentifierToSDK(id))
 	if err != nil {
 		return nil, err
@@ -252,4 +261,13 @@ func (a *Adapter) GetTransactionResultsByBlockID(ctx context.Context, blockID fl
 	}
 	return result, nil
 
+}
+
+func (a *Adapter) GetNodeVersionInfo(
+	ctx context.Context,
+) (
+	*access.NodeVersionInfo,
+	error,
+) {
+	return nil, fmt.Errorf("Not supported")
 }

@@ -25,7 +25,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/onflow/flow-go/fvm/state"
+	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/psiemens/graceland"
 
@@ -79,7 +79,7 @@ type Store interface {
 		collections []*flowgo.LightCollection,
 		transactions map[flowgo.Identifier]*flowgo.TransactionBody,
 		transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
-		executionSnapshot *state.ExecutionSnapshot,
+		executionSnapshot *snapshot.ExecutionSnapshot,
 		events []flowgo.Event,
 	) error
 
@@ -97,7 +97,7 @@ type Store interface {
 	LedgerByHeight(
 		ctx context.Context,
 		blockHeight uint64,
-	) state.StorageSnapshot
+	) snapshot.StorageSnapshot
 
 	// EventsByHeight returns the events in the block at the given height, optionally filtered by type.
 	EventsByHeight(ctx context.Context, blockHeight uint64, eventType string) ([]flowgo.Event, error)
@@ -334,7 +334,7 @@ func (s *DefaultStore) InsertEvents(ctx context.Context, blockHeight uint64, eve
 func (s *DefaultStore) InsertExecutionSnapshot(
 	ctx context.Context,
 	blockHeight uint64,
-	executionSnapshot *state.ExecutionSnapshot,
+	executionSnapshot *snapshot.ExecutionSnapshot,
 ) error {
 	for registerID, value := range executionSnapshot.WriteSet {
 		err := s.DataSetter.SetBytesWithVersion(
@@ -356,7 +356,7 @@ func (s *DefaultStore) CommitBlock(
 	collections []*flowgo.LightCollection,
 	transactions map[flowgo.Identifier]*flowgo.TransactionBody,
 	transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
-	executionSnapshot *state.ExecutionSnapshot,
+	executionSnapshot *snapshot.ExecutionSnapshot,
 	events []flowgo.Event,
 ) error {
 
@@ -445,7 +445,7 @@ func (snapshot defaultStorageSnapshot) Get(
 func (s *DefaultStore) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
-) state.StorageSnapshot {
+) snapshot.StorageSnapshot {
 	return defaultStorageSnapshot{
 		DefaultStore: s,
 		ctx:          ctx,

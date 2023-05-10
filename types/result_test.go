@@ -43,6 +43,7 @@ func TestResult(t *testing.T) {
 		trSucceed := &types.TransactionResult{
 			TransactionID:   idGenerator.New(),
 			ComputationUsed: 20,
+			MemoryEstimate:  2048,
 			Error:           nil,
 			Logs:            []string{},
 			Events:          []flowsdk.Event{},
@@ -53,6 +54,7 @@ func TestResult(t *testing.T) {
 		trReverted := &types.TransactionResult{
 			TransactionID:   idGenerator.New(),
 			ComputationUsed: 20,
+			MemoryEstimate:  2048,
 			Error:           errors.New("transaction execution error"),
 			Logs:            []string{},
 			Events:          []flowsdk.Event{},

@@ -27,6 +27,7 @@ import (
 	"github.com/onflow/flow-emulator/server/backend"
 	legacyaccess "github.com/onflow/flow-go/access/legacy"
 	"github.com/onflow/flow-go/model/flow"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	mockModule "github.com/onflow/flow-go/module/mock"
 	accessproto "github.com/onflow/flow/protobuf/go/flow/access"
 	legacyaccessproto "github.com/onflow/flow/protobuf/go/flow/legacy/access"
@@ -38,8 +39,8 @@ import (
 type mockHeaderCache struct {
 }
 
-func (mockHeaderCache) Get() *flow.Header {
-	return &flow.Header{}
+func (mockHeaderCache) Get() *flowgo.Header {
+	return &flowgo.Header{}
 }
 
 type GRPCServer struct {
@@ -59,7 +60,7 @@ func NewGRPCServer(logger *zerolog.Logger, b *backend.Backend, chain flow.Chain,
 	adaptedBackend := backend.NewAdapter(b)
 
 	me := new(mockModule.Local)
-	me.On("NodeID").Return(flow.ZeroID)
+	me.On("NodeID").Return(flowgo.ZeroID)
 
 	legacyaccessproto.RegisterAccessAPIServer(grpcServer, legacyaccess.NewHandler(adaptedBackend, chain))
 	accessproto.RegisterAccessAPIServer(grpcServer, access.NewHandler(

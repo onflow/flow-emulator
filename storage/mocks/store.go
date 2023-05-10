@@ -10,7 +10,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	types "github.com/onflow/flow-emulator/types"
-	state "github.com/onflow/flow-go/fvm/state"
+	snapshot "github.com/onflow/flow-go/fvm/storage/snapshot"
 	flow "github.com/onflow/flow-go/model/flow"
 )
 
@@ -83,7 +83,7 @@ func (mr *MockStoreMockRecorder) CollectionByID(arg0, arg1 interface{}) *gomock.
 }
 
 // CommitBlock mocks base method.
-func (m *MockStore) CommitBlock(arg0 context.Context, arg1 flow.Block, arg2 []*flow.LightCollection, arg3 map[flow.Identifier]*flow.TransactionBody, arg4 map[flow.Identifier]*types.StorableTransactionResult, arg5 *state.ExecutionSnapshot, arg6 []flow.Event) error {
+func (m *MockStore) CommitBlock(arg0 context.Context, arg1 flow.Block, arg2 []*flow.LightCollection, arg3 map[flow.Identifier]*flow.TransactionBody, arg4 map[flow.Identifier]*types.StorableTransactionResult, arg5 *snapshot.ExecutionSnapshot, arg6 []flow.Event) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CommitBlock", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
 	ret0, _ := ret[0].(error)
@@ -142,10 +142,10 @@ func (mr *MockStoreMockRecorder) LatestBlockHeight(arg0 interface{}) *gomock.Cal
 }
 
 // LedgerByHeight mocks base method.
-func (m *MockStore) LedgerByHeight(arg0 context.Context, arg1 uint64) state.StorageSnapshot {
+func (m *MockStore) LedgerByHeight(arg0 context.Context, arg1 uint64) snapshot.StorageSnapshot {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LedgerByHeight", arg0, arg1)
-	ret0, _ := ret[0].(state.StorageSnapshot)
+	ret0, _ := ret[0].(snapshot.StorageSnapshot)
 	return ret0
 }
 
