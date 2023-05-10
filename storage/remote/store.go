@@ -48,6 +48,21 @@ func New() (*Store, error) {
 	return store, nil
 }
 
+func (s *Store) LatestBlock(ctx context.Context) (flowgo.Block, error) {
+	block := flowgo.Block{
+		Header: &flowgo.Header{},
+	}
+
+	response, err := s.client.GetLast(ctx, &archive.GetLastRequest{})
+	if err != nil {
+		return block, err
+	}
+
+	//s.client.GetHeader() // todo we should get the whole header
+	block.Header.Height = response.Height
+	return block, nil
+}
+
 func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
