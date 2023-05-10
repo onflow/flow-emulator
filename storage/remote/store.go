@@ -94,8 +94,8 @@ func (s *Store) LedgerByHeight(
 		ledgerPath, err := pathfinder.KeyToPath(ledgerKey, complete.DefaultPathFinderVersion)
 
 		response, err := s.client.GetRegisterValues(ctx, &archive.GetRegisterValuesRequest{
-			Height: blockHeight,
-			Paths:  [][]byte{ledgerPath[:]},
+			Height:    blockHeight,
+			Registers: [][]byte{ledgerPath[:]},
 		})
 		if err != nil {
 			return nil, err
