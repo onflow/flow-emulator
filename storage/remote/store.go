@@ -3,8 +3,8 @@ package remote
 import (
 	"context"
 	"fmt"
-	"github.com/fxamacker/cbor/v2"
 	"github.com/onflow/flow-archive/api/archive"
+	"github.com/onflow/flow-archive/codec/zbor"
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/sqlite"
 	exeState "github.com/onflow/flow-go/engine/execution/state"
@@ -49,29 +49,50 @@ func New() (*Store, error) {
 	return store, nil
 }
 
-func (s *Store) LatestBlock(ctx context.Context) (flowgo.Block, error) {
-	block := flowgo.Block{
-		Header: &flowgo.Header{},
+func (s *Store) BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flowgo.Block, error) {
+	// todo use local storage first as a cache
+
+	heightRes, err := s.client.GetHeightForBlock(ctx, &archive.GetHeightForBlockRequest{BlockID: blockID[:]})
+	if err != nil {
+		return nil, err
 	}
 
+	return s.BlockByHeight(ctx, heightRes.Height)
+}
+
+func (s *Store) LatestBlock(ctx context.Context) (flowgo.Block, error) {
 	heightRes, err := s.client.GetLast(ctx, &archive.GetLastRequest{})
 	if err != nil {
-		return block, err
+		return flowgo.Block{}, err
 	}
 
-	blockRes, err := s.client.GetHeader(ctx, &archive.GetHeaderRequest{Height: heightRes.Height})
+	block, err := s.BlockByHeight(ctx, heightRes.Height)
 	if err != nil {
-		return block, err
+		return flowgo.Block{}, err
+	}
+
+	return *block, nil
+}
+
+func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block, error) {
+	// todo use local storage first as a cache
+
+	blockRes, err := s.client.GetHeader(ctx, &archive.GetHeaderRequest{Height: height})
+	if err != nil {
+		return nil, err
 	}
 
 	var header flowgo.Header
-	err = cbor.Unmarshal(blockRes.Data, &header)
+	err = zbor.NewCodec().Unmarshal(blockRes.Data, &header)
 	if err != nil {
-		return block, err
+		return nil, err
 	}
 
-	block.Header = &header
-	return block, nil
+	payload := flowgo.EmptyPayload()
+	return &flowgo.Block{
+		Payload: &payload,
+		Header:  &header,
+	}, nil
 }
 
 func (s *Store) LedgerByHeight(
@@ -94,8 +115,8 @@ func (s *Store) LedgerByHeight(
 		ledgerPath, err := pathfinder.KeyToPath(ledgerKey, complete.DefaultPathFinderVersion)
 
 		response, err := s.client.GetRegisterValues(ctx, &archive.GetRegisterValuesRequest{
-			Height:    blockHeight,
-			Registers: [][]byte{ledgerPath[:]},
+			Height: blockHeight,
+			Paths:  [][]byte{ledgerPath[:]},
 		})
 		if err != nil {
 			return nil, err
