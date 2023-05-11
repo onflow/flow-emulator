@@ -66,7 +66,7 @@ type Blockchain struct {
 
 	serviceKey ServiceKey
 
-	debugger               *interpreter.Debugger
+	debugger               interpreter.Debugger
 	activeDebuggingSession bool
 	currentCode            string
 	currentScriptID        string
@@ -440,7 +440,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	b := &Blockchain{
 		storage:                conf.GetStore(),
 		serviceKey:             conf.GetServiceKey(),
-		debugger:               nil,
+		debugger:               *interpreter.NewDebugger(),
 		activeDebuggingSession: false,
 		conf:                   conf,
 	}
@@ -536,7 +536,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 	cadenceLogger := conf.Logger.Hook(CadenceHook{MainLogger: &conf.ServerLogger}).Level(zerolog.DebugLevel)
 
 	config := runtime.Config{
-		Debugger:                 blockchain.debugger,
+		Debugger:                 &blockchain.debugger,
 		AccountLinkingEnabled:    true,
 		AttachmentsEnabled:       true,
 		CoverageReportingEnabled: conf.CoverageReportingEnabled,
@@ -1167,7 +1167,7 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 
 	b.currentCode = string(txnBody.Script)
 	b.currentScriptID = txnId.String()
-	if b.debugger != nil {
+	if b.activeDebuggingSession {
 		b.debugger.RequestPause()
 	}
 
@@ -1397,7 +1397,7 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
 	b.currentCode = string(script)
 	b.currentScriptID = scriptProc.ID.String()
-	if b.debugger != nil {
+	if b.activeDebuggingSession {
 		b.debugger.RequestPause()
 	}
 	_, output, err := b.vm.Run(
@@ -1570,12 +1570,13 @@ func (b *Blockchain) testAlternativeHashAlgo(sig flowgo.TransactionSignature, ms
 	return nil
 }
 
-func (b *Blockchain) SetDebugger(debugger *interpreter.Debugger) {
-	b.debugger = debugger
+func (b *Blockchain) StartDebugger() *interpreter.Debugger {
+	b.activeDebuggingSession = true
+	return &b.debugger
 }
 
 func (b *Blockchain) EndDebugging() {
-	b.SetDebugger(nil)
+	b.activeDebuggingSession = false
 }
 
 func (b *Blockchain) CoverageReport() *runtime.CoverageReport {
