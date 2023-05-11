@@ -404,18 +404,6 @@ func (mr *MockEmulatorMockRecorder) SetCoverageReport(arg0 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCoverageReport", reflect.TypeOf((*MockEmulator)(nil).SetCoverageReport), arg0)
 }
 
-// SetDebugger mocks base method.
-func (m *MockEmulator) SetDebugger(arg0 *interpreter.Debugger) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetDebugger", arg0)
-}
-
-// SetDebugger indicates an expected call of SetDebugger.
-func (mr *MockEmulatorMockRecorder) SetDebugger(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetDebugger", reflect.TypeOf((*MockEmulator)(nil).SetDebugger), arg0)
-}
-
 // Snapshots mocks base method.
 func (m *MockEmulator) Snapshots() ([]string, error) {
 	m.ctrl.T.Helper()
@@ -429,4 +417,18 @@ func (m *MockEmulator) Snapshots() ([]string, error) {
 func (mr *MockEmulatorMockRecorder) Snapshots() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Snapshots", reflect.TypeOf((*MockEmulator)(nil).Snapshots))
+}
+
+// StartDebugger mocks base method.
+func (m *MockEmulator) StartDebugger() *interpreter.Debugger {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StartDebugger")
+	ret0, _ := ret[0].(*interpreter.Debugger)
+	return ret0
+}
+
+// StartDebugger indicates an expected call of StartDebugger.
+func (mr *MockEmulatorMockRecorder) StartDebugger() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartDebugger", reflect.TypeOf((*MockEmulator)(nil).StartDebugger))
 }
