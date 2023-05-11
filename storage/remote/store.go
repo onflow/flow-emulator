@@ -23,16 +23,26 @@ type Store struct {
 	client archive.APIClient
 }
 
-func New() (*Store, error) {
+func New(chainID flowgo.ChainID) (*Store, error) {
+	archiveHosts := map[flowgo.ChainID]string{
+		flowgo.Mainnet: "archive.mainnet.nodes.onflow.org:9000",
+		flowgo.Testnet: "archive.testnet.nodes.onflow.org:9000",
+	}
+
+	host, ok := archiveHosts[chainID]
+	if !ok {
+		return nil, fmt.Errorf("chain %s not supported with remote store", chainID.String())
+	}
+
 	conn, err := grpc.Dial(
-		"archive.mainnet.nodes.onflow.org:9000",
+		host,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not connect to archive node")
 	}
 
-	memorySql, err := sqlite.New(":memory:")
+	memorySql, err := sqlite.New(sqlite.InMemory)
 	if err != nil {
 		return nil, err
 	}

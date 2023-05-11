@@ -36,6 +36,8 @@ import (
 	"github.com/onflow/flow-emulator/storage"
 )
 
+const InMemory = ":memory:"
+
 var _ storage.SnapshotProvider = &Store{}
 var _ storage.Store = &Store{}
 var _ storage.RollbackProvider = &Store{}
@@ -56,7 +58,7 @@ type Store struct {
 func New(url string) (store *Store, err error) {
 
 	dbUrl := url
-	if dbUrl != ":memory:" {
+	if dbUrl != InMemory {
 		urlInfo, err := os.Stat(url)
 		if err == nil && urlInfo.IsDir() {
 			dbUrl = filepath.Join(urlInfo.Name(), "emulator.sqlite")
