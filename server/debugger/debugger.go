@@ -104,13 +104,11 @@ func (d *Debugger) handleConnection(conn net.Conn) {
 	for {
 		err := session.handleRequest()
 		if err != nil {
-			fmt.Println(" er")
 			_, opError := err.(*net.OpError)
 			if err == io.EOF {
 				break
 			}
 			if opError {
-				fmt.Println("op er")
 				close(session.sendQueue)
 				conn.Close()
 				return
@@ -118,22 +116,18 @@ func (d *Debugger) handleConnection(conn net.Conn) {
 			d.logger.Fatal().Err(err).Msg("Debug Server error")
 		}
 	}
-	fmt.Println("wait")
-	//session.sendWg.Wait()
+	session.sendWg.Wait()
 	close(session.sendQueue)
 	conn.Close()
 }
 
 func (d *Debugger) Stop() {
-	fmt.Println("stop")
 	d.stopOnce.Do(func() {
 		close(d.quit)
 		if d.listener != nil {
 			d.listener.Close()
 		}
-		fmt.Println("closing conns")
 		for _, conn := range d.connections {
-			fmt.Println(conn)
 			conn.Close()
 		}
 	})
