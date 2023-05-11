@@ -1155,7 +1155,6 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.argType.ID(), func(t *testing.T) {
-			t.Parallel()
 
 			b, err := emulator.NewBlockchain()
 			require.NoError(t, err)
