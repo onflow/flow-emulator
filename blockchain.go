@@ -66,7 +66,7 @@ type Blockchain struct {
 
 	serviceKey ServiceKey
 
-	debugger               interpreter.Debugger
+	debugger               *interpreter.Debugger
 	activeDebuggingSession bool
 	currentCode            string
 	currentScriptID        string
@@ -440,7 +440,7 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	b := &Blockchain{
 		storage:                conf.GetStore(),
 		serviceKey:             conf.GetServiceKey(),
-		debugger:               *interpreter.NewDebugger(),
+		debugger:               interpreter.NewDebugger(),
 		activeDebuggingSession: false,
 		conf:                   conf,
 	}
@@ -536,7 +536,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 	cadenceLogger := conf.Logger.Hook(CadenceHook{MainLogger: &conf.ServerLogger}).Level(zerolog.DebugLevel)
 
 	config := runtime.Config{
-		Debugger:                 &blockchain.debugger,
+		Debugger:                 blockchain.debugger,
 		AccountLinkingEnabled:    true,
 		AttachmentsEnabled:       true,
 		CoverageReportingEnabled: conf.CoverageReportingEnabled,
@@ -1572,7 +1572,7 @@ func (b *Blockchain) testAlternativeHashAlgo(sig flowgo.TransactionSignature, ms
 
 func (b *Blockchain) StartDebugger() *interpreter.Debugger {
 	b.activeDebuggingSession = true
-	return &b.debugger
+	return b.debugger
 }
 
 func (b *Blockchain) EndDebugging() {
