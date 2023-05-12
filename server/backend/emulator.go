@@ -31,7 +31,7 @@ import (
 // Emulator defines the method set of an emulated blockchain.
 type Emulator interface {
 	// Debugger
-	SetDebugger(*interpreter.Debugger)
+	StartDebugger() *interpreter.Debugger
 	EndDebugging()
 
 	// CoverageReport
