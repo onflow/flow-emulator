@@ -20,6 +20,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/onflow/flow-go/module"
 	"os"
 	"time"
 
@@ -138,7 +139,7 @@ type listener interface {
 }
 
 // NewEmulatorServer creates a new instance of a Flow Emulator server.
-func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
+func NewEmulatorServer(logger *zerolog.Logger, conf *Config, restMetrics module.RestMetrics) *EmulatorServer {
 	conf = sanitizeConfig(conf)
 
 	store, err := configureStorage(logger, conf)
@@ -182,7 +183,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 
 	livenessTicker := NewLivenessTicker(conf.LivenessCheckTolerance)
 	grpcServer := NewGRPCServer(logger, be, blockchain.GetChain(), conf.Host, conf.GRPCPort, conf.GRPCDebug)
-	restServer, err := NewRestServer(logger, be, blockchain.GetChain(), conf.Host, conf.RESTPort, conf.RESTDebug)
+	restServer, err := NewRestServer(logger, be, blockchain.GetChain(), restMetrics, conf.Host, conf.RESTPort, conf.RESTDebug)
 	if err != nil {
 		logger.Error().Err(err).Msg("❗  Failed to startup REST API")
 		return nil

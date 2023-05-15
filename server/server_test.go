@@ -9,11 +9,14 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
+
+	"github.com/onflow/flow-go/module/metrics"
 )
 
 func TestExecuteScript(t *testing.T) {
 	logger := zerolog.Nop()
-	server := NewEmulatorServer(&logger, &Config{})
+	restCollector := metrics.NewNoopCollector()
+	server := NewEmulatorServer(&logger, &Config{}, restCollector)
 	require.NotNil(t, server)
 
 	const code = `
@@ -30,7 +33,8 @@ func TestExecuteScript(t *testing.T) {
 
 func TestGetStorage(t *testing.T) {
 	logger := zerolog.Nop()
-	server := NewEmulatorServer(&logger, &Config{})
+	restCollector := metrics.NewNoopCollector()
+	server := NewEmulatorServer(&logger, &Config{}, restCollector)
 	require.NotNil(t, server)
 	address := server.blockchain.ServiceKey().Address
 
@@ -63,7 +67,8 @@ func TestExecuteScriptImportingContracts(t *testing.T) {
 	}
 
 	logger := zerolog.Nop()
-	server := NewEmulatorServer(&logger, conf)
+	restCollector := metrics.NewNoopCollector()
+	server := NewEmulatorServer(&logger, conf, restCollector)
 	require.NotNil(t, server)
 	serviceAccount := server.blockchain.ServiceKey().Address.Hex()
 
@@ -93,7 +98,8 @@ func TestCustomChainID(t *testing.T) {
 		ChainID:       "flow-mainnet",
 	}
 	logger := zerolog.Nop()
-	server := NewEmulatorServer(&logger, conf)
+	restCollector := metrics.NewNoopCollector()
+	server := NewEmulatorServer(&logger, conf, restCollector)
 
 	serviceAccount := server.blockchain.ServiceKey().Address.Hex()
 

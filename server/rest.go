@@ -21,6 +21,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/onflow/flow-go/module"
 	"net"
 	"net/http"
 	"os"
@@ -70,14 +71,13 @@ func (r *RestServer) Stop() {
 	_ = r.server.Shutdown(context.Background())
 }
 
-func NewRestServer(logger *zerolog.Logger, be *backend.Backend, chain flow.Chain, host string, port int, debug bool) (*RestServer, error) {
-
+func NewRestServer(logger *zerolog.Logger, be *backend.Backend, chain flow.Chain, restMetrics module.RestMetrics, host string, port int, debug bool) (*RestServer, error) {
 	debugLogger := zerolog.Logger{}
 	if debug {
 		debugLogger = zerolog.New(os.Stdout)
 	}
 
-	srv, err := rest.NewServer(backend.NewAdapter(be), fmt.Sprintf("%s:3333", host), debugLogger, chain)
+	srv, err := rest.NewServer(backend.NewAdapter(be), fmt.Sprintf("%s:3333", host), debugLogger, chain, restMetrics)
 	if err != nil {
 		return nil, err
 	}

@@ -21,6 +21,8 @@ package start
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/onflow/flow-go/module/metrics"
+	metricsProm "github.com/slok/go-http-metrics/metrics/prometheus"
 	"log"
 	"os"
 	"strings"
@@ -194,8 +196,9 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				SqliteURL:                 conf.SqliteURL,
 				CoverageReportingEnabled:  conf.CoverageReportingEnabled,
 			}
+			restMetrics := metrics.NewRecorderCollector(metricsProm.Config{Prefix: "access_rest_api"})
 
-			emu := server.NewEmulatorServer(logger, serverConf)
+			emu := server.NewEmulatorServer(logger, serverConf, restMetrics)
 			if emu != nil {
 				emu.Start()
 			} else {
