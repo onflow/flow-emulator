@@ -20,7 +20,6 @@ package server
 
 import (
 	"fmt"
-	"github.com/onflow/flow-go/module"
 	"os"
 	"time"
 
@@ -29,6 +28,7 @@ import (
 	"github.com/onflow/flow-go/fvm"
 	"github.com/onflow/flow-go/fvm/environment"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow-go/module"
 	"github.com/psiemens/graceland"
 	"github.com/rs/zerolog"
 

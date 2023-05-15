@@ -21,12 +21,12 @@ package start
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/onflow/flow-go/module/metrics"
-	metricsProm "github.com/slok/go-http-metrics/metrics/prometheus"
 	"log"
 	"os"
 	"strings"
 	"time"
+
+	metricsProm "github.com/slok/go-http-metrics/metrics/prometheus"
 
 	"github.com/onflow/cadence"
 	sdk "github.com/onflow/flow-go-sdk"
@@ -34,6 +34,7 @@ import (
 
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/fvm"
+	"github.com/onflow/flow-go/module/metrics"
 	"github.com/psiemens/sconfig"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
