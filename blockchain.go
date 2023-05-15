@@ -157,7 +157,7 @@ type config struct {
 	TransactionValidationEnabled bool
 	ChainID                      flowgo.ChainID
 	CoverageReportingEnabled     bool
-	WithContracts                []ContractDescription
+	Contracts                    []ContractDescription
 }
 
 func (conf config) GetStore() storage.Store {
@@ -215,7 +215,7 @@ var defaultConfig = func() config {
 		TransactionValidationEnabled: true,
 		ChainID:                      flowgo.Emulator,
 		CoverageReportingEnabled:     false,
-		WithContracts:                []ContractDescription{},
+		Contracts:                    []ContractDescription{},
 	}
 }()
 
@@ -404,14 +404,14 @@ func WithCoverageReportingEnabled(enabled bool) Option {
 	}
 }
 
-// WithContracts allows users to deploy the given contracts.
+// Contracts allows users to deploy the given contracts.
 // Some default common contracts are pre-configured in the `CommonContracts`
 // global variable. It includes contracts such as:
-// NFT, FUSD, MetadataViews, NFTStorefront/NFTStorefrontV2, ExampleNFT
+// NonFungibleToken, FUSD, MetadataViews, NFTStorefront, NFTStorefrontV2, ExampleNFT
 // The default value is []ContractDescription{}.
-func WithContracts(contracts []ContractDescription) Option {
+func Contracts(contracts []ContractDescription) Option {
 	return func(c *config) {
-		c.WithContracts = contracts
+		c.Contracts = contracts
 	}
 }
 
@@ -461,8 +461,8 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	if err != nil {
 		return nil, err
 	}
-	if conf.WithContracts != nil && len(conf.WithContracts) > 0 {
-		err := DeployContracts(b, conf.WithContracts)
+	if len(conf.Contracts) > 0 {
+		err := DeployContracts(b, conf.Contracts)
 		if err != nil {
 			return nil, err
 		}
