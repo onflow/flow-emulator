@@ -13,7 +13,6 @@ import (
 
 func TestExecuteScript(t *testing.T) {
 	logger := zerolog.Nop()
-
 	server := NewEmulatorServer(&logger, &Config{})
 	require.NotNil(t, server)
 
@@ -31,7 +30,6 @@ func TestExecuteScript(t *testing.T) {
 
 func TestGetStorage(t *testing.T) {
 	logger := zerolog.Nop()
-
 	server := NewEmulatorServer(&logger, &Config{})
 	require.NotNil(t, server)
 	address := server.blockchain.ServiceKey().Address
@@ -65,7 +63,6 @@ func TestExecuteScriptImportingContracts(t *testing.T) {
 	}
 
 	logger := zerolog.Nop()
-
 	server := NewEmulatorServer(&logger, conf)
 	require.NotNil(t, server)
 	serviceAccount := server.blockchain.ServiceKey().Address.Hex()
@@ -96,7 +93,6 @@ func TestCustomChainID(t *testing.T) {
 		ChainID:       "flow-mainnet",
 	}
 	logger := zerolog.Nop()
-
 	server := NewEmulatorServer(&logger, conf)
 
 	serviceAccount := server.blockchain.ServiceKey().Address.Hex()

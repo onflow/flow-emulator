@@ -21,7 +21,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/onflow/flow-go/module/metrics"
 	"net"
 	"net/http"
 	"os"
@@ -29,6 +28,7 @@ import (
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-go/engine/access/rest"
 	"github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow-go/module/metrics"
 	"github.com/rs/zerolog"
 )
 
