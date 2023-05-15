@@ -26,15 +26,12 @@ import (
 	"strings"
 	"time"
 
-	metricsProm "github.com/slok/go-http-metrics/metrics/prometheus"
-
 	"github.com/onflow/cadence"
 	sdk "github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/fvm"
-	"github.com/onflow/flow-go/module/metrics"
 	"github.com/psiemens/sconfig"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -197,9 +194,8 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				SqliteURL:                 conf.SqliteURL,
 				CoverageReportingEnabled:  conf.CoverageReportingEnabled,
 			}
-			restMetrics := metrics.NewRecorderCollector(metricsProm.Config{Prefix: "access_rest_api"})
 
-			emu := server.NewEmulatorServer(logger, serverConf, restMetrics)
+			emu := server.NewEmulatorServer(logger, serverConf)
 			if emu != nil {
 				emu.Start()
 			} else {
