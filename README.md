@@ -213,6 +213,15 @@ To generate a service key, use the `keys generate` command in the Flow CLI.
 flow keys generate
 ```
 
+## Emulating mainnet and testnet transactions
+The emulator allows you to simulate the execution of transactions as if they were 
+performed on the mainnet or testnet. In order to activate this feature, 
+you must specify the network name for the chain ID flag in the following manner:
+```
+flow emulator --chain-id mainnet
+```
+Please note, the actual execution on the real network may differ.
+
 ## Development
 
 Read [contributing document](./CONTRIBUTING.md).
