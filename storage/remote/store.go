@@ -123,6 +123,9 @@ func (s *Store) LedgerByHeight(
 
 		ledgerKey := exeState.RegisterIDToKey(flowgo.RegisterID{Key: id.Key, Owner: id.Owner})
 		ledgerPath, err := pathfinder.KeyToPath(ledgerKey, complete.DefaultPathFinderVersion)
+		if err != nil {
+			return nil, err
+		}
 
 		response, err := s.client.GetRegisterValues(ctx, &archive.GetRegisterValuesRequest{
 			Height: blockHeight,
