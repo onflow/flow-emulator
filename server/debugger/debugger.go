@@ -21,25 +21,25 @@ package debugger
 import (
 	"bufio"
 	"fmt"
+	"github.com/google/go-dap"
+	"github.com/rs/zerolog"
 	"io"
 	"net"
 	"sync"
-
-	"github.com/google/go-dap"
-	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/server/backend"
 )
 
 type Debugger struct {
-	logger     *zerolog.Logger
-	backend    *backend.Backend
-	port       int
-	listener   net.Listener
-	quit       chan interface{}
-	wg         sync.WaitGroup
-	stopOnce   sync.Once
-	activeCode string
+	logger      *zerolog.Logger
+	backend     *backend.Backend
+	port        int
+	listener    net.Listener
+	quit        chan interface{}
+	wg          sync.WaitGroup
+	stopOnce    sync.Once
+	activeCode  string
+	connections []net.Conn
 }
 
 func New(logger *zerolog.Logger, backend *backend.Backend, port int) *Debugger {
@@ -52,6 +52,7 @@ func New(logger *zerolog.Logger, backend *backend.Backend, port int) *Debugger {
 }
 
 func (d *Debugger) Start() error {
+
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", d.port))
 	if err != nil {
 		return err
@@ -88,6 +89,7 @@ func (d *Debugger) serve() {
 }
 
 func (d *Debugger) handleConnection(conn net.Conn) {
+	d.connections = append(d.connections, conn)
 	session := session{
 		backend: d.backend,
 		logger:  d.logger,
@@ -102,13 +104,18 @@ func (d *Debugger) handleConnection(conn net.Conn) {
 	for {
 		err := session.handleRequest()
 		if err != nil {
+			_, opError := err.(*net.OpError)
 			if err == io.EOF {
 				break
+			}
+			if opError {
+				close(session.sendQueue)
+				conn.Close()
+				return
 			}
 			d.logger.Fatal().Err(err).Msg("Debug Server error")
 		}
 	}
-
 	session.sendWg.Wait()
 	close(session.sendQueue)
 	conn.Close()
@@ -119,6 +126,9 @@ func (d *Debugger) Stop() {
 		close(d.quit)
 		if d.listener != nil {
 			d.listener.Close()
+		}
+		for _, conn := range d.connections {
+			conn.Close()
 		}
 	})
 }

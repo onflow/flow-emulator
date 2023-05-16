@@ -439,7 +439,7 @@ func (s *session) handleConfigurationDoneRequest(request *dap.ConfigurationDoneR
 
 func (s *session) handleLaunchRequest(request *dap.LaunchRequest) {
 	// TODO: only allow one program at a time
-	s.debugger = interpreter.NewDebugger()
+	s.debugger = s.backend.Emulator().StartDebugger()
 	s.targetDepth = 1
 
 	var args map[string]any
@@ -481,7 +481,8 @@ func (s *session) handleLaunchRequest(request *dap.LaunchRequest) {
 func (s *session) handleAttachRequest(request *dap.AttachRequest) {
 	s.targetDepth = 1
 	s.stopOnEntry = true
-	s.debugger = interpreter.NewDebugger()
+	s.debugger = s.backend.Emulator().StartDebugger()
+
 	s.run()
 
 	s.send(&dap.LaunchResponse{
@@ -551,7 +552,7 @@ func (s *session) handleSetBreakpointsRequest(request *dap.SetBreakpointsRequest
 
 func (s *session) handleInitialize(request *dap.InitializeRequest) {
 	// TODO: only allow one debug session at a time
-	s.debugger = interpreter.NewDebugger()
+	s.debugger = s.backend.Emulator().StartDebugger()
 
 	s.send(&dap.InitializeResponse{
 		Response: newDAPSuccessResponse(request.GetRequest()),
@@ -756,7 +757,7 @@ func (s *session) step() {
 }
 
 func (s *session) run() context.CancelFunc {
-	s.backend.Emulator().SetDebugger(s.debugger)
+	s.debugger = s.backend.Emulator().StartDebugger()
 	if s.stopOnEntry {
 		s.debugger.RequestPause()
 	}
