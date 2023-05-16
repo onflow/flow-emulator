@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/onflow/flow-emulator/storage/remote"
 	"io"
 	"strings"
 	"testing"
@@ -1905,8 +1906,11 @@ func TestRollbackTransaction(t *testing.T) {
 
 func Test_SimulatedMainnetTransaction(t *testing.T) {
 	t.Parallel()
+	remoteStore, err := remote.New(flowgo.Mainnet)
+	require.NoError(t, err)
 
 	b, err := emulator.NewBlockchain(
+		emulator.WithStore(remoteStore),
 		emulator.WithStorageLimitEnabled(false),
 		emulator.WithTransactionValidationEnabled(false),
 		emulator.WithChainID(flowgo.Mainnet),
@@ -1948,8 +1952,11 @@ func Test_SimulatedMainnetTransaction(t *testing.T) {
 
 func Test_SimulatedMainnetTransactionWithChanges(t *testing.T) {
 	t.Parallel()
+	remoteStore, err := remote.New(flowgo.Mainnet)
+	require.NoError(t, err)
 
 	b, err := emulator.NewBlockchain(
+		emulator.WithStore(remoteStore),
 		emulator.WithStorageLimitEnabled(false),
 		emulator.WithTransactionValidationEnabled(false),
 		emulator.WithChainID(flowgo.Mainnet),
