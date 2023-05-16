@@ -39,7 +39,7 @@ func New(chainID flowgo.ChainID) (*Store, error) {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not connect to archive node")
+		return nil, fmt.Errorf("could not connect to archive node: %w", err)
 	}
 
 	memorySql, err := sqlite.New(sqlite.InMemory)
