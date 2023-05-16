@@ -289,7 +289,10 @@ func (s *EmulatorServer) Stop() {
 func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider storage.Store, err error) {
 
 	if conf.ChainID != flowgo.Emulator {
-		return remote.New(conf.ChainID)
+		storageProvider, err = remote.New(conf.ChainID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if conf.RedisURL != "" {
