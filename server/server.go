@@ -167,14 +167,18 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	}
 
 	if conf.WithContracts {
-		deployments, err := deployContracts(blockchain)
+		commonContracts := emulator.CommonContracts
+		err := emulator.DeployContracts(blockchain, commonContracts)
 		if err != nil {
 			logger.Error().Err(err).Msg("❗  Failed to deploy contracts")
 		}
 
-		for _, contract := range deployments {
-			logger.Info().Fields(map[string]any{
-				contract.name: fmt.Sprintf("0x%s", contract.address.Hex())}).Msg(contract.description)
+		for _, contract := range commonContracts {
+			logger.Info().Fields(
+				map[string]any{
+					contract.Name: fmt.Sprintf("0x%s", contract.Address.Hex()),
+				},
+			).Msg(contract.Description)
 		}
 	}
 

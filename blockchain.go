@@ -24,7 +24,6 @@ import (
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
-	"github.com/onflow/flow-go-sdk"
 	sdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
@@ -158,6 +157,7 @@ type config struct {
 	TransactionValidationEnabled bool
 	ChainID                      flowgo.ChainID
 	CoverageReportingEnabled     bool
+	Contracts                    []ContractDescription
 }
 
 func (conf config) GetStore() storage.Store {
@@ -215,6 +215,7 @@ var defaultConfig = func() config {
 		TransactionValidationEnabled: true,
 		ChainID:                      flowgo.Emulator,
 		CoverageReportingEnabled:     false,
+		Contracts:                    []ContractDescription{},
 	}
 }()
 
@@ -403,6 +404,17 @@ func WithCoverageReportingEnabled(enabled bool) Option {
 	}
 }
 
+// Contracts allows users to deploy the given contracts.
+// Some default common contracts are pre-configured in the `CommonContracts`
+// global variable. It includes contracts such as:
+// NonFungibleToken, FUSD, MetadataViews, NFTStorefront, NFTStorefrontV2, ExampleNFT
+// The default value is []ContractDescription{}.
+func Contracts(contracts []ContractDescription) Option {
+	return func(c *config) {
+		c.Contracts = contracts
+	}
+}
+
 func (b *Blockchain) ReloadBlockchain() error {
 	var err error
 
@@ -448,6 +460,12 @@ func NewBlockchain(opts ...Option) (*Blockchain, error) {
 	err := b.ReloadBlockchain()
 	if err != nil {
 		return nil, err
+	}
+	if len(conf.Contracts) > 0 {
+		err := DeployContracts(b, conf.Contracts)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return b, nil
 
@@ -943,7 +961,7 @@ func (b *Blockchain) GetTransactionResult(ID sdk.Identifier) (*sdk.TransactionRe
 // GetAccountByIndex returns the account for the given address.
 func (b *Blockchain) GetAccountByIndex(index uint) (*sdk.Account, error) {
 
-	generator := flow.NewAddressGenerator(sdk.ChainID(b.vmCtx.Chain.ChainID()))
+	generator := sdk.NewAddressGenerator(sdk.ChainID(b.vmCtx.Chain.ChainID()))
 
 	generator.SetIndex(index)
 
