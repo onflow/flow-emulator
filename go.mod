@@ -14,7 +14,7 @@ require (
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v0.38.1
-	github.com/onflow/flow-go v0.30.1-0.20230501182206-6a911be58b92
+	github.com/onflow/flow-go v0.30.1-0.20230517045958-378baae2f7b0
 	github.com/onflow/flow-go-sdk v0.40.0
 	github.com/onflow/flow-go/crypto v0.24.7
 	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20220727161549-d59b1e547ac4
@@ -161,5 +161,3 @@ require (
 	modernc.org/sqlite v1.21.1 // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
 )
-
-replace github.com/onflow/flow-go v0.30.1-0.20230501182206-6a911be58b92 => github.com/Guitarheroua/flow-go v0.0.0-20230515134220-bf45732c221f
