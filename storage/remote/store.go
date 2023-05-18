@@ -157,7 +157,7 @@ func (s *Store) LedgerByHeight(
 			return nil, err
 		}
 		// first try to see if we have local stored ledger
-		value, err := s.DefaultStore.GetBytesAtVersion(ctx, "ledger", []byte(id.String()), blockHeight)
+		value, err := s.DefaultStore.GetBytesAtVersion(ctx, storage.LedgerStoreName, []byte(id.String()), blockHeight)
 		if !errors.Is(err, storage.ErrNotFound) {
 			if err != nil {
 				return nil, err

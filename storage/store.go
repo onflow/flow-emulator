@@ -40,7 +40,7 @@ const (
 	transactionStoreName       = "transactions"
 	transactionResultStoreName = "transactionResults"
 	eventStoreName             = "events"
-	ledgerStoreName            = "ledger"
+	LedgerStoreName            = "ledger"
 )
 
 // Store defines the storage layer for persistent chain state.
@@ -340,7 +340,7 @@ func (s *DefaultStore) InsertExecutionSnapshot(
 	for registerID, value := range executionSnapshot.WriteSet {
 		err := s.DataSetter.SetBytesWithVersion(
 			ctx,
-			s.KeyGenerator.Storage(ledgerStoreName),
+			s.KeyGenerator.Storage(LedgerStoreName),
 			[]byte(registerID.String()),
 			value,
 			blockHeight)
@@ -427,7 +427,7 @@ func (snapshot defaultStorageSnapshot) Get(
 ) {
 	value, err := snapshot.GetBytesAtVersion(
 		snapshot.ctx,
-		snapshot.Storage(ledgerStoreName),
+		snapshot.Storage(LedgerStoreName),
 		[]byte(id.String()),
 		snapshot.blockHeight)
 
