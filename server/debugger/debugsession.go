@@ -480,7 +480,7 @@ func (s *session) handleLaunchRequest(request *dap.LaunchRequest) {
 
 func (s *session) handleAttachRequest(request *dap.AttachRequest) {
 	s.targetDepth = 1
-	s.stopOnEntry = true
+	s.stopOnEntry = false
 	s.debugger = s.backend.Emulator().StartDebugger()
 
 	s.run()
