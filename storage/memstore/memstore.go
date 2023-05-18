@@ -250,8 +250,8 @@ func (s *Store) TransactionResultByID(
 func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
-) snapshot.StorageSnapshot {
-	return s.ledger[blockHeight]
+) (snapshot.StorageSnapshot, error) {
+	return s.ledger[blockHeight], nil
 }
 
 func (s *Store) EventsByHeight(

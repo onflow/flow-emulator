@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/logrusorgru/aurora"
-
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
@@ -113,7 +112,9 @@ func (s ServiceKey) AccountKey() *sdk.AccountKey {
 }
 
 const defaultServiceKeyPrivateKeySeed = "elephant ears space cowboy octopus rodeo potato cannon pineapple"
+
 const DefaultServiceKeySigAlgo = sdkcrypto.ECDSA_P256
+
 const DefaultServiceKeyHashAlgo = sdkcrypto.SHA3_256
 
 func DefaultServiceKey() ServiceKey {
@@ -189,7 +190,9 @@ func (conf config) GetServiceKey() ServiceKey {
 }
 
 const defaultGenesisTokenSupply = "1000000000.0"
+
 const defaultScriptGasLimit = 100000
+
 const defaultTransactionMaxGasLimit = flowgo.DefaultMaxTransactionGasLimit
 
 // defaultConfig is the default configuration for an emulated blockchain.
@@ -460,6 +463,7 @@ func (b *Blockchain) rollbackProvider() (storage.RollbackProvider, error) {
 	}
 	return rollbackProvider, nil
 }
+
 func (b *Blockchain) RollbackToBlockHeight(height uint64) error {
 
 	rollbackProvider, err := b.rollbackProvider()
@@ -618,12 +622,12 @@ func configureNewLedger(
 	snapshot.StorageSnapshot,
 	error,
 ) {
-	genesisExecutionSnapshot, err := bootstrapLedger(
-		vm,
-		ctx,
-		store.LedgerByHeight(context.Background(), 0),
-		conf,
-	)
+	ledger, err := store.LedgerByHeight(context.Background(), 0)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	genesisExecutionSnapshot, err := bootstrapLedger(vm, ctx, ledger, conf)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to bootstrap execution state: %w", err)
 	}
@@ -645,7 +649,10 @@ func configureNewLedger(
 	}
 
 	// get empty ledger view
-	ledger := store.LedgerByHeight(context.Background(), 0)
+	ledger, err = store.LedgerByHeight(context.Background(), 0)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	return genesis, ledger, nil
 }
@@ -658,9 +665,13 @@ func configureExistingLedger(
 	snapshot.StorageSnapshot,
 	error,
 ) {
-	latestLedger := store.LedgerByHeight(
+	latestLedger, err := store.LedgerByHeight(
 		context.Background(),
-		latestBlock.Header.Height)
+		latestBlock.Header.Height,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	return latestBlock, latestLedger, nil
 }
@@ -1032,13 +1043,12 @@ func (b *Blockchain) GetAccountAtBlock(address sdk.Address, blockHeight uint64) 
 
 // GetAccountAtBlock returns the account for the given address at specified block height.
 func (b *Blockchain) getAccountAtBlock(address flowgo.Address, blockHeight uint64) (*flowgo.Account, error) {
+	ledger, err := b.storage.LedgerByHeight(context.Background(), blockHeight)
+	if err != nil {
+		return nil, err
+	}
 
-	account, err := b.vm.GetAccount(
-		b.vmCtx,
-		address,
-		b.storage.LedgerByHeight(context.Background(), blockHeight),
-	)
-
+	account, err := b.vm.GetAccount(b.vmCtx, address, ledger)
 	if fvmerrors.IsAccountNotFoundError(err) {
 		return nil, &AccountNotFoundError{Address: address}
 	}
@@ -1241,9 +1251,13 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 		return nil, err
 	}
 
-	ledger := b.storage.LedgerByHeight(
+	ledger, err := b.storage.LedgerByHeight(
 		context.Background(),
-		block.Header.Height)
+		block.Header.Height,
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	// reset pending block using current block and ledger state
 	b.pendingBlock = newPendingBlock(block, ledger)
@@ -1348,9 +1362,13 @@ func (b *Blockchain) ResetPendingBlock() error {
 		return &StorageError{err}
 	}
 
-	latestLedger := b.storage.LedgerByHeight(
+	latestLedger, err := b.storage.LedgerByHeight(
 		context.Background(),
-		latestBlock.Header.Height)
+		latestBlock.Header.Height,
+	)
+	if err != nil {
+		return err
+	}
 
 	// reset pending block using latest committed block and ledger state
 	b.pendingBlock = newPendingBlock(&latestBlock, latestLedger)
@@ -1387,9 +1405,13 @@ func (b *Blockchain) ExecuteScriptAtBlock(
 		return nil, err
 	}
 
-	requestedLedgerSnapshot := b.storage.LedgerByHeight(
+	requestedLedgerSnapshot, err := b.storage.LedgerByHeight(
 		context.Background(),
-		requestedBlock.Header.Height)
+		requestedBlock.Header.Height,
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	header := requestedBlock.Header
 	blockContext := b.newFVMContextFromHeader(header)

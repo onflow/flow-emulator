@@ -97,11 +97,12 @@ type Store interface {
 	LedgerByHeight(
 		ctx context.Context,
 		blockHeight uint64,
-	) snapshot.StorageSnapshot
+	) (snapshot.StorageSnapshot, error)
 
 	// EventsByHeight returns the events in the block at the given height, optionally filtered by type.
 	EventsByHeight(ctx context.Context, blockHeight uint64, eventType string) ([]flowgo.Event, error)
 }
+
 type SnapshotProvider interface {
 	Snapshots() ([]string, error)
 	CreateSnapshot(snapshotName string) error
@@ -445,10 +446,10 @@ func (snapshot defaultStorageSnapshot) Get(
 func (s *DefaultStore) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
-) snapshot.StorageSnapshot {
+) (snapshot.StorageSnapshot, error) {
 	return defaultStorageSnapshot{
 		DefaultStore: s,
 		ctx:          ctx,
 		blockHeight:  blockHeight,
-	}
+	}, nil
 }
