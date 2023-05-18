@@ -20,11 +20,10 @@ package server
 
 import (
 	"fmt"
-	"github.com/onflow/flow-go/access"
 	"net"
 
 	grpcprometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"github.com/onflow/flow-emulator/server/backend"
+	"github.com/onflow/flow-go/access"
 	legacyaccess "github.com/onflow/flow-go/access/legacy"
 	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -34,6 +33,8 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+
+	"github.com/onflow/flow-emulator/server/backend"
 )
 
 type mockHeaderCache struct {
