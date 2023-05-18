@@ -1,12 +1,29 @@
+/*
+ * Flow Emulator
+ *
+ * Copyright 2019 Dapper Labs, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package remote
 
 import (
 	"context"
 	"fmt"
+
 	"github.com/onflow/flow-archive/api/archive"
 	"github.com/onflow/flow-archive/codec/zbor"
-	"github.com/onflow/flow-emulator/storage"
-	"github.com/onflow/flow-emulator/storage/sqlite"
 	exeState "github.com/onflow/flow-go/engine/execution/state"
 	"github.com/onflow/flow-go/fvm/state"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
@@ -16,6 +33,9 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/onflow/flow-emulator/storage"
+	"github.com/onflow/flow-emulator/storage/sqlite"
 )
 
 type Store struct {
