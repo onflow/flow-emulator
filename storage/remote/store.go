@@ -41,37 +41,55 @@ import (
 type Store struct {
 	*sqlite.Store
 	client archive.APIClient
+	host   string
 }
 
-func New(chainID flowgo.ChainID) (*Store, error) {
-	archiveHosts := map[flowgo.ChainID]string{
-		flowgo.Mainnet: "archive.mainnet.nodes.onflow.org:9000",
-		flowgo.Testnet: "archive.testnet.nodes.onflow.org:9000",
-	}
+type Option func(*Store)
 
-	host, ok := archiveHosts[chainID]
-	if !ok {
-		return nil, fmt.Errorf("chain %s not supported with remote store", chainID.String())
-	}
+func WithChainID(ID flowgo.ChainID) Option {
+	return func(store *Store) {
+		archiveHosts := map[flowgo.ChainID]string{
+			flowgo.Mainnet: "archive.mainnet.nodes.onflow.org:9000",
+			flowgo.Testnet: "archive.testnet.nodes.onflow.org:9000",
+		}
 
-	conn, err := grpc.Dial(
-		host,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("could not connect to archive node: %w", err)
+		store.host = archiveHosts[ID]
 	}
+}
 
+func WithHost(host string) Option {
+	return func(store *Store) {
+		store.host = host
+	}
+}
+
+func New(options ...Option) (*Store, error) {
 	memorySql, err := sqlite.New(sqlite.InMemory)
 	if err != nil {
 		return nil, err
 	}
 
 	store := &Store{
-		client: archive.NewAPIClient(conn),
-		Store:  memorySql,
+		Store: memorySql,
 	}
 
+	for _, opt := range options {
+		opt(store)
+	}
+
+	if store.host == "" {
+		return nil, fmt.Errorf("archive node host must be provided")
+	}
+
+	conn, err := grpc.Dial(
+		store.host,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not connect to archive node: %w", err)
+	}
+
+	store.client = archive.NewAPIClient(conn)
 	store.DataGetter = store
 	store.DataSetter = store
 	store.KeyGenerator = &storage.DefaultKeyGenerator{}

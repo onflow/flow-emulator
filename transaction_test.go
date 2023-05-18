@@ -6,14 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/onflow/flow-emulator/storage/remote"
 	"io"
 	"strings"
 	"testing"
-
-	"github.com/rs/zerolog"
-
-	convert "github.com/onflow/flow-emulator/convert/sdk"
 
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime/common"
@@ -24,10 +19,13 @@ import (
 	"github.com/onflow/flow-go-sdk/test"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	emulator "github.com/onflow/flow-emulator"
+	convert "github.com/onflow/flow-emulator/convert/sdk"
+	"github.com/onflow/flow-emulator/storage/remote"
 	"github.com/onflow/flow-emulator/types"
 )
 
@@ -1809,6 +1807,7 @@ type Meter struct {
 }
 
 type MeteredComputationIntensities map[common.ComputationKind]uint
+
 type MeteredMemoryIntensities map[common.MemoryKind]uint
 
 func IncrementHelper(t *testing.T, b *emulator.Blockchain, counterAddress flowsdk.Address, addTwoScript string, expected int) {
@@ -1871,6 +1870,7 @@ func IncrementHelper(t *testing.T, b *emulator.Blockchain, counterAddress flowsd
 	assert.Equal(t, cadence.NewInt(expected), event.Value.Fields[0])
 
 }
+
 func TestRollbackTransaction(t *testing.T) {
 	t.Parallel()
 
@@ -1906,7 +1906,7 @@ func TestRollbackTransaction(t *testing.T) {
 
 func Test_SimulatedMainnetTransaction(t *testing.T) {
 	t.Parallel()
-	remoteStore, err := remote.New(flowgo.Mainnet)
+	remoteStore, err := remote.New(remote.WithChainID(flowgo.Mainnet))
 	require.NoError(t, err)
 
 	b, err := emulator.NewBlockchain(
@@ -1952,7 +1952,7 @@ func Test_SimulatedMainnetTransaction(t *testing.T) {
 
 func Test_SimulatedMainnetTransactionWithChanges(t *testing.T) {
 	t.Parallel()
-	remoteStore, err := remote.New(flowgo.Mainnet)
+	remoteStore, err := remote.New(remote.WithChainID(flowgo.Mainnet))
 	require.NoError(t, err)
 
 	b, err := emulator.NewBlockchain(
