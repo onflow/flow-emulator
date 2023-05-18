@@ -25,23 +25,25 @@ import (
 	"github.com/onflow/flow-archive/api/archive"
 	"github.com/onflow/flow-archive/codec/zbor"
 	exeState "github.com/onflow/flow-go/engine/execution/state"
+	"github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/state"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	"github.com/onflow/flow-go/ledger/common/pathfinder"
 	"github.com/onflow/flow-go/ledger/complete"
 	flowgo "github.com/onflow/flow-go/model/flow"
-	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/sqlite"
+	"github.com/onflow/flow-emulator/types"
 )
 
 type Store struct {
 	*sqlite.Store
-	client archive.APIClient
-	host   string
+	client     archive.APIClient
+	host       string
+	forkHeight uint64
 }
 
 type Option func(*Store)
@@ -98,14 +100,21 @@ func New(options ...Option) (*Store, error) {
 }
 
 func (s *Store) BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flowgo.Block, error) {
-	// todo use local storage first as a cache
-
-	heightRes, err := s.client.GetHeightForBlock(ctx, &archive.GetHeightForBlockRequest{BlockID: blockID[:]})
-	if err != nil {
+	var height uint64
+	block, err := s.DefaultStore.BlockByID(ctx, blockID)
+	if err == nil {
+		height = block.Header.Height
+	} else if errors.Is(err, storage.ErrNotFound) {
+		heightRes, err := s.client.GetHeightForBlock(ctx, &archive.GetHeightForBlockRequest{BlockID: blockID[:]})
+		if err != nil {
+			return nil, err
+		}
+		height = heightRes.Height
+	} else {
 		return nil, err
 	}
 
-	return s.BlockByHeight(ctx, heightRes.Height)
+	return s.BlockByHeight(ctx, height)
 }
 
 func (s *Store) LatestBlock(ctx context.Context) (flowgo.Block, error) {
@@ -123,7 +132,9 @@ func (s *Store) LatestBlock(ctx context.Context) (flowgo.Block, error) {
 }
 
 func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block, error) {
-	// todo use local storage first as a cache
+	if height <= s.forkHeight {
+		return s.DefaultStore.BlockByHeight(ctx, height)
+	}
 
 	blockRes, err := s.client.GetHeader(ctx, &archive.GetHeaderRequest{Height: height})
 	if err != nil {
@@ -143,6 +154,28 @@ func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block
 	}, nil
 }
 
+func (s *Store) CommitBlock(
+	ctx context.Context,
+	block flowgo.Block,
+	collections []*flowgo.LightCollection,
+	transactions map[flowgo.Identifier]*flowgo.TransactionBody,
+	transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
+	executionSnapshot *snapshot.ExecutionSnapshot,
+	events []flowgo.Event,
+) error {
+	s.forkHeight = block.Header.Height
+
+	return s.DefaultStore.CommitBlock(
+		ctx,
+		block,
+		collections,
+		transactions,
+		transactionResults,
+		executionSnapshot,
+		events,
+	)
+}
+
 func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
@@ -153,15 +186,13 @@ func (s *Store) LedgerByHeight(
 	}
 
 	return snapshot.NewReadFuncStorageSnapshot(func(id flowgo.RegisterID) (flowgo.RegisterValue, error) {
-		if err != nil { // handle the above error but still conform to the interface, sanity check
-			return nil, err
-		}
-		// first try to see if we have local stored ledger
-		value, err := s.DefaultStore.GetBytesAtVersion(ctx, storage.LedgerStoreName, []byte(id.String()), blockHeight)
-		if !errors.Is(err, storage.ErrNotFound) {
+		if blockHeight <= s.forkHeight {
+			// first try to see if we have local stored ledger
+			value, err := s.DefaultStore.GetBytesAtVersion(ctx, storage.LedgerStoreName, []byte(id.String()), blockHeight)
 			if err != nil {
 				return nil, err
 			}
+
 			return value, nil
 		}
 
