@@ -42,6 +42,7 @@ import (
 type Store struct {
 	*sqlite.Store
 	client     archive.APIClient
+	grpcConn   *grpc.ClientConn
 	host       string
 	forkHeight uint64
 }
@@ -91,6 +92,7 @@ func New(options ...Option) (*Store, error) {
 		return nil, fmt.Errorf("could not connect to archive node: %w", err)
 	}
 
+	store.grpcConn = conn
 	store.client = archive.NewAPIClient(conn)
 	store.DataGetter = store
 	store.DataSetter = store
@@ -216,4 +218,8 @@ func (s *Store) LedgerByHeight(
 
 		return response.Values[0], nil
 	}), nil
+}
+
+func (s *Store) Stop() {
+	_ = s.grpcConn.Close()
 }
