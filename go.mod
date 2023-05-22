@@ -3,7 +3,7 @@ module github.com/onflow/flow-emulator
 go 1.18
 
 require (
-	github.com/fxamacker/cbor/v2 v2.4.1-0.20220515183430-ad2eae63303f
+	github.com/fxamacker/cbor/v2 v2.5.0-beta3
 	github.com/glebarez/go-sqlite v1.21.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang/mock v1.6.0
