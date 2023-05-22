@@ -47,6 +47,7 @@ type Store struct {
 
 type Option func(*Store)
 
+// WithChainID sets a chain ID and is used to determine which archive node to use.
 func WithChainID(ID flowgo.ChainID) Option {
 	return func(store *Store) {
 		archiveHosts := map[flowgo.ChainID]string{
@@ -58,9 +59,19 @@ func WithChainID(ID flowgo.ChainID) Option {
 	}
 }
 
+// WithHost sets archive node host.
 func WithHost(host string) Option {
 	return func(store *Store) {
 		store.host = host
+	}
+}
+
+// WithClient can set an archive node client
+//
+// This is mostly use for testing.
+func WithClient(client archive.APIClient) Option {
+	return func(store *Store) {
+		store.client = client
 	}
 }
 
@@ -78,20 +89,23 @@ func New(options ...Option) (*Store, error) {
 		opt(store)
 	}
 
-	if store.host == "" {
-		return nil, fmt.Errorf("archive node host must be provided")
+	if store.client == nil {
+		if store.host == "" {
+			return nil, fmt.Errorf("archive node host must be provided")
+		}
+
+		conn, err := grpc.Dial(
+			store.host,
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("could not connect to archive node: %w", err)
+		}
+
+		store.grpcConn = conn
+		store.client = archive.NewAPIClient(conn)
 	}
 
-	conn, err := grpc.Dial(
-		store.host,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("could not connect to archive node: %w", err)
-	}
-
-	store.grpcConn = conn
-	store.client = archive.NewAPIClient(conn)
 	store.DataGetter = store
 	store.DataSetter = store
 	store.KeyGenerator = &storage.DefaultKeyGenerator{}
