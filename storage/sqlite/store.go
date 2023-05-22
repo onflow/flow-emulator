@@ -210,7 +210,7 @@ func New(url string) (store *Store, err error) {
 	if dbUrl != ":memory:" {
 		urlInfo, err := os.Stat(url)
 		if err == nil && urlInfo.IsDir() {
-			dbUrl = filepath.Join(urlInfo.Name(), "emulator.sqlite")
+			dbUrl = filepath.Join(url, "emulator.sqlite")
 			if err != nil {
 				return nil, err
 			}
