@@ -36,15 +36,13 @@ import (
 
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/sqlite"
-	"github.com/onflow/flow-emulator/types"
 )
 
 type Store struct {
 	*sqlite.Store
-	client     archive.APIClient
-	grpcConn   *grpc.ClientConn
-	host       string
-	forkHeight uint64
+	client   archive.APIClient
+	grpcConn *grpc.ClientConn
+	host     string
 }
 
 type Option func(*Store)
@@ -134,8 +132,9 @@ func (s *Store) LatestBlock(ctx context.Context) (flowgo.Block, error) {
 }
 
 func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block, error) {
-	if height <= s.forkHeight {
-		return s.DefaultStore.BlockByHeight(ctx, height)
+	block, err := s.DefaultStore.BlockByHeight(ctx, height)
+	if err == nil {
+		return block, nil
 	}
 
 	blockRes, err := s.client.GetHeader(ctx, &archive.GetHeaderRequest{Height: height})
@@ -156,28 +155,6 @@ func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block
 	}, nil
 }
 
-func (s *Store) CommitBlock(
-	ctx context.Context,
-	block flowgo.Block,
-	collections []*flowgo.LightCollection,
-	transactions map[flowgo.Identifier]*flowgo.TransactionBody,
-	transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
-	executionSnapshot *snapshot.ExecutionSnapshot,
-	events []flowgo.Event,
-) error {
-	s.forkHeight = block.Header.Height
-
-	return s.DefaultStore.CommitBlock(
-		ctx,
-		block,
-		collections,
-		transactions,
-		transactionResults,
-		executionSnapshot,
-		events,
-	)
-}
-
 func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
@@ -188,13 +165,14 @@ func (s *Store) LedgerByHeight(
 	}
 
 	return snapshot.NewReadFuncStorageSnapshot(func(id flowgo.RegisterID) (flowgo.RegisterValue, error) {
-		if blockHeight <= s.forkHeight {
-			// first try to see if we have local stored ledger
-			value, err := s.DefaultStore.GetBytesAtVersion(ctx, storage.LedgerStoreName, []byte(id.String()), blockHeight)
-			if err != nil {
-				return nil, err
-			}
-
+		// first try to see if we have local stored ledger
+		value, err := s.DefaultStore.GetBytesAtVersion(
+			ctx,
+			s.KeyGenerator.Storage(storage.LedgerStoreName),
+			[]byte(id.String()),
+			blockHeight,
+		)
+		if err == nil && value != nil {
 			return value, nil
 		}
 
@@ -204,6 +182,7 @@ func (s *Store) LedgerByHeight(
 			return nil, err
 		}
 
+		// todo once we obtain remote register values we could cache them
 		response, err := s.client.GetRegisterValues(ctx, &archive.GetRegisterValuesRequest{
 			Height: blockHeight,
 			Paths:  [][]byte{ledgerPath[:]},
