@@ -32,7 +32,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	emulator "github.com/onflow/flow-emulator"
 )
@@ -42,11 +41,16 @@ var _ archive.APIClient = testClient{}
 const testHeight = uint64(53115699)
 
 type testClient struct {
-	client      archive.APIClient
 	registerMap map[string][]byte
 	header      []byte
 }
 
+// newTestClient implements the archive client interface.
+//
+// The response data is obtained from fixture files which we created by
+// observing a real client usage. This data should be update once in a while
+// and this can be done by adding a simple observer to the real client call and
+// serializing the response to the files.
 func newTestClient() (*testClient, error) {
 	encoded, err := os.ReadFile("storage_registers_fixture")
 	if err != nil {
@@ -148,15 +152,9 @@ func (a testClient) ListSealsForHeight(ctx context.Context, in *archive.ListSeal
 
 func Test_SimulatedMainnetTransaction(t *testing.T) {
 	t.Parallel()
-	conn, err := grpc.Dial(
-		"archive.mainnet.nodes.onflow.org:9000",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	require.NoError(t, err)
 
 	client, err := newTestClient()
 	require.NoError(t, err)
-	client.client = archive.NewAPIClient(conn)
 
 	remoteStore, err := New(WithClient(client))
 	require.NoError(t, err)
