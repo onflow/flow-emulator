@@ -1,5 +1,3 @@
-//go:build integration
-
 /*
  * Flow Emulator
  *
@@ -21,19 +19,144 @@
 package remote
 
 import (
+	"context"
+	"encoding/hex"
+	"fmt"
+	"os"
 	"testing"
 
+	"github.com/onflow/flow-archive/api/archive"
+	"github.com/onflow/flow-archive/codec/zbor"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 
 	emulator "github.com/onflow/flow-emulator"
 )
 
+var _ archive.APIClient = testClient{}
+
+const testHeight = uint64(53115699)
+
+type testClient struct {
+	registerMap map[string][]byte
+	header      []byte
+}
+
+// newTestClient implements the archive client interface.
+//
+// The response data is obtained from fixture files which we created by
+// observing a real client usage. This data should be update once in a while
+// and this can be done by adding a simple observer to the real client call and
+// serializing the response to the files.
+func newTestClient() (*testClient, error) {
+	encoded, err := os.ReadFile("storage_registers_fixture")
+	if err != nil {
+		return nil, err
+	}
+
+	var regMap map[string][]byte
+	err = zbor.NewCodec().Decode(encoded, &regMap)
+	if err != nil {
+		return nil, err
+	}
+
+	header, err := os.ReadFile("storage_header_fixture")
+	if err != nil {
+		return nil, err
+	}
+
+	return &testClient{
+		registerMap: regMap,
+		header:      header,
+	}, nil
+}
+
+func (a testClient) GetFirst(ctx context.Context, in *archive.GetFirstRequest, opts ...grpc.CallOption) (*archive.GetFirstResponse, error) {
+	panic("Not needed")
+}
+
+func (a testClient) GetLast(ctx context.Context, in *archive.GetLastRequest, opts ...grpc.CallOption) (*archive.GetLastResponse, error) {
+	return &archive.GetLastResponse{Height: testHeight}, nil // a random height
+}
+
+func (a testClient) GetHeightForBlock(ctx context.Context, in *archive.GetHeightForBlockRequest, opts ...grpc.CallOption) (*archive.GetHeightForBlockResponse, error) {
+	panic("Not needed")
+}
+
+func (a testClient) GetCommit(ctx context.Context, in *archive.GetCommitRequest, opts ...grpc.CallOption) (*archive.GetCommitResponse, error) {
+	panic("Not needed")
+}
+
+func (a testClient) GetHeader(ctx context.Context, in *archive.GetHeaderRequest, opts ...grpc.CallOption) (*archive.GetHeaderResponse, error) {
+	return &archive.GetHeaderResponse{
+		Height: testHeight,
+		Data:   a.header,
+	}, nil
+}
+
+func (a testClient) GetEvents(ctx context.Context, in *archive.GetEventsRequest, opts ...grpc.CallOption) (*archive.GetEventsResponse, error) {
+	panic("Not needed")
+}
+
+func (a testClient) GetRegisterValues(ctx context.Context, in *archive.GetRegisterValuesRequest, opts ...grpc.CallOption) (*archive.GetRegisterValuesResponse, error) {
+	val, ok := a.registerMap[hex.EncodeToString(in.Paths[0])]
+	if !ok {
+		return nil, fmt.Errorf("register not found in test fixture")
+	}
+
+	return &archive.GetRegisterValuesResponse{
+		Height: in.Height,
+		Paths:  in.Paths,
+		Values: [][]byte{val},
+	}, nil
+}
+
+func (a testClient) GetCollection(ctx context.Context, in *archive.GetCollectionRequest, opts ...grpc.CallOption) (*archive.GetCollectionResponse, error) {
+	panic("Not needed")
+}
+
+func (a testClient) ListCollectionsForHeight(ctx context.Context, in *archive.ListCollectionsForHeightRequest, opts ...grpc.CallOption) (*archive.ListCollectionsForHeightResponse, error) {
+	panic("Not needed")
+}
+
+func (a testClient) GetGuarantee(ctx context.Context, in *archive.GetGuaranteeRequest, opts ...grpc.CallOption) (*archive.GetGuaranteeResponse, error) {
+	panic("Not needed")
+}
+
+func (a testClient) GetTransaction(ctx context.Context, in *archive.GetTransactionRequest, opts ...grpc.CallOption) (*archive.GetTransactionResponse, error) {
+	panic("Not needed")
+}
+
+func (a testClient) GetHeightForTransaction(ctx context.Context, in *archive.GetHeightForTransactionRequest, opts ...grpc.CallOption) (*archive.GetHeightForTransactionResponse, error) {
+	panic("Not needed")
+}
+
+func (a testClient) ListTransactionsForHeight(ctx context.Context, in *archive.ListTransactionsForHeightRequest, opts ...grpc.CallOption) (*archive.ListTransactionsForHeightResponse, error) {
+	panic("Not needed")
+}
+
+func (a testClient) GetResult(ctx context.Context, in *archive.GetResultRequest, opts ...grpc.CallOption) (*archive.GetResultResponse, error) {
+	panic("Not needed")
+}
+
+func (a testClient) GetSeal(ctx context.Context, in *archive.GetSealRequest, opts ...grpc.CallOption) (*archive.GetSealResponse, error) {
+	panic("Not needed")
+}
+
+func (a testClient) ListSealsForHeight(ctx context.Context, in *archive.ListSealsForHeightRequest, opts ...grpc.CallOption) (*archive.ListSealsForHeightResponse, error) {
+	panic("Not needed")
+}
+
 func Test_SimulatedMainnetTransaction(t *testing.T) {
 	t.Parallel()
-	remoteStore, err := New(WithChainID(flowgo.Mainnet))
+
+	client, err := newTestClient()
+	require.NoError(t, err)
+
+	remoteStore, err := New(WithClient(client))
 	require.NoError(t, err)
 
 	b, err := emulator.NewBlockchain(
@@ -69,7 +192,6 @@ func Test_SimulatedMainnetTransaction(t *testing.T) {
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
 
-	//tx1Result, err := b.GetTransactionResult(tx.ID())
 	assert.NoError(t, err)
 	assert.NoError(t, txRes.Error)
 	assert.Len(t, txRes.Events, 1)
@@ -140,7 +262,6 @@ func Test_SimulatedMainnetTransactionWithChanges(t *testing.T) {
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
 
-	//tx1Result, err := b.GetTransactionResult(tx.ID())
 	assert.NoError(t, err)
 	assert.NoError(t, txRes.Error)
 	assert.Len(t, txRes.Events, 1)
