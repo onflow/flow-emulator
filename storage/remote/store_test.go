@@ -201,7 +201,10 @@ func Test_SimulatedMainnetTransaction(t *testing.T) {
 
 func Test_SimulatedMainnetTransactionWithChanges(t *testing.T) {
 	t.Parallel()
-	remoteStore, err := New(WithChainID(flowgo.Mainnet))
+	client, err := newTestClient()
+	require.NoError(t, err)
+
+	remoteStore, err := New(WithClient(client))
 	require.NoError(t, err)
 
 	b, err := emulator.NewBlockchain(
