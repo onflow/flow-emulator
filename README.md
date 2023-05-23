@@ -65,11 +65,11 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--transaction-max-gas-limit` | `FLOW_TRANSACTIONMAXGASLIMIT` | `9999`         | Maximum [gas limit for transactions](https://docs.onflow.org/flow-go-sdk/building-transactions/#gas-limit)                                                                                                                                          |
 | `--script-gas-limit`          | `FLOW_SCRIPTGASLIMIT`        | `100000`       | Specify gas limit for script execution                                                                                                                                                                                                              |
 | `--contracts`                 | `FLOW_CONTRACTS`             | `false`        | Deploy common contracts when emulator starts                                                                                                                                                                                                        |
-| `--coverage-reporting`        | `FLOW_COVERAGEREPORTING`     | `false`        | Enable Cadence code coverage reporting                                                                                                                                                                                                        |
+| `--coverage-reporting`        | `FLOW_COVERAGEREPORTING`     | `false`        | Enable Cadence code coverage reporting                                                                                                                                                                                                              |
 | `--contract-removal`          | `FLOW_CONTRACTREMOVAL`            | `true`         | Allow removal of already deployed contracts, used for updating during development                                                                                                                                                                   |
 | `--skip-transaction-validation` | `FLOW_SKIPTRANSACTIONVALIDATION` | `false`        | Skip verification of transaction signatures and sequence numbers                                                                                                                                                                                    |
-| `--host`                      | `FLOW_HOST`                  | ` `            | Host to listen on for emulator GRPC/REST/Admin servers (default: All Interfaces)                                                                                                                                                                                              |
-| `--chain-id`                  | `FLOW_CHAINID`               | `emulator`     | Chain to emulate for address generation.  Valid values are: 'emulator', 'testnet', 'mainnet'                                                                                                                                                        |
+| `--host`                      | `FLOW_HOST`                  | ` `            | Host to listen on for emulator GRPC/REST/Admin servers (default: All Interfaces)                                                                                                                                                                    |
+| `--chain-id`                  | `FLOW_CHAINID`               | `emulator`     | Chain to emulate, if 'mainnet' or 'testnet' values are used, you will be able to run transactions against that network and a local fork will be created..  Valid values are: 'emulator', 'testnet', 'mainnet'                                       |
 | `-redis-url`                  | `FLOW_REDIS_URL`             | ''             | Redis-server URL for persisting redis storage backend ( `redis://[[username:]password@]host[:port][/database]` )                                                                                                                                    |
 
 ## Running the emulator with the Flow CLI
@@ -212,6 +212,15 @@ To generate a service key, use the `keys generate` command in the Flow CLI.
 ```bash
 flow keys generate
 ```
+
+## Emulating mainnet and testnet transactions
+The emulator allows you to simulate the execution of transactions as if they were 
+performed on the mainnet or testnet. In order to activate this feature, 
+you must specify the network name for the chain ID flag in the following manner:
+```
+flow emulator --chain-id mainnet
+```
+Please note, the actual execution on the real network may differ.
 
 ## Development
 

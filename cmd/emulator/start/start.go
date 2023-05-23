@@ -273,7 +273,7 @@ func getSDKChainID(chainID string) (flowgo.ChainID, error) {
 	case "testnet":
 		return flowgo.Testnet, nil
 	case "mainnet":
-		return flowgo.Testnet, nil
+		return flowgo.Mainnet, nil
 	default:
 		return "", fmt.Errorf("Invalid ChainID %s, valid values are: emulator, testnet, mainnet", chainID)
 	}

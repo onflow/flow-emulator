@@ -23,7 +23,6 @@ import (
 	"net"
 
 	grpcprometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-go/access"
 	legacyaccess "github.com/onflow/flow-go/access/legacy"
 	"github.com/onflow/flow-go/model/flow"
@@ -34,6 +33,8 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+
+	"github.com/onflow/flow-emulator/server/backend"
 )
 
 type mockHeaderCache struct {
@@ -63,13 +64,11 @@ func NewGRPCServer(logger *zerolog.Logger, b *backend.Backend, chain flow.Chain,
 	me.On("NodeID").Return(flowgo.ZeroID)
 
 	legacyaccessproto.RegisterAccessAPIServer(grpcServer, legacyaccess.NewHandler(adaptedBackend, chain))
-	accessproto.RegisterAccessAPIServer(
-		grpcServer,
-		access.NewHandler(
-			adaptedBackend,
-			chain,
-			mockHeaderCache{},
-			me))
+	accessproto.RegisterAccessAPIServer(grpcServer, access.NewHandler(
+		adaptedBackend,
+		chain,
+		mockHeaderCache{},
+		me))
 
 	grpcprometheus.Register(grpcServer)
 
