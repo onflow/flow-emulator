@@ -35,6 +35,7 @@ import (
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-emulator/server/debugger"
 	"github.com/onflow/flow-emulator/storage"
+	"github.com/onflow/flow-emulator/storage/remote"
 	"github.com/onflow/flow-emulator/storage/util"
 )
 
@@ -290,6 +291,13 @@ func (s *EmulatorServer) Stop() {
 }
 
 func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider storage.Store, err error) {
+
+	if conf.ChainID != flowgo.Emulator {
+		storageProvider, err = remote.New(remote.WithChainID(conf.ChainID))
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	if conf.RedisURL != "" {
 		storageProvider, err = util.NewRedisStorage(conf.RedisURL)

@@ -142,11 +142,12 @@ func (mr *MockStoreMockRecorder) LatestBlockHeight(arg0 interface{}) *gomock.Cal
 }
 
 // LedgerByHeight mocks base method.
-func (m *MockStore) LedgerByHeight(arg0 context.Context, arg1 uint64) snapshot.StorageSnapshot {
+func (m *MockStore) LedgerByHeight(arg0 context.Context, arg1 uint64) (snapshot.StorageSnapshot, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LedgerByHeight", arg0, arg1)
 	ret0, _ := ret[0].(snapshot.StorageSnapshot)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // LedgerByHeight indicates an expected call of LedgerByHeight.
