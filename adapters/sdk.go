@@ -24,8 +24,8 @@ import (
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/flow-emulator/convert"
-	emulator2 "github.com/onflow/flow-emulator/emulator"
-	emulator "github.com/onflow/flow-emulator/types"
+	emulator "github.com/onflow/flow-emulator/emulator"
+	types "github.com/onflow/flow-emulator/types"
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -38,7 +38,7 @@ import (
 // required by the Access API.
 type SDKAdapter struct {
 	logger   *zerolog.Logger
-	emulator emulator2.Emulator
+	emulator emulator.Emulator
 }
 
 func (b *SDKAdapter) EnableAutoMine() {
@@ -48,12 +48,12 @@ func (b *SDKAdapter) DisableAutoMine() {
 	b.emulator.DisableAutoMine()
 }
 
-func (b *SDKAdapter) Emulator() emulator2.Emulator {
+func (b *SDKAdapter) Emulator() emulator.Emulator {
 	return b.emulator
 }
 
 // NewSDKAdapter returns a new SDKAdapter.
-func NewSDKAdapter(logger *zerolog.Logger, emulator emulator2.Emulator) *SDKAdapter {
+func NewSDKAdapter(logger *zerolog.Logger, emulator emulator.Emulator) *SDKAdapter {
 	return &SDKAdapter{
 		logger:   logger,
 		emulator: emulator,
@@ -349,7 +349,7 @@ func (b *SDKAdapter) executeScriptAtBlock(script []byte, arguments [][]byte, blo
 	return valueBytes, nil
 }
 
-func (b *SDKAdapter) GetAccountStorage(address sdk.Address) (*emulator.AccountStorage, error) {
+func (b *SDKAdapter) GetAccountStorage(address sdk.Address) (*types.AccountStorage, error) {
 	return b.emulator.GetAccountStorage(convert.SDKAddressToFlow(address))
 }
 
