@@ -56,9 +56,10 @@ func TestMemstore(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			snapshot := store.LedgerByHeight(
+			snapshot, err := store.LedgerByHeight(
 				context.Background(),
 				blockHeight)
+			require.NoError(t, err)
 			actualValue, err := snapshot.Get(key)
 
 			require.NoError(t, err)
@@ -90,7 +91,9 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 	require.NoError(t, err)
 
 	// check initial value
-	register, err := store.LedgerByHeight(context.Background(), 0).Get(flow.NewRegisterID(key.Owner, key.Key))
+	ledger, err := store.LedgerByHeight(context.Background(), 0)
+	require.NoError(t, err)
+	register, err := ledger.Get(flow.NewRegisterID(key.Owner, key.Key))
 	require.NoError(t, err)
 	require.Equal(t, string(value), string(register))
 
@@ -105,7 +108,9 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 	require.NoError(t, err)
 
 	// check value is nil
-	register, err = store.LedgerByHeight(context.Background(), 1).Get(flow.NewRegisterID(key.Owner, key.Key))
+	ledger, err = store.LedgerByHeight(context.Background(), 1)
+	require.NoError(t, err)
+	register, err = ledger.Get(flow.NewRegisterID(key.Owner, key.Key))
 	require.NoError(t, err)
 	require.Equal(t, string(nilValue), string(register))
 }

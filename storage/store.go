@@ -40,7 +40,7 @@ const (
 	transactionStoreName       = "transactions"
 	transactionResultStoreName = "transactionResults"
 	eventStoreName             = "events"
-	ledgerStoreName            = "ledger"
+	LedgerStoreName            = "ledger"
 )
 
 // Store defines the storage layer for persistent chain state.
@@ -97,11 +97,12 @@ type Store interface {
 	LedgerByHeight(
 		ctx context.Context,
 		blockHeight uint64,
-	) snapshot.StorageSnapshot
+	) (snapshot.StorageSnapshot, error)
 
 	// EventsByHeight returns the events in the block at the given height, optionally filtered by type.
 	EventsByHeight(ctx context.Context, blockHeight uint64, eventType string) ([]flowgo.Event, error)
 }
+
 type SnapshotProvider interface {
 	Snapshots() ([]string, error)
 	CreateSnapshot(snapshotName string) error
@@ -339,7 +340,7 @@ func (s *DefaultStore) InsertExecutionSnapshot(
 	for registerID, value := range executionSnapshot.WriteSet {
 		err := s.DataSetter.SetBytesWithVersion(
 			ctx,
-			s.KeyGenerator.Storage(ledgerStoreName),
+			s.KeyGenerator.Storage(LedgerStoreName),
 			[]byte(registerID.String()),
 			value,
 			blockHeight)
@@ -426,7 +427,7 @@ func (snapshot defaultStorageSnapshot) Get(
 ) {
 	value, err := snapshot.GetBytesAtVersion(
 		snapshot.ctx,
-		snapshot.Storage(ledgerStoreName),
+		snapshot.Storage(LedgerStoreName),
 		[]byte(id.String()),
 		snapshot.blockHeight)
 
@@ -445,10 +446,10 @@ func (snapshot defaultStorageSnapshot) Get(
 func (s *DefaultStore) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
-) snapshot.StorageSnapshot {
+) (snapshot.StorageSnapshot, error) {
 	return defaultStorageSnapshot{
 		DefaultStore: s,
 		ctx:          ctx,
 		blockHeight:  blockHeight,
-	}
+	}, nil
 }

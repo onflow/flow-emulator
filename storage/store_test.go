@@ -266,7 +266,8 @@ func TestLedger(t *testing.T) {
 		})
 
 		t.Run("should be to get set ledger", func(t *testing.T) {
-			gotLedger := store.LedgerByHeight(context.Background(), blockHeight)
+			gotLedger, err := store.LedgerByHeight(context.Background(), blockHeight)
+			assert.NoError(t, err)
 			actual, err := gotLedger.Get(flow.NewRegisterID(owner, key))
 			assert.NoError(t, err)
 			assert.Equal(t, expected, actual)
@@ -318,7 +319,8 @@ func TestLedger(t *testing.T) {
 
 		// View at block 1 should have keys 1, 2, 3
 		t.Run("should version the first written block", func(t *testing.T) {
-			gotLedger := store.LedgerByHeight(context.Background(), 1)
+			gotLedger, err := store.LedgerByHeight(context.Background(), 1)
+			assert.NoError(t, err)
 			for i := 1; i <= 3; i++ {
 				val, err := gotLedger.Get(flow.NewRegisterID(owner, fmt.Sprintf("%d", i)))
 				assert.NoError(t, err)
@@ -329,7 +331,8 @@ func TestLedger(t *testing.T) {
 		// View at block N should have values 1->N+2
 		t.Run("should version all blocks", func(t *testing.T) {
 			for block := 2; block < totalBlocks; block++ {
-				gotLedger := store.LedgerByHeight(context.Background(), uint64(block))
+				gotLedger, err := store.LedgerByHeight(context.Background(), uint64(block))
+				assert.NoError(t, err)
 				// The keys 1->N-1 are defined in previous blocks
 				for i := 1; i < block; i++ {
 					val, err := gotLedger.Get(flow.NewRegisterID(owner, fmt.Sprintf("%d", i)))
@@ -375,6 +378,7 @@ func TestInsertEvents(t *testing.T) {
 		})
 	})
 }
+
 func TestEventsByHeight(t *testing.T) {
 
 	t.Parallel()

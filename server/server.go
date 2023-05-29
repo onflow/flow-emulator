@@ -35,6 +35,7 @@ import (
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-emulator/server/debugger"
 	"github.com/onflow/flow-emulator/storage"
+	"github.com/onflow/flow-emulator/storage/remote"
 	"github.com/onflow/flow-emulator/storage/util"
 )
 
@@ -167,14 +168,18 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	}
 
 	if conf.WithContracts {
-		deployments, err := deployContracts(blockchain)
+		commonContracts := emulator.CommonContracts
+		err := emulator.DeployContracts(blockchain, commonContracts)
 		if err != nil {
 			logger.Error().Err(err).Msg("❗  Failed to deploy contracts")
 		}
 
-		for _, contract := range deployments {
-			logger.Info().Fields(map[string]any{
-				contract.name: fmt.Sprintf("0x%s", contract.address.Hex())}).Msg(contract.description)
+		for _, contract := range commonContracts {
+			logger.Info().Fields(
+				map[string]any{
+					contract.Name: fmt.Sprintf("0x%s", contract.Address.Hex()),
+				},
+			).Msg(contract.Description)
 		}
 	}
 
@@ -286,6 +291,13 @@ func (s *EmulatorServer) Stop() {
 }
 
 func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider storage.Store, err error) {
+
+	if conf.ChainID != flowgo.Emulator {
+		storageProvider, err = remote.New(remote.WithChainID(conf.ChainID))
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	if conf.RedisURL != "" {
 		storageProvider, err = util.NewRedisStorage(conf.RedisURL)

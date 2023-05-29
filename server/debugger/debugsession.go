@@ -13,13 +13,12 @@ import (
 	"github.com/google/go-dap"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
-	flowgo "github.com/onflow/flow-go/model/flow"
-	"github.com/rs/zerolog"
-
 	"github.com/onflow/cadence/runtime/ast"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
 	sdk "github.com/onflow/flow-go-sdk"
+	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/rs/zerolog"
 
 	emulator "github.com/onflow/flow-emulator"
 	"github.com/onflow/flow-emulator/server/backend"
@@ -480,7 +479,7 @@ func (s *session) handleLaunchRequest(request *dap.LaunchRequest) {
 
 func (s *session) handleAttachRequest(request *dap.AttachRequest) {
 	s.targetDepth = 1
-	s.stopOnEntry = true
+	s.stopOnEntry = false
 	s.debugger = s.backend.Emulator().StartDebugger()
 
 	s.run()
