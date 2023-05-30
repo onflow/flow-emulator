@@ -33,7 +33,7 @@ type Store struct {
 	rdb     *redis.Client
 }
 
-// New returns a new in-memory Store implementation.
+// New returns a new in-memory Store implgoementation.
 func New(url string) (*Store, error) {
 	options, err := redis.ParseURL(url)
 	if err != nil {

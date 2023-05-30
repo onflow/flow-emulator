@@ -26,7 +26,6 @@ import (
 	"github.com/onflow/flow-archive/codec/zbor"
 	exeState "github.com/onflow/flow-go/engine/execution/state"
 	"github.com/onflow/flow-go/fvm/errors"
-	"github.com/onflow/flow-go/fvm/state"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	"github.com/onflow/flow-go/ledger/common/pathfinder"
 	"github.com/onflow/flow-go/ledger/complete"
@@ -172,7 +171,7 @@ func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block
 func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
-) (state.StorageSnapshot, error) {
+) (snapshot.StorageSnapshot, error) {
 	err := s.SetBlockHeight(blockHeight)
 	if err != nil {
 		return nil, err
