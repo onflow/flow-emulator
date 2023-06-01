@@ -28,6 +28,7 @@ import (
 	"github.com/onflow/flow-emulator/server/backend"
 	"github.com/onflow/flow-go/engine/access/rest"
 	"github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow-go/module/metrics"
 	"github.com/rs/zerolog"
 )
 
@@ -71,13 +72,14 @@ func (r *RestServer) Stop() {
 }
 
 func NewRestServer(logger *zerolog.Logger, be *backend.Backend, chain flow.Chain, host string, port int, debug bool) (*RestServer, error) {
-
 	debugLogger := zerolog.Logger{}
 	if debug {
 		debugLogger = zerolog.New(os.Stdout)
 	}
 
-	srv, err := rest.NewServer(backend.NewAdapter(be), fmt.Sprintf("%s:3333", host), debugLogger, chain)
+	restCollector := metrics.NewNoopCollector()
+
+	srv, err := rest.NewServer(backend.NewAdapter(be), fmt.Sprintf("%s:3333", host), debugLogger, chain, restCollector)
 	if err != nil {
 		return nil, err
 	}
