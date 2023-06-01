@@ -25,6 +25,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/onflow/flow-emulator/adapters"
+	"github.com/rs/zerolog"
+
 	"github.com/onflow/flow-archive/api/archive"
 	"github.com/onflow/flow-archive/codec/zbor"
 	flowsdk "github.com/onflow/flow-go-sdk"
@@ -33,7 +36,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
-	emulator "github.com/onflow/flow-emulator"
+	emulator "github.com/onflow/flow-emulator/emulator"
 )
 
 var _ archive.APIClient = testClient{}
@@ -159,12 +162,14 @@ func Test_SimulatedMainnetTransaction(t *testing.T) {
 	remoteStore, err := New(WithClient(client))
 	require.NoError(t, err)
 
-	b, err := emulator.NewBlockchain(
+	b, err := emulator.New(
 		emulator.WithStore(remoteStore),
 		emulator.WithStorageLimitEnabled(false),
 		emulator.WithTransactionValidationEnabled(false),
 		emulator.WithChainID(flowgo.Mainnet),
 	)
+	logger := zerolog.Nop()
+	adapter := adapters.NewSDKAdapter(&logger, b)
 	require.NoError(t, err)
 
 	script := []byte(`
@@ -183,7 +188,7 @@ func Test_SimulatedMainnetTransaction(t *testing.T) {
 		SetProposalKey(addr, 0, 0).
 		SetPayer(addr)
 
-	err = b.AddTransaction(*tx)
+	err = adapter.SendTransaction(context.Background(), *tx)
 	assert.NoError(t, err)
 
 	txRes, err := b.ExecuteNextTransaction()
@@ -207,13 +212,16 @@ func Test_SimulatedMainnetTransactionWithChanges(t *testing.T) {
 	remoteStore, err := New(WithClient(client))
 	require.NoError(t, err)
 
-	b, err := emulator.NewBlockchain(
+	b, err := emulator.New(
 		emulator.WithStore(remoteStore),
 		emulator.WithStorageLimitEnabled(false),
 		emulator.WithTransactionValidationEnabled(false),
 		emulator.WithChainID(flowgo.Mainnet),
 	)
 	require.NoError(t, err)
+
+	logger := zerolog.Nop()
+	adapter := adapters.NewSDKAdapter(&logger, b)
 
 	script := []byte(`
 		import Ping from 0x9799f28ff0453528
@@ -231,7 +239,7 @@ func Test_SimulatedMainnetTransactionWithChanges(t *testing.T) {
 		SetProposalKey(addr, 0, 0).
 		SetPayer(addr)
 
-	err = b.AddTransaction(*tx)
+	err = adapter.SendTransaction(context.Background(), *tx)
 	assert.NoError(t, err)
 
 	txRes, err := b.ExecuteNextTransaction()
@@ -256,7 +264,7 @@ func Test_SimulatedMainnetTransactionWithChanges(t *testing.T) {
 		SetProposalKey(addr, 0, 0).
 		SetPayer(addr)
 
-	err = b.AddTransaction(*tx)
+	err = adapter.SendTransaction(context.Background(), *tx)
 	assert.NoError(t, err)
 
 	txRes, err = b.ExecuteNextTransaction()

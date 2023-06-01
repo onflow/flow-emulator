@@ -21,18 +21,18 @@ package debugger
 import (
 	"bufio"
 	"fmt"
-	"github.com/google/go-dap"
-	"github.com/rs/zerolog"
 	"io"
 	"net"
 	"sync"
 
-	"github.com/onflow/flow-emulator/server/backend"
+	"github.com/google/go-dap"
+	"github.com/onflow/flow-emulator/emulator"
+	"github.com/rs/zerolog"
 )
 
 type Debugger struct {
 	logger      *zerolog.Logger
-	backend     *backend.Backend
+	emulator    emulator.Emulator
 	port        int
 	listener    net.Listener
 	quit        chan interface{}
@@ -42,12 +42,12 @@ type Debugger struct {
 	connections []net.Conn
 }
 
-func New(logger *zerolog.Logger, backend *backend.Backend, port int) *Debugger {
+func New(logger *zerolog.Logger, emulator emulator.Emulator, port int) *Debugger {
 	return &Debugger{
-		logger:  logger,
-		backend: backend,
-		port:    port,
-		quit:    make(chan interface{}),
+		logger:   logger,
+		emulator: emulator,
+		port:     port,
+		quit:     make(chan interface{}),
 	}
 }
 
@@ -91,8 +91,8 @@ func (d *Debugger) serve() {
 func (d *Debugger) handleConnection(conn net.Conn) {
 	d.connections = append(d.connections, conn)
 	session := session{
-		backend: d.backend,
-		logger:  d.logger,
+		emulator: d.emulator,
+		logger:   d.logger,
 		readWriter: bufio.NewReadWriter(
 			bufio.NewReader(conn),
 			bufio.NewWriter(conn),

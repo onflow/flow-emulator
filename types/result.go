@@ -32,6 +32,8 @@ type StorableTransactionResult struct {
 	ErrorMessage string
 	Logs         []string
 	Events       []flowgo.Event
+	BlockID      flowgo.Identifier
+	BlockHeight  uint64
 }
 
 // A TransactionResult is the result of executing a transaction.

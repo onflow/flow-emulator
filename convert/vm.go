@@ -23,7 +23,6 @@ import (
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/model/flow"
 
-	sdkConvert "github.com/onflow/flow-emulator/convert/sdk"
 	"github.com/onflow/flow-emulator/types"
 )
 
@@ -34,9 +33,9 @@ func VMTransactionResultToEmulator(
 	*types.TransactionResult,
 	error,
 ) {
-	txID := sdkConvert.FlowIdentifierToSDK(txnId)
+	txID := FlowIdentifierToSDK(txnId)
 
-	sdkEvents, err := sdkConvert.FlowEventsToSDK(output.Events)
+	sdkEvents, err := FlowEventsToSDK(output.Events)
 	if err != nil {
 		return nil, err
 	}
@@ -56,5 +55,5 @@ func VMErrorToEmulator(vmError fvmerrors.CodedError) error {
 		return nil
 	}
 
-	return &types.FlowError{FlowError: vmError}
+	return &types.FVMError{FlowError: vmError}
 }

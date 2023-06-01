@@ -10,6 +10,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/onflow/flow-emulator/emulator"
+	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/rs/zerolog"
+
 	"github.com/google/go-dap"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
@@ -17,11 +21,6 @@ import (
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
 	sdk "github.com/onflow/flow-go-sdk"
-	flowgo "github.com/onflow/flow-go/model/flow"
-	"github.com/rs/zerolog"
-
-	emulator "github.com/onflow/flow-emulator"
-	"github.com/onflow/flow-emulator/server/backend"
 )
 
 type ScopeIdentifier uint
@@ -34,7 +33,7 @@ const (
 
 type session struct {
 	logger                *zerolog.Logger
-	backend               *backend.Backend
+	emulator              emulator.Emulator
 	readWriter            *bufio.ReadWriter
 	variables             map[int]any
 	variableHandleCounter int
@@ -202,7 +201,7 @@ func (s *session) handleVariablesRequest(request *dap.VariablesRequest) {
 	case ScopeIdentifierStorage:
 		index := 1
 		for {
-			account, err := s.backend.Emulator().GetAccountByIndex(uint(index))
+			account, err := s.emulator.GetAccountByIndex(uint(index))
 			if err != nil { //end of accounts
 				break
 			}
@@ -438,7 +437,7 @@ func (s *session) handleConfigurationDoneRequest(request *dap.ConfigurationDoneR
 
 func (s *session) handleLaunchRequest(request *dap.LaunchRequest) {
 	// TODO: only allow one program at a time
-	s.debugger = s.backend.Emulator().StartDebugger()
+	s.debugger = s.emulator.StartDebugger()
 	s.targetDepth = 1
 
 	var args map[string]any
@@ -480,7 +479,7 @@ func (s *session) handleLaunchRequest(request *dap.LaunchRequest) {
 func (s *session) handleAttachRequest(request *dap.AttachRequest) {
 	s.targetDepth = 1
 	s.stopOnEntry = false
-	s.debugger = s.backend.Emulator().StartDebugger()
+	s.debugger = s.emulator.StartDebugger()
 
 	s.run()
 
@@ -491,7 +490,7 @@ func (s *session) handleAttachRequest(request *dap.AttachRequest) {
 
 func (s *session) handleDisconnectRequest(request *dap.DisconnectRequest) {
 	s.debugger.Continue()
-	s.backend.Emulator().EndDebugging()
+	s.emulator.EndDebugging()
 	s.configurationDone = false
 	s.launchRequested = false
 	s.send(&dap.DisconnectResponse{
@@ -551,7 +550,7 @@ func (s *session) handleSetBreakpointsRequest(request *dap.SetBreakpointsRequest
 
 func (s *session) handleInitialize(request *dap.InitializeRequest) {
 	// TODO: only allow one debug session at a time
-	s.debugger = s.backend.Emulator().StartDebugger()
+	s.debugger = s.emulator.StartDebugger()
 
 	s.send(&dap.InitializeResponse{
 		Response: newDAPSuccessResponse(request.GetRequest()),
@@ -714,7 +713,7 @@ func (s *session) newStackFrame(positioned ast.HasPosition, location common.Loca
 
 func (s *session) pathCode(path string) string {
 	basename := strings.TrimSuffix(path, ".cdc")
-	backendEmulator := s.backend.Emulator()
+	backendEmulator := s.emulator
 
 	runningScriptID, runningCode := backendEmulator.(*emulator.Blockchain).CurrentScript()
 	if basename == runningScriptID {
@@ -731,8 +730,8 @@ func (s *session) pathCode(path string) string {
 	}
 
 	if addressLocation, ok := location.(common.AddressLocation); ok {
-		var account *sdk.Account
-		address := sdk.Address(addressLocation.Address)
+		var account *flowgo.Account
+		address := flowgo.Address(addressLocation.Address)
 		// nolint:staticcheck
 		account, err = backendEmulator.GetAccountUnsafe(address)
 		if err != nil {
@@ -756,7 +755,8 @@ func (s *session) step() {
 }
 
 func (s *session) run() context.CancelFunc {
-	s.debugger = s.backend.Emulator().StartDebugger()
+	s.debugger = s.emulator.StartDebugger()
+
 	if s.stopOnEntry {
 		s.debugger.RequestPause()
 	}
@@ -799,7 +799,7 @@ func (s *session) run() context.CancelFunc {
 			// TODO: add support for arguments
 			// TODO: add support for transactions. requires automine
 
-			result, err := s.backend.ExecuteScriptAtLatestBlock(context.Background(), []byte(s.code), nil)
+			result, err := s.emulator.ExecuteScript([]byte(s.code), nil)
 			cancel()
 
 			var outputBody dap.OutputEventBody
@@ -811,7 +811,7 @@ func (s *session) run() context.CancelFunc {
 			} else {
 				outputBody = dap.OutputEventBody{
 					Category: "stdout",
-					Output:   string(result),
+					Output:   result.Value.String(),
 				}
 			}
 
@@ -836,7 +836,7 @@ func (s *session) run() context.CancelFunc {
 				Event: newDAPEvent("terminated"),
 			})
 
-			s.backend.Emulator().EndDebugging()
+			s.emulator.EndDebugging()
 
 		}()
 
