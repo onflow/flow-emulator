@@ -19,6 +19,7 @@
 package storage
 
 import (
+	"github.com/onflow/flow-emulator/convert"
 	"testing"
 
 	"github.com/onflow/flow-go-sdk/test"
@@ -26,7 +27,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	convert "github.com/onflow/flow-emulator/convert/sdk"
 	"github.com/onflow/flow-emulator/types"
 	"github.com/onflow/flow-emulator/utils/unittest"
 )

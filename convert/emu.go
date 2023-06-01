@@ -20,12 +20,15 @@ package convert
 
 import (
 	"github.com/onflow/flow-go/fvm"
+	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/onflow/flow-emulator/types"
 )
 
 func ToStorableResult(
 	output fvm.ProcedureOutput,
+	blockID flowgo.Identifier,
+	blockHeight uint64,
 ) (
 	types.StorableTransactionResult,
 	error,
@@ -39,6 +42,8 @@ func ToStorableResult(
 	}
 
 	return types.StorableTransactionResult{
+		BlockID:      blockID,
+		BlockHeight:  blockHeight,
 		ErrorCode:    errorCode,
 		ErrorMessage: errorMessage,
 		Logs:         output.Logs,

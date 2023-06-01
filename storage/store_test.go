@@ -21,6 +21,7 @@ package storage_test
 import (
 	"context"
 	"fmt"
+	"github.com/onflow/flow-emulator/convert"
 	"os"
 	"path/filepath"
 	"testing"
@@ -32,7 +33,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	convert "github.com/onflow/flow-emulator/convert/sdk"
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/sqlite"
 	"github.com/onflow/flow-emulator/utils/unittest"

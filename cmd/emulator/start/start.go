@@ -146,7 +146,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				serviceFields["servicePrivKey"] = hex.EncodeToString(servicePrivateKey.Encode())
 			}
 
-			logger.Info().Fields(serviceFields).Msgf("⚙️   Using service account 0x%s", serviceAddress.Hex())
+			logger.Info().Fields(serviceFields).Msgf("⚙️ Using service account 0x%s", serviceAddress.Hex())
 
 			minimumStorageReservation := fvm.DefaultMinimumStorageReservation
 			if conf.MinimumAccountBalance != "" {

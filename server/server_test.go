@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/onflow/flow-go/model/flow"
 	"sync"
 	"testing"
 
@@ -12,8 +13,12 @@ import (
 )
 
 func TestExecuteScript(t *testing.T) {
+
 	logger := zerolog.Nop()
 	server := NewEmulatorServer(&logger, &Config{})
+	go server.Start()
+	defer server.Stop()
+
 	require.NotNil(t, server)
 
 	const code = `
@@ -21,7 +26,8 @@ func TestExecuteScript(t *testing.T) {
 	      return "Hello"
       }
     `
-	result, err := server.backend.ExecuteScriptAtLatestBlock(context.Background(), []byte(code), nil)
+	adapter := server.AccessAdapter()
+	result, err := adapter.ExecuteScriptAtLatestBlock(context.Background(), []byte(code), nil)
 	require.NoError(t, err)
 
 	require.JSONEq(t, `{"type":"String","value":"Hello"}`, string(result))
@@ -32,7 +38,7 @@ func TestGetStorage(t *testing.T) {
 	logger := zerolog.Nop()
 	server := NewEmulatorServer(&logger, &Config{})
 	require.NotNil(t, server)
-	address := server.blockchain.ServiceKey().Address
+	address := server.Emulator().ServiceKey().Address
 
 	var result *multierror.Error
 	errchan := make(chan error, 10)
@@ -41,7 +47,7 @@ func TestGetStorage(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
 		go func() {
-			_, err := server.backend.GetAccountStorage(address)
+			_, err := server.Emulator().GetAccountStorage(flow.Address(address))
 			errchan <- err
 			wg.Done()
 		}()
@@ -65,7 +71,7 @@ func TestExecuteScriptImportingContracts(t *testing.T) {
 	logger := zerolog.Nop()
 	server := NewEmulatorServer(&logger, conf)
 	require.NotNil(t, server)
-	serviceAccount := server.blockchain.ServiceKey().Address.Hex()
+	serviceAccount := server.Emulator().ServiceKey().Address.Hex()
 
 	code := fmt.Sprintf(
 		`
@@ -81,7 +87,7 @@ func TestExecuteScriptImportingContracts(t *testing.T) {
 		serviceAccount,
 	)
 
-	_, err := server.backend.ExecuteScriptAtLatestBlock(context.Background(), []byte(code), nil)
+	_, err := server.Emulator().ExecuteScript([]byte(code), nil)
 	require.NoError(t, err)
 
 }
@@ -95,7 +101,7 @@ func TestCustomChainID(t *testing.T) {
 	logger := zerolog.Nop()
 	server := NewEmulatorServer(&logger, conf)
 
-	serviceAccount := server.blockchain.ServiceKey().Address.Hex()
+	serviceAccount := server.Emulator().ServiceKey().Address.Hex()
 
 	require.Equal(t, serviceAccount, "e467b9dd11fa00df")
 }
