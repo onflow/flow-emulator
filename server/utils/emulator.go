@@ -20,11 +20,12 @@ package utils
 
 import (
 	"encoding/json"
+	"net/http"
+	"strconv"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
 	flowgo "github.com/onflow/flow-go/model/flow"
-	"net/http"
-	"strconv"
 
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 

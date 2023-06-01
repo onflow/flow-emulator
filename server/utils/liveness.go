@@ -19,9 +19,10 @@
 package utils
 
 import (
-	"github.com/onflow/flow-emulator/server/utils/liveness"
 	"net/http"
 	"time"
+
+	"github.com/onflow/flow-emulator/server/utils/liveness"
 )
 
 type LivenessTicker struct {

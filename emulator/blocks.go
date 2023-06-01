@@ -21,6 +21,7 @@ package emulator
 import (
 	"context"
 	"errors"
+
 	"github.com/onflow/flow-go/access"
 
 	"github.com/onflow/flow-go/fvm/environment"

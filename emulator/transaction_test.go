@@ -7,12 +7,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/onflow/flow-emulator/adapters"
-	"github.com/onflow/flow-emulator/convert"
-	"github.com/onflow/flow-emulator/emulator"
 	"io"
 	"strings"
 	"testing"
+
+	"github.com/onflow/flow-emulator/adapters"
+	"github.com/onflow/flow-emulator/convert"
+	"github.com/onflow/flow-emulator/emulator"
 
 	"github.com/rs/zerolog"
 

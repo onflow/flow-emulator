@@ -2,6 +2,7 @@ package emulator
 
 import (
 	"fmt"
+
 	"github.com/onflow/flow-emulator/convert"
 
 	flowsdk "github.com/onflow/flow-go-sdk"

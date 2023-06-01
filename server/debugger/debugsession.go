@@ -6,12 +6,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/onflow/flow-emulator/emulator"
-	flowgo "github.com/onflow/flow-go/model/flow"
-	"github.com/rs/zerolog"
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/onflow/flow-emulator/emulator"
+	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/rs/zerolog"
 
 	"github.com/google/go-dap"
 	"github.com/onflow/cadence"

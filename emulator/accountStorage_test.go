@@ -19,11 +19,12 @@ package emulator_test
 
 import (
 	"context"
+	"testing"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
-	"testing"
 
 	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/test"

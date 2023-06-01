@@ -3,6 +3,8 @@ package adapters
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-emulator/convert"
@@ -13,7 +15,6 @@ import (
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func sdkTest(f func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator)) func(t *testing.T) {

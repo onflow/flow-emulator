@@ -19,8 +19,9 @@
 package storage
 
 import (
-	"github.com/onflow/flow-emulator/convert"
 	"testing"
+
+	"github.com/onflow/flow-emulator/convert"
 
 	"github.com/onflow/flow-go-sdk/test"
 	flowgo "github.com/onflow/flow-go/model/flow"

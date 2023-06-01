@@ -21,10 +21,11 @@ package access
 import (
 	"context"
 	"fmt"
-	"github.com/onflow/flow-emulator/adapters"
 	"net"
 	"net/http"
 	"os"
+
+	"github.com/onflow/flow-emulator/adapters"
 
 	"github.com/onflow/flow-go/engine/access/rest"
 	"github.com/onflow/flow-go/model/flow"

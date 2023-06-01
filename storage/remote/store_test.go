@@ -22,10 +22,11 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"github.com/onflow/flow-emulator/adapters"
-	"github.com/rs/zerolog"
 	"os"
 	"testing"
+
+	"github.com/onflow/flow-emulator/adapters"
+	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-archive/api/archive"
 	"github.com/onflow/flow-archive/codec/zbor"

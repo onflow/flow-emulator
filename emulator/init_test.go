@@ -3,12 +3,13 @@ package emulator_test
 import (
 	"context"
 	"fmt"
+	"os"
+	"testing"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/convert"
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/rs/zerolog"
-	"os"
-	"testing"
 
 	"github.com/onflow/cadence"
 	flowsdk "github.com/onflow/flow-go-sdk"

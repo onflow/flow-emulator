@@ -3,10 +3,11 @@ package emulator_test
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/rs/zerolog"
-	"testing"
 
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"

@@ -3,9 +3,10 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/onflow/flow-go/model/flow"
 	"sync"
 	"testing"
+
+	"github.com/onflow/flow-go/model/flow"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/rs/zerolog"

@@ -21,10 +21,11 @@ package emulator_test
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/rs/zerolog"
-	"testing"
 
 	"github.com/onflow/cadence"
 	flowsdk "github.com/onflow/flow-go-sdk"

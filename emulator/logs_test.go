@@ -1,8 +1,9 @@
 package emulator_test
 
 import (
-	"github.com/onflow/flow-emulator/emulator"
 	"testing"
+
+	"github.com/onflow/flow-emulator/emulator"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

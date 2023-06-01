@@ -21,10 +21,11 @@ package storage_test
 import (
 	"context"
 	"fmt"
-	"github.com/onflow/flow-emulator/convert"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/onflow/flow-emulator/convert"
 
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"

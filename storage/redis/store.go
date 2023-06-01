@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+
 	"github.com/go-redis/redis/v8"
 	"github.com/onflow/flow-emulator/storage"
 )

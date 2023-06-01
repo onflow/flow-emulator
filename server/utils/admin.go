@@ -22,11 +22,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"net/http"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-emulator/server/access"
-	"net"
-	"net/http"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/prometheus/client_golang/prometheus/promhttp"

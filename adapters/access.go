@@ -21,6 +21,7 @@ package adapters
 import (
 	"context"
 	"fmt"
+
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-emulator/types"

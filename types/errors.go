@@ -20,6 +20,7 @@ package types
 
 import (
 	"fmt"
+
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 
 	"github.com/onflow/flow-go-sdk/crypto"

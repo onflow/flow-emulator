@@ -20,12 +20,13 @@ package server
 
 import (
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-emulator/server/access"
 	"github.com/onflow/flow-emulator/server/utils"
-	"os"
-	"time"
 
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-go-sdk/crypto"

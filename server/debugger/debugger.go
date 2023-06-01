@@ -21,12 +21,13 @@ package debugger
 import (
 	"bufio"
 	"fmt"
-	"github.com/google/go-dap"
-	"github.com/onflow/flow-emulator/emulator"
-	"github.com/rs/zerolog"
 	"io"
 	"net"
 	"sync"
+
+	"github.com/google/go-dap"
+	"github.com/onflow/flow-emulator/emulator"
+	"github.com/rs/zerolog"
 )
 
 type Debugger struct {

@@ -20,9 +20,10 @@ package access
 
 import (
 	"fmt"
+	"net"
+
 	"github.com/onflow/flow-emulator/adapters"
 	mockModule "github.com/onflow/flow-go/module/mock"
-	"net"
 
 	grpcprometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/onflow/flow-go/access"

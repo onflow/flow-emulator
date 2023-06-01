@@ -3,6 +3,8 @@ package adapters
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-emulator/emulator/mocks"
@@ -11,7 +13,6 @@ import (
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func accessTest(f func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator)) func(t *testing.T) {
