@@ -1,4 +1,4 @@
-// Package emulator Package emulator provides an emulated version of the Flow emulator that can be used
+// Package emulator provides an emulated version of the Flow emulator that can be used
 // for development purposes.
 //
 // This package can be used as a library or as a standalone application.
@@ -254,6 +254,15 @@ func WithCoverageReportingEnabled(enabled bool) Option {
 	}
 }
 
+// WithCoverageReport injects a CoverageReport to collect coverage information.
+//
+// The default is nil.
+func WithCoverageReport(coverageReport *runtime.CoverageReport) Option {
+	return func(c *config) {
+		c.CoverageReport = coverageReport
+	}
+}
+
 // Contracts allows users to deploy the given contracts.
 // Some default common contracts are pre-configured in the `CommonContracts`
 // global variable. It includes contracts such as:
@@ -291,7 +300,7 @@ type Blockchain struct {
 
 	conf config
 
-	coverageReportedRuntime *CoverageReportedRuntime
+	coverageReport *runtime.CoverageReport
 }
 
 // config is a set of configuration options for an emulated emulator.
@@ -313,6 +322,7 @@ type config struct {
 	TransactionValidationEnabled bool
 	ChainID                      flowgo.ChainID
 	CoverageReportingEnabled     bool
+	CoverageReport               *runtime.CoverageReport
 	AutoMine                     bool
 	Contracts                    []ContractDescription
 }
@@ -371,6 +381,7 @@ var defaultConfig = func() config {
 		TransactionValidationEnabled: true,
 		ChainID:                      flowgo.Emulator,
 		CoverageReportingEnabled:     false,
+		CoverageReport:               nil,
 		AutoMine:                     false,
 	}
 }()
@@ -506,23 +517,20 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 	cadenceLogger := conf.Logger.Hook(CadenceHook{MainLogger: &conf.ServerLogger}).Level(zerolog.DebugLevel)
 
 	config := runtime.Config{
-		Debugger:                 blockchain.debugger,
-		AccountLinkingEnabled:    true,
-		AttachmentsEnabled:       true,
-		CoverageReportingEnabled: conf.CoverageReportingEnabled,
+		Debugger:              blockchain.debugger,
+		AccountLinkingEnabled: true,
+		AttachmentsEnabled:    true,
 	}
-	coverageReportedRuntime := &CoverageReportedRuntime{
-		Runtime:        runtime.NewInterpreterRuntime(config),
-		CoverageReport: runtime.NewCoverageReport(),
-		Environment:    runtime.NewBaseInterpreterEnvironment(config),
+	// When Emulator is used as a library, a CoverageReport can be injected
+	// by calling `WithCoverageReport`, and we want to be using that one.
+	// When Emulator is used from within flow-cli, we just create a new one.
+	if conf.CoverageReport != nil {
+		config.CoverageReport = conf.CoverageReport
+		blockchain.coverageReport = conf.CoverageReport
+	} else if conf.CoverageReportingEnabled {
+		config.CoverageReport = runtime.NewCoverageReport()
+		blockchain.coverageReport = config.CoverageReport
 	}
-	customRuntimePool := reusableRuntime.NewCustomReusableCadenceRuntimePool(
-		1,
-		config,
-		func(config runtime.Config) runtime.Runtime {
-			return coverageReportedRuntime
-		},
-	)
 
 	fvmOptions := []fvm.Option{
 		fvm.WithLogger(cadenceLogger),
@@ -534,7 +542,12 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithCadenceLogging(true),
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
-		fvm.WithReusableCadenceRuntimePool(customRuntimePool),
+		fvm.WithReusableCadenceRuntimePool(
+			reusableRuntime.NewReusableCadenceRuntimePool(
+				1,
+				config,
+			),
+		),
 	}
 
 	if !conf.TransactionValidationEnabled {
@@ -547,8 +560,6 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 	ctx := fvm.NewContext(
 		fvmOptions...,
 	)
-
-	blockchain.coverageReportedRuntime = coverageReportedRuntime
 
 	return vm, ctx, nil
 }
@@ -1247,13 +1258,14 @@ func (b *Blockchain) GetAccountStorage(
 		return nil, err
 	}
 
-	extractStorage := func(path common.PathDomain) types.StorageItem {
+	extractStorage := func(path common.PathDomain) (types.StorageItem, error) {
 		storageMap := store.GetStorageMap(
 			common.MustBytesToAddress(address.Bytes()),
 			path.Identifier(),
-			false)
+			false,
+		)
 		if storageMap == nil {
-			return nil
+			return nil, nil
 		}
 
 		iterator := storageMap.Iterator(nil)
@@ -1265,17 +1277,35 @@ func (b *Blockchain) GetAccountStorage(
 				// just skip errored value
 				continue
 			}
-			values[k] = exportedValue
+
+			if k, ok := k.(interpreter.StringAtreeValue); ok {
+				values[string(k)] = exportedValue
+			}
 		}
-		return values
+		return values, nil
+	}
+
+	privateStorageItems, err := extractStorage(common.PathDomainPrivate)
+	if err != nil {
+		return nil, err
+	}
+
+	publicStorageItems, err := extractStorage(common.PathDomainPublic)
+	if err != nil {
+		return nil, err
+	}
+
+	storageStorageItems, err := extractStorage(common.PathDomainStorage)
+	if err != nil {
+		return nil, err
 	}
 
 	return types.NewAccountStorage(
 		account,
 		flowsdk.Address(address),
-		extractStorage(common.PathDomainPrivate),
-		extractStorage(common.PathDomainPublic),
-		extractStorage(common.PathDomainStorage),
+		privateStorageItems,
+		publicStorageItems,
+		storageStorageItems,
 	)
 }
 
@@ -1495,15 +1525,11 @@ func (b *Blockchain) EndDebugging() {
 }
 
 func (b *Blockchain) CoverageReport() *runtime.CoverageReport {
-	return b.coverageReportedRuntime.CoverageReport
-}
-
-func (b *Blockchain) SetCoverageReport(coverageReport *runtime.CoverageReport) {
-	b.coverageReportedRuntime.CoverageReport = coverageReport
+	return b.coverageReport
 }
 
 func (b *Blockchain) ResetCoverageReport() {
-	b.coverageReportedRuntime.Reset()
+	b.coverageReport.Reset()
 }
 
 func (b *Blockchain) GetTransactionsByBlockID(blockID flowgo.Identifier) ([]*flowgo.TransactionBody, error) {

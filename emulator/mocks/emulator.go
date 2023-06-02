@@ -559,18 +559,6 @@ func (mr *MockEmulatorMockRecorder) ServiceKey() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceKey", reflect.TypeOf((*MockEmulator)(nil).ServiceKey))
 }
 
-// SetCoverageReport mocks base method.
-func (m *MockEmulator) SetCoverageReport(arg0 *runtime.CoverageReport) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetCoverageReport", arg0)
-}
-
-// SetCoverageReport indicates an expected call of SetCoverageReport.
-func (mr *MockEmulatorMockRecorder) SetCoverageReport(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCoverageReport", reflect.TypeOf((*MockEmulator)(nil).SetCoverageReport), arg0)
-}
-
 // Snapshots mocks base method.
 func (m *MockEmulator) Snapshots() ([]string, error) {
 	m.ctrl.T.Helper()

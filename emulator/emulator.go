@@ -96,7 +96,6 @@ func (s ServiceKey) AccountKey() *flowgosdk.AccountKey {
 
 type CoverageReportCapable interface {
 	CoverageReport() *runtime.CoverageReport
-	SetCoverageReport(coverageReport *runtime.CoverageReport)
 	ResetCoverageReport()
 }
 
