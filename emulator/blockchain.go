@@ -1258,13 +1258,14 @@ func (b *Blockchain) GetAccountStorage(
 		return nil, err
 	}
 
-	extractStorage := func(path common.PathDomain) types.StorageItem {
+	extractStorage := func(path common.PathDomain) (types.StorageItem, error) {
 		storageMap := store.GetStorageMap(
 			common.MustBytesToAddress(address.Bytes()),
 			path.Identifier(),
-			false)
+			false,
+		)
 		if storageMap == nil {
-			return nil
+			return nil, nil
 		}
 
 		iterator := storageMap.Iterator(nil)
@@ -1276,17 +1277,35 @@ func (b *Blockchain) GetAccountStorage(
 				// just skip errored value
 				continue
 			}
-			values[k] = exportedValue
+
+			if k, ok := k.(interpreter.StringAtreeValue); ok {
+				values[string(k)] = exportedValue
+			}
 		}
-		return values
+		return values, nil
+	}
+
+	privateStorageItems, err := extractStorage(common.PathDomainPrivate)
+	if err != nil {
+		return nil, err
+	}
+
+	publicStorageItems, err := extractStorage(common.PathDomainPublic)
+	if err != nil {
+		return nil, err
+	}
+
+	storageStorageItems, err := extractStorage(common.PathDomainStorage)
+	if err != nil {
+		return nil, err
 	}
 
 	return types.NewAccountStorage(
 		account,
 		flowsdk.Address(address),
-		extractStorage(common.PathDomainPrivate),
-		extractStorage(common.PathDomainPublic),
-		extractStorage(common.PathDomainStorage),
+		privateStorageItems,
+		publicStorageItems,
+		storageStorageItems,
 	)
 }
 

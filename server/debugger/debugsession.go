@@ -10,9 +10,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/onflow/flow-emulator/emulator"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
+
+	"github.com/onflow/flow-emulator/emulator"
 
 	"github.com/google/go-dap"
 	"github.com/onflow/cadence"
@@ -639,7 +640,7 @@ func (s *session) convertStorageMapToDAPVariables(
 	it := value.Iterator(inter)
 	for {
 		key, value := it.Next()
-		if key == "" {
+		if key == nil {
 			break
 		}
 
@@ -648,7 +649,14 @@ func (s *session) convertStorageMapToDAPVariables(
 			panic(err)
 		}
 
-		variable := s.convertValueToDAPVariable(key, cadenceValue)
+		var name string
+		if key, ok := key.(interpreter.StringAtreeValue); ok {
+			name = string(key)
+		} else {
+			continue
+		}
+
+		variable := s.convertValueToDAPVariable(name, cadenceValue)
 		members = append(members, variable)
 	}
 
