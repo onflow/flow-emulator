@@ -243,17 +243,6 @@ func WithChainID(chainID flowgo.ChainID) Option {
 	}
 }
 
-// WithCoverageReportingEnabled enables/disables Cadence code coverage reporting.
-//
-// If set to false, the emulator will not collect/expose coverage information for Cadence code.
-//
-// The default is false.
-func WithCoverageReportingEnabled(enabled bool) Option {
-	return func(c *config) {
-		c.CoverageReportingEnabled = enabled
-	}
-}
-
 // WithCoverageReport injects a CoverageReport to collect coverage information.
 //
 // The default is nil.
@@ -299,8 +288,6 @@ type Blockchain struct {
 	currentScriptID        string
 
 	conf config
-
-	coverageReport *runtime.CoverageReport
 }
 
 // config is a set of configuration options for an emulated emulator.
@@ -321,7 +308,6 @@ type config struct {
 	ServerLogger                 zerolog.Logger
 	TransactionValidationEnabled bool
 	ChainID                      flowgo.ChainID
-	CoverageReportingEnabled     bool
 	CoverageReport               *runtime.CoverageReport
 	AutoMine                     bool
 	Contracts                    []ContractDescription
@@ -380,7 +366,6 @@ var defaultConfig = func() config {
 		ServerLogger:                 zerolog.Nop(),
 		TransactionValidationEnabled: true,
 		ChainID:                      flowgo.Emulator,
-		CoverageReportingEnabled:     false,
 		CoverageReport:               nil,
 		AutoMine:                     false,
 	}
@@ -521,15 +506,8 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		AccountLinkingEnabled: true,
 		AttachmentsEnabled:    true,
 	}
-	// When Emulator is used as a library, a CoverageReport can be injected
-	// by calling `WithCoverageReport`, and we want to be using that one.
-	// When Emulator is used from within flow-cli, we just create a new one.
 	if conf.CoverageReport != nil {
 		config.CoverageReport = conf.CoverageReport
-		blockchain.coverageReport = conf.CoverageReport
-	} else if conf.CoverageReportingEnabled {
-		config.CoverageReport = runtime.NewCoverageReport()
-		blockchain.coverageReport = config.CoverageReport
 	}
 
 	fvmOptions := []fvm.Option{
@@ -1525,11 +1503,11 @@ func (b *Blockchain) EndDebugging() {
 }
 
 func (b *Blockchain) CoverageReport() *runtime.CoverageReport {
-	return b.coverageReport
+	return b.conf.CoverageReport
 }
 
 func (b *Blockchain) ResetCoverageReport() {
-	b.coverageReport.Reset()
+	b.conf.CoverageReport.Reset()
 }
 
 func (b *Blockchain) GetTransactionsByBlockID(blockID flowgo.Identifier) ([]*flowgo.TransactionBody, error) {

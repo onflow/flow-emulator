@@ -23,6 +23,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-emulator/server/access"
@@ -373,7 +374,6 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		emulator.WithChainID(conf.ChainID),
 		emulator.WithContractRemovalEnabled(conf.ContractRemovalEnabled),
-		emulator.WithCoverageReportingEnabled(conf.CoverageReportingEnabled),
 	}
 
 	if conf.SkipTransactionValidation {
@@ -399,6 +399,13 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		options = append(
 			options,
 			emulator.WithServicePublicKey(conf.ServicePublicKey, conf.ServiceKeySigAlgo, conf.ServiceKeyHashAlgo),
+		)
+	}
+
+	if conf.CoverageReportingEnabled {
+		options = append(
+			options,
+			emulator.WithCoverageReport(runtime.NewCoverageReport()),
 		)
 	}
 
