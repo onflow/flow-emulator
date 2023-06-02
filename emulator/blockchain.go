@@ -505,9 +505,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		Debugger:              blockchain.debugger,
 		AccountLinkingEnabled: true,
 		AttachmentsEnabled:    true,
-	}
-	if conf.CoverageReport != nil {
-		config.CoverageReport = conf.CoverageReport
+		CoverageReport:        conf.CoverageReport,
 	}
 
 	fvmOptions := []fvm.Option{
