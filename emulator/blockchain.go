@@ -65,6 +65,12 @@ func New(opts ...Option) (*Blockchain, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(conf.Contracts) > 0 {
+		err := DeployContracts(b, conf.Contracts)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return b, nil
 
 }
