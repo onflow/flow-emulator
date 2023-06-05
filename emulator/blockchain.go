@@ -65,6 +65,12 @@ func New(opts ...Option) (*Blockchain, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(conf.Contracts) > 0 {
+		err := DeployContracts(b, conf.Contracts)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return b, nil
 
 }
@@ -288,6 +294,8 @@ type Blockchain struct {
 	currentScriptID        string
 
 	conf config
+
+	coverageReportedRuntime *CoverageReportedRuntime
 }
 
 // config is a set of configuration options for an emulated emulator.
@@ -507,6 +515,18 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		AttachmentsEnabled:    true,
 		CoverageReport:        conf.CoverageReport,
 	}
+	coverageReportedRuntime := &CoverageReportedRuntime{
+		Runtime:        runtime.NewInterpreterRuntime(config),
+		CoverageReport: conf.CoverageReport,
+		Environment:    runtime.NewBaseInterpreterEnvironment(config),
+	}
+	customRuntimePool := reusableRuntime.NewCustomReusableCadenceRuntimePool(
+		1,
+		config,
+		func(config runtime.Config) runtime.Runtime {
+			return coverageReportedRuntime
+		},
+	)
 
 	fvmOptions := []fvm.Option{
 		fvm.WithLogger(cadenceLogger),
@@ -518,12 +538,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithCadenceLogging(true),
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
-		fvm.WithReusableCadenceRuntimePool(
-			reusableRuntime.NewReusableCadenceRuntimePool(
-				1,
-				config,
-			),
-		),
+		fvm.WithReusableCadenceRuntimePool(customRuntimePool),
 	}
 
 	if !conf.TransactionValidationEnabled {
@@ -536,6 +551,8 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 	ctx := fvm.NewContext(
 		fvmOptions...,
 	)
+
+	blockchain.coverageReportedRuntime = coverageReportedRuntime
 
 	return vm, ctx, nil
 }
@@ -1501,11 +1518,11 @@ func (b *Blockchain) EndDebugging() {
 }
 
 func (b *Blockchain) CoverageReport() *runtime.CoverageReport {
-	return b.conf.CoverageReport
+	return b.coverageReportedRuntime.CoverageReport
 }
 
 func (b *Blockchain) ResetCoverageReport() {
-	b.conf.CoverageReport.Reset()
+	b.coverageReportedRuntime.Reset()
 }
 
 func (b *Blockchain) GetTransactionsByBlockID(blockID flowgo.Identifier) ([]*flowgo.TransactionBody, error) {
