@@ -29,6 +29,7 @@ jobs:
         continue-on-error: true
       
       - name: create an issue
+        if: ${{ failure() }}
         uses: dacbd/create-issue-action@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
