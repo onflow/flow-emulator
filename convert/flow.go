@@ -24,7 +24,8 @@ import (
 	"github.com/onflow/flow-emulator/types"
 
 	"github.com/onflow/cadence"
-	jsoncdc "github.com/onflow/cadence/encoding/json"
+	"github.com/onflow/cadence/encoding/ccf"
+
 	sdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/access"
@@ -183,7 +184,7 @@ func FlowTransactionResultToSDK(result *access.TransactionResult) (*sdk.Transact
 }
 
 func SDKEventToFlow(event sdk.Event) (flowgo.Event, error) {
-	payload, err := jsoncdc.Encode(event.Value)
+	payload, err := ccf.Encode(event.Value)
 	if err != nil {
 		return flowgo.Event{}, err
 	}
@@ -198,7 +199,7 @@ func SDKEventToFlow(event sdk.Event) (flowgo.Event, error) {
 }
 
 func FlowEventToSDK(flowEvent flowgo.Event) (sdk.Event, error) {
-	cadenceValue, err := jsoncdc.Decode(nil, flowEvent.Payload)
+	cadenceValue, err := ccf.Decode(nil, flowEvent.Payload)
 	if err != nil {
 		return sdk.Event{}, err
 	}
