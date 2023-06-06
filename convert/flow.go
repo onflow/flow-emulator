@@ -183,6 +183,21 @@ func FlowTransactionResultToSDK(result *access.TransactionResult) (*sdk.Transact
 	return sdkResult, nil
 }
 
+func SDKEventToFlow(event sdk.Event) (flowgo.Event, error) {
+	payload, err := ccf.Encode(event.Value)
+	if err != nil {
+		return flowgo.Event{}, err
+	}
+
+	return flowgo.Event{
+		Type:             flowgo.EventType(event.Type),
+		TransactionID:    SDKIdentifierToFlow(event.TransactionID),
+		TransactionIndex: uint32(event.TransactionIndex),
+		EventIndex:       uint32(event.EventIndex),
+		Payload:          payload,
+	}, nil
+}
+
 func FlowEventToSDK(flowEvent flowgo.Event) (sdk.Event, error) {
 	cadenceValue, err := ccf.Decode(nil, flowEvent.Payload)
 	if err != nil {

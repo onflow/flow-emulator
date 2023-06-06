@@ -19,9 +19,7 @@
 package unittest
 
 import (
-	"github.com/onflow/cadence/encoding/ccf"
 	"github.com/onflow/flow-emulator/convert"
-	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/test"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
@@ -35,8 +33,8 @@ func TransactionFixture() flowgo.TransactionBody {
 func StorableTransactionResultFixture() types.StorableTransactionResult {
 	events := test.EventGenerator()
 
-	eventA, _ := SDKEventToFlow(events.New())
-	eventB, _ := SDKEventToFlow(events.New())
+	eventA, _ := convert.SDKEventToFlow(events.New())
+	eventB, _ := convert.SDKEventToFlow(events.New())
 
 	return types.StorableTransactionResult{
 		ErrorCode:    42,
@@ -47,19 +45,4 @@ func StorableTransactionResultFixture() types.StorableTransactionResult {
 			eventB,
 		},
 	}
-}
-
-func SDKEventToFlow(event sdk.Event) (flowgo.Event, error) {
-	payload, err := ccf.Encode(event.Value)
-	if err != nil {
-		return flowgo.Event{}, err
-	}
-
-	return flowgo.Event{
-		Type:             flowgo.EventType(event.Type),
-		TransactionID:    convert.SDKIdentifierToFlow(event.TransactionID),
-		TransactionIndex: uint32(event.TransactionIndex),
-		EventIndex:       uint32(event.EventIndex),
-		Payload:          payload,
-	}, nil
 }

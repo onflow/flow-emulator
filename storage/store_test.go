@@ -32,6 +32,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/onflow/flow-emulator/convert"
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/sqlite"
 	"github.com/onflow/flow-emulator/utils/unittest"
@@ -362,7 +363,7 @@ func TestInsertEvents(t *testing.T) {
 	events := test.EventGenerator()
 
 	t.Run("should be able to insert events", func(t *testing.T) {
-		event, _ := unittest.SDKEventToFlow(events.New())
+		event, _ := convert.SDKEventToFlow(events.New())
 		events := []flowgo.Event{event}
 
 		var blockHeight uint64 = 1
@@ -401,7 +402,7 @@ func TestEventsByHeight(t *testing.T) {
 	)
 
 	for i := range allEvents {
-		event, _ := unittest.SDKEventToFlow(events.New())
+		event, _ := convert.SDKEventToFlow(events.New())
 
 		event.TransactionIndex = uint32(i)
 		event.EventIndex = uint32(i * 2)

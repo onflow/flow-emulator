@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/onflow/flow-emulator/convert"
 	"github.com/onflow/flow-emulator/types"
 	"github.com/onflow/flow-emulator/utils/unittest"
 )
@@ -114,8 +115,8 @@ func TestEncodeEvents(t *testing.T) {
 
 	t.Parallel()
 
-	event1, _ := unittest.SDKEventToFlow(test.EventGenerator().New())
-	event2, _ := unittest.SDKEventToFlow(test.EventGenerator().New())
+	event1, _ := convert.SDKEventToFlow(test.EventGenerator().New())
+	event2, _ := convert.SDKEventToFlow(test.EventGenerator().New())
 
 	events := []flowgo.Event{
 		event1,
