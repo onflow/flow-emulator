@@ -25,8 +25,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/onflow/flow-emulator/adapters"
 	"github.com/rs/zerolog"
+
+	"github.com/onflow/flow-emulator/adapters"
 
 	"github.com/onflow/flow-archive/api/archive"
 	"github.com/onflow/flow-archive/codec/zbor"
@@ -189,17 +190,17 @@ func Test_SimulatedMainnetTransaction(t *testing.T) {
 		SetPayer(addr)
 
 	err = adapter.SendTransaction(context.Background(), *tx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	txRes, err := b.ExecuteNextTransaction()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	_, err = b.CommitBlock()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.NoError(t, err)
 	assert.NoError(t, txRes.Error)
-	assert.Len(t, txRes.Events, 1)
+
+	require.Len(t, txRes.Events, 1)
 	assert.Equal(t, txRes.Events[0].String(), "A.9799f28ff0453528.Ping.PingEmitted: 0x953f6f26d61710cb0e140bfde1022483b9ef410ddd181bac287d9968c84f4778")
 	assert.Equal(t, txRes.Events[0].Value.String(), `A.9799f28ff0453528.Ping.PingEmitted(sound: "ping ping ping")`)
 }
@@ -240,14 +241,14 @@ func Test_SimulatedMainnetTransactionWithChanges(t *testing.T) {
 		SetPayer(addr)
 
 	err = adapter.SendTransaction(context.Background(), *tx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	txRes, err := b.ExecuteNextTransaction()
-	assert.NoError(t, err)
-	assert.NoError(t, txRes.Error)
+	require.NoError(t, err)
+	require.NoError(t, txRes.Error)
 
 	_, err = b.CommitBlock()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	script = []byte(`
 		import Ping from 0x9799f28ff0453528
@@ -265,17 +266,17 @@ func Test_SimulatedMainnetTransactionWithChanges(t *testing.T) {
 		SetPayer(addr)
 
 	err = adapter.SendTransaction(context.Background(), *tx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	txRes, err = b.ExecuteNextTransaction()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	_, err = b.CommitBlock()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.NoError(t, err)
 	assert.NoError(t, txRes.Error)
-	assert.Len(t, txRes.Events, 1)
+
+	require.Len(t, txRes.Events, 1)
 	assert.Equal(t, txRes.Events[0].String(), "A.9799f28ff0453528.Ping.PingEmitted: 0x953f6f26d61710cb0e140bfde1022483b9ef410ddd181bac287d9968c84f4778")
 	assert.Equal(t, txRes.Events[0].Value.String(), `A.9799f28ff0453528.Ping.PingEmitted(sound: "pong pong pong")`)
 }
