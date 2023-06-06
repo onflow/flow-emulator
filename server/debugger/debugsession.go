@@ -211,7 +211,7 @@ func (s *session) handleVariablesRequest(request *dap.VariablesRequest) {
 				Name:  account.Address.String(),
 				Value: "FlowAccount",
 				Type:  "FlowAccount",
-				PresentationHint: dap.VariablePresentationHint{
+				PresentationHint: &dap.VariablePresentationHint{
 					Kind:       "class",
 					Visibility: "public",
 				},
@@ -575,7 +575,7 @@ func (s *session) convertValueToDAPVariable(name string, value cadence.Value) da
 		Name:  name,
 		Value: value.String(),
 		Type:  value.Type().ID(),
-		PresentationHint: dap.VariablePresentationHint{
+		PresentationHint: &dap.VariablePresentationHint{
 			Kind:       "property",
 			Visibility: "private",
 		},
@@ -709,7 +709,7 @@ func (s *session) newStackFrame(positioned ast.HasPosition, location common.Loca
 	}
 
 	return dap.StackFrame{
-		Source: dap.Source{
+		Source: &dap.Source{
 			Path: locationString,
 		},
 		Line:      startPos.Line,
@@ -883,7 +883,7 @@ func newDAPErrorResponse(request dap.Request, message dap.ErrorMessage) *dap.Err
 	return &dap.ErrorResponse{
 		Response: newDAPResponse(request.Seq, request.Command, false),
 		Body: dap.ErrorResponseBody{
-			Error: message,
+			Error: &message,
 		},
 	}
 }
