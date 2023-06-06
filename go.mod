@@ -13,13 +13,13 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v0.39.1
+	github.com/onflow/cadence v0.39.2
 	github.com/onflow/flow-archive v1.3.4-0.20230503192214-9e81e82d4dcc
-	github.com/onflow/flow-go v0.30.1-0.20230602200347-2a0e824db380
+	github.com/onflow/flow-go v0.30.1-0.20230606183951-596485936163
 	github.com/onflow/flow-go-sdk v0.41.0
 	github.com/onflow/flow-go/crypto v0.24.7
 	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20220727161549-d59b1e547ac4
-	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20230428213521-89bcc9e8517e
+	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20230602212908-08fc6536d391
 	github.com/onflow/fusd/lib/go/contracts v0.0.0-20211021081023-ae9de8fb2c7e
 	github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20221222181731-14b90207cead
 	github.com/prometheus/client_golang v1.14.0
@@ -65,7 +65,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -89,7 +89,6 @@ require (
 	github.com/libp2p/go-libp2p v0.24.2 // indirect
 	github.com/libp2p/go-openssl v0.1.0 // indirect
 	github.com/logrusorgru/aurora/v4 v4.0.0 // indirect
-	github.com/m4ksio/wal v1.0.1-0.20221209164835-154a17396e4c // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.18 // indirect
@@ -112,6 +111,7 @@ require (
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.2.3 // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v0.7.0 // indirect
 	github.com/onflow/sdks v0.5.0 // indirect
+	github.com/onflow/wal v0.0.0-20230529184820-bc9f8244608d // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect

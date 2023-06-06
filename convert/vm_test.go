@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/onflow/flow-emulator/convert"
+	"github.com/onflow/flow-emulator/utils/unittest"
 	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
@@ -40,10 +41,10 @@ func TestVm(t *testing.T) {
 		idGenerator := test.IdentifierGenerator()
 
 		eventGenerator := test.EventGenerator()
-		event1, err := convert.SDKEventToFlow(eventGenerator.New())
+		event1, err := unittest.SDKEventToFlow(eventGenerator.New())
 		assert.NoError(t, err)
 
-		event2, err := convert.SDKEventToFlow(eventGenerator.New())
+		event2, err := unittest.SDKEventToFlow(eventGenerator.New())
 		assert.NoError(t, err)
 
 		txnId := flowgo.Identifier(idGenerator.New())

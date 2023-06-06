@@ -25,8 +25,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/onflow/flow-emulator/convert"
-
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	"github.com/onflow/flow-go/model/flow"
@@ -364,7 +362,7 @@ func TestInsertEvents(t *testing.T) {
 	events := test.EventGenerator()
 
 	t.Run("should be able to insert events", func(t *testing.T) {
-		event, _ := convert.SDKEventToFlow(events.New())
+		event, _ := unittest.SDKEventToFlow(events.New())
 		events := []flowgo.Event{event}
 
 		var blockHeight uint64 = 1
@@ -403,7 +401,7 @@ func TestEventsByHeight(t *testing.T) {
 	)
 
 	for i := range allEvents {
-		event, _ := convert.SDKEventToFlow(events.New())
+		event, _ := unittest.SDKEventToFlow(events.New())
 
 		event.TransactionIndex = uint32(i)
 		event.EventIndex = uint32(i * 2)
