@@ -13,10 +13,10 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v0.39.2
+	github.com/onflow/cadence v0.39.3
 	github.com/onflow/flow-archive v1.3.4-0.20230503192214-9e81e82d4dcc
-	github.com/onflow/flow-go v0.31.1-0.20230606232908-66e59a929e3d
-	github.com/onflow/flow-go-sdk v0.41.1
+	github.com/onflow/flow-go v0.31.1-0.20230607185125-e75265a6c631
+	github.com/onflow/flow-go-sdk v0.41.2
 	github.com/onflow/flow-go/crypto v0.24.7
 	github.com/onflow/flow-nft/lib/go/contracts v0.0.0-20220727161549-d59b1e547ac4
 	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20230602212908-08fc6536d391
