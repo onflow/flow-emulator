@@ -5,11 +5,15 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/golang/mock/gomock"
 	"github.com/onflow/cadence"
+	"github.com/onflow/cadence/encoding/ccf"
 	"github.com/onflow/flow-emulator/emulator/mocks"
 	"github.com/onflow/flow-emulator/types"
 	"github.com/onflow/flow-go/access"
+	"github.com/onflow/flow-go/engine/common/rpc/convert"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
@@ -302,12 +306,21 @@ func TestAccess(t *testing.T) {
 		blockID := flowgo.Identifier{}
 		collectionID := flowgo.Identifier{}
 
-		expected := access.TransactionResult{}
+		emuResult := access.TransactionResult{
+			Events: []flowgo.Event{
+				ccfEventFixture(t),
+			},
+		}
+		expected := access.TransactionResult{
+			Events: []flowgo.Event{
+				jsonCDCEventFixture(t),
+			},
+		}
 
 		//success
 		emu.EXPECT().
 			GetTransactionResult(txID).
-			Return(&expected, nil).
+			Return(&emuResult, nil).
 			Times(1)
 
 		result, err := adapter.GetTransactionResult(context.Background(), txID, blockID, collectionID)
@@ -510,12 +523,25 @@ func TestAccess(t *testing.T) {
 		startHeight := uint64(0)
 		endHeight := uint64(42)
 
-		expected := []flowgo.BlockEvents{}
+		blockEvents := []flowgo.BlockEvents{
+			{
+				Events: []flowgo.Event{
+					ccfEventFixture(t),
+				},
+			},
+		}
+		expected := []flowgo.BlockEvents{
+			{
+				Events: []flowgo.Event{
+					jsonCDCEventFixture(t),
+				},
+			},
+		}
 
 		//success
 		emu.EXPECT().
 			GetEventsForHeightRange(eventType, startHeight, endHeight).
-			Return(expected, nil).
+			Return(blockEvents, nil).
 			Times(1)
 
 		result, err := adapter.GetEventsForHeightRange(context.Background(), eventType, startHeight, endHeight)
@@ -539,12 +565,25 @@ func TestAccess(t *testing.T) {
 		eventType := "testEvent"
 		blockIDs := []flowgo.Identifier{flowgo.Identifier{}}
 
-		expected := []flowgo.BlockEvents{}
+		blockEvents := []flowgo.BlockEvents{
+			{
+				Events: []flowgo.Event{
+					ccfEventFixture(t),
+				},
+			},
+		}
+		expected := []flowgo.BlockEvents{
+			{
+				Events: []flowgo.Event{
+					jsonCDCEventFixture(t),
+				},
+			},
+		}
 
 		//success
 		emu.EXPECT().
 			GetEventsForBlockIDs(eventType, blockIDs).
-			Return(expected, nil).
+			Return(blockEvents, nil).
 			Times(1)
 
 		result, err := adapter.GetEventsForBlockIDs(context.Background(), eventType, blockIDs)
@@ -568,17 +607,26 @@ func TestAccess(t *testing.T) {
 		blockID := flowgo.Identifier{}
 		index := uint32(0)
 
-		txResult := &access.TransactionResult{}
-		expected := []*access.TransactionResult{txResult}
+		txResult := &access.TransactionResult{
+			Events: []flowgo.Event{
+				ccfEventFixture(t),
+			},
+		}
+		results := []*access.TransactionResult{txResult}
+		convertedTXResult := &access.TransactionResult{
+			Events: []flowgo.Event{
+				jsonCDCEventFixture(t),
+			},
+		}
 
 		//success
 		emu.EXPECT().
 			GetTransactionResultsByBlockID(blockID).
-			Return(expected, nil).
+			Return(results, nil).
 			Times(1)
 
 		result, err := adapter.GetTransactionResultByIndex(context.Background(), blockID, index)
-		assert.Equal(t, txResult, result)
+		assert.Equal(t, convertedTXResult, result)
 		assert.NoError(t, err)
 
 		//fail
@@ -625,12 +673,25 @@ func TestAccess(t *testing.T) {
 
 		blockID := flowgo.Identifier{}
 
-		expected := []*access.TransactionResult{}
+		results := []*access.TransactionResult{
+			{
+				Events: []flowgo.Event{
+					ccfEventFixture(t),
+				},
+			},
+		}
+		expected := []*access.TransactionResult{
+			{
+				Events: []flowgo.Event{
+					jsonCDCEventFixture(t),
+				},
+			},
+		}
 
 		//success
 		emu.EXPECT().
 			GetTransactionResultsByBlockID(blockID).
-			Return(expected, nil).
+			Return(results, nil).
 			Times(1)
 
 		result, err := adapter.GetTransactionResultsByBlockID(context.Background(), blockID)
@@ -681,4 +742,20 @@ func TestAccess(t *testing.T) {
 
 	}))
 
+}
+
+func ccfEventFixture(t *testing.T) flowgo.Event {
+	cadenceValue, err := cadence.NewValue(2)
+	require.NoError(t, err)
+	ccfEvent, err := ccf.Encode(cadenceValue)
+	require.NoError(t, err)
+	return flowgo.Event{
+		Payload: ccfEvent,
+	}
+}
+
+func jsonCDCEventFixture(t *testing.T) flowgo.Event {
+	converted, err := convert.CcfEventToJsonEvent(ccfEventFixture(t))
+	require.NoError(t, err)
+	return *converted
 }
