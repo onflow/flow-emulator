@@ -97,12 +97,12 @@ func TestCustomChainID(t *testing.T) {
 
 	conf := &Config{
 		WithContracts: true,
-		ChainID:       "flow-mainnet",
+		ChainID:       "flow-sandboxnet",
 	}
 	logger := zerolog.Nop()
 	server := NewEmulatorServer(&logger, conf)
 
 	serviceAccount := server.Emulator().ServiceKey().Address.Hex()
 
-	require.Equal(t, serviceAccount, "e467b9dd11fa00df")
+	require.Equal(t, "f4527793ee68aede", serviceAccount)
 }

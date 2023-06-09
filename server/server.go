@@ -305,7 +305,7 @@ func (s *EmulatorServer) Stop() {
 
 func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
 
-	if conf.ChainID != flowgo.Emulator {
+	if conf.ChainID == flowgo.Testnet || conf.ChainID == flowgo.Mainnet {
 		storageProvider, err = remote.New(remote.WithChainID(conf.ChainID))
 		if err != nil {
 			return nil, err
