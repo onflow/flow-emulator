@@ -276,7 +276,9 @@ func (a *AccessAdapter) ExecuteScriptAtLatestBlock(
 ) ([]byte, error) {
 	a.logger.Debug().Msg("👤  ExecuteScriptAtLatestBlock called")
 	result, err := a.emulator.ExecuteScript(script, arguments)
-	utils.PrintScriptResult(a.logger, result)
+	if err == nil {
+		utils.PrintScriptResult(a.logger, result)
+	}
 	return convertScriptResult(result, err)
 }
 
@@ -292,7 +294,9 @@ func (a *AccessAdapter) ExecuteScriptAtBlockHeight(
 		Msg("👤  ExecuteScriptAtBlockHeight called")
 
 	result, err := a.emulator.ExecuteScriptAtBlockHeight(script, arguments, blockHeight)
-	utils.PrintScriptResult(a.logger, result)
+	if err == nil {
+		utils.PrintScriptResult(a.logger, result)
+	}
 	return convertScriptResult(result, err)
 }
 
@@ -308,7 +312,9 @@ func (a *AccessAdapter) ExecuteScriptAtBlockID(
 		Msg("👤  ExecuteScriptAtBlockID called")
 
 	result, err := a.emulator.ExecuteScriptAtBlockID(script, arguments, blockID)
-	utils.PrintScriptResult(a.logger, result)
+	if err == nil {
+		utils.PrintScriptResult(a.logger, result)
+	}
 	return convertScriptResult(result, err)
 }
 
