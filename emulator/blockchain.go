@@ -12,8 +12,10 @@ package emulator
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/onflow/flow-emulator/utils"
 	"strings"
 	"sync"
 	"time"
@@ -23,6 +25,10 @@ import (
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
+	"github.com/onflow/flow-emulator/convert"
+	"github.com/onflow/flow-emulator/storage"
+	"github.com/onflow/flow-emulator/storage/util"
+	"github.com/onflow/flow-emulator/types"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/access"
@@ -36,11 +42,6 @@ import (
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
-
-	"github.com/onflow/flow-emulator/convert"
-	"github.com/onflow/flow-emulator/storage"
-	"github.com/onflow/flow-emulator/storage/util"
-	"github.com/onflow/flow-emulator/types"
 )
 
 var _ Emulator = &Blockchain{}
@@ -1323,6 +1324,16 @@ func (b *Blockchain) executeAndCommitBlock() (*flowgo.Block, []*types.Transactio
 	if err != nil {
 		return nil, results, err
 	}
+
+	for _, result := range results {
+		utils.PrintTransactionResult(&b.conf.ServerLogger, result)
+	}
+
+	blockID := block.ID()
+	b.conf.ServerLogger.Info().Fields(map[string]any{
+		"blockHeight": block.Header.Height,
+		"blockID":     hex.EncodeToString(blockID[:]),
+	}).Msgf("📦 Block #%d committed", block.Header.Height)
 
 	return block, results, nil
 }
