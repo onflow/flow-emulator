@@ -21,10 +21,10 @@ package adapters
 import (
 	"context"
 	"fmt"
-
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-emulator/types"
+	"github.com/onflow/flow-emulator/utils"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -77,6 +77,12 @@ func (a *AccessAdapter) GetLatestBlockHeader(_ context.Context, _ bool) (*flowgo
 	if err != nil {
 		return nil, flowgo.BlockStatusUnknown, convertError(err)
 	}
+
+	a.logger.Debug().Fields(map[string]any{
+		"blockHeight": block.Header.Height,
+		"blockID":     block.ID().String(),
+	}).Msg("🎁  GetLatestBlockHeader called")
+
 	return block.Header, flowgo.BlockStatusSealed, nil
 }
 
@@ -85,6 +91,12 @@ func (a *AccessAdapter) GetBlockHeaderByHeight(_ context.Context, height uint64)
 	if err != nil {
 		return nil, flowgo.BlockStatusUnknown, convertError(err)
 	}
+
+	a.logger.Debug().Fields(map[string]any{
+		"blockHeight": block.Header.Height,
+		"blockID":     block.ID().String(),
+	}).Msg("🎁  GetBlockHeaderByHeight called")
+
 	return block.Header, flowgo.BlockStatusSealed, nil
 }
 
@@ -93,6 +105,12 @@ func (a *AccessAdapter) GetBlockHeaderByID(_ context.Context, id flowgo.Identifi
 	if err != nil {
 		return nil, flowgo.BlockStatusUnknown, convertError(err)
 	}
+
+	a.logger.Debug().Fields(map[string]any{
+		"blockHeight": block.Header.Height,
+		"blockID":     block.ID().String(),
+	}).Msg("🎁  GetBlockHeaderByID called")
+
 	return block.Header, flowgo.BlockStatusSealed, nil
 }
 
@@ -101,6 +119,12 @@ func (a *AccessAdapter) GetLatestBlock(_ context.Context, _ bool) (*flowgo.Block
 	if err != nil {
 		return nil, flowgo.BlockStatusUnknown, convertError(err)
 	}
+
+	a.logger.Debug().Fields(map[string]any{
+		"blockHeight": block.Header.Height,
+		"blockID":     block.ID().String(),
+	}).Msg("🎁  GetLatestBlock called")
+
 	return block, flowgo.BlockStatusSealed, nil
 }
 
@@ -109,6 +133,12 @@ func (a *AccessAdapter) GetBlockByHeight(_ context.Context, height uint64) (*flo
 	if err != nil {
 		return nil, flowgo.BlockStatusUnknown, convertError(err)
 	}
+
+	a.logger.Debug().Fields(map[string]any{
+		"blockHeight": block.Header.Height,
+		"blockID":     block.ID().String(),
+	}).Msg("🎁  GetBlockByHeight called")
+
 	return block, flowgo.BlockStatusSealed, nil
 }
 
@@ -117,6 +147,12 @@ func (a *AccessAdapter) GetBlockByID(_ context.Context, id flowgo.Identifier) (*
 	if err != nil {
 		return nil, flowgo.BlockStatusUnknown, convertError(err)
 	}
+
+	a.logger.Debug().Fields(map[string]any{
+		"blockHeight": block.Header.Height,
+		"blockID":     block.ID().String(),
+	}).Msg("🎁  GetBlockByID called")
+
 	return block, flowgo.BlockStatusSealed, nil
 }
 
@@ -125,6 +161,11 @@ func (a *AccessAdapter) GetCollectionByID(_ context.Context, id flowgo.Identifie
 	if err != nil {
 		return nil, convertError(err)
 	}
+
+	a.logger.Debug().
+		Str("colID", id.String()).
+		Msg("📚  GetCollectionByID called")
+
 	return collection, nil
 }
 
@@ -133,6 +174,11 @@ func (a *AccessAdapter) GetTransaction(_ context.Context, id flowgo.Identifier) 
 	if err != nil {
 		return nil, convertError(err)
 	}
+
+	a.logger.Debug().
+		Str("txID", id.String()).
+		Msg("💵  GetTransaction called")
+
 	return tx, nil
 }
 
@@ -155,6 +201,10 @@ func (a *AccessAdapter) GetTransactionResult(
 		return nil, convertError(err)
 	}
 
+	a.logger.Debug().
+		Str("txID", id.String()).
+		Msg("📝  GetTransactionResult called")
+
 	return result, nil
 }
 
@@ -163,6 +213,11 @@ func (a *AccessAdapter) GetAccount(_ context.Context, address flowgo.Address) (*
 	if err != nil {
 		return nil, convertError(err)
 	}
+
+	a.logger.Debug().
+		Stringer("address", address).
+		Msg("👤  GetAccount called")
+
 	return account, nil
 }
 
@@ -171,6 +226,11 @@ func (a *AccessAdapter) GetAccountAtLatestBlock(ctx context.Context, address flo
 	if err != nil {
 		return nil, convertError(err)
 	}
+
+	a.logger.Debug().
+		Stringer("address", address).
+		Msg("👤  GetAccountAtLatestBlock called")
+
 	return account, nil
 }
 
@@ -179,6 +239,12 @@ func (a *AccessAdapter) GetAccountAtBlockHeight(
 	address flowgo.Address,
 	height uint64,
 ) (*flowgo.Account, error) {
+
+	a.logger.Debug().
+		Stringer("address", address).
+		Uint64("height", height).
+		Msg("👤  GetAccountAtBlockHeight called")
+
 	account, err := a.emulator.GetAccountAtBlockHeight(address, height)
 	if err != nil {
 		return nil, convertError(err)
@@ -208,7 +274,10 @@ func (a *AccessAdapter) ExecuteScriptAtLatestBlock(
 	script []byte,
 	arguments [][]byte,
 ) ([]byte, error) {
-	return convertScriptResult(a.emulator.ExecuteScript(script, arguments))
+	a.logger.Debug().Msg("👤  ExecuteScriptAtLatestBlock called")
+	result, err := a.emulator.ExecuteScript(script, arguments)
+	utils.PrintScriptResult(a.logger, result)
+	return convertScriptResult(result, err)
 }
 
 func (a *AccessAdapter) ExecuteScriptAtBlockHeight(
@@ -217,7 +286,14 @@ func (a *AccessAdapter) ExecuteScriptAtBlockHeight(
 	script []byte,
 	arguments [][]byte,
 ) ([]byte, error) {
-	return convertScriptResult(a.emulator.ExecuteScriptAtBlockHeight(script, arguments, blockHeight))
+
+	a.logger.Debug().
+		Uint64("blockHeight", blockHeight).
+		Msg("👤  ExecuteScriptAtBlockHeight called")
+
+	result, err := a.emulator.ExecuteScriptAtBlockHeight(script, arguments, blockHeight)
+	utils.PrintScriptResult(a.logger, result)
+	return convertScriptResult(result, err)
 }
 
 func (a *AccessAdapter) ExecuteScriptAtBlockID(
@@ -226,7 +302,14 @@ func (a *AccessAdapter) ExecuteScriptAtBlockID(
 	script []byte,
 	arguments [][]byte,
 ) ([]byte, error) {
-	return convertScriptResult(a.emulator.ExecuteScriptAtBlockID(script, arguments, blockID))
+
+	a.logger.Debug().
+		Stringer("blockID", blockID).
+		Msg("👤  ExecuteScriptAtBlockID called")
+
+	result, err := a.emulator.ExecuteScriptAtBlockID(script, arguments, blockID)
+	utils.PrintScriptResult(a.logger, result)
+	return convertScriptResult(result, err)
 }
 
 func (a *AccessAdapter) GetEventsForHeightRange(
@@ -239,13 +322,23 @@ func (a *AccessAdapter) GetEventsForHeightRange(
 		return nil, convertError(err)
 	}
 
+	eventCount := 0
+
 	// Convert CCF events to JSON events
 	for i := range events {
 		events[i].Events, err = ConvertCCFEventsToJsonEvents(events[i].Events)
+		eventCount = eventCount + len(events[i].Events)
 		if err != nil {
 			return nil, convertError(err)
 		}
 	}
+
+	a.logger.Debug().Fields(map[string]any{
+		"eventType":   eventType,
+		"startHeight": startHeight,
+		"endHeight":   endHeight,
+		"eventCount":  eventCount,
+	}).Msg("🎁  GetEventsForHeightRange called")
 
 	return events, nil
 }
@@ -260,13 +353,21 @@ func (a *AccessAdapter) GetEventsForBlockIDs(
 		return nil, convertError(err)
 	}
 
+	eventCount := 0
+
 	// Convert CCF events to JSON events
 	for i := range events {
 		events[i].Events, err = ConvertCCFEventsToJsonEvents(events[i].Events)
+		eventCount = eventCount + len(events[i].Events)
 		if err != nil {
 			return nil, convertError(err)
 		}
 	}
+
+	a.logger.Debug().Fields(map[string]any{
+		"eventType":  eventType,
+		"eventCount": eventCount,
+	}).Msg("🎁  GetEventsForBlockIDs called")
 
 	return events, nil
 }
@@ -329,6 +430,10 @@ func (a *AccessAdapter) GetTransactionResultsByBlockID(_ context.Context, blockI
 }
 
 func (a *AccessAdapter) SendTransaction(_ context.Context, tx *flowgo.TransactionBody) error {
+	a.logger.Debug().
+		Str("txID", tx.ID().String()).
+		Msg(`✉️   Transaction submitted`)
+
 	return convertError(a.emulator.SendTransaction(tx))
 }
 
