@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"github.com/onflow/cadence"
 	"os"
 	"testing"
 
@@ -279,4 +280,163 @@ func Test_SimulatedMainnetTransactionWithChanges(t *testing.T) {
 	require.Len(t, txRes.Events, 1)
 	assert.Equal(t, txRes.Events[0].String(), "A.9799f28ff0453528.Ping.PingEmitted: 0x953f6f26d61710cb0e140bfde1022483b9ef410ddd181bac287d9968c84f4778")
 	assert.Equal(t, txRes.Events[0].Value.String(), `A.9799f28ff0453528.Ping.PingEmitted(sound: "pong pong pong")`)
+}
+
+func TestReplayTransaction(t *testing.T) {
+	t.Parallel()
+
+	remoteStore, err := New(WithChainID(flowgo.Mainnet))
+
+	require.NoError(t, err)
+
+	b, err := emulator.New(
+		emulator.WithStore(remoteStore),
+		emulator.WithStorageLimitEnabled(false),
+		emulator.WithTransactionValidationEnabled(false),
+		emulator.WithChainID(flowgo.Mainnet),
+	)
+	require.NoError(t, err)
+
+	logger := zerolog.Nop()
+	adapter := adapters.NewSDKAdapter(&logger, b)
+
+	script := []byte(`
+		import Cryptoys from 0xca63ce22f0d6bdba
+		import ICryptoys from 0xca63ce22f0d6bdba
+		import NonFungibleToken from 0x1d7e57aa55817448
+		
+		transaction(recipient: Address, metadata: {String: String}, items: [{String: String}], royalties: [String], imageWithPossessions: String){
+			let admin: &Cryptoys.Admin
+			let receiver: Capability<&{NonFungibleToken.CollectionPublic}>
+			let contractCollection: Capability<&{NonFungibleToken.CollectionPublic}>
+			let collectionRef: &Cryptoys.Collection
+			prepare(account: AuthAccount) {
+				self.admin = account.borrow<&Cryptoys.Admin>(from: Cryptoys.AdminStoragePath)!
+				if !account.getCapability<&{NonFungibleToken.CollectionPublic,NonFungibleToken.Receiver}>(Cryptoys.CollectionPublicPath).check() {
+					if account.borrow<&AnyResource>(from: Cryptoys.CollectionStoragePath) != nil {
+						account.unlink(Cryptoys.CollectionPublicPath)
+						account.link<&{NonFungibleToken.CollectionPublic,NonFungibleToken.Receiver}>(Cryptoys.CollectionPublicPath, target: Cryptoys.CollectionStoragePath)
+					} else {
+						let collection <- Cryptoys.createEmptyCollection() as! @Cryptoys.Collection
+						account.save(<-collection, to: Cryptoys.CollectionStoragePath)
+						account.link<&{NonFungibleToken.CollectionPublic,NonFungibleToken.Receiver}>(Cryptoys.CollectionPublicPath, target: Cryptoys.CollectionStoragePath)
+					}
+				}
+				self.receiver = getAccount(recipient).getCapability<&{NonFungibleToken.CollectionPublic}>(Cryptoys.CollectionPublicPath)
+				self.contractCollection = account.getCapability<&{NonFungibleToken.CollectionPublic}>(Cryptoys.CollectionPublicPath)
+		
+				self.collectionRef = account.borrow<&Cryptoys.Collection>(from: Cryptoys.CollectionStoragePath)
+					?? panic("Could not borrow a reference to the owner''s collection")
+			}
+			execute {
+				if items.length == 0 {
+					self.admin.mintNFT(
+						recipient: self.receiver, 
+						metadata:  metadata,
+						royaltyNames: royalties
+					)
+				} else {
+					let nftId = self.admin.mintNFT(
+						recipient: self.contractCollection, 
+						metadata:  metadata,
+						royaltyNames: royalties
+					)
+		
+					let nftRef = self.collectionRef.borrowCryptoy(id: nftId)
+		
+					for itemMetadata in items {
+						let itemId = self.admin.mintNFT(
+							recipient: self.contractCollection, 
+							metadata:  itemMetadata,
+							royaltyNames: royalties
+						)
+		
+						let item <- self.collectionRef.withdraw(withdrawID: itemId) as! @Cryptoys.NFT
+						nftRef.addToBucket("item", <-item)
+					}
+		
+					let nft <- self.collectionRef.withdraw(withdrawID: nftId) as! @Cryptoys.NFT
+		
+					self.receiver.borrow()!.deposit(token: <- nft)
+		
+					if imageWithPossessions.length > 0 {
+						let display: Cryptoys.Display? = Cryptoys.Display(image: imageWithPossessions, video: "")
+		
+						self.admin.updateDisplay(
+							cryptoy: nftRef,
+							display: display
+						)
+					}
+				}
+			}
+		}
+	`)
+
+	addr := flowsdk.HexToAddress("0x5744b7b8417c2858")
+	authorizer := flowsdk.HexToAddress("0xca63ce22f0d6bdba")
+
+	tx := flowsdk.NewTransaction().
+		SetScript(script).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetProposalKey(addr, 0, 0).
+		SetPayer(addr).
+		AddAuthorizer(authorizer)
+
+	// Add arguments Tx
+
+	err = tx.AddArgument(cadence.NewAddress(flowsdk.HexToAddress("8aa4ced1c983f9a8")))
+	require.NoError(t, err)
+
+	err = tx.AddArgument(cadence.NewDictionary([]cadence.KeyValuePair{
+		{
+			Key:   cadence.String("category"),
+			Value: cadence.String("Character"),
+		},
+		{
+			Key:   cadence.String("type"),
+			Value: cadence.String("Darth Vader: Sith Lord"),
+		},
+		{
+			Key:   cadence.String("skin"),
+			Value: cadence.String("Sith Lord"),
+		},
+	}))
+	require.NoError(t, err)
+
+	err = tx.AddArgument(
+		cadence.NewArray([]cadence.Value{
+			cadence.NewDictionary([]cadence.KeyValuePair{
+				{
+					Key:   cadence.String("category"),
+					Value: cadence.String("Character"),
+				},
+				{
+					Key:   cadence.String("type"),
+					Value: cadence.String("Darth Vader: Sith Lord"),
+				},
+				{
+					Key:   cadence.String("skin"),
+					Value: cadence.String("Sith Lord"),
+				},
+			}),
+		}),
+	)
+	require.NoError(t, err)
+
+	err = tx.AddArgument(cadence.NewArray([]cadence.Value{
+		cadence.String("royalty_c"),
+	}))
+	require.NoError(t, err)
+
+	err = tx.AddArgument(cadence.String("https://arweave.net/gI4YYxfdtQVgbQYuNSDJ-tTf53maOK7dlME7r4Bjtz0"))
+	require.NoError(t, err)
+
+	// Send Tx
+
+	err = adapter.SendTransaction(context.Background(), *tx)
+	require.NoError(t, err)
+
+	txRes, err := b.ExecuteNextTransaction()
+	require.NoError(t, err)
+	require.NoError(t, txRes.Error)
 }
