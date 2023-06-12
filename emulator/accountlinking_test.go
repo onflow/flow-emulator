@@ -100,6 +100,8 @@ func TestAccountLinking(t *testing.T) {
 
 	actualEvent := events[0].Events[0]
 	decodedEvent := actualEvent.Value
+	decodedEventType := decodedEvent.Type().(*cadence.EventType)
+
 	expectedID := flowsdk.Event{
 		TransactionID: tx.ID(),
 		EventIndex:    0,
@@ -110,6 +112,9 @@ func TestAccountLinking(t *testing.T) {
 	expectedPath, err := cadence.NewPath(common.PathDomainPrivate, "foo")
 	require.NoError(t, err)
 	require.Len(t, decodedEvent.Fields, 2)
-	assert.Equal(t, expectedPath, decodedEvent.Fields[0])
-	assert.Equal(t, cadence.NewAddress(serviceAccountAddress), decodedEvent.Fields[1])
+	require.Len(t, decodedEventType.Fields, 2)
+	assert.Equal(t, "address", decodedEventType.Fields[0].Identifier)
+	assert.Equal(t, cadence.NewAddress(serviceAccountAddress), decodedEvent.Fields[0])
+	assert.Equal(t, "path", decodedEventType.Fields[1].Identifier)
+	assert.Equal(t, expectedPath, decodedEvent.Fields[1])
 }

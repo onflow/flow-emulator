@@ -127,11 +127,14 @@ func TestEventEmitted(t *testing.T) {
 
 		actualEvent := events[0].Events[0]
 		decodedEvent := actualEvent.Value
+		decodedEventType := decodedEvent.Type().(*cadence.EventType)
 		expectedID := flowsdk.Event{TransactionID: tx.ID(), EventIndex: 0}.ID()
 
 		assert.Equal(t, string(expectedType), actualEvent.Type)
 		assert.Equal(t, expectedID, actualEvent.ID())
+		assert.Equal(t, "x", decodedEventType.Fields[0].Identifier)
 		assert.Equal(t, cadence.NewInt(1), decodedEvent.Fields[0])
+		assert.Equal(t, "y", decodedEventType.Fields[1].Identifier)
 		assert.Equal(t, cadence.NewInt(2), decodedEvent.Fields[1])
 
 		events, err = adapter.GetEventsForBlockIDs(context.Background(), string(expectedType), []flowsdk.Identifier{flowsdk.Identifier(block.Header.ID())})
@@ -140,11 +143,14 @@ func TestEventEmitted(t *testing.T) {
 
 		actualEvent = events[0].Events[0]
 		decodedEvent = actualEvent.Value
+		decodedEventType = decodedEvent.Type().(*cadence.EventType)
 		expectedID = flowsdk.Event{TransactionID: tx.ID(), EventIndex: 0}.ID()
 
 		assert.Equal(t, string(expectedType), actualEvent.Type)
 		assert.Equal(t, expectedID, actualEvent.ID())
+		assert.Equal(t, "x", decodedEventType.Fields[0].Identifier)
 		assert.Equal(t, cadence.NewInt(1), decodedEvent.Fields[0])
+		assert.Equal(t, "y", decodedEventType.Fields[1].Identifier)
 		assert.Equal(t, cadence.NewInt(2), decodedEvent.Fields[1])
 
 	})
