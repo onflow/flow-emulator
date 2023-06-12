@@ -184,7 +184,7 @@ func FlowTransactionResultToSDK(result *access.TransactionResult) (*sdk.Transact
 }
 
 func SDKEventToFlow(event sdk.Event) (flowgo.Event, error) {
-	payload, err := ccf.Encode(event.Value)
+	payload, err := ccf.EventsEncMode.Encode(event.Value)
 	if err != nil {
 		return flowgo.Event{}, err
 	}
@@ -199,7 +199,7 @@ func SDKEventToFlow(event sdk.Event) (flowgo.Event, error) {
 }
 
 func FlowEventToSDK(flowEvent flowgo.Event) (sdk.Event, error) {
-	cadenceValue, err := ccf.Decode(nil, flowEvent.Payload)
+	cadenceValue, err := ccf.EventsDecMode.Decode(nil, flowEvent.Payload)
 	if err != nil {
 		return sdk.Event{}, err
 	}

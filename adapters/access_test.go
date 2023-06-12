@@ -747,7 +747,7 @@ func TestAccess(t *testing.T) {
 func ccfEventFixture(t *testing.T) flowgo.Event {
 	cadenceValue, err := cadence.NewValue(2)
 	require.NoError(t, err)
-	ccfEvent, err := ccf.Encode(cadenceValue)
+	ccfEvent, err := ccf.EventsEncMode.Encode(cadenceValue)
 	require.NoError(t, err)
 	return flowgo.Event{
 		Payload: ccfEvent,
