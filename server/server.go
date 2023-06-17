@@ -136,6 +136,8 @@ type Config struct {
 	SqliteURL string
 	// CoverageReportingEnabled enables/disables Cadence code coverage reporting.
 	CoverageReportingEnabled bool
+	// StartBlockHeight is the height at which to start the emulator.
+	StartBlockHeight uint64
 }
 
 type listener interface {
@@ -306,10 +308,16 @@ func (s *EmulatorServer) Stop() {
 func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
 
 	if conf.ChainID == flowgo.Testnet || conf.ChainID == flowgo.Mainnet {
-		storageProvider, err = remote.New(remote.WithChainID(conf.ChainID))
+		provider, err := remote.New(remote.WithChainID(conf.ChainID))
 		if err != nil {
 			return nil, err
 		}
+
+		if conf.StartBlockHeight > 0 {
+			provider.SetBlockHeight(conf.StartBlockHeight)
+		}
+
+		storageProvider = provider
 	}
 
 	if conf.RedisURL != "" {
