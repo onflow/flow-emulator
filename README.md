@@ -69,7 +69,8 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--skip-tx-validation` | `FLOW_SKIPTRANSACTIONVALIDATION` | `false`        | Skip verification of transaction signatures and sequence numbers                                                                                                                                                                                    |
 | `--host`                      | `FLOW_HOST`                  | ` `            | Host to listen on for emulator GRPC/REST/Admin servers (default: All Interfaces)                                                                                                                                                                                              |
 | `--chain-id`                  | `FLOW_CHAINID`               | `emulator`     | Chain to simulate, if 'mainnet' or 'testnet' values are used, you will be able to run transactions against that network and a local fork will be created..  Valid values are: 'emulator', 'testnet', 'mainnet'                                       |
-| `-redis-url`                  | `FLOW_REDIS_URL`             | ''             | Redis-server URL for persisting redis storage backend ( `redis://[[username:]password@]host[:port][/database]` )                                                                                                                                    |
+| `--redis-url`                 | `FLOW_REDIS_URL`             | ''             | Redis-server URL for persisting redis storage backend ( `redis://[[username:]password@]host[:port][/database]` )                                                                                                                                    |
+| `--start-block-height`        | `FLOW_STARTBLOCKHEIGHT`             | `0`             | Start block height to use when starting the network using 'testnet' or 'mainnet' as the chain-id    |
 
 ## Running the emulator with the Flow CLI
 
@@ -137,6 +138,9 @@ POST http://localhost:8080/emulator/rollback
 Post Data: height={block height}
 ```
 
+Note: it is only possible to roll back state to a height that was previously executed by the emulator.
+To roll back to a past block height when using a forked mainnet or testnet network, use the
+`--start-block-height` flag.
 
 ## Managing emulator state
 It's possible to manage emulator state by using the admin API. You can at any point 
@@ -220,6 +224,9 @@ you must specify the network name for the chain ID flag in the following manner:
 flow emulator --chain-id mainnet
 ```
 Please note, the actual execution on the real network may differ.
+
+By default, the forked network will start from the latest sealed block when the emulator
+is started. You can specify a different starting block height by using the `--start-block-height` flag.
 
 ## Development
 
