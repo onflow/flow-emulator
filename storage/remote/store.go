@@ -205,7 +205,7 @@ func (s *Store) LedgerByHeight(
 			return nil, err
 		}
 
-		// todo once we obtain remote register values we could cache them
+		// if we don't have it, get it from the archive node
 		response, err := s.client.GetRegisterValues(ctx, &archive.GetRegisterValuesRequest{
 			Height: blockHeight,
 			Paths:  [][]byte{ledgerPath[:]},
@@ -218,7 +218,20 @@ func (s *Store) LedgerByHeight(
 			return nil, fmt.Errorf("not found value for register id %s", id.String())
 		}
 
-		return response.Values[0], nil
+		value = response.Values[0]
+
+		// cache the value for future use
+		err = s.DataSetter.SetBytesWithVersion(
+			ctx,
+			s.KeyGenerator.Storage(storage.LedgerStoreName),
+			[]byte(id.String()),
+			value,
+			blockHeight)
+		if err != nil {
+			return nil, fmt.Errorf("could not cache ledger value: %w", err)
+		}
+
+		return value, nil
 	}), nil
 }
 
