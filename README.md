@@ -139,7 +139,7 @@ Post Data: height={block height}
 ```
 
 Note: it is only possible to roll back state to a height that was previously executed by the emulator.
-To roll back to a past block height when using a forked mainnet or testnet network, use the
+To roll back to a past block height when using a forked Mainnet or Testnet network, use the
 `--start-block-height` flag.
 
 ## Managing emulator state

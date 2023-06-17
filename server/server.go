@@ -314,7 +314,10 @@ func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
 		}
 
 		if conf.StartBlockHeight > 0 {
-			provider.SetBlockHeight(conf.StartBlockHeight)
+			err = provider.SetBlockHeight(conf.StartBlockHeight)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		storageProvider = provider

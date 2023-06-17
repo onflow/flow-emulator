@@ -139,7 +139,7 @@ Post Data: height={block height}
 ```
 
 Note: it is only possible to roll back state to a height that was previously executed by the emulator.
-To roll back to a past block height when using a forked mainnet or testnet network, use the
+To roll back to a past block height when using a forked Mainnet or Testnet network, use the
 `--start-block-height` flag.
 
 ## Managing emulator state
@@ -211,9 +211,9 @@ To generate a service key, use the `keys generate` command in the Flow CLI.
 flow keys generate
 ```
 
-## Emulating mainnet and testnet transactions
+## Emulating Mainnet and Testnet transactions
 The emulator allows you to simulate the execution of transactions as if they were
-performed on the mainnet or testnet. In order to activate this feature,
+performed on the Mainnet or Testnet. In order to activate this feature,
 you must specify the network name for the chain ID flag in the following manner:
 ```
 flow emulator --chain-id mainnet
