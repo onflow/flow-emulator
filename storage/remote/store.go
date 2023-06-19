@@ -131,12 +131,22 @@ func (s *Store) BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flow
 }
 
 func (s *Store) LatestBlock(ctx context.Context) (flowgo.Block, error) {
-	heightRes, err := s.client.GetLast(ctx, &archive.GetLastRequest{})
-	if err != nil {
+	// try to resume from the last local block
+	latestBlockHeight, err := s.LatestBlockHeight(ctx)
+	if err != nil && !errors.Is(err, storage.ErrNotFound) {
 		return flowgo.Block{}, err
 	}
 
-	block, err := s.BlockByHeight(ctx, heightRes.Height)
+	// if it's not set yet, get the latest block available from the archive node
+	if latestBlockHeight == 0 {
+		heightRes, err := s.client.GetLast(ctx, &archive.GetLastRequest{})
+		if err != nil {
+			return flowgo.Block{}, err
+		}
+		latestBlockHeight = heightRes.Height
+	}
+
+	block, err := s.BlockByHeight(ctx, latestBlockHeight)
 	if err != nil {
 		return flowgo.Block{}, err
 	}
@@ -195,7 +205,7 @@ func (s *Store) LedgerByHeight(
 			return nil, err
 		}
 
-		// todo once we obtain remote register values we could cache them
+		// if we don't have it, get it from the archive node
 		response, err := s.client.GetRegisterValues(ctx, &archive.GetRegisterValuesRequest{
 			Height: blockHeight,
 			Paths:  [][]byte{ledgerPath[:]},
@@ -208,7 +218,20 @@ func (s *Store) LedgerByHeight(
 			return nil, fmt.Errorf("not found value for register id %s", id.String())
 		}
 
-		return response.Values[0], nil
+		value = response.Values[0]
+
+		// cache the value for future use
+		err = s.DataSetter.SetBytesWithVersion(
+			ctx,
+			s.KeyGenerator.Storage(storage.LedgerStoreName),
+			[]byte(id.String()),
+			value,
+			blockHeight)
+		if err != nil {
+			return nil, fmt.Errorf("could not cache ledger value: %w", err)
+		}
+
+		return value, nil
 	}), nil
 }
 
