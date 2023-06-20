@@ -33,6 +33,12 @@ var CommonContracts = func() []ContractDescription {
 			Source:      contracts.NonFungibleToken(),
 		},
 		{
+			Name:        "ViewResolver",
+			Address:     serviceAddress,
+			Description: "✨  Metadata views contract",
+			Source:      contracts.Resolver(),
+		},
+		{
 			Name:        "MetadataViews",
 			Address:     serviceAddress,
 			Description: "✨  Metadata views contract",
@@ -42,7 +48,7 @@ var CommonContracts = func() []ContractDescription {
 			Name:        "ExampleNFT",
 			Address:     serviceAddress,
 			Description: "✨  Example NFT contract",
-			Source:      contracts.ExampleNFT(serviceAddress, serviceAddress),
+			Source:      contracts.ExampleNFT(serviceAddress, serviceAddress, serviceAddress),
 		},
 		{
 			Name:        "NFTStorefrontV2",
