@@ -2,7 +2,6 @@ package emulator_test
 
 import (
 	"fmt"
-	flowgo "github.com/onflow/flow-go/model/flow"
 	"testing"
 
 	"github.com/onflow/cadence"
@@ -16,7 +15,7 @@ func TestCommonContractsDeployment(t *testing.T) {
 	t.Parallel()
 
 	b, err := emulator.New(
-		emulator.Contracts(emulator.CommonContracts(flowgo.Emulator.Chain())),
+		emulator.Contracts(emulator.CommonContracts),
 	)
 	require.NoError(t, err)
 

@@ -174,7 +174,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	}
 
 	if conf.WithContracts {
-		commonContracts := emulator.CommonContracts(chain)
+		commonContracts := emulator.CommonContractsGenerator(chain)
 		err := emulator.DeployContracts(emulatedBlockchain, commonContracts)
 		if err != nil {
 			logger.Error().Err(err).Msg("❗  Failed to deploy contracts")
