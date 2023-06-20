@@ -786,6 +786,12 @@ func (b *Blockchain) PendingBlockTimestamp() time.Time {
 
 // GetLatestBlock gets the latest sealed block.
 func (b *Blockchain) GetLatestBlock() (*flowgo.Block, error) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	return b.getLatestBlock()
+}
+
+func (b *Blockchain) getLatestBlock() (*flowgo.Block, error) {
 	block, err := b.storage.LatestBlock(context.Background())
 	if err != nil {
 		return nil, err
@@ -796,6 +802,12 @@ func (b *Blockchain) GetLatestBlock() (*flowgo.Block, error) {
 
 // GetBlockByID gets a block by ID.
 func (b *Blockchain) GetBlockByID(id flowgo.Identifier) (*flowgo.Block, error) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	return b.getBlockByID(id)
+}
+
+func (b *Blockchain) getBlockByID(id flowgo.Identifier) (*flowgo.Block, error) {
 	block, err := b.storage.BlockByID(context.Background(), id)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
@@ -810,6 +822,9 @@ func (b *Blockchain) GetBlockByID(id flowgo.Identifier) (*flowgo.Block, error) {
 
 // GetBlockByHeight gets a block by height.
 func (b *Blockchain) GetBlockByHeight(height uint64) (*flowgo.Block, error) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
 	block, err := b.getBlockByHeight(height)
 	if err != nil {
 		return nil, err
@@ -833,7 +848,10 @@ func (b *Blockchain) getBlockByHeight(height uint64) (*flowgo.Block, error) {
 func (b *Blockchain) GetCollectionByID(colID flowgo.Identifier) (*flowgo.LightCollection, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
+	return b.getCollectionByID(colID)
+}
 
+func (b *Blockchain) getCollectionByID(colID flowgo.Identifier) (*flowgo.LightCollection, error) {
 	col, err := b.storage.CollectionByID(context.Background(), colID)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
@@ -851,7 +869,10 @@ func (b *Blockchain) GetCollectionByID(colID flowgo.Identifier) (*flowgo.LightCo
 func (b *Blockchain) GetTransaction(txID flowgo.Identifier) (*flowgo.TransactionBody, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
+	return b.getTransaction(txID)
+}
 
+func (b *Blockchain) getTransaction(txID flowgo.Identifier) (*flowgo.TransactionBody, error) {
 	pendingTx := b.pendingBlock.GetTransaction(txID)
 	if pendingTx != nil {
 		return pendingTx, nil
@@ -872,6 +893,10 @@ func (b *Blockchain) GetTransactionResult(txID flowgo.Identifier) (*access.Trans
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
+	return b.getTransactionResult(txID)
+}
+
+func (b *Blockchain) getTransactionResult(txID flowgo.Identifier) (*access.TransactionResult, error) {
 	if b.pendingBlock.ContainsTransaction(txID) {
 		return &access.TransactionResult{
 			Status: flowgo.TransactionStatusPending,
@@ -914,13 +939,12 @@ func (b *Blockchain) GetAccountByIndex(index uint) (*flowgo.Account, error) {
 	}
 
 	return account, nil
-
 }
 
 // Deprecated: Needed for the debugger right now, do NOT use for other purposes.
 // TODO: refactor
 func (b *Blockchain) GetAccountUnsafe(address flowgo.Address) (*flowgo.Account, error) {
-	latestBlock, err := b.GetLatestBlock()
+	latestBlock, err := b.getLatestBlock()
 	if err != nil {
 		return nil, err
 	}
@@ -936,7 +960,7 @@ func (b *Blockchain) GetAccount(address flowgo.Address) (*flowgo.Account, error)
 
 // getAccount returns the account for the given address.
 func (b *Blockchain) getAccount(address flowgo.Address) (*flowgo.Account, error) {
-	latestBlock, err := b.GetLatestBlock()
+	latestBlock, err := b.getLatestBlock()
 	if err != nil {
 		return nil, err
 	}
@@ -972,6 +996,9 @@ func (b *Blockchain) getAccountAtBlock(address flowgo.Address, blockHeight uint6
 }
 
 func (b *Blockchain) GetEventsForBlockIDs(eventType string, blockIDs []flowgo.Identifier) (result []flowgo.BlockEvents, err error) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
 	for _, blockID := range blockIDs {
 		block, err := b.storage.BlockByID(context.Background(), blockID)
 		if err != nil {
@@ -993,6 +1020,8 @@ func (b *Blockchain) GetEventsForBlockIDs(eventType string, blockIDs []flowgo.Id
 }
 
 func (b *Blockchain) GetEventsForHeightRange(eventType string, startHeight, endHeight uint64) (result []flowgo.BlockEvents, err error) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
 
 	for blockHeight := startHeight; blockHeight <= endHeight; blockHeight++ {
 		block, err := b.storage.BlockByHeight(context.Background(), blockHeight)
@@ -1018,12 +1047,18 @@ func (b *Blockchain) GetEventsForHeightRange(eventType string, startHeight, endH
 
 // GetEventsByHeight returns the events in the block at the given height, optionally filtered by type.
 func (b *Blockchain) GetEventsByHeight(blockHeight uint64, eventType string) ([]flowgo.Event, error) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
 	return b.storage.EventsByHeight(context.Background(), blockHeight, eventType)
 }
 
 // SendTransaction submits a transaction to the network.
 func (b *Blockchain) SendTransaction(flowTx *flowgo.TransactionBody) error {
-	err := b.AddTransaction(*flowTx)
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	err := b.addTransaction(*flowTx)
 	if err != nil {
 		return err
 	}
@@ -1040,6 +1075,13 @@ func (b *Blockchain) SendTransaction(flowTx *flowgo.TransactionBody) error {
 
 // AddTransaction validates a transaction and adds it to the current pending block.
 func (b *Blockchain) AddTransaction(tx flowgo.TransactionBody) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	return b.addTransaction(tx)
+}
+
+func (b *Blockchain) addTransaction(tx flowgo.TransactionBody) error {
 
 	// If index > 0, pending block has begun execution (cannot add more transactions)
 	if b.pendingBlock.ExecutionStarted() {
@@ -1370,18 +1412,22 @@ func (b *Blockchain) ExecuteScript(
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
-	latestBlock, err := b.GetLatestBlock()
+	latestBlock, err := b.getLatestBlock()
 	if err != nil {
 		return nil, err
 	}
 
-	return b.ExecuteScriptAtBlockHeight(script, arguments, latestBlock.Header.Height)
+	return b.executeScriptAtBlockID(script, arguments, latestBlock.Header.ID())
 }
 
 func (b *Blockchain) ExecuteScriptAtBlockID(script []byte, arguments [][]byte, id flowgo.Identifier) (*types.ScriptResult, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
+	return b.executeScriptAtBlockID(script, arguments, id)
+}
+
+func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, id flowgo.Identifier) (*types.ScriptResult, error) {
 	requestedBlock, err := b.storage.BlockByID(context.Background(), id)
 	if err != nil {
 		return nil, err
@@ -1445,13 +1491,14 @@ func (b *Blockchain) ExecuteScriptAtBlockHeight(
 	blockHeight uint64,
 ) (*types.ScriptResult, error) {
 	b.mu.RLock()
-	requestedBlock, err := b.getBlockByHeight(blockHeight)
-	b.mu.RUnlock()
+	defer b.mu.RUnlock()
 
+	requestedBlock, err := b.getBlockByHeight(blockHeight)
 	if err != nil {
 		return nil, err
 	}
-	return b.ExecuteScriptAtBlockID(script, arguments, requestedBlock.Header.ID())
+
+	return b.executeScriptAtBlockID(script, arguments, requestedBlock.Header.ID())
 }
 
 func convertToSealedResults(
@@ -1538,11 +1585,55 @@ func (b *Blockchain) ResetCoverageReport() {
 }
 
 func (b *Blockchain) GetTransactionsByBlockID(blockID flowgo.Identifier) ([]*flowgo.TransactionBody, error) {
-	//TODO implement me
-	panic("implement me")
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	block, err := b.getBlockByID(blockID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get block %s: %w", blockID, err)
+	}
+
+	var transactions []*flowgo.TransactionBody
+	for i, guarantee := range block.Payload.Guarantees {
+		c, err := b.getCollectionByID(guarantee.CollectionID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get collection [%d] %s: %w", i, guarantee.CollectionID, err)
+		}
+
+		for j, txID := range c.Transactions {
+			tx, err := b.getTransaction(txID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get transaction [%d] %s: %w", j, txID, err)
+			}
+			transactions = append(transactions, tx)
+		}
+	}
+	return transactions, nil
 }
 
 func (b *Blockchain) GetTransactionResultsByBlockID(blockID flowgo.Identifier) ([]*access.TransactionResult, error) {
-	//TODO implement me
-	panic("implement me")
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	block, err := b.getBlockByID(blockID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get block %s: %w", blockID, err)
+	}
+
+	var results []*access.TransactionResult
+	for i, guarantee := range block.Payload.Guarantees {
+		c, err := b.getCollectionByID(guarantee.CollectionID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get collection [%d] %s: %w", i, guarantee.CollectionID, err)
+		}
+
+		for j, txID := range c.Transactions {
+			result, err := b.getTransactionResult(txID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get transaction result [%d] %s: %w", j, txID, err)
+			}
+			results = append(results, result)
+		}
+	}
+	return results, nil
 }
