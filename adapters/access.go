@@ -21,7 +21,6 @@ package adapters
 import (
 	"context"
 	"fmt"
-
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-emulator/types"
@@ -396,7 +395,7 @@ func (a *AccessAdapter) GetTransactionResultByIndex(_ context.Context, blockID f
 	if err != nil {
 		return nil, convertError(err)
 	}
-	if len(results) <= int(index) {
+	if len(results) < int(index) {
 		return nil, convertError(&types.TransactionNotFoundError{ID: flowgo.Identifier{}})
 	}
 
