@@ -15,6 +15,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"google.golang.org/grpc/codes"
 	"strings"
 	"sync"
 	"time"
@@ -888,9 +889,13 @@ func (b *Blockchain) GetTransactionResult(txID flowgo.Identifier) (*access.Trans
 		return nil, err
 	}
 
+	statusCode := codes.OK
+	if storedResult.ErrorCode > 0 {
+		statusCode = codes.Canceled
+	}
 	result := access.TransactionResult{
 		Status:        flowgo.TransactionStatusSealed,
-		StatusCode:    uint(storedResult.ErrorCode),
+		StatusCode:    uint(statusCode),
 		ErrorMessage:  storedResult.ErrorMessage,
 		Events:        storedResult.Events,
 		TransactionID: txID,
