@@ -132,7 +132,7 @@ func (s *Store) Snapshots() (snapshots []string, err error) {
 		return []string{}, fmt.Errorf("snapshot is not supported with current configuration")
 	}
 
-	if s.url == ":memory:" {
+	if s.url == InMemory {
 		return s.snapshotNames, nil
 	}
 
@@ -160,7 +160,7 @@ func (s *Store) LoadSnapshot(name string) error {
 	}
 
 	var dbfile string
-	if s.url == ":memory:" {
+	if s.url == InMemory {
 		dbfile = fmt.Sprintf("file:%s?mode=memory&cache=shared", name)
 		db, err := sql.Open("sqlite", dbfile)
 		if err != nil {
@@ -203,7 +203,7 @@ func (s *Store) CreateSnapshot(name string) error {
 	}
 
 	var dbfile string
-	if s.url == ":memory:" {
+	if s.url == InMemory {
 		dbfile = fmt.Sprintf("file:%s?mode=memory&cache=shared", name)
 		db, err := sql.Open("sqlite", dbfile)
 		if err != nil {
@@ -231,7 +231,7 @@ func (s *Store) CreateSnapshot(name string) error {
 }
 
 func (s *Store) SupportSnapshotsWithCurrentConfig() bool {
-	if s.url == ":memory:" {
+	if s.url == InMemory {
 		return true
 	}
 	fileInfo, err := os.Stat(s.url)

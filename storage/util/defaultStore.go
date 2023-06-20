@@ -28,7 +28,7 @@ import (
 )
 
 func CreateDefaultStorage() (storage.Store, error) {
-	return sqlite.New(":memory:")
+	return sqlite.New(sqlite.InMemory)
 }
 
 func NewSqliteStorage(url string) (storage.Store, error) {

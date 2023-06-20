@@ -336,7 +336,7 @@ func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
 	}
 
 	if storageProvider == nil {
-		storageProvider, err = util.NewSqliteStorage(":memory:")
+		storageProvider, err = util.NewSqliteStorage(sqlite.InMemory)
 		if err != nil {
 			return nil, err
 		}
