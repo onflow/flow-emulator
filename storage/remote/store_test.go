@@ -28,6 +28,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/adapters"
+	"github.com/onflow/flow-emulator/storage/sqlite"
 
 	"github.com/onflow/flow-archive/api/archive"
 	"github.com/onflow/flow-archive/codec/zbor"
@@ -160,7 +161,10 @@ func Test_SimulatedMainnetTransaction(t *testing.T) {
 	client, err := newTestClient()
 	require.NoError(t, err)
 
-	remoteStore, err := New(WithClient(client))
+	provider, err := sqlite.New(sqlite.InMemory)
+	require.NoError(t, err)
+
+	remoteStore, err := New(provider, WithClient(client))
 	require.NoError(t, err)
 
 	b, err := emulator.New(
@@ -210,7 +214,10 @@ func Test_SimulatedMainnetTransactionWithChanges(t *testing.T) {
 	client, err := newTestClient()
 	require.NoError(t, err)
 
-	remoteStore, err := New(WithClient(client))
+	provider, err := sqlite.New(sqlite.InMemory)
+	require.NoError(t, err)
+
+	remoteStore, err := New(provider, WithClient(client))
 	require.NoError(t, err)
 
 	b, err := emulator.New(
