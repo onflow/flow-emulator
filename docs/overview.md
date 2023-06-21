@@ -223,6 +223,9 @@ Please note, the actual execution on the real network may differ.
 By default, the forked network will start from the latest sealed block when the emulator
 is started. You can specify a different starting block height by using the `--start-block-height` flag.
 
+You can also store all of your changes and cached registers to a persistent db by using the `--persist` flag,
+along with the other sqlite settings.
+
 ## Development
 
 Read [contributing document](./CONTRIBUTING.md).

@@ -74,14 +74,9 @@ func WithClient(client archive.APIClient) Option {
 	}
 }
 
-func New(options ...Option) (*Store, error) {
-	memorySql, err := sqlite.New(sqlite.InMemory)
-	if err != nil {
-		return nil, err
-	}
-
+func New(provider *sqlite.Store, options ...Option) (*Store, error) {
 	store := &Store{
-		Store: memorySql,
+		Store: provider,
 	}
 
 	for _, opt := range options {
