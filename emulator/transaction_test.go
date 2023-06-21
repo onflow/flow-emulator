@@ -14,6 +14,7 @@ import (
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/convert"
 	"github.com/onflow/flow-emulator/emulator"
+	"github.com/onflow/flow-go-sdk"
 
 	"github.com/rs/zerolog"
 
@@ -1441,6 +1442,82 @@ func TestGetTransactionResult(t *testing.T) {
 	assert.Equal(t, 0, event.EventIndex)
 	assert.Equal(t, 1, len(event.Value.Fields))
 	assert.Equal(t, cadence.NewInt(2), event.Value.Fields[0])
+}
+
+// TestGetTxByBlockIDMethods tests the GetTransactionByBlockID and GetTransactionResultByBlockID
+// methods return the correct transaction and transaction result for a given block ID.
+func TestGetTxByBlockIDMethods(t *testing.T) {
+
+	t.Parallel()
+
+	b, adapter := setupTransactionTests(
+		t,
+		emulator.WithStorageLimitEnabled(false),
+	)
+
+	const code = `
+		transaction {
+			execute {
+				log("Hello, World!")
+			}
+		}
+    `
+
+	serviceKey := b.ServiceKey()
+	signer, err := serviceKey.Signer()
+	require.NoError(t, err)
+
+	submittedTx := make([]*flowsdk.Transaction, 0)
+
+	// submit 5 tx to be executed in a single block
+	for i := uint64(0); i < 5; i++ {
+		tx := flowsdk.NewTransaction().
+			SetScript([]byte(code)).
+			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+			SetProposalKey(serviceKey.Address, serviceKey.Index, serviceKey.SequenceNumber).
+			SetPayer(serviceKey.Address).
+			AddAuthorizer(serviceKey.Address)
+
+		err = tx.SignEnvelope(serviceKey.Address, serviceKey.Index, signer)
+		require.NoError(t, err)
+
+		err = adapter.SendTransaction(context.Background(), *tx)
+		assert.NoError(t, err)
+
+		// added to fix tx matching (nil vs empty slice)
+		tx.PayloadSignatures = []flow.TransactionSignature{}
+
+		submittedTx = append(submittedTx, tx)
+
+		// tx will be executed in the order they were submitted
+		serviceKey.SequenceNumber++
+	}
+
+	// execute the batch of transactions
+	block, expectedResults, err := b.ExecuteAndCommitBlock()
+	assert.NoError(t, err)
+	assert.Len(t, expectedResults, len(submittedTx))
+
+	results, err := adapter.GetTransactionResultsByBlockID(context.Background(), flowsdk.Identifier(block.ID()))
+	require.NoError(t, err)
+	assert.Len(t, results, len(submittedTx))
+
+	transactions, err := adapter.GetTransactionsByBlockID(context.Background(), flowsdk.Identifier(block.ID()))
+	require.NoError(t, err)
+	assert.Len(t, transactions, len(submittedTx))
+
+	// make sure the results and transactions returned match the transactions submitted, and are in
+	// the same order
+	for i, tx := range submittedTx {
+		assert.Equal(t, tx.ID(), transactions[i].ID())
+		assert.Equal(t, submittedTx[i], transactions[i])
+
+		assert.Equal(t, tx.ID(), results[i].TransactionID)
+		assert.Equal(t, tx.ID(), expectedResults[i].TransactionID)
+		// note: expectedResults from ExecuteAndCommitBlock and results from GetTransactionResultsByBlockID
+		// use different representations. results is missing some data included in the flow.TransactionResult
+		// struct, so we can't compare them directly.
+	}
 }
 
 const helloWorldContract = `
