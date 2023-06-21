@@ -14,7 +14,7 @@ import (
 	nftstorefront "github.com/onflow/nft-storefront/lib/go/contracts"
 )
 
-var CommonContractsGenerator = func(chain flowgo.Chain) []ContractDescription {
+func NewCommonContracts(chain flowgo.Chain) []ContractDescription {
 	ftAddress := flowsdk.HexToAddress(fvm.FungibleTokenAddress(chain).HexWithPrefix())
 	serviceAddress := flowsdk.HexToAddress(chain.ServiceAddress().HexWithPrefix())
 
@@ -58,7 +58,7 @@ var CommonContractsGenerator = func(chain flowgo.Chain) []ContractDescription {
 	}
 }
 
-var CommonContracts = CommonContractsGenerator(flowgo.Emulator.Chain())
+var CommonContracts = NewCommonContracts(flowgo.Emulator.Chain())
 
 type ContractDescription struct {
 	Name        string
