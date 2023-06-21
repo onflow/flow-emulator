@@ -17,7 +17,6 @@ import (
 func NewCommonContracts(chain flowgo.Chain) []ContractDescription {
 	ftAddress := flowsdk.HexToAddress(fvm.FungibleTokenAddress(chain).HexWithPrefix())
 	serviceAddress := flowsdk.HexToAddress(chain.ServiceAddress().HexWithPrefix())
-
 	return []ContractDescription{
 		{
 			Name:        "FUSD",

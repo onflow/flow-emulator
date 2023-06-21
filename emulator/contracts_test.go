@@ -2,6 +2,7 @@ package emulator_test
 
 import (
 	"fmt"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"testing"
 
 	"github.com/onflow/cadence"
@@ -14,13 +15,22 @@ func TestCommonContractsDeployment(t *testing.T) {
 
 	t.Parallel()
 
-	b, err := emulator.New(
-		emulator.Contracts(emulator.CommonContracts),
-	)
-	require.NoError(t, err)
+	//only test monotonic and emulator ( mainnet / testnet is used for remote debugging )
+	chains := []flowgo.Chain{
+		flowgo.MonotonicEmulator.Chain(),
+		flowgo.Emulator.Chain(),
+	}
 
-	serviceAccount := b.ServiceKey().Address.Hex()
-	scriptCode := fmt.Sprintf(`
+	for _, chain := range chains {
+
+		b, err := emulator.New(
+			emulator.Contracts(emulator.NewCommonContracts(chain)),
+			emulator.WithChainID(chain.ChainID()),
+		)
+		require.NoError(t, err)
+
+		serviceAccount := b.ServiceKey().Address.Hex()
+		scriptCode := fmt.Sprintf(`
 	    import
 	        FUSD,
 	        NonFungibleToken,
@@ -33,28 +43,28 @@ func TestCommonContractsDeployment(t *testing.T) {
 	    pub fun main(): Bool {
 	        log(Type<FUSD>().identifier)
 	        log(Type<NonFungibleToken>().identifier)
-	        log(Type<MetadataViews>().identifier)
+			log(Type<MetadataViews>().identifier)
 	        log(Type<ExampleNFT>().identifier)
 	        log(Type<NFTStorefrontV2>().identifier)
 	        log(Type<NFTStorefront>().identifier)
-
 	        return true
 	    }
 	`, serviceAccount)
 
-	scriptResult, err := b.ExecuteScript([]byte(scriptCode), [][]byte{})
-	require.NoError(t, err)
-	assert.ElementsMatch(
-		t,
-		[]string{
-			"\"A.f8d6e0586b0a20c7.FUSD\"",
-			"\"A.f8d6e0586b0a20c7.NonFungibleToken\"",
-			"\"A.f8d6e0586b0a20c7.MetadataViews\"",
-			"\"A.f8d6e0586b0a20c7.ExampleNFT\"",
-			"\"A.f8d6e0586b0a20c7.NFTStorefrontV2\"",
-			"\"A.f8d6e0586b0a20c7.NFTStorefront\"",
-		},
-		scriptResult.Logs,
-	)
-	assert.Equal(t, cadence.NewBool(true), scriptResult.Value)
+		scriptResult, err := b.ExecuteScript([]byte(scriptCode), [][]byte{})
+		require.NoError(t, err)
+		assert.ElementsMatch(
+			t,
+			[]string{
+				fmt.Sprintf("\"A.%s.FUSD\"", serviceAccount),
+				fmt.Sprintf("\"A.%s.NonFungibleToken\"", serviceAccount),
+				fmt.Sprintf("\"A.%s.MetadataViews\"", serviceAccount),
+				fmt.Sprintf("\"A.%s.ExampleNFT\"", serviceAccount),
+				fmt.Sprintf("\"A.%s.NFTStorefrontV2\"", serviceAccount),
+				fmt.Sprintf("\"A.%s.NFTStorefront\"", serviceAccount),
+			},
+			scriptResult.Logs,
+		)
+		assert.Equal(t, cadence.NewBool(true), scriptResult.Value)
+	}
 }
