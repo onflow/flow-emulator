@@ -19,30 +19,23 @@ func TestCommonContractsDeployment(t *testing.T) {
 		flowgo.MonotonicEmulator.Chain(),
 	}
 
-	contracts := []string{
-		"FUSD",
-		"MetadataViews",
-		"ExampleNFT",
-		"NFTStorefrontV2",
-		"NFTStorefront",
-		"NonFungibleToken",
-	}
 	for _, chain := range chains {
+		contracts := emulator.NewCommonContracts(chain)
 
 		b, err := emulator.New(
-			emulator.Contracts(emulator.NewCommonContracts(chain)),
+			emulator.Contracts(contracts),
 			emulator.WithChainID(chain.ChainID()),
 		)
 		require.NoError(t, err)
 
-		serviceAccount := b.ServiceKey().Address.Hex()
-
 		for _, contract := range contracts {
+
+			require.Equal(t, contract.Address.Hex(), chain.ServiceAddress().Hex())
 
 			scriptCode := fmt.Sprintf(`
 			pub fun main() {
 				getAccount(0x%s).contracts.get(name: "%s") ?? panic("contract is not deployed")
-	    	}`, serviceAccount, contract)
+	    	}`, contract.Address, contract.Name)
 
 			scriptResult, err := b.ExecuteScript([]byte(scriptCode), [][]byte{})
 			require.NoError(t, err)
