@@ -889,9 +889,9 @@ func (b *Blockchain) GetTransactionResult(txID flowgo.Identifier) (*access.Trans
 		return nil, err
 	}
 
-	statusCode := codes.OK
+	statusCode := 0
 	if storedResult.ErrorCode > 0 {
-		statusCode = codes.Canceled
+		statusCode = 1
 	}
 	result := access.TransactionResult{
 		Status:        flowgo.TransactionStatusSealed,
