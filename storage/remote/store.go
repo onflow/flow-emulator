@@ -41,7 +41,6 @@ type Store struct {
 	archiveClient archive.APIClient
 	grpcConn      *grpc.ClientConn
 	archiveHost   string
-	accessHost    string
 	forkHeight    uint64
 }
 
