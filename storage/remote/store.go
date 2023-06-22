@@ -177,7 +177,10 @@ func New(provider storage.Store, options ...Option) (*Store, error) {
 		} else {
 			store.forkHeight = lastHeight
 		}
-		store.SetBlockHeight(store.forkHeight)
+		err = store.SetBlockHeight(store.forkHeight)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	store.DataGetter = store.forkedStore.(storage.DataGetter)

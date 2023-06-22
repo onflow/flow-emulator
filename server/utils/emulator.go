@@ -127,7 +127,7 @@ func (m EmulatorAPIServer) Rollback(w http.ResponseWriter, r *http.Request) {
 	err = m.emulator.RollbackToBlockHeight(height)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		_, _ = w.Write([]byte(err.Error()))
 		return
 	}
 
