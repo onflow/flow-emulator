@@ -2,11 +2,10 @@ package emulator_test
 
 import (
 	"fmt"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"testing"
 
-	"github.com/onflow/cadence"
 	"github.com/onflow/flow-emulator/emulator"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,47 +13,34 @@ func TestCommonContractsDeployment(t *testing.T) {
 
 	t.Parallel()
 
-	b, err := emulator.New(
-		emulator.Contracts(emulator.CommonContracts),
-	)
-	require.NoError(t, err)
+	//only test monotonic and emulator ( mainnet / testnet is used for remote debugging )
+	chains := []flowgo.Chain{
+		flowgo.Emulator.Chain(),
+		flowgo.MonotonicEmulator.Chain(),
+	}
 
-	serviceAccount := b.ServiceKey().Address.Hex()
-	scriptCode := fmt.Sprintf(`
-	    import
-	        FUSD,
-	        NonFungibleToken,
-	        MetadataViews,
-	        ExampleNFT,
-	        NFTStorefrontV2,
-	        NFTStorefront
-	    from 0x%s
+	for _, chain := range chains {
+		contracts := emulator.NewCommonContracts(chain)
 
-	    pub fun main(): Bool {
-	        log(Type<FUSD>().identifier)
-	        log(Type<NonFungibleToken>().identifier)
-	        log(Type<MetadataViews>().identifier)
-	        log(Type<ExampleNFT>().identifier)
-	        log(Type<NFTStorefrontV2>().identifier)
-	        log(Type<NFTStorefront>().identifier)
+		b, err := emulator.New(
+			emulator.Contracts(contracts),
+			emulator.WithChainID(chain.ChainID()),
+		)
+		require.NoError(t, err)
 
-	        return true
-	    }
-	`, serviceAccount)
+		for _, contract := range contracts {
 
-	scriptResult, err := b.ExecuteScript([]byte(scriptCode), [][]byte{})
-	require.NoError(t, err)
-	assert.ElementsMatch(
-		t,
-		[]string{
-			"\"A.f8d6e0586b0a20c7.FUSD\"",
-			"\"A.f8d6e0586b0a20c7.NonFungibleToken\"",
-			"\"A.f8d6e0586b0a20c7.MetadataViews\"",
-			"\"A.f8d6e0586b0a20c7.ExampleNFT\"",
-			"\"A.f8d6e0586b0a20c7.NFTStorefrontV2\"",
-			"\"A.f8d6e0586b0a20c7.NFTStorefront\"",
-		},
-		scriptResult.Logs,
-	)
-	assert.Equal(t, cadence.NewBool(true), scriptResult.Value)
+			require.Equal(t, contract.Address.Hex(), chain.ServiceAddress().Hex())
+
+			scriptCode := fmt.Sprintf(`
+			pub fun main() {
+				getAccount(0x%s).contracts.get(name: "%s") ?? panic("contract is not deployed")
+	    	}`, contract.Address, contract.Name)
+
+			scriptResult, err := b.ExecuteScript([]byte(scriptCode), [][]byte{})
+			require.NoError(t, err)
+			require.NoError(t, scriptResult.Error)
+
+		}
+	}
 }
