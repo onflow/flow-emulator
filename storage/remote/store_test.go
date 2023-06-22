@@ -53,8 +53,8 @@ type testClient struct {
 // newTestClient implements the archive archiveClient interface.
 //
 // The response data is obtained from fixture files which we created by
-// observing a real archiveClient usage. This data should be update once in a while
-// and this can be done by adding a simple observer to the real archiveClient call and
+// observing a real client usage. This data should be update once in a while
+// and this can be done by adding a simple observer to the real client call and
 // serializing the response to the files.
 func newTestClient() (*testClient, error) {
 	encoded, err := os.ReadFile("storage_registers_fixture")
