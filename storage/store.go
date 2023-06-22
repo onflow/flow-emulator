@@ -101,6 +101,8 @@ type Store interface {
 
 	// EventsByHeight returns the events in the block at the given height, optionally filtered by type.
 	EventsByHeight(ctx context.Context, blockHeight uint64, eventType string) ([]flowgo.Event, error)
+
+	SetBlockHeight(height uint64) error
 }
 
 type SnapshotProvider interface {

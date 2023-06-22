@@ -67,6 +67,11 @@ func New() *Store {
 
 var _ storage.Store = &Store{}
 
+func (s *Store) SetBlockHeight(height uint64) error {
+	//mem-store does not support SetBlockHeight
+	return nil
+}
+
 func (s *Store) Start() error {
 	return nil
 }
