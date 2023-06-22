@@ -913,9 +913,13 @@ func (b *Blockchain) getTransactionResult(txID flowgo.Identifier) (*access.Trans
 		return nil, err
 	}
 
+	statusCode := 0
+	if storedResult.ErrorCode > 0 {
+		statusCode = 1
+	}
 	result := access.TransactionResult{
 		Status:        flowgo.TransactionStatusSealed,
-		StatusCode:    uint(storedResult.ErrorCode),
+		StatusCode:    uint(statusCode),
 		ErrorMessage:  storedResult.ErrorMessage,
 		Events:        storedResult.Events,
 		TransactionID: txID,
