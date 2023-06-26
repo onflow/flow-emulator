@@ -293,9 +293,9 @@ func (m EmulatorAPIServer) Logs(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		if len(logs) == 0 {
-			json.NewEncoder(w).Encode([]string{})
+			_ = json.NewEncoder(w).Encode([]string{})
 		} else {
-			json.NewEncoder(w).Encode(logs)
+			_ = json.NewEncoder(w).Encode(logs)
 		}
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
