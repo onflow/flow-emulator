@@ -20,6 +20,7 @@ package utils
 
 import (
 	"fmt"
+
 	"github.com/logrusorgru/aurora"
 	"github.com/onflow/flow-emulator/types"
 	sdk "github.com/onflow/flow-go-sdk"
@@ -28,7 +29,7 @@ import (
 
 func PrintScriptResult(logger *zerolog.Logger, result *types.ScriptResult) {
 	if result.Succeeded() {
-		logger.Info().
+		logger.Debug().
 			Str("scriptID", result.ScriptID.String()).
 			Uint64("computationUsed", result.ComputationUsed).
 			Msg("⭐  Script executed")
@@ -37,14 +38,6 @@ func PrintScriptResult(logger *zerolog.Logger, result *types.ScriptResult) {
 			Str("scriptID", result.ScriptID.String()).
 			Uint64("computationUsed", result.ComputationUsed).
 			Msg("❗  Script reverted")
-	}
-
-	for _, log := range result.Logs {
-		logger.Debug().Msgf(
-			"%s %s",
-			logPrefix("LOG", result.ScriptID, aurora.BlueFg),
-			log,
-		)
 	}
 
 	if !result.Succeeded() {
@@ -58,7 +51,7 @@ func PrintScriptResult(logger *zerolog.Logger, result *types.ScriptResult) {
 
 func PrintTransactionResult(logger *zerolog.Logger, result *types.TransactionResult) {
 	if result.Succeeded() {
-		logger.Info().
+		logger.Debug().
 			Str("txID", result.TransactionID.String()).
 			Uint64("computationUsed", result.ComputationUsed).
 			Msg("⭐  Transaction executed")
@@ -67,14 +60,6 @@ func PrintTransactionResult(logger *zerolog.Logger, result *types.TransactionRes
 			Str("txID", result.TransactionID.String()).
 			Uint64("computationUsed", result.ComputationUsed).
 			Msg("❗  Transaction reverted")
-	}
-
-	for _, log := range result.Logs {
-		logger.Info().Msgf(
-			"%s %s",
-			logPrefix("LOG", result.TransactionID, aurora.BlueFg),
-			log,
-		)
 	}
 
 	for _, event := range result.Events {
