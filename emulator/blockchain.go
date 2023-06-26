@@ -1294,7 +1294,7 @@ func (b *Blockchain) executeAndCommitBlock() (*flowgo.Block, []*types.Transactio
 	}
 
 	blockID := block.ID()
-	b.conf.ServerLogger.Info().Fields(map[string]any{
+	b.conf.ServerLogger.Debug().Fields(map[string]any{
 		"blockHeight": block.Header.Height,
 		"blockID":     hex.EncodeToString(blockID[:]),
 	}).Msgf("📦 Block #%d committed", block.Header.Height)
