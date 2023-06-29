@@ -291,16 +291,14 @@ func (m EmulatorAPIServer) Logs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err == nil {
-		if len(logs) == 0 {
-			_ = json.NewEncoder(w).Encode([]string{})
-		} else {
-			_ = json.NewEncoder(w).Encode(logs)
-		}
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	if len(logs) == 0 {
+		err = json.NewEncoder(w).Encode([]string{})
+	} else {
+		err = json.NewEncoder(w).Encode(logs)
 	}
 
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
