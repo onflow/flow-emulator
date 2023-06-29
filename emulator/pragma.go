@@ -94,34 +94,32 @@ func ExtractPragmas(code string) (result PragmaList) {
 	}
 
 	program.Walk(func(el ast.Element) {
-		if el.ElementType() == ast.ElementTypePragmaDeclaration {
-			pragmaDeclaration, ok := el.(*ast.PragmaDeclaration)
-			if !ok {
-				return
-			}
-			expression, ok := pragmaDeclaration.Expression.(*ast.InvocationExpression)
-			if !ok {
-				return
-			}
-
-			if len(expression.Arguments) > 1 {
-				return
-			}
-			var argument = ""
-			if len(expression.Arguments) == 1 {
-				stringParameter, ok := expression.Arguments[0].Expression.(*ast.StringExpression)
-				if !ok {
-					return
-				}
-				argument = stringParameter.Value
-			}
-
-			result = append(result, &BasicPragma{
-				name:     expression.InvokedExpression.String(),
-				argument: argument,
-			})
-
+		pragmaDeclaration, ok := el.(*ast.PragmaDeclaration)
+		if !ok {
+			return
 		}
+		expression, ok := pragmaDeclaration.Expression.(*ast.InvocationExpression)
+		if !ok {
+			return
+		}
+
+		if len(expression.Arguments) > 1 {
+			return
+		}
+		
+		var argument string
+		if len(expression.Arguments) == 1 {
+			stringParameter, ok := expression.Arguments[0].Expression.(*ast.StringExpression)
+			if !ok {
+				return
+			}
+			argument = stringParameter.Value
+		}
+
+		result = append(result, &BasicPragma{
+			name:     expression.InvokedExpression.String(),
+			argument: argument,
+		})
 	})
 
 	return result
