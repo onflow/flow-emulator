@@ -65,7 +65,9 @@ func TestSourceFilePragmaForTransaction(t *testing.T) {
 	logger := zerolog.Nop()
 	adapter := adapters.NewSDKAdapter(&logger, b)
 
-	txCode := `#sourceFile("transaction.cdc")	
+	txCode := `
+		//some comment 
+		#sourceFile("transaction.cdc")	
 		transaction{
 		}
 	`
@@ -116,6 +118,44 @@ func TestSourceFilePragmaForContract(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "contracts/C.cdc", b.GetSourceFile(common.NewAddressLocation(
+		nil,
+		common.Address(b.ServiceKey().Address),
+		"C",
+	)))
+}
+
+func TestSourceFileCommentedOutPragmaForContract(t *testing.T) {
+
+	t.Parallel()
+
+	b, err := emulator.New(
+		emulator.WithTransactionValidationEnabled(false),
+	)
+	b.EnableAutoMine()
+
+	require.NoError(t, err)
+	logger := zerolog.Nop()
+	adapter := adapters.NewSDKAdapter(&logger, b)
+
+	contract := `//#sourceFile("contracts/C.cdc")		
+				pub contract C {
+				}`
+
+	tx := templates.AddAccountContract(
+		b.ServiceKey().Address,
+		templates.Contract{
+			Name:   "C",
+			Source: contract,
+		})
+
+	tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber+1).
+		SetPayer(b.ServiceKey().Address)
+
+	err = adapter.SendTransaction(context.Background(), *tx)
+	require.NoError(t, err)
+
+	assert.Equal(t, "A.f8d6e0586b0a20c7.C", b.GetSourceFile(common.NewAddressLocation(
 		nil,
 		common.Address(b.ServiceKey().Address),
 		"C",
