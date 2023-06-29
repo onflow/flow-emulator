@@ -20,9 +20,9 @@ package emulator
 
 import (
 	"fmt"
-	"github.com/onflow/cadence/runtime/common"
 
 	"github.com/onflow/cadence/runtime"
+	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
 	flowgosdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
