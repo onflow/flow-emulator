@@ -29,6 +29,17 @@ var (
 
 type PragmaList []Pragma
 
+// This is regular expression to parse basic pragmas
+// although cadence supports more advanced stuff, currently we support pragmas like below:
+// # + identifier +  invocation with optional string parameter ( we don't support invocation parameter labels )
+// examples:
+//
+// #sourceFile("scripts.cdc")
+// #debugger()
+//
+// Regex is:
+// # + IdentifierHead + repeatMinZero(IdentifierCharacter) + '(' + repeatMinZero('"' + CapturedParameter + '"' + ')'
+// # ( [a-zA-Z_]        ([0-9a-zA-Z_]*)?                      )    ( \(          \"         ([^\"]*?)      \"    \) )?
 var pragmaRegexp = regexp.MustCompile(`#([a-zA-Z_]([0-9a-zA-Z_]*)?)(\(\"([^\"]*?)\"\))?`)
 
 type Pragma interface {
