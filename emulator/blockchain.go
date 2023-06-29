@@ -1180,7 +1180,7 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 
 	pragmas := ExtractPragmas(b.currentCode)
 
-	if b.activeDebuggingSession && pragmas.HasPragma("debug") {
+	if b.activeDebuggingSession && pragmas.Contains(PragmaDebug) {
 		b.debugger.RequestPause()
 	}
 
@@ -1203,9 +1203,9 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 	}
 
 	//add to source map if any pragma
-	if pragmas.HasPragma("sourceFile") {
+	if pragmas.Contains(PragmaSourceFile) {
 		location := common.NewTransactionLocation(nil, tr.TransactionID.Bytes())
-		sourceFile := pragmas.ArgumentForPragma("sourceFile")
+		sourceFile := pragmas.FilterByName(PragmaSourceFile).First().Argument()
 		b.sourceFileMap[location] = sourceFile
 	}
 
@@ -1379,7 +1379,7 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 
 	pragmas := ExtractPragmas(b.currentCode)
 
-	if b.activeDebuggingSession && pragmas.HasPragma("debug") {
+	if b.activeDebuggingSession && pragmas.Contains(PragmaDebug) {
 		b.debugger.RequestPause()
 	}
 	_, output, err := b.vm.Run(
@@ -1407,9 +1407,9 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 	}
 
 	//add to source map if any pragma
-	if pragmas.HasPragma("sourceFile") {
+	if pragmas.Contains(PragmaSourceFile) {
 		location := common.NewScriptLocation(nil, scriptID.Bytes())
-		sourceFile := pragmas.ArgumentForPragma("sourceFile")
+		sourceFile := pragmas.FilterByName(PragmaSourceFile).First().Argument()
 		b.sourceFileMap[location] = sourceFile
 	}
 
@@ -1619,8 +1619,8 @@ func (b *Blockchain) GetSourceFile(location common.Location) string {
 			return location.ID()
 		}
 		pragmas := ExtractPragmas(string(code))
-		if pragmas.HasPragma("sourceFile") {
-			return pragmas.ArgumentForPragma("sourceFile")
+		if pragmas.Contains(PragmaSourceFile) {
+			return pragmas.FilterByName(PragmaSourceFile).First().Argument()
 		}
 	}
 

@@ -22,38 +22,77 @@ import (
 	"regexp"
 )
 
+var (
+	PragmaDebug      = "debug"
+	PragmaSourceFile = "sourceFile"
+)
+
 type PragmaList []Pragma
 
-type Pragma struct {
-	Name     string
-	Argument string
+var pragmaRegexp = regexp.MustCompile(`#([a-zA-Z_]([0-9a-zA-Z_]*)?)(\(\"([^\"]*?)\"\))?`)
+
+type Pragma interface {
+	Name() string
+	Argument() string
 }
 
-func (l PragmaList) HasPragma(name string) bool {
+var _ Pragma = &BasicPragma{}
+
+type BasicPragma struct {
+	name     string
+	argument string
+}
+
+func (p *BasicPragma) Name() string {
+	return p.name
+}
+
+func (p *BasicPragma) Argument() string {
+	return p.argument
+}
+
+func (l PragmaList) FilterByName(name string) (result PragmaList) {
+	result = PragmaList{}
 	for _, p := range l {
-		if p.Name == name {
+		if p.Name() == name {
+			result = append(result, p)
+		}
+	}
+	return result
+}
+
+func (l PragmaList) First() Pragma {
+	if len(l) == 0 {
+		return nil
+	}
+	return l[0]
+}
+
+func (l PragmaList) Contains(name string) bool {
+	for _, p := range l {
+		if p.Name() == name {
 			return true
 		}
 	}
 	return false
 }
 
-func (l PragmaList) ArgumentForPragma(name string) string {
+func (l PragmaList) Count(name string) int {
+	c := 0
 	for _, p := range l {
-		if p.Name == name {
-			return p.Argument
+		if p.Name() == name {
+			c = c + 1
 		}
 	}
-	return ""
+	return c
 }
 
 func ExtractPragmas(code string) (result PragmaList) {
 	result = make(PragmaList, 0)
-	r := regexp.MustCompile(`#([a-zA-Z]*)(\(\"([^\"]*?)\"\))?`)
-	for _, match := range r.FindAllStringSubmatch(code, -1) {
-		result = append(result, Pragma{
-			Name:     match[1],
-			Argument: match[3],
+	for _, match := range pragmaRegexp.FindAllStringSubmatch(code, -1) {
+		result = append(result, &BasicPragma{
+			name:     match[1],
+			argument: match[4],
 		})
 	}
 	return result
