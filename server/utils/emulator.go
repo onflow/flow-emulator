@@ -281,7 +281,7 @@ func (m EmulatorAPIServer) Logs(w http.ResponseWriter, r *http.Request) {
 
 	identifier, err := flowgo.HexStringToIdentifier(id)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
