@@ -1621,26 +1621,28 @@ func (b *Blockchain) GetSourceFile(location common.Location) string {
 	}
 
 	addressLocation, isAddressLocation := location.(common.AddressLocation)
-	if isAddressLocation {
-		view := b.pendingBlock.ledgerState.NewChild()
+	if !isAddressLocation {
+		return location.ID()
+	}
+	view := b.pendingBlock.ledgerState.NewChild()
 
-		env := environment.NewScriptEnvironmentFromStorageSnapshot(
-			b.vmCtx.EnvironmentParams,
-			view)
+	env := environment.NewScriptEnvironmentFromStorageSnapshot(
+		b.vmCtx.EnvironmentParams,
+		view)
 
-		r := b.vmCtx.Borrow(env)
-		defer b.vmCtx.Return(r)
+	r := b.vmCtx.Borrow(env)
+	defer b.vmCtx.Return(r)
 
-		code, err := r.GetAccountContractCode(addressLocation)
+	code, err := r.GetAccountContractCode(addressLocation)
 
-		if err != nil {
-			return location.ID()
-		}
-		pragmas := ExtractPragmas(string(code))
-		if pragmas.Contains(PragmaSourceFile) {
-			return pragmas.FilterByName(PragmaSourceFile).First().Argument()
-		}
+	if err != nil {
+		return location.ID()
+	}
+	pragmas := ExtractPragmas(string(code))
+	if pragmas.Contains(PragmaSourceFile) {
+		return pragmas.FilterByName(PragmaSourceFile).First().Argument()
 	}
 
 	return location.ID()
+
 }
