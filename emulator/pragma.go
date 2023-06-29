@@ -19,7 +19,8 @@
 package emulator
 
 import (
-	"regexp"
+	"github.com/onflow/cadence/runtime/ast"
+	"github.com/onflow/cadence/runtime/parser"
 )
 
 var (
@@ -28,19 +29,6 @@ var (
 )
 
 type PragmaList []Pragma
-
-// This is regular expression to parse basic pragmas
-// although cadence supports more advanced stuff, currently we support pragmas like below:
-// # + identifier +  invocation with optional string parameter ( we don't support invocation parameter labels )
-// examples:
-//
-// #sourceFile("scripts.cdc")
-// #debugger()
-//
-// Regex is:
-// # + IdentifierHead + repeatMinZero(IdentifierCharacter) + '(' + repeatMinZero('"' + CapturedParameter + '"' + ')'
-// # ( [a-zA-Z_]        ([0-9a-zA-Z_]*)?                      )    ( \(          \"         ([^\"]*?)      \"    \) )?
-var pragmaRegexp = regexp.MustCompile(`#([a-zA-Z_]([0-9a-zA-Z_]*)?)(\(\"([^\"]*?)\"\))?`)
 
 type Pragma interface {
 	Name() string
@@ -99,12 +87,42 @@ func (l PragmaList) Count(name string) int {
 }
 
 func ExtractPragmas(code string) (result PragmaList) {
-	result = make(PragmaList, 0)
-	for _, match := range pragmaRegexp.FindAllStringSubmatch(code, -1) {
-		result = append(result, &BasicPragma{
-			name:     match[1],
-			argument: match[4],
-		})
+
+	program, err := parser.ParseProgram(nil, []byte(code), parser.Config{})
+	if err != nil {
+		return PragmaList{}
 	}
+
+	program.Walk(func(el ast.Element) {
+		if el.ElementType() == ast.ElementTypePragmaDeclaration {
+			pragmaDeclaration, ok := el.(*ast.PragmaDeclaration)
+			if !ok {
+				return
+			}
+			expression, ok := pragmaDeclaration.Expression.(*ast.InvocationExpression)
+			if !ok {
+				return
+			}
+
+			if len(expression.Arguments) > 1 {
+				return
+			}
+			var argument = ""
+			if len(expression.Arguments) == 1 {
+				stringParameter, ok := expression.Arguments[0].Expression.(*ast.StringExpression)
+				if !ok {
+					return
+				}
+				argument = stringParameter.Value
+			}
+
+			result = append(result, &BasicPragma{
+				name:     expression.InvokedExpression.String(),
+				argument: argument,
+			})
+
+		}
+	})
+
 	return result
 }
