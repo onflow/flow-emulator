@@ -17,7 +17,7 @@ require (
 	github.com/onflow/flow-archive v1.3.4-0.20230503192214-9e81e82d4dcc
 	github.com/onflow/flow-go v0.31.1-0.20230622201809-5001508cc224
 	github.com/onflow/flow-go-sdk v0.41.6
-	github.com/onflow/flow-go/crypto v0.24.7
+	github.com/onflow/flow-go/crypto v0.24.8
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
 	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20230602212908-08fc6536d391
 	github.com/onflow/fusd/lib/go/contracts v0.0.0-20211021081023-ae9de8fb2c7e
@@ -160,6 +160,7 @@ require (
 	golang.org/x/term v0.7.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
+	gonum.org/v1/gonum v0.8.2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
