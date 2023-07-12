@@ -1,6 +1,6 @@
 module github.com/onflow/flow-emulator
 
-go 1.18
+go 1.19
 
 require (
 	github.com/fxamacker/cbor/v2 v2.4.1-0.20230228173756-c0c9f774e40c
