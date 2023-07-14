@@ -107,14 +107,12 @@ func (a testClient) GetEvents(ctx context.Context, in *archive.GetEventsRequest,
 }
 
 func (a testClient) GetRegisterValues(ctx context.Context, in *archive.GetRegisterValuesRequest, opts ...grpc.CallOption) (*archive.GetRegisterValuesResponse, error) {
-	val, ok := a.registerMap[hex.EncodeToString(in.Paths[0])]
+	val, ok := a.registerMap[hex.EncodeToString(in.Registers[0])]
 	if !ok {
 		return nil, fmt.Errorf("register not found in test fixture")
 	}
 
 	return &archive.GetRegisterValuesResponse{
-		Height: in.Height,
-		Paths:  in.Paths,
 		Values: [][]byte{val},
 	}, nil
 }
