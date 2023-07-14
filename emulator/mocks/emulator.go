@@ -403,6 +403,21 @@ func (mr *MockEmulatorMockRecorder) GetLatestBlock() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestBlock", reflect.TypeOf((*MockEmulator)(nil).GetLatestBlock))
 }
 
+// GetLogs mocks base method.
+func (m *MockEmulator) GetLogs(arg0 flow.Identifier) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLogs", arg0)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLogs indicates an expected call of GetLogs.
+func (mr *MockEmulatorMockRecorder) GetLogs(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLogs", reflect.TypeOf((*MockEmulator)(nil).GetLogs), arg0)
+}
+
 // GetNetworkParameters mocks base method.
 func (m *MockEmulator) GetNetworkParameters() access.NetworkParameters {
 	m.ctrl.T.Helper()

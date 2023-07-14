@@ -162,6 +162,10 @@ type ExecutionCapable interface {
 	CommitBlock() (*flowgo.Block, error)
 }
 
+type LogProvider interface {
+	GetLogs(flowgo.Identifier) ([]string, error)
+}
+
 // Emulator defines the method set of an emulated emulator.
 type Emulator interface {
 	ServiceKey() ServiceKey
@@ -174,4 +178,5 @@ type Emulator interface {
 	RollbackCapable
 	AutoMineCapable
 	ExecutionCapable
+	LogProvider
 }
