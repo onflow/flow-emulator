@@ -57,6 +57,8 @@ func NewEmulatorAPIServer(emulator emulator.Emulator, adapter *adapters.AccessAd
 	router.HandleFunc("/emulator/snapshots", r.SnapshotList).Methods("GET")
 	router.HandleFunc("/emulator/snapshots/{name}", r.SnapshotJump).Methods("PUT")
 
+	router.HandleFunc("/emulator/logs/{id}", r.Logs).Methods("GET")
+
 	router.HandleFunc("/emulator/config", r.Config)
 
 	router.HandleFunc("/emulator/codeCoverage", r.CodeCoverage).Methods("GET")
@@ -240,4 +242,33 @@ func (m EmulatorAPIServer) ResetCodeCoverage(w http.ResponseWriter, r *http.Requ
 	w.Header().Set("Content-Type", "application/json")
 	m.emulator.ResetCoverageReport()
 	w.WriteHeader(http.StatusOK)
+}
+
+func (m EmulatorAPIServer) Logs(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	identifier, err := flowgo.HexStringToIdentifier(id)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	logs, err := m.emulator.GetLogs(identifier)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	if len(logs) == 0 {
+		err = json.NewEncoder(w).Encode([]string{})
+	} else {
+		err = json.NewEncoder(w).Encode(logs)
+	}
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
