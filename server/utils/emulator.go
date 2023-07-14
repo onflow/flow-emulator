@@ -23,15 +23,12 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gorilla/mux"
+	flowgo "github.com/onflow/flow-go/model/flow"
+	"golang.org/x/exp/slices"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
-	flowgo "github.com/onflow/flow-go/model/flow"
-
-	fvmerrors "github.com/onflow/flow-go/fvm/errors"
-
-	"github.com/gorilla/mux"
-
-	"golang.org/x/exp/slices"
 )
 
 type BlockResponse struct {
@@ -62,8 +59,6 @@ func NewEmulatorAPIServer(emulator emulator.Emulator, adapter *adapters.AccessAd
 	router.HandleFunc("/emulator/snapshots/{name}", r.SnapshotJump).Methods("PUT")
 
 	router.HandleFunc("/emulator/logs/{id}", r.Logs).Methods("GET")
-
-	router.HandleFunc("/emulator/storages/{address}", r.Storage)
 
 	router.HandleFunc("/emulator/config", r.Config)
 
@@ -232,30 +227,6 @@ func (m EmulatorAPIServer) SnapshotCreate(w http.ResponseWriter, r *http.Request
 		return
 	}
 	m.latestBlockResponse(name, w)
-}
-
-func (m EmulatorAPIServer) Storage(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	vars := mux.Vars(r)
-	address := vars["address"]
-
-	addr := flowgo.HexToAddress(address)
-
-	accountStorage, err := m.emulator.GetAccountStorage(addr)
-	if err != nil {
-		if fvmerrors.IsAccountNotFoundError(err) {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	err = json.NewEncoder(w).Encode(accountStorage)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
 }
 
 func (m EmulatorAPIServer) CodeCoverage(w http.ResponseWriter, r *http.Request) {

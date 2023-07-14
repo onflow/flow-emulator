@@ -26,7 +26,6 @@ import (
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/flow-emulator/convert"
 	emulator "github.com/onflow/flow-emulator/emulator"
-	types "github.com/onflow/flow-emulator/types"
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -348,10 +347,6 @@ func (b *SDKAdapter) executeScriptAtBlock(script []byte, arguments [][]byte, blo
 		return nil, err
 	}
 	return valueBytes, nil
-}
-
-func (b *SDKAdapter) GetAccountStorage(address sdk.Address) (*types.AccountStorage, error) {
-	return b.emulator.GetAccountStorage(convert.SDKAddressToFlow(address))
 }
 
 func (b *SDKAdapter) GetLatestProtocolStateSnapshot(_ context.Context) ([]byte, error) {

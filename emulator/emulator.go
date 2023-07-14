@@ -144,8 +144,6 @@ type AccessProvider interface {
 	ExecuteScriptAtBlockHeight(script []byte, arguments [][]byte, blockHeight uint64) (*types.ScriptResult, error)
 	ExecuteScriptAtBlockID(script []byte, arguments [][]byte, id flowgo.Identifier) (*types.ScriptResult, error)
 
-	GetAccountStorage(address flowgo.Address) (*types.AccountStorage, error)
-
 	SendTransaction(tx *flowgo.TransactionBody) error
 	AddTransaction(tx flowgo.TransactionBody) error
 }

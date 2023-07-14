@@ -268,21 +268,6 @@ func (mr *MockEmulatorMockRecorder) GetAccountByIndex(arg0 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountByIndex", reflect.TypeOf((*MockEmulator)(nil).GetAccountByIndex), arg0)
 }
 
-// GetAccountStorage mocks base method.
-func (m *MockEmulator) GetAccountStorage(arg0 flow.Address) (*types.AccountStorage, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAccountStorage", arg0)
-	ret0, _ := ret[0].(*types.AccountStorage)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAccountStorage indicates an expected call of GetAccountStorage.
-func (mr *MockEmulatorMockRecorder) GetAccountStorage(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountStorage", reflect.TypeOf((*MockEmulator)(nil).GetAccountStorage), arg0)
-}
-
 // GetAccountUnsafe mocks base method.
 func (m *MockEmulator) GetAccountUnsafe(arg0 flow.Address) (*flow.Account, error) {
 	m.ctrl.T.Helper()
