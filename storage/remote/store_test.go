@@ -50,7 +50,7 @@ type testClient struct {
 	header      []byte
 }
 
-// newTestClient implements the archive archiveClient interface.
+// newTestClient implements the archive client interface.
 //
 // The response data is obtained from fixture files which we created by
 // observing a real client usage. This data should be update once in a while
