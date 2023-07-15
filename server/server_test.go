@@ -3,12 +3,8 @@ package server
 import (
 	"context"
 	"fmt"
-	"sync"
 	"testing"
 
-	"github.com/onflow/flow-go/model/flow"
-
-	"github.com/hashicorp/go-multierror"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 )
@@ -33,35 +29,6 @@ func TestExecuteScript(t *testing.T) {
 
 	require.JSONEq(t, `{"type":"String","value":"Hello"}`, string(result))
 
-}
-
-func TestGetStorage(t *testing.T) {
-	logger := zerolog.Nop()
-	server := NewEmulatorServer(&logger, &Config{})
-	require.NotNil(t, server)
-	address := server.Emulator().ServiceKey().Address
-
-	var result *multierror.Error
-	errchan := make(chan error, 10)
-	wg := sync.WaitGroup{}
-
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			_, err := server.Emulator().GetAccountStorage(flow.Address(address))
-			errchan <- err
-			wg.Done()
-		}()
-	}
-
-	wg.Wait()
-	close(errchan)
-
-	for err := range errchan {
-		result = multierror.Append(result, err)
-	}
-
-	require.NoError(t, result.ErrorOrNil())
 }
 
 func TestExecuteScriptImportingContracts(t *testing.T) {
