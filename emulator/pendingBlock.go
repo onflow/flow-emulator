@@ -24,6 +24,7 @@ type pendingBlock struct {
 	height    uint64
 	view      uint64
 	parentID  flowgo.Identifier
+	clock     Clock
 	timestamp time.Time
 	// mapping from transaction ID to transaction
 	transactions map[flowgo.Identifier]*flowgo.TransactionBody
@@ -43,15 +44,16 @@ type pendingBlock struct {
 func newPendingBlock(
 	prevBlock *flowgo.Block,
 	ledgerSnapshot snapshot.StorageSnapshot,
+	clock Clock,
 ) *pendingBlock {
-
 	return &pendingBlock{
 		height: prevBlock.Header.Height + 1,
 		// the view increments by between 1 and MaxViewIncrease to match
 		// behaviour on a real network, where views are not consecutive
 		view:               prevBlock.Header.View + uint64(rand.Intn(MaxViewIncrease)+1),
 		parentID:           prevBlock.ID(),
-		timestamp:          time.Now().UTC(),
+		clock:              clock,
+		timestamp:          clock.Now(),
 		transactions:       make(map[flowgo.Identifier]*flowgo.TransactionBody),
 		transactionIDs:     make([]flowgo.Identifier, 0),
 		transactionResults: make(map[flowgo.Identifier]IndexedTransactionResult),
@@ -212,4 +214,12 @@ func (b *pendingBlock) Size() int {
 // Empty returns true if the pending block is empty.
 func (b *pendingBlock) Empty() bool {
 	return b.Size() == 0
+}
+
+// SetClock sets the given clock on the pending block.
+// After this block is committed, the block timestamp will
+// contain the value of clock.Now().
+func (b *pendingBlock) SetClock(clock Clock) {
+	b.clock = clock
+	b.timestamp = clock.Now()
 }
