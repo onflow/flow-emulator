@@ -25,24 +25,6 @@ func NewCommonContracts(chain flowgo.Chain) []ContractDescription {
 			Source:      fusd.FUSD(ftAddress.String()),
 		},
 		{
-			Name:        "NonFungibleToken",
-			Address:     serviceAddress,
-			Description: "✨  NFT contract",
-			Source:      contracts.NonFungibleToken(),
-		},
-		{
-			Name:        "ViewResolver",
-			Address:     serviceAddress,
-			Description: "✨  Metadata views contract",
-			Source:      contracts.Resolver(),
-		},
-		{
-			Name:        "MetadataViews",
-			Address:     serviceAddress,
-			Description: "✨  Metadata views contract",
-			Source:      contracts.MetadataViews(ftAddress, serviceAddress),
-		},
-		{
 			Name:        "ExampleNFT",
 			Address:     serviceAddress,
 			Description: "✨  Example NFT contract",
