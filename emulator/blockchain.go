@@ -61,6 +61,7 @@ func New(opts ...Option) (*Blockchain, error) {
 		debugger:               nil,
 		activeDebuggingSession: false,
 		conf:                   conf,
+		clock:                  NewSystemClock(),
 	}
 	err := b.ReloadBlockchain()
 	if err != nil {
@@ -280,6 +281,7 @@ type Blockchain struct {
 
 	// pending block containing block info, register state, pending transactions
 	pendingBlock *pendingBlock
+	clock        Clock
 
 	// used to execute transactions and scripts
 	vm    *fvm.VirtualMachine
@@ -399,7 +401,7 @@ func (b *Blockchain) ReloadBlockchain() error {
 		return err
 	}
 
-	b.pendingBlock = newPendingBlock(latestBlock, latestLedger)
+	b.pendingBlock = newPendingBlock(latestBlock, latestLedger, b.clock)
 	b.transactionValidator = configureTransactionValidator(b.conf, blocks)
 
 	return nil
@@ -1263,7 +1265,7 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	}
 
 	// reset pending block using current block and ledger state
-	b.pendingBlock = newPendingBlock(block, ledger)
+	b.pendingBlock = newPendingBlock(block, ledger, b.clock)
 
 	return block, nil
 }
@@ -1321,7 +1323,7 @@ func (b *Blockchain) ResetPendingBlock() error {
 	}
 
 	// reset pending block using latest committed block and ledger state
-	b.pendingBlock = newPendingBlock(&latestBlock, latestLedger)
+	b.pendingBlock = newPendingBlock(&latestBlock, latestLedger, b.clock)
 
 	return nil
 }
@@ -1567,4 +1569,12 @@ func (b *Blockchain) GetLogs(identifier flowgo.Identifier) ([]string, error) {
 
 	}
 	return txResult.Logs, nil
+}
+
+// SetClock sets the given clock on blockchain's pending block.
+// After this block is committed, the block timestamp will
+// contain the value of clock.Now().
+func (b *Blockchain) SetClock(clock Clock) {
+	b.clock = clock
+	b.pendingBlock.SetClock(clock)
 }
