@@ -157,19 +157,72 @@ func TestInfiniteScript(t *testing.T) {
 
 	t.Parallel()
 
-	const limit = 1000
+	const limit = 90
 	b, err := emulator.New(
 		emulator.WithScriptGasLimit(limit),
 	)
 	require.NoError(t, err)
 
 	const code = `
-      pub fun main() {
-          main()
-      }
-    `
+		pub fun main() {
+			main()
+		}
+	`
 	result, err := b.ExecuteScript([]byte(code), nil)
 	require.NoError(t, err)
 
 	require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
+}
+
+func TestScriptExecutionLimit(t *testing.T) {
+
+	t.Parallel()
+
+	const code = `
+		pub fun main() {
+			var s: Int256 = 1024102410241024
+			var i: Int256 = 0
+			var a: Int256 = 7
+			var b: Int256 = 5
+			var c: Int256 = 2
+
+			while i < 150000 {
+				s = s * a
+				s = s / b
+				s = s / c
+				i = i + 1
+			}
+		}
+	`
+
+	t.Run("ExceedingLimit", func(t *testing.T) {
+
+		t.Parallel()
+
+		const limit = 2000
+		b, err := emulator.New(
+			emulator.WithScriptGasLimit(limit),
+		)
+		require.NoError(t, err)
+
+		result, err := b.ExecuteScript([]byte(code), nil)
+		require.NoError(t, err)
+
+		require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
+	})
+
+	t.Run("SufficientLimit", func(t *testing.T) {
+
+		t.Parallel()
+
+		const limit = 19000
+		b, err := emulator.New(
+			emulator.WithScriptGasLimit(limit),
+		)
+		require.NoError(t, err)
+
+		result, err := b.ExecuteScript([]byte(code), nil)
+		require.NoError(t, err)
+		require.NoError(t, result.Error)
+	})
 }

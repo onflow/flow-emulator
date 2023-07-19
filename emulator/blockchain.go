@@ -15,6 +15,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 	"time"
@@ -38,6 +39,7 @@ import (
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
 	"github.com/onflow/flow-go/fvm/environment"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
+	"github.com/onflow/flow-go/fvm/meter"
 	reusableRuntime "github.com/onflow/flow-go/fvm/runtime"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -538,7 +540,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithBlocks(blocks),
 		fvm.WithContractDeploymentRestricted(false),
 		fvm.WithContractRemovalRestricted(!conf.ContractRemovalEnabled),
-		fvm.WithGasLimit(conf.ScriptGasLimit),
+		fvm.WithComputationLimit(conf.ScriptGasLimit),
 		fvm.WithCadenceLogging(true),
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
@@ -692,33 +694,23 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 	options = append(options,
 		fvm.WithInitialTokenSupply(supply),
 		fvm.WithRestrictedAccountCreationEnabled(false),
+		fvm.WithTransactionFee(fvm.DefaultTransactionFees),
+		fvm.WithExecutionMemoryLimit(math.MaxUint32),
+		fvm.WithExecutionMemoryWeights(meter.DefaultMemoryWeights),
+		fvm.WithExecutionEffortWeights(map[common.ComputationKind]uint64{
+			common.ComputationKindStatement:          1569,
+			common.ComputationKindLoop:               1569,
+			common.ComputationKindFunctionInvocation: 1569,
+			environment.ComputationKindGetValue:      808,
+			environment.ComputationKindCreateAccount: 2837670,
+			environment.ComputationKindSetValue:      765,
+		}),
 	)
 	if conf.StorageLimitEnabled {
 		options = append(options,
 			fvm.WithAccountCreationFee(conf.MinimumStorageReservation),
 			fvm.WithMinimumStorageReservation(conf.MinimumStorageReservation),
 			fvm.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
-		)
-	}
-	if conf.TransactionFeesEnabled {
-		// This enables variable transaction fees AND execution effort metering
-		// as described in Variable Transaction Fees: Execution Effort FLIP: https://github.com/onflow/flow/pull/753)
-		// TODO: In the future this should be an injectable parameter. For now this is hard coded
-		// as this is the first iteration of variable execution fees.
-		options = append(options,
-			fvm.WithTransactionFee(fvm.BootstrapProcedureFeeParameters{
-				SurgeFactor:         cadence.UFix64(100_000_000), // 1.0
-				InclusionEffortCost: cadence.UFix64(100),         // 1E-6
-				ExecutionEffortCost: cadence.UFix64(499_000_000), // 4.99
-			}),
-			fvm.WithExecutionEffortWeights(map[common.ComputationKind]uint64{
-				common.ComputationKindStatement:          1569,
-				common.ComputationKindLoop:               1569,
-				common.ComputationKindFunctionInvocation: 1569,
-				environment.ComputationKindGetValue:      808,
-				environment.ComputationKindCreateAccount: 2837670,
-				environment.ComputationKindSetValue:      765,
-			}),
 		)
 	}
 	return fvm.Bootstrap(
