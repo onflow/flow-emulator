@@ -1774,15 +1774,15 @@ func TestInfiniteTransaction(t *testing.T) {
 	)
 
 	const code = `
-	    pub fun test() {
-	        test()
-	    }
+		pub fun test() {
+			test()
+		}
 
-	    transaction {
-	        execute {
-	            test()
-	        }
-	    }
+		transaction {
+			execute {
+				test()
+			}
+		}
 	`
 
 	// Create a new account
@@ -1816,127 +1816,113 @@ func TestInfiniteTransaction(t *testing.T) {
 	require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
 }
 
-func TestTransactionWithExceedingComputationLimit(t *testing.T) {
+func TestTransactionExecutionLimit(t *testing.T) {
 
 	t.Parallel()
 
-	const limit = 2000
-
-	b, adapter := setupTransactionTests(
-		t,
-		emulator.WithStorageLimitEnabled(false),
-		emulator.WithTransactionMaxGasLimit(limit),
-	)
-
 	const code = `
-	    transaction {
-	        execute {
-	            var s: Int256 = 1024102410241024
-	            var i: Int256 = 0
-	            var a: Int256 = 7
-	            var b: Int256 = 5
-	            var c: Int256 = 2
+		transaction {
+			execute {
+				var s: Int256 = 1024102410241024
+				var i: Int256 = 0
+				var a: Int256 = 7
+				var b: Int256 = 5
+				var c: Int256 = 2
 
-	            while i < 150000 {
-	                s = s * a
-	                s = s / b
-	                s = s / c
-	                i = i + 1
-	            }
-	        }
-	    }
+				while i < 150000 {
+					s = s * a
+					s = s / b
+					s = s / c
+					i = i + 1
+				}
+			}
+		}
 	`
 
-	// Create a new account
+	t.Run("ExceedingLimit", func(t *testing.T) {
 
-	accountKeys := test.AccountKeyGenerator()
-	accountKey, signer := accountKeys.NewWithSigner()
-	accountAddress, err := adapter.CreateAccount(context.Background(), []*flowsdk.AccountKey{accountKey}, nil)
-	assert.NoError(t, err)
+		t.Parallel()
 
-	// Sign the transaction using the new account.
-	// Do not test using the service account,
-	// as the computation limit is disabled for it
+		const limit = 2000
 
-	tx := flowsdk.NewTransaction().
-		SetScript([]byte(code)).
-		SetGasLimit(limit).
-		SetProposalKey(accountAddress, 0, 0).
-		SetPayer(accountAddress)
+		b, adapter := setupTransactionTests(
+			t,
+			emulator.WithStorageLimitEnabled(false),
+			emulator.WithTransactionMaxGasLimit(limit),
+		)
 
-	err = tx.SignEnvelope(accountAddress, 0, signer)
-	assert.NoError(t, err)
+		// Create a new account
 
-	// Submit tx
-	err = adapter.SendTransaction(context.Background(), *tx)
-	assert.NoError(t, err)
+		accountKeys := test.AccountKeyGenerator()
+		accountKey, signer := accountKeys.NewWithSigner()
+		accountAddress, err := adapter.CreateAccount(context.Background(), []*flowsdk.AccountKey{accountKey}, nil)
+		assert.NoError(t, err)
 
-	// Execute tx
-	result, err := b.ExecuteNextTransaction()
-	assert.NoError(t, err)
+		// Sign the transaction using the new account.
+		// Do not test using the service account,
+		// as the computation limit is disabled for it
 
-	require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
-}
+		tx := flowsdk.NewTransaction().
+			SetScript([]byte(code)).
+			SetGasLimit(limit).
+			SetProposalKey(accountAddress, 0, 0).
+			SetPayer(accountAddress)
 
-func TestTransactionWithSufficientComputationLimit(t *testing.T) {
+		err = tx.SignEnvelope(accountAddress, 0, signer)
+		assert.NoError(t, err)
 
-	t.Parallel()
+		// Submit tx
+		err = adapter.SendTransaction(context.Background(), *tx)
+		assert.NoError(t, err)
 
-	const limit = 19000
+		// Execute tx
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
 
-	b, adapter := setupTransactionTests(
-		t,
-		emulator.WithStorageLimitEnabled(false),
-		emulator.WithTransactionMaxGasLimit(limit),
-	)
+		require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
+	})
 
-	const code = `
-	    transaction {
-	        execute {
-	            var s: Int256 = 1024102410241024
-	            var i: Int256 = 0
-	            var a: Int256 = 7
-	            var b: Int256 = 5
-	            var c: Int256 = 2
+	t.Run("SufficientLimit", func(t *testing.T) {
 
-	            while i < 150000 {
-	                s = s * a
-	                s = s / b
-	                s = s / c
-	                i = i + 1
-	            }
-	        }
-	    }
-	`
+		t.Parallel()
 
-	// Create a new account
+		const limit = 19000
 
-	accountKeys := test.AccountKeyGenerator()
-	accountKey, signer := accountKeys.NewWithSigner()
-	accountAddress, err := adapter.CreateAccount(context.Background(), []*flowsdk.AccountKey{accountKey}, nil)
-	assert.NoError(t, err)
+		b, adapter := setupTransactionTests(
+			t,
+			emulator.WithStorageLimitEnabled(false),
+			emulator.WithTransactionMaxGasLimit(limit),
+		)
 
-	// Sign the transaction using the new account.
-	// Do not test using the service account,
-	// as the computation limit is disabled for it
+		// Create a new account
 
-	tx := flowsdk.NewTransaction().
-		SetScript([]byte(code)).
-		SetGasLimit(limit).
-		SetProposalKey(accountAddress, 0, 0).
-		SetPayer(accountAddress)
+		accountKeys := test.AccountKeyGenerator()
+		accountKey, signer := accountKeys.NewWithSigner()
+		accountAddress, err := adapter.CreateAccount(context.Background(), []*flowsdk.AccountKey{accountKey}, nil)
+		assert.NoError(t, err)
 
-	err = tx.SignEnvelope(accountAddress, 0, signer)
-	assert.NoError(t, err)
+		// Sign the transaction using the new account.
+		// Do not test using the service account,
+		// as the computation limit is disabled for it
 
-	// Submit tx
-	err = adapter.SendTransaction(context.Background(), *tx)
-	assert.NoError(t, err)
+		tx := flowsdk.NewTransaction().
+			SetScript([]byte(code)).
+			SetGasLimit(limit).
+			SetProposalKey(accountAddress, 0, 0).
+			SetPayer(accountAddress)
 
-	// Execute tx
-	result, err := b.ExecuteNextTransaction()
-	assert.NoError(t, err)
-	assert.NoError(t, result.Error)
+		err = tx.SignEnvelope(accountAddress, 0, signer)
+		assert.NoError(t, err)
+
+		// Submit tx
+		err = adapter.SendTransaction(context.Background(), *tx)
+		assert.NoError(t, err)
+
+		// Execute tx
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+		assert.NoError(t, result.Error)
+	})
 }
 
 func TestSubmitTransactionWithCustomLogger(t *testing.T) {
