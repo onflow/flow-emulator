@@ -32,11 +32,13 @@ func PrintScriptResult(logger *zerolog.Logger, result *types.ScriptResult) {
 		logger.Debug().
 			Str("scriptID", result.ScriptID.String()).
 			Uint64("computationUsed", result.ComputationUsed).
+			Uint64("memoryEstimate", result.MemoryEstimate).
 			Msg("⭐  Script executed")
 	} else {
 		logger.Warn().
 			Str("scriptID", result.ScriptID.String()).
 			Uint64("computationUsed", result.ComputationUsed).
+			Uint64("memoryEstimate", result.MemoryEstimate).
 			Msg("❗  Script reverted")
 	}
 
@@ -54,11 +56,13 @@ func PrintTransactionResult(logger *zerolog.Logger, result *types.TransactionRes
 		logger.Debug().
 			Str("txID", result.TransactionID.String()).
 			Uint64("computationUsed", result.ComputationUsed).
+			Uint64("memoryEstimate", result.MemoryEstimate).
 			Msg("⭐  Transaction executed")
 	} else {
 		logger.Warn().
 			Str("txID", result.TransactionID.String()).
 			Uint64("computationUsed", result.ComputationUsed).
+			Uint64("memoryEstimate", result.MemoryEstimate).
 			Msg("❗  Transaction reverted")
 	}
 
