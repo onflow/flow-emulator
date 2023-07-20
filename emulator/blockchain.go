@@ -265,7 +265,7 @@ func WithCoverageReport(coverageReport *runtime.CoverageReport) Option {
 // Contracts allows users to deploy the given contracts.
 // Some default common contracts are pre-configured in the `CommonContracts`
 // global variable. It includes contracts such as:
-// NonFungibleToken, FUSD, MetadataViews, NFTStorefront, NFTStorefrontV2, ExampleNFT
+// NonFungibleToken, MetadataViews, NFTStorefront, NFTStorefrontV2, ExampleNFT
 // The default value is []ContractDescription{}.
 func Contracts(contracts []ContractDescription) Option {
 	return func(c *config) {
