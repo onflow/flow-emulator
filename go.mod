@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/fxamacker/cbor/v2 v2.4.1-0.20230228173756-c0c9f774e40c
-	github.com/glebarez/go-sqlite v1.21.1
+	github.com/glebarez/go-sqlite v1.21.2
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang/mock v1.6.0
 	github.com/google/go-dap v0.10.0
@@ -164,9 +164,9 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/blake3 v1.2.1 // indirect
-	modernc.org/libc v1.22.3 // indirect
+	modernc.org/libc v1.22.5 // indirect
 	modernc.org/mathutil v1.5.0 // indirect
 	modernc.org/memory v1.5.0 // indirect
-	modernc.org/sqlite v1.21.1 // indirect
+	modernc.org/sqlite v1.23.1 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 )
