@@ -64,6 +64,7 @@ func New(opts ...Option) (*Blockchain, error) {
 		activeDebuggingSession: false,
 		conf:                   conf,
 		clock:                  NewSystemClock(),
+		sourceFileMap:          make(map[common.Location]string),
 	}
 	err := b.ReloadBlockchain()
 	if err != nil {
@@ -301,6 +302,8 @@ type Blockchain struct {
 	conf config
 
 	coverageReportedRuntime *CoverageReportedRuntime
+
+	sourceFileMap map[common.Location]string
 }
 
 // config is a set of configuration options for an emulated emulator.
@@ -1174,7 +1177,10 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 
 	b.currentCode = string(txnBody.Script)
 	b.currentScriptID = txnId.String()
-	if b.activeDebuggingSession {
+
+	pragmas := ExtractPragmas(b.currentCode)
+
+	if b.activeDebuggingSession && pragmas.HasPragma("debug") {
 		b.debugger.RequestPause()
 	}
 
@@ -1194,6 +1200,13 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 	// if transaction error exist try to further debug what was the problem
 	if tr.Error != nil {
 		tr.Debug = b.debugSignatureError(tr.Error, txnBody)
+	}
+
+	//add to source map if any pragma
+	if pragmas.HasPragma("sourceFile") {
+		location := common.NewTransactionLocation(nil, tr.TransactionID.Bytes())
+		sourceFile := pragmas.ArgumentForPragma("sourceFile")
+		b.sourceFileMap[location] = sourceFile
 	}
 
 	return tr, nil
@@ -1363,7 +1376,10 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
 	b.currentCode = string(script)
 	b.currentScriptID = scriptProc.ID.String()
-	if b.activeDebuggingSession {
+
+	pragmas := ExtractPragmas(b.currentCode)
+
+	if b.activeDebuggingSession && pragmas.HasPragma("debug") {
 		b.debugger.RequestPause()
 	}
 	_, output, err := b.vm.Run(
@@ -1388,6 +1404,13 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 		convertedValue = output.Value
 	} else {
 		scriptError = convert.VMErrorToEmulator(output.Err)
+	}
+
+	//add to source map if any pragma
+	if pragmas.HasPragma("sourceFile") {
+		location := common.NewScriptLocation(nil, scriptID.Bytes())
+		sourceFile := pragmas.ArgumentForPragma("sourceFile")
+		b.sourceFileMap[location] = sourceFile
 	}
 
 	return &types.ScriptResult{
@@ -1554,6 +1577,7 @@ func (b *Blockchain) GetTransactionResultsByBlockID(blockID flowgo.Identifier) (
 	return results, nil
 }
 
+<<<<<<< HEAD
 func (b *Blockchain) GetLogs(identifier flowgo.Identifier) ([]string, error) {
 	txResult, err := b.storage.TransactionResultByID(context.Background(), identifier)
 	if err != nil {
@@ -1569,4 +1593,36 @@ func (b *Blockchain) GetLogs(identifier flowgo.Identifier) ([]string, error) {
 func (b *Blockchain) SetClock(clock Clock) {
 	b.clock = clock
 	b.pendingBlock.SetClock(clock)
+}
+
+func (b *Blockchain) GetSourceFile(location common.Location) string {
+
+	value, exists := b.sourceFileMap[location]
+	if exists {
+		return value
+	}
+
+	addressLocation, isAddressLocation := location.(common.AddressLocation)
+	if isAddressLocation {
+		view := b.pendingBlock.ledgerState.NewChild()
+
+		env := environment.NewScriptEnvironmentFromStorageSnapshot(
+			b.vmCtx.EnvironmentParams,
+			view)
+
+		r := b.vmCtx.Borrow(env)
+		defer b.vmCtx.Return(r)
+
+		code, err := r.GetAccountContractCode(addressLocation)
+
+		if err != nil {
+			return location.ID()
+		}
+		pragmas := ExtractPragmas(string(code))
+		if pragmas.HasPragma("sourceFile") {
+			return pragmas.ArgumentForPragma("sourceFile")
+		}
+	}
+
+	return location.ID()
 }

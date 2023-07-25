@@ -20,6 +20,7 @@ package emulator
 
 import (
 	"fmt"
+	"github.com/onflow/cadence/runtime/common"
 
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/interpreter"
@@ -164,6 +165,10 @@ type LogProvider interface {
 	GetLogs(flowgo.Identifier) ([]string, error)
 }
 
+type SourceMapCapable interface {
+	GetSourceFile(location common.Location) string
+}
+
 // Emulator defines the method set of an emulated emulator.
 type Emulator interface {
 	ServiceKey() ServiceKey
@@ -177,4 +182,5 @@ type Emulator interface {
 	AutoMineCapable
 	ExecutionCapable
 	LogProvider
+	SourceMapCapable
 }
