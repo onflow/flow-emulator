@@ -1595,7 +1595,6 @@ func (b *Blockchain) GetTransactionResultsByBlockID(blockID flowgo.Identifier) (
 	return results, nil
 }
 
-<<<<<<< HEAD
 func (b *Blockchain) GetLogs(identifier flowgo.Identifier) ([]string, error) {
 	txResult, err := b.storage.TransactionResultByID(context.Background(), identifier)
 	if err != nil {
