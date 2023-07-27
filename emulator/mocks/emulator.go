@@ -9,6 +9,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	runtime "github.com/onflow/cadence/runtime"
+	common "github.com/onflow/cadence/runtime/common"
 	interpreter "github.com/onflow/cadence/runtime/interpreter"
 	emulator "github.com/onflow/flow-emulator/emulator"
 	types "github.com/onflow/flow-emulator/types"
@@ -268,21 +269,6 @@ func (mr *MockEmulatorMockRecorder) GetAccountByIndex(arg0 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountByIndex", reflect.TypeOf((*MockEmulator)(nil).GetAccountByIndex), arg0)
 }
 
-// GetAccountStorage mocks base method.
-func (m *MockEmulator) GetAccountStorage(arg0 flow.Address) (*types.AccountStorage, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAccountStorage", arg0)
-	ret0, _ := ret[0].(*types.AccountStorage)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAccountStorage indicates an expected call of GetAccountStorage.
-func (mr *MockEmulatorMockRecorder) GetAccountStorage(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountStorage", reflect.TypeOf((*MockEmulator)(nil).GetAccountStorage), arg0)
-}
-
 // GetAccountUnsafe mocks base method.
 func (m *MockEmulator) GetAccountUnsafe(arg0 flow.Address) (*flow.Account, error) {
 	m.ctrl.T.Helper()
@@ -403,6 +389,21 @@ func (mr *MockEmulatorMockRecorder) GetLatestBlock() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestBlock", reflect.TypeOf((*MockEmulator)(nil).GetLatestBlock))
 }
 
+// GetLogs mocks base method.
+func (m *MockEmulator) GetLogs(arg0 flow.Identifier) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLogs", arg0)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLogs indicates an expected call of GetLogs.
+func (mr *MockEmulatorMockRecorder) GetLogs(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLogs", reflect.TypeOf((*MockEmulator)(nil).GetLogs), arg0)
+}
+
 // GetNetworkParameters mocks base method.
 func (m *MockEmulator) GetNetworkParameters() access.NetworkParameters {
 	m.ctrl.T.Helper()
@@ -415,6 +416,20 @@ func (m *MockEmulator) GetNetworkParameters() access.NetworkParameters {
 func (mr *MockEmulatorMockRecorder) GetNetworkParameters() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetworkParameters", reflect.TypeOf((*MockEmulator)(nil).GetNetworkParameters))
+}
+
+// GetSourceFile mocks base method.
+func (m *MockEmulator) GetSourceFile(arg0 common.Location) string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSourceFile", arg0)
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetSourceFile indicates an expected call of GetSourceFile.
+func (mr *MockEmulatorMockRecorder) GetSourceFile(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSourceFile", reflect.TypeOf((*MockEmulator)(nil).GetSourceFile), arg0)
 }
 
 // GetTransaction mocks base method.

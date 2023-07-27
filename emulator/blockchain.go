@@ -1,3 +1,21 @@
+/*
+ * Flow Emulator
+ *
+ * Copyright Dapper Labs, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 // Package emulator provides an emulated version of the Flow emulator that can be used
 // for development purposes.
 //
@@ -15,6 +33,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 	"time"
@@ -38,6 +57,7 @@ import (
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
 	"github.com/onflow/flow-go/fvm/environment"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
+	"github.com/onflow/flow-go/fvm/meter"
 	reusableRuntime "github.com/onflow/flow-go/fvm/runtime"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -61,6 +81,8 @@ func New(opts ...Option) (*Blockchain, error) {
 		debugger:               nil,
 		activeDebuggingSession: false,
 		conf:                   conf,
+		clock:                  NewSystemClock(),
+		sourceFileMap:          make(map[common.Location]string),
 	}
 	err := b.ReloadBlockchain()
 	if err != nil {
@@ -262,7 +284,7 @@ func WithCoverageReport(coverageReport *runtime.CoverageReport) Option {
 // Contracts allows users to deploy the given contracts.
 // Some default common contracts are pre-configured in the `CommonContracts`
 // global variable. It includes contracts such as:
-// NonFungibleToken, FUSD, MetadataViews, NFTStorefront, NFTStorefrontV2, ExampleNFT
+// NonFungibleToken, MetadataViews, NFTStorefront, NFTStorefrontV2, ExampleNFT
 // The default value is []ContractDescription{}.
 func Contracts(contracts []ContractDescription) Option {
 	return func(c *config) {
@@ -280,6 +302,7 @@ type Blockchain struct {
 
 	// pending block containing block info, register state, pending transactions
 	pendingBlock *pendingBlock
+	clock        Clock
 
 	// used to execute transactions and scripts
 	vm    *fvm.VirtualMachine
@@ -297,6 +320,8 @@ type Blockchain struct {
 	conf config
 
 	coverageReportedRuntime *CoverageReportedRuntime
+
+	sourceFileMap map[common.Location]string
 }
 
 // config is a set of configuration options for an emulated emulator.
@@ -399,7 +424,7 @@ func (b *Blockchain) ReloadBlockchain() error {
 		return err
 	}
 
-	b.pendingBlock = newPendingBlock(latestBlock, latestLedger)
+	b.pendingBlock = newPendingBlock(latestBlock, latestLedger, b.clock)
 	b.transactionValidator = configureTransactionValidator(b.conf, blocks)
 
 	return nil
@@ -536,7 +561,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithBlocks(blocks),
 		fvm.WithContractDeploymentRestricted(false),
 		fvm.WithContractRemovalRestricted(!conf.ContractRemovalEnabled),
-		fvm.WithGasLimit(conf.ScriptGasLimit),
+		fvm.WithComputationLimit(conf.ScriptGasLimit),
 		fvm.WithCadenceLogging(true),
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
@@ -690,33 +715,23 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 	options = append(options,
 		fvm.WithInitialTokenSupply(supply),
 		fvm.WithRestrictedAccountCreationEnabled(false),
+		fvm.WithTransactionFee(fvm.DefaultTransactionFees),
+		fvm.WithExecutionMemoryLimit(math.MaxUint32),
+		fvm.WithExecutionMemoryWeights(meter.DefaultMemoryWeights),
+		fvm.WithExecutionEffortWeights(map[common.ComputationKind]uint64{
+			common.ComputationKindStatement:          1569,
+			common.ComputationKindLoop:               1569,
+			common.ComputationKindFunctionInvocation: 1569,
+			environment.ComputationKindGetValue:      808,
+			environment.ComputationKindCreateAccount: 2837670,
+			environment.ComputationKindSetValue:      765,
+		}),
 	)
 	if conf.StorageLimitEnabled {
 		options = append(options,
 			fvm.WithAccountCreationFee(conf.MinimumStorageReservation),
 			fvm.WithMinimumStorageReservation(conf.MinimumStorageReservation),
 			fvm.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
-		)
-	}
-	if conf.TransactionFeesEnabled {
-		// This enables variable transaction fees AND execution effort metering
-		// as described in Variable Transaction Fees: Execution Effort FLIP: https://github.com/onflow/flow/pull/753)
-		// TODO: In the future this should be an injectable parameter. For now this is hard coded
-		// as this is the first iteration of variable execution fees.
-		options = append(options,
-			fvm.WithTransactionFee(fvm.BootstrapProcedureFeeParameters{
-				SurgeFactor:         cadence.UFix64(100_000_000), // 1.0
-				InclusionEffortCost: cadence.UFix64(100),         // 1E-6
-				ExecutionEffortCost: cadence.UFix64(499_000_000), // 4.99
-			}),
-			fvm.WithExecutionEffortWeights(map[common.ComputationKind]uint64{
-				common.ComputationKindStatement:          1569,
-				common.ComputationKindLoop:               1569,
-				common.ComputationKindFunctionInvocation: 1569,
-				environment.ComputationKindGetValue:      808,
-				environment.ComputationKindCreateAccount: 2837670,
-				environment.ComputationKindSetValue:      765,
-			}),
 		)
 	}
 	return fvm.Bootstrap(
@@ -1180,7 +1195,10 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 
 	b.currentCode = string(txnBody.Script)
 	b.currentScriptID = txnId.String()
-	if b.activeDebuggingSession {
+
+	pragmas := ExtractPragmas(b.currentCode)
+
+	if b.activeDebuggingSession && pragmas.Contains(PragmaDebug) {
 		b.debugger.RequestPause()
 	}
 
@@ -1200,6 +1218,13 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 	// if transaction error exist try to further debug what was the problem
 	if tr.Error != nil {
 		tr.Debug = b.debugSignatureError(tr.Error, txnBody)
+	}
+
+	//add to source map if any pragma
+	if pragmas.Contains(PragmaSourceFile) {
+		location := common.NewTransactionLocation(nil, tr.TransactionID.Bytes())
+		sourceFile := pragmas.FilterByName(PragmaSourceFile).First().Argument()
+		b.sourceFileMap[location] = sourceFile
 	}
 
 	return tr, nil
@@ -1263,91 +1288,9 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	}
 
 	// reset pending block using current block and ledger state
-	b.pendingBlock = newPendingBlock(block, ledger)
+	b.pendingBlock = newPendingBlock(block, ledger, b.clock)
 
 	return block, nil
-}
-
-func (b *Blockchain) GetAccountStorage(
-	address flowgo.Address,
-) (
-	*types.AccountStorage,
-	error,
-) {
-	view := b.pendingBlock.ledgerState.NewChild()
-
-	env := environment.NewScriptEnvironmentFromStorageSnapshot(
-		b.vmCtx.EnvironmentParams,
-		view)
-
-	r := b.vmCtx.Borrow(env)
-	defer b.vmCtx.Return(r)
-	ctx := runtime.Context{
-		Interface: env,
-	}
-
-	store, inter, err := r.Storage(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	account, err := b.vm.GetAccount(
-		b.vmCtx,
-		flowgo.BytesToAddress(address.Bytes()),
-		view)
-	if err != nil {
-		return nil, err
-	}
-
-	extractStorage := func(path common.PathDomain) (types.StorageItem, error) {
-		storageMap := store.GetStorageMap(
-			common.MustBytesToAddress(address.Bytes()),
-			path.Identifier(),
-			false,
-		)
-		if storageMap == nil {
-			return nil, nil
-		}
-
-		iterator := storageMap.Iterator(nil)
-		values := make(types.StorageItem)
-
-		for k, v := iterator.Next(); v != nil; k, v = iterator.Next() {
-			exportedValue, err := runtime.ExportValue(v, inter, interpreter.EmptyLocationRange)
-			if err != nil {
-				// just skip errored value
-				continue
-			}
-
-			if k, ok := k.(interpreter.StringAtreeValue); ok {
-				values[string(k)] = exportedValue
-			}
-		}
-		return values, nil
-	}
-
-	privateStorageItems, err := extractStorage(common.PathDomainPrivate)
-	if err != nil {
-		return nil, err
-	}
-
-	publicStorageItems, err := extractStorage(common.PathDomainPublic)
-	if err != nil {
-		return nil, err
-	}
-
-	storageStorageItems, err := extractStorage(common.PathDomainStorage)
-	if err != nil {
-		return nil, err
-	}
-
-	return types.NewAccountStorage(
-		account,
-		flowsdk.Address(address),
-		privateStorageItems,
-		publicStorageItems,
-		storageStorageItems,
-	)
 }
 
 // ExecuteAndCommitBlock is a utility that combines ExecuteBlock with CommitBlock.
@@ -1403,7 +1346,7 @@ func (b *Blockchain) ResetPendingBlock() error {
 	}
 
 	// reset pending block using latest committed block and ledger state
-	b.pendingBlock = newPendingBlock(&latestBlock, latestLedger)
+	b.pendingBlock = newPendingBlock(&latestBlock, latestLedger, b.clock)
 
 	return nil
 }
@@ -1451,7 +1394,10 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
 	b.currentCode = string(script)
 	b.currentScriptID = scriptProc.ID.String()
-	if b.activeDebuggingSession {
+
+	pragmas := ExtractPragmas(b.currentCode)
+
+	if b.activeDebuggingSession && pragmas.Contains(PragmaDebug) {
 		b.debugger.RequestPause()
 	}
 	_, output, err := b.vm.Run(
@@ -1476,6 +1422,13 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 		convertedValue = output.Value
 	} else {
 		scriptError = convert.VMErrorToEmulator(output.Err)
+	}
+
+	//add to source map if any pragma
+	if pragmas.Contains(PragmaSourceFile) {
+		location := common.NewScriptLocation(nil, scriptID.Bytes())
+		sourceFile := pragmas.FilterByName(PragmaSourceFile).First().Argument()
+		b.sourceFileMap[location] = sourceFile
 	}
 
 	return &types.ScriptResult{
@@ -1640,4 +1593,55 @@ func (b *Blockchain) GetTransactionResultsByBlockID(blockID flowgo.Identifier) (
 		}
 	}
 	return results, nil
+}
+
+func (b *Blockchain) GetLogs(identifier flowgo.Identifier) ([]string, error) {
+	txResult, err := b.storage.TransactionResultByID(context.Background(), identifier)
+	if err != nil {
+		return nil, err
+
+	}
+	return txResult.Logs, nil
+}
+
+// SetClock sets the given clock on blockchain's pending block.
+// After this block is committed, the block timestamp will
+// contain the value of clock.Now().
+func (b *Blockchain) SetClock(clock Clock) {
+	b.clock = clock
+	b.pendingBlock.SetClock(clock)
+}
+
+func (b *Blockchain) GetSourceFile(location common.Location) string {
+
+	value, exists := b.sourceFileMap[location]
+	if exists {
+		return value
+	}
+
+	addressLocation, isAddressLocation := location.(common.AddressLocation)
+	if !isAddressLocation {
+		return location.ID()
+	}
+	view := b.pendingBlock.ledgerState.NewChild()
+
+	env := environment.NewScriptEnvironmentFromStorageSnapshot(
+		b.vmCtx.EnvironmentParams,
+		view)
+
+	r := b.vmCtx.Borrow(env)
+	defer b.vmCtx.Return(r)
+
+	code, err := r.GetAccountContractCode(addressLocation)
+
+	if err != nil {
+		return location.ID()
+	}
+	pragmas := ExtractPragmas(string(code))
+	if pragmas.Contains(PragmaSourceFile) {
+		return pragmas.FilterByName(PragmaSourceFile).First().Argument()
+	}
+
+	return location.ID()
+
 }

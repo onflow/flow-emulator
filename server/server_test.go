@@ -1,14 +1,28 @@
+/*
+ * Flow Emulator
+ *
+ * Copyright Dapper Labs, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package server
 
 import (
 	"context"
 	"fmt"
-	"sync"
 	"testing"
 
-	"github.com/onflow/flow-go/model/flow"
-
-	"github.com/hashicorp/go-multierror"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 )
@@ -33,35 +47,6 @@ func TestExecuteScript(t *testing.T) {
 
 	require.JSONEq(t, `{"type":"String","value":"Hello"}`, string(result))
 
-}
-
-func TestGetStorage(t *testing.T) {
-	logger := zerolog.Nop()
-	server := NewEmulatorServer(&logger, &Config{})
-	require.NotNil(t, server)
-	address := server.Emulator().ServiceKey().Address
-
-	var result *multierror.Error
-	errchan := make(chan error, 10)
-	wg := sync.WaitGroup{}
-
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			_, err := server.Emulator().GetAccountStorage(flow.Address(address))
-			errchan <- err
-			wg.Done()
-		}()
-	}
-
-	wg.Wait()
-	close(errchan)
-
-	for err := range errchan {
-		result = multierror.Append(result, err)
-	}
-
-	require.NoError(t, result.ErrorOrNil())
 }
 
 func TestExecuteScriptImportingContracts(t *testing.T) {

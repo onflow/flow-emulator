@@ -1,8 +1,27 @@
+/*
+ * Flow Emulator
+ *
+ * Copyright Dapper Labs, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package emulator_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
@@ -379,4 +398,61 @@ func TestPendingBlockCommit(t *testing.T) {
 		assert.Equal(t, blockID, block.ID())
 		assert.Len(t, results, 1)
 	})
+}
+
+type testClock struct {
+	Time time.Time
+}
+
+func (tc testClock) Now() time.Time {
+	return tc.Time.UTC()
+}
+
+func TestPendingBlockSetTimestamp(t *testing.T) {
+
+	t.Parallel()
+
+	b, adapter, _, _, _ := setupPendingBlockTests(t)
+	clock := testClock{
+		Time: time.Now().UTC(),
+	}
+	b.SetClock(clock)
+	_, _ = b.CommitBlock()
+
+	script := []byte(`
+	    pub fun main(): UFix64 {
+	        return getCurrentBlock().timestamp
+	    }
+	`)
+	scriptResult, err := adapter.ExecuteScriptAtLatestBlock(
+		context.Background(),
+		script,
+		[][]byte{},
+	)
+	require.NoError(t, err)
+
+	expected := fmt.Sprintf(
+		"{\"value\":\"%d.00000000\",\"type\":\"UFix64\"}\n",
+		clock.Time.Unix(),
+	)
+	assert.Equal(t, expected, string(scriptResult))
+
+	clock = testClock{
+		Time: time.Now().Add(time.Hour * 24 * 7).UTC(),
+	}
+	b.SetClock(clock)
+	_, _ = b.CommitBlock()
+
+	scriptResult, err = adapter.ExecuteScriptAtLatestBlock(
+		context.Background(),
+		script,
+		[][]byte{},
+	)
+	require.NoError(t, err)
+
+	expected = fmt.Sprintf(
+		"{\"value\":\"%d.00000000\",\"type\":\"UFix64\"}\n",
+		clock.Time.Unix(),
+	)
+	assert.Equal(t, expected, string(scriptResult))
 }
