@@ -207,6 +207,12 @@ curl -XPUT 'http://localhost:8080/emulator/codeCoverage/reset'
 Note: The above command will reset the code coverage for all the locations, except
 for `A.f8d6e0586b0a20c7.FlowServiceAccount`, which is a system contract that is essential to the operations of Flow.
 
+To get better reports with source file references, you can utilize the `sourceFile` pragma in the headers of your transactions and scripts.
+
+```cadence
+#sourceFile("scripts/myScript.cdc")
+```
+
 ## Running the emulator with Docker
 
 Docker builds for the emulator are automatically built and pushed to
@@ -248,6 +254,11 @@ is started. You can specify a different starting block height by using the `--st
 
 You can also store all of your changes and cached registers to a persistent db by using the `--persist` flag,
 along with the other sqlite settings.
+
+## Debugging
+To debug any transactions sent via VSCode or Flow CLI, you can use the `debugger` pragma.
+This will cause execution to pause at the debugger for any transaction or script which includes that pragma.
+
 
 ## Development
 
