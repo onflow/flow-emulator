@@ -21,7 +21,7 @@ func NewCommonContracts(chain flowgo.Chain) []ContractDescription {
 			Name:        "ExampleNFT",
 			Address:     serviceAddress,
 			Description: "✨  Example NFT contract",
-			Source:      contracts.ExampleNFT(serviceAddress, serviceAddress, serviceAddress),
+			Source:      contracts.ExampleNFT(serviceAddress, serviceAddress, serviceAddress, serviceAddress),
 		},
 		{
 			Name:        "NFTStorefrontV2",

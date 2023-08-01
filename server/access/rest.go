@@ -28,8 +28,6 @@ import (
 	"os"
 
 	"github.com/onflow/flow-emulator/adapters"
-	metricsProm "github.com/slok/go-http-metrics/metrics/prometheus"
-
 	"github.com/onflow/flow-go/engine/access/rest"
 	"github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module/metrics"
@@ -85,7 +83,8 @@ func NewRestServer(logger *zerolog.Logger, adapter *adapters.AccessAdapter, chai
 
 	// only collect metrics if not test
 	if flag.Lookup("test.v") == nil {
-		restCollector = metrics.NewRestCollector(metricsProm.Config{Prefix: "access_rest_api"})
+		// TODO: Update to match the new API
+		//restCollector = metrics.NewRestCollector(metricsProm.Config{Prefix: "access_rest_api"}, nil)
 	}
 
 	srv, err := rest.NewServer(adapter, fmt.Sprintf("%s:3333", host), debugLogger, chain, restCollector)
