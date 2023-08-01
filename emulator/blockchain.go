@@ -715,6 +715,9 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 	options = append(options,
 		fvm.WithInitialTokenSupply(supply),
 		fvm.WithRestrictedAccountCreationEnabled(false),
+		// This enables variable transaction fees AND execution effort metering
+		// as described in Variable Transaction Fees:
+		// Execution Effort FLIP: https://github.com/onflow/flow/pull/753)
 		fvm.WithTransactionFee(fvm.DefaultTransactionFees),
 		fvm.WithExecutionMemoryLimit(math.MaxUint32),
 		fvm.WithExecutionMemoryWeights(meter.DefaultMemoryWeights),
