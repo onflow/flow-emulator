@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2021 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/onflow/flow-emulator/convert"
-	sdkConvert "github.com/onflow/flow-emulator/convert/sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
@@ -41,31 +40,33 @@ func TestVm(t *testing.T) {
 		idGenerator := test.IdentifierGenerator()
 
 		eventGenerator := test.EventGenerator()
-		event1, err := sdkConvert.SDKEventToFlow(eventGenerator.New())
+		event1, err := convert.SDKEventToFlow(eventGenerator.New())
 		assert.NoError(t, err)
 
-		event2, err := sdkConvert.SDKEventToFlow(eventGenerator.New())
+		event2, err := convert.SDKEventToFlow(eventGenerator.New())
 		assert.NoError(t, err)
 
-		tp := &fvm.TransactionProcedure{
-			ID:              flowgo.Identifier(idGenerator.New()),
+		txnId := flowgo.Identifier(idGenerator.New())
+		output := fvm.ProcedureOutput{
 			Logs:            []string{"TestLog1", "TestLog2"},
 			Events:          []flowgo.Event{event1, event2},
 			ComputationUsed: 5,
+			MemoryEstimate:  1211,
 			Err:             nil,
 		}
 
-		tr, err := convert.VMTransactionResultToEmulator(tp)
+		tr, err := convert.VMTransactionResultToEmulator(txnId, output)
 		assert.NoError(t, err)
 
-		assert.Equal(t, tp.ID, flowgo.Identifier(tr.TransactionID))
-		assert.Equal(t, tp.Logs, tr.Logs)
+		assert.Equal(t, txnId, flowgo.Identifier(tr.TransactionID))
+		assert.Equal(t, output.Logs, tr.Logs)
 
-		flowEvents, err := sdkConvert.FlowEventsToSDK(tp.Events)
+		flowEvents, err := convert.FlowEventsToSDK(output.Events)
 		assert.NoError(t, err)
 		assert.Equal(t, flowEvents, tr.Events)
 
-		assert.Equal(t, tp.ComputationUsed, tr.ComputationUsed)
-		assert.Equal(t, tp.Err, tr.Error)
+		assert.Equal(t, output.ComputationUsed, tr.ComputationUsed)
+		assert.Equal(t, output.MemoryEstimate, tr.MemoryEstimate)
+		assert.Equal(t, output.Err, tr.Error)
 	})
 }

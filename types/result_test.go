@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import (
 	"testing"
 
 	"github.com/onflow/cadence"
-	"github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
 
@@ -43,9 +43,10 @@ func TestResult(t *testing.T) {
 		trSucceed := &types.TransactionResult{
 			TransactionID:   idGenerator.New(),
 			ComputationUsed: 20,
+			MemoryEstimate:  2048,
 			Error:           nil,
 			Logs:            []string{},
-			Events:          []flow.Event{},
+			Events:          []flowsdk.Event{},
 		}
 		assert.True(t, trSucceed.Succeeded())
 		assert.False(t, trSucceed.Reverted())
@@ -53,9 +54,10 @@ func TestResult(t *testing.T) {
 		trReverted := &types.TransactionResult{
 			TransactionID:   idGenerator.New(),
 			ComputationUsed: 20,
+			MemoryEstimate:  2048,
 			Error:           errors.New("transaction execution error"),
 			Logs:            []string{},
-			Events:          []flow.Event{},
+			Events:          []flowsdk.Event{},
 		}
 		assert.True(t, trReverted.Reverted())
 		assert.False(t, trReverted.Succeeded())
@@ -65,7 +67,7 @@ func TestResult(t *testing.T) {
 			Value:    cadence.Value(cadence.NewInt(1)),
 			Error:    nil,
 			Logs:     []string{},
-			Events:   []flow.Event{},
+			Events:   []flowsdk.Event{},
 		}
 		assert.True(t, srSucceed.Succeeded())
 		assert.False(t, srSucceed.Reverted())
@@ -75,7 +77,7 @@ func TestResult(t *testing.T) {
 			Value:    cadence.Value(cadence.NewInt(1)),
 			Error:    errors.New("transaction execution error"),
 			Logs:     []string{},
-			Events:   []flow.Event{},
+			Events:   []flowsdk.Event{},
 		}
 		assert.True(t, srReverted.Reverted())
 		assert.False(t, srReverted.Succeeded())

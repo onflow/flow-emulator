@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,23 +20,33 @@ package convert
 
 import (
 	"github.com/onflow/flow-go/fvm"
+	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/onflow/flow-emulator/types"
 )
 
-func ToStorableResult(tp *fvm.TransactionProcedure) (types.StorableTransactionResult, error) {
+func ToStorableResult(
+	output fvm.ProcedureOutput,
+	blockID flowgo.Identifier,
+	blockHeight uint64,
+) (
+	types.StorableTransactionResult,
+	error,
+) {
 	var errorCode int
 	var errorMessage string
 
-	if tp.Err != nil {
-		errorCode = int(tp.Err.Code())
-		errorMessage = tp.Err.Error()
+	if output.Err != nil {
+		errorCode = int(output.Err.Code())
+		errorMessage = output.Err.Error()
 	}
 
 	return types.StorableTransactionResult{
+		BlockID:      blockID,
+		BlockHeight:  blockHeight,
 		ErrorCode:    errorCode,
 		ErrorMessage: errorMessage,
-		Logs:         tp.Logs,
-		Events:       tp.Events,
+		Logs:         output.Logs,
+		Events:       output.Events,
 	}, nil
 }

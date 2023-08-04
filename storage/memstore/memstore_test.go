@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,12 @@
 package memstore
 
 import (
+	"context"
 	"sync"
 	"testing"
 
-	"github.com/onflow/flow-go/engine/execution/state/delta"
+	"github.com/onflow/flow-go/fvm/storage/snapshot"
+	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,23 +35,15 @@ func TestMemstore(t *testing.T) {
 	t.Parallel()
 
 	const blockHeight = 0
-	key := flowgo.RegisterID{
-		Owner:      "",
-		Controller: "",
-		Key:        "foo",
-	}
-	value := flowgo.RegisterEntry{
-		Key:   key,
-		Value: []byte("bar"),
-	}
-
+	key := flow.NewRegisterID("", "foo")
+	value := []byte("bar")
 	store := New()
 
-	err := store.UnsafeInsertLedgerDelta(
+	err := store.insertExecutionSnapshot(
 		blockHeight,
-		delta.Delta{
-			Data: map[string]flowgo.RegisterEntry{
-				key.String(): value,
+		&snapshot.ExecutionSnapshot{
+			WriteSet: map[flowgo.RegisterID]flowgo.RegisterValue{
+				key: value,
 			},
 		},
 	)
@@ -62,11 +56,14 @@ func TestMemstore(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			view := store.LedgerViewByHeight(blockHeight)
-			actualValue, err := view.Get("", "", "foo")
+			snapshot, err := store.LedgerByHeight(
+				context.Background(),
+				blockHeight)
+			require.NoError(t, err)
+			actualValue, err := snapshot.Get(key)
 
 			require.NoError(t, err)
-			assert.Equal(t, value.Value, actualValue)
+			assert.Equal(t, value, actualValue)
 		}()
 	}
 
@@ -78,45 +75,42 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 	t.Parallel()
 
 	store := New()
-	key := flowgo.RegisterID{
-		Owner:      "",
-		Controller: "",
-		Key:        "foo",
-	}
-	value := flowgo.RegisterEntry{
-		Key:   key,
-		Value: []byte("bar"),
-	}
-	nilValue := flowgo.RegisterEntry{
-		Key:   key,
-		Value: nil,
-	}
+	key := flow.NewRegisterID("", "foo")
+	value := []byte("bar")
+	var nilByte []byte
+	nilValue := nilByte
 
 	// set initial value
-	err := store.insertLedgerDelta(0,
-		delta.Delta{
-			Data: map[string]flowgo.RegisterEntry{
-				key.String(): value,
+	err := store.insertExecutionSnapshot(
+		0,
+		&snapshot.ExecutionSnapshot{
+			WriteSet: map[flowgo.RegisterID]flowgo.RegisterValue{
+				key: value,
 			},
 		})
 	require.NoError(t, err)
 
 	// check initial value
-	register, err := store.LedgerViewByHeight(0).Get(key.Owner, key.Controller, key.Key)
+	ledger, err := store.LedgerByHeight(context.Background(), 0)
 	require.NoError(t, err)
-	require.Equal(t, string(value.Value), string(register))
+	register, err := ledger.Get(flow.NewRegisterID(key.Owner, key.Key))
+	require.NoError(t, err)
+	require.Equal(t, string(value), string(register))
 
 	// set value to nil
-	err = store.insertLedgerDelta(1,
-		delta.Delta{
-			Data: map[string]flowgo.RegisterEntry{
-				key.String(): nilValue,
+	err = store.insertExecutionSnapshot(
+		1,
+		&snapshot.ExecutionSnapshot{
+			WriteSet: map[flowgo.RegisterID]flowgo.RegisterValue{
+				key: nilValue,
 			},
 		})
 	require.NoError(t, err)
 
 	// check value is nil
-	register, err = store.LedgerViewByHeight(1).Get(key.Owner, key.Controller, key.Key)
+	ledger, err = store.LedgerByHeight(context.Background(), 1)
 	require.NoError(t, err)
-	require.Equal(t, string(nilValue.Value), string(register))
+	register, err = ledger.Get(flow.NewRegisterID(key.Owner, key.Key))
+	require.NoError(t, err)
+	require.Equal(t, string(nilValue), string(register))
 }

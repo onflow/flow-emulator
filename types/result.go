@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright 2019-2022 Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import (
 	"fmt"
 
 	"github.com/onflow/cadence"
-	"github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go/crypto/hash"
 	flowgo "github.com/onflow/flow-go/model/flow"
 )
@@ -32,15 +32,18 @@ type StorableTransactionResult struct {
 	ErrorMessage string
 	Logs         []string
 	Events       []flowgo.Event
+	BlockID      flowgo.Identifier
+	BlockHeight  uint64
 }
 
 // A TransactionResult is the result of executing a transaction.
 type TransactionResult struct {
-	TransactionID   flow.Identifier
+	TransactionID   flowsdk.Identifier
 	ComputationUsed uint64
+	MemoryEstimate  uint64
 	Error           error
 	Logs            []string
-	Events          []flow.Event
+	Events          []flowsdk.Event
 	Debug           *TransactionResultDebug
 }
 
@@ -57,7 +60,7 @@ func (r TransactionResult) Reverted() bool {
 // TransactionResultDebug provides details about unsuccessful transaction execution
 type TransactionResultDebug struct {
 	Message string
-	Meta    map[string]string
+	Meta    map[string]any
 }
 
 // NewTransactionInvalidHashAlgo creates debug details for transactions with invalid hashing algorithm
@@ -81,7 +84,7 @@ func NewTransactionInvalidSignature(
 ) *TransactionResultDebug {
 	return &TransactionResultDebug{
 		Message: "",
-		Meta: map[string]string{
+		Meta: map[string]any{
 			"payer":            tx.Payer.String(),
 			"proposer":         tx.ProposalKey.Address.String(),
 			"proposerKeyIndex": fmt.Sprintf("%d", tx.ProposalKey.KeyIndex),
@@ -95,11 +98,13 @@ func NewTransactionInvalidSignature(
 
 // A ScriptResult is the result of executing a script.
 type ScriptResult struct {
-	ScriptID flow.Identifier
-	Value    cadence.Value
-	Error    error
-	Logs     []string
-	Events   []flow.Event
+	ScriptID        flowsdk.Identifier
+	Value           cadence.Value
+	Error           error
+	Logs            []string
+	Events          []flowsdk.Event
+	ComputationUsed uint64
+	MemoryEstimate  uint64
 }
 
 // Succeeded returns true if the script executed without errors.
