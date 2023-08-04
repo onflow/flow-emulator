@@ -244,3 +244,22 @@ func TestScriptExecutionLimit(t *testing.T) {
 		require.NoError(t, result.Error)
 	})
 }
+
+func TestScriptRandom(t *testing.T) {
+
+	const code = `
+    pub fun main() {
+        assert(unsafeRandom() >= 0)
+    }
+	`
+
+	const limit = 200
+	b, err := emulator.New(
+		emulator.WithScriptGasLimit(limit),
+	)
+	require.NoError(t, err)
+
+	result, err := b.ExecuteScript([]byte(code), nil)
+	require.NoError(t, err)
+	require.NoError(t, result.Error)
+}
