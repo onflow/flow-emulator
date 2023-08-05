@@ -22,7 +22,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/onflow/flow-go/module"
 	"net"
 	"net/http"
 	"os"
@@ -31,7 +30,9 @@ import (
 	metricsProm "github.com/slok/go-http-metrics/metrics/prometheus"
 
 	"github.com/onflow/flow-go/engine/access/rest"
+	"github.com/onflow/flow-go/engine/access/rest/routes"
 	"github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow-go/module"
 	"github.com/onflow/flow-go/module/metrics"
 	"github.com/rs/zerolog"
 )
@@ -85,7 +86,11 @@ func NewRestServer(logger *zerolog.Logger, adapter *adapters.AccessAdapter, chai
 
 	// only collect metrics if not test
 	if flag.Lookup("test.v") == nil {
-		restCollector = metrics.NewRestCollector(metricsProm.Config{Prefix: "access_rest_api"})
+		var err error
+		restCollector, err = metrics.NewRestCollector(routes.URLToRoute, metricsProm.Config{Prefix: "access_rest_api"}.Registry)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	srv, err := rest.NewServer(adapter, fmt.Sprintf("%s:3333", host), debugLogger, chain, restCollector)
