@@ -14,11 +14,11 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v0.39.14
 	github.com/onflow/flow-archive v1.3.4-0.20230503192214-9e81e82d4dcc
-	github.com/onflow/flow-go v0.31.1-0.20230718164039-e3411eff1e9d
+	github.com/onflow/flow-go v0.31.1-0.20230805002948-04e12b3ea8a9
 	github.com/onflow/flow-go-sdk v0.41.9
 	github.com/onflow/flow-go/crypto v0.24.9
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
-	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20230602212908-08fc6536d391
+	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20230628215638-83439d22e0ce
 	github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20221222181731-14b90207cead
 	github.com/prometheus/client_golang v1.16.0
 	github.com/psiemens/graceland v1.0.0
@@ -68,6 +68,7 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
+	github.com/hashicorp/golang-lru/v2 v2.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect

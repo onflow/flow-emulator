@@ -245,7 +245,9 @@ func TestScriptExecutionLimit(t *testing.T) {
 	})
 }
 
-func TestScriptRandom(t *testing.T) {
+// TestScriptWithCadenceRandom checks Cadence's random function works
+// within a script
+func TestScriptWithCadenceRandom(t *testing.T) {
 
 	const code = `
     pub fun main() {
