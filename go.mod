@@ -12,10 +12,10 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v0.39.14
+	github.com/onflow/cadence v0.40.0
 	github.com/onflow/flow-archive v1.3.4-0.20230503192214-9e81e82d4dcc
-	github.com/onflow/flow-go v0.31.1-0.20230805002948-04e12b3ea8a9
-	github.com/onflow/flow-go-sdk v0.41.9
+	github.com/onflow/flow-go v0.31.1-0.20230808172820-f074502a67e3
+	github.com/onflow/flow-go-sdk v0.41.10
 	github.com/onflow/flow-go/crypto v0.24.9
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
 	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20230628215638-83439d22e0ce
@@ -24,7 +24,6 @@ require (
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
 	github.com/rs/zerolog v1.29.0
-	github.com/slok/go-http-metrics v0.10.0
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
@@ -126,6 +125,7 @@ require (
 	github.com/rs/cors v1.8.0 // indirect
 	github.com/schollz/progressbar/v3 v3.13.1 // indirect
 	github.com/sethvargo/go-retry v0.2.3 // indirect
+	github.com/slok/go-http-metrics v0.10.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect

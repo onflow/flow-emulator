@@ -26,15 +26,16 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/onflow/flow-emulator/adapters"
-	metricsProm "github.com/slok/go-http-metrics/metrics/prometheus"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-go/engine/access/rest"
 	"github.com/onflow/flow-go/engine/access/rest/routes"
 	"github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module"
 	"github.com/onflow/flow-go/module/metrics"
-	"github.com/rs/zerolog"
+
+	"github.com/onflow/flow-emulator/adapters"
 )
 
 type RestServer struct {
@@ -87,7 +88,7 @@ func NewRestServer(logger *zerolog.Logger, adapter *adapters.AccessAdapter, chai
 	// only collect metrics if not test
 	if flag.Lookup("test.v") == nil {
 		var err error
-		restCollector, err = metrics.NewRestCollector(routes.URLToRoute, metricsProm.Config{Prefix: "access_rest_api"}.Registry)
+		restCollector, err = metrics.NewRestCollector(routes.URLToRoute, prometheus.DefaultRegisterer)
 		if err != nil {
 			return nil, err
 		}
