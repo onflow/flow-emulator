@@ -530,6 +530,19 @@ func (h CadenceHook) Run(_ *zerolog.Event, level zerolog.Level, msg string) {
 	}
 }
 
+// `dummyEntropyProvider“ implements `environment.EntropyProvider`
+// which provides a source of entropy to fvm context (required for Cadence's randomness).
+type dummyEntropyProvider struct{}
+
+var dummySource = make([]byte, 32)
+
+func (gen *dummyEntropyProvider) RandomSource() ([]byte, error) {
+	return dummySource, nil
+}
+
+// make sure `dummyEntropyProvider“ implements `environment.EntropyProvider`
+var _ environment.EntropyProvider = (*dummyEntropyProvider)(nil)
+
 func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {
 	vm := fvm.NewVirtualMachine()
 
@@ -566,6 +579,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		fvm.WithReusableCadenceRuntimePool(customRuntimePool),
+		fvm.WithEntropyProvider(&dummyEntropyProvider{}),
 	}
 
 	if !conf.TransactionValidationEnabled {

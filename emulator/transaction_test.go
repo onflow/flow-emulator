@@ -2116,3 +2116,38 @@ func TestRollbackTransaction(t *testing.T) {
 	IncrementHelper(t, b, adapter, counterAddress, addTwoScript, 2)
 
 }
+
+// TestTransactionWithCadenceRandom checks Cadence's random function works
+// within a transaction
+func TestTransactionWithCadenceRandom(t *testing.T) {
+	b, adapter := setupTransactionTests(t)
+
+	code := `
+    transaction {
+        prepare() {
+            assert(unsafeRandom() >= 0)
+        }
+    }
+	`
+	callRandomTx := flowsdk.NewTransaction().
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetScript([]byte(code)).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+		SetPayer(b.ServiceKey().Address)
+
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = callRandomTx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
+
+	err = adapter.SendTransaction(context.Background(), *callRandomTx)
+	assert.NoError(t, err)
+
+	result, err := b.ExecuteNextTransaction()
+	assert.NoError(t, err)
+	AssertTransactionSucceeded(t, result)
+
+	_, err = b.CommitBlock()
+	assert.NoError(t, err)
+}
