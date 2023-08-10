@@ -9,6 +9,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	runtime "github.com/onflow/cadence/runtime"
+	common "github.com/onflow/cadence/runtime/common"
 	interpreter "github.com/onflow/cadence/runtime/interpreter"
 	emulator "github.com/onflow/flow-emulator/emulator"
 	types "github.com/onflow/flow-emulator/types"
@@ -415,6 +416,20 @@ func (m *MockEmulator) GetNetworkParameters() access.NetworkParameters {
 func (mr *MockEmulatorMockRecorder) GetNetworkParameters() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetworkParameters", reflect.TypeOf((*MockEmulator)(nil).GetNetworkParameters))
+}
+
+// GetSourceFile mocks base method.
+func (m *MockEmulator) GetSourceFile(arg0 common.Location) string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSourceFile", arg0)
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetSourceFile indicates an expected call of GetSourceFile.
+func (mr *MockEmulatorMockRecorder) GetSourceFile(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSourceFile", reflect.TypeOf((*MockEmulator)(nil).GetSourceFile), arg0)
 }
 
 // GetTransaction mocks base method.

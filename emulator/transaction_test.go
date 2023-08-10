@@ -1,3 +1,21 @@
+/*
+ * Flow Emulator
+ *
+ * Copyright Dapper Labs, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package emulator_test
 
 import (
@@ -2097,4 +2115,39 @@ func TestRollbackTransaction(t *testing.T) {
 
 	IncrementHelper(t, b, adapter, counterAddress, addTwoScript, 2)
 
+}
+
+// TestTransactionWithCadenceRandom checks Cadence's random function works
+// within a transaction
+func TestTransactionWithCadenceRandom(t *testing.T) {
+	b, adapter := setupTransactionTests(t)
+
+	code := `
+    transaction {
+        prepare() {
+            assert(unsafeRandom() >= 0)
+        }
+    }
+	`
+	callRandomTx := flowsdk.NewTransaction().
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetScript([]byte(code)).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+		SetPayer(b.ServiceKey().Address)
+
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = callRandomTx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
+
+	err = adapter.SendTransaction(context.Background(), *callRandomTx)
+	assert.NoError(t, err)
+
+	result, err := b.ExecuteNextTransaction()
+	assert.NoError(t, err)
+	AssertTransactionSucceeded(t, result)
+
+	_, err = b.CommitBlock()
+	assert.NoError(t, err)
 }
