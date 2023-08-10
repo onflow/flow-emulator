@@ -34,11 +34,11 @@ func TestAttachments(t *testing.T) {
 	require.NoError(t, err)
 
 	script := `
-		pub resource R {}
+		access(all) resource R {}
 
-		pub attachment A for R {}
+		access(all) attachment A for R {}
 
-		pub fun main() {
+		access(all) fun main() {
 			let r <- create R()
 			r[A]
 			destroy r
