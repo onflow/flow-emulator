@@ -21,24 +21,31 @@ package convert
 import (
 	"github.com/onflow/flow-go/fvm"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
+	"github.com/onflow/flow-go/model/flow"
 
-	sdkConvert "github.com/onflow/flow-emulator/convert/sdk"
 	"github.com/onflow/flow-emulator/types"
 )
 
-func VMTransactionResultToEmulator(tp *fvm.TransactionProcedure) (*types.TransactionResult, error) {
-	txID := sdkConvert.FlowIdentifierToSDK(tp.ID)
+func VMTransactionResultToEmulator(
+	txnId flow.Identifier,
+	output fvm.ProcedureOutput,
+) (
+	*types.TransactionResult,
+	error,
+) {
+	txID := FlowIdentifierToSDK(txnId)
 
-	sdkEvents, err := sdkConvert.FlowEventsToSDK(tp.Events)
+	sdkEvents, err := FlowEventsToSDK(output.Events)
 	if err != nil {
 		return nil, err
 	}
 
 	return &types.TransactionResult{
 		TransactionID:   txID,
-		ComputationUsed: tp.ComputationUsed,
-		Error:           VMErrorToEmulator(tp.Err),
-		Logs:            tp.Logs,
+		ComputationUsed: output.ComputationUsed,
+		MemoryEstimate:  output.MemoryEstimate,
+		Error:           VMErrorToEmulator(output.Err),
+		Logs:            output.Logs,
 		Events:          sdkEvents,
 	}, nil
 }
@@ -48,5 +55,5 @@ func VMErrorToEmulator(vmError fvmerrors.CodedError) error {
 		return nil
 	}
 
-	return &types.FlowError{FlowError: vmError}
+	return &types.FVMError{FlowError: vmError}
 }

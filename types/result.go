@@ -32,12 +32,15 @@ type StorableTransactionResult struct {
 	ErrorMessage string
 	Logs         []string
 	Events       []flowgo.Event
+	BlockID      flowgo.Identifier
+	BlockHeight  uint64
 }
 
 // A TransactionResult is the result of executing a transaction.
 type TransactionResult struct {
 	TransactionID   flowsdk.Identifier
 	ComputationUsed uint64
+	MemoryEstimate  uint64
 	Error           error
 	Logs            []string
 	Events          []flowsdk.Event
@@ -57,7 +60,7 @@ func (r TransactionResult) Reverted() bool {
 // TransactionResultDebug provides details about unsuccessful transaction execution
 type TransactionResultDebug struct {
 	Message string
-	Meta    map[string]string
+	Meta    map[string]any
 }
 
 // NewTransactionInvalidHashAlgo creates debug details for transactions with invalid hashing algorithm
@@ -81,7 +84,7 @@ func NewTransactionInvalidSignature(
 ) *TransactionResultDebug {
 	return &TransactionResultDebug{
 		Message: "",
-		Meta: map[string]string{
+		Meta: map[string]any{
 			"payer":            tx.Payer.String(),
 			"proposer":         tx.ProposalKey.Address.String(),
 			"proposerKeyIndex": fmt.Sprintf("%d", tx.ProposalKey.KeyIndex),
@@ -101,6 +104,7 @@ type ScriptResult struct {
 	Logs            []string
 	Events          []flowsdk.Event
 	ComputationUsed uint64
+	MemoryEstimate  uint64
 }
 
 // Succeeded returns true if the script executed without errors.

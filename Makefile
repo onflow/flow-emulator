@@ -44,7 +44,7 @@ generate: generate-mocks
 
 .PHONY: generate-mocks
 generate-mocks:
-	GO111MODULE=on ${GOPATH}/bin/mockgen -destination=server/backend/mocks/emulator.go -package=mocks github.com/onflow/flow-emulator/server/backend Emulator
+	GO111MODULE=on ${GOPATH}/bin/mockgen -destination=emulator/mocks/emulator.go -package=mocks github.com/onflow/flow-emulator/emulator Emulator
 	GO111MODULE=on ${GOPATH}/bin/mockgen -destination=storage/mocks/store.go -package=mocks github.com/onflow/flow-emulator/storage Store
 
 .PHONY: ci
@@ -57,6 +57,11 @@ install-linter:
 .PHONY: lint
 lint:
 	golangci-lint run -v ./...
+
+.PHONY: fix-lint
+fix-lint:
+	golangci-lint run -v --fix ./...
+
 
 .PHONY: check-headers
 check-headers:

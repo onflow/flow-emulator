@@ -26,7 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	convert "github.com/onflow/flow-emulator/convert/sdk"
+	"github.com/onflow/flow-emulator/convert"
 	"github.com/onflow/flow-emulator/types"
 	"github.com/onflow/flow-emulator/utils/unittest"
 )
@@ -111,17 +111,23 @@ func TestEncodeGenesisBlock(t *testing.T) {
 	assert.Equal(t, *block.Payload, *decodedBlock.Payload)
 }
 
-func TestEncodeEvent(t *testing.T) {
+func TestEncodeEvents(t *testing.T) {
 
 	t.Parallel()
 
-	event, _ := convert.SDKEventToFlow(test.EventGenerator().New())
+	event1, _ := convert.SDKEventToFlow(test.EventGenerator().New())
+	event2, _ := convert.SDKEventToFlow(test.EventGenerator().New())
 
-	data, err := encodeEvent(event)
+	events := []flowgo.Event{
+		event1,
+		event2,
+	}
+
+	data, err := encodeEvents(events)
 	require.Nil(t, err)
 
-	var decodedEvent flowgo.Event
-	err = decodeEvent(&decodedEvent, data)
+	var decodedEvents []flowgo.Event
+	err = decodeEvents(&decodedEvents, data)
 	require.Nil(t, err)
-	assert.Equal(t, event, decodedEvent)
+	assert.Equal(t, events, decodedEvents)
 }

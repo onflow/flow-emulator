@@ -25,8 +25,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/onflow/flow-go/engine/execution/state/delta"
+	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/psiemens/graceland"
 
 	"github.com/onflow/flow-emulator/types"
 )
@@ -39,7 +40,7 @@ const (
 	transactionStoreName       = "transactions"
 	transactionResultStoreName = "transactionResults"
 	eventStoreName             = "events"
-	ledgerStoreName            = "ledger"
+	LedgerStoreName            = "ledger"
 )
 
 // Store defines the storage layer for persistent chain state.
@@ -54,12 +55,13 @@ const (
 //
 // Implementations must be safe for use by multiple goroutines.
 type Store interface {
+	graceland.Routine
 	LatestBlockHeight(ctx context.Context) (uint64, error)
 
 	// LatestBlock returns the block with the highest block height.
 	LatestBlock(ctx context.Context) (flowgo.Block, error)
 
-	// Store stores the block. If the exactly same block is already in a storage, return successfully
+	// StoreBlock stores the block in storage. If the exactly same block is already in a storage, return successfully
 	StoreBlock(ctx context.Context, block *flowgo.Block) error
 
 	// BlockByID returns the block with the given hash. It is available for
@@ -77,7 +79,7 @@ type Store interface {
 		collections []*flowgo.LightCollection,
 		transactions map[flowgo.Identifier]*flowgo.TransactionBody,
 		transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
-		delta delta.Delta,
+		executionSnapshot *snapshot.ExecutionSnapshot,
 		events []flowgo.Event,
 	) error
 
@@ -90,11 +92,26 @@ type Store interface {
 	// TransactionResultByID gets the transaction result with the given ID.
 	TransactionResultByID(ctx context.Context, transactionID flowgo.Identifier) (types.StorableTransactionResult, error)
 
-	// LedgerViewByHeight returns a view into the ledger state at a given block.
-	LedgerViewByHeight(ctx context.Context, blockHeight uint64) *delta.View
+	// LedgerByHeight returns a storage snapshot into the ledger state
+	// at a given block.
+	LedgerByHeight(
+		ctx context.Context,
+		blockHeight uint64,
+	) (snapshot.StorageSnapshot, error)
 
 	// EventsByHeight returns the events in the block at the given height, optionally filtered by type.
 	EventsByHeight(ctx context.Context, blockHeight uint64, eventType string) ([]flowgo.Event, error)
+}
+
+type SnapshotProvider interface {
+	Snapshots() ([]string, error)
+	CreateSnapshot(snapshotName string) error
+	LoadSnapshot(snapshotName string) error
+	SupportSnapshotsWithCurrentConfig() bool
+}
+
+type RollbackProvider interface {
+	RollbackToBlockHeight(height uint64) error
 }
 
 type KeyGenerator interface {
@@ -102,7 +119,6 @@ type KeyGenerator interface {
 	LatestBlock() []byte
 	BlockHeight(height uint64) []byte
 	Identifier(id flowgo.Identifier) []byte
-	Event(blockHeight uint64, txIndex, eventIndex uint32, eventType flowgo.EventType) []byte
 }
 
 type DataGetter interface {
@@ -134,21 +150,23 @@ func (s *DefaultKeyGenerator) Identifier(id flowgo.Identifier) []byte {
 	return []byte(fmt.Sprintf("%x", id))
 }
 
-func (s *DefaultKeyGenerator) Event(blockHeight uint64, txIndex, eventIndex uint32, eventType flowgo.EventType) []byte {
-	return []byte(fmt.Sprintf(
-		"%032d-%032d-%032d-%s",
-		blockHeight,
-		txIndex,
-		eventIndex,
-		eventType,
-	))
-}
-
 type DefaultStore struct {
 	KeyGenerator
 	DataSetter
 	DataGetter
+	CurrentHeight uint64
 }
+
+func (s *DefaultStore) SetBlockHeight(height uint64) error {
+	s.CurrentHeight = height
+	return s.DataSetter.SetBytes(context.Background(), s.KeyGenerator.Storage(globalStoreName), s.KeyGenerator.LatestBlock(), mustEncodeUint64(height))
+}
+
+func (s *DefaultStore) Start() error {
+	return nil
+}
+
+func (s *DefaultStore) Stop() {}
 
 func (s *DefaultStore) LatestBlockHeight(ctx context.Context) (latestBlockHeight uint64, err error) {
 	latestBlockHeightEnc, err := s.DataGetter.GetBytes(ctx, s.KeyGenerator.Storage(globalStoreName), s.KeyGenerator.LatestBlock())
@@ -173,6 +191,7 @@ func (s *DefaultStore) LatestBlock(ctx context.Context) (block flowgo.Block, err
 }
 
 func (s *DefaultStore) StoreBlock(ctx context.Context, block *flowgo.Block) error {
+	s.CurrentHeight = block.Header.Height
 
 	encBlock, err := encodeBlock(*block)
 	if err != nil {
@@ -313,11 +332,18 @@ func (s *DefaultStore) InsertEvents(ctx context.Context, blockHeight uint64, eve
 	return nil
 }
 
-func (s *DefaultStore) InsertLedgerDelta(ctx context.Context, blockHeight uint64, delta delta.Delta) error {
-	updatedIDs, updatedValues := delta.RegisterUpdates()
-	for i, registerID := range updatedIDs {
-		value := updatedValues[i]
-		err := s.DataSetter.SetBytesWithVersion(ctx, s.KeyGenerator.Storage(ledgerStoreName), []byte(registerID.String()), value, blockHeight)
+func (s *DefaultStore) InsertExecutionSnapshot(
+	ctx context.Context,
+	blockHeight uint64,
+	executionSnapshot *snapshot.ExecutionSnapshot,
+) error {
+	for registerID, value := range executionSnapshot.WriteSet {
+		err := s.DataSetter.SetBytesWithVersion(
+			ctx,
+			s.KeyGenerator.Storage(LedgerStoreName),
+			[]byte(registerID.String()),
+			value,
+			blockHeight)
 		if err != nil {
 			return err
 		}
@@ -331,7 +357,7 @@ func (s *DefaultStore) CommitBlock(
 	collections []*flowgo.LightCollection,
 	transactions map[flowgo.Identifier]*flowgo.TransactionBody,
 	transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
-	delta delta.Delta,
+	executionSnapshot *snapshot.ExecutionSnapshot,
 	events []flowgo.Event,
 ) error {
 
@@ -369,7 +395,10 @@ func (s *DefaultStore) CommitBlock(
 		}
 	}
 
-	err = s.InsertLedgerDelta(ctx, block.Header.Height, delta)
+	err = s.InsertExecutionSnapshot(
+		ctx,
+		block.Header.Height,
+		executionSnapshot)
 	if err != nil {
 		return err
 	}
@@ -383,24 +412,44 @@ func (s *DefaultStore) CommitBlock(
 
 }
 
-func (s *DefaultStore) LedgerViewByHeight(ctx context.Context, blockHeight uint64) *delta.View {
-	return delta.NewView(func(owner, key string) (value flowgo.RegisterValue, err error) {
-		id := flowgo.RegisterID{
-			Owner: owner,
-			Key:   key,
+type defaultStorageSnapshot struct {
+	*DefaultStore
+
+	ctx         context.Context
+	blockHeight uint64
+}
+
+func (snapshot defaultStorageSnapshot) Get(
+	id flowgo.RegisterID,
+) (
+	flowgo.RegisterValue,
+	error,
+) {
+	value, err := snapshot.GetBytesAtVersion(
+		snapshot.ctx,
+		snapshot.Storage(LedgerStoreName),
+		[]byte(id.String()),
+		snapshot.blockHeight)
+
+	if err != nil {
+		// silence not found errors
+		if errors.Is(err, ErrNotFound) {
+			return nil, nil
 		}
 
-		value, err = s.DataGetter.GetBytesAtVersion(ctx, s.KeyGenerator.Storage(ledgerStoreName), []byte(id.String()), blockHeight)
+		return nil, err
+	}
 
-		if err != nil {
-			// silence not found errors
-			if errors.Is(err, ErrNotFound) {
-				return nil, nil
-			}
+	return value, nil
+}
 
-			return nil, err
-		}
-
-		return value, nil
-	})
+func (s *DefaultStore) LedgerByHeight(
+	ctx context.Context,
+	blockHeight uint64,
+) (snapshot.StorageSnapshot, error) {
+	return defaultStorageSnapshot{
+		DefaultStore: s,
+		ctx:          ctx,
+		blockHeight:  blockHeight,
+	}, nil
 }

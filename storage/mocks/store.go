@@ -10,7 +10,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	types "github.com/onflow/flow-emulator/types"
-	delta "github.com/onflow/flow-go/engine/execution/state/delta"
+	snapshot "github.com/onflow/flow-go/fvm/storage/snapshot"
 	flow "github.com/onflow/flow-go/model/flow"
 )
 
@@ -83,7 +83,7 @@ func (mr *MockStoreMockRecorder) CollectionByID(arg0, arg1 interface{}) *gomock.
 }
 
 // CommitBlock mocks base method.
-func (m *MockStore) CommitBlock(arg0 context.Context, arg1 flow.Block, arg2 []*flow.LightCollection, arg3 map[flow.Identifier]*flow.TransactionBody, arg4 map[flow.Identifier]*types.StorableTransactionResult, arg5 delta.Delta, arg6 []flow.Event) error {
+func (m *MockStore) CommitBlock(arg0 context.Context, arg1 flow.Block, arg2 []*flow.LightCollection, arg3 map[flow.Identifier]*flow.TransactionBody, arg4 map[flow.Identifier]*types.StorableTransactionResult, arg5 *snapshot.ExecutionSnapshot, arg6 []flow.Event) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CommitBlock", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
 	ret0, _ := ret[0].(error)
@@ -141,18 +141,45 @@ func (mr *MockStoreMockRecorder) LatestBlockHeight(arg0 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LatestBlockHeight", reflect.TypeOf((*MockStore)(nil).LatestBlockHeight), arg0)
 }
 
-// LedgerViewByHeight mocks base method.
-func (m *MockStore) LedgerViewByHeight(arg0 context.Context, arg1 uint64) *delta.View {
+// LedgerByHeight mocks base method.
+func (m *MockStore) LedgerByHeight(arg0 context.Context, arg1 uint64) (snapshot.StorageSnapshot, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LedgerViewByHeight", arg0, arg1)
-	ret0, _ := ret[0].(*delta.View)
+	ret := m.ctrl.Call(m, "LedgerByHeight", arg0, arg1)
+	ret0, _ := ret[0].(snapshot.StorageSnapshot)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LedgerByHeight indicates an expected call of LedgerByHeight.
+func (mr *MockStoreMockRecorder) LedgerByHeight(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LedgerByHeight", reflect.TypeOf((*MockStore)(nil).LedgerByHeight), arg0, arg1)
+}
+
+// Start mocks base method.
+func (m *MockStore) Start() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Start")
+	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// LedgerViewByHeight indicates an expected call of LedgerViewByHeight.
-func (mr *MockStoreMockRecorder) LedgerViewByHeight(arg0, arg1 interface{}) *gomock.Call {
+// Start indicates an expected call of Start.
+func (mr *MockStoreMockRecorder) Start() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LedgerViewByHeight", reflect.TypeOf((*MockStore)(nil).LedgerViewByHeight), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockStore)(nil).Start))
+}
+
+// Stop mocks base method.
+func (m *MockStore) Stop() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Stop")
+}
+
+// Stop indicates an expected call of Stop.
+func (mr *MockStoreMockRecorder) Stop() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockStore)(nil).Stop))
 }
 
 // StoreBlock mocks base method.
