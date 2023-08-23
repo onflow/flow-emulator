@@ -1250,8 +1250,8 @@ github.com/onflow/flow-core-contracts/lib/go/templates v1.2.4-0.20230808220007-f
 github.com/onflow/flow-core-contracts/lib/go/templates v1.2.4-0.20230808220007-f00e74ca675b/go.mod h1:a9vPOJl7SwR0L6MMzPGEshp5HEsPQfay/pze+jrNlrw=
 github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20230818200853-ab1b03e98a95 h1:mtQIjtnUQ2axR74YRMSG4rYo5PzWIbToGCdbu0oZjGs=
 github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20230818200853-ab1b03e98a95/go.mod h1:kTMFIySzEJJeupk+7EmXs0EJ6CBWY/MV9fv9iYQk+RU=
-github.com/onflow/flow-go v0.31.1-0.20230822232926-3e4e686e38a0 h1:EX88tVq0ZbzyvF1/YiyQ24a09kV9zKlHwasZQnHBUNc=
-github.com/onflow/flow-go v0.31.1-0.20230822232926-3e4e686e38a0/go.mod h1:BC9pUgGOoprxzKmhZ7Bn7eXANb4X4BEY7eFhdYqvzLo=
+github.com/onflow/flow-go v0.31.1-0.20230823193859-43245c9c2602 h1:7ewOtP3ynBlWW2cvomRD4Ierkb9Qk3awkmdnnAAYtM0=
+github.com/onflow/flow-go v0.31.1-0.20230823193859-43245c9c2602/go.mod h1:BC9pUgGOoprxzKmhZ7Bn7eXANb4X4BEY7eFhdYqvzLo=
 github.com/onflow/flow-go-sdk v0.41.7-stable-cadence/go.mod h1:ejVN+bqcsTHVvRpDDJDoBNdmcxUfFMW4IvdTbMeQ/hQ=
 github.com/onflow/flow-go-sdk v0.41.10-0.20230815215544-c3e9ce914aee h1:zU78xj/94YNYtf4CLGWogCTPyrR+1h3QTalsU/ZEKDg=
 github.com/onflow/flow-go-sdk v0.41.10-0.20230815215544-c3e9ce914aee/go.mod h1:JdN8uOpLMFaMTCFSoeck78fYPupTsV7ccvyrDM88nQU=
