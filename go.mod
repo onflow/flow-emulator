@@ -19,7 +19,6 @@ require (
 	github.com/onflow/flow-go/crypto v0.24.9
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20230818200521-3acffe2472a3
 	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20230628215638-83439d22e0ce
-	github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20221222181731-14b90207cead
 	github.com/prometheus/client_golang v1.16.0
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
