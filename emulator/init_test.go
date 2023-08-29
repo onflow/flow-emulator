@@ -187,7 +187,7 @@ func TestInitialization(t *testing.T) {
 				`
                   import 0x%s
 
-                  pub fun main(): Int {
+                  access(all) fun main(): Int {
                       return getAccount(0x%s).getCapability(/public/counter)!.borrow<&Counting.Counter>()?.count ?? 0
                   }
                 `,

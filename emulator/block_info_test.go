@@ -88,7 +88,7 @@ func TestBlockInfo(t *testing.T) {
 
 	t.Run("works as script", func(t *testing.T) {
 		script := []byte(`
-			pub fun main() {
+			access(all) fun main() {
 				let block = getCurrentBlock()
 				log(block)
 

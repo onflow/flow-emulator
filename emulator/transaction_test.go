@@ -1539,9 +1539,9 @@ func TestGetTxByBlockIDMethods(t *testing.T) {
 }
 
 const helloWorldContract = `
-    pub contract HelloWorld {
+    access(all) contract HelloWorld {
 
-        pub fun hello(): String {
+        access(all) fun hello(): String {
             return "Hello, World!"
         }
     }
@@ -1671,7 +1671,7 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 	contracts := []templates.Contract{
 		{
 			Name:   "HelloWorld",
-			Source: `pub contract HelloWorld {}`,
+			Source: `access(all) contract HelloWorld {}`,
 		},
 	}
 
@@ -1792,7 +1792,7 @@ func TestInfiniteTransaction(t *testing.T) {
 	)
 
 	const code = `
-		pub fun test() {
+		access(all) fun test() {
 			test()
 		}
 

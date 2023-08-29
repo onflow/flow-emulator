@@ -38,24 +38,24 @@ import (
 
 const counterScript = `
 
-  pub contract Counting {
+  access(all) contract Counting {
 
-      pub event CountIncremented(count: Int)
+      access(all) event CountIncremented(count: Int)
 
-      pub resource Counter {
-          pub var count: Int
+      access(all) resource Counter {
+          access(all) var count: Int
 
           init() {
               self.count = 0
           }
 
-          pub fun add(_ count: Int) {
+          access(all) fun add(_ count: Int) {
               self.count = self.count + count
               emit CountIncremented(count: self.count)
           }
       }
 
-      pub fun createCounter(): @Counter {
+      access(all) fun createCounter(): @Counter {
           return <-create Counter()
       }
   }
@@ -108,7 +108,7 @@ func GenerateGetCounterCountScript(counterAddress flowsdk.Address, accountAddres
 		`
             import 0x%s
 
-            pub fun main(): Int {
+            access(all) fun main(): Int {
                 return getAccount(0x%s).getCapability(/public/counter)!.borrow<&Counting.Counter>()?.count ?? 0
             }
         `,

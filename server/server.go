@@ -172,6 +172,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 		"NonFungibleToken":   chain.ServiceAddress().HexWithPrefix(),
 		"ViewResolver":       chain.ServiceAddress().HexWithPrefix(),
 		"MetadataViews":      chain.ServiceAddress().HexWithPrefix(),
+		"MultipleNFT":        chain.ServiceAddress().HexWithPrefix(),
 	}
 	for contract, address := range coreContracts {
 		logger.Info().Fields(map[string]any{contract: address}).Msg("📜 Flow contract")

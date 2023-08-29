@@ -41,7 +41,7 @@ func TestSourceFilePragmaForScript(t *testing.T) {
 	require.NoError(t, err)
 
 	scriptCode := `#sourceFile("script.cdc")			
-		pub fun main() {
+		access(all) fun main() {
 			log("42")
 		}`
 
@@ -100,7 +100,7 @@ func TestSourceFilePragmaForContract(t *testing.T) {
 	adapter := adapters.NewSDKAdapter(&logger, b)
 
 	contract := `#sourceFile("contracts/C.cdc")		
-				pub contract C {
+				access(all) contract C {
 				}`
 
 	tx := templates.AddAccountContract(
@@ -138,7 +138,7 @@ func TestSourceFileCommentedOutPragmaForContract(t *testing.T) {
 	adapter := adapters.NewSDKAdapter(&logger, b)
 
 	contract := `//#sourceFile("contracts/C.cdc")		
-				pub contract C {
+				access(all) contract C {
 				}`
 
 	tx := templates.AddAccountContract(

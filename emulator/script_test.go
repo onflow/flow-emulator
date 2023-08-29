@@ -110,7 +110,7 @@ func TestExecuteScript_WithArguments(t *testing.T) {
 		require.NoError(t, err)
 
 		scriptWithArgs := `
-			pub fun main(n: Int): Int {
+			access(all) fun main(n: Int): Int {
 				return n
 			}
 		`
@@ -132,7 +132,7 @@ func TestExecuteScript_WithArguments(t *testing.T) {
 		require.NoError(t, err)
 
 		scriptWithArgs := `
-			pub fun main(n: String): Int {
+			access(all) fun main(n: String): Int {
 				log(n)
 				return 0
 			}
@@ -156,7 +156,7 @@ func TestExecuteScript_FlowServiceAccountBalance(t *testing.T) {
 	code := fmt.Sprintf(
 		`
           import FlowServiceAccount from %[1]s
-          pub fun main(): UFix64 {
+          access(all) fun main(): UFix64 {
             let acct = getAccount(%[1]s)
             return FlowServiceAccount.defaultTokenBalance(acct)
           }
@@ -182,7 +182,7 @@ func TestInfiniteScript(t *testing.T) {
 	require.NoError(t, err)
 
 	const code = `
-		pub fun main() {
+		access(all) fun main() {
 			main()
 		}
 	`
@@ -197,7 +197,7 @@ func TestScriptExecutionLimit(t *testing.T) {
 	t.Parallel()
 
 	const code = `
-		pub fun main() {
+		access(all) fun main() {
 			var s: Int256 = 1024102410241024
 			var i: Int256 = 0
 			var a: Int256 = 7
@@ -250,7 +250,7 @@ func TestScriptExecutionLimit(t *testing.T) {
 func TestScriptWithCadenceRandom(t *testing.T) {
 
 	const code = `
-    pub fun main() {
+    access(all) fun main() {
         assert(unsafeRandom() >= 0)
     }
 	`

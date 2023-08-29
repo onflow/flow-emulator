@@ -12,14 +12,13 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v0.39.13-stable-cadence.0.20230815212832-22bddebe43d0
+	github.com/onflow/cadence v0.41.0-stable-cadence.1
 	github.com/onflow/flow-archive v1.3.4-0.20230503192214-9e81e82d4dcc
-	github.com/onflow/flow-go v0.31.1-0.20230815214010-848d14191e2d
-	github.com/onflow/flow-go-sdk v0.41.10-0.20230815213805-f058bf5079ea
+	github.com/onflow/flow-go v0.31.1-0.20230829185811-090be4adebb5
+	github.com/onflow/flow-go-sdk v0.44.0-stable-cadence.1
 	github.com/onflow/flow-go/crypto v0.24.9
-	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20230726191152-4293bb676808
+	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20230818200521-3acffe2472a3
 	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20230628215638-83439d22e0ce
-	github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20221222181731-14b90207cead
 	github.com/prometheus/client_golang v1.16.0
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
@@ -108,9 +107,9 @@ require (
 	github.com/multiformats/go-multistream v0.4.1 // indirect
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/onflow/atree v0.6.0 // indirect
-	github.com/onflow/flow-core-contracts/lib/go/contracts v1.2.4-0.20230808220007-f00e74ca675b // indirect
+	github.com/onflow/flow-core-contracts/lib/go/contracts v1.2.4-0.20230822191436-8a95802475f4 // indirect
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.2.4-0.20230808220007-f00e74ca675b // indirect
-	github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20230726183918-f90805445bfa // indirect
+	github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20230818200853-ab1b03e98a95 // indirect
 	github.com/onflow/sdks v0.5.0 // indirect
 	github.com/onflow/wal v0.0.0-20230529184820-bc9f8244608d // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
