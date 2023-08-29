@@ -37,7 +37,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const testContract = "pub contract Test {}"
+const testContract = "access(all) contract Test {}"
 
 func setupAccountTests(t *testing.T, opts ...emulator.Option) (
 	*emulator.Blockchain,
@@ -361,15 +361,15 @@ func TestCreateAccount(t *testing.T) {
 		b, adapter := setupAccountTests(t)
 
 		codeA := `
-		  pub contract Test1 {
-			  pub fun a(): Int {
+		  access(all) contract Test1 {
+			  access(all) fun a(): Int {
 				  return 1
 			  }
 		  }
 		`
 		codeB := `
-		  pub contract Test2 {
-			  pub fun b(): Int {
+		  access(all) contract Test2 {
+			  access(all) fun b(): Int {
 				  return 2
 			  }
 		  }
@@ -875,16 +875,16 @@ func TestUpdateAccountCode(t *testing.T) {
 	t.Parallel()
 
 	const codeA = `
-      pub contract Test {
-          pub fun a(): Int {
+      access(all) contract Test {
+          access(all) fun a(): Int {
               return 1
           }
       }
     `
 
 	const codeB = `
-      pub contract Test {
-          pub fun b(): Int {
+      access(all) contract Test {
+          access(all) fun b(): Int {
               return 2
           }
       }
@@ -1027,8 +1027,8 @@ func TestImportAccountCode(t *testing.T) {
 		{
 			Name: "Computer",
 			Source: `
-              pub contract Computer {
-                  pub fun answer(): Int {
+              access(all) contract Computer {
+                  access(all) fun answer(): Int {
                       return 42
                   }
               }
@@ -1087,7 +1087,7 @@ func TestAccountAccess(t *testing.T) {
 		{
 			Name: "A",
 			Source: `
-				pub contract A {
+				access(all) contract A {
 					access(account) let a: Int
 
 					init() {
@@ -1120,8 +1120,8 @@ func TestAccountAccess(t *testing.T) {
 			Source: fmt.Sprintf(`
 				    import A from 0x%s
 
-					pub contract B {
-						pub fun use() {
+					access(all) contract B {
+						access(all) fun use() {
 							let b = A.a
 						}
 					}
@@ -1176,8 +1176,8 @@ func TestAccountAccess(t *testing.T) {
 			Source: fmt.Sprintf(`
 				    import A from 0x%s
 
-					pub contract C {
-						pub fun use() {
+					access(all) contract C {
+						access(all) fun use() {
 							let b = A.a
 						}
 					}

@@ -51,9 +51,9 @@ func TestEventEmitted(t *testing.T) {
 		require.NoError(t, err)
 
 		script := []byte(`
-			pub event MyEvent(x: Int, y: Int)
+			access(all) event MyEvent(x: Int, y: Int)
 
-			pub fun main() {
+			access(all) fun main() {
 			  emit MyEvent(x: 1, y: 2)
 			}
 		`)
@@ -80,10 +80,10 @@ func TestEventEmitted(t *testing.T) {
 			{
 				Name: "Test",
 				Source: `
-                    pub contract Test {
-						pub event MyEvent(x: Int, y: Int)
+                    access(all) contract Test {
+						access(all) event MyEvent(x: Int, y: Int)
 
-						pub fun emitMyEvent(x: Int, y: Int) {
+						access(all) fun emitMyEvent(x: Int, y: Int) {
 							emit MyEvent(x: x, y: y)
 						}
 					}

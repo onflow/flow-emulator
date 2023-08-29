@@ -34,7 +34,7 @@ func TestCapabilityControllers(t *testing.T) {
 	require.NoError(t, err)
 
 	script := `
-		pub fun main() {
+		access(all) fun main() {
 			getAccount(0x1).capabilities.get
 		}
 	`

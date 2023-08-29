@@ -35,7 +35,7 @@ func TestRuntimeLogs(t *testing.T) {
 	require.NoError(t, err)
 
 	script := []byte(`
-		pub fun main() {
+		access(all) fun main() {
 			log("elephant ears")
 		}
 	`)
