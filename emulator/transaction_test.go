@@ -427,7 +427,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		tx := flowsdk.NewTransaction().
 			SetScript([]byte(`
 			  transaction {
-				prepare(signer: AuthAccount) {}
+				prepare(signer: &Account) {}
 			  }
 			`)).
 			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
@@ -618,7 +618,7 @@ func TestSubmitTransaction_Authorizers(t *testing.T) {
 		// script only supports one account
 		script := []byte(`
 		  transaction {
-		    prepare(signer: AuthAccount) {}
+		    prepare(signer: &Account) {}
 		  }
 		`)
 
@@ -740,7 +740,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 
 		script := []byte(`
 		  transaction {
-		    prepare(signer: AuthAccount) {}
+		    prepare(signer: &Account) {}
 		  }
 		`)
 
@@ -878,7 +878,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 
 		script := []byte(`
 		  transaction {
-		    prepare(signer: AuthAccount) {}
+		    prepare(signer: &Account) {}
 		  }
 		`)
 
@@ -1043,101 +1043,101 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 		arg     cadence.Value
 	}{
 		{
-			cadence.BoolType{},
+			cadence.BoolType,
 			cadence.NewBool(true),
 		},
 		{
-			cadence.StringType{},
+			cadence.StringType,
 			cadence.String("foo"),
 		},
 		{
-			cadence.AddressType{},
+			cadence.AddressType,
 			cadence.NewAddress(addresses.New()),
 		},
 		{
-			cadence.IntType{},
+			cadence.IntType,
 			cadence.NewInt(42),
 		},
 		{
-			cadence.Int8Type{},
+			cadence.Int8Type,
 			cadence.NewInt8(42),
 		},
 		{
-			cadence.Int16Type{},
+			cadence.Int16Type,
 			cadence.NewInt16(42),
 		},
 		{
-			cadence.Int32Type{},
+			cadence.Int32Type,
 			cadence.NewInt32(42),
 		},
 		{
-			cadence.Int64Type{},
+			cadence.Int64Type,
 			cadence.NewInt64(42),
 		},
 		{
-			cadence.Int128Type{},
+			cadence.Int128Type,
 			cadence.NewInt128(42),
 		},
 		{
-			cadence.Int256Type{},
+			cadence.Int256Type,
 			cadence.NewInt256(42),
 		},
 		{
-			cadence.UIntType{},
+			cadence.UIntType,
 			cadence.NewUInt(42),
 		},
 		{
-			cadence.UInt8Type{},
+			cadence.UInt8Type,
 			cadence.NewUInt8(42),
 		},
 		{
-			cadence.UInt16Type{},
+			cadence.UInt16Type,
 			cadence.NewUInt16(42),
 		},
 		{
-			cadence.UInt32Type{},
+			cadence.UInt32Type,
 			cadence.NewUInt32(42),
 		},
 		{
-			cadence.UInt64Type{},
+			cadence.UInt64Type,
 			cadence.NewUInt64(42),
 		},
 		{
-			cadence.UInt128Type{},
+			cadence.UInt128Type,
 			cadence.NewUInt128(42),
 		},
 		{
-			cadence.UInt256Type{},
+			cadence.UInt256Type,
 			cadence.NewUInt256(42),
 		},
 		{
-			cadence.Word8Type{},
+			cadence.Word8Type,
 			cadence.NewWord8(42),
 		},
 		{
-			cadence.Word16Type{},
+			cadence.Word16Type,
 			cadence.NewWord16(42),
 		},
 		{
-			cadence.Word32Type{},
+			cadence.Word32Type,
 			cadence.NewWord32(42),
 		},
 		{
-			cadence.Word64Type{},
+			cadence.Word64Type,
 			cadence.NewWord64(42),
 		},
 		{
-			cadence.Fix64Type{},
+			cadence.Fix64Type,
 			fix64Value,
 		},
 		{
-			cadence.UFix64Type{},
+			cadence.UFix64Type,
 			uFix64Value,
 		},
 		{
 			&cadence.ConstantSizedArrayType{
 				Size:        3,
-				ElementType: cadence.IntType{},
+				ElementType: cadence.IntType,
 			},
 			cadence.NewArray([]cadence.Value{
 				cadence.NewInt(1),
@@ -1147,8 +1147,8 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 		},
 		{
 			&cadence.DictionaryType{
-				KeyType:     cadence.StringType{},
-				ElementType: cadence.IntType{},
+				KeyType:     cadence.StringType,
+				ElementType: cadence.IntType,
 			},
 			cadence.NewDictionary([]cadence.KeyValuePair{
 				{
@@ -1263,7 +1263,7 @@ func TestSubmitTransaction_ProposerSequence(t *testing.T) {
 
 		script := []byte(`
 		  transaction {
-		    prepare(signer: AuthAccount) {}
+		    prepare(signer: &Account) {}
 		  }
 		`)
 		prevSeq := b.ServiceKey().SequenceNumber
@@ -1310,7 +1310,7 @@ func TestSubmitTransaction_ProposerSequence(t *testing.T) {
 		prevSeq := b.ServiceKey().SequenceNumber
 		script := []byte(`
 		  transaction {
-			prepare(signer: AuthAccount) {} 
+			prepare(signer: &Account) {} 
 			execute { panic("revert!") }
 		  }
 		`)

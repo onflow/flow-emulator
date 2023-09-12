@@ -15,7 +15,7 @@ require (
 	github.com/onflow/cadence v0.41.0-stable-cadence.1.0.20230908213403-8f1134670ed0
 	github.com/onflow/flow-archive v1.3.4-0.20230503192214-9e81e82d4dcc
 	github.com/onflow/flow-go v0.31.1-0.20230912223233-26a5aeb2636a
-	github.com/onflow/flow-go-sdk v0.44.0-stable-cadence.1.0.20230912223109-0524891b677a
+	github.com/onflow/flow-go-sdk v0.44.0-stable-cadence.1.0.20230912230115-25ad6f515ce6
 	github.com/onflow/flow-go/crypto v0.24.9
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20230906170014-ac628577704c
 	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20230628215638-83439d22e0ce
@@ -107,10 +107,10 @@ require (
 	github.com/multiformats/go-multistream v0.4.1 // indirect
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/onflow/atree v0.6.1-0.20230711151834-86040b30171f // indirect
-	github.com/onflow/flow-core-contracts/lib/go/contracts v1.2.4-0.20230912213425-e944757e5498 // indirect
-	github.com/onflow/flow-core-contracts/lib/go/templates v1.2.4-0.20230912213425-e944757e5498 // indirect
+	github.com/onflow/flow-core-contracts/lib/go/contracts v1.2.4-0.20230912234730-407f346dfe8c // indirect
+	github.com/onflow/flow-core-contracts/lib/go/templates v1.2.4-0.20230912234730-407f346dfe8c // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20230906165834-daca6600a634 // indirect
-	github.com/onflow/sdks v0.5.0 // indirect
+	github.com/onflow/sdks v0.5.1-0.20230912225508-b35402f12bba // indirect
 	github.com/onflow/wal v0.0.0-20230529184820-bc9f8244608d // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
