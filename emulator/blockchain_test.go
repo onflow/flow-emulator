@@ -69,12 +69,15 @@ func GenerateAddTwoToCounterScript(counterAddress flowsdk.Address) string {
             import 0x%s
 
             transaction {
-                prepare(signer: auth(Storage) &Account) {
+                prepare(signer: auth(Storage, Capabilities) &Account) {
                     var counter = signer.storage.borrow<&Counting.Counter>(from: /storage/counter)
                     if counter == nil {
                         signer.storage.save(<-Counting.createCounter(), to: /storage/counter)
-                        // signer.link<&Counting.Counter>(/public/counter, target: /storage/counter)
                         counter = signer.storage.borrow<&Counting.Counter>(from: /storage/counter)
+
+                        // Also publish this for others to borrow.
+                        let cap = signer.capabilities.storage.issue<&Counting.Counter>(/storage/counter)
+                        signer.capabilities.publish(cap, at: /public/counter)
                     }
                     counter?.add(2)
                 }
@@ -109,7 +112,7 @@ func GenerateGetCounterCountScript(counterAddress flowsdk.Address, accountAddres
             import 0x%s
 
             access(all) fun main(): Int {
-                return getAccount(0x%s).capabilities.get<&Counting.Counter>(/public/counter)!.borrow()?.count ?? 0
+                return getAccount(0x%s).capabilities.borrow<&Counting.Counter>(/public/counter)?.count ?? 0
             }
         `,
 		counterAddress,

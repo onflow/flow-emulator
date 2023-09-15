@@ -655,7 +655,7 @@ func TestSubmitTransaction_Authorizers(t *testing.T) {
 		// script requires two accounts
 		script := []byte(`
 		  transaction {
-		    prepare(signerA: AuthAccount, signerB: AuthAccount) {}
+		    prepare(signerA: &Account, signerB: &Account) {}
 		  }
 		`)
 
@@ -986,7 +986,7 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 
 		multipleAccountScript := []byte(`
 		  transaction {
-		    prepare(signerA: AuthAccount, signerB: AuthAccount) {
+		    prepare(signerA: &Account, signerB: &Account) {
 		      log(signerA.address)
 			  log(signerB.address)
 		    }
