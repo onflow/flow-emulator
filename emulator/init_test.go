@@ -190,7 +190,7 @@ func TestInitialization(t *testing.T) {
                   import 0x%s
 
                   access(all) fun main(): Int {
-                      return getAccount(0x%s).capabilities.get<&Counting.Counter>(/public/counter)!.borrow()?.count ?? 0
+                      return getAccount(0x%s).capabilities.borrow<&Counting.Counter>(/public/counter)?.count ?? 0
                   }
                 `,
 				counterAddress,

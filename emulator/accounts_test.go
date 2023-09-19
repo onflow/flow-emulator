@@ -1208,5 +1208,9 @@ func TestAccountAccess(t *testing.T) {
 	require.False(t, result.Succeeded())
 	require.Error(t, result.Error)
 
-	require.Contains(t, result.Error.Error(), "error: cannot access `a`: field requires `account` authorization")
+	require.Contains(
+		t,
+		result.Error.Error(),
+		"error: cannot access `a`: field requires `account` authorization",
+	)
 }
