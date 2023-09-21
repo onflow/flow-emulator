@@ -94,7 +94,14 @@ func NewRestServer(logger *zerolog.Logger, adapter *adapters.AccessAdapter, chai
 		}
 	}
 
-	srv, err := rest.NewServer(adapter, fmt.Sprintf("%s:3333", host), debugLogger, chain, restCollector)
+	config := rest.Config{
+		ListenAddress: fmt.Sprintf("%s:3333", host),
+		WriteTimeout:  rest.DefaultWriteTimeout,
+		ReadTimeout:   rest.DefaultReadTimeout,
+		IdleTimeout:   rest.DefaultIdleTimeout,
+	}
+
+	srv, err := rest.NewServer(adapter, config, debugLogger, chain, restCollector)
 
 	if err != nil {
 		return nil, err
