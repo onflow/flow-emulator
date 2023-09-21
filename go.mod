@@ -12,12 +12,12 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v0.41.0-stable-cadence.1.0.20230908213403-8f1134670ed0
+	github.com/onflow/cadence v1.0.0-preview.1
 	github.com/onflow/flow-archive v1.3.4-0.20230503192214-9e81e82d4dcc
-	github.com/onflow/flow-go v0.31.1-0.20230915232445-43aebfd0ae6a
-	github.com/onflow/flow-go-sdk v0.44.0-stable-cadence.1.0.20230915213126-68e7ffb5595f
+	github.com/onflow/flow-go v0.31.1-0.20230921060220-83b00fb98777
+	github.com/onflow/flow-go-sdk v0.44.0-stable-cadence.2
 	github.com/onflow/flow-go/crypto v0.24.9
-	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20230915224343-ca2663ed82cf
+	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20230921055127-6493dc1ba948
 	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20230628215638-83439d22e0ce
 	github.com/prometheus/client_golang v1.16.0
 	github.com/psiemens/graceland v1.0.0
@@ -107,9 +107,9 @@ require (
 	github.com/multiformats/go-multistream v0.4.1 // indirect
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/onflow/atree v0.6.1-0.20230711151834-86040b30171f // indirect
-	github.com/onflow/flow-core-contracts/lib/go/contracts v1.2.4-0.20230915224512-fa9343b5af21 // indirect
-	github.com/onflow/flow-core-contracts/lib/go/templates v1.2.4-0.20230915224512-fa9343b5af21 // indirect
-	github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20230913160646-09adc7d3b513 // indirect
+	github.com/onflow/flow-core-contracts/lib/go/contracts v1.2.4-0.20230921055800-5ed9c184d103 // indirect
+	github.com/onflow/flow-core-contracts/lib/go/templates v1.2.4-0.20230918230627-2daea3d4f44b // indirect
+	github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20230921055403-cf7a05c90c20 // indirect
 	github.com/onflow/sdks v0.5.1-0.20230912225508-b35402f12bba // indirect
 	github.com/onflow/wal v0.0.0-20230529184820-bc9f8244608d // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
