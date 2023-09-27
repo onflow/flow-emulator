@@ -774,11 +774,13 @@ func configureTransactionValidator(conf config, blocks *blocks) *access.Transact
 	)
 }
 
-func (b *Blockchain) newFVMContextFromHeader(header *flowgo.Header) fvm.Context {
-	return fvm.NewContextFromParent(
+func (b *Blockchain) setFVMContextFromHeader(header *flowgo.Header) fvm.Context {
+	b.vmCtx = fvm.NewContextFromParent(
 		b.vmCtx,
 		fvm.WithBlockHeader(header),
 	)
+
+	return b.vmCtx
 }
 
 func (b *Blockchain) CurrentScript() (string, string) {
@@ -1165,7 +1167,7 @@ func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 	}
 
 	header := b.pendingBlock.Block().Header
-	blockContext := b.newFVMContextFromHeader(header)
+	blockContext := b.setFVMContextFromHeader(header)
 
 	// cannot execute a block that has already executed
 	if b.pendingBlock.ExecutionComplete() {
@@ -1193,7 +1195,7 @@ func (b *Blockchain) ExecuteNextTransaction() (*types.TransactionResult, error) 
 	defer b.mu.Unlock()
 
 	header := b.pendingBlock.Block().Header
-	blockContext := b.newFVMContextFromHeader(header)
+	blockContext := b.setFVMContextFromHeader(header)
 	return b.executeNextTransaction(blockContext)
 }
 
@@ -1405,8 +1407,10 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 		return nil, err
 	}
 
-	header := requestedBlock.Header
-	blockContext := b.newFVMContextFromHeader(header)
+	blockContext := fvm.NewContextFromParent(
+		b.vmCtx,
+		fvm.WithBlockHeader(requestedBlock.Header),
+	)
 
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
 	b.currentCode = string(script)
