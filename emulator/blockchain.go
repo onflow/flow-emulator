@@ -548,7 +548,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 
 	cadenceLogger := conf.Logger.Hook(CadenceHook{MainLogger: &conf.ServerLogger}).Level(zerolog.DebugLevel)
 
-	config := runtime.Config{
+	runtimeConfig := runtime.Config{
 		Debugger:                     blockchain.debugger,
 		AccountLinkingEnabled:        true,
 		AttachmentsEnabled:           true,
@@ -556,13 +556,13 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		CoverageReport:               conf.CoverageReport,
 	}
 	coverageReportedRuntime := &CoverageReportedRuntime{
-		Runtime:        runtime.NewInterpreterRuntime(config),
+		Runtime:        runtime.NewInterpreterRuntime(runtimeConfig),
 		CoverageReport: conf.CoverageReport,
-		Environment:    runtime.NewBaseInterpreterEnvironment(config),
+		Environment:    runtime.NewBaseInterpreterEnvironment(runtimeConfig),
 	}
 	customRuntimePool := reusableRuntime.NewCustomReusableCadenceRuntimePool(
 		1,
-		config,
+		runtimeConfig,
 		func(config runtime.Config) runtime.Runtime {
 			return coverageReportedRuntime
 		},
