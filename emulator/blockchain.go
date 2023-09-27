@@ -1633,6 +1633,16 @@ func (b *Blockchain) SetClock(clock Clock) {
 	b.pendingBlock.SetClock(clock)
 }
 
+// NewScriptEnvironment returns an environment.Environment by
+// using as a storage snapshot the blockchain's ledger state.
+// Useful for tools that use the emulator's blockchain as a library.
+func (b *Blockchain) NewScriptEnvironment() environment.Environment {
+	return environment.NewScriptEnvironmentFromStorageSnapshot(
+		b.vmCtx.EnvironmentParams,
+		b.pendingBlock.ledgerState.NewChild(),
+	)
+}
+
 func (b *Blockchain) GetSourceFile(location common.Location) string {
 
 	value, exists := b.sourceFileMap[location]
@@ -1644,12 +1654,8 @@ func (b *Blockchain) GetSourceFile(location common.Location) string {
 	if !isAddressLocation {
 		return location.ID()
 	}
-	view := b.pendingBlock.ledgerState.NewChild()
 
-	env := environment.NewScriptEnvironmentFromStorageSnapshot(
-		b.vmCtx.EnvironmentParams,
-		view)
-
+	env := b.NewScriptEnvironment()
 	r := b.vmCtx.Borrow(env)
 	defer b.vmCtx.Return(r)
 
