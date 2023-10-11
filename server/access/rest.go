@@ -31,6 +31,7 @@ import (
 
 	"github.com/onflow/flow-go/engine/access/rest"
 	"github.com/onflow/flow-go/engine/access/rest/routes"
+	"github.com/onflow/flow-go/engine/access/state_stream"
 	"github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module"
 	"github.com/onflow/flow-go/module/metrics"
@@ -94,7 +95,18 @@ func NewRestServer(logger *zerolog.Logger, adapter *adapters.AccessAdapter, chai
 		}
 	}
 
-	srv, err := rest.NewServer(adapter, fmt.Sprintf("%s:3333", host), debugLogger, chain, restCollector)
+	srv, err := rest.NewServer(
+		adapter,
+		rest.Config{
+			ListenAddress: fmt.Sprintf("%s:3333", host),
+		},
+		debugLogger,
+		chain,
+		restCollector,
+		&state_stream.StateStreamBackend{},
+		state_stream.DefaultEventFilterConfig,
+		state_stream.DefaultMaxGlobalStreams,
+	)
 
 	if err != nil {
 		return nil, err
