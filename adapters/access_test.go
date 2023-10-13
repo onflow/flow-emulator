@@ -341,7 +341,7 @@ func TestAccess(t *testing.T) {
 			Return(&emuResult, nil).
 			Times(1)
 
-		result, err := adapter.GetTransactionResult(context.Background(), txID, blockID, collectionID)
+		result, err := adapter.GetTransactionResult(context.Background(), txID, blockID, collectionID, nil)
 		assert.Equal(t, expected, *result)
 		assert.NoError(t, err)
 
@@ -351,7 +351,7 @@ func TestAccess(t *testing.T) {
 			Return(nil, fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.GetTransactionResult(context.Background(), txID, blockID, collectionID)
+		result, err = adapter.GetTransactionResult(context.Background(), txID, blockID, collectionID, nil)
 		assert.Nil(t, result)
 		assert.Error(t, err)
 
@@ -562,7 +562,7 @@ func TestAccess(t *testing.T) {
 			Return(blockEvents, nil).
 			Times(1)
 
-		result, err := adapter.GetEventsForHeightRange(context.Background(), eventType, startHeight, endHeight)
+		result, err := adapter.GetEventsForHeightRange(context.Background(), eventType, startHeight, endHeight, nil)
 		assert.Equal(t, expected, result)
 		assert.NoError(t, err)
 
@@ -572,7 +572,7 @@ func TestAccess(t *testing.T) {
 			Return(nil, fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.GetEventsForHeightRange(context.Background(), eventType, startHeight, endHeight)
+		result, err = adapter.GetEventsForHeightRange(context.Background(), eventType, startHeight, endHeight, nil)
 		assert.Nil(t, result)
 		assert.Error(t, err)
 
@@ -604,7 +604,7 @@ func TestAccess(t *testing.T) {
 			Return(blockEvents, nil).
 			Times(1)
 
-		result, err := adapter.GetEventsForBlockIDs(context.Background(), eventType, blockIDs)
+		result, err := adapter.GetEventsForBlockIDs(context.Background(), eventType, blockIDs, nil)
 		assert.Equal(t, expected, result)
 		assert.NoError(t, err)
 
@@ -614,7 +614,7 @@ func TestAccess(t *testing.T) {
 			Return(nil, fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.GetEventsForBlockIDs(context.Background(), eventType, blockIDs)
+		result, err = adapter.GetEventsForBlockIDs(context.Background(), eventType, blockIDs, nil)
 		assert.Nil(t, result)
 		assert.Error(t, err)
 
@@ -643,7 +643,7 @@ func TestAccess(t *testing.T) {
 			Return(results, nil).
 			Times(1)
 
-		result, err := adapter.GetTransactionResultByIndex(context.Background(), blockID, index)
+		result, err := adapter.GetTransactionResultByIndex(context.Background(), blockID, index, nil)
 		assert.Equal(t, convertedTXResult, result)
 		assert.NoError(t, err)
 
@@ -653,7 +653,7 @@ func TestAccess(t *testing.T) {
 			Return(nil, fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.GetTransactionResultByIndex(context.Background(), blockID, index)
+		result, err = adapter.GetTransactionResultByIndex(context.Background(), blockID, index, nil)
 		assert.Nil(t, result)
 		assert.Error(t, err)
 
@@ -712,7 +712,7 @@ func TestAccess(t *testing.T) {
 			Return(results, nil).
 			Times(1)
 
-		result, err := adapter.GetTransactionResultsByBlockID(context.Background(), blockID)
+		result, err := adapter.GetTransactionResultsByBlockID(context.Background(), blockID, nil)
 		assert.Equal(t, expected, result)
 		assert.NoError(t, err)
 
@@ -722,7 +722,7 @@ func TestAccess(t *testing.T) {
 			Return(nil, fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.GetTransactionResultsByBlockID(context.Background(), blockID)
+		result, err = adapter.GetTransactionResultsByBlockID(context.Background(), blockID, nil)
 		assert.Nil(t, result)
 		assert.Error(t, err)
 
