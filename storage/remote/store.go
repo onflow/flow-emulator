@@ -194,8 +194,18 @@ func (s *Store) LedgerByHeight(
 			return value, nil
 		}
 
-		ledgerKey := exeState.RegisterIDToKey(flowgo.RegisterID{Key: id.Key, Owner: id.Owner})
-		ledgerPath, err := pathfinder.KeyToPath(ledgerKey, complete.DefaultPathFinderVersion)
+		ledgerKeys, _ := exeState.RegisterEntriesToKeysValues(
+			flowgo.RegisterEntries{
+				{
+					Key:   flowgo.RegisterID{Key: id.Key, Owner: id.Owner},
+					Value: value,
+				},
+			},
+		)
+		ledgerPath, err := pathfinder.KeyToPath(
+			ledgerKeys[0],
+			complete.DefaultPathFinderVersion,
+		)
 		if err != nil {
 			return nil, err
 		}
