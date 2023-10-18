@@ -18,7 +18,7 @@ require (
 	github.com/onflow/flow-go-sdk v0.41.10
 	github.com/onflow/flow-go/crypto v0.24.9
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
-	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20230915140723-432828f7afb9
+	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20231017162044-5d0f9b6dfdb2
 	github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20221222181731-14b90207cead
 	github.com/prometheus/client_golang v1.16.0
 	github.com/psiemens/graceland v1.0.0
@@ -193,6 +193,6 @@ require (
 
 //TODO: Remove when both version will be merged
 replace (
-	github.com/onflow/flow-go v0.31.1-0.20230808172820-f074502a67e3 => github.com/Guitarheroua/flow-go v0.0.0-20231012141014-37d587e8cbb0
-	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20230915140723-432828f7afb9 => github.com/Guitarheroua/flow/protobuf/go/flow v0.0.0-20231004094238-e7eaa83befe5
+	github.com/onflow/flow-go v0.31.1-0.20230808172820-f074502a67e3 => github.com/Guitarheroua/flow-go v0.0.0-20231018151139-3e80a49914ad
+	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20231017162044-5d0f9b6dfdb2 => github.com/Guitarheroua/flow/protobuf/go/flow v0.0.0-20231018150252-f223f1d42001
 )

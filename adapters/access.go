@@ -189,7 +189,7 @@ func (a *AccessAdapter) GetTransactionResult(
 	id flowgo.Identifier,
 	_ flowgo.Identifier,
 	_ flowgo.Identifier,
-	eventsEncodedVersion *entities.EventEncodingVersionValue,
+	requiredEventEncodingVersion entities.EventEncodingVersion,
 ) (
 	*access.TransactionResult,
 	error,
@@ -199,10 +199,8 @@ func (a *AccessAdapter) GetTransactionResult(
 		return nil, convertError(err)
 	}
 
-	convertFromVersion := convert.GetConversionEventEncodingVersion(eventsEncodedVersion)
-
 	// Convert CCF events to JSON events, else return CCF encoded version
-	if convertFromVersion == entities.EventEncodingVersion_CCF_V0 {
+	if requiredEventEncodingVersion == entities.EventEncodingVersion_JSON_CDC_V0 {
 		result.Events, err = ConvertCCFEventsToJsonEvents(result.Events)
 		if err != nil {
 			return nil, convertError(err)
@@ -329,7 +327,7 @@ func (a *AccessAdapter) GetEventsForHeightRange(
 	_ context.Context,
 	eventType string,
 	startHeight, endHeight uint64,
-	eventsEncodedVersion *entities.EventEncodingVersionValue,
+	requiredEventEncodingVersion entities.EventEncodingVersion,
 ) ([]flowgo.BlockEvents, error) {
 	events, err := a.emulator.GetEventsForHeightRange(eventType, startHeight, endHeight)
 	if err != nil {
@@ -338,10 +336,8 @@ func (a *AccessAdapter) GetEventsForHeightRange(
 
 	eventCount := 0
 
-	convertFromVersion := convert.GetConversionEventEncodingVersion(eventsEncodedVersion)
-
 	// Convert CCF events to JSON events, else return CCF encoded version
-	if convertFromVersion == entities.EventEncodingVersion_CCF_V0 {
+	if requiredEventEncodingVersion == entities.EventEncodingVersion_JSON_CDC_V0 {
 		for i := range events {
 			events[i].Events, err = ConvertCCFEventsToJsonEvents(events[i].Events)
 			eventCount = eventCount + len(events[i].Events)
@@ -365,7 +361,7 @@ func (a *AccessAdapter) GetEventsForBlockIDs(
 	_ context.Context,
 	eventType string,
 	blockIDs []flowgo.Identifier,
-	eventsEncodedVersion *entities.EventEncodingVersionValue,
+	requiredEventEncodingVersion entities.EventEncodingVersion,
 ) ([]flowgo.BlockEvents, error) {
 	events, err := a.emulator.GetEventsForBlockIDs(eventType, blockIDs)
 	if err != nil {
@@ -374,10 +370,8 @@ func (a *AccessAdapter) GetEventsForBlockIDs(
 
 	eventCount := 0
 
-	convertFromVersion := convert.GetConversionEventEncodingVersion(eventsEncodedVersion)
-
 	// Convert CCF events to JSON events, else return CCF encoded version
-	if convertFromVersion == entities.EventEncodingVersion_CCF_V0 {
+	if requiredEventEncodingVersion == entities.EventEncodingVersion_JSON_CDC_V0 {
 		for i := range events {
 			events[i].Events, err = ConvertCCFEventsToJsonEvents(events[i].Events)
 			eventCount = eventCount + len(events[i].Events)
@@ -411,7 +405,7 @@ func (a *AccessAdapter) GetTransactionResultByIndex(
 	_ context.Context,
 	blockID flowgo.Identifier,
 	index uint32,
-	eventsEncodedVersion *entities.EventEncodingVersionValue,
+	requiredEventEncodingVersion entities.EventEncodingVersion,
 ) (*access.TransactionResult, error) {
 	results, err := a.emulator.GetTransactionResultsByBlockID(blockID)
 	if err != nil {
@@ -421,10 +415,8 @@ func (a *AccessAdapter) GetTransactionResultByIndex(
 		return nil, convertError(&types.TransactionNotFoundError{ID: flowgo.Identifier{}})
 	}
 
-	convertFromVersion := convert.GetConversionEventEncodingVersion(eventsEncodedVersion)
-
 	// Convert CCF events to JSON events, else return CCF encoded version
-	if convertFromVersion == entities.EventEncodingVersion_CCF_V0 {
+	if requiredEventEncodingVersion == entities.EventEncodingVersion_JSON_CDC_V0 {
 		for i := range results {
 			results[i].Events, err = ConvertCCFEventsToJsonEvents(results[i].Events)
 			if err != nil {
@@ -447,17 +439,15 @@ func (a *AccessAdapter) GetTransactionsByBlockID(_ context.Context, blockID flow
 func (a *AccessAdapter) GetTransactionResultsByBlockID(
 	_ context.Context,
 	blockID flowgo.Identifier,
-	eventsEncodedVersion *entities.EventEncodingVersionValue,
+	requiredEventEncodingVersion entities.EventEncodingVersion,
 ) ([]*access.TransactionResult, error) {
 	result, err := a.emulator.GetTransactionResultsByBlockID(blockID)
 	if err != nil {
 		return nil, convertError(err)
 	}
 
-	convertFromVersion := convert.GetConversionEventEncodingVersion(eventsEncodedVersion)
-
 	// Convert CCF events to JSON events, else return CCF encoded version
-	if convertFromVersion == entities.EventEncodingVersion_CCF_V0 {
+	if requiredEventEncodingVersion == entities.EventEncodingVersion_JSON_CDC_V0 {
 		for i := range result {
 			result[i].Events, err = ConvertCCFEventsToJsonEvents(result[i].Events)
 			if err != nil {
