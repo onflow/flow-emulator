@@ -23,6 +23,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/onflow/flow-go/engine/access/state_stream"
+	"github.com/onflow/flow-go/engine/access/state_stream/backend"
 	"net"
 	"net/http"
 	"os"
@@ -95,13 +96,26 @@ func NewRestServer(logger *zerolog.Logger, adapter *adapters.AccessAdapter, chai
 		}
 	}
 
-	restConf := rest.Config{
-		ListenAddress: fmt.Sprintf("%s:3333", host),
-		WriteTimeout:  rest.DefaultWriteTimeout,
-		ReadTimeout:   rest.DefaultReadTimeout,
-		IdleTimeout:   rest.DefaultIdleTimeout,
-	}
-	srv, err := rest.NewServer(adapter, restConf, debugLogger, chain, restCollector, nil, state_stream.DefaultEventFilterConfig, 0)
+	srv, err := rest.NewServer(
+		adapter,
+		rest.Config{
+			ListenAddress: fmt.Sprintf("%s:3333", host),
+			WriteTimeout:  rest.DefaultWriteTimeout,
+			ReadTimeout:   rest.DefaultReadTimeout,
+			IdleTimeout:   rest.DefaultIdleTimeout,
+		},
+		debugLogger,
+		chain,
+		restCollector,
+		nil,
+		backend.Config{
+			EventFilterConfig:    state_stream.DefaultEventFilterConfig,
+			ClientSendTimeout:    state_stream.DefaultSendTimeout,
+			ClientSendBufferSize: state_stream.DefaultSendBufferSize,
+			MaxGlobalStreams:     state_stream.DefaultMaxGlobalStreams,
+			HeartbeatInterval:    state_stream.DefaultHeartbeatInterval,
+		},
+	)
 
 	if err != nil {
 		return nil, err
