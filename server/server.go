@@ -352,18 +352,17 @@ func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
 			return nil, fmt.Errorf("only sqlite is supported with forked networks")
 		}
 
-		provider, err := remote.New(baseProvider, remote.WithChainID(conf.ChainID))
+		opts := []remote.Option{
+			remote.WithChainID(conf.ChainID),
+		}
+		if conf.StartBlockHeight > 0 {
+			opts = append(opts, remote.WithStartBlockHeight(conf.StartBlockHeight))
+		}
+
+		provider, err := remote.New(baseProvider, opts...)
 		if err != nil {
 			return nil, err
 		}
-
-		if conf.StartBlockHeight > 0 {
-			err = provider.SetBlockHeight(conf.StartBlockHeight)
-			if err != nil {
-				return nil, err
-			}
-		}
-
 		storageProvider = provider
 	}
 

@@ -26,19 +26,23 @@ import (
 	"testing"
 
 	"github.com/rs/zerolog"
-
-	"github.com/onflow/flow-emulator/adapters"
-	"github.com/onflow/flow-emulator/storage/sqlite"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/onflow/flow-archive/api/archive"
 	"github.com/onflow/flow-archive/codec/zbor"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
 
+	"github.com/onflow/flow-emulator/adapters"
 	emulator "github.com/onflow/flow-emulator/emulator"
+	internalmock "github.com/onflow/flow-emulator/internal/mocks"
+	"github.com/onflow/flow-emulator/storage/sqlite"
+	"github.com/onflow/flow-emulator/storage/util"
 )
 
 var _ archive.APIClient = testClient{}
@@ -211,6 +215,7 @@ func Test_SimulatedMainnetTransaction(t *testing.T) {
 
 func Test_SimulatedMainnetTransactionWithChanges(t *testing.T) {
 	t.Parallel()
+
 	client, err := newTestClient()
 	require.NoError(t, err)
 
@@ -286,4 +291,225 @@ func Test_SimulatedMainnetTransactionWithChanges(t *testing.T) {
 	require.Len(t, txRes.Events, 1)
 	assert.Equal(t, txRes.Events[0].String(), "A.9799f28ff0453528.Ping.PingEmitted: 0x953f6f26d61710cb0e140bfde1022483b9ef410ddd181bac287d9968c84f4778")
 	assert.Equal(t, txRes.Events[0].Value.String(), `A.9799f28ff0453528.Ping.PingEmitted(sound: "pong pong pong")`)
+}
+
+func Test_SimulatedMainnetProgressesBlocks(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	logger := zerolog.Nop()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	expectedHeight := uint64(100)
+
+	t.Run("GetLatestBlockHeader returns the latest sealed block from archive node", func(t *testing.T) {
+		t.Parallel()
+
+		client := internalmock.NewMockArchiveAPIClient(mockCtrl)
+		addLastBlockCall(client, expectedHeight)
+		addGetHeaderCall(t, client, expectedHeight)
+
+		b, _ := getBlockchain(t, expectedHeight, WithClient(client))
+		adapter := adapters.NewAccessAdapter(&logger, b)
+
+		addGetHeaderCall(t, client, expectedHeight)
+		header, status, err := adapter.GetLatestBlockHeader(ctx, true)
+		require.NoError(t, err)
+
+		assert.Equal(t, expectedHeight, header.Height)
+		assert.Equal(t, flowgo.BlockStatusSealed, status)
+	})
+
+	t.Run("GetLatestBlockHeader returns the start block", func(t *testing.T) {
+		t.Parallel()
+
+		startHeight := expectedHeight + 2
+
+		client := internalmock.NewMockArchiveAPIClient(mockCtrl)
+		addGetHeaderCall(t, client, startHeight)
+
+		b, _ := getBlockchain(t, expectedHeight, WithClient(client), WithStartBlockHeight(startHeight))
+
+		adapter := adapters.NewAccessAdapter(&logger, b)
+
+		addGetHeaderCall(t, client, startHeight)
+
+		header, status, err := adapter.GetLatestBlockHeader(ctx, true)
+		require.NoError(t, err)
+
+		assert.Equal(t, startHeight, header.Height)
+		assert.Equal(t, flowgo.BlockStatusSealed, status)
+	})
+
+	t.Run("GetBlockHeaderByHeight calls archive node for past blocks", func(t *testing.T) {
+		t.Parallel()
+
+		client := internalmock.NewMockArchiveAPIClient(mockCtrl)
+		addLastBlockCall(client, expectedHeight)
+		addGetHeaderCall(t, client, expectedHeight)
+
+		b, _ := getBlockchain(t, expectedHeight, WithClient(client))
+		adapter := adapters.NewAccessAdapter(&logger, b)
+
+		addGetHeaderCall(t, client, expectedHeight-1)
+
+		header, status, err := adapter.GetBlockHeaderByHeight(ctx, expectedHeight-1)
+		require.NoError(t, err)
+
+		assert.Equal(t, expectedHeight-1, header.Height)
+		assert.Equal(t, flowgo.BlockStatusSealed, status)
+	})
+
+	t.Run("GetBlockHeaderByHeight returns NotFound for future blocks", func(t *testing.T) {
+		t.Parallel()
+
+		client := internalmock.NewMockArchiveAPIClient(mockCtrl)
+		addLastBlockCall(client, expectedHeight)
+		addGetHeaderCall(t, client, expectedHeight)
+
+		b, _ := getBlockchain(t, expectedHeight, WithClient(client))
+		adapter := adapters.NewAccessAdapter(&logger, b)
+
+		_, _, err := adapter.GetBlockHeaderByHeight(ctx, expectedHeight+1)
+		require.Error(t, err)
+		require.Equal(t, codes.NotFound, status.Code(err), "unexpected error: %v", err)
+	})
+
+	// create persistent db
+	dbDir := t.TempDir()
+	t.Logf("dbDir: %s", dbDir)
+
+	t.Run("Starting with persistent store handles blocks", func(t *testing.T) {
+		startHeight := expectedHeight + 2
+
+		client := internalmock.NewMockArchiveAPIClient(mockCtrl)
+		addGetHeaderCall(t, client, startHeight)
+
+		provider, err := util.NewSqliteStorage(dbDir)
+		require.NoError(t, err)
+
+		opts := []Option{WithClient(client), WithStartBlockHeight(startHeight)}
+
+		remoteStore := getRemoteStore(t, provider.(*sqlite.Store), opts...)
+		b := getEmulatorBlockchain(t, remoteStore)
+
+		adapter := adapters.NewAccessAdapter(&logger, b)
+
+		addGetHeaderCall(t, client, startHeight)
+
+		header, status, err := adapter.GetLatestBlockHeader(ctx, true)
+		require.NoError(t, err)
+
+		assert.Equal(t, startHeight, header.Height)
+		assert.Equal(t, flowgo.BlockStatusSealed, status)
+
+		// simulate progressing one block
+		err = remoteStore.SetBlockHeight(startHeight + 1)
+		require.NoError(t, err)
+
+		err = remoteStore.StoreBlock(ctx, &flowgo.Block{Header: &flowgo.Header{Height: startHeight + 1}})
+		require.NoError(t, err)
+
+		// make sure the new block is now latest
+		header, status, err = adapter.GetLatestBlockHeader(ctx, true)
+		require.NoError(t, err)
+
+		assert.Equal(t, startHeight+1, header.Height)
+		assert.Equal(t, flowgo.BlockStatusSealed, status)
+	})
+
+	t.Run("Restarting with persistent store continues from last block", func(t *testing.T) {
+		startHeight := expectedHeight + 2
+		lastHeight := startHeight + 1
+
+		client := internalmock.NewMockArchiveAPIClient(mockCtrl)
+
+		provider, err := util.NewSqliteStorage(dbDir)
+		require.NoError(t, err)
+
+		opts := []Option{WithClient(client), WithStartBlockHeight(startHeight)}
+
+		remoteStore := getRemoteStore(t, provider.(*sqlite.Store), opts...)
+		b := getEmulatorBlockchain(t, remoteStore)
+
+		adapter := adapters.NewAccessAdapter(&logger, b)
+
+		header, status, err := adapter.GetLatestBlockHeader(ctx, true)
+		require.NoError(t, err)
+
+		// blocks should start where the left off
+		assert.Equal(t, lastHeight, header.Height)
+		assert.Equal(t, flowgo.BlockStatusSealed, status)
+	})
+}
+
+func getBlockchain(t *testing.T, height uint64, opts ...Option) (*emulator.Blockchain, *Store) {
+	remoteStore := getRemoteStore(t, nil, opts...)
+	b := getEmulatorBlockchain(t, remoteStore)
+
+	return b, remoteStore
+}
+
+func getRemoteStore(t *testing.T, provider *sqlite.Store, opts ...Option) *Store {
+	var err error
+	if provider == nil {
+		provider, err = sqlite.New(sqlite.InMemory)
+		require.NoError(t, err)
+	}
+	remoteStore, err := New(provider, opts...)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		err := remoteStore.Close()
+		require.NoError(t, err)
+	})
+
+	return remoteStore
+}
+
+func getEmulatorBlockchain(t *testing.T, remoteStore *Store) *emulator.Blockchain {
+	b, err := emulator.New(
+		emulator.WithStore(remoteStore),
+		emulator.WithStorageLimitEnabled(false),
+		emulator.WithTransactionValidationEnabled(false),
+		emulator.WithChainID(flowgo.Mainnet),
+	)
+	require.NoError(t, err)
+
+	return b
+}
+
+func addLastBlockCall(client *internalmock.MockArchiveAPIClient, height uint64) {
+	responseGetLast := &archive.GetLastResponse{
+		Height: height,
+	}
+
+	client.EXPECT().
+		GetLast(context.Background(), &archive.GetLastRequest{}).
+		Return(responseGetLast, nil).
+		Times(1)
+}
+
+func addGetHeaderCall(t *testing.T, client *internalmock.MockArchiveAPIClient, height uint64) {
+	request := &archive.GetHeaderRequest{
+		Height: height,
+	}
+
+	header := flowgo.Header{
+		Height: height,
+	}
+
+	data, err := zbor.NewCodec().Marshal(&header)
+	require.NoError(t, err)
+
+	response := &archive.GetHeaderResponse{
+		Height: height,
+		Data:   data,
+	}
+
+	client.EXPECT().
+		GetHeader(context.Background(), request).
+		Return(response, nil).
+		Times(1)
 }
