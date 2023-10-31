@@ -327,7 +327,7 @@ func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
 		}
 	}
 
-	if conf.Persist {
+	if conf.Persist || conf.Snapshot {
 		if storageProvider != nil {
 			return nil, fmt.Errorf("you cannot use persist with current configuration")
 		}
