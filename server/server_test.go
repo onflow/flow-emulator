@@ -76,7 +76,7 @@ func TestPersistenceWithSnapshotFlag(t *testing.T) {
 
 	require.NotNil(t, server)
 	_, err := os.Stat(conf.DBPath)
-	require.NoError(t, err, "DB should exist")
+	require.True(t, os.IsNotExist(err), "DB should not exist")
 }
 
 func TestExecuteScript(t *testing.T) {
