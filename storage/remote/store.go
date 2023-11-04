@@ -21,27 +21,27 @@ package remote
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/onflow/flow-archive/api/archive"
 	"github.com/onflow/flow-archive/codec/zbor"
-	exeState "github.com/onflow/flow-go/engine/execution/state"
 	"github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
-	"github.com/onflow/flow-go/ledger/common/pathfinder"
-	"github.com/onflow/flow-go/ledger/complete"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/sqlite"
+	"github.com/onflow/flow-emulator/types"
 )
 
 type Store struct {
 	*sqlite.Store
-	client   archive.APIClient
-	grpcConn *grpc.ClientConn
-	host     string
+	client           archive.APIClient
+	grpcConn         *grpc.ClientConn
+	host             string
+	startBlockHeight uint64
 }
 
 type Option func(*Store)
@@ -74,6 +74,13 @@ func WithClient(client archive.APIClient) Option {
 	}
 }
 
+// WithStartBlockHeight sets the start height for the store.
+func WithStartBlockHeight(height uint64) Option {
+	return func(store *Store) {
+		store.startBlockHeight = height
+	}
+}
+
 func New(provider *sqlite.Store, options ...Option) (*Store, error) {
 	store := &Store{
 		Store: provider,
@@ -100,11 +107,43 @@ func New(provider *sqlite.Store, options ...Option) (*Store, error) {
 		store.client = archive.NewAPIClient(conn)
 	}
 
+	if err := store.initializeStartBlock(); err != nil {
+		return nil, err
+	}
+
 	store.DataGetter = store
 	store.DataSetter = store
 	store.KeyGenerator = &storage.DefaultKeyGenerator{}
 
 	return store, nil
+}
+
+func (s *Store) initializeStartBlock() error {
+	if s.startBlockHeight > 0 {
+		// only set the start block height if it's not already set
+		// it may be set if restarting from a persistent store
+		_, err := s.Store.LatestBlockHeight(context.Background())
+		if errors.Is(err, storage.ErrNotFound) {
+			err = s.Store.SetBlockHeight(s.startBlockHeight)
+			if err != nil {
+				return fmt.Errorf("could not set start block height: %w", err)
+			}
+		} else if err != nil {
+			return fmt.Errorf("error getting latest block height: %w", err)
+		}
+		return nil
+	}
+
+	resp, err := s.client.GetLast(context.Background(), &archive.GetLastRequest{})
+	if err != nil {
+		return fmt.Errorf("could not get last block height: %w", err)
+	}
+	err = s.Store.SetBlockHeight(resp.Height)
+	if err != nil {
+		return fmt.Errorf("could not set start block height: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Store) BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flowgo.Block, error) {
@@ -155,6 +194,10 @@ func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block
 		return block, nil
 	}
 
+	if latestBlockHeight, err := s.LatestBlockHeight(ctx); err == nil && height > latestBlockHeight {
+		return nil, &types.BlockNotFoundByHeightError{Height: height}
+	}
+
 	blockRes, err := s.client.GetHeader(ctx, &archive.GetHeaderRequest{Height: height})
 	if err != nil {
 		return nil, err
@@ -177,10 +220,10 @@ func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
 ) (snapshot.StorageSnapshot, error) {
-	err := s.SetBlockHeight(blockHeight)
-	if err != nil {
-		return nil, err
-	}
+	// err := s.SetBlockHeight(blockHeight)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return snapshot.NewReadFuncStorageSnapshot(func(id flowgo.RegisterID) (flowgo.RegisterValue, error) {
 		// first try to see if we have local stored ledger
@@ -194,16 +237,13 @@ func (s *Store) LedgerByHeight(
 			return value, nil
 		}
 
-		ledgerKey := exeState.RegisterIDToKey(flowgo.RegisterID{Key: id.Key, Owner: id.Owner})
-		ledgerPath, err := pathfinder.KeyToPath(ledgerKey, complete.DefaultPathFinderVersion)
-		if err != nil {
-			return nil, err
-		}
+		log.Printf("fetching register: owner: %x, key: %x", []byte(id.Owner), []byte(id.Key))
 
 		// if we don't have it, get it from the archive node
+		registerID := flowgo.RegisterID{Key: id.Key, Owner: id.Owner}
 		response, err := s.client.GetRegisterValues(ctx, &archive.GetRegisterValuesRequest{
-			Height: blockHeight,
-			Paths:  [][]byte{ledgerPath[:]},
+			Height:    blockHeight,
+			Registers: [][]byte{registerID.Bytes()},
 		})
 		if err != nil {
 			return nil, err

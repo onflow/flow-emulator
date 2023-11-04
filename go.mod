@@ -13,8 +13,8 @@ require (
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v0.39.14
-	github.com/onflow/flow-archive v1.3.4-0.20230503192214-9e81e82d4dcc
-	github.com/onflow/flow-go v0.31.1-0.20230712191318-82d6e5f45ca1
+	github.com/onflow/flow-archive v0.31.14
+	github.com/onflow/flow-go v0.31.9
 	github.com/onflow/flow-go-sdk v0.41.9
 	github.com/onflow/flow-go/crypto v0.24.7
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
@@ -28,6 +28,7 @@ require (
 	github.com/slok/go-http-metrics v0.10.0
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.4
+	go.uber.org/mock v0.3.0
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
 	google.golang.org/grpc v1.56.1
 )
@@ -92,10 +93,8 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
-	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
-	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/multiformats/go-base32 v0.1.0 // indirect
@@ -124,7 +123,6 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/rs/cors v1.8.0 // indirect
-	github.com/schollz/progressbar/v3 v3.13.1 // indirect
 	github.com/sethvargo/go-retry v0.2.3 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
@@ -156,7 +154,6 @@ require (
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.2.0 // indirect
 	golang.org/x/sys v0.9.0 // indirect
-	golang.org/x/term v0.9.0 // indirect
 	golang.org/x/text v0.10.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
