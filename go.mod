@@ -186,4 +186,5 @@ require (
 //TODO: Remove when both version will be merged
 replace github.com/onflow/flow-go v0.32.3 => github.com/Guitarheroua/flow-go v0.0.0-20231024184136-247768e776f7
 
-replace github.com/onflow/flow-archive => ../flow-archive/
+//TODO: change this when flow-archive PR is merged
+replace github.com/onflow/flow-archive => github.com/bluesign/flow-dps v1.4.8-0.20231107143842-75c6d48ac313
