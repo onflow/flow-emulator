@@ -25,9 +25,6 @@ import (
 	"github.com/onflow/flow-archive/codec/zbor"
 	"github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
-	"github.com/onflow/flow-go/ledger/common/convert"
-	"github.com/onflow/flow-go/ledger/common/pathfinder"
-	"github.com/onflow/flow-go/ledger/complete"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -278,16 +275,10 @@ func (s *Store) LedgerByHeight(
 			return value, nil
 		}
 
-		ledgerKey := convert.RegisterIDToLedgerKey(flowgo.RegisterID{Key: id.Key, Owner: id.Owner})
-		ledgerPath, err := pathfinder.KeyToPath(ledgerKey, complete.DefaultPathFinderVersion)
-		if err != nil {
-			return nil, err
-		}
-
-		// if we don't have it, get it from the archive node
+		reg := flowgo.RegisterID{Key: id.Key, Owner: id.Owner}
 		response, err := s.archiveClient.GetRegisterValues(ctx, &archive.GetRegisterValuesRequest{
-			Height: blockHeight,
-			Paths:  [][]byte{ledgerPath[:]},
+			Height:    blockHeight,
+			Registers: [][]byte{reg.Bytes()},
 		})
 		if err != nil {
 			return nil, err
