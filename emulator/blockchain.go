@@ -548,7 +548,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 
 	cadenceLogger := conf.Logger.Hook(CadenceHook{MainLogger: &conf.ServerLogger}).Level(zerolog.DebugLevel)
 
-	config := runtime.Config{
+	runtimeConfig := runtime.Config{
 		Debugger:                     blockchain.debugger,
 		AccountLinkingEnabled:        true,
 		AttachmentsEnabled:           true,
@@ -556,13 +556,13 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		CoverageReport:               conf.CoverageReport,
 	}
 	coverageReportedRuntime := &CoverageReportedRuntime{
-		Runtime:        runtime.NewInterpreterRuntime(config),
+		Runtime:        runtime.NewInterpreterRuntime(runtimeConfig),
 		CoverageReport: conf.CoverageReport,
-		Environment:    runtime.NewBaseInterpreterEnvironment(config),
+		Environment:    runtime.NewBaseInterpreterEnvironment(runtimeConfig),
 	}
 	customRuntimePool := reusableRuntime.NewCustomReusableCadenceRuntimePool(
 		1,
-		config,
+		runtimeConfig,
 		func(config runtime.Config) runtime.Runtime {
 			return coverageReportedRuntime
 		},
@@ -774,11 +774,13 @@ func configureTransactionValidator(conf config, blocks *blocks) *access.Transact
 	)
 }
 
-func (b *Blockchain) newFVMContextFromHeader(header *flowgo.Header) fvm.Context {
-	return fvm.NewContextFromParent(
+func (b *Blockchain) setFVMContextFromHeader(header *flowgo.Header) fvm.Context {
+	b.vmCtx = fvm.NewContextFromParent(
 		b.vmCtx,
 		fvm.WithBlockHeader(header),
 	)
+
+	return b.vmCtx
 }
 
 func (b *Blockchain) CurrentScript() (string, string) {
@@ -1165,7 +1167,7 @@ func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 	}
 
 	header := b.pendingBlock.Block().Header
-	blockContext := b.newFVMContextFromHeader(header)
+	blockContext := b.setFVMContextFromHeader(header)
 
 	// cannot execute a block that has already executed
 	if b.pendingBlock.ExecutionComplete() {
@@ -1193,7 +1195,7 @@ func (b *Blockchain) ExecuteNextTransaction() (*types.TransactionResult, error) 
 	defer b.mu.Unlock()
 
 	header := b.pendingBlock.Block().Header
-	blockContext := b.newFVMContextFromHeader(header)
+	blockContext := b.setFVMContextFromHeader(header)
 	return b.executeNextTransaction(blockContext)
 }
 
@@ -1405,8 +1407,10 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 		return nil, err
 	}
 
-	header := requestedBlock.Header
-	blockContext := b.newFVMContextFromHeader(header)
+	blockContext := fvm.NewContextFromParent(
+		b.vmCtx,
+		fvm.WithBlockHeader(requestedBlock.Header),
+	)
 
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
 	b.currentCode = string(script)
@@ -1629,6 +1633,16 @@ func (b *Blockchain) SetClock(clock Clock) {
 	b.pendingBlock.SetClock(clock)
 }
 
+// NewScriptEnvironment returns an environment.Environment by
+// using as a storage snapshot the blockchain's ledger state.
+// Useful for tools that use the emulator's blockchain as a library.
+func (b *Blockchain) NewScriptEnvironment() environment.Environment {
+	return environment.NewScriptEnvironmentFromStorageSnapshot(
+		b.vmCtx.EnvironmentParams,
+		b.pendingBlock.ledgerState.NewChild(),
+	)
+}
+
 func (b *Blockchain) GetSourceFile(location common.Location) string {
 
 	value, exists := b.sourceFileMap[location]
@@ -1640,12 +1654,8 @@ func (b *Blockchain) GetSourceFile(location common.Location) string {
 	if !isAddressLocation {
 		return location.ID()
 	}
-	view := b.pendingBlock.ledgerState.NewChild()
 
-	env := environment.NewScriptEnvironmentFromStorageSnapshot(
-		b.vmCtx.EnvironmentParams,
-		view)
-
+	env := b.NewScriptEnvironment()
 	r := b.vmCtx.Borrow(env)
 	defer b.vmCtx.Return(r)
 

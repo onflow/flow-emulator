@@ -21,12 +21,11 @@ package remote
 import (
 	"context"
 	"fmt"
-
 	"github.com/onflow/flow-archive/api/archive"
 	"github.com/onflow/flow-archive/codec/zbor"
-	exeState "github.com/onflow/flow-go/engine/execution/state"
 	"github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
+	"github.com/onflow/flow-go/ledger/common/convert"
 	"github.com/onflow/flow-go/ledger/common/pathfinder"
 	"github.com/onflow/flow-go/ledger/complete"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -194,7 +193,7 @@ func (s *Store) LedgerByHeight(
 			return value, nil
 		}
 
-		ledgerKey := exeState.RegisterIDToKey(flowgo.RegisterID{Key: id.Key, Owner: id.Owner})
+		ledgerKey := convert.RegisterIDToLedgerKey(flowgo.RegisterID{Key: id.Key, Owner: id.Owner})
 		ledgerPath, err := pathfinder.KeyToPath(ledgerKey, complete.DefaultPathFinderVersion)
 		if err != nil {
 			return nil, err
