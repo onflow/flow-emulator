@@ -21,7 +21,7 @@ package remote
 import (
 	"context"
 	"fmt"
-	"github.com/onflow/flow-archive/api/archive"
+	archive "github.com/onflow/flow-archive/api/archive/client"
 	"github.com/onflow/flow-archive/codec/zbor"
 	"github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
