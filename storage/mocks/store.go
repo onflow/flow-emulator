@@ -156,6 +156,20 @@ func (mr *MockStoreMockRecorder) LedgerByHeight(arg0, arg1 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LedgerByHeight", reflect.TypeOf((*MockStore)(nil).LedgerByHeight), arg0, arg1)
 }
 
+// SetBlockHeight mocks base method.
+func (m *MockStore) SetBlockHeight(arg0 uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetBlockHeight", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetBlockHeight indicates an expected call of SetBlockHeight.
+func (mr *MockStoreMockRecorder) SetBlockHeight(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetBlockHeight", reflect.TypeOf((*MockStore)(nil).SetBlockHeight), arg0)
+}
+
 // Start mocks base method.
 func (m *MockStore) Start() error {
 	m.ctrl.T.Helper()

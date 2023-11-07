@@ -242,7 +242,8 @@ func (s *Store) SupportSnapshotsWithCurrentConfig() bool {
 }
 
 func (s *Store) GetBytes(ctx context.Context, store string, key []byte) ([]byte, error) {
-	return s.GetBytesAtVersion(ctx, store, key, 0)
+	v, err := s.GetBytesAtVersion(ctx, store, key, 0)
+	return v, err
 }
 
 func (s *Store) SetBytes(ctx context.Context, store string, key []byte, value []byte) error {

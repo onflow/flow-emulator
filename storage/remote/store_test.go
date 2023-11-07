@@ -30,9 +30,12 @@ import (
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/storage/sqlite"
 
-	"github.com/onflow/flow-archive/api/archive"
+	archive "github.com/onflow/flow-archive/api/archive/client"
 	"github.com/onflow/flow-archive/codec/zbor"
 	flowsdk "github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go/ledger/common/convert"
+	"github.com/onflow/flow-go/ledger/common/pathfinder"
+	"github.com/onflow/flow-go/model/encoding/rlp"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,6 +43,16 @@ import (
 
 	emulator "github.com/onflow/flow-emulator/emulator"
 )
+
+func BytesToRegister(b []byte) (*flowgo.RegisterID, error) {
+	var decoded flowgo.RegisterID
+	unmarshaler := rlp.NewMarshaler()
+	err := unmarshaler.Unmarshal(b, &decoded)
+	if err != nil {
+		return nil, fmt.Errorf("could not decode register ID: %w", err)
+	}
+	return &decoded, nil
+}
 
 var _ archive.APIClient = testClient{}
 
@@ -107,14 +120,21 @@ func (a testClient) GetEvents(ctx context.Context, in *archive.GetEventsRequest,
 }
 
 func (a testClient) GetRegisterValues(ctx context.Context, in *archive.GetRegisterValuesRequest, opts ...grpc.CallOption) (*archive.GetRegisterValuesResponse, error) {
-	val, ok := a.registerMap[hex.EncodeToString(in.Paths[0])]
+	for key := range a.registerMap {
+		fmt.Println(key)
+	}
+
+	regBytes := in.Registers[0]
+	register, _ := BytesToRegister(regBytes)
+	key := convert.RegisterIDToLedgerKey(*register)
+	path, _ := pathfinder.KeyToPath(key, 1)
+	val, ok := a.registerMap[hex.EncodeToString(path[:])]
+
 	if !ok {
 		return nil, fmt.Errorf("register not found in test fixture")
 	}
 
 	return &archive.GetRegisterValuesResponse{
-		Height: in.Height,
-		Paths:  in.Paths,
 		Values: [][]byte{val},
 	}, nil
 }

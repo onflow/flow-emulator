@@ -21,29 +21,83 @@ package remote
 import (
 	"context"
 	"fmt"
-	"github.com/onflow/flow-archive/api/archive"
+	archive "github.com/onflow/flow-archive/api/archive/client"
 	"github.com/onflow/flow-archive/codec/zbor"
 	"github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
-	"github.com/onflow/flow-go/ledger/common/convert"
-	"github.com/onflow/flow-go/ledger/common/pathfinder"
-	"github.com/onflow/flow-go/ledger/complete"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/onflow/flow-emulator/storage"
-	"github.com/onflow/flow-emulator/storage/sqlite"
 )
 
 type Store struct {
-	*sqlite.Store
-	client   archive.APIClient
-	grpcConn *grpc.ClientConn
-	host     string
+	storage.DefaultStore
+	forkedStore   storage.Store
+	archiveClient archive.APIClient
+	grpcConn      *grpc.ClientConn
+	archiveHost   string
+	forkHeight    uint64
+}
+
+func (s *Store) SetBlockHeight(height uint64) error {
+
+	if height < s.forkHeight {
+		s.forkHeight = height
+	}
+
+	return s.forkedStore.SetBlockHeight(height)
+}
+
+func (s *Store) RollbackToBlockHeight(height uint64) error {
+	rollbackProvider, isRollbackProvider := s.forkedStore.(storage.RollbackProvider)
+	if !isRollbackProvider {
+		return fmt.Errorf("storage provider does not support rollback")
+	}
+	err := rollbackProvider.RollbackToBlockHeight(height)
+	if err != nil {
+		return err
+	}
+	return s.SetBlockHeight(height)
+}
+
+func (s *Store) Snapshots() ([]string, error) {
+	snapshotProvider, isSnapshotShotProvider := s.forkedStore.(storage.SnapshotProvider)
+	if !isSnapshotShotProvider {
+		return []string{}, fmt.Errorf("storage provider does not support snapshots")
+	}
+	return snapshotProvider.Snapshots()
+}
+
+func (s *Store) CreateSnapshot(snapshotName string) error {
+	snapshotProvider, isSnapshotShotProvider := s.forkedStore.(storage.SnapshotProvider)
+	if !isSnapshotShotProvider {
+		return fmt.Errorf("storage provider does not support snapshots")
+	}
+	return snapshotProvider.CreateSnapshot(snapshotName)
+}
+
+func (s *Store) LoadSnapshot(snapshotName string) error {
+	snapshotProvider, isSnapshotShotProvider := s.forkedStore.(storage.SnapshotProvider)
+	if !isSnapshotShotProvider {
+		return fmt.Errorf("storage provider does not support snapshots")
+	}
+	return snapshotProvider.LoadSnapshot(snapshotName)
+}
+
+func (s *Store) SupportSnapshotsWithCurrentConfig() bool {
+	snapshotProvider, isSnapshotShotProvider := s.forkedStore.(storage.SnapshotProvider)
+	if !isSnapshotShotProvider {
+		return false
+	}
+	return snapshotProvider.SupportSnapshotsWithCurrentConfig()
 }
 
 type Option func(*Store)
+
+var _ storage.SnapshotProvider = &Store{}
+var _ storage.RollbackProvider = &Store{}
 
 // WithChainID sets a chain ID and is used to determine which archive node to use.
 func WithChainID(ID flowgo.ChainID) Option {
@@ -53,42 +107,50 @@ func WithChainID(ID flowgo.ChainID) Option {
 			flowgo.Testnet: "archive.testnet.nodes.onflow.org:9000",
 		}
 
-		store.host = archiveHosts[ID]
+		store.archiveHost = archiveHosts[ID]
 	}
 }
 
-// WithHost sets archive node host.
+// WithHost sets archive node archiveHost.
 func WithHost(host string) Option {
 	return func(store *Store) {
-		store.host = host
+		store.archiveHost = host
 	}
 }
 
-// WithClient can set an archive node client
+// WithForkHeight sets height to fork chain.
+func WithForkHeight(height uint64) Option {
+	return func(store *Store) {
+		store.forkHeight = height
+	}
+}
+
+// WithClient can set an archive node archiveClient
 //
 // This is mostly use for testing.
 func WithClient(client archive.APIClient) Option {
 	return func(store *Store) {
-		store.client = client
+		store.archiveClient = client
 	}
 }
 
-func New(provider *sqlite.Store, options ...Option) (*Store, error) {
+func New(provider storage.Store, options ...Option) (*Store, error) {
 	store := &Store{
-		Store: provider,
+		forkedStore: provider,
+		forkHeight:  0,
 	}
 
 	for _, opt := range options {
 		opt(store)
 	}
 
-	if store.client == nil {
-		if store.host == "" {
-			return nil, fmt.Errorf("archive node host must be provided")
+	if store.archiveClient == nil {
+		if store.archiveHost == "" {
+			return nil, fmt.Errorf("archive node archiveHost must be provided")
 		}
 
 		conn, err := grpc.Dial(
-			store.host,
+			store.archiveHost,
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 		)
 		if err != nil {
@@ -96,90 +158,110 @@ func New(provider *sqlite.Store, options ...Option) (*Store, error) {
 		}
 
 		store.grpcConn = conn
-		store.client = archive.NewAPIClient(conn)
+		store.archiveClient = archive.NewAPIClient(conn)
 	}
 
-	store.DataGetter = store
-	store.DataSetter = store
+	if store.forkHeight == 0 {
+		// check persist
+		lastHeight, err := store.forkedStore.LatestBlockHeight(context.Background())
+		if err != nil {
+			// if it's not set yet, get the block height at fork point
+			heightRes, err := store.archiveClient.GetLast(context.Background(), &archive.GetLastRequest{})
+			if err != nil {
+				return nil, err
+			}
+			store.forkHeight = heightRes.Height
+		} else {
+			store.forkHeight = lastHeight
+		}
+		err = store.SetBlockHeight(store.forkHeight)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	store.DataGetter = store.forkedStore.(storage.DataGetter)
+	store.DataSetter = store.forkedStore.(storage.DataSetter)
 	store.KeyGenerator = &storage.DefaultKeyGenerator{}
 
 	return store, nil
 }
 
 func (s *Store) BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flowgo.Block, error) {
-	var height uint64
-	block, err := s.DefaultStore.BlockByID(ctx, blockID)
-	if err == nil {
-		height = block.Header.Height
-	} else if errors.Is(err, storage.ErrNotFound) {
-		heightRes, err := s.client.GetHeightForBlock(ctx, &archive.GetHeightForBlockRequest{BlockID: blockID[:]})
-		if err != nil {
-			return nil, err
-		}
-		height = heightRes.Height
-	} else {
-		return nil, err
-	}
-
-	return s.BlockByHeight(ctx, height)
-}
-
-func (s *Store) LatestBlock(ctx context.Context) (flowgo.Block, error) {
-	// try to resume from the last local block
-	latestBlockHeight, err := s.LatestBlockHeight(ctx)
-	if err != nil && !errors.Is(err, storage.ErrNotFound) {
-		return flowgo.Block{}, err
-	}
-
-	// if it's not set yet, get the latest block available from the archive node
-	if latestBlockHeight == 0 {
-		heightRes, err := s.client.GetLast(ctx, &archive.GetLastRequest{})
-		if err != nil {
-			return flowgo.Block{}, err
-		}
-		latestBlockHeight = heightRes.Height
-	}
-
-	block, err := s.BlockByHeight(ctx, latestBlockHeight)
-	if err != nil {
-		return flowgo.Block{}, err
-	}
-
-	return *block, nil
-}
-
-func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block, error) {
-	block, err := s.DefaultStore.BlockByHeight(ctx, height)
+	block, err := s.forkedStore.BlockByID(ctx, blockID)
 	if err == nil {
 		return block, nil
 	}
 
-	blockRes, err := s.client.GetHeader(ctx, &archive.GetHeaderRequest{Height: height})
+	if !errors.Is(err, storage.ErrNotFound) {
+		return nil, err
+	}
+
+	//not found on fork
+	heightRes, err := s.archiveClient.GetHeightForBlock(ctx, &archive.GetHeightForBlockRequest{BlockID: blockID[:]})
 	if err != nil {
 		return nil, err
 	}
 
-	var header flowgo.Header
-	err = zbor.NewCodec().Unmarshal(blockRes.Data, &header)
+	if heightRes.Height > s.forkHeight {
+		//return 'not found' for blocks after fork
+		return nil, storage.ErrNotFound
+	}
+	return s.BlockByHeight(ctx, heightRes.Height)
+}
+
+func (s *Store) LatestBlock(ctx context.Context) (block flowgo.Block, err error) {
+	block, err = s.forkedStore.LatestBlock(ctx)
+	if err == nil {
+		return block, nil
+	}
+	if !errors.Is(err, storage.ErrNotFound) {
+		return flowgo.Block{}, err
+	}
+	//if no block on fork, ask archive
+	aBlock, err := s.BlockByHeight(ctx, s.forkHeight)
+	if err != nil {
+		return flowgo.Block{}, err
+	}
+	return *aBlock, nil
+}
+
+func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block, error) {
+
+	if height <= s.forkHeight {
+		//get block from archive node
+		blockRes, err := s.archiveClient.GetHeader(ctx, &archive.GetHeaderRequest{Height: height})
+		if err != nil {
+			return nil, err
+		}
+
+		var header flowgo.Header
+		err = zbor.NewCodec().Unmarshal(blockRes.Data, &header)
+		if err != nil {
+			return nil, err
+		}
+
+		payload := flowgo.EmptyPayload()
+		return &flowgo.Block{
+			Payload: &payload,
+			Header:  &header,
+		}, nil
+	}
+
+	//get block from local fork
+	block, err := s.forkedStore.BlockByHeight(ctx, height)
 	if err != nil {
 		return nil, err
 	}
 
-	payload := flowgo.EmptyPayload()
-	return &flowgo.Block{
-		Payload: &payload,
-		Header:  &header,
-	}, nil
+	return block, nil
+
 }
 
 func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
 ) (snapshot.StorageSnapshot, error) {
-	err := s.SetBlockHeight(blockHeight)
-	if err != nil {
-		return nil, err
-	}
 
 	return snapshot.NewReadFuncStorageSnapshot(func(id flowgo.RegisterID) (flowgo.RegisterValue, error) {
 		// first try to see if we have local stored ledger
@@ -193,16 +275,10 @@ func (s *Store) LedgerByHeight(
 			return value, nil
 		}
 
-		ledgerKey := convert.RegisterIDToLedgerKey(flowgo.RegisterID{Key: id.Key, Owner: id.Owner})
-		ledgerPath, err := pathfinder.KeyToPath(ledgerKey, complete.DefaultPathFinderVersion)
-		if err != nil {
-			return nil, err
-		}
-
-		// if we don't have it, get it from the archive node
-		response, err := s.client.GetRegisterValues(ctx, &archive.GetRegisterValuesRequest{
-			Height: blockHeight,
-			Paths:  [][]byte{ledgerPath[:]},
+		reg := flowgo.RegisterID{Key: id.Key, Owner: id.Owner}
+		response, err := s.archiveClient.GetRegisterValues(ctx, &archive.GetRegisterValuesRequest{
+			Height:    blockHeight,
+			Registers: [][]byte{reg.Bytes()},
 		})
 		if err != nil {
 			return nil, err

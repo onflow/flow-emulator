@@ -310,6 +310,7 @@ func (s *EmulatorServer) Stop() {
 }
 
 func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
+
 	if conf.RedisURL != "" {
 		storageProvider, err = util.NewRedisStorage(conf.RedisURL)
 		if err != nil {
@@ -346,25 +347,17 @@ func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
 	}
 
 	if conf.ChainID == flowgo.Testnet || conf.ChainID == flowgo.Mainnet {
-		// TODO: any reason redis shouldn't work?
-		baseProvider, ok := storageProvider.(*sqlite.Store)
-		if !ok {
-			return nil, fmt.Errorf("only sqlite is supported with forked networks")
-		}
 
-		provider, err := remote.New(baseProvider, remote.WithChainID(conf.ChainID))
+		storageProvider, err = remote.New(
+			storageProvider,
+			remote.WithChainID(conf.ChainID),
+			remote.WithForkHeight(conf.StartBlockHeight),
+		)
+
 		if err != nil {
 			return nil, err
 		}
 
-		if conf.StartBlockHeight > 0 {
-			err = provider.SetBlockHeight(conf.StartBlockHeight)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		storageProvider = provider
 	}
 
 	if conf.Snapshot {
