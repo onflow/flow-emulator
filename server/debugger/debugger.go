@@ -38,7 +38,6 @@ type Debugger struct {
 	quit        chan interface{}
 	wg          sync.WaitGroup
 	stopOnce    sync.Once
-	activeCode  string
 	connections []net.Conn
 }
 
