@@ -190,6 +190,3 @@ require (
 	modernc.org/sqlite v1.21.1 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 )
-
-//TODO: Remove when both version will be merged
-replace github.com/onflow/flow-go v0.32.3 => github.com/Guitarheroua/flow-go v0.0.0-20231024184136-247768e776f7
