@@ -353,6 +353,14 @@ func (b *SDKAdapter) GetLatestProtocolStateSnapshot(_ context.Context) ([]byte, 
 	return nil, nil
 }
 
+func (a *SDKAdapter) GetProtocolStateSnapshotByBlockID(_ context.Context, _ flowgo.Identifier) ([]byte, error) {
+	return nil, nil
+}
+
+func (a *SDKAdapter) GetProtocolStateSnapshotByHeight(_ context.Context, _ uint64) ([]byte, error) {
+	return nil, nil
+}
+
 func (b *SDKAdapter) GetExecutionResultForBlockID(_ context.Context, _ sdk.Identifier) (*sdk.ExecutionResult, error) {
 	return nil, nil
 }

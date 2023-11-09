@@ -393,6 +393,14 @@ func (a *AccessAdapter) GetLatestProtocolStateSnapshot(_ context.Context) ([]byt
 	return nil, nil
 }
 
+func (a *AccessAdapter) GetProtocolStateSnapshotByBlockID(_ context.Context, _ flowgo.Identifier) ([]byte, error) {
+	return nil, nil
+}
+
+func (a *AccessAdapter) GetProtocolStateSnapshotByHeight(_ context.Context, _ uint64) ([]byte, error) {
+	return nil, nil
+}
+
 func (a *AccessAdapter) GetExecutionResultForBlockID(_ context.Context, _ flowgo.Identifier) (*flowgo.ExecutionResult, error) {
 	return nil, nil
 }
