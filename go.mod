@@ -3,6 +3,7 @@ module github.com/onflow/flow-emulator
 go 1.19
 
 require (
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
 	github.com/fxamacker/cbor/v2 v2.4.1-0.20230228173756-c0c9f774e40c
 	github.com/glebarez/go-sqlite v1.21.1
 	github.com/go-redis/redis/v8 v8.11.5
