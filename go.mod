@@ -12,10 +12,10 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v0.42.4
+	github.com/onflow/cadence v0.42.5
 	github.com/onflow/flow-archive v1.3.4-0.20230503192214-9e81e82d4dcc
-	github.com/onflow/flow-go v0.32.7
-	github.com/onflow/flow-go-sdk v0.41.14
+	github.com/onflow/flow-go v0.32.4-0.20231110175038-e4011e4c93e4
+	github.com/onflow/flow-go-sdk v0.41.16
 	github.com/onflow/flow-go/crypto v0.24.9
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
 	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20231018182244-e72527c55c63
@@ -31,19 +31,17 @@ require (
 )
 
 require (
-	github.com/DataDog/zstd v1.4.5 // indirect
+	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bits-and-blooms/bitset v1.5.0 // indirect
+	github.com/bits-and-blooms/bitset v1.7.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/cockroachdb/errors v1.8.1 // indirect
-	github.com/cockroachdb/logtags v0.0.0-20190617123548-eb05cc24525f // indirect
-	github.com/cockroachdb/pebble v0.0.0-20230829171545-74d4bb649d92 // indirect
-	github.com/cockroachdb/redact v1.0.8 // indirect
-	github.com/cockroachdb/sentry-go v0.6.1-cockroachdb.2 // indirect
-	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
+	github.com/cockroachdb/errors v1.9.1 // indirect
+	github.com/cockroachdb/logtags v0.0.0-20230118201751-21c54148d20b // indirect
+	github.com/cockroachdb/pebble v0.0.0-20230906160148-46873a6a7a06 // indirect
+	github.com/cockroachdb/redact v1.1.3 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
@@ -55,10 +53,11 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ef-ds/deque v1.0.4 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.0.2 // indirect
-	github.com/ethereum/go-ethereum v1.9.13 // indirect
+	github.com/ethereum/go-ethereum v1.12.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fxamacker/circlehash v0.3.0 // indirect
 	github.com/gammazero/deque v0.1.0 // indirect
+	github.com/getsentry/sentry-go v0.18.0 // indirect
 	github.com/go-kit/kit v0.12.0 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
@@ -67,7 +66,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.1.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/golang/snappy v0.0.4 // indirect
+	github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb // indirect
 	github.com/google/uuid v1.3.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/zerolog/v2 v2.0.0-rc.2 // indirect
@@ -78,6 +77,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/holiman/uint256 v1.2.2-0.20230321075855-87b91420868c // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/go-block-format v0.1.2 // indirect
