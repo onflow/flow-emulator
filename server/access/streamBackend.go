@@ -19,7 +19,6 @@
 package access
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -28,7 +27,6 @@ import (
 	"github.com/onflow/flow-go/engine/access/state_stream"
 	"github.com/onflow/flow-go/engine/access/state_stream/backend"
 	"github.com/onflow/flow-go/engine/common/rpc"
-	"github.com/onflow/flow-go/module/blobs"
 	"github.com/onflow/flow-go/storage"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -70,9 +68,12 @@ func getStartHeightFunc(blockchain *emulator.Blockchain) GetStartHeightFunc {
 	return func(blockID flow.Identifier, height uint64) (uint64, error) {
 		// try with start at blockID
 		block, err := blockchain.GetBlockByID(blockID)
+
 		if err != nil {
-			if !errors.Is(err, &types.BlockNotFoundByIDError{}) {
-				return 0, err
+			var blockNotFoundByIDError *types.BlockNotFoundByIDError
+			isNotFound := errors.As(err, &blockNotFoundByIDError)
+			if !isNotFound {
+				return 0, storage.ErrNotFound
 			}
 		} else {
 			return block.Header.Height, nil
@@ -81,8 +82,10 @@ func getStartHeightFunc(blockchain *emulator.Blockchain) GetStartHeightFunc {
 		// try with start at blockHeight
 		block, err = blockchain.GetBlockByHeight(height)
 		if err != nil {
-			if !errors.Is(err, &types.BlockNotFoundByIDError{}) {
-				return 0, err
+			var blockNotFoundByIDError *types.BlockNotFoundByIDError
+			isNotFound := errors.As(err, &blockNotFoundByIDError)
+			if !isNotFound {
+				return 0, storage.ErrNotFound
 			}
 		} else {
 			return block.Header.Height, nil
@@ -96,9 +99,10 @@ func getStartHeightFunc(blockchain *emulator.Blockchain) GetStartHeightFunc {
 func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc {
 	return func(_ context.Context, height uint64) (*execution_data.BlockExecutionDataEntity, error) {
 		block, err := blockchain.GetBlockByHeight(height)
-
 		if err != nil {
-			if errors.Is(err, &types.BlockNotFoundByIDError{}) {
+			var blockNotFoundByIDError *types.BlockNotFoundByIDError
+			isNotFound := errors.As(err, &blockNotFoundByIDError)
+			if !isNotFound {
 				return nil, storage.ErrNotFound
 			}
 			return nil, err
@@ -150,25 +154,10 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 			ChunkExecutionDatas: chunks,
 		}
 
-		buf := new(bytes.Buffer)
-
-		serializer := execution_data.DefaultSerializer
-		err = serializer.Serialize(buf, executionData)
-		if err != nil {
-			return nil, err
-		}
-
-		rootBlob := blobs.NewBlob(buf.Bytes())
-		rootID, err := flow.CidToId(rootBlob.Cid())
-		if err != nil {
-			return nil, err
-		}
-
 		result := execution_data.NewBlockExecutionDataEntity(
-			rootID,
+			flow.ZeroID,
 			executionData,
 		)
-
 		return result, nil
 	}
 }
