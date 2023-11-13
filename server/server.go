@@ -164,14 +164,15 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	chain := emulatedBlockchain.GetChain()
 
 	coreContracts := map[string]string{
-		"FlowServiceAccount": chain.ServiceAddress().HexWithPrefix(),
-		"FlowToken":          fvm.FlowTokenAddress(chain).HexWithPrefix(),
-		"FungibleToken":      fvm.FungibleTokenAddress(chain).HexWithPrefix(),
-		"FlowFees":           environment.FlowFeesAddress(chain).HexWithPrefix(),
-		"FlowStorageFees":    chain.ServiceAddress().HexWithPrefix(),
-		"NonFungibleToken":   chain.ServiceAddress().HexWithPrefix(),
-		"ViewResolver":       chain.ServiceAddress().HexWithPrefix(),
-		"MetadataViews":      chain.ServiceAddress().HexWithPrefix(),
+		"FlowServiceAccount":  chain.ServiceAddress().HexWithPrefix(),
+		"FlowToken":           fvm.FlowTokenAddress(chain).HexWithPrefix(),
+		"FungibleToken":       fvm.FungibleTokenAddress(chain).HexWithPrefix(),
+		"FlowFees":            environment.FlowFeesAddress(chain).HexWithPrefix(),
+		"FlowStorageFees":     chain.ServiceAddress().HexWithPrefix(),
+		"NonFungibleToken":    chain.ServiceAddress().HexWithPrefix(),
+		"ViewResolver":        chain.ServiceAddress().HexWithPrefix(),
+		"MetadataViews":       chain.ServiceAddress().HexWithPrefix(),
+		"RandomBeaconHistory": chain.ServiceAddress().HexWithPrefix(),
 	}
 	for contract, address := range coreContracts {
 		logger.Info().Fields(map[string]any{contract: address}).Msg("📜 Flow contract")
