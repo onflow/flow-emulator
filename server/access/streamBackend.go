@@ -67,6 +67,7 @@ var _ state_stream.API = &StateStreamBackend{}
 
 func getStartHeightFunc(blockchain *emulator.Blockchain) GetStartHeightFunc {
 	return func(blockID flow.Identifier, height uint64) (uint64, error) {
+		// try with start at blockID
 		block, err := blockchain.GetBlockByID(blockID)
 		if err != nil {
 			if !errors.Is(err, &types.BlockNotFoundByIDError{}) {
@@ -76,6 +77,7 @@ func getStartHeightFunc(blockchain *emulator.Blockchain) GetStartHeightFunc {
 			return block.Header.Height, nil
 		}
 
+		// try with start at blockHeight
 		block, err = blockchain.GetBlockByHeight(height)
 		if err != nil {
 			if !errors.Is(err, &types.BlockNotFoundByIDError{}) {
@@ -85,6 +87,7 @@ func getStartHeightFunc(blockchain *emulator.Blockchain) GetStartHeightFunc {
 			return block.Header.Height, nil
 		}
 
+		// both arguments are wrong
 		return 0, storage.ErrNotFound
 	}
 }
@@ -95,10 +98,11 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 
 		if err != nil {
 			if errors.Is(err, &types.BlockNotFoundByIDError{}) {
-				return block.Header.Height, nil
+				return nil, storage.ErrNotFound
 			}
-			return 0, err
+			return nil, err
 		}
+
 		chunks := make([]*execution_data.ChunkExecutionData, 0)
 
 		for _, collectionGuarantee := range block.Payload.Guarantees {
