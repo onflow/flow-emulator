@@ -103,7 +103,7 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 			return nil, err
 		}
 
-		chunks := make([]*execution_data.ChunkExecutionData, 0)
+		chunks := make([]*execution_data.ChunkExecutionData, len(block.Payload.Guarantees))
 
 		for _, collectionGuarantee := range block.Payload.Guarantees {
 			collection := &flow.Collection{}
@@ -127,10 +127,10 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 				}
 				events = append(events, txResult.Events...)
 
-				var lightResult flow.LightTransactionResult
-				lightResult.TransactionID = txResult.TransactionID
-				lightResult.ComputationUsed = 0
-				lightResult.Failed = txResult.Status != 0
+				lightResult := flow.LightTransactionResult{
+					TransactionID: txResult.TransactionID,
+					Failed:        txResult.ErrorMessage != "",
+				}
 				txResults = append(txResults, lightResult)
 			}
 
