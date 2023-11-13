@@ -69,12 +69,23 @@ func getStartHeightFunc(blockchain *emulator.Blockchain) GetStartHeightFunc {
 	return func(blockID flow.Identifier, height uint64) (uint64, error) {
 		block, err := blockchain.GetBlockByID(blockID)
 		if err != nil {
-			if errors.Is(err, &types.BlockNotFoundByIDError{}) {
-				return block.Header.Height, nil
+			if !errors.Is(err, &types.BlockNotFoundByIDError{}) {
+				return 0, err
 			}
-			return 0, err
+		} else {
+			return block.Header.Height, nil
 		}
-		return height, nil
+
+		block, err = blockchain.GetBlockByHeight(height)
+		if err != nil {
+			if !errors.Is(err, &types.BlockNotFoundByIDError{}) {
+				return 0, err
+			}
+		} else {
+			return block.Header.Height, nil
+		}
+
+		return 0, storage.ErrNotFound
 	}
 }
 
@@ -83,7 +94,10 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 		block, err := blockchain.GetBlockByHeight(height)
 
 		if err != nil {
-			return nil, storage.ErrNotFound
+			if errors.Is(err, &types.BlockNotFoundByIDError{}) {
+				return block.Header.Height, nil
+			}
+			return 0, err
 		}
 		chunks := make([]*execution_data.ChunkExecutionData, 0)
 
