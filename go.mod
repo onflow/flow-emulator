@@ -17,7 +17,7 @@ require (
 	github.com/onflow/flow-archive v1.3.4-0.20230503192214-9e81e82d4dcc
 	github.com/onflow/flow-go v0.32.4-0.20231111003039-3b479f6b0995
 	github.com/onflow/flow-go-sdk v0.41.16
-	github.com/onflow/flow-go/crypto v0.24.9
+	github.com/onflow/flow-go/crypto v0.24.10
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
 	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20231018182244-e72527c55c63
 	github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20221222181731-14b90207cead
