@@ -19,6 +19,7 @@
 package access
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -27,6 +28,7 @@ import (
 	"github.com/onflow/flow-go/engine/access/state_stream"
 	"github.com/onflow/flow-go/engine/access/state_stream/backend"
 	"github.com/onflow/flow-go/engine/common/rpc"
+	"github.com/onflow/flow-go/module/blobs"
 	"github.com/onflow/flow-go/storage"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -142,12 +144,28 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 			chunks = append(chunks, chunk)
 		}
 
+		executionData := &execution_data.BlockExecutionData{
+			BlockID:             block.ID(),
+			ChunkExecutionDatas: chunks,
+		}
+
+		buf := new(bytes.Buffer)
+
+		serializer := execution_data.DefaultSerializer
+		err = serializer.Serialize(buf, executionData)
+		if err != nil {
+			return nil, err
+		}
+
+		rootBlob := blobs.NewBlob(buf.Bytes())
+		rootID, err := flow.CidToId(rootBlob.Cid())
+		if err != nil {
+			return nil, err
+		}
+
 		result := execution_data.NewBlockExecutionDataEntity(
-			flow.ZeroID,
-			&execution_data.BlockExecutionData{
-				BlockID:             block.ID(),
-				ChunkExecutionDatas: chunks,
-			},
+			rootID,
+			executionData,
 		)
 
 		return result, nil
