@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/onflow/flow-emulator/emulator"
+	"github.com/onflow/flow-emulator/types"
 	"github.com/onflow/flow-go/engine/access/state_stream"
 	"github.com/onflow/flow-go/engine/access/state_stream/backend"
 	"github.com/onflow/flow-go/engine/common/rpc"
@@ -67,8 +68,11 @@ var _ state_stream.API = &StateStreamBackend{}
 func getStartHeightFunc(blockchain *emulator.Blockchain) GetStartHeightFunc {
 	return func(blockID flow.Identifier, height uint64) (uint64, error) {
 		block, err := blockchain.GetBlockByID(blockID)
-		if err == nil {
-			return block.Header.Height, nil
+		if err != nil {
+			if errors.Is(err, &types.BlockNotFoundByIDError{}) {
+				return block.Header.Height, nil
+			}
+			return 0, err
 		}
 		return height, nil
 	}
