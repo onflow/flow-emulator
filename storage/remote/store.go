@@ -21,6 +21,8 @@ package remote
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"github.com/onflow/flow-archive/api/archive"
 	"github.com/onflow/flow-archive/codec/zbor"
 	"github.com/onflow/flow-go/fvm/errors"
@@ -34,13 +36,15 @@ import (
 
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/sqlite"
+	"github.com/onflow/flow-emulator/types"
 )
 
 type Store struct {
 	*sqlite.Store
-	client   archive.APIClient
-	grpcConn *grpc.ClientConn
-	host     string
+	client           archive.APIClient
+	grpcConn         *grpc.ClientConn
+	host             string
+	startBlockHeight uint64
 }
 
 type Option func(*Store)
@@ -73,6 +77,13 @@ func WithClient(client archive.APIClient) Option {
 	}
 }
 
+// WithStartBlockHeight sets the start height for the store.
+func WithStartBlockHeight(height uint64) Option {
+	return func(store *Store) {
+		store.startBlockHeight = height
+	}
+}
+
 func New(provider *sqlite.Store, options ...Option) (*Store, error) {
 	store := &Store{
 		Store: provider,
@@ -99,11 +110,44 @@ func New(provider *sqlite.Store, options ...Option) (*Store, error) {
 		store.client = archive.NewAPIClient(conn)
 	}
 
+	if err := store.initializeStartBlock(context.Background()); err != nil {
+		return nil, err
+	}
+
 	store.DataGetter = store
 	store.DataSetter = store
 	store.KeyGenerator = &storage.DefaultKeyGenerator{}
 
 	return store, nil
+}
+
+func (s *Store) initializeStartBlock(ctx context.Context) error {
+	if s.startBlockHeight > 0 {
+		// the start height may already be set in the db if restarting from persistent store
+		// only set the start block height if it's not already set
+		_, err := s.Store.LatestBlockHeight(ctx)
+		if errors.Is(err, storage.ErrNotFound) {
+			err = s.Store.SetBlockHeight(s.startBlockHeight)
+			if err != nil {
+				return fmt.Errorf("could not set start block height: %w", err)
+			}
+		} else if err != nil {
+			return fmt.Errorf("error getting latest block height: %w", err)
+		}
+		return nil
+	}
+
+	// otherwise, get the latest block from the archive node
+	resp, err := s.client.GetLast(ctx, &archive.GetLastRequest{})
+	if err != nil {
+		return fmt.Errorf("could not get last block height: %w", err)
+	}
+	err = s.Store.SetBlockHeight(resp.Height)
+	if err != nil {
+		return fmt.Errorf("could not set start block height: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Store) BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flowgo.Block, error) {
@@ -154,6 +198,10 @@ func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block
 		return block, nil
 	}
 
+	if latestBlockHeight, err := s.LatestBlockHeight(ctx); err == nil && height > latestBlockHeight {
+		return nil, &types.BlockNotFoundByHeightError{Height: height}
+	}
+
 	blockRes, err := s.client.GetHeader(ctx, &archive.GetHeaderRequest{Height: height})
 	if err != nil {
 		return nil, err
@@ -176,11 +224,6 @@ func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
 ) (snapshot.StorageSnapshot, error) {
-	err := s.SetBlockHeight(blockHeight)
-	if err != nil {
-		return nil, err
-	}
-
 	return snapshot.NewReadFuncStorageSnapshot(func(id flowgo.RegisterID) (flowgo.RegisterValue, error) {
 		// first try to see if we have local stored ledger
 		value, err := s.DefaultStore.GetBytesAtVersion(
@@ -193,6 +236,7 @@ func (s *Store) LedgerByHeight(
 			return value, nil
 		}
 
+		log.Printf("fetching register: owner: %x, key: %x", []byte(id.Owner), []byte(id.Key))
 		ledgerKey := convert.RegisterIDToLedgerKey(flowgo.RegisterID{Key: id.Key, Owner: id.Owner})
 		ledgerPath, err := pathfinder.KeyToPath(ledgerKey, complete.DefaultPathFinderVersion)
 		if err != nil {
