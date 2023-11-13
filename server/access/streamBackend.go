@@ -107,11 +107,12 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 		chunks := make([]*execution_data.ChunkExecutionData, len(block.Payload.Guarantees))
 
 		for i, collectionGuarantee := range block.Payload.Guarantees {
-			collection := &flow.Collection{}
 			lightCollection, err := blockchain.GetCollectionByID(collectionGuarantee.CollectionID)
 			if err != nil {
 				return nil, err
 			}
+
+			collection := &flow.Collection{}
 			var events []flow.Event
 			var txResults []flow.LightTransactionResult
 
