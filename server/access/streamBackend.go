@@ -27,7 +27,6 @@ import (
 	"github.com/onflow/flow-go/engine/access/state_stream"
 	"github.com/onflow/flow-go/engine/access/state_stream/backend"
 	"github.com/onflow/flow-go/engine/common/rpc"
-	"github.com/onflow/flow-go/ledger"
 	"github.com/onflow/flow-go/storage"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -138,7 +137,6 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 				Collection: collection,
 				Events:     events,
 				//TODO: add trie updates
-				TrieUpdate:         &ledger.TrieUpdate{},
 				TransactionResults: txResults,
 			}
 			chunks = append(chunks, chunk)
