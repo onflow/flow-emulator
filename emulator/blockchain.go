@@ -1659,7 +1659,7 @@ func (b *Blockchain) GetSourceFile(location common.Location) string {
 	r := b.vmCtx.Borrow(env)
 	defer b.vmCtx.Return(r)
 
-	code, err := r.GetAccountContractCode(addressLocation)
+	code, err := r.TxRuntimeEnv.GetAccountContractCode(addressLocation)
 
 	if err != nil {
 		return location.ID()
