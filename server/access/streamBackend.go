@@ -106,7 +106,7 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 
 		chunks := make([]*execution_data.ChunkExecutionData, len(block.Payload.Guarantees))
 
-		for _, collectionGuarantee := range block.Payload.Guarantees {
+		for i, collectionGuarantee := range block.Payload.Guarantees {
 			collection := &flow.Collection{}
 			lightCollection, err := blockchain.GetCollectionByID(collectionGuarantee.CollectionID)
 			if err != nil {
@@ -141,7 +141,7 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 				//TODO: add trie updates
 				TransactionResults: txResults,
 			}
-			chunks = append(chunks, chunk)
+			chunks[i] = chunk
 		}
 
 		executionData := &execution_data.BlockExecutionData{
