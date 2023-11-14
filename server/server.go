@@ -197,7 +197,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	accessAdapter := adapters.NewAccessAdapter(logger, emulatedBlockchain)
 	livenessTicker := utils.NewLivenessTicker(conf.LivenessCheckTolerance)
 	grpcServer := access.NewGRPCServer(logger, accessAdapter, chain, conf.Host, conf.GRPCPort, conf.GRPCDebug)
-	restServer, err := access.NewRestServer(logger, accessAdapter, chain, conf.Host, conf.RESTPort, conf.RESTDebug)
+	restServer, err := access.NewRestServer(logger, emulatedBlockchain, accessAdapter, chain, conf.Host, conf.RESTPort, conf.RESTDebug)
 	if err != nil {
 		logger.Error().Err(err).Msg("❗  Failed to startup REST API")
 		return nil

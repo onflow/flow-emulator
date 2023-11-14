@@ -33,6 +33,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/onflow/flow-go/engine"
 	"math"
 	"strings"
 	"sync"
@@ -77,6 +78,7 @@ func New(opts ...Option) (*Blockchain, error) {
 
 	b := &Blockchain{
 		storage:                conf.GetStore(),
+		broadcaster:            engine.NewBroadcaster(),
 		serviceKey:             conf.GetServiceKey(),
 		debugger:               nil,
 		activeDebuggingSession: false,
@@ -295,8 +297,8 @@ func Contracts(contracts []ContractDescription) Option {
 // Blockchain emulates the functionality of the Flow emulator.
 type Blockchain struct {
 	// committed chain state: blocks, transactions, registers, events
-	storage storage.Store
-
+	storage     storage.Store
+	broadcaster *engine.Broadcaster
 	// mutex protecting pending block
 	mu sync.RWMutex
 
@@ -404,6 +406,10 @@ var defaultConfig = func() config {
 		AutoMine:                     false,
 	}
 }()
+
+func (b *Blockchain) Broadcaster() *engine.Broadcaster {
+	return b.broadcaster
+}
 
 func (b *Blockchain) ReloadBlockchain() error {
 	var err error
@@ -1305,6 +1311,9 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	//notify listeners on new block
+	b.broadcaster.Publish()
 
 	// reset pending block using current block and ledger state
 	b.pendingBlock = newPendingBlock(block, ledger, b.clock)
