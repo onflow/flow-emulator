@@ -43,16 +43,12 @@ import (
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
-	"github.com/onflow/flow-emulator/convert"
-	"github.com/onflow/flow-emulator/storage"
-	"github.com/onflow/flow-emulator/storage/util"
-	"github.com/onflow/flow-emulator/types"
-	"github.com/onflow/flow-emulator/utils"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/access"
 	"github.com/onflow/flow-go/crypto"
 	"github.com/onflow/flow-go/crypto/hash"
+	"github.com/onflow/flow-go/engine"
 	"github.com/onflow/flow-go/fvm"
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
 	"github.com/onflow/flow-go/fvm/environment"
@@ -62,6 +58,12 @@ import (
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
+
+	"github.com/onflow/flow-emulator/convert"
+	"github.com/onflow/flow-emulator/storage"
+	"github.com/onflow/flow-emulator/storage/util"
+	"github.com/onflow/flow-emulator/types"
+	"github.com/onflow/flow-emulator/utils"
 )
 
 var _ Emulator = &Blockchain{}
@@ -77,6 +79,7 @@ func New(opts ...Option) (*Blockchain, error) {
 
 	b := &Blockchain{
 		storage:                conf.GetStore(),
+		broadcaster:            engine.NewBroadcaster(),
 		serviceKey:             conf.GetServiceKey(),
 		debugger:               nil,
 		activeDebuggingSession: false,
@@ -295,7 +298,8 @@ func Contracts(contracts []ContractDescription) Option {
 // Blockchain emulates the functionality of the Flow emulator.
 type Blockchain struct {
 	// committed chain state: blocks, transactions, registers, events
-	storage storage.Store
+	storage     storage.Store
+	broadcaster *engine.Broadcaster
 
 	// mutex protecting pending block
 	mu sync.RWMutex
@@ -375,7 +379,9 @@ func (conf config) GetServiceKey() ServiceKey {
 }
 
 const defaultGenesisTokenSupply = "1000000000.0"
+
 const defaultScriptGasLimit = 100000
+
 const defaultTransactionMaxGasLimit = flowgo.DefaultMaxTransactionGasLimit
 
 // defaultConfig is the default configuration for an emulated emulator.
@@ -404,6 +410,10 @@ var defaultConfig = func() config {
 		AutoMine:                     false,
 	}
 }()
+
+func (b *Blockchain) Broadcaster() *engine.Broadcaster {
+	return b.broadcaster
+}
 
 func (b *Blockchain) ReloadBlockchain() error {
 	var err error
@@ -1308,6 +1318,9 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	//notify listeners on new block
+	b.broadcaster.Publish()
 
 	// reset pending block using current block and ledger state
 	b.pendingBlock = newPendingBlock(block, ledger, b.clock)
