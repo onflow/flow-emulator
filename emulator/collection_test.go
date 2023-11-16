@@ -102,15 +102,14 @@ func TestCollections(t *testing.T) {
 		// block should contain at least one collection
 		assert.NotEmpty(t, block.Payload.Guarantees)
 
-		i := 0
 		for _, guarantee := range block.Payload.Guarantees {
 			collection, err := adapter.GetCollectionByID(context.Background(), convert.FlowIdentifierToSDK(guarantee.ID()))
 			require.NoError(t, err)
 
-			for _, txID := range collection.TransactionIDs {
-				assert.Equal(t, transactions[i].ID(), txID)
-				i++
+			for _, tx := range transactions {
+				assert.Contains(t, collection.TransactionIDs, tx.ID())
 			}
+			assert.Equal(t, len(collection.TransactionIDs), len(transactions)+1)
 		}
 	})
 }

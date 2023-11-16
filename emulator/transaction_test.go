@@ -1514,15 +1514,15 @@ func TestGetTxByBlockIDMethods(t *testing.T) {
 	// execute the batch of transactions
 	block, expectedResults, err := b.ExecuteAndCommitBlock()
 	assert.NoError(t, err)
-	assert.Len(t, expectedResults, len(submittedTx))
+	assert.Len(t, expectedResults, len(submittedTx)+1)
 
 	results, err := adapter.GetTransactionResultsByBlockID(context.Background(), flowsdk.Identifier(block.ID()))
 	require.NoError(t, err)
-	assert.Len(t, results, len(submittedTx))
+	assert.Len(t, results, len(submittedTx)+1)
 
 	transactions, err := adapter.GetTransactionsByBlockID(context.Background(), flowsdk.Identifier(block.ID()))
 	require.NoError(t, err)
-	assert.Len(t, transactions, len(submittedTx))
+	assert.Len(t, transactions, len(submittedTx)+1)
 
 	// make sure the results and transactions returned match the transactions submitted, and are in
 	// the same order
