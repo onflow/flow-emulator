@@ -284,6 +284,13 @@ func WithCoverageReport(coverageReport *runtime.CoverageReport) Option {
 	}
 }
 
+// WithEVMEnabled enables/disables evm.
+func WithEVMEnabled(enabled bool) Option {
+	return func(c *config) {
+		c.EVMEnabled = enabled
+	}
+}
+
 // Contracts allows users to deploy the given contracts.
 // Some default common contracts are pre-configured in the `CommonContracts`
 // global variable. It includes contracts such as:
@@ -340,6 +347,7 @@ type config struct {
 	StorageLimitEnabled          bool
 	TransactionFeesEnabled       bool
 	ContractRemovalEnabled       bool
+	EVMEnabled                   bool
 	MinimumStorageReservation    cadence.UFix64
 	StorageMBPerFLOW             cadence.UFix64
 	Logger                       zerolog.Logger
@@ -591,7 +599,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithReusableCadenceRuntimePool(customRuntimePool),
 		fvm.WithEntropyProvider(&dummyEntropyProvider{}),
 		// todo use a configuration flag to enable/disable this
-		fvm.WithEVMEnabled(true),
+		fvm.WithEVMEnabled(conf.EVMEnabled),
 	}
 
 	if !conf.TransactionValidationEnabled {

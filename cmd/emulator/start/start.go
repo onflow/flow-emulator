@@ -73,6 +73,7 @@ type Config struct {
 	RedisURL                 string        `default:"" flag:"redis-url" info:"redis-server URL for persisting redis storage backend ( redis://[[username:]password@]host[:port][/database] ) "`
 	SqliteURL                string        `default:"" flag:"sqlite-url" info:"sqlite db URL for persisting sqlite storage backend "`
 	CoverageReportingEnabled bool          `default:"false" flag:"coverage-reporting" info:"enable Cadence code coverage reporting"`
+	EVMEnabled               bool          `default:"false" flag:"evm-enabled" info:"enables flow evm"`
 	// todo temporarily disabled until remote register endpoint is re-enabled
 	// StartBlockHeight         uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
 }
