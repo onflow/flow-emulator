@@ -565,15 +565,13 @@ type dummyEntropyProvider struct {
 	LatestBlock flowgo.Identifier
 }
 
-//var dummySource = make([]byte, 32)
-
 func (gen *dummyEntropyProvider) RandomSource() ([]byte, error) {
-	//return dummySource, nil
 	return gen.LatestBlock[:], nil
 }
 
 // make sure `dummyEntropyProvider“ implements `environment.EntropyProvider`
-var _ environment.EntropyProvider = (*dummyEntropyProvider)(nil)
+// var _ environment.EntropyProvider = (*dummyEntropyProvider)(nil)
+var _ environment.EntropyProvider = &dummyEntropyProvider{}
 
 func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {
 	vm := fvm.NewVirtualMachine()
