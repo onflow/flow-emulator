@@ -598,7 +598,6 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		fvm.WithReusableCadenceRuntimePool(customRuntimePool),
 		fvm.WithEntropyProvider(&dummyEntropyProvider{}),
-		// todo use a configuration flag to enable/disable this
 		fvm.WithEVMEnabled(conf.EVMEnabled),
 	}
 
@@ -725,6 +724,9 @@ func bootstrapLedger(
 	ctx = fvm.NewContextFromParent(
 		ctx,
 		fvm.WithAccountStorageLimit(false),
+		// This one has to always be set to false for bootstraping
+		// otherwise during bootstraping we expect evm storage account to exist
+		// which would be bootstrapped later during this process.
 		fvm.WithEVMEnabled(false),
 	)
 
@@ -750,7 +752,7 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 	options = append(options,
 		fvm.WithInitialTokenSupply(supply),
 		fvm.WithRestrictedAccountCreationEnabled(false),
-		fvm.WithSetupEVMEnabled(true),
+		fvm.WithSetupEVMEnabled(cadence.Bool(conf.EVMEnabled)),
 		// This enables variable transaction fees AND execution effort metering
 		// as described in Variable Transaction Fees:
 		// Execution Effort FLIP: https://github.com/onflow/flow/pull/753)
