@@ -33,7 +33,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/onflow/flow-go/engine"
 	"math"
 	"strings"
 	"sync"
@@ -78,7 +77,6 @@ func New(opts ...Option) (*Blockchain, error) {
 
 	b := &Blockchain{
 		storage:                conf.GetStore(),
-		broadcaster:            engine.NewBroadcaster(),
 		serviceKey:             conf.GetServiceKey(),
 		debugger:               nil,
 		activeDebuggingSession: false,
@@ -297,8 +295,8 @@ func Contracts(contracts []ContractDescription) Option {
 // Blockchain emulates the functionality of the Flow emulator.
 type Blockchain struct {
 	// committed chain state: blocks, transactions, registers, events
-	storage     storage.Store
-	broadcaster *engine.Broadcaster
+	storage storage.Store
+
 	// mutex protecting pending block
 	mu sync.RWMutex
 
@@ -406,10 +404,6 @@ var defaultConfig = func() config {
 		AutoMine:                     false,
 	}
 }()
-
-func (b *Blockchain) Broadcaster() *engine.Broadcaster {
-	return b.broadcaster
-}
 
 func (b *Blockchain) ReloadBlockchain() error {
 	var err error
@@ -586,6 +580,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		fvm.WithReusableCadenceRuntimePool(customRuntimePool),
 		fvm.WithEntropyProvider(&dummyEntropyProvider{}),
+		fvm.WithEVMEnabled(true),
 	}
 
 	if !conf.TransactionValidationEnabled {
@@ -711,6 +706,7 @@ func bootstrapLedger(
 	ctx = fvm.NewContextFromParent(
 		ctx,
 		fvm.WithAccountStorageLimit(false),
+		fvm.WithEVMEnabled(false),
 	)
 
 	flowAccountKey := flowgo.AccountPublicKey{
@@ -735,6 +731,7 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 	options = append(options,
 		fvm.WithInitialTokenSupply(supply),
 		fvm.WithRestrictedAccountCreationEnabled(false),
+		fvm.WithSetupEVMEnabled(true),
 		// This enables variable transaction fees AND execution effort metering
 		// as described in Variable Transaction Fees:
 		// Execution Effort FLIP: https://github.com/onflow/flow/pull/753)
@@ -1311,9 +1308,6 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	//notify listeners on new block
-	b.broadcaster.Publish()
 
 	// reset pending block using current block and ledger state
 	b.pendingBlock = newPendingBlock(block, ledger, b.clock)
