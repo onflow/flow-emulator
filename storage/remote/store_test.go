@@ -156,6 +156,9 @@ func (a testClient) ListSealsForHeight(ctx context.Context, in *archive.ListSeal
 }
 
 func Test_SimulatedMainnetTransaction(t *testing.T) {
+	// TODO skip until we re-enable get register endpoints
+	t.Skip()
+
 	t.Parallel()
 
 	client, err := newTestClient()
@@ -210,6 +213,9 @@ func Test_SimulatedMainnetTransaction(t *testing.T) {
 }
 
 func Test_SimulatedMainnetTransactionWithChanges(t *testing.T) {
+	// TODO skip until we re-enable get register endpoints
+	t.Skip()
+
 	t.Parallel()
 	client, err := newTestClient()
 	require.NoError(t, err)

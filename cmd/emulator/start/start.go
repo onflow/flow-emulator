@@ -73,7 +73,8 @@ type Config struct {
 	RedisURL                 string        `default:"" flag:"redis-url" info:"redis-server URL for persisting redis storage backend ( redis://[[username:]password@]host[:port][/database] ) "`
 	SqliteURL                string        `default:"" flag:"sqlite-url" info:"sqlite db URL for persisting sqlite storage backend "`
 	CoverageReportingEnabled bool          `default:"false" flag:"coverage-reporting" info:"enable Cadence code coverage reporting"`
-	StartBlockHeight         uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
+	// todo temporarily disabled until remote register endpoint is re-enabled
+	// StartBlockHeight         uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
 }
 
 const EnvPrefix = "FLOW"
@@ -131,9 +132,10 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				Exit(1, err.Error())
 			}
 
-			if conf.StartBlockHeight > 0 && flowChainID != flowgo.Mainnet && flowChainID != flowgo.Testnet {
-				Exit(1, "❗  --start-block-height is only valid when forking Mainnet or Testnet")
-			}
+			// todo temporarily disabled until remote register endpoint is re-enabled
+			//if conf.StartBlockHeight > 0 && flowChainID != flowgo.Mainnet && flowChainID != flowgo.Testnet {
+			//	Exit(1, "❗  --start-block-height is only valid when forking Mainnet or Testnet")
+			//}
 
 			serviceAddress := sdk.ServiceAddress(sdk.ChainID(flowChainID))
 			if conf.SimpleAddresses {
@@ -197,7 +199,8 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				ContractRemovalEnabled:    conf.ContractRemovalEnabled,
 				SqliteURL:                 conf.SqliteURL,
 				CoverageReportingEnabled:  conf.CoverageReportingEnabled,
-				StartBlockHeight:          conf.StartBlockHeight,
+				// todo temporarily disabled until remote register endpoint is re-enabled
+				// StartBlockHeight:          conf.StartBlockHeight,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)

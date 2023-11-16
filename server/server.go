@@ -23,13 +23,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/onflow/cadence/runtime"
-	"github.com/onflow/flow-emulator/adapters"
-	"github.com/onflow/flow-emulator/emulator"
-	"github.com/onflow/flow-emulator/server/access"
-	"github.com/onflow/flow-emulator/server/utils"
-
 	"github.com/onflow/cadence"
+	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/fvm"
 	"github.com/onflow/flow-go/fvm/environment"
@@ -37,7 +32,11 @@ import (
 	"github.com/psiemens/graceland"
 	"github.com/rs/zerolog"
 
+	"github.com/onflow/flow-emulator/adapters"
+	"github.com/onflow/flow-emulator/emulator"
+	"github.com/onflow/flow-emulator/server/access"
 	"github.com/onflow/flow-emulator/server/debugger"
+	"github.com/onflow/flow-emulator/server/utils"
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/remote"
 	"github.com/onflow/flow-emulator/storage/sqlite"
@@ -292,6 +291,7 @@ func (s *EmulatorServer) Start() {
 
 	s.Stop()
 }
+
 func (s *EmulatorServer) Emulator() emulator.Emulator {
 	return s.emulator
 }
@@ -346,26 +346,30 @@ func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
 		}
 	}
 
-	if conf.ChainID == flowgo.Testnet || conf.ChainID == flowgo.Mainnet {
-		// TODO: any reason redis shouldn't work?
-		baseProvider, ok := storageProvider.(*sqlite.Store)
-		if !ok {
-			return nil, fmt.Errorf("only sqlite is supported with forked networks")
-		}
+	// TODO disable until we re-enable get register endpoints
+	featureRemoteRegisterStorageEnabled := false
+	if featureRemoteRegisterStorageEnabled {
+		if conf.ChainID == flowgo.Testnet || conf.ChainID == flowgo.Mainnet {
+			// TODO: any reason redis shouldn't work?
+			baseProvider, ok := storageProvider.(*sqlite.Store)
+			if !ok {
+				return nil, fmt.Errorf("only sqlite is supported with forked networks")
+			}
 
-		provider, err := remote.New(baseProvider, remote.WithChainID(conf.ChainID))
-		if err != nil {
-			return nil, err
-		}
-
-		if conf.StartBlockHeight > 0 {
-			err = provider.SetBlockHeight(conf.StartBlockHeight)
+			provider, err := remote.New(baseProvider, remote.WithChainID(conf.ChainID))
 			if err != nil {
 				return nil, err
 			}
-		}
 
-		storageProvider = provider
+			if conf.StartBlockHeight > 0 {
+				err = provider.SetBlockHeight(conf.StartBlockHeight)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			storageProvider = provider
+		}
 	}
 
 	if conf.Snapshot {
