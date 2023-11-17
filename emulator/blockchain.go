@@ -33,7 +33,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/onflow/flow-go/engine"
 	"math"
 	"strings"
 	"sync"
@@ -44,16 +43,12 @@ import (
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
-	"github.com/onflow/flow-emulator/convert"
-	"github.com/onflow/flow-emulator/storage"
-	"github.com/onflow/flow-emulator/storage/util"
-	"github.com/onflow/flow-emulator/types"
-	"github.com/onflow/flow-emulator/utils"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/access"
 	"github.com/onflow/flow-go/crypto"
 	"github.com/onflow/flow-go/crypto/hash"
+	"github.com/onflow/flow-go/engine"
 	"github.com/onflow/flow-go/fvm"
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
 	"github.com/onflow/flow-go/fvm/environment"
@@ -63,6 +58,12 @@ import (
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
+
+	"github.com/onflow/flow-emulator/convert"
+	"github.com/onflow/flow-emulator/storage"
+	"github.com/onflow/flow-emulator/storage/util"
+	"github.com/onflow/flow-emulator/types"
+	"github.com/onflow/flow-emulator/utils"
 )
 
 var _ Emulator = &Blockchain{}
@@ -283,6 +284,13 @@ func WithCoverageReport(coverageReport *runtime.CoverageReport) Option {
 	}
 }
 
+// WithEVMEnabled enables/disables evm.
+func WithEVMEnabled(enabled bool) Option {
+	return func(c *config) {
+		c.EVMEnabled = enabled
+	}
+}
+
 // Contracts allows users to deploy the given contracts.
 // Some default common contracts are pre-configured in the `CommonContracts`
 // global variable. It includes contracts such as:
@@ -299,6 +307,7 @@ type Blockchain struct {
 	// committed chain state: blocks, transactions, registers, events
 	storage     storage.Store
 	broadcaster *engine.Broadcaster
+
 	// mutex protecting pending block
 	mu sync.RWMutex
 
@@ -338,6 +347,7 @@ type config struct {
 	StorageLimitEnabled          bool
 	TransactionFeesEnabled       bool
 	ContractRemovalEnabled       bool
+	EVMEnabled                   bool
 	MinimumStorageReservation    cadence.UFix64
 	StorageMBPerFLOW             cadence.UFix64
 	Logger                       zerolog.Logger
@@ -377,7 +387,9 @@ func (conf config) GetServiceKey() ServiceKey {
 }
 
 const defaultGenesisTokenSupply = "1000000000.0"
+
 const defaultScriptGasLimit = 100000
+
 const defaultTransactionMaxGasLimit = flowgo.DefaultMaxTransactionGasLimit
 
 // defaultConfig is the default configuration for an emulated emulator.
@@ -586,6 +598,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		fvm.WithReusableCadenceRuntimePool(customRuntimePool),
 		fvm.WithEntropyProvider(&dummyEntropyProvider{}),
+		fvm.WithEVMEnabled(conf.EVMEnabled),
 	}
 
 	if !conf.TransactionValidationEnabled {
@@ -711,6 +724,10 @@ func bootstrapLedger(
 	ctx = fvm.NewContextFromParent(
 		ctx,
 		fvm.WithAccountStorageLimit(false),
+		// This one has to always be set to false for bootstraping
+		// otherwise during bootstraping we expect evm storage account to exist
+		// which would be bootstrapped later during this process.
+		fvm.WithEVMEnabled(false),
 	)
 
 	flowAccountKey := flowgo.AccountPublicKey{
@@ -735,6 +752,7 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 	options = append(options,
 		fvm.WithInitialTokenSupply(supply),
 		fvm.WithRestrictedAccountCreationEnabled(false),
+		fvm.WithSetupEVMEnabled(cadence.Bool(conf.EVMEnabled)),
 		// This enables variable transaction fees AND execution effort metering
 		// as described in Variable Transaction Fees:
 		// Execution Effort FLIP: https://github.com/onflow/flow/pull/753)

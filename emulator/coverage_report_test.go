@@ -25,13 +25,14 @@ import (
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
-	"github.com/onflow/flow-emulator/adapters"
-	"github.com/onflow/flow-emulator/emulator"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/onflow/flow-emulator/adapters"
+	"github.com/onflow/flow-emulator/emulator"
 )
 
 func TestCoverageReport(t *testing.T) {
@@ -78,7 +79,7 @@ func TestCoverageReport(t *testing.T) {
 	require.NoError(t, err)
 	AssertTransactionSucceeded(t, txResult)
 
-	address, err := common.HexToAddress("0x01cf0e2f2f715450")
+	address, err := common.HexToAddress(counterAddress.Hex())
 	require.NoError(t, err)
 	location := common.AddressLocation{
 		Address: address,
