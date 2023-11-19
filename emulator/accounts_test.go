@@ -836,7 +836,7 @@ func TestRemoveAccountKey(t *testing.T) {
 	account, err = adapter.GetAccount(context.Background(), b.ServiceKey().Address)
 	assert.NoError(t, err)
 
-	// key at index 1 should not be revoked
+	// keys at indices 1 and 2 should not be revoked
 	require.Len(t, account.Keys, 3)
 	assert.True(t, account.Keys[0].Revoked)
 	assert.False(t, account.Keys[1].Revoked)
