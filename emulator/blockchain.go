@@ -1351,31 +1351,9 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	b.entropyProvider.LatestBlock = block.ID()
 
 	// lastly we execute the system chunk transaction
-	txn, err := b.systemChunkTransaction()
+	err = b.executeSystemChunkTransaction()
 	if err != nil {
 		return nil, err
-	}
-	ctx := fvm.NewContextFromParent(
-		b.vmCtx,
-		fvm.WithAuthorizationChecksEnabled(false),
-		fvm.WithSequenceNumberCheckAndIncrementEnabled(false),
-		fvm.WithRandomSourceHistoryCallAllowed(true),
-	)
-
-	executionSnapshot, output, err := b.vm.Run(
-		ctx,
-		fvm.Transaction(txn, uint32(len(transactions))),
-		b.pendingBlock.ledgerState,
-	)
-	if err != nil {
-		panic(err)
-	}
-
-	b.pendingBlock.events = append(b.pendingBlock.events, output.Events...)
-
-	err = b.pendingBlock.ledgerState.Merge(executionSnapshot)
-	if err != nil {
-		panic(err)
 	}
 
 	return block, nil
@@ -1752,10 +1730,41 @@ func (b *Blockchain) systemChunkTransaction() (*flowgo.TransactionBody, error) {
 
 	tx := flowgo.NewTransactionBody().
 		SetScript([]byte(script)).
-		SetGasLimit(9999).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		AddAuthorizer(b.GetChain().ServiceAddress()).
 		SetPayer(b.GetChain().ServiceAddress()).
 		SetReferenceBlockID(b.pendingBlock.parentID)
 
 	return tx, nil
+}
+
+func (b *Blockchain) executeSystemChunkTransaction() error {
+	txn, err := b.systemChunkTransaction()
+	if err != nil {
+		return err
+	}
+	ctx := fvm.NewContextFromParent(
+		b.vmCtx,
+		fvm.WithAuthorizationChecksEnabled(false),
+		fvm.WithSequenceNumberCheckAndIncrementEnabled(false),
+		fvm.WithRandomSourceHistoryCallAllowed(true),
+	)
+
+	executionSnapshot, output, err := b.vm.Run(
+		ctx,
+		fvm.Transaction(txn, uint32(len(b.pendingBlock.Transactions()))),
+		b.pendingBlock.ledgerState,
+	)
+	if err != nil {
+		return err
+	}
+
+	b.pendingBlock.events = append(b.pendingBlock.events, output.Events...)
+
+	err = b.pendingBlock.ledgerState.Merge(executionSnapshot)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
