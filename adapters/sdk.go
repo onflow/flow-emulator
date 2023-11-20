@@ -486,7 +486,7 @@ func (b *SDKAdapter) CreateAccount(ctx context.Context, publicKeys []*sdk.Accoun
 	if err != nil {
 		return sdk.Address{}, err
 	}
-	lastResult := results[len(results)-2]
+	lastResult := results[len(results)-1]
 
 	_, err = b.emulator.CommitBlock()
 	if err != nil {

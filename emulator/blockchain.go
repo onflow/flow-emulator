@@ -780,18 +780,6 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 			environment.ComputationKindCreateAccount: 2837670,
 			environment.ComputationKindSetValue:      765,
 		}),
-		fvm.WithBootstrapAccountKeys(fvm.BootstrapAccountKeys{
-			ServiceAccountPublicKeys: []flowgo.AccountPublicKey{
-				flowAccountKey,
-				{
-					Index:     1,
-					PublicKey: flowAccountKey.PublicKey,
-					SignAlgo:  flowAccountKey.SignAlgo,
-					HashAlgo:  flowAccountKey.HashAlgo,
-					Weight:    fvm.AccountKeyWeightThreshold,
-				},
-			},
-		}),
 	)
 	if conf.StorageLimitEnabled {
 		options = append(options,
@@ -1235,25 +1223,6 @@ func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 		results = append(results, result)
 	}
 
-	// lastly, we add & execute the system chunk transaction
-	txn, err := b.systemChunkTransaction()
-	if err != nil {
-		return results, err
-	}
-	b.pendingBlock.AddTransaction(*txn)
-
-	result, err := b.executeNextTransaction(
-		fvm.NewContextFromParent(
-			blockContext,
-			fvm.WithRandomSourceHistoryCallAllowed(true),
-		),
-	)
-	if err != nil {
-		return results, err
-	}
-
-	results = append(results, result)
-
 	return results, nil
 }
 
@@ -1380,6 +1349,34 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	// reset pending block using current block and ledger state
 	b.pendingBlock = newPendingBlock(block, ledger, b.clock)
 	b.entropyProvider.LatestBlock = block.ID()
+
+	// lastly we execute the system chunk transaction
+	txn, err := b.systemChunkTransaction()
+	if err != nil {
+		return nil, err
+	}
+	ctx := fvm.NewContextFromParent(
+		b.vmCtx,
+		fvm.WithAuthorizationChecksEnabled(false),
+		fvm.WithSequenceNumberCheckAndIncrementEnabled(false),
+		fvm.WithRandomSourceHistoryCallAllowed(true),
+	)
+
+	executionSnapshot, output, err := b.vm.Run(
+		ctx,
+		fvm.Transaction(txn, uint32(len(transactions))),
+		b.pendingBlock.ledgerState,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	b.pendingBlock.events = append(b.pendingBlock.events, output.Events...)
+
+	err = b.pendingBlock.ledgerState.Merge(executionSnapshot)
+	if err != nil {
+		panic(err)
+	}
 
 	return block, nil
 }
@@ -1752,26 +1749,13 @@ func (b *Blockchain) systemChunkTransaction() (*flowgo.TransactionBody, error) {
 			RandomBeaconHistoryAddress: b.GetChain().ServiceAddress().Hex(),
 		},
 	)
-	serviceKey := b.ServiceKey()
-	serviceAccount, _ := b.getAccount(flowgo.Address(b.serviceKey.Address))
-	tx := flowsdk.NewTransaction().
+
+	tx := flowgo.NewTransactionBody().
 		SetScript([]byte(script)).
 		SetGasLimit(9999).
-		AddAuthorizer(serviceKey.Address).
-		SetProposalKey(serviceKey.Address, 1, serviceAccount.Keys[1].SeqNumber).
-		SetPayer(serviceKey.Address).
-		SetReferenceBlockID(flowsdk.Identifier(b.pendingBlock.parentID))
+		AddAuthorizer(b.GetChain().ServiceAddress()).
+		SetPayer(b.GetChain().ServiceAddress()).
+		SetReferenceBlockID(b.pendingBlock.parentID)
 
-	signer, err := serviceKey.Signer()
-	if err != nil {
-		return nil, err
-	}
-
-	err = tx.SignEnvelope(serviceKey.Address, 1, signer)
-	if err != nil {
-		return nil, err
-	}
-	txn := convert.SDKTransactionToFlow(*tx)
-
-	return txn, nil
+	return tx, nil
 }

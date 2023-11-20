@@ -677,7 +677,7 @@ func TestAddAccountKey(t *testing.T) {
 
 		script := []byte("transaction { execute {} }")
 
-		var newKeyID = 2 // new key with have ID 1
+		var newKeyID = 1 // new key will have ID 1
 		var newKeySequenceNum uint64 = 0
 
 		tx2 := flowsdk.NewTransaction().
@@ -768,10 +768,9 @@ func TestRemoveAccountKey(t *testing.T) {
 	account, err := adapter.GetAccount(context.Background(), b.ServiceKey().Address)
 	assert.NoError(t, err)
 
-	require.Len(t, account.Keys, 3)
+	require.Len(t, account.Keys, 2)
 	assert.False(t, account.Keys[0].Revoked)
 	assert.False(t, account.Keys[1].Revoked)
-	assert.False(t, account.Keys[2].Revoked)
 
 	// create transaction that removes service key
 	tx2 := templates.RemoveAccountKey(b.ServiceKey().Address, 0)
@@ -801,13 +800,12 @@ func TestRemoveAccountKey(t *testing.T) {
 	assert.NoError(t, err)
 
 	// key at index 0 should be revoked
-	require.Len(t, account.Keys, 3)
+	require.Len(t, account.Keys, 2)
 	assert.True(t, account.Keys[0].Revoked)
 	assert.False(t, account.Keys[1].Revoked)
-	assert.False(t, account.Keys[2].Revoked)
 
-	// create transaction that removes the last account key
-	tx3 := templates.RemoveAccountKey(b.ServiceKey().Address, 2)
+	// create transaction that removes remaining account key
+	tx3 := templates.RemoveAccountKey(b.ServiceKey().Address, 0)
 
 	tx3.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -836,21 +834,20 @@ func TestRemoveAccountKey(t *testing.T) {
 	account, err = adapter.GetAccount(context.Background(), b.ServiceKey().Address)
 	assert.NoError(t, err)
 
-	// keys at indices 1 and 2 should not be revoked
-	require.Len(t, account.Keys, 3)
+	// key at index 1 should not be revoked
+	require.Len(t, account.Keys, 2)
 	assert.True(t, account.Keys[0].Revoked)
 	assert.False(t, account.Keys[1].Revoked)
-	assert.False(t, account.Keys[2].Revoked)
 
-	// create transaction that removes second account key
-	tx4 := templates.RemoveAccountKey(b.ServiceKey().Address, 2)
+	// create transaction that removes remaining account key
+	tx4 := templates.RemoveAccountKey(b.ServiceKey().Address, 1)
 
 	tx4.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
-		SetProposalKey(b.ServiceKey().Address, account.Keys[2].Index, account.Keys[2].SequenceNumber).
+		SetProposalKey(b.ServiceKey().Address, account.Keys[1].Index, account.Keys[1].SequenceNumber).
 		SetPayer(b.ServiceKey().Address)
 
 	// sign with remaining account key
-	err = tx4.SignEnvelope(b.ServiceKey().Address, account.Keys[2].Index, newSigner)
+	err = tx4.SignEnvelope(b.ServiceKey().Address, account.Keys[1].Index, newSigner)
 	assert.NoError(t, err)
 
 	// submit tx4 (should succeed)
@@ -867,9 +864,10 @@ func TestRemoveAccountKey(t *testing.T) {
 	account, err = adapter.GetAccount(context.Background(), b.ServiceKey().Address)
 	assert.NoError(t, err)
 
-	assert.True(t, account.Keys[0].Revoked)
-	assert.False(t, account.Keys[1].Revoked)
-	assert.True(t, account.Keys[2].Revoked)
+	// all keys should be revoked
+	for _, key := range account.Keys {
+		assert.True(t, key.Revoked)
+	}
 }
 
 func TestUpdateAccountCode(t *testing.T) {
