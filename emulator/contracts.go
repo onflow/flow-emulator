@@ -20,6 +20,7 @@ package emulator
 
 import (
 	"fmt"
+
 	"github.com/onflow/flow-go/fvm/systemcontracts"
 
 	"github.com/onflow/flow-emulator/convert"
