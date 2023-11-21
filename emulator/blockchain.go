@@ -30,6 +30,7 @@ package emulator
 
 import (
 	"context"
+	_ "embed"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -37,6 +38,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/onflow/flow-core-contracts/lib/go/templates"
+	"github.com/onflow/flow-go/engine"
 
 	"github.com/logrusorgru/aurora"
 	"github.com/onflow/cadence"
@@ -48,7 +52,6 @@ import (
 	"github.com/onflow/flow-go/access"
 	"github.com/onflow/flow-go/crypto"
 	"github.com/onflow/flow-go/crypto/hash"
-	"github.com/onflow/flow-go/engine"
 	"github.com/onflow/flow-go/fvm"
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
 	"github.com/onflow/flow-go/fvm/environment"
@@ -65,6 +68,12 @@ import (
 	"github.com/onflow/flow-emulator/types"
 	"github.com/onflow/flow-emulator/utils"
 )
+
+// systemChunkTransactionTemplate looks for the RandomBeaconHistory
+// heartbeat resource on the service account and calls it.
+//
+//go:embed templates/systemChunkTransactionTemplate.cdc
+var systemChunkTransactionTemplate string
 
 var _ Emulator = &Blockchain{}
 
@@ -86,6 +95,7 @@ func New(opts ...Option) (*Blockchain, error) {
 		conf:                   conf,
 		clock:                  NewSystemClock(),
 		sourceFileMap:          make(map[common.Location]string),
+		entropyProvider:        &blockHashEntropyProvider{},
 	}
 	err := b.ReloadBlockchain()
 	if err != nil {
@@ -333,6 +343,8 @@ type Blockchain struct {
 	coverageReportedRuntime *CoverageReportedRuntime
 
 	sourceFileMap map[common.Location]string
+
+	entropyProvider *blockHashEntropyProvider
 }
 
 // config is a set of configuration options for an emulated emulator.
@@ -548,18 +560,19 @@ func (h CadenceHook) Run(_ *zerolog.Event, level zerolog.Level, msg string) {
 	}
 }
 
-// `dummyEntropyProvider“ implements `environment.EntropyProvider`
-// which provides a source of entropy to fvm context (required for Cadence's randomness).
-type dummyEntropyProvider struct{}
-
-var dummySource = make([]byte, 32)
-
-func (gen *dummyEntropyProvider) RandomSource() ([]byte, error) {
-	return dummySource, nil
+// `blockHashEntropyProvider implements `environment.EntropyProvider`
+// which provides a source of entropy to fvm context (required for Cadence's randomness),
+// by using the latest block hash.
+type blockHashEntropyProvider struct {
+	LatestBlock flowgo.Identifier
 }
 
-// make sure `dummyEntropyProvider“ implements `environment.EntropyProvider`
-var _ environment.EntropyProvider = (*dummyEntropyProvider)(nil)
+func (gen *blockHashEntropyProvider) RandomSource() ([]byte, error) {
+	return gen.LatestBlock[:], nil
+}
+
+// make sure `blockHashEntropyProvider implements `environment.EntropyProvider`
+var _ environment.EntropyProvider = &blockHashEntropyProvider{}
 
 func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {
 	vm := fvm.NewVirtualMachine()
@@ -597,7 +610,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithAccountStorageLimit(conf.StorageLimitEnabled),
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		fvm.WithReusableCadenceRuntimePool(customRuntimePool),
-		fvm.WithEntropyProvider(&dummyEntropyProvider{}),
+		fvm.WithEntropyProvider(blockchain.entropyProvider),
 		fvm.WithEVMEnabled(conf.EVMEnabled),
 	}
 
@@ -1335,6 +1348,13 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 
 	// reset pending block using current block and ledger state
 	b.pendingBlock = newPendingBlock(block, ledger, b.clock)
+	b.entropyProvider.LatestBlock = block.ID()
+
+	// lastly we execute the system chunk transaction
+	err = b.executeSystemChunkTransaction()
+	if err != nil {
+		return nil, err
+	}
 
 	return block, nil
 }
@@ -1698,4 +1718,53 @@ func (b *Blockchain) GetSourceFile(location common.Location) string {
 
 	return location.ID()
 
+}
+
+func (b *Blockchain) systemChunkTransaction() (*flowgo.TransactionBody, error) {
+	script := templates.ReplaceAddresses(
+		systemChunkTransactionTemplate,
+		templates.Environment{
+			RandomBeaconHistoryAddress: b.GetChain().ServiceAddress().Hex(),
+		},
+	)
+
+	tx := flowgo.NewTransactionBody().
+		SetScript([]byte(script)).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		AddAuthorizer(b.GetChain().ServiceAddress()).
+		SetPayer(b.GetChain().ServiceAddress()).
+		SetReferenceBlockID(b.pendingBlock.parentID)
+
+	return tx, nil
+}
+
+func (b *Blockchain) executeSystemChunkTransaction() error {
+	txn, err := b.systemChunkTransaction()
+	if err != nil {
+		return err
+	}
+	ctx := fvm.NewContextFromParent(
+		b.vmCtx,
+		fvm.WithAuthorizationChecksEnabled(false),
+		fvm.WithSequenceNumberCheckAndIncrementEnabled(false),
+		fvm.WithRandomSourceHistoryCallAllowed(true),
+	)
+
+	executionSnapshot, output, err := b.vm.Run(
+		ctx,
+		fvm.Transaction(txn, uint32(len(b.pendingBlock.Transactions()))),
+		b.pendingBlock.ledgerState,
+	)
+	if err != nil {
+		return err
+	}
+
+	b.pendingBlock.events = append(b.pendingBlock.events, output.Events...)
+
+	err = b.pendingBlock.ledgerState.Merge(executionSnapshot)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
