@@ -2152,7 +2152,7 @@ func TestTransactionWithCadenceRandom(t *testing.T) {
 }
 
 func TestEVMTransaction(t *testing.T) {
-
+	serviceAddr := flowgo.Emulator.Chain().ServiceAddress()
 	code := []byte(fmt.Sprintf(
 		`
 		import EVM from %s
@@ -2164,23 +2164,17 @@ func TestEVMTransaction(t *testing.T) {
 			}
 		}
 	 `,
-		flowgo.Emulator.Chain().ServiceAddress().HexWithPrefix(),
+		serviceAddr.HexWithPrefix(),
 	))
 
 	b, adapter := setupTransactionTests(t, emulator.WithEVMEnabled(true))
 
-	addressBytesArray := cadence.NewArray([]cadence.Value{
-		cadence.UInt8(1), cadence.UInt8(1),
-		cadence.UInt8(2), cadence.UInt8(2),
-		cadence.UInt8(3), cadence.UInt8(3),
-		cadence.UInt8(4), cadence.UInt8(4),
-		cadence.UInt8(5), cadence.UInt8(5),
-		cadence.UInt8(6), cadence.UInt8(6),
-		cadence.UInt8(7), cadence.UInt8(7),
-		cadence.UInt8(8), cadence.UInt8(8),
-		cadence.UInt8(9), cadence.UInt8(9),
-		cadence.UInt8(10), cadence.UInt8(10),
-	}).WithType(stdlib.EVMAddressBytesCadenceType)
+	// generate random address
+	genArr := make([]cadence.Value, 20)
+	for i := range genArr {
+		genArr[i] = cadence.UInt8(i)
+	}
+	addressBytesArray := cadence.NewArray(genArr).WithType(stdlib.EVMAddressBytesCadenceType)
 
 	tx := flowsdk.NewTransaction().
 		SetScript(code).
@@ -2204,5 +2198,6 @@ func TestEVMTransaction(t *testing.T) {
 	require.NoError(t, err)
 	AssertTransactionSucceeded(t, result)
 
-	assert.Len(t, result.Logs, 1)
+	require.Len(t, result.Logs, 1)
+	require.Equal(t, result.Logs[0], fmt.Sprintf("A.%s.EVM.EVMAddress(bytes: %s)", serviceAddr, addressBytesArray.String()))
 }
