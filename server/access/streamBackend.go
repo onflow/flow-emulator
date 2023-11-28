@@ -22,20 +22,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/onflow/flow-emulator/emulator"
-	"github.com/onflow/flow-emulator/types"
+	"time"
+
 	"github.com/onflow/flow-go/engine/access/state_stream"
 	"github.com/onflow/flow-go/engine/access/state_stream/backend"
 	"github.com/onflow/flow-go/engine/common/rpc"
+	"github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow-go/module/executiondatasync/execution_data"
 	"github.com/onflow/flow-go/storage"
+	"github.com/onflow/flow-go/utils/logging"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/onflow/flow-go/model/flow"
-	"github.com/onflow/flow-go/module/executiondatasync/execution_data"
-	"github.com/onflow/flow-go/utils/logging"
-	"github.com/rs/zerolog"
-	"time"
+	"github.com/onflow/flow-emulator/emulator"
+	"github.com/onflow/flow-emulator/types"
 )
 
 type StateStreamBackend struct {
@@ -208,6 +209,7 @@ func (b *StateStreamBackend) getResponse(ctx context.Context, height uint64) (in
 }
 
 type GetExecutionDataFunc func(context.Context, uint64) (*execution_data.BlockExecutionDataEntity, error)
+
 type GetStartHeightFunc func(flow.Identifier, uint64) (uint64, error)
 
 func (b StateStreamBackend) SubscribeEvents(ctx context.Context, startBlockID flow.Identifier, startHeight uint64, filter state_stream.EventFilter) state_stream.Subscription {
@@ -246,4 +248,9 @@ func (b StateStreamBackend) getResponseFactory(filter state_stream.EventFilter) 
 			Events:  events,
 		}, nil
 	}
+}
+
+func (b *StateStreamBackend) GetRegisterValues(registerIDs flow.RegisterIDs, height uint64) ([]flow.RegisterValue, error) {
+	//TODO implement me
+	panic("implement me")
 }
