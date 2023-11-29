@@ -18,9 +18,9 @@ require (
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.2.4-0.20231016154253-a00dbf7c061f
 	github.com/onflow/flow-go v0.32.4-0.20231115172515-c1ec969fd6f2
 	github.com/onflow/flow-go-sdk v0.41.16
-	github.com/onflow/flow-go/crypto v0.24.10
+	github.com/onflow/flow-go/crypto v0.24.9
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
-	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20231018182244-e72527c55c63
+	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20231124194313-106cc495def6
 	github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20221222181731-14b90207cead
 	github.com/prometheus/client_golang v1.16.0
 	github.com/psiemens/graceland v1.0.0
@@ -204,3 +204,6 @@ require (
 	modernc.org/sqlite v1.21.1 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 )
+
+//TODO: Remove when merged
+replace github.com/onflow/flow-go v0.32.4-0.20231115172515-c1ec969fd6f2 => github.com/AndriiDiachuk/flow-go v0.0.0-20231127171138-fbe6207ef346
