@@ -401,6 +401,14 @@ func (a *AccessAdapter) GetExecutionResultByID(_ context.Context, _ flowgo.Ident
 	return nil, nil
 }
 
+func (a *AccessAdapter) GetSystemTransaction(_ context.Context, _ flowgo.Identifier) (*flowgo.TransactionBody, error) {
+	return nil, nil
+}
+
+func (a *AccessAdapter) GetSystemTransactionResult(_ context.Context, _ flowgo.Identifier, _ entities.EventEncodingVersion) (*access.TransactionResult, error) {
+	return nil, nil
+}
+
 func (a *AccessAdapter) GetTransactionResultByIndex(
 	_ context.Context,
 	blockID flowgo.Identifier,
