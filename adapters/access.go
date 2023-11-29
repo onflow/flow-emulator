@@ -21,6 +21,7 @@ package adapters
 import (
 	"context"
 	"fmt"
+
 	"github.com/onflow/flow/protobuf/go/flow/entities"
 
 	jsoncdc "github.com/onflow/cadence/encoding/json"
@@ -390,6 +391,14 @@ func (a *AccessAdapter) GetEventsForBlockIDs(
 }
 
 func (a *AccessAdapter) GetLatestProtocolStateSnapshot(_ context.Context) ([]byte, error) {
+	return nil, nil
+}
+
+func (a *AccessAdapter) GetProtocolStateSnapshotByBlockID(_ context.Context, _ flowgo.Identifier) ([]byte, error) {
+	return nil, nil
+}
+
+func (a *AccessAdapter) GetProtocolStateSnapshotByHeight(_ context.Context, _ uint64) ([]byte, error) {
 	return nil, nil
 }
 

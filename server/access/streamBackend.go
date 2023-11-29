@@ -22,6 +22,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-emulator/types"
 	"github.com/onflow/flow-go/engine/access/state_stream"
@@ -35,7 +37,6 @@ import (
 	"github.com/onflow/flow-go/module/executiondatasync/execution_data"
 	"github.com/onflow/flow-go/utils/logging"
 	"github.com/rs/zerolog"
-	"time"
 )
 
 type StateStreamBackend struct {
@@ -246,4 +247,8 @@ func (b StateStreamBackend) getResponseFactory(filter state_stream.EventFilter) 
 			Events:  events,
 		}, nil
 	}
+}
+
+func (b StateStreamBackend) GetRegisterValues(registerIDs flow.RegisterIDs, height uint64) ([]flow.RegisterValue, error) {
+	return nil, status.Errorf(codes.Unimplemented, "not implemented")
 }
