@@ -22,14 +22,14 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-go/engine/access/state_stream"
 	"github.com/onflow/flow-go/engine/access/state_stream/backend"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/zerolog"
 	"net"
 	"net/http"
 	"os"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-go/engine/access/rest"
 	"github.com/onflow/flow-go/engine/access/rest/routes"
@@ -79,7 +79,7 @@ func (r *RestServer) Stop() {
 	_ = r.server.Shutdown(context.Background())
 }
 
-func NewRestServer(logger *zerolog.Logger, adapter *adapters.AccessAdapter, chain flow.Chain, host string, port int, debug bool) (*RestServer, error) {
+func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adapter *adapters.AccessAdapter, chain flow.Chain, host string, port int, debug bool) (*RestServer, error) {
 
 	debugLogger := zerolog.Logger{}
 	if debug {
@@ -96,6 +96,16 @@ func NewRestServer(logger *zerolog.Logger, adapter *adapters.AccessAdapter, chai
 		}
 	}
 
+	streamConfig := backend.Config{
+		EventFilterConfig:    state_stream.DefaultEventFilterConfig,
+		RpcMetricsEnabled:    false,
+		MaxGlobalStreams:     state_stream.DefaultMaxGlobalStreams,
+		ClientSendTimeout:    state_stream.DefaultSendTimeout,
+		ClientSendBufferSize: state_stream.DefaultSendBufferSize,
+		ResponseLimit:        state_stream.DefaultResponseLimit,
+		HeartbeatInterval:    state_stream.DefaultHeartbeatInterval,
+	}
+
 	srv, err := rest.NewServer(
 		adapter,
 		rest.Config{
@@ -107,14 +117,8 @@ func NewRestServer(logger *zerolog.Logger, adapter *adapters.AccessAdapter, chai
 		debugLogger,
 		chain,
 		restCollector,
-		nil,
-		backend.Config{
-			EventFilterConfig:    state_stream.DefaultEventFilterConfig,
-			ClientSendTimeout:    state_stream.DefaultSendTimeout,
-			ClientSendBufferSize: state_stream.DefaultSendBufferSize,
-			MaxGlobalStreams:     state_stream.DefaultMaxGlobalStreams,
-			HeartbeatInterval:    state_stream.DefaultHeartbeatInterval,
-		},
+		NewStateStreamBackend(blockchain, debugLogger),
+		streamConfig,
 	)
 
 	if err != nil {

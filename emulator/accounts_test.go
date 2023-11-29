@@ -23,18 +23,18 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/onflow/flow-emulator/adapters"
-	"github.com/onflow/flow-emulator/emulator"
-	"github.com/rs/zerolog"
-
 	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go-sdk/test"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/onflow/flow-emulator/adapters"
+	"github.com/onflow/flow-emulator/emulator"
 )
 
 const testContract = "pub contract Test {}"
@@ -677,7 +677,7 @@ func TestAddAccountKey(t *testing.T) {
 
 		script := []byte("transaction { execute {} }")
 
-		var newKeyID = 1 // new key with have ID 1
+		var newKeyID = 1 // new key will have ID 1
 		var newKeySequenceNum uint64 = 0
 
 		tx2 := flowsdk.NewTransaction().

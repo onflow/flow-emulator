@@ -31,6 +31,7 @@ import (
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
+	"github.com/onflow/flow-go/fvm/evm/stdlib"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -155,12 +156,12 @@ func TestExecuteScript_FlowServiceAccountBalance(t *testing.T) {
 
 	code := fmt.Sprintf(
 		`
-          import FlowServiceAccount from %[1]s
-          pub fun main(): UFix64 {
-            let acct = getAccount(%[1]s)
-            return FlowServiceAccount.defaultTokenBalance(acct)
-          }
-        `,
+		import FlowServiceAccount from %[1]s
+		pub fun main(): UFix64 {
+			let acct = getAccount(%[1]s)
+			return FlowServiceAccount.defaultTokenBalance(acct)
+		}
+		`,
 		b.GetChain().ServiceAddress().HexWithPrefix(),
 	)
 
@@ -185,7 +186,7 @@ func TestInfiniteScript(t *testing.T) {
 		pub fun main() {
 			main()
 		}
-	`
+	 `
 	result, err := b.ExecuteScript([]byte(code), nil)
 	require.NoError(t, err)
 
@@ -211,7 +212,7 @@ func TestScriptExecutionLimit(t *testing.T) {
 				i = i + 1
 			}
 		}
-	`
+	 `
 
 	t.Run("ExceedingLimit", func(t *testing.T) {
 
@@ -250,10 +251,10 @@ func TestScriptExecutionLimit(t *testing.T) {
 func TestScriptWithCadenceRandom(t *testing.T) {
 
 	const code = `
-    pub fun main() {
-        assert(unsafeRandom() >= 0)
-    }
-	`
+	pub fun main() {
+		assert(unsafeRandom() >= 0)
+	}
+	 `
 
 	const limit = 200
 	b, err := emulator.New(
@@ -264,4 +265,46 @@ func TestScriptWithCadenceRandom(t *testing.T) {
 	result, err := b.ExecuteScript([]byte(code), nil)
 	require.NoError(t, err)
 	require.NoError(t, result.Error)
+}
+
+// TestEVM checks evm functionality
+func TestEVM(t *testing.T) {
+
+	code := []byte(fmt.Sprintf(
+		`
+		import EVM from %s
+
+		access(all)
+		fun main(bytes: [UInt8; 20]) {
+			EVM.EVMAddress(bytes: bytes)
+		}
+	 `,
+		flowgo.Emulator.Chain().ServiceAddress().HexWithPrefix(),
+	))
+
+	gasLimit := uint64(100_000)
+
+	b, err := emulator.New(
+		emulator.WithScriptGasLimit(gasLimit),
+		emulator.WithEVMEnabled(true),
+	)
+	require.NoError(t, err)
+
+	addressBytesArray := cadence.NewArray([]cadence.Value{
+		cadence.UInt8(1), cadence.UInt8(1),
+		cadence.UInt8(2), cadence.UInt8(2),
+		cadence.UInt8(3), cadence.UInt8(3),
+		cadence.UInt8(4), cadence.UInt8(4),
+		cadence.UInt8(5), cadence.UInt8(5),
+		cadence.UInt8(6), cadence.UInt8(6),
+		cadence.UInt8(7), cadence.UInt8(7),
+		cadence.UInt8(8), cadence.UInt8(8),
+		cadence.UInt8(9), cadence.UInt8(9),
+		cadence.UInt8(10), cadence.UInt8(10),
+	}).WithType(stdlib.EVMAddressBytesCadenceType)
+
+	result, err := b.ExecuteScript([]byte(code), [][]byte{jsoncdc.MustEncode(addressBytesArray)})
+	require.NoError(t, err)
+	require.NoError(t, result.Error)
+
 }

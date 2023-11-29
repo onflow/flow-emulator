@@ -23,13 +23,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/onflow/cadence/runtime"
-	"github.com/onflow/flow-emulator/adapters"
-	"github.com/onflow/flow-emulator/emulator"
-	"github.com/onflow/flow-emulator/server/access"
-	"github.com/onflow/flow-emulator/server/utils"
-
 	"github.com/onflow/cadence"
+	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/fvm"
 	"github.com/onflow/flow-go/fvm/environment"
@@ -37,7 +32,11 @@ import (
 	"github.com/psiemens/graceland"
 	"github.com/rs/zerolog"
 
+	"github.com/onflow/flow-emulator/adapters"
+	"github.com/onflow/flow-emulator/emulator"
+	"github.com/onflow/flow-emulator/server/access"
 	"github.com/onflow/flow-emulator/server/debugger"
+	"github.com/onflow/flow-emulator/server/utils"
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/remote"
 	"github.com/onflow/flow-emulator/storage/sqlite"
@@ -108,6 +107,7 @@ type Config struct {
 	MinimumStorageReservation cadence.UFix64
 	StorageMBPerFLOW          cadence.UFix64
 	TransactionFeesEnabled    bool
+	EVMEnabled                bool
 	TransactionMaxGasLimit    uint64
 	ScriptGasLimit            uint64
 	Persist                   bool
@@ -164,14 +164,15 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	chain := emulatedBlockchain.GetChain()
 
 	coreContracts := map[string]string{
-		"FlowServiceAccount": chain.ServiceAddress().HexWithPrefix(),
-		"FlowToken":          fvm.FlowTokenAddress(chain).HexWithPrefix(),
-		"FungibleToken":      fvm.FungibleTokenAddress(chain).HexWithPrefix(),
-		"FlowFees":           environment.FlowFeesAddress(chain).HexWithPrefix(),
-		"FlowStorageFees":    chain.ServiceAddress().HexWithPrefix(),
-		"NonFungibleToken":   chain.ServiceAddress().HexWithPrefix(),
-		"ViewResolver":       chain.ServiceAddress().HexWithPrefix(),
-		"MetadataViews":      chain.ServiceAddress().HexWithPrefix(),
+		"FlowServiceAccount":  chain.ServiceAddress().HexWithPrefix(),
+		"FlowToken":           fvm.FlowTokenAddress(chain).HexWithPrefix(),
+		"FungibleToken":       fvm.FungibleTokenAddress(chain).HexWithPrefix(),
+		"FlowFees":            environment.FlowFeesAddress(chain).HexWithPrefix(),
+		"FlowStorageFees":     chain.ServiceAddress().HexWithPrefix(),
+		"NonFungibleToken":    chain.ServiceAddress().HexWithPrefix(),
+		"ViewResolver":        chain.ServiceAddress().HexWithPrefix(),
+		"MetadataViews":       chain.ServiceAddress().HexWithPrefix(),
+		"RandomBeaconHistory": chain.ServiceAddress().HexWithPrefix(),
 	}
 	for contract, address := range coreContracts {
 		logger.Info().Fields(map[string]any{contract: address}).Msg("📜 Flow contract")
@@ -196,7 +197,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	accessAdapter := adapters.NewAccessAdapter(logger, emulatedBlockchain)
 	livenessTicker := utils.NewLivenessTicker(conf.LivenessCheckTolerance)
 	grpcServer := access.NewGRPCServer(logger, accessAdapter, chain, conf.Host, conf.GRPCPort, conf.GRPCDebug)
-	restServer, err := access.NewRestServer(logger, accessAdapter, chain, conf.Host, conf.RESTPort, conf.RESTDebug)
+	restServer, err := access.NewRestServer(logger, emulatedBlockchain, accessAdapter, chain, conf.Host, conf.RESTPort, conf.RESTDebug)
 	if err != nil {
 		logger.Error().Err(err).Msg("❗  Failed to startup REST API")
 		return nil
@@ -291,6 +292,7 @@ func (s *EmulatorServer) Start() {
 
 	s.Stop()
 }
+
 func (s *EmulatorServer) Emulator() emulator.Emulator {
 	return s.emulator
 }
@@ -345,26 +347,30 @@ func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
 		}
 	}
 
-	if conf.ChainID == flowgo.Testnet || conf.ChainID == flowgo.Mainnet {
-		// TODO: any reason redis shouldn't work?
-		baseProvider, ok := storageProvider.(*sqlite.Store)
-		if !ok {
-			return nil, fmt.Errorf("only sqlite is supported with forked networks")
-		}
+	// TODO disable until we re-enable get register endpoints
+	featureRemoteRegisterStorageEnabled := false
+	if featureRemoteRegisterStorageEnabled {
+		if conf.ChainID == flowgo.Testnet || conf.ChainID == flowgo.Mainnet {
+			// TODO: any reason redis shouldn't work?
+			baseProvider, ok := storageProvider.(*sqlite.Store)
+			if !ok {
+				return nil, fmt.Errorf("only sqlite is supported with forked networks")
+			}
 
-		provider, err := remote.New(baseProvider, remote.WithChainID(conf.ChainID))
-		if err != nil {
-			return nil, err
-		}
-
-		if conf.StartBlockHeight > 0 {
-			err = provider.SetBlockHeight(conf.StartBlockHeight)
+			provider, err := remote.New(baseProvider, remote.WithChainID(conf.ChainID))
 			if err != nil {
 				return nil, err
 			}
-		}
 
-		storageProvider = provider
+			if conf.StartBlockHeight > 0 {
+				err = provider.SetBlockHeight(conf.StartBlockHeight)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			storageProvider = provider
+		}
 	}
 
 	if conf.Snapshot {
@@ -392,6 +398,7 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		emulator.WithMinimumStorageReservation(conf.MinimumStorageReservation),
 		emulator.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
+		emulator.WithEVMEnabled(conf.EVMEnabled),
 		emulator.WithChainID(conf.ChainID),
 		emulator.WithContractRemovalEnabled(conf.ContractRemovalEnabled),
 	}
