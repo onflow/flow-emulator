@@ -1,6 +1,6 @@
 module github.com/onflow/flow-emulator
 
-go 1.19
+go 1.20
 
 require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
@@ -16,7 +16,7 @@ require (
 	github.com/onflow/cadence v0.42.5
 	github.com/onflow/flow-archive v1.3.4-0.20230503192214-9e81e82d4dcc
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.2.4-0.20231016154253-a00dbf7c061f
-	github.com/onflow/flow-go v0.32.4-0.20231115172515-c1ec969fd6f2
+	github.com/onflow/flow-go v0.32.4-0.20231128161804-783804dbd577
 	github.com/onflow/flow-go-sdk v0.41.16
 	github.com/onflow/flow-go/crypto v0.24.9
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
@@ -204,6 +204,3 @@ require (
 	modernc.org/sqlite v1.21.1 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 )
-
-//TODO: Remove when merged
-replace github.com/onflow/flow-go v0.32.4-0.20231115172515-c1ec969fd6f2 => github.com/AndriiDiachuk/flow-go v0.0.0-20231127171138-fbe6207ef346
