@@ -21,13 +21,13 @@ package server
 import (
 	"fmt"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/flow-go-sdk/crypto"
-	"github.com/onflow/flow-go/fvm"
-	"github.com/onflow/flow-go/fvm/environment"
+	"github.com/onflow/flow-go/fvm/systemcontracts"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/psiemens/graceland"
 	"github.com/rs/zerolog"
@@ -162,20 +162,17 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	}
 
 	chain := emulatedBlockchain.GetChain()
-
-	coreContracts := map[string]string{
-		"FlowServiceAccount":  chain.ServiceAddress().HexWithPrefix(),
-		"FlowToken":           fvm.FlowTokenAddress(chain).HexWithPrefix(),
-		"FungibleToken":       fvm.FungibleTokenAddress(chain).HexWithPrefix(),
-		"FlowFees":            environment.FlowFeesAddress(chain).HexWithPrefix(),
-		"FlowStorageFees":     chain.ServiceAddress().HexWithPrefix(),
-		"NonFungibleToken":    chain.ServiceAddress().HexWithPrefix(),
-		"ViewResolver":        chain.ServiceAddress().HexWithPrefix(),
-		"MetadataViews":       chain.ServiceAddress().HexWithPrefix(),
-		"RandomBeaconHistory": chain.ServiceAddress().HexWithPrefix(),
-	}
-	for contract, address := range coreContracts {
-		logger.Info().Fields(map[string]any{contract: address}).Msg("📜 Flow contract")
+	sc := systemcontracts.SystemContractsForChain(chain.ChainID())
+	contracts := sc.All()
+	// sort contracts to always have the same order
+	sort.Slice(contracts, func(i, j int) bool {
+		return contracts[i].Name < contracts[j].Name
+	})
+	for _, contract := range contracts {
+		logger.
+			Info().
+			Fields(map[string]any{contract.Name: contract.Address.HexWithPrefix()}).
+			Msg("📜 Flow contract")
 	}
 
 	if conf.WithContracts {
