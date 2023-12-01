@@ -200,6 +200,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				ContractRemovalEnabled:    conf.ContractRemovalEnabled,
 				SqliteURL:                 conf.SqliteURL,
 				CoverageReportingEnabled:  conf.CoverageReportingEnabled,
+				EVMEnabled:                conf.EVMEnabled,
 				// todo temporarily disabled until remote register endpoint is re-enabled
 				// StartBlockHeight:          conf.StartBlockHeight,
 			}
