@@ -21,6 +21,7 @@ package adapters
 import (
 	"context"
 	"fmt"
+
 	"github.com/onflow/flow/protobuf/go/flow/entities"
 
 	jsoncdc "github.com/onflow/cadence/encoding/json"
@@ -393,11 +394,27 @@ func (a *AccessAdapter) GetLatestProtocolStateSnapshot(_ context.Context) ([]byt
 	return nil, nil
 }
 
+func (a *AccessAdapter) GetProtocolStateSnapshotByBlockID(_ context.Context, _ flowgo.Identifier) ([]byte, error) {
+	return nil, nil
+}
+
+func (a *AccessAdapter) GetProtocolStateSnapshotByHeight(_ context.Context, _ uint64) ([]byte, error) {
+	return nil, nil
+}
+
 func (a *AccessAdapter) GetExecutionResultForBlockID(_ context.Context, _ flowgo.Identifier) (*flowgo.ExecutionResult, error) {
 	return nil, nil
 }
 
 func (a *AccessAdapter) GetExecutionResultByID(_ context.Context, _ flowgo.Identifier) (*flowgo.ExecutionResult, error) {
+	return nil, nil
+}
+
+func (a *AccessAdapter) GetSystemTransaction(_ context.Context, _ flowgo.Identifier) (*flowgo.TransactionBody, error) {
+	return nil, nil
+}
+
+func (a *AccessAdapter) GetSystemTransactionResult(_ context.Context, _ flowgo.Identifier, _ entities.EventEncodingVersion) (*access.TransactionResult, error) {
 	return nil, nil
 }
 
