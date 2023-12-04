@@ -39,19 +39,18 @@ import (
 	"sync"
 	"time"
 
-	"github.com/onflow/flow-core-contracts/lib/go/templates"
-	"github.com/onflow/flow-go/engine"
-
 	"github.com/logrusorgru/aurora"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
+	"github.com/onflow/flow-core-contracts/lib/go/templates"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/access"
 	"github.com/onflow/flow-go/crypto"
 	"github.com/onflow/flow-go/crypto/hash"
+	"github.com/onflow/flow-go/engine"
 	"github.com/onflow/flow-go/fvm"
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
 	"github.com/onflow/flow-go/fvm/environment"
@@ -619,6 +618,11 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 			fvmOptions,
 			fvm.WithAuthorizationChecksEnabled(false),
 			fvm.WithSequenceNumberCheckAndIncrementEnabled(false))
+	}
+
+	// todo temporary fix because the EVM storage account doesn't have sufficient funds
+	if conf.EVMEnabled {
+		fvmOptions = append(fvmOptions, fvm.WithAccountStorageLimit(false))
 	}
 
 	ctx := fvm.NewContext(

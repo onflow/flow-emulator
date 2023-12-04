@@ -28,7 +28,9 @@ import (
 	emulator "github.com/onflow/flow-emulator/emulator"
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
+	"github.com/onflow/flow-go/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow/protobuf/go/flow/entities"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -362,6 +364,14 @@ func (a *SDKAdapter) GetProtocolStateSnapshotByHeight(_ context.Context, _ uint6
 }
 
 func (b *SDKAdapter) GetExecutionResultForBlockID(_ context.Context, _ sdk.Identifier) (*sdk.ExecutionResult, error) {
+	return nil, nil
+}
+
+func (b *SDKAdapter) GetSystemTransaction(_ context.Context, _ flowgo.Identifier) (*flowgo.TransactionBody, error) {
+	return nil, nil
+}
+
+func (b *SDKAdapter) GetSystemTransactionResult(_ context.Context, _ flowgo.Identifier, _ entities.EventEncodingVersion) (*access.TransactionResult, error) {
 	return nil, nil
 }
 

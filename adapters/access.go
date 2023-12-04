@@ -21,6 +21,7 @@ package adapters
 import (
 	"context"
 	"fmt"
+
 	"github.com/onflow/flow/protobuf/go/flow/entities"
 
 	jsoncdc "github.com/onflow/cadence/encoding/json"
