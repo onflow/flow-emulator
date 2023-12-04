@@ -205,9 +205,5 @@ require (
 	nhooyr.io/websocket v1.8.7 // indirect
 )
 
-////TODO: Remove when both version will be merged
-//replace github.com/onflow/flow-go v0.32.4-0.20231115172515-c1ec969fd6f2 => github.com/AndriiDiachuk/flow-go v0.0.0-20231108171341-18d79032dc5d
-
-
 //TODO: Remove when merged
 replace github.com/onflow/flow-go v0.32.4-0.20231115172515-c1ec969fd6f2 => github.com/AndriiDiachuk/flow-go v0.0.0-20231127171138-fbe6207ef346
