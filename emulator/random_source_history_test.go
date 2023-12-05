@@ -80,8 +80,8 @@ func TestRandomSourceHistoryAtBlockHeight(t *testing.T) {
 
         access(all)
         fun main(): Bool {
-            let sorAt1 = RandomBeaconHistory.sourceOfRandomnessAtBlockHeight(blockHeight: 1)
-            let sorAt2 = RandomBeaconHistory.sourceOfRandomnessAtBlockHeight(blockHeight: 2)
+            let sorAt1 = RandomBeaconHistory.sourceOfRandomness(atBlockHeight: 1)
+			let sorAt2 = RandomBeaconHistory.sourceOfRandomness(atBlockHeight: 2)
 
             assert(sorAt1.blockHeight == 1)
             assert(sorAt2.blockHeight == 2)
