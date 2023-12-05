@@ -38,7 +38,6 @@ import (
 	"github.com/onflow/flow-emulator/server/debugger"
 	"github.com/onflow/flow-emulator/server/utils"
 	"github.com/onflow/flow-emulator/storage"
-	"github.com/onflow/flow-emulator/storage/remote"
 	"github.com/onflow/flow-emulator/storage/sqlite"
 	"github.com/onflow/flow-emulator/storage/util"
 )
@@ -344,32 +343,6 @@ func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
 		storageProvider, err = util.NewSqliteStorage(sqlite.InMemory)
 		if err != nil {
 			return nil, err
-		}
-	}
-
-	// TODO disable until we re-enable get register endpoints
-	featureRemoteRegisterStorageEnabled := false
-	if featureRemoteRegisterStorageEnabled {
-		if conf.ChainID == flowgo.Testnet || conf.ChainID == flowgo.Mainnet {
-			// TODO: any reason redis shouldn't work?
-			baseProvider, ok := storageProvider.(*sqlite.Store)
-			if !ok {
-				return nil, fmt.Errorf("only sqlite is supported with forked networks")
-			}
-
-			provider, err := remote.New(baseProvider, remote.WithChainID(conf.ChainID))
-			if err != nil {
-				return nil, err
-			}
-
-			if conf.StartBlockHeight > 0 {
-				err = provider.SetBlockHeight(conf.StartBlockHeight)
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			storageProvider = provider
 		}
 	}
 
