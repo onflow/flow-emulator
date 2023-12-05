@@ -1,6 +1,6 @@
 module github.com/onflow/flow-emulator
 
-go 1.19
+go 1.20
 
 require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
@@ -15,11 +15,11 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v0.42.5
 	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.0
-	github.com/onflow/flow-go v0.32.4-0.20231115172515-c1ec969fd6f2
+	github.com/onflow/flow-go v0.32.4-0.20231130134727-3c01c7f8966c
 	github.com/onflow/flow-go-sdk v0.41.16
-	github.com/onflow/flow-go/crypto v0.24.10
+	github.com/onflow/flow-go/crypto v0.24.9
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
-	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20231018182244-e72527c55c63
+	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20231124194313-106cc495def6
 	github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20221222181731-14b90207cead
 	github.com/prometheus/client_golang v1.16.0
 	github.com/psiemens/graceland v1.0.0
@@ -61,6 +61,9 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/fxamacker/circlehash v0.3.0 // indirect
 	github.com/getsentry/sentry-go v0.18.0 // indirect
+	github.com/go-kit/kit v0.12.0 // indirect
+	github.com/go-kit/log v0.2.1 // indirect
+	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
@@ -127,6 +130,7 @@ require (
 	github.com/onflow/flow-core-contracts/lib/go/contracts v1.2.4-0.20231016154253-a00dbf7c061f // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20230711213910-baad011d2b13 // indirect
 	github.com/onflow/sdks v0.5.0 // indirect
+	github.com/onflow/wal v0.0.0-20230529184820-bc9f8244608d // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect

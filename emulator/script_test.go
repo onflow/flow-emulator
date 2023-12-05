@@ -23,18 +23,18 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/onflow/flow-emulator/adapters"
-	"github.com/onflow/flow-emulator/emulator"
-	"github.com/rs/zerolog"
-
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/evm/stdlib"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/onflow/flow-emulator/adapters"
+	"github.com/onflow/flow-emulator/emulator"
 )
 
 func TestExecuteScript(t *testing.T) {
@@ -269,17 +269,17 @@ func TestScriptWithCadenceRandom(t *testing.T) {
 
 // TestEVM checks evm functionality
 func TestEVM(t *testing.T) {
-
+	serviceAddr := flowgo.Emulator.Chain().ServiceAddress()
 	code := []byte(fmt.Sprintf(
 		`
-		import EVM from %s
+		import EVM from 0x%s
 
 		access(all)
 		fun main(bytes: [UInt8; 20]) {
-			EVM.EVMAddress(bytes: bytes)
+			log(EVM.EVMAddress(bytes: bytes))
 		}
 	 `,
-		flowgo.Emulator.Chain().ServiceAddress().HexWithPrefix(),
+		serviceAddr,
 	))
 
 	gasLimit := uint64(100_000)
@@ -303,8 +303,10 @@ func TestEVM(t *testing.T) {
 		cadence.UInt8(10), cadence.UInt8(10),
 	}).WithType(stdlib.EVMAddressBytesCadenceType)
 
-	result, err := b.ExecuteScript([]byte(code), [][]byte{jsoncdc.MustEncode(addressBytesArray)})
+	result, err := b.ExecuteScript(code, [][]byte{jsoncdc.MustEncode(addressBytesArray)})
 	require.NoError(t, err)
 	require.NoError(t, result.Error)
+	require.Len(t, result.Logs, 1)
+	require.Equal(t, result.Logs[0], fmt.Sprintf("A.%s.EVM.EVMAddress(bytes: %s)", serviceAddr, addressBytesArray.String()))
 
 }
