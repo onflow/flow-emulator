@@ -519,22 +519,21 @@ func (s *DefaultStore) CommitBlock(
 
 }
 
-type defaultStorageSnapshot struct {
-	*DefaultStore
-
-	ctx         context.Context
-	blockHeight uint64
+type defaultStoreSnapshot struct {
+	defaultStore *DefaultStore
+	ctx          context.Context
+	blockHeight  uint64
 }
 
-func (snapshot defaultStorageSnapshot) Get(
+func (snapshot defaultStoreSnapshot) Get(
 	id flowgo.RegisterID,
 ) (
 	flowgo.RegisterValue,
 	error,
 ) {
-	value, err := snapshot.GetBytesAtVersion(
+	value, err := snapshot.defaultStore.GetBytesAtVersion(
 		snapshot.ctx,
-		snapshot.Storage(LedgerStoreName),
+		snapshot.defaultStore.Storage(LedgerStoreName),
 		[]byte(id.String()),
 		snapshot.blockHeight)
 
@@ -554,8 +553,8 @@ func (s *DefaultStore) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
 ) (snapshot.StorageSnapshot, error) {
-	return defaultStorageSnapshot{
-		DefaultStore: s,
+	return defaultStoreSnapshot{
+		defaultStore: s,
 		ctx:          ctx,
 		blockHeight:  blockHeight,
 	}, nil
