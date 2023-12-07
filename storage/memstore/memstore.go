@@ -83,7 +83,7 @@ func (s *Store) LatestBlockHeight(ctx context.Context) (uint64, error) {
 	return b.Header.Height, nil
 }
 
-func (s *Store) LatestBlock(ctx context.Context) (flowgo.Block, error) {
+func (s *Store) LatestBlock(_ context.Context) (flowgo.Block, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -94,7 +94,7 @@ func (s *Store) LatestBlock(ctx context.Context) (flowgo.Block, error) {
 	return latestBlock, nil
 }
 
-func (s *Store) StoreBlock(ctx context.Context, block *flowgo.Block) error {
+func (s *Store) StoreBlock(_ context.Context, block *flowgo.Block) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -112,7 +112,7 @@ func (s *Store) storeBlock(block *flowgo.Block) error {
 	return nil
 }
 
-func (s *Store) BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flowgo.Block, error) {
+func (s *Store) BlockByID(_ context.Context, blockID flowgo.Identifier) (*flowgo.Block, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -130,7 +130,7 @@ func (s *Store) BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flow
 
 }
 
-func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block, error) {
+func (s *Store) BlockByHeight(_ context.Context, height uint64) (*flowgo.Block, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -143,7 +143,7 @@ func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block
 }
 
 func (s *Store) CommitBlock(
-	ctx context.Context,
+	_ context.Context,
 	block flowgo.Block,
 	collections []*flowgo.LightCollection,
 	transactions map[flowgo.Identifier]*flowgo.TransactionBody,
@@ -204,7 +204,7 @@ func (s *Store) CommitBlock(
 }
 
 func (s *Store) CollectionByID(
-	ctx context.Context,
+	_ context.Context,
 	collectionID flowgo.Identifier,
 ) (flowgo.LightCollection, error) {
 	s.mu.RLock()
@@ -218,7 +218,7 @@ func (s *Store) CollectionByID(
 }
 
 func (s *Store) TransactionByID(
-	ctx context.Context,
+	_ context.Context,
 	transactionID flowgo.Identifier,
 ) (flowgo.TransactionBody, error) {
 	s.mu.RLock()
@@ -233,7 +233,7 @@ func (s *Store) TransactionByID(
 }
 
 func (s *Store) TransactionResultByID(
-	ctx context.Context,
+	_ context.Context,
 	transactionID flowgo.Identifier,
 ) (types.StorableTransactionResult, error) {
 	s.mu.RLock()
@@ -248,14 +248,14 @@ func (s *Store) TransactionResultByID(
 }
 
 func (s *Store) LedgerByHeight(
-	ctx context.Context,
+	_ context.Context,
 	blockHeight uint64,
 ) (snapshot.StorageSnapshot, error) {
 	return s.ledger[blockHeight], nil
 }
 
 func (s *Store) EventsByHeight(
-	ctx context.Context,
+	_ context.Context,
 	blockHeight uint64,
 	eventType string,
 ) ([]flowgo.Event, error) {
