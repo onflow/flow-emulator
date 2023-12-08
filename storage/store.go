@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/onflow/flow-go/ledger"
 
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -112,6 +113,12 @@ type SnapshotProvider interface {
 
 type RollbackProvider interface {
 	RollbackToBlockHeight(height uint64) error
+}
+
+type PayloadProvider interface {
+	AllPayloads() (result []ledger.Payload, err error)
+	ClearAllPayloads() error
+	ImportPayloads(payloads []ledger.Payload) error
 }
 
 type KeyGenerator interface {
@@ -448,7 +455,7 @@ func (s *DefaultStore) InsertExecutionSnapshot(
 		err := s.DataSetter.SetBytesWithVersion(
 			ctx,
 			s.KeyGenerator.Storage(LedgerStoreName),
-			[]byte(registerID.String()),
+			[]byte(registerID.Bytes()),
 			value,
 			blockHeight)
 		if err != nil {

@@ -27,6 +27,10 @@ import (
 	_ "embed"
 	"encoding/hex"
 	"fmt"
+	"github.com/onflow/flow-go/ledger"
+	"github.com/onflow/flow-go/ledger/common/convert"
+	"github.com/onflow/flow-go/model/encoding/rlp"
+	"github.com/onflow/flow-go/model/flow"
 	"os"
 	"path/filepath"
 	"strings"
@@ -101,6 +105,100 @@ func initDb(db *sql.DB) error {
 		return err
 	}
 	return tx.Commit()
+}
+
+func (s *Store) ClearAllPayloads() error {
+	tx, err := s.db.BeginTx(context.Background(), &sql.TxOptions{})
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(fmt.Sprintf(`DELETE from %s`, storage.LedgerStoreName))
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func (s *Store) ImportPayloads(payloads []ledger.Payload) error {
+	for _, payload := range payloads {
+		key, err := payload.Key()
+		if err != nil {
+			return err
+		}
+
+		registerID, err := convert.LedgerKeyToRegisterID(key)
+		if err != nil {
+			return err
+		}
+
+		err = s.SetBytesWithVersion(context.Background(), storage.LedgerStoreName, registerID.Bytes(), payload.Value(), 0)
+		if err != nil {
+			return err
+		}
+
+	}
+	return nil
+}
+
+func (s *Store) AllPayloads() (result []ledger.Payload, err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	rows, err := s.db.Query(
+		`SELECT key, value from ledger L 
+                  where version=(SELECT max(version) 
+                  from ledger where 
+                  key=L.key and value=L.value)
+				`,
+	)
+
+	if err != nil {
+		return result, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var ledgerKey string
+		var ledgerValue string
+		if err := rows.Scan(&ledgerKey, &ledgerValue); err != nil {
+			return nil, err
+		}
+
+		rawKeyBytes, err := hex.DecodeString(ledgerKey)
+		if err != nil {
+			return nil, err
+		}
+		var registerID flow.RegisterID
+		err = rlp.NewMarshaler().Unmarshal(rawKeyBytes, &registerID)
+		if err != nil {
+			return nil, err
+		}
+
+		rawValueBytes, err := hex.DecodeString(ledgerValue)
+		if err != nil {
+			return nil, err
+		}
+		payload := ledger.NewPayload(
+			ledger.NewKey(
+				[]ledger.KeyPart{
+					ledger.NewKeyPart(convert.KeyPartOwner, []byte(registerID.Owner)),
+					ledger.NewKeyPart(convert.KeyPartKey, []byte(registerID.Key)),
+				},
+			),
+			rawValueBytes,
+		)
+
+		result = append(result, *payload)
+	}
+
+	return result, err
 }
 
 func (s *Store) RollbackToBlockHeight(height uint64) error {
