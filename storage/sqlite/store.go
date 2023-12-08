@@ -185,13 +185,9 @@ func (s *Store) AllPayloads() (result []ledger.Payload, err error) {
 		if err != nil {
 			return nil, err
 		}
+
 		payload := ledger.NewPayload(
-			ledger.NewKey(
-				[]ledger.KeyPart{
-					ledger.NewKeyPart(convert.KeyPartOwner, []byte(registerID.Owner)),
-					ledger.NewKeyPart(convert.KeyPartKey, []byte(registerID.Key)),
-				},
-			),
+			convert.RegisterIDToLedgerKey(registerID),
 			rawValueBytes,
 		)
 
