@@ -1,3 +1,21 @@
+/*
+ * Flow Emulator
+ *
+ * Copyright Dapper Labs, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package emulator_test
 
 import (
@@ -11,25 +29,24 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/onflow/flow-emulator/adapters"
-	"github.com/onflow/flow-emulator/convert"
-	"github.com/onflow/flow-emulator/emulator"
-	"github.com/onflow/flow-go-sdk"
-
-	"github.com/rs/zerolog"
-
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
+	"github.com/onflow/flow-go-sdk"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go-sdk/test"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
+	"github.com/onflow/flow-go/fvm/evm/stdlib"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/onflow/flow-emulator/adapters"
+	"github.com/onflow/flow-emulator/convert"
+	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-emulator/types"
 )
 
@@ -1765,7 +1782,7 @@ func TestInfiniteTransaction(t *testing.T) {
 
 	t.Parallel()
 
-	const limit = 1000
+	const limit = 90
 
 	b, adapter := setupTransactionTests(
 		t,
@@ -1774,16 +1791,16 @@ func TestInfiniteTransaction(t *testing.T) {
 	)
 
 	const code = `
-      pub fun test() {
-          test()
-      }
+		pub fun test() {
+			test()
+		}
 
-      transaction {
-          execute {
-              test()
-          }
-      }
-    `
+		transaction {
+			execute {
+				test()
+			}
+		}
+	`
 
 	// Create a new account
 
@@ -1814,6 +1831,115 @@ func TestInfiniteTransaction(t *testing.T) {
 	assert.NoError(t, err)
 
 	require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
+}
+
+func TestTransactionExecutionLimit(t *testing.T) {
+
+	t.Parallel()
+
+	const code = `
+		transaction {
+			execute {
+				var s: Int256 = 1024102410241024
+				var i: Int256 = 0
+				var a: Int256 = 7
+				var b: Int256 = 5
+				var c: Int256 = 2
+
+				while i < 150000 {
+					s = s * a
+					s = s / b
+					s = s / c
+					i = i + 1
+				}
+			}
+		}
+	`
+
+	t.Run("ExceedingLimit", func(t *testing.T) {
+
+		t.Parallel()
+
+		const limit = 2000
+
+		b, adapter := setupTransactionTests(
+			t,
+			emulator.WithStorageLimitEnabled(false),
+			emulator.WithTransactionMaxGasLimit(limit),
+		)
+
+		// Create a new account
+
+		accountKeys := test.AccountKeyGenerator()
+		accountKey, signer := accountKeys.NewWithSigner()
+		accountAddress, err := adapter.CreateAccount(context.Background(), []*flowsdk.AccountKey{accountKey}, nil)
+		assert.NoError(t, err)
+
+		// Sign the transaction using the new account.
+		// Do not test using the service account,
+		// as the computation limit is disabled for it
+
+		tx := flowsdk.NewTransaction().
+			SetScript([]byte(code)).
+			SetGasLimit(limit).
+			SetProposalKey(accountAddress, 0, 0).
+			SetPayer(accountAddress)
+
+		err = tx.SignEnvelope(accountAddress, 0, signer)
+		assert.NoError(t, err)
+
+		// Submit tx
+		err = adapter.SendTransaction(context.Background(), *tx)
+		assert.NoError(t, err)
+
+		// Execute tx
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+
+		require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
+	})
+
+	t.Run("SufficientLimit", func(t *testing.T) {
+
+		t.Parallel()
+
+		const limit = 19000
+
+		b, adapter := setupTransactionTests(
+			t,
+			emulator.WithStorageLimitEnabled(false),
+			emulator.WithTransactionMaxGasLimit(limit),
+		)
+
+		// Create a new account
+
+		accountKeys := test.AccountKeyGenerator()
+		accountKey, signer := accountKeys.NewWithSigner()
+		accountAddress, err := adapter.CreateAccount(context.Background(), []*flowsdk.AccountKey{accountKey}, nil)
+		assert.NoError(t, err)
+
+		// Sign the transaction using the new account.
+		// Do not test using the service account,
+		// as the computation limit is disabled for it
+
+		tx := flowsdk.NewTransaction().
+			SetScript([]byte(code)).
+			SetGasLimit(limit).
+			SetProposalKey(accountAddress, 0, 0).
+			SetPayer(accountAddress)
+
+		err = tx.SignEnvelope(accountAddress, 0, signer)
+		assert.NoError(t, err)
+
+		// Submit tx
+		err = adapter.SendTransaction(context.Background(), *tx)
+		assert.NoError(t, err)
+
+		// Execute tx
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+		assert.NoError(t, result.Error)
+	})
 }
 
 func TestSubmitTransactionWithCustomLogger(t *testing.T) {
@@ -1988,4 +2114,90 @@ func TestRollbackTransaction(t *testing.T) {
 
 	IncrementHelper(t, b, adapter, counterAddress, addTwoScript, 2)
 
+}
+
+// TestTransactionWithCadenceRandom checks Cadence's random function works
+// within a transaction
+func TestTransactionWithCadenceRandom(t *testing.T) {
+	b, adapter := setupTransactionTests(t)
+
+	code := `
+    transaction {
+        prepare() {
+            assert(unsafeRandom() >= 0)
+        }
+    }
+	`
+	callRandomTx := flowsdk.NewTransaction().
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetScript([]byte(code)).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+		SetPayer(b.ServiceKey().Address)
+
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = callRandomTx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
+
+	err = adapter.SendTransaction(context.Background(), *callRandomTx)
+	assert.NoError(t, err)
+
+	result, err := b.ExecuteNextTransaction()
+	assert.NoError(t, err)
+	AssertTransactionSucceeded(t, result)
+
+	_, err = b.CommitBlock()
+	assert.NoError(t, err)
+}
+
+func TestEVMTransaction(t *testing.T) {
+	serviceAddr := flowgo.Emulator.Chain().ServiceAddress()
+	code := []byte(fmt.Sprintf(
+		`
+		import EVM from %s
+
+		transaction(bytes: [UInt8; 20]) {
+			execute {
+				let addr = EVM.EVMAddress(bytes: bytes)
+				log(addr)
+			}
+		}
+	 `,
+		serviceAddr.HexWithPrefix(),
+	))
+
+	b, adapter := setupTransactionTests(t, emulator.WithEVMEnabled(true))
+
+	// generate random address
+	genArr := make([]cadence.Value, 20)
+	for i := range genArr {
+		genArr[i] = cadence.UInt8(i)
+	}
+	addressBytesArray := cadence.NewArray(genArr).WithType(stdlib.EVMAddressBytesCadenceType)
+
+	tx := flowsdk.NewTransaction().
+		SetScript(code).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+		SetPayer(b.ServiceKey().Address)
+
+	err := tx.AddArgument(addressBytesArray)
+	assert.NoError(t, err)
+
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
+
+	err = adapter.SendTransaction(context.Background(), *tx)
+	assert.NoError(t, err)
+
+	result, err := b.ExecuteNextTransaction()
+	require.NoError(t, err)
+	AssertTransactionSucceeded(t, result)
+
+	require.Len(t, result.Logs, 1)
+	require.Equal(t, result.Logs[0], fmt.Sprintf("A.%s.EVM.EVMAddress(bytes: %s)", serviceAddr, addressBytesArray.String()))
 }

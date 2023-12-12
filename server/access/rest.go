@@ -22,18 +22,22 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/onflow/flow-go/module"
+	"github.com/onflow/flow-emulator/emulator"
+	"github.com/onflow/flow-go/engine/access/state_stream"
+	"github.com/onflow/flow-go/engine/access/state_stream/backend"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/zerolog"
 	"net"
 	"net/http"
 	"os"
 
-	"github.com/onflow/flow-emulator/adapters"
-	metricsProm "github.com/slok/go-http-metrics/metrics/prometheus"
-
 	"github.com/onflow/flow-go/engine/access/rest"
+	"github.com/onflow/flow-go/engine/access/rest/routes"
 	"github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow-go/module"
 	"github.com/onflow/flow-go/module/metrics"
-	"github.com/rs/zerolog"
+
+	"github.com/onflow/flow-emulator/adapters"
 )
 
 type RestServer struct {
@@ -75,7 +79,7 @@ func (r *RestServer) Stop() {
 	_ = r.server.Shutdown(context.Background())
 }
 
-func NewRestServer(logger *zerolog.Logger, adapter *adapters.AccessAdapter, chain flow.Chain, host string, port int, debug bool) (*RestServer, error) {
+func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adapter *adapters.AccessAdapter, chain flow.Chain, host string, port int, debug bool) (*RestServer, error) {
 
 	debugLogger := zerolog.Logger{}
 	if debug {
@@ -85,10 +89,37 @@ func NewRestServer(logger *zerolog.Logger, adapter *adapters.AccessAdapter, chai
 
 	// only collect metrics if not test
 	if flag.Lookup("test.v") == nil {
-		restCollector = metrics.NewRestCollector(metricsProm.Config{Prefix: "access_rest_api"})
+		var err error
+		restCollector, err = metrics.NewRestCollector(routes.URLToRoute, prometheus.DefaultRegisterer)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	srv, err := rest.NewServer(adapter, fmt.Sprintf("%s:3333", host), debugLogger, chain, restCollector)
+	streamConfig := backend.Config{
+		EventFilterConfig:    state_stream.DefaultEventFilterConfig,
+		RpcMetricsEnabled:    false,
+		MaxGlobalStreams:     state_stream.DefaultMaxGlobalStreams,
+		ClientSendTimeout:    state_stream.DefaultSendTimeout,
+		ClientSendBufferSize: state_stream.DefaultSendBufferSize,
+		ResponseLimit:        state_stream.DefaultResponseLimit,
+		HeartbeatInterval:    state_stream.DefaultHeartbeatInterval,
+	}
+
+	srv, err := rest.NewServer(
+		adapter,
+		rest.Config{
+			ListenAddress: fmt.Sprintf("%s:3333", host),
+			WriteTimeout:  rest.DefaultWriteTimeout,
+			ReadTimeout:   rest.DefaultReadTimeout,
+			IdleTimeout:   rest.DefaultIdleTimeout,
+		},
+		debugLogger,
+		chain,
+		restCollector,
+		NewStateStreamBackend(blockchain, debugLogger),
+		streamConfig,
+	)
 
 	if err != nil {
 		return nil, err

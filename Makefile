@@ -55,7 +55,7 @@ ci: install-tools test check-tidy test coverage check-headers
 
 .PHONY: install-linter
 install-linter:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.46.0
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.54.2
 
 .PHONY: lint
 lint:

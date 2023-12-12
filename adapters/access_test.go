@@ -1,3 +1,21 @@
+/*
+ * Flow Emulator
+ *
+ * Copyright Dapper Labs, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package adapters
 
 import (
@@ -15,6 +33,7 @@ import (
 	"github.com/onflow/flow-go/access"
 	"github.com/onflow/flow-go/engine/common/rpc/convert"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow/protobuf/go/flow/entities"
 
 	"github.com/onflow/flow-emulator/emulator/mocks"
 	"github.com/onflow/flow-emulator/types"
@@ -324,7 +343,7 @@ func TestAccess(t *testing.T) {
 			Return(&emuResult, nil).
 			Times(1)
 
-		result, err := adapter.GetTransactionResult(context.Background(), txID, blockID, collectionID)
+		result, err := adapter.GetTransactionResult(context.Background(), txID, blockID, collectionID, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Equal(t, expected, *result)
 		assert.NoError(t, err)
 
@@ -334,7 +353,7 @@ func TestAccess(t *testing.T) {
 			Return(nil, fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.GetTransactionResult(context.Background(), txID, blockID, collectionID)
+		result, err = adapter.GetTransactionResult(context.Background(), txID, blockID, collectionID, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Nil(t, result)
 		assert.Error(t, err)
 
@@ -545,7 +564,7 @@ func TestAccess(t *testing.T) {
 			Return(blockEvents, nil).
 			Times(1)
 
-		result, err := adapter.GetEventsForHeightRange(context.Background(), eventType, startHeight, endHeight)
+		result, err := adapter.GetEventsForHeightRange(context.Background(), eventType, startHeight, endHeight, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Equal(t, expected, result)
 		assert.NoError(t, err)
 
@@ -555,7 +574,7 @@ func TestAccess(t *testing.T) {
 			Return(nil, fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.GetEventsForHeightRange(context.Background(), eventType, startHeight, endHeight)
+		result, err = adapter.GetEventsForHeightRange(context.Background(), eventType, startHeight, endHeight, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Nil(t, result)
 		assert.Error(t, err)
 
@@ -587,7 +606,7 @@ func TestAccess(t *testing.T) {
 			Return(blockEvents, nil).
 			Times(1)
 
-		result, err := adapter.GetEventsForBlockIDs(context.Background(), eventType, blockIDs)
+		result, err := adapter.GetEventsForBlockIDs(context.Background(), eventType, blockIDs, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Equal(t, expected, result)
 		assert.NoError(t, err)
 
@@ -597,7 +616,7 @@ func TestAccess(t *testing.T) {
 			Return(nil, fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.GetEventsForBlockIDs(context.Background(), eventType, blockIDs)
+		result, err = adapter.GetEventsForBlockIDs(context.Background(), eventType, blockIDs, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Nil(t, result)
 		assert.Error(t, err)
 
@@ -626,7 +645,7 @@ func TestAccess(t *testing.T) {
 			Return(results, nil).
 			Times(1)
 
-		result, err := adapter.GetTransactionResultByIndex(context.Background(), blockID, index)
+		result, err := adapter.GetTransactionResultByIndex(context.Background(), blockID, index, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Equal(t, convertedTXResult, result)
 		assert.NoError(t, err)
 
@@ -636,7 +655,7 @@ func TestAccess(t *testing.T) {
 			Return(nil, fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.GetTransactionResultByIndex(context.Background(), blockID, index)
+		result, err = adapter.GetTransactionResultByIndex(context.Background(), blockID, index, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Nil(t, result)
 		assert.Error(t, err)
 
@@ -695,7 +714,7 @@ func TestAccess(t *testing.T) {
 			Return(results, nil).
 			Times(1)
 
-		result, err := adapter.GetTransactionResultsByBlockID(context.Background(), blockID)
+		result, err := adapter.GetTransactionResultsByBlockID(context.Background(), blockID, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Equal(t, expected, result)
 		assert.NoError(t, err)
 
@@ -705,7 +724,7 @@ func TestAccess(t *testing.T) {
 			Return(nil, fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.GetTransactionResultsByBlockID(context.Background(), blockID)
+		result, err = adapter.GetTransactionResultsByBlockID(context.Background(), blockID, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Nil(t, result)
 		assert.Error(t, err)
 

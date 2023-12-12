@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright Dapper Labs, Inc.
+ * Copyright 2023 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package utils
 
-package emulator_test
+import "github.com/btcsuite/btcd/chaincfg/chainhash"
 
-import (
-	"testing"
-
-	"github.com/onflow/flow-emulator/emulator"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-)
-
-func TestRuntimeLogs(t *testing.T) {
-
-	t.Parallel()
-
-	b, err := emulator.New()
-	require.NoError(t, err)
-
-	script := []byte(`
-		pub fun main() {
-			log("elephant ears")
-		}
-	`)
-
-	result, err := b.ExecuteScript(script, nil)
-	assert.NoError(t, err)
-	assert.Equal(t, []string{`"elephant ears"`}, result.Logs)
-}
+// this is added to resolve the issue with chainhash ambiguous import,
+// the code is not used, but it's needed to force go.mod specify and retain chainhash version
+// workaround for issue: https://github.com/golang/go/issues/27899
+var _ = chainhash.Hash{}

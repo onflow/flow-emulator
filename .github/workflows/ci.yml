@@ -15,12 +15,12 @@ jobs:
     name: "Test"
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - uses: actions/setup-go@v4
       with:
-        go-version: '1.19.x'
+        go-version: '1.20.x'
     - uses: actions/cache@v3
       with:
         path: ~/go/pkg/mod
@@ -38,15 +38,15 @@ jobs:
     name: "Lint"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
-          go-version: '1.19.x'
+          go-version: '1.20.x'
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
           # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
-          version: v1.50
+          version: v1.54
           args: --timeout=10m
 
   docker:
@@ -75,7 +75,7 @@ jobs:
 
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Cache Docker layers
         uses: actions/cache@v3
@@ -86,7 +86,7 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Login to GCR
         uses: docker/login-action@v2
@@ -97,7 +97,7 @@ jobs:
 
       - name: Build and push
         id: docker_build
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           builder: ${{ steps.buildx.outputs.name }}
           push: true

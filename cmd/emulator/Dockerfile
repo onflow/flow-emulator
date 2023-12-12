@@ -3,7 +3,7 @@
 # NOTE: Must be run in the context of the repo's root directory
 
 ## Build the app binary
-FROM --platform=$BUILDPLATFORM golang:1.18 AS build-app
+FROM --platform=$BUILDPLATFORM golang:1.20 AS build-app
 
 # Build the app binary in /app
 RUN mkdir /app

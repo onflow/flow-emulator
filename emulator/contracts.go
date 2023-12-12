@@ -1,3 +1,21 @@
+/*
+ * Flow Emulator
+ *
+ * Copyright Dapper Labs, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package emulator
 
 import (
@@ -7,41 +25,18 @@ import (
 
 	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
-	"github.com/onflow/flow-go/fvm"
+	"github.com/onflow/flow-go/fvm/systemcontracts"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-nft/lib/go/contracts"
-	fusd "github.com/onflow/fusd/lib/go/contracts"
 	nftstorefront "github.com/onflow/nft-storefront/lib/go/contracts"
 )
 
 func NewCommonContracts(chain flowgo.Chain) []ContractDescription {
-	ftAddress := flowsdk.HexToAddress(fvm.FungibleTokenAddress(chain).HexWithPrefix())
+	sc := systemcontracts.SystemContractsForChain(chain.ChainID())
+
+	ftAddress := flowsdk.HexToAddress(sc.FungibleToken.Address.HexWithPrefix())
 	serviceAddress := flowsdk.HexToAddress(chain.ServiceAddress().HexWithPrefix())
 	return []ContractDescription{
-		{
-			Name:        "FUSD",
-			Address:     serviceAddress,
-			Description: "💵  FUSD contract",
-			Source:      fusd.FUSD(ftAddress.String()),
-		},
-		{
-			Name:        "NonFungibleToken",
-			Address:     serviceAddress,
-			Description: "✨  NFT contract",
-			Source:      contracts.NonFungibleToken(),
-		},
-		{
-			Name:        "ViewResolver",
-			Address:     serviceAddress,
-			Description: "✨  Metadata views contract",
-			Source:      contracts.Resolver(),
-		},
-		{
-			Name:        "MetadataViews",
-			Address:     serviceAddress,
-			Description: "✨  Metadata views contract",
-			Source:      contracts.MetadataViews(ftAddress, serviceAddress),
-		},
 		{
 			Name:        "ExampleNFT",
 			Address:     serviceAddress,

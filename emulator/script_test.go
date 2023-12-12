@@ -1,3 +1,21 @@
+/*
+ * Flow Emulator
+ *
+ * Copyright Dapper Labs, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package emulator_test
 
 import (
@@ -5,17 +23,18 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/onflow/flow-emulator/adapters"
-	"github.com/onflow/flow-emulator/emulator"
-	"github.com/rs/zerolog"
-
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
+	"github.com/onflow/flow-go/fvm/evm/stdlib"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/onflow/flow-emulator/adapters"
+	"github.com/onflow/flow-emulator/emulator"
 )
 
 func TestExecuteScript(t *testing.T) {
@@ -137,12 +156,12 @@ func TestExecuteScript_FlowServiceAccountBalance(t *testing.T) {
 
 	code := fmt.Sprintf(
 		`
-          import FlowServiceAccount from %[1]s
-          pub fun main(): UFix64 {
-            let acct = getAccount(%[1]s)
-            return FlowServiceAccount.defaultTokenBalance(acct)
-          }
-        `,
+		import FlowServiceAccount from %[1]s
+		pub fun main(): UFix64 {
+			let acct = getAccount(%[1]s)
+			return FlowServiceAccount.defaultTokenBalance(acct)
+		}
+		`,
 		b.GetChain().ServiceAddress().HexWithPrefix(),
 	)
 
@@ -157,19 +176,137 @@ func TestInfiniteScript(t *testing.T) {
 
 	t.Parallel()
 
-	const limit = 1000
+	const limit = 90
 	b, err := emulator.New(
 		emulator.WithScriptGasLimit(limit),
 	)
 	require.NoError(t, err)
 
 	const code = `
-      pub fun main() {
-          main()
-      }
-    `
+		pub fun main() {
+			main()
+		}
+	 `
 	result, err := b.ExecuteScript([]byte(code), nil)
 	require.NoError(t, err)
 
 	require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
+}
+
+func TestScriptExecutionLimit(t *testing.T) {
+
+	t.Parallel()
+
+	const code = `
+		pub fun main() {
+			var s: Int256 = 1024102410241024
+			var i: Int256 = 0
+			var a: Int256 = 7
+			var b: Int256 = 5
+			var c: Int256 = 2
+
+			while i < 150000 {
+				s = s * a
+				s = s / b
+				s = s / c
+				i = i + 1
+			}
+		}
+	 `
+
+	t.Run("ExceedingLimit", func(t *testing.T) {
+
+		t.Parallel()
+
+		const limit = 2000
+		b, err := emulator.New(
+			emulator.WithScriptGasLimit(limit),
+		)
+		require.NoError(t, err)
+
+		result, err := b.ExecuteScript([]byte(code), nil)
+		require.NoError(t, err)
+
+		require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
+	})
+
+	t.Run("SufficientLimit", func(t *testing.T) {
+
+		t.Parallel()
+
+		const limit = 19000
+		b, err := emulator.New(
+			emulator.WithScriptGasLimit(limit),
+		)
+		require.NoError(t, err)
+
+		result, err := b.ExecuteScript([]byte(code), nil)
+		require.NoError(t, err)
+		require.NoError(t, result.Error)
+	})
+}
+
+// TestScriptWithCadenceRandom checks Cadence's random function works
+// within a script
+func TestScriptWithCadenceRandom(t *testing.T) {
+
+	const code = `
+	pub fun main() {
+		assert(unsafeRandom() >= 0)
+	}
+	 `
+
+	const limit = 200
+	b, err := emulator.New(
+		emulator.WithScriptGasLimit(limit),
+	)
+	require.NoError(t, err)
+
+	result, err := b.ExecuteScript([]byte(code), nil)
+	require.NoError(t, err)
+	require.NoError(t, result.Error)
+}
+
+// TestEVM checks evm functionality
+func TestEVM(t *testing.T) {
+	serviceAddr := flowgo.Emulator.Chain().ServiceAddress()
+	code := []byte(fmt.Sprintf(
+		`
+		import EVM from 0x%s
+
+		access(all)
+		fun main(bytes: [UInt8; 20]) {
+			log(EVM.EVMAddress(bytes: bytes))
+		}
+	 `,
+		serviceAddr,
+	))
+
+	gasLimit := uint64(100_000)
+
+	b, err := emulator.New(
+		emulator.WithScriptGasLimit(gasLimit),
+		emulator.WithEVMEnabled(true),
+	)
+	require.NoError(t, err)
+
+	addressBytesArray := cadence.NewArray([]cadence.Value{
+		cadence.UInt8(1), cadence.UInt8(1),
+		cadence.UInt8(2), cadence.UInt8(2),
+		cadence.UInt8(3), cadence.UInt8(3),
+		cadence.UInt8(4), cadence.UInt8(4),
+		cadence.UInt8(5), cadence.UInt8(5),
+		cadence.UInt8(6), cadence.UInt8(6),
+		cadence.UInt8(7), cadence.UInt8(7),
+		cadence.UInt8(8), cadence.UInt8(8),
+		cadence.UInt8(9), cadence.UInt8(9),
+		cadence.UInt8(10), cadence.UInt8(10),
+	}).WithType(stdlib.EVMAddressBytesCadenceType)
+
+	result, err := b.ExecuteScript(code, [][]byte{jsoncdc.MustEncode(addressBytesArray)})
+	require.NoError(t, err)
+	require.NoError(t, result.Error)
+	require.Len(t, result.Logs, 1)
+	require.Equal(t, result.Logs[0], fmt.Sprintf("A.%s.EVM.EVMAddress(bytes: %s)", serviceAddr, addressBytesArray.String()))
+
 }

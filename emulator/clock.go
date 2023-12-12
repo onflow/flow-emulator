@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright Dapper Labs, Inc.
+ * Copyright 2019 Dapper Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +16,20 @@
  * limitations under the License.
  */
 
-package emulator_test
+package emulator
 
-import (
-	"testing"
+import "time"
 
-	"github.com/onflow/flow-emulator/emulator"
+type Clock interface {
+	Now() time.Time
+}
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-)
+type SystemClock struct{}
 
-func TestRuntimeLogs(t *testing.T) {
+func (sc SystemClock) Now() time.Time {
+	return time.Now().UTC()
+}
 
-	t.Parallel()
-
-	b, err := emulator.New()
-	require.NoError(t, err)
-
-	script := []byte(`
-		pub fun main() {
-			log("elephant ears")
-		}
-	`)
-
-	result, err := b.ExecuteScript(script, nil)
-	assert.NoError(t, err)
-	assert.Equal(t, []string{`"elephant ears"`}, result.Logs)
+func NewSystemClock() SystemClock {
+	return SystemClock{}
 }
