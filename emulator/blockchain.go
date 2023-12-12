@@ -39,8 +39,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/onflow/flow-go/engine"
-
 	"github.com/onflow/flow-core-contracts/lib/go/templates"
 	"github.com/onflow/flow-go/engine"
 
