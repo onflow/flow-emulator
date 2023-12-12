@@ -26,9 +26,7 @@ test:
 
 .PHONY: run
 run:
-# latest: 63430953
-	GO111MODULE=on go run ./cmd/emulator --chain-id mainnet --skip-tx-validation=true --persist -v  --start-block-height 61000000
-#	GO111MODULE=on go run ./cmd/emulator --chain-id mainnet --start-block-height 54327815 --skip-tx-validation=true -v
+	GO111MODULE=on go run ./cmd/emulator
 
 .PHONY: coverage
 coverage:
