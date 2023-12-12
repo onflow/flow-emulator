@@ -38,10 +38,10 @@ import (
 
 type Store struct {
 	*sqlite.Store
-	client           archive.APIClient
-	grpcConn         *grpc.ClientConn
-	host             string
-	startBlockHeight uint64
+	client     archive.APIClient
+	grpcConn   *grpc.ClientConn
+	host       string
+	forkHeight uint64
 }
 
 type Option func(*Store)
@@ -77,7 +77,7 @@ func WithClient(client archive.APIClient) Option {
 // WithStartBlockHeight sets the start height for the store.
 func WithStartBlockHeight(height uint64) Option {
 	return func(store *Store) {
-		store.startBlockHeight = height
+		store.forkHeight = height
 	}
 }
 
@@ -107,7 +107,7 @@ func New(provider *sqlite.Store, options ...Option) (*Store, error) {
 		store.client = archive.NewAPIClient(conn)
 	}
 
-	if err := store.initializeStartBlock(); err != nil {
+	if err := store.initializeStartBlock(context.Background()); err != nil {
 		return nil, err
 	}
 
@@ -118,27 +118,36 @@ func New(provider *sqlite.Store, options ...Option) (*Store, error) {
 	return store, nil
 }
 
-func (s *Store) initializeStartBlock() error {
-	if s.startBlockHeight > 0 {
-		// only set the start block height if it's not already set
-		// it may be set if restarting from a persistent store
-		_, err := s.Store.LatestBlockHeight(context.Background())
-		if errors.Is(err, storage.ErrNotFound) {
-			err = s.Store.SetBlockHeight(s.startBlockHeight)
-			if err != nil {
-				return fmt.Errorf("could not set start block height: %w", err)
-			}
-		} else if err != nil {
-			return fmt.Errorf("error getting latest block height: %w", err)
-		}
+// initializeStartBlock initializes and stores the fork height and local latest height.
+func (s *Store) initializeStartBlock(ctx context.Context) error {
+	// the fork height may already be set in the db if restarting from persistent store
+	forkHeight, err := s.Store.ForkedBlockHeight(ctx)
+	if err == nil && forkHeight > 0 {
+		s.forkHeight = forkHeight
 		return nil
 	}
-
-	resp, err := s.client.GetLast(context.Background(), &archive.GetLastRequest{})
-	if err != nil {
-		return fmt.Errorf("could not get last block height: %w", err)
+	if err != nil && !errors.Is(err, storage.ErrNotFound) {
+		return fmt.Errorf("could not get forked block height: %w", err)
 	}
-	err = s.Store.SetBlockHeight(resp.Height)
+
+	// use the current latest block from the archive node if no height was provided
+	if s.forkHeight == 0 {
+		resp, err := s.client.GetLast(ctx, &archive.GetLastRequest{})
+		if err != nil {
+			return fmt.Errorf("could not get last block height: %w", err)
+		}
+		s.forkHeight = resp.Height
+	}
+
+	// store the initial fork height. any future queries for data on the archive node will be fixed
+	// to this height.
+	err = s.Store.StoreForkedBlockHeight(ctx, s.forkHeight)
+	if err != nil {
+		return fmt.Errorf("could not set start block height: %w", err)
+	}
+
+	// initialize the local latest height.
+	err = s.Store.SetBlockHeight(s.forkHeight)
 	if err != nil {
 		return fmt.Errorf("could not set start block height: %w", err)
 	}
@@ -165,19 +174,9 @@ func (s *Store) BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flow
 }
 
 func (s *Store) LatestBlock(ctx context.Context) (flowgo.Block, error) {
-	// try to resume from the last local block
 	latestBlockHeight, err := s.LatestBlockHeight(ctx)
-	if err != nil && !errors.Is(err, storage.ErrNotFound) {
-		return flowgo.Block{}, err
-	}
-
-	// if it's not set yet, get the latest block available from the archive node
-	if latestBlockHeight == 0 {
-		heightRes, err := s.client.GetLast(ctx, &archive.GetLastRequest{})
-		if err != nil {
-			return flowgo.Block{}, err
-		}
-		latestBlockHeight = heightRes.Height
+	if err != nil {
+		return flowgo.Block{}, fmt.Errorf("could not get local latest block: %w", err)
 	}
 
 	block, err := s.BlockByHeight(ctx, latestBlockHeight)
@@ -194,7 +193,11 @@ func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block
 		return block, nil
 	}
 
-	if latestBlockHeight, err := s.LatestBlockHeight(ctx); err == nil && height > latestBlockHeight {
+	latestBlockHeight, err := s.LatestBlockHeight(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not get local latest block: %w", err)
+	}
+	if height > latestBlockHeight {
 		return nil, &types.BlockNotFoundByHeightError{Height: height}
 	}
 
@@ -220,11 +223,6 @@ func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
 ) (snapshot.StorageSnapshot, error) {
-	// err := s.SetBlockHeight(blockHeight)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	return snapshot.NewReadFuncStorageSnapshot(func(id flowgo.RegisterID) (flowgo.RegisterValue, error) {
 		// first try to see if we have local stored ledger
 		value, err := s.DefaultStore.GetBytesAtVersion(
@@ -237,9 +235,14 @@ func (s *Store) LedgerByHeight(
 			return value, nil
 		}
 
-		log.Printf("fetching register: owner: %x, key: %x", []byte(id.Owner), []byte(id.Key))
-
 		// if we don't have it, get it from the archive node
+		// for consistency, always use data at the forked height for future blocks
+		if blockHeight > s.forkHeight {
+			blockHeight = s.forkHeight
+		}
+
+		log.Printf("fetching register: block: %d, owner: %x, key: %x", blockHeight, []byte(id.Owner), []byte(id.Key))
+
 		registerID := flowgo.RegisterID{Key: id.Key, Owner: id.Owner}
 		response, err := s.client.GetRegisterValues(ctx, &archive.GetRegisterValuesRequest{
 			Height:    blockHeight,

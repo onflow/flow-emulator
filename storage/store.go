@@ -117,6 +117,7 @@ type RollbackProvider interface {
 type KeyGenerator interface {
 	Storage(key string) string
 	LatestBlock() []byte
+	ForkedBlock() []byte
 	BlockHeight(height uint64) []byte
 	Identifier(id flowgo.Identifier) []byte
 }
@@ -140,6 +141,10 @@ func (s *DefaultKeyGenerator) Storage(key string) string {
 
 func (s *DefaultKeyGenerator) LatestBlock() []byte {
 	return []byte("latest_block_height")
+}
+
+func (s *DefaultKeyGenerator) ForkedBlock() []byte {
+	return []byte("forked_block_height")
 }
 
 func (s *DefaultKeyGenerator) BlockHeight(blockHeight uint64) []byte {
@@ -214,6 +219,21 @@ func (s *DefaultStore) StoreBlock(ctx context.Context, block *flowgo.Block) erro
 		return s.DataSetter.SetBytes(ctx, s.KeyGenerator.Storage(globalStoreName), s.KeyGenerator.LatestBlock(), mustEncodeUint64(block.Header.Height))
 	}
 	return nil
+}
+
+// ForkedBlockHeight returns the height of the block at which the chain forked from a live network.
+// All blocks after this height were produced by the emulator.
+func (s *DefaultStore) ForkedBlockHeight(ctx context.Context) (forkedBlockHeight uint64, err error) {
+	forkedBlockHeightEnc, err := s.DataGetter.GetBytes(ctx, s.KeyGenerator.Storage(globalStoreName), s.KeyGenerator.ForkedBlock())
+	if err != nil {
+		return
+	}
+	err = decodeUint64(&forkedBlockHeight, forkedBlockHeightEnc)
+	return
+}
+
+func (s *DefaultStore) StoreForkedBlockHeight(ctx context.Context, height uint64) error {
+	return s.DataSetter.SetBytes(ctx, s.KeyGenerator.Storage(globalStoreName), s.KeyGenerator.ForkedBlock(), mustEncodeUint64(height))
 }
 
 func (s *DefaultStore) BlockByHeight(ctx context.Context, blockHeight uint64) (block *flowgo.Block, err error) {
