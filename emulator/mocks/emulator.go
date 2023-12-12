@@ -431,7 +431,7 @@ func (m *MockEmulator) GetSourceFile(arg0 common.Location) string {
 }
 
 // GetSourceFile indicates an expected call of GetSourceFile.
-func (mr *MockEmulatorMockRecorder) GetSourceFile(arg0 interface{}) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) GetSourceFile(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSourceFile", reflect.TypeOf((*MockEmulator)(nil).GetSourceFile), arg0)
 }

@@ -48,7 +48,8 @@ generate: generate-mocks
 generate-mocks:
 	GO111MODULE=on ${GOPATH}/bin/mockgen -destination=emulator/mocks/emulator.go -package=mocks github.com/onflow/flow-emulator/emulator Emulator
 	GO111MODULE=on ${GOPATH}/bin/mockgen -destination=storage/mocks/store.go -package=mocks github.com/onflow/flow-emulator/storage Store
-	GO111MODULE=on ${GOPATH}/bin/mockgen -destination=internal/mocks/archive.go -package=mocks github.com/onflow/flow-emulator/internal ArchiveAPIClient
+	GO111MODULE=on ${GOPATH}/bin/mockgen -destination=internal/mocks/access.go -package=mocks github.com/onflow/flow-emulator/internal AccessAPIClient
+	GO111MODULE=on ${GOPATH}/bin/mockgen -destination=internal/mocks/executiondata.go -package=mocks github.com/onflow/flow-emulator/internal ExecutionDataAPIClient
 
 .PHONY: ci
 ci: install-tools test check-tidy test coverage check-headers

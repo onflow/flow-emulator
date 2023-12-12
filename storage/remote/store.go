@@ -23,11 +23,13 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/onflow/flow-archive/api/archive"
-	"github.com/onflow/flow-archive/codec/zbor"
+	"github.com/onflow/flow-go/engine/common/rpc/convert"
 	"github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow/protobuf/go/flow/access"
+	"github.com/onflow/flow/protobuf/go/flow/entities"
+	"github.com/onflow/flow/protobuf/go/flow/executiondata"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -38,10 +40,11 @@ import (
 
 type Store struct {
 	*sqlite.Store
-	client     archive.APIClient
-	grpcConn   *grpc.ClientConn
-	host       string
-	forkHeight uint64
+	executionClient executiondata.ExecutionDataAPIClient
+	accessClient    access.AccessAPIClient
+	grpcConn        *grpc.ClientConn
+	host            string
+	forkHeight      uint64
 }
 
 type Option func(*Store)
@@ -50,8 +53,10 @@ type Option func(*Store)
 func WithChainID(ID flowgo.ChainID) Option {
 	return func(store *Store) {
 		archiveHosts := map[flowgo.ChainID]string{
-			flowgo.Mainnet: "archive.mainnet.nodes.onflow.org:9000",
-			flowgo.Testnet: "archive.testnet.nodes.onflow.org:9000",
+			flowgo.Mainnet: "access-008.mainnet24.nodes.onflow.org:9000",
+			flowgo.Testnet: "access-002.devnet49.nodes.onflow.org:9000",
+			// flowgo.Mainnet: "archive.mainnet.nodes.onflow.org:9000",
+			// flowgo.Testnet: "archive.testnet.nodes.onflow.org:9000",
 		}
 
 		store.host = archiveHosts[ID]
@@ -68,9 +73,13 @@ func WithHost(host string) Option {
 // WithClient can set an archive node client
 //
 // This is mostly use for testing.
-func WithClient(client archive.APIClient) Option {
+func WithClient(
+	executionClient executiondata.ExecutionDataAPIClient,
+	accessClient access.AccessAPIClient,
+) Option {
 	return func(store *Store) {
-		store.client = client
+		store.executionClient = executionClient
+		store.accessClient = accessClient
 	}
 }
 
@@ -90,7 +99,7 @@ func New(provider *sqlite.Store, options ...Option) (*Store, error) {
 		opt(store)
 	}
 
-	if store.client == nil {
+	if store.executionClient == nil {
 		if store.host == "" {
 			return nil, fmt.Errorf("archive node host must be provided")
 		}
@@ -98,13 +107,15 @@ func New(provider *sqlite.Store, options ...Option) (*Store, error) {
 		conn, err := grpc.Dial(
 			store.host,
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1024*1024*1024)),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("could not connect to archive node: %w", err)
 		}
 
 		store.grpcConn = conn
-		store.client = archive.NewAPIClient(conn)
+		store.executionClient = executiondata.NewExecutionDataAPIClient(conn)
+		store.accessClient = access.NewAccessAPIClient(conn)
 	}
 
 	if err := store.initializeStartBlock(context.Background()); err != nil {
@@ -132,11 +143,11 @@ func (s *Store) initializeStartBlock(ctx context.Context) error {
 
 	// use the current latest block from the archive node if no height was provided
 	if s.forkHeight == 0 {
-		resp, err := s.client.GetLast(ctx, &archive.GetLastRequest{})
+		resp, err := s.accessClient.GetLatestBlockHeader(ctx, &access.GetLatestBlockHeaderRequest{IsSealed: true})
 		if err != nil {
 			return fmt.Errorf("could not get last block height: %w", err)
 		}
-		s.forkHeight = resp.Height
+		s.forkHeight = resp.Block.Height
 	}
 
 	// store the initial fork height. any future queries for data on the archive node will be fixed
@@ -161,11 +172,11 @@ func (s *Store) BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flow
 	if err == nil {
 		height = block.Header.Height
 	} else if errors.Is(err, storage.ErrNotFound) {
-		heightRes, err := s.client.GetHeightForBlock(ctx, &archive.GetHeightForBlockRequest{BlockID: blockID[:]})
+		heightRes, err := s.accessClient.GetBlockHeaderByID(ctx, &access.GetBlockHeaderByIDRequest{Id: blockID[:]})
 		if err != nil {
 			return nil, err
 		}
-		height = heightRes.Height
+		height = heightRes.Block.Height
 	} else {
 		return nil, err
 	}
@@ -201,13 +212,12 @@ func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block
 		return nil, &types.BlockNotFoundByHeightError{Height: height}
 	}
 
-	blockRes, err := s.client.GetHeader(ctx, &archive.GetHeaderRequest{Height: height})
+	blockRes, err := s.accessClient.GetBlockHeaderByHeight(ctx, &access.GetBlockHeaderByHeightRequest{Height: height})
 	if err != nil {
 		return nil, err
 	}
 
-	var header flowgo.Header
-	err = zbor.NewCodec().Unmarshal(blockRes.Data, &header)
+	header, err := convert.MessageToBlockHeader(blockRes.GetBlock())
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +225,7 @@ func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block
 	payload := flowgo.EmptyPayload()
 	return &flowgo.Block{
 		Payload: &payload,
-		Header:  &header,
+		Header:  header,
 	}, nil
 }
 
@@ -243,10 +253,10 @@ func (s *Store) LedgerByHeight(
 
 		log.Printf("fetching register: block: %d, owner: %x, key: %x", blockHeight, []byte(id.Owner), []byte(id.Key))
 
-		registerID := flowgo.RegisterID{Key: id.Key, Owner: id.Owner}
-		response, err := s.client.GetRegisterValues(ctx, &archive.GetRegisterValuesRequest{
-			Height:    blockHeight,
-			Registers: [][]byte{registerID.Bytes()},
+		registerID := convert.RegisterIDToMessage(flowgo.RegisterID{Key: id.Key, Owner: id.Owner})
+		response, err := s.executionClient.GetRegisterValues(ctx, &executiondata.GetRegisterValuesRequest{
+			BlockHeight: blockHeight,
+			RegisterIds: []*entities.RegisterID{registerID},
 		})
 		if err != nil {
 			return nil, err

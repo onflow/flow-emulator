@@ -7,7 +7,6 @@ require (
 	github.com/fxamacker/cbor/v2 v2.4.1-0.20230228173756-c0c9f774e40c
 	github.com/glebarez/go-sqlite v1.21.1
 	github.com/go-redis/redis/v8 v8.11.5
-	github.com/golang/mock v1.6.0
 	github.com/google/go-dap v0.11.0
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -112,6 +111,7 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
