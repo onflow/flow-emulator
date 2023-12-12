@@ -21,11 +21,63 @@ package server
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 )
+
+func TestNoPersistence(t *testing.T) {
+	logger := zerolog.Nop()
+
+	dbPath := "test_no_persistence"
+
+	os.RemoveAll(dbPath)
+	defer os.RemoveAll(dbPath)
+
+	conf := &Config{DBPath: dbPath}
+	server := NewEmulatorServer(&logger, conf)
+	defer server.Stop()
+
+	require.NotNil(t, server)
+	_, err := os.Stat(conf.DBPath)
+	require.True(t, os.IsNotExist(err), "DB should not exist")
+}
+
+func TestPersistenceWithPersistFlag(t *testing.T) {
+	logger := zerolog.Nop()
+
+	dbPath := "test_persistence"
+
+	os.RemoveAll(dbPath)
+	defer os.RemoveAll(dbPath)
+
+	conf := &Config{Persist: true, DBPath: dbPath}
+	server := NewEmulatorServer(&logger, conf)
+	defer server.Stop()
+
+	require.NotNil(t, server)
+	_, err := os.Stat(conf.DBPath)
+	require.NoError(t, err, "DB should exist")
+}
+
+func TestPersistenceWithSnapshotFlag(t *testing.T) {
+	logger := zerolog.Nop()
+
+	dbPath := "test_persistence_with_snapshot"
+
+	os.RemoveAll(dbPath)
+	defer os.RemoveAll(dbPath)
+
+	conf := &Config{Snapshot: true, DBPath: dbPath}
+	server := NewEmulatorServer(&logger, conf)
+	defer server.Stop()
+
+	require.NotNil(t, server)
+	_, err := os.Stat(conf.DBPath)
+	require.True(t, os.IsNotExist(err), "DB should not exist")
+}
 
 func TestExecuteScript(t *testing.T) {
 
