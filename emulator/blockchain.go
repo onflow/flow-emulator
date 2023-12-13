@@ -1761,6 +1761,10 @@ func (b *Blockchain) executeSystemChunkTransaction() error {
 		return err
 	}
 
+	if output.Err != nil {
+		return output.Err
+	}
+
 	b.pendingBlock.events = append(b.pendingBlock.events, output.Events...)
 
 	err = b.pendingBlock.ledgerState.Merge(executionSnapshot)
