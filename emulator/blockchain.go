@@ -1756,6 +1756,7 @@ func (b *Blockchain) executeSystemChunkTransaction() error {
 		fvm.WithAuthorizationChecksEnabled(false),
 		fvm.WithSequenceNumberCheckAndIncrementEnabled(false),
 		fvm.WithRandomSourceHistoryCallAllowed(true),
+		fvm.WithBlockHeader(b.pendingBlock.Block().Header),
 	)
 
 	executionSnapshot, output, err := b.vm.Run(

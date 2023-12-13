@@ -24,9 +24,10 @@ import (
 	"github.com/onflow/cadence"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
-	"github.com/onflow/flow-emulator/emulator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/onflow/flow-emulator/emulator"
 )
 
 func TestRandomSourceHistoryLowestHeight(t *testing.T) {
@@ -57,7 +58,7 @@ func TestRandomSourceHistoryLowestHeight(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, scriptResult.Error)
 
-	assert.Equal(t, cadence.UInt64(1), scriptResult.Value)
+	assert.Equal(t, cadence.UInt64(2), scriptResult.Value)
 }
 
 func TestRandomSourceHistoryAtBlockHeight(t *testing.T) {
@@ -73,6 +74,9 @@ func TestRandomSourceHistoryAtBlockHeight(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	_, err = b.CommitBlock()
+	require.NoError(t, err)
+
 	serviceAddress := chain.ServiceAddress().Hex()
 
 	scriptCode := fmt.Sprintf(`
@@ -80,12 +84,12 @@ func TestRandomSourceHistoryAtBlockHeight(t *testing.T) {
 
         access(all)
         fun main(): Bool {
-            let sorAt1 = RandomBeaconHistory.sourceOfRandomness(atBlockHeight: 1)
             let sorAt2 = RandomBeaconHistory.sourceOfRandomness(atBlockHeight: 2)
+            let sorAt3 = RandomBeaconHistory.sourceOfRandomness(atBlockHeight: 3)
 
-            assert(sorAt1.blockHeight == 1)
             assert(sorAt2.blockHeight == 2)
-            assert(sorAt1.value != sorAt2.value)
+            assert(sorAt3.blockHeight == 3)
+            assert(sorAt2.value != sorAt3.value)
 
             return true
         }
