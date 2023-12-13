@@ -24,10 +24,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/rs/zerolog"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/convert"
 	"github.com/onflow/flow-emulator/emulator"
-	"github.com/rs/zerolog"
 
 	"github.com/onflow/cadence"
 	flowsdk "github.com/onflow/flow-go-sdk"
@@ -136,7 +137,6 @@ func TestInitialization(t *testing.T) {
 
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
-		require.NoError(t, result.Error)
 		require.True(t, result.Succeeded())
 
 		block, err := b.CommitBlock()
