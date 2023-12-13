@@ -1327,6 +1327,13 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// lastly we execute the system chunk transaction
+	err = b.executeSystemChunkTransaction()
+	if err != nil {
+		return nil, err
+	}
+
 	executionSnapshot := b.pendingBlock.Finalize()
 	events := b.pendingBlock.Events()
 
@@ -1357,12 +1364,6 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	// reset pending block using current block and ledger state
 	b.pendingBlock = newPendingBlock(block, ledger, b.clock)
 	b.entropyProvider.LatestBlock = block.ID()
-
-	// lastly we execute the system chunk transaction
-	err = b.executeSystemChunkTransaction()
-	if err != nil {
-		return nil, err
-	}
 
 	return block, nil
 }
