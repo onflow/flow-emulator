@@ -74,6 +74,12 @@ func TestRandomSourceHistoryAtBlockHeight(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	_, err = b.CommitBlock()
+	require.NoError(t, err)
+
+	_, err = b.CommitBlock()
+	require.NoError(t, err)
+
 	serviceAddress := chain.ServiceAddress().Hex()
 
 	scriptCode := fmt.Sprintf(`
