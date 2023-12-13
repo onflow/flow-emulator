@@ -74,11 +74,16 @@ func TestRandomSourceHistoryAtBlockHeight(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	_, err = b.CommitBlock()
-	require.NoError(t, err)
-
-	_, err = b.CommitBlock()
-	require.NoError(t, err)
+	// We need to ensure that at least two blocks exist
+	for {
+		block, err := b.GetLatestBlock()
+		require.NoError(t, err)
+		if block.Header.Height > 2 {
+			break
+		}
+		_, err = b.CommitBlock()
+		require.NoError(t, err)
+	}
 
 	serviceAddress := chain.ServiceAddress().Hex()
 
