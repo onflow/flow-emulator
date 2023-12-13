@@ -148,7 +148,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		assert.IsType(t, err, &types.IncompleteTransactionError{})
 	})
 
-	t.Run("Missing script", func(t *testing.T) {
+	t.Run("Invalid script", func(t *testing.T) {
 
 		t.Parallel()
 
@@ -2124,7 +2124,7 @@ func TestTransactionWithCadenceRandom(t *testing.T) {
 	code := `
     transaction {
         prepare() {
-            assert(unsafeRandom() >= 0)
+            assert(revertibleRandom<UInt64>() >= 0)
         }
     }
 	`
