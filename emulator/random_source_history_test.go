@@ -24,9 +24,10 @@ import (
 	"github.com/onflow/cadence"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
-	"github.com/onflow/flow-emulator/emulator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/onflow/flow-emulator/emulator"
 )
 
 func TestRandomSourceHistoryLowestHeight(t *testing.T) {

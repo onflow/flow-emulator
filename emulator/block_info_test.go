@@ -23,9 +23,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/rs/zerolog"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
-	"github.com/rs/zerolog"
 
 	flowsdk "github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -57,7 +58,7 @@ func TestBlockInfo(t *testing.T) {
 						let block = getCurrentBlock()
 						log(block)
 
-						let lastBlock = getBlock(at: block.height - UInt64(1))
+						let lastBlock = getBlock(at: block.height - 1)
 						log(lastBlock)
 					}
 				}
@@ -92,7 +93,7 @@ func TestBlockInfo(t *testing.T) {
 				let block = getCurrentBlock()
 				log(block)
 
-				let lastBlock = getBlock(at: block.height - UInt64(1))
+				let lastBlock = getBlock(at: block.height - 1)
 				log(lastBlock)
 			}
 		`)
