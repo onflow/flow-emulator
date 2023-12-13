@@ -754,9 +754,13 @@ func bootstrapLedger(
 
 	bootstrap := configureBootstrapProcedure(conf, flowAccountKey, conf.GenesisTokenSupply)
 
-	executionSnapshot, _, err := vm.Run(ctx, bootstrap, ledger)
+	executionSnapshot, output, err := vm.Run(ctx, bootstrap, ledger)
 	if err != nil {
 		return nil, err
+	}
+
+	if output.Err != nil {
+		return nil, output.Err
 	}
 
 	return executionSnapshot, nil
