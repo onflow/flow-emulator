@@ -756,9 +756,13 @@ func bootstrapLedger(
 
 	bootstrap := configureBootstrapProcedure(conf, flowAccountKey, conf.GenesisTokenSupply)
 
-	executionSnapshot, _, err := vm.Run(ctx, bootstrap, ledger)
+	executionSnapshot, output, err := vm.Run(ctx, bootstrap, ledger)
 	if err != nil {
 		return nil, err
+	}
+
+	if output.Err != nil {
+		return nil, output.Err
 	}
 
 	return executionSnapshot, nil
@@ -1323,6 +1327,13 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// lastly we execute the system chunk transaction
+	err = b.executeSystemChunkTransaction()
+	if err != nil {
+		return nil, err
+	}
+
 	executionSnapshot := b.pendingBlock.Finalize()
 	events := b.pendingBlock.Events()
 
@@ -1353,12 +1364,6 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	// reset pending block using current block and ledger state
 	b.pendingBlock = newPendingBlock(block, ledger, b.clock)
 	b.entropyProvider.LatestBlock = block.ID()
-
-	// lastly we execute the system chunk transaction
-	err = b.executeSystemChunkTransaction()
-	if err != nil {
-		return nil, err
-	}
 
 	return block, nil
 }
@@ -1752,6 +1757,7 @@ func (b *Blockchain) executeSystemChunkTransaction() error {
 		fvm.WithAuthorizationChecksEnabled(false),
 		fvm.WithSequenceNumberCheckAndIncrementEnabled(false),
 		fvm.WithRandomSourceHistoryCallAllowed(true),
+		fvm.WithBlockHeader(b.pendingBlock.Block().Header),
 	)
 
 	executionSnapshot, output, err := b.vm.Run(
@@ -1761,6 +1767,10 @@ func (b *Blockchain) executeSystemChunkTransaction() error {
 	)
 	if err != nil {
 		return err
+	}
+
+	if output.Err != nil {
+		return output.Err
 	}
 
 	b.pendingBlock.events = append(b.pendingBlock.events, output.Events...)
