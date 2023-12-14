@@ -54,7 +54,7 @@ type Config struct {
 	GRPCDebug                bool          `default:"false" flag:"grpc-debug" info:"enable gRPC server reflection for debugging with grpc_cli"`
 	RESTDebug                bool          `default:"false" flag:"rest-debug" info:"enable REST API debugging output"`
 	Persist                  bool          `default:"false" flag:"persist" info:"enable persistent storage"`
-	Snapshot                 bool          `default:"false" flag:"snapshot" info:"enable snapshots for emulator (this setting also automatically turns on persistent storage)"`
+	Snapshot                 bool          `default:"false" flag:"snapshot" info:"enable snapshots for emulator"`
 	DBPath                   string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
 	SimpleAddresses          bool          `default:"false" flag:"simple-addresses" info:"use sequential addresses starting with 0x01"`
 	TokenSupply              string        `default:"1000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
@@ -73,7 +73,9 @@ type Config struct {
 	RedisURL                 string        `default:"" flag:"redis-url" info:"redis-server URL for persisting redis storage backend ( redis://[[username:]password@]host[:port][/database] ) "`
 	SqliteURL                string        `default:"" flag:"sqlite-url" info:"sqlite db URL for persisting sqlite storage backend "`
 	CoverageReportingEnabled bool          `default:"false" flag:"coverage-reporting" info:"enable Cadence code coverage reporting"`
-	StartBlockHeight         uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
+	EVMEnabled               bool          `default:"false" flag:"evm-enabled" info:"enable EVM support"`
+	// todo temporarily disabled until remote register endpoint is re-enabled
+	// StartBlockHeight         uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
 }
 
 const EnvPrefix = "FLOW"
@@ -131,9 +133,10 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				Exit(1, err.Error())
 			}
 
-			if conf.StartBlockHeight > 0 && flowChainID != flowgo.Mainnet && flowChainID != flowgo.Testnet {
-				Exit(1, "❗  --start-block-height is only valid when forking Mainnet or Testnet")
-			}
+			// todo temporarily disabled until remote register endpoint is re-enabled
+			//if conf.StartBlockHeight > 0 && flowChainID != flowgo.Mainnet && flowChainID != flowgo.Testnet {
+			//	Exit(1, "❗  --start-block-height is only valid when forking Mainnet or Testnet")
+			//}
 
 			serviceAddress := sdk.ServiceAddress(sdk.ChainID(flowChainID))
 			if conf.SimpleAddresses {
@@ -197,7 +200,9 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				ContractRemovalEnabled:    conf.ContractRemovalEnabled,
 				SqliteURL:                 conf.SqliteURL,
 				CoverageReportingEnabled:  conf.CoverageReportingEnabled,
-				StartBlockHeight:          conf.StartBlockHeight,
+				EVMEnabled:                conf.EVMEnabled,
+				// todo temporarily disabled until remote register endpoint is re-enabled
+				// StartBlockHeight:          conf.StartBlockHeight,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)

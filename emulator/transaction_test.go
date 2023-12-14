@@ -29,25 +29,24 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/onflow/flow-emulator/adapters"
-	"github.com/onflow/flow-emulator/convert"
-	"github.com/onflow/flow-emulator/emulator"
-	"github.com/onflow/flow-go-sdk"
-
-	"github.com/rs/zerolog"
-
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
+	"github.com/onflow/flow-go-sdk"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go-sdk/test"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
+	"github.com/onflow/flow-go/fvm/evm/stdlib"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/onflow/flow-emulator/adapters"
+	"github.com/onflow/flow-emulator/convert"
+	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-emulator/types"
 )
 
@@ -149,7 +148,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		assert.IsType(t, err, &types.IncompleteTransactionError{})
 	})
 
-	t.Run("Missing script", func(t *testing.T) {
+	t.Run("Invalid script", func(t *testing.T) {
 
 		t.Parallel()
 
@@ -2125,7 +2124,7 @@ func TestTransactionWithCadenceRandom(t *testing.T) {
 	code := `
     transaction {
         prepare() {
-            assert(unsafeRandom() >= 0)
+            assert(revertibleRandom<UInt64>() >= 0)
         }
     }
 	`
@@ -2150,4 +2149,55 @@ func TestTransactionWithCadenceRandom(t *testing.T) {
 
 	_, err = b.CommitBlock()
 	assert.NoError(t, err)
+}
+
+func TestEVMTransaction(t *testing.T) {
+	serviceAddr := flowgo.Emulator.Chain().ServiceAddress()
+	code := []byte(fmt.Sprintf(
+		`
+		import EVM from %s
+
+		transaction(bytes: [UInt8; 20]) {
+			execute {
+				let addr = EVM.EVMAddress(bytes: bytes)
+				log(addr)
+			}
+		}
+	 `,
+		serviceAddr.HexWithPrefix(),
+	))
+
+	b, adapter := setupTransactionTests(t, emulator.WithEVMEnabled(true))
+
+	// generate random address
+	genArr := make([]cadence.Value, 20)
+	for i := range genArr {
+		genArr[i] = cadence.UInt8(i)
+	}
+	addressBytesArray := cadence.NewArray(genArr).WithType(stdlib.EVMAddressBytesCadenceType)
+
+	tx := flowsdk.NewTransaction().
+		SetScript(code).
+		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+		SetPayer(b.ServiceKey().Address)
+
+	err := tx.AddArgument(addressBytesArray)
+	assert.NoError(t, err)
+
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
+
+	err = adapter.SendTransaction(context.Background(), *tx)
+	assert.NoError(t, err)
+
+	result, err := b.ExecuteNextTransaction()
+	require.NoError(t, err)
+	AssertTransactionSucceeded(t, result)
+
+	require.Len(t, result.Logs, 1)
+	require.Equal(t, result.Logs[0], fmt.Sprintf("A.%s.EVM.EVMAddress(bytes: %s)", serviceAddr, addressBytesArray.String()))
 }

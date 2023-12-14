@@ -23,6 +23,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/onflow/flow/protobuf/go/flow/entities"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/golang/mock/gomock"
@@ -341,7 +343,7 @@ func TestAccess(t *testing.T) {
 			Return(&emuResult, nil).
 			Times(1)
 
-		result, err := adapter.GetTransactionResult(context.Background(), txID, blockID, collectionID)
+		result, err := adapter.GetTransactionResult(context.Background(), txID, blockID, collectionID, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Equal(t, expected, *result)
 		assert.NoError(t, err)
 
@@ -351,7 +353,7 @@ func TestAccess(t *testing.T) {
 			Return(nil, fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.GetTransactionResult(context.Background(), txID, blockID, collectionID)
+		result, err = adapter.GetTransactionResult(context.Background(), txID, blockID, collectionID, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Nil(t, result)
 		assert.Error(t, err)
 
@@ -562,7 +564,7 @@ func TestAccess(t *testing.T) {
 			Return(blockEvents, nil).
 			Times(1)
 
-		result, err := adapter.GetEventsForHeightRange(context.Background(), eventType, startHeight, endHeight)
+		result, err := adapter.GetEventsForHeightRange(context.Background(), eventType, startHeight, endHeight, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Equal(t, expected, result)
 		assert.NoError(t, err)
 
@@ -572,7 +574,7 @@ func TestAccess(t *testing.T) {
 			Return(nil, fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.GetEventsForHeightRange(context.Background(), eventType, startHeight, endHeight)
+		result, err = adapter.GetEventsForHeightRange(context.Background(), eventType, startHeight, endHeight, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Nil(t, result)
 		assert.Error(t, err)
 
@@ -604,7 +606,7 @@ func TestAccess(t *testing.T) {
 			Return(blockEvents, nil).
 			Times(1)
 
-		result, err := adapter.GetEventsForBlockIDs(context.Background(), eventType, blockIDs)
+		result, err := adapter.GetEventsForBlockIDs(context.Background(), eventType, blockIDs, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Equal(t, expected, result)
 		assert.NoError(t, err)
 
@@ -614,7 +616,7 @@ func TestAccess(t *testing.T) {
 			Return(nil, fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.GetEventsForBlockIDs(context.Background(), eventType, blockIDs)
+		result, err = adapter.GetEventsForBlockIDs(context.Background(), eventType, blockIDs, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Nil(t, result)
 		assert.Error(t, err)
 
@@ -643,7 +645,7 @@ func TestAccess(t *testing.T) {
 			Return(results, nil).
 			Times(1)
 
-		result, err := adapter.GetTransactionResultByIndex(context.Background(), blockID, index)
+		result, err := adapter.GetTransactionResultByIndex(context.Background(), blockID, index, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Equal(t, convertedTXResult, result)
 		assert.NoError(t, err)
 
@@ -653,7 +655,7 @@ func TestAccess(t *testing.T) {
 			Return(nil, fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.GetTransactionResultByIndex(context.Background(), blockID, index)
+		result, err = adapter.GetTransactionResultByIndex(context.Background(), blockID, index, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Nil(t, result)
 		assert.Error(t, err)
 
@@ -712,7 +714,7 @@ func TestAccess(t *testing.T) {
 			Return(results, nil).
 			Times(1)
 
-		result, err := adapter.GetTransactionResultsByBlockID(context.Background(), blockID)
+		result, err := adapter.GetTransactionResultsByBlockID(context.Background(), blockID, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Equal(t, expected, result)
 		assert.NoError(t, err)
 
@@ -722,7 +724,7 @@ func TestAccess(t *testing.T) {
 			Return(nil, fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.GetTransactionResultsByBlockID(context.Background(), blockID)
+		result, err = adapter.GetTransactionResultsByBlockID(context.Background(), blockID, entities.EventEncodingVersion_JSON_CDC_V0)
 		assert.Nil(t, result)
 		assert.Error(t, err)
 

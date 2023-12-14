@@ -33,6 +33,7 @@ import (
 	"sync"
 
 	_ "github.com/glebarez/go-sqlite"
+
 	"github.com/onflow/flow-emulator/storage"
 )
 
@@ -112,7 +113,15 @@ func (s *Store) RollbackToBlockHeight(height uint64) error {
 		return err
 	}
 
-	for _, table := range []string{"ledger", "blocks", "blockIndex", "events", "transactions", "collections", "transactionResults"} {
+	for _, table := range []string{
+		storage.LedgerStoreName,
+		storage.BlockStoreName,
+		storage.BlockIndexStoreName,
+		storage.EventStoreName,
+		storage.TransactionStoreName,
+		storage.CollectionStoreName,
+		storage.TransactionResultStoreName,
+	} {
 		_, err = tx.Exec(fmt.Sprintf(`DELETE from %s where height>%d`, table, height))
 		if err != nil {
 			return err
@@ -126,6 +135,8 @@ func (s *Store) RollbackToBlockHeight(height uint64) error {
 
 	return s.DefaultStore.SetBlockHeight(height)
 }
+
+const snapshotPrefix = "snapshot_"
 
 func (s *Store) Snapshots() (snapshots []string, err error) {
 	if !s.SupportSnapshotsWithCurrentConfig() {
@@ -146,23 +157,24 @@ func (s *Store) Snapshots() (snapshots []string, err error) {
 			continue
 		}
 
-		if strings.HasPrefix(file.Name(), "snapshot_") {
-			snapshotName := strings.TrimPrefix(file.Name(), "snapshot_")
+		if strings.HasPrefix(file.Name(), snapshotPrefix) {
+			snapshotName := strings.TrimPrefix(file.Name(), snapshotPrefix)
 			snapshots = append(snapshots, snapshotName)
 		}
 
 	}
 	return snapshots, nil
 }
+
 func (s *Store) LoadSnapshot(name string) error {
 	if !s.SupportSnapshotsWithCurrentConfig() {
 		return fmt.Errorf("snapshot is not supported with current configuration")
 	}
 
-	var dbfile string
+	var dbFile string
 	if s.url == InMemory {
-		dbfile = fmt.Sprintf("file:%s?mode=memory&cache=shared", name)
-		db, err := sql.Open("sqlite", dbfile)
+		dbFile = fmt.Sprintf("file:%s?mode=memory&cache=shared", name)
+		db, err := sql.Open("sqlite", dbFile)
 		if err != nil {
 			return err
 		}
@@ -179,19 +191,23 @@ func (s *Store) LoadSnapshot(name string) error {
 			return fmt.Errorf("snapshot %s does not exist", name)
 		}
 	} else {
-		dbfile = filepath.Join(s.url, fmt.Sprintf("snapshot_%s", name))
-		_, err := os.Stat(dbfile)
+		dbFile = filepath.Join(s.url, snapshotPrefix+name)
+		_, err := os.Stat(dbFile)
 		if os.IsNotExist(err) {
 			return fmt.Errorf("snapshot %s does not exist", name)
 		}
 	}
 
-	db, err := sql.Open("sqlite", dbfile)
+	db, err := sql.Open("sqlite", dbFile)
 	if err != nil {
 		return err
 	}
 
-	s.db.Close()
+	err = s.db.Close()
+	if err != nil {
+		return err
+	}
+
 	s.db = db
 
 	return nil
@@ -219,7 +235,7 @@ func (s *Store) CreateSnapshot(name string) error {
 		}
 
 	} else {
-		dbfile = filepath.Join(s.url, fmt.Sprintf("snapshot_%s", name))
+		dbfile = filepath.Join(s.url, snapshotPrefix+name)
 	}
 
 	_, err := s.db.Exec(fmt.Sprintf("VACUUM main INTO '%s'", dbfile))
@@ -234,10 +250,12 @@ func (s *Store) SupportSnapshotsWithCurrentConfig() bool {
 	if s.url == InMemory {
 		return true
 	}
+
 	fileInfo, err := os.Stat(s.url)
 	if err != nil {
 		return false
 	}
+
 	return fileInfo.IsDir()
 }
 
@@ -249,14 +267,17 @@ func (s *Store) SetBytes(ctx context.Context, store string, key []byte, value []
 	return s.SetBytesWithVersion(ctx, store, key, value, 0)
 }
 
-func (s *Store) SetBytesWithVersion(ctx context.Context, store string, key []byte, value []byte, version uint64) error {
+func (s *Store) SetBytesWithVersion(_ context.Context, store string, key []byte, value []byte, version uint64) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	height := s.CurrentHeight
+
 	//global table has no height
 	if store == "global" {
 		height = 0
 	}
+
 	_, err := s.db.Exec(
 		fmt.Sprintf(
 			"INSERT INTO %s (key, version, value, height) VALUES (?, ?, ?, ?) ON CONFLICT(key, version, height) DO UPDATE SET value=excluded.value",
@@ -270,12 +291,14 @@ func (s *Store) SetBytesWithVersion(ctx context.Context, store string, key []byt
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
-func (s *Store) GetBytesAtVersion(ctx context.Context, store string, key []byte, version uint64) ([]byte, error) {
+func (s *Store) GetBytesAtVersion(_ context.Context, store string, key []byte, version uint64) ([]byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	rows, err := s.db.Query(
 		fmt.Sprintf(
 			"SELECT value from %s  WHERE key = ? and version <= ? order by version desc LIMIT 1",
@@ -288,6 +311,7 @@ func (s *Store) GetBytesAtVersion(ctx context.Context, store string, key []byte,
 		return nil, err
 	}
 	defer rows.Close()
+
 	for rows.Next() {
 		var value string
 		if err := rows.Scan(&value); err != nil {
@@ -303,9 +327,15 @@ func (s *Store) GetBytesAtVersion(ctx context.Context, store string, key []byte,
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
 	return nil, storage.ErrNotFound
 }
+
 func (s *Store) Close() error {
-	s.db.Close()
+	err := s.db.Close()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

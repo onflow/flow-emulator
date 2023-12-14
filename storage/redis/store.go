@@ -24,6 +24,7 @@ import (
 	"fmt"
 
 	"github.com/go-redis/redis/v8"
+
 	"github.com/onflow/flow-emulator/storage"
 )
 
@@ -51,8 +52,12 @@ func New(url string) (*Store, error) {
 	return store, nil
 }
 
+func storeKey(store string, key []byte) string {
+	return fmt.Sprintf("%s_%s", store, hex.EncodeToString(key))
+}
+
 func (s *Store) GetBytes(ctx context.Context, store string, key []byte) ([]byte, error) {
-	val, err := s.rdb.Get(ctx, fmt.Sprintf("%s_%s", store, hex.EncodeToString(key))).Result()
+	val, err := s.rdb.Get(ctx, storeKey(store, key)).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, storage.ErrNotFound
@@ -67,7 +72,7 @@ func (s *Store) GetBytes(ctx context.Context, store string, key []byte) ([]byte,
 }
 
 func (s *Store) SetBytes(ctx context.Context, store string, key []byte, value []byte) error {
-	err := s.rdb.Set(ctx, fmt.Sprintf("%s_%s", store, hex.EncodeToString(key)), hex.EncodeToString(value), 0).Err()
+	err := s.rdb.Set(ctx, storeKey(store, key), hex.EncodeToString(value), 0).Err()
 	if err != nil {
 		return err
 	}
@@ -76,9 +81,7 @@ func (s *Store) SetBytes(ctx context.Context, store string, key []byte, value []
 
 func (s *Store) SetBytesWithVersion(ctx context.Context, store string, key []byte, value []byte, version uint64) error {
 	err := s.rdb.ZAdd(ctx,
-		fmt.Sprintf("%s_%s",
-			store,
-			hex.EncodeToString(key)),
+		storeKey(store, key),
 		&redis.Z{
 			Score:  float64(version),
 			Member: hex.EncodeToString(value),
@@ -92,10 +95,7 @@ func (s *Store) SetBytesWithVersion(ctx context.Context, store string, key []byt
 
 func (s *Store) GetBytesAtVersion(ctx context.Context, store string, key []byte, version uint64) ([]byte, error) {
 	val, err := s.rdb.ZRevRangeByScore(ctx,
-		fmt.Sprintf("%s_%s",
-			store,
-			hex.EncodeToString(key),
-		),
+		storeKey(store, key),
 		&redis.ZRangeBy{
 			Max:    fmt.Sprintf("%d", version),
 			Offset: 0,

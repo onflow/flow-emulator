@@ -26,8 +26,12 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/onflow/flow-go/engine/access/state_stream"
+	"github.com/onflow/flow-go/engine/access/state_stream/backend"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
+
+	"github.com/onflow/flow-emulator/emulator"
 
 	"github.com/onflow/flow-go/engine/access/rest"
 	"github.com/onflow/flow-go/engine/access/rest/routes"
@@ -77,7 +81,7 @@ func (r *RestServer) Stop() {
 	_ = r.server.Shutdown(context.Background())
 }
 
-func NewRestServer(logger *zerolog.Logger, adapter *adapters.AccessAdapter, chain flow.Chain, host string, port int, debug bool) (*RestServer, error) {
+func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adapter *adapters.AccessAdapter, chain flow.Chain, host string, port int, debug bool) (*RestServer, error) {
 
 	debugLogger := zerolog.Logger{}
 	if debug {
@@ -94,14 +98,30 @@ func NewRestServer(logger *zerolog.Logger, adapter *adapters.AccessAdapter, chai
 		}
 	}
 
-	config := rest.Config{
-		ListenAddress: fmt.Sprintf("%s:3333", host),
-		WriteTimeout:  rest.DefaultWriteTimeout,
-		ReadTimeout:   rest.DefaultReadTimeout,
-		IdleTimeout:   rest.DefaultIdleTimeout,
+	streamConfig := backend.Config{
+		EventFilterConfig:    state_stream.DefaultEventFilterConfig,
+		RpcMetricsEnabled:    false,
+		MaxGlobalStreams:     state_stream.DefaultMaxGlobalStreams,
+		ClientSendTimeout:    state_stream.DefaultSendTimeout,
+		ClientSendBufferSize: state_stream.DefaultSendBufferSize,
+		ResponseLimit:        state_stream.DefaultResponseLimit,
+		HeartbeatInterval:    state_stream.DefaultHeartbeatInterval,
 	}
 
-	srv, err := rest.NewServer(adapter, config, debugLogger, chain, restCollector)
+	srv, err := rest.NewServer(
+		adapter,
+		rest.Config{
+			ListenAddress: fmt.Sprintf("%s:3333", host),
+			WriteTimeout:  rest.DefaultWriteTimeout,
+			ReadTimeout:   rest.DefaultReadTimeout,
+			IdleTimeout:   rest.DefaultIdleTimeout,
+		},
+		debugLogger,
+		chain,
+		restCollector,
+		NewStateStreamBackend(blockchain, debugLogger),
+		streamConfig,
+	)
 
 	if err != nil {
 		return nil, err
