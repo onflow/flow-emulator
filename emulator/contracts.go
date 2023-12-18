@@ -25,36 +25,38 @@ import (
 
 	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
-	"github.com/onflow/flow-go/fvm/systemcontracts"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-nft/lib/go/contracts"
-	nftstorefront "github.com/onflow/nft-storefront/lib/go/contracts"
+	// TODO:
+	//nftstorefront "github.com/onflow/nft-storefront/lib/go/contracts"
 )
 
 func NewCommonContracts(chain flowgo.Chain) []ContractDescription {
-	sc := systemcontracts.SystemContractsForChain(chain.ChainID())
+	// TODO:
+	// sc := systemcontracts.SystemContractsForChain(chain.ChainID())
+	// ftAddress := flowsdk.HexToAddress(sc.FungibleToken.Address.HexWithPrefix())
 
-	ftAddress := flowsdk.HexToAddress(sc.FungibleToken.Address.HexWithPrefix())
 	serviceAddress := flowsdk.HexToAddress(chain.ServiceAddress().HexWithPrefix())
 	return []ContractDescription{
 		{
 			Name:        "ExampleNFT",
 			Address:     serviceAddress,
 			Description: "✨  Example NFT contract",
-			Source:      contracts.ExampleNFT(serviceAddress, serviceAddress, serviceAddress),
+			Source:      contracts.ExampleNFT(serviceAddress, serviceAddress, serviceAddress, serviceAddress),
 		},
-		{
-			Name:        "NFTStorefrontV2",
-			Address:     serviceAddress,
-			Description: "✨  NFT Storefront contract v2",
-			Source:      nftstorefront.NFTStorefront(2, ftAddress.String(), serviceAddress.String()),
-		},
-		{
-			Name:        "NFTStorefront",
-			Address:     serviceAddress,
-			Description: "✨  NFT Storefront contract",
-			Source:      nftstorefront.NFTStorefront(1, ftAddress.String(), serviceAddress.String()),
-		},
+		// TODO:
+		//{
+		//	Name:        "NFTStorefrontV2",
+		//	Address:     serviceAddress,
+		//	Description: "✨  NFT Storefront contract v2",
+		//	Source:      nftstorefront.NFTStorefront(2, ftAddress.String(), serviceAddress.String()),
+		//},
+		//{
+		//	Name:        "NFTStorefront",
+		//	Address:     serviceAddress,
+		//	Description: "✨  NFT Storefront contract",
+		//	Source:      nftstorefront.NFTStorefront(1, ftAddress.String(), serviceAddress.String()),
+		//},
 	}
 }
 

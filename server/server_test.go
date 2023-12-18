@@ -89,7 +89,7 @@ func TestExecuteScript(t *testing.T) {
 	require.NotNil(t, server)
 
 	const code = `
-      pub fun main(): String {
+      access(all) fun main(): String {
 	      return "Hello"
       }
     `
@@ -115,7 +115,7 @@ func TestExecuteScriptImportingContracts(t *testing.T) {
 		`
 	      import ExampleNFT, NFTStorefront from 0x%s
 
-          pub fun main() {
+          access(all) fun main() {
 		      let collection <- ExampleNFT.createEmptyCollection()
 		      destroy collection
 

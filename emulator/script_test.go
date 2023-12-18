@@ -111,7 +111,7 @@ func TestExecuteScript_WithArguments(t *testing.T) {
 		require.NoError(t, err)
 
 		scriptWithArgs := `
-			pub fun main(n: Int): Int {
+			access(all) fun main(n: Int): Int {
 				return n
 			}
 		`
@@ -133,7 +133,7 @@ func TestExecuteScript_WithArguments(t *testing.T) {
 		require.NoError(t, err)
 
 		scriptWithArgs := `
-			pub fun main(n: String): Int {
+			access(all) fun main(n: String): Int {
 				log(n)
 				return 0
 			}
@@ -156,12 +156,14 @@ func TestExecuteScript_FlowServiceAccountBalance(t *testing.T) {
 
 	code := fmt.Sprintf(
 		`
-		import FlowServiceAccount from %[1]s
-		pub fun main(): UFix64 {
-			let acct = getAccount(%[1]s)
-			return FlowServiceAccount.defaultTokenBalance(acct)
-		}
-		`,
+          import FlowServiceAccount from %[1]s
+
+          access(all)
+          fun main(): UFix64 {
+              let acct = getAccount(%[1]s)
+              return FlowServiceAccount.defaultTokenBalance(acct)
+          }
+        `,
 		b.GetChain().ServiceAddress().HexWithPrefix(),
 	)
 
@@ -183,7 +185,7 @@ func TestInfiniteScript(t *testing.T) {
 	require.NoError(t, err)
 
 	const code = `
-		pub fun main() {
+		access(all) fun main() {
 			main()
 		}
 	 `
@@ -198,7 +200,7 @@ func TestScriptExecutionLimit(t *testing.T) {
 	t.Parallel()
 
 	const code = `
-		pub fun main() {
+		access(all) fun main() {
 			var s: Int256 = 1024102410241024
 			var i: Int256 = 0
 			var a: Int256 = 7
@@ -250,11 +252,13 @@ func TestScriptExecutionLimit(t *testing.T) {
 // within a script
 func TestScriptWithCadenceRandom(t *testing.T) {
 
-	const code = `
-	pub fun main() {
-		assert(unsafeRandom() >= 0)
-	}
-	 `
+	//language=cadence
+	code := `
+      access(all)
+      fun main() {
+          assert(revertibleRandom<UInt64>() >= 0)
+      }
+	`
 
 	const limit = 200
 	b, err := emulator.New(
@@ -272,13 +276,13 @@ func TestEVM(t *testing.T) {
 	serviceAddr := flowgo.Emulator.Chain().ServiceAddress()
 	code := []byte(fmt.Sprintf(
 		`
-		import EVM from 0x%s
+			import EVM from 0x%s
 
-		access(all)
-		fun main(bytes: [UInt8; 20]) {
-			log(EVM.EVMAddress(bytes: bytes))
-		}
-	 `,
+			access(all)
+			fun main(bytes: [UInt8; 20]) {
+				log(EVM.EVMAddress(bytes: bytes))
+			}
+		`,
 		serviceAddr,
 	))
 

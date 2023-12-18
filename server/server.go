@@ -161,6 +161,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	}
 
 	chain := emulatedBlockchain.GetChain()
+
 	sc := systemcontracts.SystemContractsForChain(chain.ChainID())
 	contracts := sc.All()
 	// sort contracts to always have the same order

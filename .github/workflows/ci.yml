@@ -4,11 +4,15 @@ name: CI
 # events but only for the master branch
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+      - 'feature/**'
     tags:
       - "v*"
   pull_request:
-    branches: [ master ]
+    branches:
+      - master
+      - 'feature/**'
 
 jobs:
   test:

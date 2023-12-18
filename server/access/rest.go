@@ -22,14 +22,16 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/onflow/flow-emulator/emulator"
+	"net"
+	"net/http"
+	"os"
+
 	"github.com/onflow/flow-go/engine/access/state_stream"
 	"github.com/onflow/flow-go/engine/access/state_stream/backend"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
-	"net"
-	"net/http"
-	"os"
+
+	"github.com/onflow/flow-emulator/emulator"
 
 	"github.com/onflow/flow-go/engine/access/rest"
 	"github.com/onflow/flow-go/engine/access/rest/routes"

@@ -50,7 +50,7 @@ func TestCommonContractsDeployment(t *testing.T) {
 			require.Equal(t, contract.Address.Hex(), chain.ServiceAddress().Hex())
 
 			scriptCode := fmt.Sprintf(`
-			pub fun main() {
+			access(all) fun main() {
 				getAccount(0x%s).contracts.get(name: "%s") ?? panic("contract is not deployed")
 	    	}`, contract.Address, contract.Name)
 

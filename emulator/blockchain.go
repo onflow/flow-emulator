@@ -579,11 +579,9 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 	cadenceLogger := conf.Logger.Hook(CadenceHook{MainLogger: &conf.ServerLogger}).Level(zerolog.DebugLevel)
 
 	runtimeConfig := runtime.Config{
-		Debugger:                     blockchain.debugger,
-		AccountLinkingEnabled:        true,
-		AttachmentsEnabled:           true,
-		CapabilityControllersEnabled: true,
-		CoverageReport:               conf.CoverageReport,
+		Debugger:           blockchain.debugger,
+		AttachmentsEnabled: true,
+		CoverageReport:     conf.CoverageReport,
 	}
 	coverageReportedRuntime := &CoverageReportedRuntime{
 		Runtime:        runtime.NewInterpreterRuntime(runtimeConfig),

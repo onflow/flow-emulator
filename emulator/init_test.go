@@ -24,10 +24,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/rs/zerolog"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/convert"
 	"github.com/onflow/flow-emulator/emulator"
-	"github.com/rs/zerolog"
 
 	"github.com/onflow/cadence"
 	flowsdk "github.com/onflow/flow-go-sdk"
@@ -103,14 +104,15 @@ func TestInitialization(t *testing.T) {
 
                 transaction {
 
-                  prepare(acct: AuthAccount) {
+                  prepare(acct: auth(Storage, Capabilities) &Account) {
 
                     let counter <- Counting.createCounter()
                     counter.add(1)
 
-                    acct.save(<-counter, to: /storage/counter)
+                    acct.storage.save(<-counter, to: /storage/counter)
 
-                    acct.link<&Counting.Counter>(/public/counter, target: /storage/counter)
+                    let counterCap = acct.capabilities.storage.issue<&Counting.Counter>(/storage/counter)
+                    acct.capabilities.publish(counterCap, at: /public/counter)
                   }
                 }
             `,
@@ -187,8 +189,8 @@ func TestInitialization(t *testing.T) {
 				`
                   import 0x%s
 
-                  pub fun main(): Int {
-                      return getAccount(0x%s).getCapability(/public/counter)!.borrow<&Counting.Counter>()?.count ?? 0
+                  access(all) fun main(): Int {
+                      return getAccount(0x%s).capabilities.borrow<&Counting.Counter>(/public/counter)?.count ?? 0
                   }
                 `,
 				counterAddress,

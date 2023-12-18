@@ -127,19 +127,6 @@ func (crr CoverageReportedRuntime) ReadStored(
 	return crr.Runtime.ReadStored(address, path, context)
 }
 
-func (crr CoverageReportedRuntime) ReadLinked(
-	address common.Address,
-	path cadence.Path,
-	context runtime.Context,
-) (
-	cadence.Value,
-	error,
-) {
-	context.CoverageReport = crr.CoverageReport
-	//nolint:staticcheck
-	return crr.Runtime.ReadLinked(address, path, context)
-}
-
 func (crr CoverageReportedRuntime) Storage(
 	context runtime.Context,
 ) (

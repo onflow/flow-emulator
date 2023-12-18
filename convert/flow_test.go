@@ -31,7 +31,7 @@ func TestSDKAccountToFlowAndBack(t *testing.T) {
 
 	t.Parallel()
 
-	contract := []byte("pub contract Test {}")
+	contract := []byte("access(all) contract Test {}")
 	var keys []*sdk.AccountKey
 
 	keys = append(keys, &sdk.AccountKey{

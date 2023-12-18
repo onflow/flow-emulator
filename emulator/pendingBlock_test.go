@@ -420,7 +420,7 @@ func TestPendingBlockSetTimestamp(t *testing.T) {
 	_, _ = b.CommitBlock()
 
 	script := []byte(`
-	    pub fun main(): UFix64 {
+	    access(all) fun main(): UFix64 {
 	        return getCurrentBlock().timestamp
 	    }
 	`)
