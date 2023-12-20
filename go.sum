@@ -804,8 +804,8 @@ github.com/onflow/flow-core-contracts/lib/go/templates v0.15.0 h1:diY0Wi5gFXE8GK
 github.com/onflow/flow-core-contracts/lib/go/templates v0.15.0/go.mod h1:ZeLxwaBkzuSInESGjL8/IPZWezF+YOYsYbMrZlhN+q4=
 github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20230711213910-baad011d2b13 h1:B4ll7e3j+MqTJv2122Enq3RtDNzmIGRu9xjV7fo7un0=
 github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20230711213910-baad011d2b13/go.mod h1:kTMFIySzEJJeupk+7EmXs0EJ6CBWY/MV9fv9iYQk+RU=
-github.com/onflow/flow-go v0.32.4-0.20231211231711-1aba0828ca33 h1:QCUFvIlE4Y7OMp3ZqXMCOw7emLV0jBMcC5BSoNX375Q=
-github.com/onflow/flow-go v0.32.4-0.20231211231711-1aba0828ca33/go.mod h1:+MttssV2daiKbbTOLDfeTWU1affMjC+1mcR3fnqWtGM=
+github.com/onflow/flow-go v0.32.4-0.20231219234712-3d8d907db2f0 h1:EjXmdNIEXzszaODMtB2rm/ZthgQ/aKn/mOfvNG/qXLE=
+github.com/onflow/flow-go v0.32.4-0.20231219234712-3d8d907db2f0/go.mod h1:aHYBSd6x/FA9AEP5vrO1GlM4NpamM8maSQ7w9qffpbA=
 github.com/onflow/flow-go-sdk v0.24.0/go.mod h1:IoptMLPyFXWvyd9yYA6/4EmSeeozl6nJoIv4FaEMg74=
 github.com/onflow/flow-go-sdk v0.41.17 h1:HpNn3j2fqLGA6H3HGfAuh2A+TsPBv8gWO3kvK9Hvtic=
 github.com/onflow/flow-go-sdk v0.41.17/go.mod h1:ZIj2XBI9R0QiKzbI6iPwOeqyIy/M4+atczoMOEWdKYw=
@@ -815,8 +815,8 @@ github.com/onflow/flow-go/crypto v0.25.0/go.mod h1:OOb2vYcS8AOCajBClhHTJ0NKftFl1
 github.com/onflow/flow-nft/lib/go/contracts v1.1.0 h1:rhUDeD27jhLwOqQKI/23008CYfnqXErrJvc4EFRP2a0=
 github.com/onflow/flow-nft/lib/go/contracts v1.1.0/go.mod h1:YsvzYng4htDgRB9sa9jxdwoTuuhjK8WYWXTyLkIigZY=
 github.com/onflow/flow/protobuf/go/flow v0.2.2/go.mod h1:gQxYqCfkI8lpnKsmIjwtN2mV/N2PIwc1I+RUK4HPIc8=
-github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20231124194313-106cc495def6 h1:KMN+OEVaw7KAgxL3p8ux7CMuyTvacAlYTbasOqowh4M=
-github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20231124194313-106cc495def6/go.mod h1:NA2pX2nw8zuaxfKphhKsk00kWLwfd+tv8mS23YXO4Sk=
+github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20231213135419-ae911cc351a2 h1:+rT+UsfTR39JZO8ht2+4fkaWfHw74SCj1fyz1lWuX8A=
+github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20231213135419-ae911cc351a2/go.mod h1:NA2pX2nw8zuaxfKphhKsk00kWLwfd+tv8mS23YXO4Sk=
 github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20221222181731-14b90207cead h1:2j1Unqs76Z1b95Gu4C3Y28hzNUHBix7wL490e61SMSw=
 github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20221222181731-14b90207cead/go.mod h1:E3ScfQb5XcWJCIAdtIeEnr5i5l2y60GT0BTXeIHseWg=
 github.com/onflow/sdks v0.5.0 h1:2HCRibwqDaQ1c9oUApnkZtEAhWiNY2GTpRD5+ftdkN8=

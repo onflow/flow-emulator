@@ -15,11 +15,11 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v0.42.6
 	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.0
-	github.com/onflow/flow-go v0.32.4-0.20231211231711-1aba0828ca33
+	github.com/onflow/flow-go v0.32.4-0.20231219234712-3d8d907db2f0
 	github.com/onflow/flow-go-sdk v0.41.17
 	github.com/onflow/flow-go/crypto v0.25.0
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
-	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20231124194313-106cc495def6
+	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20231213135419-ae911cc351a2
 	github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20221222181731-14b90207cead
 	github.com/prometheus/client_golang v1.16.0
 	github.com/psiemens/graceland v1.0.0
