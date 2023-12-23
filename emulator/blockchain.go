@@ -1752,6 +1752,7 @@ func (b *Blockchain) executeSystemChunkTransaction() error {
 	}
 	ctx := fvm.NewContextFromParent(
 		b.vmCtx,
+		fvm.WithLogger(zerolog.Nop()),
 		fvm.WithAuthorizationChecksEnabled(false),
 		fvm.WithSequenceNumberCheckAndIncrementEnabled(false),
 		fvm.WithRandomSourceHistoryCallAllowed(true),
