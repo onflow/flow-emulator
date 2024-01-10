@@ -19,14 +19,14 @@ COPY . .
 
 ARG TARGETOS 
 ARG TARGETARCH
-ARG C_COMPILER
-RUN if [ "$TARGETARCH" = "arm64" ] ; then C_COMPILER="arm-linux-gnueabi-gcc" ; else C_COMPILER="gcc" ; fi
-
+ARG C_COMPILER=""
+RUN if [ "$TARGETARCH" = "arm64" ] ; then C_COMPILER="arm-linux-gnueabi-gcc" ; \
+    elif [ "$TARGETARCH" = "amd64" ] ; then C_COMPILER="gcc" ; fi
 RUN --mount=type=ssh \
     --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    GO111MODULE=on CGO_ENABLED=1 GOOS=$TARGETOS GOARCH=$TARGETARCH \
-    CC=$C_COMPILER \
+    GO111MODULE=on CGO_ENABLED=1 GOOS=$TARGETOS \
+    GOARCH=$TARGETARCH CC=$C_COMPILER \
     go build -ldflags "-extldflags -static" -o ./app ./cmd/emulator
 
 ## Add the binary to a fresh distroless image
