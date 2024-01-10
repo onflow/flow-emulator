@@ -12,7 +12,8 @@ WORKDIR /app
 # add the pubkey of github.com to knownhosts, so ssh-agent doesn't bark
 RUN mkdir -p /root/.ssh && ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
 RUN git config --global 'url.ssh://git@github.com/.insteadOf' https://github.com/
-RUN apt-get install gcc-arm-linux-gnueabi
+RUN apt-get update
+RUN apt-get -y install gcc-arm-linux-gnueabi
 
 COPY . .
 
