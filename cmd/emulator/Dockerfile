@@ -13,14 +13,14 @@ WORKDIR /app
 RUN mkdir -p /root/.ssh && ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
 RUN git config --global 'url.ssh://git@github.com/.insteadOf' https://github.com/
 RUN apt-get update
-RUN apt-get -y install gcc-arm-linux-gnueabi
+RUN apt-get -y install apt-utils gcc-arm-linux-gnueabi
 
 COPY . .
 
 ARG TARGETOS 
 ARG TARGETARCH
 ARG C_COMPILER
-RUN if [ "$TARGETARCH" = "arm" ] ; then C_COMPILER="arm-linux-gnueabi-gcc" ; else C_COMPILER="gcc" ; fi
+RUN if [ "$TARGETARCH" = "arm64" ] ; then C_COMPILER="arm-linux-gnueabi-gcc" ; else C_COMPILER="gcc" ; fi
 
 RUN --mount=type=ssh \
     --mount=type=cache,target=/go/pkg/mod \
