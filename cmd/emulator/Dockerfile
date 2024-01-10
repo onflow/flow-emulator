@@ -12,15 +12,20 @@ WORKDIR /app
 # add the pubkey of github.com to knownhosts, so ssh-agent doesn't bark
 RUN mkdir -p /root/.ssh && ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
 RUN git config --global 'url.ssh://git@github.com/.insteadOf' https://github.com/
+RUN apt-get install gcc-arm-linux-gnueabi
 
 COPY . .
 
 ARG TARGETOS 
 ARG TARGETARCH
+ARG C_COMPILER
+RUN if [ "$TARGETARCH" = "arm" ] ; then C_COMPILER="arm-linux-gnueabi-gcc" ; else C_COMPILER="gcc" ; fi
+
 RUN --mount=type=ssh \
     --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     GO111MODULE=on CGO_ENABLED=1 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    CC=$C_COMPILER \
     go build -ldflags "-extldflags -static" -o ./app ./cmd/emulator
 
 ## Add the binary to a fresh distroless image
