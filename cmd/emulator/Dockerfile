@@ -20,7 +20,7 @@ ARG TARGETARCH
 RUN --mount=type=ssh \
     --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    GO111MODULE=on CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    GO111MODULE=on CGO_ENABLED=1 GOOS=$TARGETOS GOARCH=$TARGETARCH \
     go build -ldflags "-extldflags -static" -o ./app ./cmd/emulator
 
 ## Add the binary to a fresh distroless image
