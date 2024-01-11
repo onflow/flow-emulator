@@ -23,14 +23,18 @@ import (
 	"net"
 
 	"github.com/onflow/flow-emulator/adapters"
+	"github.com/onflow/flow-emulator/emulator"
 	mockModule "github.com/onflow/flow-go/module/mock"
 
 	grpcprometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/onflow/flow-go/access"
 	legacyaccess "github.com/onflow/flow-go/access/legacy"
+	"github.com/onflow/flow-go/engine/access/state_stream"
+	"github.com/onflow/flow-go/engine/access/state_stream/backend"
 	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	accessproto "github.com/onflow/flow/protobuf/go/flow/access"
+	"github.com/onflow/flow/protobuf/go/flow/executiondata"
 	legacyaccessproto "github.com/onflow/flow/protobuf/go/flow/legacy/access"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
@@ -52,7 +56,7 @@ type GRPCServer struct {
 	listener   net.Listener
 }
 
-func NewGRPCServer(logger *zerolog.Logger, adapter *adapters.AccessAdapter, chain flow.Chain, host string, port int, debug bool) *GRPCServer {
+func NewGRPCServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adapter *adapters.AccessAdapter, chain flow.Chain, host string, port int, debug bool) *GRPCServer {
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpcprometheus.StreamServerInterceptor),
 		grpc.UnaryInterceptor(grpcprometheus.UnaryServerInterceptor),
@@ -70,6 +74,19 @@ func NewGRPCServer(logger *zerolog.Logger, adapter *adapters.AccessAdapter, chai
 	if debug {
 		reflection.Register(grpcServer)
 	}
+
+	streamConfig := backend.Config{
+		EventFilterConfig:    state_stream.DefaultEventFilterConfig,
+		RpcMetricsEnabled:    false,
+		MaxGlobalStreams:     state_stream.DefaultMaxGlobalStreams,
+		ClientSendTimeout:    state_stream.DefaultSendTimeout,
+		ClientSendBufferSize: state_stream.DefaultSendBufferSize,
+		ResponseLimit:        state_stream.DefaultResponseLimit,
+		HeartbeatInterval:    state_stream.DefaultHeartbeatInterval,
+	}
+	streamBackend := NewStateStreamBackend(blockchain, *logger)
+	handler := backend.NewHandler(streamBackend, chain, streamConfig)
+	executiondata.RegisterExecutionDataAPIServer(grpcServer, handler)
 
 	return &GRPCServer{
 		logger:     logger,
