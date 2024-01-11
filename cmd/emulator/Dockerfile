@@ -19,17 +19,14 @@ COPY . .
 
 ARG TARGETOS 
 ARG TARGETARCH
-RUN if [ "$TARGETARCH" = "arm64" ] ; then \
-    --mount=type=ssh \
+RUN --mount=type=ssh \
     --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
+    if [ "$TARGETARCH" = "arm64" ] ; then \
     GO111MODULE=on CGO_ENABLED=1 GOOS=$TARGETOS \
     GOARCH=$TARGETARCH CC=arm-linux-gnueabi-gcc \
     go build -ldflags "-extldflags -static" -o ./app ./cmd/emulator ; \
     elif [ "$TARGETARCH" = "amd64" ] ; then \
-    --mount=type=ssh \
-    --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
     GO111MODULE=on CGO_ENABLED=1 GOOS=$TARGETOS \
     GOARCH=$TARGETARCH CC=gcc \
     go build -ldflags "-extldflags -static" -o ./app ./cmd/emulator ; \
