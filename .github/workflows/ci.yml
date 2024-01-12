@@ -54,6 +54,8 @@ jobs:
           args: --timeout=10m
 
   docker:
+    if: github.ref == 'refs/heads/master' || contains(github.ref, 'refs/tags/')
+    needs: test
     name: "Docker image"
     runs-on: ubuntu-latest
     steps:
