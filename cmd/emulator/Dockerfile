@@ -13,6 +13,7 @@ WORKDIR /app
 RUN mkdir -p /root/.ssh && ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
 RUN git config --global 'url.ssh://git@github.com/.insteadOf' https://github.com/
 RUN apt-get update && apt-get -y install apt-utils gcc-aarch64-linux-gnu
+RUN echo $PATH && ls /usr/bin/
 
 COPY . .
 
@@ -23,7 +24,7 @@ RUN --mount=type=ssh \
     --mount=type=cache,target=/root/.cache/go-build \
     if [ "$TARGETARCH" = "arm64" ] ; then \
     GO111MODULE=on CGO_ENABLED=1 GOOS=$TARGETOS \
-    GOARCH=$TARGETARCH CC=/usr/bin/gcc-aarch64-linux-gnu \
+    GOARCH=$TARGETARCH CC=gcc-aarch64-linux-gnu \
     go build -ldflags "-extldflags -static" -o ./app ./cmd/emulator ; \
     elif [ "$TARGETARCH" = "amd64" ] ; then \
     GO111MODULE=on CGO_ENABLED=1 GOOS=$TARGETOS \
