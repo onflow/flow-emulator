@@ -23,7 +23,7 @@ RUN --mount=type=ssh \
     --mount=type=cache,target=/root/.cache/go-build \
     if [ "$TARGETARCH" = "arm64" ] ; then \
     GO111MODULE=on CGO_ENABLED=1 GOOS=$TARGETOS \
-    GOARCH=$TARGETARCH CC=gcc-aarch64-linux-gnu \
+    GOARCH=$TARGETARCH CC=/usr/bin/gcc-aarch64-linux-gnu \
     go build -ldflags "-extldflags -static" -o ./app ./cmd/emulator ; \
     elif [ "$TARGETARCH" = "amd64" ] ; then \
     GO111MODULE=on CGO_ENABLED=1 GOOS=$TARGETOS \
