@@ -27,7 +27,7 @@ RUN --mount=type=ssh \
     go build -ldflags "-extldflags -static" -o ./app ./cmd/emulator ; \
     elif [ "$TARGETARCH" = "amd64" ] ; then \
     GO111MODULE=on CGO_ENABLED=1 GOOS=$TARGETOS \
-    GOARCH=$TARGETARCH CC=gcc \
+    GOARCH=$TARGETARCH CC=x86_64-linux-gnu-gcc \
     go build -ldflags "-extldflags -static" -o ./app ./cmd/emulator ; \
     fi
 
