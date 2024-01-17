@@ -27,9 +27,7 @@ import (
 	"github.com/onflow/cadence/encoding/ccf"
 
 	sdk "github.com/onflow/flow-go-sdk"
-	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/access"
-	flowcrypto "github.com/onflow/flow-go/crypto"
 	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
@@ -231,24 +229,12 @@ func FlowEventsToSDK(flowEvents []flowgo.Event) ([]sdk.Event, error) {
 }
 
 func FlowAccountPublicKeyToSDK(flowPublicKey flowgo.AccountPublicKey, index int) (sdk.AccountKey, error) {
-	// TODO - Looks like SDK contains copy-paste of code from flow-go
-	// Once crypto become its own separate library, this can possibly be simplified or not needed
-	encodedPublicKey := flowPublicKey.PublicKey.Encode()
-
-	sdkSignAlgo := flowPublicKey.SignAlgo
-
-	sdkPublicKey, err := sdkcrypto.DecodePublicKey(sdkSignAlgo, encodedPublicKey)
-	if err != nil {
-		return sdk.AccountKey{}, err
-	}
-
-	sdkHashAlgo := flowPublicKey.HashAlgo
 
 	return sdk.AccountKey{
 		Index:          index,
-		PublicKey:      sdkPublicKey,
-		SigAlgo:        sdkSignAlgo,
-		HashAlgo:       sdkHashAlgo,
+		PublicKey:      flowPublicKey.PublicKey,
+		SigAlgo:        flowPublicKey.SignAlgo,
+		HashAlgo:       flowPublicKey.HashAlgo,
 		Weight:         flowPublicKey.Weight,
 		SequenceNumber: flowPublicKey.SeqNumber,
 		Revoked:        flowPublicKey.Revoked,
@@ -256,22 +242,12 @@ func FlowAccountPublicKeyToSDK(flowPublicKey flowgo.AccountPublicKey, index int)
 }
 
 func SDKAccountKeyToFlow(key *sdk.AccountKey) (flowgo.AccountPublicKey, error) {
-	encodedPublicKey := key.PublicKey.Encode()
-
-	flowSignAlgo := key.SigAlgo
-
-	flowPublicKey, err := flowcrypto.DecodePublicKey(flowSignAlgo, encodedPublicKey)
-	if err != nil {
-		return flowgo.AccountPublicKey{}, err
-	}
-
-	flowhashAlgo := key.HashAlgo
 
 	return flowgo.AccountPublicKey{
 		Index:     key.Index,
-		PublicKey: flowPublicKey,
-		SignAlgo:  flowSignAlgo,
-		HashAlgo:  flowhashAlgo,
+		PublicKey: key.PublicKey,
+		SignAlgo:  key.SigAlgo,
+		HashAlgo:  key.HashAlgo,
 		Weight:    key.Weight,
 		SeqNumber: key.SequenceNumber,
 		Revoked:   key.Revoked,
