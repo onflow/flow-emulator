@@ -50,7 +50,6 @@ import (
 	flowsdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/access"
-	"github.com/onflow/flow-go/crypto"
 	"github.com/onflow/flow-go/crypto/hash"
 	"github.com/onflow/flow-go/fvm"
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
@@ -729,7 +728,7 @@ func bootstrapLedger(
 	error,
 ) {
 	accountKey := conf.GetServiceKey().AccountKey()
-	publicKey, _ := crypto.DecodePublicKey(
+	publicKey, _ := sdkcrypto.DecodePublicKey(
 		accountKey.SigAlgo,
 		accountKey.PublicKey.Encode(),
 	)
@@ -1577,7 +1576,7 @@ func (b *Blockchain) testAlternativeHashAlgo(sig flowgo.TransactionSignature, ms
 
 	key := acc.Keys[sig.KeyIndex]
 
-	for _, algo := range []hash.HashingAlgorithm{sdkcrypto.SHA2_256, sdkcrypto.SHA3_256} {
+	for _, algo := range []hash.HashingAlgorithm{hash.SHA2_256, hash.SHA3_256} {
 		if key.HashAlgo == algo {
 			continue // skip valid hash algo
 		}
