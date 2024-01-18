@@ -40,6 +40,7 @@ import (
 	"time"
 
 	"github.com/onflow/flow-core-contracts/lib/go/templates"
+	"github.com/onflow/flow-go/crypto/hash"
 	"github.com/onflow/flow-go/engine"
 
 	"github.com/logrusorgru/aurora"
@@ -1583,7 +1584,7 @@ func (b *Blockchain) testAlternativeHashAlgo(sig flowgo.TransactionSignature, ms
 		h, _ := fvmcrypto.NewPrefixedHashing(algo, flowgo.TransactionTagString)
 		valid, _ := key.PublicKey.Verify(sig.Signature, msg, h)
 		if valid {
-			return types.NewTransactionInvalidHashAlgo(key, acc.Address, algo)
+			return types.NewTransactionInvalidHashAlgo(key, acc.Address, hash.HashingAlgorithm(algo))
 		}
 	}
 
