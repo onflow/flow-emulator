@@ -192,7 +192,7 @@ func Test_SimulatedMainnetTransaction(t *testing.T) {
 	addr := flowsdk.HexToAddress("0x9799f28ff0453528")
 	tx := flowsdk.NewTransaction().
 		SetScript(script).
-		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(addr, 0, 0).
 		SetPayer(addr)
 
@@ -249,7 +249,7 @@ func Test_SimulatedMainnetTransactionWithChanges(t *testing.T) {
 	addr := flowsdk.HexToAddress("0x9799f28ff0453528")
 	tx := flowsdk.NewTransaction().
 		SetScript(script).
-		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(addr, 0, 0).
 		SetPayer(addr)
 
@@ -274,7 +274,7 @@ func Test_SimulatedMainnetTransactionWithChanges(t *testing.T) {
 	`)
 	tx = flowsdk.NewTransaction().
 		SetScript(script).
-		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(addr, 0, 0).
 		SetPayer(addr)
 

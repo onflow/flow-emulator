@@ -17,7 +17,7 @@ require (
 	github.com/onflow/flow-archive v1.3.4-0.20230503192214-9e81e82d4dcc
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.2.4-0.20231016154253-a00dbf7c061f
 	github.com/onflow/flow-go v0.32.4-0.20231130134727-3c01c7f8966c
-	github.com/onflow/flow-go-sdk v0.41.16
+	github.com/onflow/flow-go-sdk v0.44.0
 	github.com/onflow/flow-go/crypto v0.24.9
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
 	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20231124194313-106cc495def6
@@ -130,6 +130,7 @@ require (
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/onflow/atree v0.6.0 // indirect
+	github.com/onflow/crypto v0.24.9 // indirect
 	github.com/onflow/flow-core-contracts/lib/go/contracts v1.2.4-0.20231016154253-a00dbf7c061f // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20230711213910-baad011d2b13 // indirect
 	github.com/onflow/sdks v0.5.0 // indirect
