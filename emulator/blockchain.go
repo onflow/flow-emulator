@@ -479,6 +479,10 @@ func (b *Blockchain) Ping() error {
 	return nil
 }
 
+func (b *Blockchain) Runtime() runtime.Runtime {
+	return b.coverageReportedRuntime
+}
+
 func (b *Blockchain) GetChain() flowgo.Chain {
 	return b.vmCtx.Chain
 }

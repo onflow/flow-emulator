@@ -89,9 +89,11 @@ func TestLegacyUpgradeFlag(t *testing.T) {
 
 	require.NotNil(t, server)
 	require.True(t, server.config.LegacyContractUpgradeEnabled)
-	require.IsType(t, &emulator.Blockchain{}, server.Emulator)
-	// require.True(t, server.Emulator().)
 
+	e := server.Emulator()
+
+	require.IsType(t, &emulator.Blockchain{}, e)
+	require.True(t, e.(*emulator.Blockchain).Runtime().Config().LegacyContractUpgradeEnabled)
 }
 
 func TestExecuteScript(t *testing.T) {
