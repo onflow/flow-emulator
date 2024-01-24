@@ -39,41 +39,42 @@ import (
 )
 
 type Config struct {
-	Port                     int           `default:"3569" flag:"port,p" info:"port to run RPC server"`
-	DebuggerPort             int           `default:"2345" flag:"debugger-port" info:"port to run the Debugger (Debug Adapter Protocol)"`
-	RestPort                 int           `default:"8888" flag:"rest-port" info:"port to run the REST API"`
-	AdminPort                int           `default:"8080" flag:"admin-port" info:"port to run the admin API"`
-	Verbose                  bool          `default:"false" flag:"verbose,v" info:"enable verbose logging"`
-	LogFormat                string        `default:"text" flag:"log-format" info:"logging output format. Valid values (text, JSON)"`
-	BlockTime                time.Duration `flag:"block-time,b" info:"time between sealed blocks, e.g. '300ms', '-1.5h' or '2h45m'. Valid units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'"`
-	ServicePrivateKey        string        `flag:"service-priv-key" info:"service account private key"`
-	ServicePublicKey         string        `flag:"service-pub-key" info:"service account public key"`
-	ServiceKeySigAlgo        string        `default:"ECDSA_P256" flag:"service-sig-algo" info:"service account key signature algorithm"`
-	ServiceKeyHashAlgo       string        `default:"SHA3_256" flag:"service-hash-algo" info:"service account key hash algorithm"`
-	Init                     bool          `default:"false" flag:"init" info:"whether to initialize a new account profile"`
-	GRPCDebug                bool          `default:"false" flag:"grpc-debug" info:"enable gRPC server reflection for debugging with grpc_cli"`
-	RESTDebug                bool          `default:"false" flag:"rest-debug" info:"enable REST API debugging output"`
-	Persist                  bool          `default:"false" flag:"persist" info:"enable persistent storage"`
-	Snapshot                 bool          `default:"false" flag:"snapshot" info:"enable snapshots for emulator"`
-	DBPath                   string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
-	SimpleAddresses          bool          `default:"false" flag:"simple-addresses" info:"use sequential addresses starting with 0x01"`
-	TokenSupply              string        `default:"1000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
-	TransactionExpiry        int           `default:"10" flag:"transaction-expiry" info:"transaction expiry, measured in blocks"`
-	StorageLimitEnabled      bool          `default:"true" flag:"storage-limit" info:"enable account storage limit"`
-	StorageMBPerFLOW         string        `flag:"storage-per-flow" info:"the MB amount of storage capacity an account has per 1 FLOW token it has. e.g. '100.0'. The default is taken from the current version of flow-go"`
-	MinimumAccountBalance    string        `flag:"min-account-balance" info:"The minimum account balance of an account. This is also the cost of creating one account. e.g. '0.001'. The default is taken from the current version of flow-go"`
-	TransactionFeesEnabled   bool          `default:"false" flag:"transaction-fees" info:"enable transaction fees"`
-	TransactionMaxGasLimit   int           `default:"9999" flag:"transaction-max-gas-limit" info:"maximum gas limit for transactions"`
-	ScriptGasLimit           int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
-	Contracts                bool          `default:"false" flag:"contracts" info:"deploy common contracts when emulator starts"`
-	ContractRemovalEnabled   bool          `default:"true" flag:"contract-removal" info:"allow removal of already deployed contracts, used for updating during development"`
-	SkipTxValidation         bool          `default:"false" flag:"skip-tx-validation" info:"skip verification of transaction signatures and sequence numbers"`
-	Host                     string        `default:"" flag:"host" info:"host to listen on for emulator GRPC/REST/Admin servers (default: all interfaces)"`
-	ChainID                  string        `default:"emulator" flag:"chain-id" info:"chain to emulate for address generation. Valid values are: 'emulator', 'testnet', 'mainnet'"`
-	RedisURL                 string        `default:"" flag:"redis-url" info:"redis-server URL for persisting redis storage backend ( redis://[[username:]password@]host[:port][/database] ) "`
-	SqliteURL                string        `default:"" flag:"sqlite-url" info:"sqlite db URL for persisting sqlite storage backend "`
-	CoverageReportingEnabled bool          `default:"false" flag:"coverage-reporting" info:"enable Cadence code coverage reporting"`
-	EVMEnabled               bool          `default:"false" flag:"evm-enabled" info:"enable EVM support"`
+	Port                         int           `default:"3569" flag:"port,p" info:"port to run RPC server"`
+	DebuggerPort                 int           `default:"2345" flag:"debugger-port" info:"port to run the Debugger (Debug Adapter Protocol)"`
+	RestPort                     int           `default:"8888" flag:"rest-port" info:"port to run the REST API"`
+	AdminPort                    int           `default:"8080" flag:"admin-port" info:"port to run the admin API"`
+	Verbose                      bool          `default:"false" flag:"verbose,v" info:"enable verbose logging"`
+	LogFormat                    string        `default:"text" flag:"log-format" info:"logging output format. Valid values (text, JSON)"`
+	BlockTime                    time.Duration `flag:"block-time,b" info:"time between sealed blocks, e.g. '300ms', '-1.5h' or '2h45m'. Valid units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'"`
+	ServicePrivateKey            string        `flag:"service-priv-key" info:"service account private key"`
+	ServicePublicKey             string        `flag:"service-pub-key" info:"service account public key"`
+	ServiceKeySigAlgo            string        `default:"ECDSA_P256" flag:"service-sig-algo" info:"service account key signature algorithm"`
+	ServiceKeyHashAlgo           string        `default:"SHA3_256" flag:"service-hash-algo" info:"service account key hash algorithm"`
+	Init                         bool          `default:"false" flag:"init" info:"whether to initialize a new account profile"`
+	GRPCDebug                    bool          `default:"false" flag:"grpc-debug" info:"enable gRPC server reflection for debugging with grpc_cli"`
+	RESTDebug                    bool          `default:"false" flag:"rest-debug" info:"enable REST API debugging output"`
+	Persist                      bool          `default:"false" flag:"persist" info:"enable persistent storage"`
+	Snapshot                     bool          `default:"false" flag:"snapshot" info:"enable snapshots for emulator"`
+	DBPath                       string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
+	SimpleAddresses              bool          `default:"false" flag:"simple-addresses" info:"use sequential addresses starting with 0x01"`
+	TokenSupply                  string        `default:"1000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
+	TransactionExpiry            int           `default:"10" flag:"transaction-expiry" info:"transaction expiry, measured in blocks"`
+	StorageLimitEnabled          bool          `default:"true" flag:"storage-limit" info:"enable account storage limit"`
+	StorageMBPerFLOW             string        `flag:"storage-per-flow" info:"the MB amount of storage capacity an account has per 1 FLOW token it has. e.g. '100.0'. The default is taken from the current version of flow-go"`
+	MinimumAccountBalance        string        `flag:"min-account-balance" info:"The minimum account balance of an account. This is also the cost of creating one account. e.g. '0.001'. The default is taken from the current version of flow-go"`
+	TransactionFeesEnabled       bool          `default:"false" flag:"transaction-fees" info:"enable transaction fees"`
+	TransactionMaxGasLimit       int           `default:"9999" flag:"transaction-max-gas-limit" info:"maximum gas limit for transactions"`
+	ScriptGasLimit               int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
+	Contracts                    bool          `default:"false" flag:"contracts" info:"deploy common contracts when emulator starts"`
+	ContractRemovalEnabled       bool          `default:"true" flag:"contract-removal" info:"allow removal of already deployed contracts, used for updating during development"`
+	SkipTxValidation             bool          `default:"false" flag:"skip-tx-validation" info:"skip verification of transaction signatures and sequence numbers"`
+	Host                         string        `default:"" flag:"host" info:"host to listen on for emulator GRPC/REST/Admin servers (default: all interfaces)"`
+	ChainID                      string        `default:"emulator" flag:"chain-id" info:"chain to emulate for address generation. Valid values are: 'emulator', 'testnet', 'mainnet'"`
+	RedisURL                     string        `default:"" flag:"redis-url" info:"redis-server URL for persisting redis storage backend ( redis://[[username:]password@]host[:port][/database] ) "`
+	SqliteURL                    string        `default:"" flag:"sqlite-url" info:"sqlite db URL for persisting sqlite storage backend "`
+	CoverageReportingEnabled     bool          `default:"false" flag:"coverage-reporting" info:"enable Cadence code coverage reporting"`
+	LegacyContractUpgradeEnabled bool          `default:"false" flag:"legacy-upgrade" info:"enable Cadence legacy contract upgrade"`
+	EVMEnabled                   bool          `default:"false" flag:"evm-enabled" info:"enable EVM support"`
 	// todo temporarily disabled until remote register endpoint is re-enabled
 	// StartBlockHeight         uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
 }
@@ -174,33 +175,34 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				RESTPort:     conf.RestPort,
 				RESTDebug:    conf.RESTDebug,
 				// TODO: allow headers to be parsed from environment
-				HTTPHeaders:               nil,
-				BlockTime:                 conf.BlockTime,
-				ServicePublicKey:          servicePublicKey,
-				ServicePrivateKey:         servicePrivateKey,
-				ServiceKeySigAlgo:         serviceKeySigAlgo,
-				ServiceKeyHashAlgo:        serviceKeyHashAlgo,
-				Persist:                   conf.Persist,
-				Snapshot:                  conf.Snapshot,
-				DBPath:                    conf.DBPath,
-				GenesisTokenSupply:        parseCadenceUFix64(conf.TokenSupply, "token-supply"),
-				TransactionMaxGasLimit:    uint64(conf.TransactionMaxGasLimit),
-				ScriptGasLimit:            uint64(conf.ScriptGasLimit),
-				TransactionExpiry:         uint(conf.TransactionExpiry),
-				StorageLimitEnabled:       conf.StorageLimitEnabled,
-				StorageMBPerFLOW:          storageMBPerFLOW,
-				MinimumStorageReservation: minimumStorageReservation,
-				TransactionFeesEnabled:    conf.TransactionFeesEnabled,
-				WithContracts:             conf.Contracts,
-				SkipTransactionValidation: conf.SkipTxValidation,
-				SimpleAddressesEnabled:    conf.SimpleAddresses,
-				Host:                      conf.Host,
-				ChainID:                   flowChainID,
-				RedisURL:                  conf.RedisURL,
-				ContractRemovalEnabled:    conf.ContractRemovalEnabled,
-				SqliteURL:                 conf.SqliteURL,
-				CoverageReportingEnabled:  conf.CoverageReportingEnabled,
-				EVMEnabled:                conf.EVMEnabled,
+				HTTPHeaders:                  nil,
+				BlockTime:                    conf.BlockTime,
+				ServicePublicKey:             servicePublicKey,
+				ServicePrivateKey:            servicePrivateKey,
+				ServiceKeySigAlgo:            serviceKeySigAlgo,
+				ServiceKeyHashAlgo:           serviceKeyHashAlgo,
+				Persist:                      conf.Persist,
+				Snapshot:                     conf.Snapshot,
+				DBPath:                       conf.DBPath,
+				GenesisTokenSupply:           parseCadenceUFix64(conf.TokenSupply, "token-supply"),
+				TransactionMaxGasLimit:       uint64(conf.TransactionMaxGasLimit),
+				ScriptGasLimit:               uint64(conf.ScriptGasLimit),
+				TransactionExpiry:            uint(conf.TransactionExpiry),
+				StorageLimitEnabled:          conf.StorageLimitEnabled,
+				StorageMBPerFLOW:             storageMBPerFLOW,
+				MinimumStorageReservation:    minimumStorageReservation,
+				TransactionFeesEnabled:       conf.TransactionFeesEnabled,
+				WithContracts:                conf.Contracts,
+				SkipTransactionValidation:    conf.SkipTxValidation,
+				SimpleAddressesEnabled:       conf.SimpleAddresses,
+				Host:                         conf.Host,
+				ChainID:                      flowChainID,
+				RedisURL:                     conf.RedisURL,
+				ContractRemovalEnabled:       conf.ContractRemovalEnabled,
+				SqliteURL:                    conf.SqliteURL,
+				CoverageReportingEnabled:     conf.CoverageReportingEnabled,
+				LegacyContractUpgradeEnabled: conf.LegacyContractUpgradeEnabled,
+				EVMEnabled:                   conf.EVMEnabled,
 				// todo temporarily disabled until remote register endpoint is re-enabled
 				// StartBlockHeight:          conf.StartBlockHeight,
 			}
