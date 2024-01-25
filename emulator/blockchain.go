@@ -44,12 +44,12 @@ import (
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
+	"github.com/onflow/crypto"
+	"github.com/onflow/crypto/hash"
 	"github.com/onflow/flow-core-contracts/lib/go/templates"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/access"
-	"github.com/onflow/flow-go/crypto"
-	"github.com/onflow/flow-go/crypto/hash"
 	"github.com/onflow/flow-go/engine"
 	"github.com/onflow/flow-go/fvm"
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
@@ -1737,7 +1737,7 @@ func (b *Blockchain) systemChunkTransaction() (*flowgo.TransactionBody, error) {
 
 	tx := flowgo.NewTransactionBody().
 		SetScript([]byte(script)).
-		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		AddAuthorizer(b.GetChain().ServiceAddress()).
 		SetPayer(b.GetChain().ServiceAddress()).
 		SetReferenceBlockID(b.pendingBlock.parentID)
