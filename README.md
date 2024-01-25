@@ -73,6 +73,8 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--start-block-height`        | `FLOW_STARTBLOCKHEIGHT`             | `0`             | Start block height to use when starting the network using 'testnet' or 'mainnet' as the chain-id    |
 | `--evm-enabled` | `FLOW_EVMENABLED` | `false`         | Enable evm support |
 
+| `--legacy-upgrade` | `FLOW_LEGACYUPGRADE` | `false`         | Enable upgrading of legacy contracts |
+
 ## Running the emulator with the Flow CLI
 
 The emulator is bundled with the [Flow CLI](https://docs.onflow.org/flow-cli), a command-line interface for working with Flow.
