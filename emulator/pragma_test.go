@@ -73,7 +73,7 @@ func TestSourceFilePragmaForTransaction(t *testing.T) {
 	`
 	tx := flowsdk.NewTransaction().
 		SetScript([]byte(txCode)).
-		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber+1).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
@@ -110,7 +110,7 @@ func TestSourceFilePragmaForContract(t *testing.T) {
 			Source: contract,
 		})
 
-	tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+	tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber+1).
 		SetPayer(b.ServiceKey().Address)
 
@@ -148,7 +148,7 @@ func TestSourceFileCommentedOutPragmaForContract(t *testing.T) {
 			Source: contract,
 		})
 
-	tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+	tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber+1).
 		SetPayer(b.ServiceKey().Address)
 

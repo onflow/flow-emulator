@@ -22,8 +22,8 @@ import (
 	"fmt"
 
 	"github.com/onflow/cadence"
+	"github.com/onflow/crypto/hash"
 	flowsdk "github.com/onflow/flow-go-sdk"
-	"github.com/onflow/flow-go/crypto/hash"
 	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
