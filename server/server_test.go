@@ -24,6 +24,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/onflow/flow-emulator/emulator"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 )
@@ -77,6 +78,22 @@ func TestPersistenceWithSnapshotFlag(t *testing.T) {
 	require.NotNil(t, server)
 	_, err := os.Stat(conf.DBPath)
 	require.True(t, os.IsNotExist(err), "DB should not exist")
+}
+
+func TestLegacyUpgradeFlag(t *testing.T) {
+	logger := zerolog.Nop()
+
+	conf := &Config{LegacyContractUpgradeEnabled: true}
+	server := NewEmulatorServer(&logger, conf)
+	defer server.Stop()
+
+	require.NotNil(t, server)
+	require.True(t, server.config.LegacyContractUpgradeEnabled)
+
+	e := server.Emulator()
+
+	require.IsType(t, &emulator.Blockchain{}, e)
+	require.True(t, e.(*emulator.Blockchain).Runtime().Config().LegacyContractUpgradeEnabled)
 }
 
 func TestExecuteScript(t *testing.T) {

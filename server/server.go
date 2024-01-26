@@ -136,6 +136,8 @@ type Config struct {
 	SqliteURL string
 	// CoverageReportingEnabled enables/disables Cadence code coverage reporting.
 	CoverageReportingEnabled bool
+	// LegacyUpgradeEnabled enables/disables Cadence legacy contracts upgrades
+	LegacyContractUpgradeEnabled bool
 	// StartBlockHeight is the height at which to start the emulator.
 	StartBlockHeight uint64
 }
@@ -404,6 +406,13 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		options = append(
 			options,
 			emulator.WithCoverageReport(runtime.NewCoverageReport()),
+		)
+	}
+
+	if conf.LegacyContractUpgradeEnabled {
+		options = append(
+			options,
+			emulator.WithLegacyUpgradeEnabled(),
 		)
 	}
 
