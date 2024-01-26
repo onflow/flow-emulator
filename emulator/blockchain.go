@@ -44,7 +44,6 @@ import (
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
-	"github.com/onflow/crypto"
 	"github.com/onflow/crypto/hash"
 	"github.com/onflow/flow-core-contracts/lib/go/templates"
 	flowsdk "github.com/onflow/flow-go-sdk"
@@ -731,7 +730,7 @@ func bootstrapLedger(
 	error,
 ) {
 	accountKey := conf.GetServiceKey().AccountKey()
-	publicKey, _ := crypto.DecodePublicKey(
+	publicKey, _ := sdkcrypto.DecodePublicKey(
 		accountKey.SigAlgo,
 		accountKey.PublicKey.Encode(),
 	)
@@ -1584,7 +1583,7 @@ func (b *Blockchain) testAlternativeHashAlgo(sig flowgo.TransactionSignature, ms
 
 	key := acc.Keys[sig.KeyIndex]
 
-	for _, algo := range []hash.HashingAlgorithm{sdkcrypto.SHA2_256, sdkcrypto.SHA3_256} {
+	for _, algo := range []hash.HashingAlgorithm{hash.SHA2_256, hash.SHA3_256} {
 		if key.HashAlgo == algo {
 			continue // skip valid hash algo
 		}
