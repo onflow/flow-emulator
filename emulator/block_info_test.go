@@ -63,7 +63,7 @@ func TestBlockInfo(t *testing.T) {
 					}
 				}
 			`)).
-			SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+			SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 

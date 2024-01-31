@@ -44,12 +44,12 @@ import (
 	"github.com/onflow/cadence/runtime"
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/cadence/runtime/interpreter"
+	"github.com/onflow/crypto"
+	"github.com/onflow/crypto/hash"
 	"github.com/onflow/flow-core-contracts/lib/go/templates"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/access"
-	"github.com/onflow/flow-go/crypto"
-	"github.com/onflow/flow-go/crypto/hash"
 	"github.com/onflow/flow-go/engine"
 	"github.com/onflow/flow-go/fvm"
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
@@ -173,6 +173,13 @@ func WithStore(store storage.Store) Option {
 func WithSimpleAddresses() Option {
 	return func(c *config) {
 		c.SimpleAddresses = true
+	}
+}
+
+// WithLegacyUpgradeEnabled enables parsing of old contracts for legacy upgrade purposes
+func WithLegacyUpgradeEnabled() Option {
+	return func(c *config) {
+		c.LegacyContractUpgradeEnabled = true
 	}
 }
 
@@ -358,6 +365,7 @@ type config struct {
 	StorageLimitEnabled          bool
 	TransactionFeesEnabled       bool
 	ContractRemovalEnabled       bool
+	LegacyContractUpgradeEnabled bool
 	EVMEnabled                   bool
 	MinimumStorageReservation    cadence.UFix64
 	StorageMBPerFLOW             cadence.UFix64
@@ -471,6 +479,10 @@ func (b *Blockchain) Ping() error {
 	return nil
 }
 
+func (b *Blockchain) Runtime() runtime.Runtime {
+	return b.coverageReportedRuntime
+}
+
 func (b *Blockchain) GetChain() flowgo.Chain {
 	return b.vmCtx.Chain
 }
@@ -579,9 +591,10 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 	cadenceLogger := conf.Logger.Hook(CadenceHook{MainLogger: &conf.ServerLogger}).Level(zerolog.DebugLevel)
 
 	runtimeConfig := runtime.Config{
-		Debugger:           blockchain.debugger,
-		AttachmentsEnabled: true,
-		CoverageReport:     conf.CoverageReport,
+		Debugger:                     blockchain.debugger,
+		AttachmentsEnabled:           true,
+		LegacyContractUpgradeEnabled: conf.LegacyContractUpgradeEnabled,
+		CoverageReport:               conf.CoverageReport,
 	}
 	coverageReportedRuntime := &CoverageReportedRuntime{
 		Runtime:        runtime.NewInterpreterRuntime(runtimeConfig),
@@ -1737,7 +1750,7 @@ func (b *Blockchain) systemChunkTransaction() (*flowgo.TransactionBody, error) {
 
 	tx := flowgo.NewTransactionBody().
 		SetScript([]byte(script)).
-		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		AddAuthorizer(b.GetChain().ServiceAddress()).
 		SetPayer(b.GetChain().ServiceAddress()).
 		SetReferenceBlockID(b.pendingBlock.parentID)
@@ -1752,6 +1765,7 @@ func (b *Blockchain) executeSystemChunkTransaction() error {
 	}
 	ctx := fvm.NewContextFromParent(
 		b.vmCtx,
+		fvm.WithLogger(zerolog.Nop()),
 		fvm.WithAuthorizationChecksEnabled(false),
 		fvm.WithSequenceNumberCheckAndIncrementEnabled(false),
 		fvm.WithRandomSourceHistoryCallAllowed(true),

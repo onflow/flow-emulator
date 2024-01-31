@@ -53,7 +53,7 @@ func TestCoverageReport(t *testing.T) {
 
 	tx := flowsdk.NewTransaction().
 		SetScript([]byte(addTwoScript)).
-		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
