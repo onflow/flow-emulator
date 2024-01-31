@@ -31,7 +31,7 @@ RUN --mount=type=ssh \
     elif [ "$TARGETARCH" = "amd64" ] ; then \
         export CC=x86_64-linux-gnu-gcc; \
     fi; \
-    go build -ldflags "-extldflags -static" -o ./app ./cmd/emulator ; \
+    go build -ldflags "-extldflags -static" -o ./app ./cmd/emulator
 
 ## Add the binary to a fresh distroless image
 FROM gcr.io/distroless/static
