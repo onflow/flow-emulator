@@ -18,18 +18,20 @@ COPY . .
 
 ARG TARGETOS 
 ARG TARGETARCH
+ENV GO111MODULE=on \
+    CGO_ENABLED=1 \
+    CGO_FLAGS="-O2 -D__BLST_PORTABLE__" \
+    GOOS=$TARGETOS \
+    GOARCH=$TARGETARCH
 RUN --mount=type=ssh \
     --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     if [ "$TARGETARCH" = "arm64" ] ; then \
-    GO111MODULE=on CGO_ENABLED=1 CGO_FLAGS="-O2 -D__BLST_PORTABLE__" \
-    GOOS=$TARGETOS GOARCH=$TARGETARCH CC=aarch64-linux-gnu-gcc \
-    go build -ldflags "-extldflags -static" -o ./app ./cmd/emulator ; \
+        export CC=aarch64-linux-gnu-gcc; \
     elif [ "$TARGETARCH" = "amd64" ] ; then \
-    GO111MODULE=on CGO_ENABLED=1 CGO_FLAGS="-O2 -D__BLST_PORTABLE__" \
-    GOOS=$TARGETOS GOARCH=$TARGETARCH CC=x86_64-linux-gnu-gcc \
+        export CC=x86_64-linux-gnu-gcc; \
+    fi; \
     go build -ldflags "-extldflags -static" -o ./app ./cmd/emulator ; \
-    fi
 
 ## Add the binary to a fresh distroless image
 FROM gcr.io/distroless/static
