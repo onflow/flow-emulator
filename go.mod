@@ -13,7 +13,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.0.0-M4
+	github.com/onflow/cadence v1.0.0-preview.2.0.20240201184233-a301a4152f6b
 	github.com/onflow/crypto v0.25.0
 	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.1-0.20240125214229-b7a95136dd0d
 	github.com/onflow/flow-go v0.33.2-0.20240126211806-97279f96695f
@@ -118,7 +118,7 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-runewidth v0.0.14 // indirect
+	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect

@@ -24,8 +24,13 @@ import (
 	"github.com/onflow/flow-go/model/flow"
 )
 
-func Migrate(db *sql.DB) error {
-	payloads, payloadInfo, accounts, err := payloadsAndAccountsFromSnapshot(db)
+func Migrate(url string) error {
+	store, err := New(url)
+	if err != nil {
+		return err
+	}
+
+	payloads, payloadInfo, accounts, err := payloadsAndAccountsFromSnapshot(store.db)
 	if err != nil {
 		return err
 	}
@@ -44,7 +49,7 @@ func Migrate(db *sql.DB) error {
 		return err
 	}
 
-	return writePayloadsToSnapshot(db, payloads, payloadInfo)
+	return writePayloadsToSnapshot(store, payloads, payloadInfo)
 }
 
 func migrateLinkValues(
@@ -120,10 +125,12 @@ func newConsoleLogger() zerolog.Logger {
 }
 
 func writePayloadsToSnapshot(
-	db *sql.DB,
+	store *Store,
 	payloads []*ledger.Payload,
 	payloadInfoSet map[flow.RegisterID]payloadMetaInfo,
 ) error {
+
+	const storeName = storage.LedgerStoreName
 
 	for _, payload := range payloads {
 		key, err := payload.Key()
@@ -141,24 +148,26 @@ func writePayloadsToSnapshot(
 		value := payload.Value()
 
 		payloadInfo, ok := payloadInfoSet[registerId]
-		if !ok {
-			// Should be unreachable.
-			// Assumption is that registers can get modified/updated in-place,
-			// but no new registers are added or no exiting registers are removed during the migration.
-			// TODO: Verify if ^this is the case
-			return fmt.Errorf("cannot find payload meta info for register %s", registerId)
+		if ok {
+			_, err = store.db.Exec(
+				fmt.Sprintf(
+					"INSERT INTO %s (key, version, value, height) VALUES (?, ?, ?, ?) ON CONFLICT(key, version, height) DO UPDATE SET value=excluded.value",
+					storeName,
+				),
+				hex.EncodeToString(registerIdBytes),
+				payloadInfo.version,
+				hex.EncodeToString(value),
+				payloadInfo.height,
+			)
+		} else {
+			// if this is a new payload, use the current block height
+			err = store.SetBytes(
+				nil,
+				storeName,
+				registerIdBytes,
+				value,
+			)
 		}
-
-		_, err = db.Exec(
-			fmt.Sprintf(
-				"INSERT INTO %s (key, version, value, height) VALUES (?, ?, ?, ?) ON CONFLICT(key, version, height) DO UPDATE SET value=excluded.value",
-				storage.LedgerStoreName,
-			),
-			hex.EncodeToString(registerIdBytes),
-			payloadInfo.version,
-			hex.EncodeToString(value),
-			payloadInfo.height,
-		)
 
 		if err != nil {
 			return err
