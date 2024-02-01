@@ -111,8 +111,9 @@ func TestExecuteScript(t *testing.T) {
       }
     `
 	adapter := server.AccessAdapter()
-	result, err := adapter.ExecuteScriptAtLatestBlock(context.Background(), []byte(code), nil)
+	result, compUsed, err := adapter.ExecuteScriptAtLatestBlock(context.Background(), []byte(code), nil)
 	require.NoError(t, err)
+	require.NotZero(t, compUsed)
 
 	require.JSONEq(t, `{"type":"String","value":"Hello"}`, string(result))
 

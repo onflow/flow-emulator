@@ -258,28 +258,28 @@ func (a *AccessAdapter) GetAccountAtBlockHeight(
 	return account, nil
 }
 
-func convertScriptResult(result *types.ScriptResult, err error) ([]byte, error) {
+func convertScriptResult(result *types.ScriptResult, err error) ([]byte, uint64, error) {
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, uint64(0), status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	if !result.Succeeded() {
-		return nil, result.Error
+		return nil, result.ComputationUsed, result.Error
 	}
 
 	valueBytes, err := jsoncdc.Encode(result.Value)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, uint64(0), status.Error(codes.Internal, err.Error())
 	}
 
-	return valueBytes, nil
+	return valueBytes, result.ComputationUsed, nil
 }
 
 func (a *AccessAdapter) ExecuteScriptAtLatestBlock(
 	_ context.Context,
 	script []byte,
 	arguments [][]byte,
-) ([]byte, error) {
+) ([]byte, uint64, error) {
 	a.logger.Debug().Msg("👤  ExecuteScriptAtLatestBlock called")
 	result, err := a.emulator.ExecuteScript(script, arguments)
 	if err == nil {
@@ -293,7 +293,7 @@ func (a *AccessAdapter) ExecuteScriptAtBlockHeight(
 	blockHeight uint64,
 	script []byte,
 	arguments [][]byte,
-) ([]byte, error) {
+) ([]byte, uint64, error) {
 
 	a.logger.Debug().
 		Uint64("blockHeight", blockHeight).
@@ -311,7 +311,7 @@ func (a *AccessAdapter) ExecuteScriptAtBlockID(
 	blockID flowgo.Identifier,
 	script []byte,
 	arguments [][]byte,
-) ([]byte, error) {
+) ([]byte, uint64, error) {
 
 	a.logger.Debug().
 		Stringer("blockID", blockID).

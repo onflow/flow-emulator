@@ -481,7 +481,7 @@ func TestSDK(t *testing.T) {
 
 		stringValue, _ := cadence.NewString("42")
 		emulatorResult := types.ScriptResult{Value: stringValue}
-		expected, _ := convertScriptResult(&emulatorResult, nil)
+		expected, _, _ := convertScriptResult(&emulatorResult, nil)
 
 		flowBlock := &flowgo.Block{
 			Header: &flowgo.Header{
@@ -497,12 +497,13 @@ func TestSDK(t *testing.T) {
 
 		emu.EXPECT().
 			ExecuteScriptAtBlockHeight(script, arguments, uint64(42)).
-			Return(&emulatorResult, nil).
+			Return(&emulatorResult, uint64(10), nil).
 			Times(1)
 
-		result, err := adapter.ExecuteScriptAtLatestBlock(context.Background(), script, arguments)
+		result, compUsed, err := adapter.ExecuteScriptAtLatestBlock(context.Background(), script, arguments)
 		assert.Equal(t, expected, result)
 		assert.NoError(t, err)
+		assert.NotZero(t, compUsed)
 
 		//fail
 		emu.EXPECT().
@@ -512,12 +513,13 @@ func TestSDK(t *testing.T) {
 
 		emu.EXPECT().
 			ExecuteScriptAtBlockHeight(script, arguments, uint64(42)).
-			Return(nil, fmt.Errorf("some error")).
+			Return(nil, uint64(0), fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.ExecuteScriptAtLatestBlock(context.Background(), script, arguments)
+		result, compUsed, err = adapter.ExecuteScriptAtLatestBlock(context.Background(), script, arguments)
 		assert.Nil(t, result)
 		assert.Error(t, err)
+		assert.Zero(t, compUsed)
 
 	}))
 
@@ -529,28 +531,29 @@ func TestSDK(t *testing.T) {
 		height := uint64(42)
 		stringValue, _ := cadence.NewString("42")
 		emulatorResult := types.ScriptResult{Value: stringValue}
-		expected, _ := convertScriptResult(&emulatorResult, nil)
+		expected, _, _ := convertScriptResult(&emulatorResult, nil)
 
 		//success
 		emu.EXPECT().
 			ExecuteScriptAtBlockHeight(script, arguments, height).
-			Return(&emulatorResult, nil).
+			Return(&emulatorResult, uint64(10), nil).
 			Times(1)
 
-		result, err := adapter.ExecuteScriptAtBlockHeight(context.Background(), height, script, arguments)
+		result, compUsed, err := adapter.ExecuteScriptAtBlockHeight(context.Background(), height, script, arguments)
 		assert.Equal(t, expected, result)
 		assert.NoError(t, err)
+		assert.NotZero(t, compUsed)
 
 		//fail
 		emu.EXPECT().
 			ExecuteScriptAtBlockHeight(script, arguments, height).
-			Return(nil, fmt.Errorf("some error")).
+			Return(nil, uint64(0), fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.ExecuteScriptAtBlockHeight(context.Background(), height, script, arguments)
+		result, compUsed, err = adapter.ExecuteScriptAtBlockHeight(context.Background(), height, script, arguments)
 		assert.Nil(t, result)
 		assert.Error(t, err)
-
+		assert.Zero(t, compUsed)
 	}))
 
 	t.Run("ExecuteScriptAtBlockID", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
@@ -561,7 +564,7 @@ func TestSDK(t *testing.T) {
 		id := flowgosdk.Identifier{}
 		stringValue, _ := cadence.NewString("42")
 		emulatorResult := types.ScriptResult{Value: stringValue}
-		expected, _ := convertScriptResult(&emulatorResult, nil)
+		expected, _, _ := convertScriptResult(&emulatorResult, nil)
 
 		flowBlock := &flowgo.Block{
 			Header: &flowgo.Header{
@@ -577,12 +580,13 @@ func TestSDK(t *testing.T) {
 
 		emu.EXPECT().
 			ExecuteScriptAtBlockHeight(script, arguments, uint64(42)).
-			Return(&emulatorResult, nil).
+			Return(&emulatorResult, uint64(10), nil).
 			Times(1)
 
-		result, err := adapter.ExecuteScriptAtBlockID(context.Background(), id, script, arguments)
+		result, compUsed, err := adapter.ExecuteScriptAtBlockID(context.Background(), id, script, arguments)
 		assert.Equal(t, expected, result)
 		assert.NoError(t, err)
+		assert.NotZero(t, compUsed)
 
 		//fail
 		emu.EXPECT().
@@ -592,13 +596,13 @@ func TestSDK(t *testing.T) {
 
 		emu.EXPECT().
 			ExecuteScriptAtBlockHeight(script, arguments, uint64(42)).
-			Return(nil, fmt.Errorf("some error")).
+			Return(nil, uint64(0), fmt.Errorf("some error")).
 			Times(1)
 
-		result, err = adapter.ExecuteScriptAtBlockID(context.Background(), id, script, arguments)
+		result, compUsed, err = adapter.ExecuteScriptAtBlockID(context.Background(), id, script, arguments)
 		assert.Nil(t, result)
 		assert.Error(t, err)
-
+		assert.Zero(t, compUsed)
 	}))
 
 	t.Run("GetEventsForHeightRange", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {

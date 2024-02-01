@@ -303,10 +303,10 @@ func (b *SDKAdapter) ExecuteScriptAtLatestBlock(
 	ctx context.Context,
 	script []byte,
 	arguments [][]byte,
-) ([]byte, error) {
+) ([]byte, uint64, error) {
 	block, err := b.emulator.GetLatestBlock()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	return b.executeScriptAtBlock(script, arguments, block.Header.Height)
 }
@@ -317,7 +317,7 @@ func (b *SDKAdapter) ExecuteScriptAtBlockHeight(
 	blockHeight uint64,
 	script []byte,
 	arguments [][]byte,
-) ([]byte, error) {
+) ([]byte, uint64, error) {
 	return b.executeScriptAtBlock(script, arguments, blockHeight)
 }
 
@@ -327,28 +327,28 @@ func (b *SDKAdapter) ExecuteScriptAtBlockID(
 	blockID sdk.Identifier,
 	script []byte,
 	arguments [][]byte,
-) ([]byte, error) {
+) ([]byte, uint64, error) {
 	block, err := b.emulator.GetBlockByID(convert.SDKIdentifierToFlow(blockID))
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	return b.executeScriptAtBlock(script, arguments, block.Header.Height)
 }
 
 // executeScriptAtBlock is a helper for executing a script at a specific block
-func (b *SDKAdapter) executeScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) ([]byte, error) {
+func (b *SDKAdapter) executeScriptAtBlock(script []byte, arguments [][]byte, blockHeight uint64) ([]byte, uint64, error) {
 	result, err := b.emulator.ExecuteScriptAtBlockHeight(script, arguments, blockHeight)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if !result.Succeeded() {
-		return nil, result.Error
+		return nil, result.ComputationUsed, result.Error
 	}
 	valueBytes, err := jsoncdc.Encode(result.Value)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return valueBytes, nil
+	return valueBytes, result.ComputationUsed, nil
 }
 
 func (b *SDKAdapter) GetLatestProtocolStateSnapshot(_ context.Context) ([]byte, error) {
