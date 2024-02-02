@@ -20,6 +20,7 @@ package migration
 
 import (
 	"context"
+
 	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/storage/sqlite"
@@ -31,6 +32,8 @@ import (
 	"github.com/onflow/flow-go/ledger"
 	"github.com/onflow/flow-go/model/flow"
 )
+
+const chain = flow.Emulator
 
 func MigrateSystemContracts(store *sqlite.Store) error {
 	payloads, payloadInfo, accounts, err := util.PayloadsAndAccountsFromEmulatorSnapshot(store.DB())
@@ -56,7 +59,7 @@ func migrateSystemContracts(
 
 	migration := migrations.ChangeContractCodeMigration{}
 
-	systemContractChanges := migrations.SystemContractChanges(flow.Emulator)
+	systemContractChanges := migrations.SystemContractChanges(chain)
 
 	for _, contractChange := range systemContractChanges {
 		migration.RegisterContractChange(
@@ -78,5 +81,10 @@ func migrateSystemContracts(
 			return nil, err
 		}
 	}
+
+	// Add new contracts
+	newlyIntroducedContracts := migrations.NewlyAddedSystemContracts(chain)
+	payloads = append(payloads, newlyIntroducedContracts...)
+
 	return payloads, nil
 }
