@@ -35,13 +35,14 @@ import (
 
 const chain = flow.Emulator
 
-func MigrateSystemContracts(store *sqlite.Store) error {
+func MigrateSystemContracts(
+	store *sqlite.Store,
+	logger zerolog.Logger,
+) error {
 	payloads, payloadInfo, accounts, err := util.PayloadsAndAccountsFromEmulatorSnapshot(store.DB())
 	if err != nil {
 		return err
 	}
-
-	logger := NewConsoleLogger()
 
 	payloads, err = migrateSystemContracts(logger, accounts, payloads)
 	if err != nil {

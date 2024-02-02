@@ -19,9 +19,13 @@
 package migration
 
 import (
+	"io"
 	"os"
 	"testing"
 
+	"github.com/rs/zerolog"
+
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/onflow/flow-emulator/storage/sqlite"
@@ -51,11 +55,37 @@ func TestStateMigration(t *testing.T) {
 	store, err := sqlite.New(tempEmulatorStatePath)
 	require.NoError(t, err)
 
+	logWriter := &writer{}
+	logger := zerolog.New(logWriter).Level(zerolog.ErrorLevel)
+
 	// First migrate the system contracts
-	err = MigrateSystemContracts(store)
+	err = MigrateSystemContracts(store, logger)
 	require.NoError(t, err)
 
 	// Then migrate the values.
-	err = MigrateCadenceValues(store)
+	rwf := &NOOPReportWriterFactory{}
+	err = MigrateCadenceValues(store, rwf, logger)
 	require.NoError(t, err)
+
+	logs := logWriter.logs
+	require.Len(t, logs, 9)
+
+	// TODO: see why
+	assert.Contains(t, logs[0], "failed to load type: A.f8d6e0586b0a20c7.MetadataViews.Resolver")
+	assert.Contains(t, logs[1], "failed to load type: A.f8d6e0586b0a20c7.MetadataViews.Resolver")
+
+	for _, log := range logs[2:] {
+		assert.Contains(t, log, "cannot convert deprecated type")
+	}
+}
+
+type writer struct {
+	logs []string
+}
+
+var _ io.Writer = &writer{}
+
+func (w *writer) Write(p []byte) (n int, err error) {
+	w.logs = append(w.logs, string(p))
+	return len(p), nil
 }

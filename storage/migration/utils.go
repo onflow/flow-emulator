@@ -100,9 +100,9 @@ func NewConsoleLogger() zerolog.Logger {
 		Level(zerolog.InfoLevel)
 }
 
-type ReportWriterFactory struct{}
+type NOOPReportWriterFactory struct{}
 
-func (_m *ReportWriterFactory) ReportWriter(_ string) reporters.ReportWriter {
+func (*NOOPReportWriterFactory) ReportWriter(_ string) reporters.ReportWriter {
 	return &NOOPWriter{}
 }
 
@@ -110,7 +110,7 @@ type NOOPWriter struct{}
 
 var _ reporters.ReportWriter = &NOOPWriter{}
 
-func (r *NOOPWriter) Write(_ any) {
+func (*NOOPWriter) Write(_ any) {
 	// NO-OP
 }
 

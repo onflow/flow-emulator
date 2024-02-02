@@ -20,6 +20,7 @@ package migration
 
 import (
 	"context"
+
 	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/storage/sqlite"
@@ -28,19 +29,22 @@ import (
 	"github.com/onflow/cadence/runtime/interpreter"
 
 	"github.com/onflow/flow-go/cmd/util/ledger/migrations"
+	"github.com/onflow/flow-go/cmd/util/ledger/reporters"
 	"github.com/onflow/flow-go/cmd/util/ledger/util"
 	"github.com/onflow/flow-go/ledger"
 )
 
-func MigrateCadenceValues(store *sqlite.Store) error {
+func MigrateCadenceValues(
+	store *sqlite.Store,
+	rwf reporters.ReportWriterFactory,
+	logger zerolog.Logger,
+) error {
 	payloads, payloadInfo, accounts, err := util.PayloadsAndAccountsFromEmulatorSnapshot(store.DB())
 	if err != nil {
 		return err
 	}
 
-	rwf := &ReportWriterFactory{}
 	capabilityIDs := map[interpreter.AddressPath]interpreter.UInt64Value{}
-	logger := NewConsoleLogger()
 
 	payloads, err = migrateLinkValues(rwf, logger, capabilityIDs, accounts, payloads)
 	if err != nil {
@@ -56,7 +60,7 @@ func MigrateCadenceValues(store *sqlite.Store) error {
 }
 
 func migrateLinkValues(
-	rwf *ReportWriterFactory,
+	rwf reporters.ReportWriterFactory,
 	logger zerolog.Logger,
 	capabilityIDs map[interpreter.AddressPath]interpreter.UInt64Value,
 	accounts []common.Address,
@@ -81,7 +85,7 @@ func migrateLinkValues(
 }
 
 func migrateCadenceValues(
-	rwf *ReportWriterFactory,
+	rwf reporters.ReportWriterFactory,
 	logger zerolog.Logger,
 	capabilityIDs map[interpreter.AddressPath]interpreter.UInt64Value,
 	accounts []common.Address,
