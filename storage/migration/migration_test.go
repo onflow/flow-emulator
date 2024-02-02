@@ -37,15 +37,8 @@ func TestStateMigration(t *testing.T) {
 
 	tempEmulatorStatePath := tempEmulatorState.Name()
 
-	defer func() {
-		err := tempEmulatorState.Close()
-		require.NoError(t, err)
-	}()
-
-	defer func() {
-		err := os.Remove(tempEmulatorStatePath)
-		require.NoError(t, err)
-	}()
+	defer tempEmulatorState.Close()
+	defer os.Remove(tempEmulatorStatePath)
 
 	content, err := os.ReadFile(emulatorStateFile)
 	require.NoError(t, err)
@@ -58,6 +51,11 @@ func TestStateMigration(t *testing.T) {
 	store, err := sqlite.New(tempEmulatorStatePath)
 	require.NoError(t, err)
 
+	// First migrate the system contracts
+	err = MigrateSystemContracts(store)
+	require.NoError(t, err)
+
+	// Then migrate the values.
 	err = MigrateCadenceValues(store)
 	require.NoError(t, err)
 }
