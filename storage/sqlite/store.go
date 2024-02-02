@@ -31,6 +31,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	_ "github.com/glebarez/go-sqlite"
 
@@ -53,6 +54,7 @@ type Store struct {
 	url           string
 	mu            sync.RWMutex
 	snapshotNames []string
+	id            int64
 }
 
 // New returns a new in-memory Store implementation.
@@ -82,6 +84,7 @@ func New(url string) (store *Store, err error) {
 	store = &Store{
 		db:  db,
 		url: url,
+		id:  time.Now().UnixMilli(),
 	}
 
 	store.DataSetter = store
@@ -173,7 +176,7 @@ func (s *Store) LoadSnapshot(name string) error {
 
 	var dbFile string
 	if s.url == InMemory {
-		dbFile = fmt.Sprintf("file:%s?mode=memory&cache=shared", name)
+		dbFile = fmt.Sprintf("file:%s%d?mode=memory&cache=shared", name, s.id)
 		db, err := sql.Open("sqlite", dbFile)
 		if err != nil {
 			return err
@@ -218,10 +221,10 @@ func (s *Store) CreateSnapshot(name string) error {
 		return fmt.Errorf("snapshot is not supported with current configuration")
 	}
 
-	var dbfile string
+	var dbFile string
 	if s.url == InMemory {
-		dbfile = fmt.Sprintf("file:%s?mode=memory&cache=shared", name)
-		db, err := sql.Open("sqlite", dbfile)
+		dbFile = fmt.Sprintf("file:%s%d?mode=memory&cache=shared", name, s.id)
+		db, err := sql.Open("sqlite", dbFile)
 		if err != nil {
 			return err
 		}
@@ -235,10 +238,10 @@ func (s *Store) CreateSnapshot(name string) error {
 		}
 
 	} else {
-		dbfile = filepath.Join(s.url, snapshotPrefix+name)
+		dbFile = filepath.Join(s.url, snapshotPrefix+name)
 	}
 
-	_, err := s.db.Exec(fmt.Sprintf("VACUUM main INTO '%s'", dbfile))
+	_, err := s.db.Exec(fmt.Sprintf("VACUUM main INTO '%s'", dbFile))
 	if err != nil {
 		return err
 	}
