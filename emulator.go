@@ -17,7 +17,9 @@
  */
 package emulator
 
-import "github.com/onflow/flow-emulator/emulator"
+import (
+	"github.com/onflow/flow-emulator/emulator"
+)
 
 func New(opts ...emulator.Option) (emulator.Emulator, error) {
 	return emulator.New(opts...)
