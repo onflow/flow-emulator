@@ -33,7 +33,7 @@ jobs:
           ${{ runner.os }}-go-
     - run: make ci
     - name: "Coverage Report"
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./cover.out
         flags: unittests
