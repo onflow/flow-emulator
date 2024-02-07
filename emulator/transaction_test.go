@@ -33,7 +33,6 @@ import (
 	"github.com/onflow/flow-emulator/convert"
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-go-sdk"
-	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/rs/zerolog"
 
@@ -46,6 +45,7 @@ import (
 	"github.com/onflow/flow-go-sdk/test"
 	flowgocrypto "github.com/onflow/flow-go/crypto/hash"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
