@@ -33,6 +33,7 @@ import (
 	"github.com/onflow/flow-emulator/convert"
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-go-sdk"
+	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/rs/zerolog"
 
@@ -43,8 +44,8 @@ import (
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go-sdk/test"
+	flowgocrypto "github.com/onflow/flow-go/crypto/hash"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
-	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -401,7 +402,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 
 		pk, _ := convert.SDKAccountKeyToFlow(b.ServiceKey().AccountKey())
 		assert.Equal(t, types.NewTransactionInvalidHashAlgo(
-			pk, convert.SDKAddressToFlow(b.ServiceKey().Address), crypto.SHA2_256,
+			pk, convert.SDKAddressToFlow(b.ServiceKey().Address), flowgocrypto.SHA2_256,
 		), result.Debug)
 	})
 
@@ -463,7 +464,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 			Revoked:   false,
 		}
 		assert.Equal(t, types.NewTransactionInvalidHashAlgo(
-			key, convert.SDKAddressToFlow(accountAddressB), crypto.SHA2_256,
+			key, convert.SDKAddressToFlow(accountAddressB), flowgocrypto.SHA2_256,
 		), result.Debug)
 	})
 

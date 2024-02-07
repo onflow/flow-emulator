@@ -28,6 +28,7 @@ import (
 	"github.com/onflow/flow-emulator/types"
 	"github.com/onflow/flow-go/engine/access/state_stream"
 	"github.com/onflow/flow-go/engine/access/state_stream/backend"
+	"github.com/onflow/flow-go/engine/access/subscription"
 	"github.com/onflow/flow-go/engine/common/rpc"
 	"github.com/onflow/flow-go/storage"
 	"google.golang.org/grpc/codes"
@@ -55,9 +56,9 @@ func NewStateStreamBackend(blockchain *emulator.Blockchain, log zerolog.Logger) 
 	return &StateStreamBackend{
 		blockchain:       blockchain,
 		log:              log,
-		sendTimeout:      state_stream.DefaultSendTimeout,
-		responseLimit:    state_stream.DefaultResponseLimit,
-		sendBufferSize:   state_stream.DefaultSendBufferSize,
+		sendTimeout:      subscription.DefaultSendTimeout,
+		responseLimit:    subscription.DefaultResponseLimit,
+		sendBufferSize:   subscription.DefaultSendBufferSize,
 		getExecutionData: getExecutionDataFunc(blockchain),
 		getStartHeight:   getStartHeightFunc(blockchain),
 	}
@@ -183,15 +184,15 @@ func (b *StateStreamBackend) GetExecutionDataByBlockID(ctx context.Context, bloc
 	return executionData.BlockExecutionData, nil
 }
 
-func (b *StateStreamBackend) SubscribeExecutionData(ctx context.Context, startBlockID flow.Identifier, startHeight uint64) state_stream.Subscription {
+func (b *StateStreamBackend) SubscribeExecutionData(ctx context.Context, startBlockID flow.Identifier, startHeight uint64) subscription.Subscription {
 	nextHeight, err := b.getStartHeight(startBlockID, startHeight)
 	if err != nil {
-		return backend.NewFailedSubscription(err, "could not get start height")
+		return subscription.NewFailedSubscription(err, "could not get start height")
 	}
 
-	sub := backend.NewHeightBasedSubscription(b.sendBufferSize, nextHeight, b.getResponse)
+	sub := subscription.NewHeightBasedSubscription(b.sendBufferSize, nextHeight, b.getResponse)
 
-	go backend.NewStreamer(b.log, b.blockchain.Broadcaster(), b.sendTimeout, b.responseLimit, sub).Stream(ctx)
+	go subscription.NewStreamer(b.log, b.blockchain.Broadcaster(), b.sendTimeout, b.responseLimit, sub).Stream(ctx)
 
 	return sub
 }
@@ -211,20 +212,20 @@ func (b *StateStreamBackend) getResponse(ctx context.Context, height uint64) (in
 type GetExecutionDataFunc func(context.Context, uint64) (*execution_data.BlockExecutionDataEntity, error)
 type GetStartHeightFunc func(flow.Identifier, uint64) (uint64, error)
 
-func (b StateStreamBackend) SubscribeEvents(ctx context.Context, startBlockID flow.Identifier, startHeight uint64, filter state_stream.EventFilter) state_stream.Subscription {
+func (b StateStreamBackend) SubscribeEvents(ctx context.Context, startBlockID flow.Identifier, startHeight uint64, filter state_stream.EventFilter) subscription.Subscription {
 	nextHeight, err := b.getStartHeight(startBlockID, startHeight)
 	if err != nil {
-		return backend.NewFailedSubscription(err, "could not get start height")
+		return subscription.NewFailedSubscription(err, "could not get start height")
 	}
 
-	sub := backend.NewHeightBasedSubscription(b.sendBufferSize, nextHeight, b.getResponseFactory(filter))
+	sub := subscription.NewHeightBasedSubscription(b.sendBufferSize, nextHeight, b.getResponseFactory(filter))
 
-	go backend.NewStreamer(b.log, b.blockchain.Broadcaster(), b.sendTimeout, b.responseLimit, sub).Stream(ctx)
+	go subscription.NewStreamer(b.log, b.blockchain.Broadcaster(), b.sendTimeout, b.responseLimit, sub).Stream(ctx)
 
 	return sub
 }
 
-func (b StateStreamBackend) getResponseFactory(filter state_stream.EventFilter) backend.GetDataByHeightFunc {
+func (b StateStreamBackend) getResponseFactory(filter state_stream.EventFilter) subscription.GetDataByHeightFunc {
 	return func(ctx context.Context, height uint64) (interface{}, error) {
 		executionData, err := b.getExecutionData(ctx, height)
 		if err != nil {

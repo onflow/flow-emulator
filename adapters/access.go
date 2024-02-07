@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/onflow/flow-go/engine/access/subscription"
 	"github.com/onflow/flow/protobuf/go/flow/entities"
 
 	jsoncdc "github.com/onflow/cadence/encoding/json"
@@ -491,6 +492,10 @@ func (a *AccessAdapter) GetNodeVersionInfo(
 	error,
 ) {
 	return nil, fmt.Errorf("not supported")
+}
+
+func (a *AccessAdapter) SubscribeBlocks(_ context.Context, _ flowgo.Identifier, _ uint64, _ flowgo.BlockStatus) subscription.Subscription {
+	return nil
 }
 
 func ConvertCCFEventsToJsonEvents(events []flowgo.Event) ([]flowgo.Event, error) {
