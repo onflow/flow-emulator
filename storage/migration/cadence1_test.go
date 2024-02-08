@@ -25,13 +25,12 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/onflow/flow-emulator/storage/sqlite"
 )
 
-func TestStateMigration(t *testing.T) {
+func TestCadence1Migration(t *testing.T) {
 	const emulatorStateFile = "test-data/emulator_state_cadence_v0.42.6"
 
 	// Work on a temp copy of the state,
@@ -58,25 +57,12 @@ func TestStateMigration(t *testing.T) {
 	logWriter := &writer{}
 	logger := zerolog.New(logWriter).Level(zerolog.ErrorLevel)
 
-	// First migrate the system contracts
-	err = MigrateSystemContracts(store, logger)
-	require.NoError(t, err)
-
 	// Then migrate the values.
 	rwf := &NOOPReportWriterFactory{}
-	err = MigrateCadenceValues(store, rwf, logger)
+	err = MigrateCadence1(store, rwf, logger)
 	require.NoError(t, err)
 
-	logs := logWriter.logs
-	require.Len(t, logs, 9)
-
-	// TODO: see why
-	assert.Contains(t, logs[0], "failed to load type: A.f8d6e0586b0a20c7.MetadataViews.Resolver")
-	assert.Contains(t, logs[1], "failed to load type: A.f8d6e0586b0a20c7.MetadataViews.Resolver")
-
-	for _, log := range logs[2:] {
-		assert.Contains(t, log, "cannot convert deprecated type")
-	}
+	require.Empty(t, logWriter.logs)
 }
 
 type writer struct {
