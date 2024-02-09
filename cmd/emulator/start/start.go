@@ -89,7 +89,7 @@ type serviceKeyFunc func(
 ) (crypto.PrivateKey, crypto.SignatureAlgorithm, crypto.HashAlgorithm)
 
 type EmulatorOption struct {
-	OnStart func()
+	OnStart func(*server.EmulatorServer)
 }
 
 func Cmd(getServiceKey serviceKeyFunc, opts ...EmulatorOption) *cobra.Command {
@@ -215,7 +215,7 @@ func Cmd(getServiceKey serviceKeyFunc, opts ...EmulatorOption) *cobra.Command {
 
 				for _, opt := range opts {
 					if opt.OnStart != nil {
-						opt.OnStart()
+						opt.OnStart(emu)
 					}
 				}
 			} else {
