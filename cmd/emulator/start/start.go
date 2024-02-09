@@ -88,7 +88,11 @@ type serviceKeyFunc func(
 	hashAlgo crypto.HashAlgorithm,
 ) (crypto.PrivateKey, crypto.SignatureAlgorithm, crypto.HashAlgorithm)
 
-func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
+type EmulatorOption struct {
+	OnStart func()
+}
+
+func Cmd(getServiceKey serviceKeyFunc, opts ...EmulatorOption) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Starts the Flow emulator server",
@@ -208,6 +212,12 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 			emu := server.NewEmulatorServer(logger, serverConf)
 			if emu != nil {
 				emu.Start()
+
+				for _, opt := range opts {
+					if opt.OnStart != nil {
+						opt.OnStart()
+					}
+				}
 			} else {
 				Exit(-1, "")
 			}
