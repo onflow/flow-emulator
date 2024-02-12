@@ -247,7 +247,7 @@ func TestLedger(t *testing.T) {
 
 		var blockHeight uint64 = 1
 
-		const owner = ""
+		var owner = flow.HexToAddress("0x01")
 		const key = "foo"
 		expected := []byte("bar")
 
@@ -284,7 +284,7 @@ func TestLedger(t *testing.T) {
 			require.NoError(t, os.RemoveAll(dir))
 		}()
 
-		const owner = ""
+		var owner = flow.HexToAddress("0x01")
 
 		// Create a list of ledgers, where the ledger at index i has
 		// keys (i+2)-1->(i+2)+1 set to value i-1.

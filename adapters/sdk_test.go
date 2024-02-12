@@ -23,16 +23,18 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/golang/mock/gomock"
+	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
+
 	"github.com/onflow/cadence"
-	"github.com/onflow/flow-emulator/convert"
-	"github.com/onflow/flow-emulator/emulator/mocks"
-	"github.com/onflow/flow-emulator/types"
 	flowgosdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
-	"github.com/rs/zerolog"
-	"github.com/stretchr/testify/assert"
+
+	"github.com/onflow/flow-emulator/convert"
+	"github.com/onflow/flow-emulator/emulator/mocks"
+	"github.com/onflow/flow-emulator/types"
 )
 
 func sdkTest(f func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator)) func(t *testing.T) {
