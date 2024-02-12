@@ -208,5 +208,3 @@ require (
 	nhooyr.io/websocket v1.8.7 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
-
-// replace github.com/onflow/flow-go => ../flow-go
