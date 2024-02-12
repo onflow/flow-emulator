@@ -278,7 +278,7 @@ func (s *Store) GetBytesAtVersion(ctx context.Context, store string, key []byte,
 	defer s.mu.Unlock()
 	rows, err := s.db.Query(
 		fmt.Sprintf(
-			"SELECT value from %s  WHERE key = ? and version <= ? order by version desc LIMIT 1",
+			"SELECT value from %s WHERE key = ? and version <= ? order by version desc LIMIT 1",
 			store,
 		),
 		hex.EncodeToString(key),
