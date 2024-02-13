@@ -342,3 +342,30 @@ func (s *Store) Close() error {
 
 	return nil
 }
+
+// Below are needed for the state migrations only.
+
+func (s *Store) DB() *sql.DB {
+	return s.db
+}
+
+func (s *Store) SetBytesWithVersionAndHeight(_ context.Context, store string, key []byte, value []byte, version, height uint64) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	_, err := s.db.Exec(
+		fmt.Sprintf(
+			"INSERT INTO %s (key, version, value, height) VALUES (?, ?, ?, ?) ON CONFLICT(key, version, height) DO UPDATE SET value=excluded.value",
+			store,
+		),
+		hex.EncodeToString(key),
+		version,
+		hex.EncodeToString(value),
+		height,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
