@@ -39,6 +39,11 @@ func MigrateCadence1(
 		return err
 	}
 
+	// If there are no payloads, there is nothing to migrate.
+	if len(payloads) == 0 {
+		return nil
+	}
+
 	// TODO: >1 breaks atree storage map iteration
 	//   and requires LinkValueMigration.LinkValueMigration to be thread-safe
 	const nWorker = 1

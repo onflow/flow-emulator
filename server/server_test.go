@@ -160,3 +160,14 @@ func TestCustomChainID(t *testing.T) {
 
 	require.Equal(t, "f4527793ee68aede", serviceAccount)
 }
+
+func TestMigrateFlag(t *testing.T) {
+	logger := zerolog.Nop()
+
+	conf := &Config{Migrate: true, DBPath: "test_migrate"}
+	server := NewEmulatorServer(&logger, conf)
+	defer server.Stop()
+
+	require.NotNil(t, server)
+	require.True(t, server.config.Migrate)
+}

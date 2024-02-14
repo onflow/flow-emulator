@@ -75,6 +75,7 @@ type Config struct {
 	CoverageReportingEnabled     bool          `default:"false" flag:"coverage-reporting" info:"enable Cadence code coverage reporting"`
 	LegacyContractUpgradeEnabled bool          `default:"false" flag:"legacy-upgrade" info:"enable Cadence legacy contract upgrade"`
 	EVMEnabled                   bool          `default:"false" flag:"evm-enabled" info:"enable EVM support"`
+	Migrate                      bool          `default:"false" flag:"migrate" info:"migrate the database to the latest version"`
 	// todo temporarily disabled until remote register endpoint is re-enabled
 	// StartBlockHeight         uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
 }
@@ -203,6 +204,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				CoverageReportingEnabled:     conf.CoverageReportingEnabled,
 				LegacyContractUpgradeEnabled: conf.LegacyContractUpgradeEnabled,
 				EVMEnabled:                   conf.EVMEnabled,
+				Migrate:                      conf.Migrate,
 				// todo temporarily disabled until remote register endpoint is re-enabled
 				// StartBlockHeight:          conf.StartBlockHeight,
 			}

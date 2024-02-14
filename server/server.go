@@ -38,6 +38,7 @@ import (
 	"github.com/onflow/flow-emulator/server/debugger"
 	"github.com/onflow/flow-emulator/server/utils"
 	"github.com/onflow/flow-emulator/storage"
+	"github.com/onflow/flow-emulator/storage/migration"
 	"github.com/onflow/flow-emulator/storage/sqlite"
 	"github.com/onflow/flow-emulator/storage/util"
 )
@@ -140,6 +141,8 @@ type Config struct {
 	LegacyContractUpgradeEnabled bool
 	// StartBlockHeight is the height at which to start the emulator.
 	StartBlockHeight uint64
+	// Migrate is a flag to indicate if the database should be migrated to Cadence 1.0
+	Migrate bool
 }
 
 type listener interface {
@@ -150,7 +153,7 @@ type listener interface {
 func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	conf = sanitizeConfig(conf)
 
-	store, err := configureStorage(conf)
+	store, err := configureStorage(conf, *logger)
 	if err != nil {
 		logger.Error().Err(err).Msg("❗  Failed to configure storage")
 		return nil
@@ -310,7 +313,7 @@ func (s *EmulatorServer) Stop() {
 	s.logger.Info().Msg("🛑  Server stopped")
 }
 
-func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
+func configureStorage(conf *Config, logger zerolog.Logger) (storageProvider storage.Store, err error) {
 	if conf.RedisURL != "" {
 		storageProvider, err = util.NewRedisStorage(conf.RedisURL)
 		if err != nil {
@@ -353,6 +356,18 @@ func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
 		}
 		if !snapshotProvider.SupportSnapshotsWithCurrentConfig() {
 			return nil, fmt.Errorf("selected storage provider does not support snapshots with current configuration")
+		}
+	}
+
+	if conf.Migrate {
+		sqliteStore, isSqliteStore := storageProvider.(*sqlite.Store)
+		if !isSqliteStore {
+			return nil, fmt.Errorf("selected storage provider does not support migrations")
+		}
+		rwf := &migration.NOOPReportWriterFactory{}
+		err = migration.MigrateCadence1(sqliteStore, rwf, logger)
+		if err != nil {
+			return nil, err
 		}
 	}
 
