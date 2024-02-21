@@ -46,29 +46,18 @@ type Store struct {
 	accessClient    access.AccessAPIClient
 	grpcConn        *grpc.ClientConn
 	host            string
+	chainID         flowgo.ChainID
 	forkHeight      uint64
+	logger          *zerolog.Logger
 }
 
 type Option func(*Store)
 
-// WithChainID sets a chain ID and is used to determine which archive node to use.
-func WithChainID(ID flowgo.ChainID) Option {
-	return func(store *Store) {
-		archiveHosts := map[flowgo.ChainID]string{
-			flowgo.Mainnet: "access-008.mainnet24.nodes.onflow.org:9000",
-			flowgo.Testnet: "access-002.devnet49.nodes.onflow.org:9000",
-			// flowgo.Mainnet: "archive.mainnet.nodes.onflow.org:9000",
-			// flowgo.Testnet: "archive.testnet.nodes.onflow.org:9000",
-		}
-
-		store.host = archiveHosts[ID]
-	}
-}
-
-// WithHost sets archive node host.
-func WithHost(host string) Option {
+// WithHost sets access node host.
+func WithHost(host string, chainID flowgo.ChainID) Option {
 	return func(store *Store) {
 		store.host = host
+		store.chainID = chainID
 	}
 }
 
@@ -118,6 +107,15 @@ func New(provider *sqlite.Store, options ...Option) (*Store, error) {
 		store.grpcConn = conn
 		store.executionClient = executiondata.NewExecutionDataAPIClient(conn)
 		store.accessClient = access.NewAccessAPIClient(conn)
+	}
+
+	params, err := store.accessClient.GetNetworkParameters(context.Background(), &access.GetNetworkParametersRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("could not get network parameters: %w", err)
+	}
+
+	if params.ChainId != store.chainID.String() {
+		return nil, fmt.Errorf("chain ID of access node does not match chain ID provided in config: %s != %s", params.ChainId, store.chainID)
 	}
 
 	if err := store.initializeStartBlock(context.Background()); err != nil {
