@@ -74,8 +74,8 @@ type Config struct {
 	SqliteURL                string        `default:"" flag:"sqlite-url" info:"sqlite db URL for persisting sqlite storage backend "`
 	CoverageReportingEnabled bool          `default:"false" flag:"coverage-reporting" info:"enable Cadence code coverage reporting"`
 	EVMEnabled               bool          `default:"false" flag:"evm-enabled" info:"enable EVM support"`
-	// todo temporarily disabled until remote register endpoint is re-enabled
-	// StartBlockHeight         uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
+	StartBlockHeight         uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
+	RPCHost                  string        `default:"" flag:"rpc-host" info:"rpc host to query when forking Mainnet or Testnet"`
 }
 
 const EnvPrefix = "FLOW"
@@ -133,10 +133,13 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				Exit(1, err.Error())
 			}
 
-			// todo temporarily disabled until remote register endpoint is re-enabled
-			//if conf.StartBlockHeight > 0 && flowChainID != flowgo.Mainnet && flowChainID != flowgo.Testnet {
-			//	Exit(1, "❗  --start-block-height is only valid when forking Mainnet or Testnet")
-			//}
+			if conf.StartBlockHeight > 0 && flowChainID != flowgo.Mainnet && flowChainID != flowgo.Testnet {
+				Exit(1, "❗  --start-block-height is only valid when forking Mainnet or Testnet")
+			}
+
+			if (flowChainID == flowgo.Mainnet || flowChainID == flowgo.Testnet) && conf.RPCHost == "" {
+				Exit(1, "❗  --rpc-host must be provided when forking Mainnet or Testnet")
+			}
 
 			serviceAddress := sdk.ServiceAddress(sdk.ChainID(flowChainID))
 			if conf.SimpleAddresses {
@@ -201,8 +204,8 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				SqliteURL:                 conf.SqliteURL,
 				CoverageReportingEnabled:  conf.CoverageReportingEnabled,
 				EVMEnabled:                conf.EVMEnabled,
-				// todo temporarily disabled until remote register endpoint is re-enabled
-				// StartBlockHeight:          conf.StartBlockHeight,
+				StartBlockHeight:          conf.StartBlockHeight,
+				RPCHost:                   conf.RPCHost,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
