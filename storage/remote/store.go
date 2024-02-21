@@ -240,12 +240,15 @@ func (s *Store) LedgerByHeight(
 	blockHeight uint64,
 ) (snapshot.StorageSnapshot, error) {
 	return snapshot.NewReadFuncStorageSnapshot(func(id flowgo.RegisterID) (flowgo.RegisterValue, error) {
+		// create a copy so updating it doesn't affect future calls
+		lookupHeight := blockHeight
+
 		// first try to see if we have local stored ledger
 		value, err := s.DefaultStore.GetBytesAtVersion(
 			ctx,
 			s.KeyGenerator.Storage(storage.LedgerStoreName),
 			[]byte(id.String()),
-			blockHeight,
+			lookupHeight,
 		)
 		if err == nil && value != nil {
 			return value, nil
@@ -256,13 +259,13 @@ func (s *Store) LedgerByHeight(
 
 		// if we don't have it, get it from the rpc host
 		// for consistency, always use data at the forked height for future blocks
-		if blockHeight > s.forkHeight {
-			blockHeight = s.forkHeight
+		if lookupHeight > s.forkHeight {
+			lookupHeight = s.forkHeight
 		}
 
 		registerID := convert.RegisterIDToMessage(flowgo.RegisterID{Key: id.Key, Owner: id.Owner})
 		response, err := s.executionClient.GetRegisterValues(ctx, &executiondata.GetRegisterValuesRequest{
-			BlockHeight: blockHeight,
+			BlockHeight: lookupHeight,
 			RegisterIds: []*entities.RegisterID{registerID},
 		})
 		if err != nil {
@@ -281,7 +284,7 @@ func (s *Store) LedgerByHeight(
 			s.KeyGenerator.Storage(storage.LedgerStoreName),
 			[]byte(id.String()),
 			value,
-			blockHeight)
+			lookupHeight)
 		if err != nil {
 			return nil, fmt.Errorf("could not cache ledger value: %w", err)
 		}
