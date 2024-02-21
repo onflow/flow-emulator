@@ -53,11 +53,18 @@ type Store struct {
 
 type Option func(*Store)
 
-// WithHost sets access node host.
-func WithHost(host string, chainID flowgo.ChainID) Option {
+// WithRPCHost sets access/observer node host.
+func WithRPCHost(host string, chainID flowgo.ChainID) Option {
 	return func(store *Store) {
 		store.host = host
 		store.chainID = chainID
+	}
+}
+
+// WithStartBlockHeight sets the start height for the store.
+func WithStartBlockHeight(height uint64) Option {
+	return func(store *Store) {
+		store.forkHeight = height
 	}
 }
 
@@ -71,13 +78,6 @@ func WithClient(
 	return func(store *Store) {
 		store.executionClient = executionClient
 		store.accessClient = accessClient
-	}
-}
-
-// WithStartBlockHeight sets the start height for the store.
-func WithStartBlockHeight(height uint64) Option {
-	return func(store *Store) {
-		store.forkHeight = height
 	}
 }
 
