@@ -151,7 +151,7 @@ type listener interface {
 func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	conf = sanitizeConfig(conf)
 
-	store, err := configureStorage(conf)
+	store, err := configureStorage(logger, conf)
 	if err != nil {
 		logger.Error().Err(err).Msg("❗  Failed to configure storage")
 		return nil
@@ -310,7 +310,7 @@ func (s *EmulatorServer) Stop() {
 	s.logger.Info().Msg("🛑  Server stopped")
 }
 
-func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
+func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider storage.Store, err error) {
 	if conf.RedisURL != "" {
 		storageProvider, err = util.NewRedisStorage(conf.RedisURL)
 		if err != nil {
@@ -360,7 +360,7 @@ func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
 			opts = append(opts, remote.WithStartBlockHeight(conf.StartBlockHeight))
 		}
 
-		provider, err := remote.New(baseProvider, opts...)
+		provider, err := remote.New(baseProvider, logger, opts...)
 		if err != nil {
 			return nil, err
 		}

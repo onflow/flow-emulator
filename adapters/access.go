@@ -264,7 +264,7 @@ func convertScriptResult(result *types.ScriptResult, err error) ([]byte, error) 
 	}
 
 	if !result.Succeeded() {
-		return nil, result.Error
+		return nil, status.Error(codes.InvalidArgument, result.Error.Error())
 	}
 
 	valueBytes, err := jsoncdc.Encode(result.Value)
@@ -280,7 +280,14 @@ func (a *AccessAdapter) ExecuteScriptAtLatestBlock(
 	script []byte,
 	arguments [][]byte,
 ) ([]byte, error) {
-	a.logger.Debug().Msg("👤  ExecuteScriptAtLatestBlock called")
+	latestBlock, err := a.emulator.GetLatestBlock()
+	if err != nil {
+		return nil, err
+	}
+	a.logger.Debug().
+		Uint64("blockHeight", latestBlock.Header.Height).
+		Msg("👤  ExecuteScriptAtLatestBlock called")
+
 	result, err := a.emulator.ExecuteScript(script, arguments)
 	if err == nil {
 		utils.PrintScriptResult(a.logger, result)
