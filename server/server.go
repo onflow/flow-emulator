@@ -355,14 +355,10 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 			return nil, fmt.Errorf("only sqlite is supported with forked networks")
 		}
 
-		opts := []remote.Option{
-			remote.WithHost(conf.RPCHost, conf.ChainID),
-		}
-		if conf.StartBlockHeight > 0 {
-			opts = append(opts, remote.WithStartBlockHeight(conf.StartBlockHeight))
-		}
-
-		provider, err := remote.New(baseProvider, logger, opts...)
+		provider, err := remote.New(baseProvider, logger,
+			remote.WithRPCHost(conf.RPCHost, conf.ChainID),
+			remote.WithStartBlockHeight(conf.StartBlockHeight),
+		)
 		if err != nil {
 			return nil, err
 		}
