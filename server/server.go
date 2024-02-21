@@ -138,6 +138,8 @@ type Config struct {
 	CoverageReportingEnabled bool
 	// LegacyUpgradeEnabled enables/disables Cadence legacy contracts upgrades
 	LegacyContractUpgradeEnabled bool
+	// RPCHost is the address of the access node to use when using a forked network.
+	RPCHost string
 	// StartBlockHeight is the height at which to start the emulator.
 	StartBlockHeight uint64
 }
@@ -354,7 +356,7 @@ func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
 		}
 
 		opts := []remote.Option{
-			remote.WithChainID(conf.ChainID),
+			remote.WithHost(conf.RPCHost, conf.ChainID),
 		}
 		if conf.StartBlockHeight > 0 {
 			opts = append(opts, remote.WithStartBlockHeight(conf.StartBlockHeight))
