@@ -68,7 +68,7 @@ func WithStartBlockHeight(height uint64) Option {
 	}
 }
 
-// WithClient can set an archive node client
+// WithClient can set an rpc host client
 //
 // This is mostly use for testing.
 func WithClient(
@@ -93,7 +93,7 @@ func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*St
 
 	if store.executionClient == nil {
 		if store.host == "" {
-			return nil, fmt.Errorf("archive node host must be provided")
+			return nil, fmt.Errorf("rpc host must be provided")
 		}
 
 		conn, err := grpc.Dial(
@@ -102,7 +102,7 @@ func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*St
 			grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1024*1024*1024)),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("could not connect to archive node: %w", err)
+			return nil, fmt.Errorf("could not connect to rpc host: %w", err)
 		}
 
 		store.grpcConn = conn
@@ -116,7 +116,7 @@ func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*St
 	}
 
 	if params.ChainId != store.chainID.String() {
-		return nil, fmt.Errorf("chain ID of access node does not match chain ID provided in config: %s != %s", params.ChainId, store.chainID)
+		return nil, fmt.Errorf("chain ID of rpc host does not match chain ID provided in config: %s != %s", params.ChainId, store.chainID)
 	}
 
 	if err := store.initializeStartBlock(context.Background()); err != nil {
@@ -142,7 +142,7 @@ func (s *Store) initializeStartBlock(ctx context.Context) error {
 		return fmt.Errorf("could not get forked block height: %w", err)
 	}
 
-	// use the current latest block from the archive node if no height was provided
+	// use the current latest block from the rpc host if no height was provided
 	if s.forkHeight == 0 {
 		resp, err := s.accessClient.GetLatestBlockHeader(ctx, &access.GetLatestBlockHeaderRequest{IsSealed: true})
 		if err != nil {
@@ -156,7 +156,7 @@ func (s *Store) initializeStartBlock(ctx context.Context) error {
 		Str("host", s.host).
 		Msg("Using fork height")
 
-	// store the initial fork height. any future queries for data on the archive node will be fixed
+	// store the initial fork height. any future queries for data on the rpc host will be fixed
 	// to this height.
 	err = s.Store.StoreForkedBlockHeight(ctx, s.forkHeight)
 	if err != nil {
@@ -254,7 +254,7 @@ func (s *Store) LedgerByHeight(
 		// FVM expects an empty byte array if the value is not found
 		value = []byte{}
 
-		// if we don't have it, get it from the archive node
+		// if we don't have it, get it from the rpc host
 		// for consistency, always use data at the forked height for future blocks
 		if blockHeight > s.forkHeight {
 			blockHeight = s.forkHeight
