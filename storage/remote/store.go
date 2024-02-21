@@ -21,7 +21,6 @@ package remote
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/onflow/flow-go/engine/common/rpc/convert"
 	"github.com/onflow/flow-go/fvm/errors"
@@ -82,9 +81,10 @@ func WithStartBlockHeight(height uint64) Option {
 	}
 }
 
-func New(provider *sqlite.Store, options ...Option) (*Store, error) {
+func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*Store, error) {
 	store := &Store{
-		Store: provider,
+		Store:  provider,
+		logger: logger,
 	}
 
 	for _, opt := range options {
@@ -151,7 +151,10 @@ func (s *Store) initializeStartBlock(ctx context.Context) error {
 		s.forkHeight = resp.Block.Height
 	}
 
-	log.Printf("fork height: %d", s.forkHeight)
+	s.logger.Info().
+		Uint64("forkHeight", s.forkHeight).
+		Str("host", s.host).
+		Msg("Using fork height")
 
 	// store the initial fork height. any future queries for data on the archive node will be fixed
 	// to this height.
@@ -248,7 +251,7 @@ func (s *Store) LedgerByHeight(
 			return value, nil
 		}
 
-		// FVM expectes an empty byte array if the value is not found
+		// FVM expects an empty byte array if the value is not found
 		value = []byte{}
 
 		// if we don't have it, get it from the archive node
@@ -257,29 +260,20 @@ func (s *Store) LedgerByHeight(
 			blockHeight = s.forkHeight
 		}
 
-		log.Printf("fetching register: block: %d, owner: %x, key: %x (%s)", blockHeight, []byte(id.Owner), []byte(id.Key), []byte(id.Key))
-
 		registerID := convert.RegisterIDToMessage(flowgo.RegisterID{Key: id.Key, Owner: id.Owner})
 		response, err := s.executionClient.GetRegisterValues(ctx, &executiondata.GetRegisterValuesRequest{
 			BlockHeight: blockHeight,
 			RegisterIds: []*entities.RegisterID{registerID},
 		})
 		if err != nil {
-			log.Printf("could not get register value: %v", err)
 			if status.Code(err) != codes.NotFound {
 				return nil, err
 			}
 		}
 
-		if response == nil || len(response.Values) == 0 {
-			log.Printf("not found value for register id %s", id.String())
-			// return nil, fmt.Errorf("not found value for register id %s", id.String())
-			// return []byte{}, nil
-		} else {
+		if response != nil && len(response.Values) > 0 {
 			value = response.Values[0]
 		}
-
-		// log.Printf("register value: %x", value)
 
 		// cache the value for future use
 		err = s.DataSetter.SetBytesWithVersion(
