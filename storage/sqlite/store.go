@@ -63,11 +63,12 @@ func New(url string) (store *Store, err error) {
 	dbUrl := url
 	if dbUrl != InMemory {
 		urlInfo, err := os.Stat(url)
-		if err == nil && urlInfo.IsDir() {
+		if err != nil {
+			return nil, fmt.Errorf("unable to find database file: %w", err)
+		}
+
+		if urlInfo.IsDir() {
 			dbUrl = filepath.Join(url, "emulator.sqlite")
-			if err != nil {
-				return nil, err
-			}
 		}
 	}
 
