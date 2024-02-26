@@ -31,6 +31,7 @@ import (
 
 func MigrateCadence1(
 	store *sqlite.Store,
+	stagedContracts []migrations.StagedContract,
 	rwf reporters.ReportWriterFactory,
 	logger zerolog.Logger,
 ) error {
@@ -45,9 +46,6 @@ func MigrateCadence1(
 
 	// TODO: EVM contract is not deployed in snapshot yet, so can't update it
 	const evmContractChange = migrations.EVMContractChangeNone
-
-	// TODO:
-	var stagedContracts []migrations.StagedContract
 
 	cadence1Migrations := migrations.NewCadence1Migrations(
 		logger,

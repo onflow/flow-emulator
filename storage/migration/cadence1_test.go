@@ -59,7 +59,7 @@ func TestCadence1Migration(t *testing.T) {
 
 	// Then migrate the values.
 	rwf := &NOOPReportWriterFactory{}
-	err = MigrateCadence1(store, rwf, logger)
+	err = MigrateCadence1(store, nil, rwf, logger)
 	require.NoError(t, err)
 
 	require.Empty(t, logWriter.logs)
