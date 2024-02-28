@@ -15,10 +15,10 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v1.0.0-M8
 	github.com/onflow/crypto v0.25.0
-	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.2-0.20240206003101-928bf99024d7
-	github.com/onflow/flow-go v0.34.0-crescendo-preview.1.0.20240222213538-3677206d445c
-	github.com/onflow/flow-go-sdk v1.0.0-M5
-	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20240205233530-86ee8c352fa6
+	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.2-0.20240215154014-70c9655b5713
+	github.com/onflow/flow-go v0.34.0-crescendo-preview.2.0.20240227001756-cb6311412b78
+	github.com/onflow/flow-go-sdk v1.0.0-M6
+	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20240214230837-cd2c42e54b4a
 	github.com/onflow/flow/protobuf/go/flow v0.3.7
 	github.com/prometheus/client_golang v1.18.0
 	github.com/psiemens/graceland v1.0.0
@@ -138,8 +138,10 @@ require (
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/onflow/atree v0.6.1-0.20230711151834-86040b30171f // indirect
-	github.com/onflow/flow-core-contracts/lib/go/contracts v0.15.2-0.20240206003101-928bf99024d7 // indirect
-	github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20240205224107-320aa3cf09e0 // indirect
+	github.com/onflow/flow-core-contracts/lib/go/contracts v0.15.2-0.20240216154240-9d90f6a1002b // indirect
+	github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20240213220156-959b70719876 // indirect
+	github.com/onflow/flow-ft/lib/go/templates v0.7.1-0.20240213220156-959b70719876 // indirect
+	github.com/onflow/flow-nft/lib/go/templates v0.0.0-20240213205729-48f42d9896f8 // indirect
 	github.com/onflow/sdks v0.5.1-0.20230912225508-b35402f12bba // indirect
 	github.com/onflow/wal v0.0.0-20240208022732-d756cd497d3b // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
