@@ -1,4 +1,4 @@
-import RandomBeaconHistory from 0xRANDOMBEACONHISTORYADDRESS
+import RandomBeaconHistory from "RandomBeaconHistory"
 
 transaction {
     prepare(serviceAccount: auth(BorrowValue) &Account) {
