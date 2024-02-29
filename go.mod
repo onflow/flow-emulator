@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
-	github.com/fxamacker/cbor/v2 v2.4.1-0.20230228173756-c0c9f774e40c
+	github.com/fxamacker/cbor/v2 v2.6.0
 	github.com/glebarez/go-sqlite v1.22.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang/mock v1.6.0
