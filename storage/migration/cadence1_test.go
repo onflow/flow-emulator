@@ -77,6 +77,7 @@ func TestCadence1Migration(t *testing.T) {
 	rwf := &NOOPReportWriterFactory{}
 	err = MigrateCadence1(store, nil, rwf, logger)
 	require.NoError(t, err)
+	require.Empty(t, logWriter.logs)
 
 	// Reload the payloads from the emulator state (store)
 	// and check whether the registers have migrated properly.
