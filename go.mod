@@ -19,7 +19,7 @@ require (
 	github.com/onflow/flow-go-sdk v0.44.0
 	github.com/onflow/flow-go/crypto v0.24.9
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
-	github.com/onflow/flow/protobuf/go/flow v0.3.7
+	github.com/onflow/flow/protobuf/go/flow v0.3.7-0.20240229093058-5751765de18c
 	github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20221222181731-14b90207cead
 	github.com/prometheus/client_golang v1.18.0
 	github.com/psiemens/graceland v1.0.0
@@ -210,7 +210,4 @@ require (
 )
 
 //TODO: Remove when merged
-replace github.com/onflow/flow/protobuf/go/flow v0.3.7 => github.com/UlyanaAndrukhiv/flow/protobuf/go/flow v0.0.0-20240228104423-1cfc3adda41e
-
-//TODO: Remove when merged
-replace github.com/onflow/flow-go v0.32.4-0.20231130134727-3c01c7f8966c => github.com/UlyanaAndrukhiv/flow-go v0.0.0-20240228111629-422329edaaf4
+replace github.com/onflow/flow-go v0.32.4-0.20231130134727-3c01c7f8966c => github.com/UlyanaAndrukhiv/flow-go v0.0.0-20240301172111-054859542970
