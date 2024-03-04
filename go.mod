@@ -16,7 +16,7 @@ require (
 	github.com/onflow/cadence v1.0.0-M8
 	github.com/onflow/crypto v0.25.0
 	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.2-0.20240227190927-0e6ce7e3222b
-	github.com/onflow/flow-go v0.34.0-crescendo-preview.5.0.20240228222755-c41bc8a25122
+	github.com/onflow/flow-go v0.34.0-crescendo-preview.5.0.20240301191137-524be1eb7636
 	github.com/onflow/flow-go-sdk v1.0.0-M7
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20240214230837-cd2c42e54b4a
 	github.com/onflow/flow/protobuf/go/flow v0.3.7
