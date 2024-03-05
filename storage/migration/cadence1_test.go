@@ -20,6 +20,7 @@ package migration
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"io"
 	"os"
@@ -55,7 +56,48 @@ var testAccountAddress = func() common.Address {
 	return address
 }()
 
+//go:embed test-data/test_contract_upgraded.cdc
+var testContract string
+
 const emulatorStateFile = "test-data/emulator_state_cadence_v0.42.6"
+
+func createEmulatorStateTempCopy(t *testing.T) string {
+	tempEmulatorState, err := os.CreateTemp("test-data", "temp_emulator_state")
+	require.NoError(t, err)
+	defer func() {
+		err = tempEmulatorState.Close()
+		require.NoError(t, err)
+	}()
+
+	tempEmulatorStatePath := tempEmulatorState.Name()
+
+	content, err := os.ReadFile(emulatorStateFile)
+	require.NoError(t, err)
+
+	_, err = tempEmulatorState.Write(content)
+	require.NoError(t, err)
+	return tempEmulatorStatePath
+}
+
+func migrateEmulatorState(t *testing.T, tempEmulatorStatePath string) {
+	store, err := sqlite.New(tempEmulatorStatePath)
+	require.NoError(t, err)
+
+	defer func() {
+		err = store.Close()
+		require.NoError(t, err)
+	}()
+
+	logWriter := &writer{}
+	logger := zerolog.New(logWriter).Level(zerolog.ErrorLevel)
+
+	rwf := &NOOPReportWriterFactory{}
+	stagedContracts := stagedContracts()
+
+	err = MigrateCadence1(store, stagedContracts, rwf, logger)
+	require.NoError(t, err)
+	require.Empty(t, logWriter.logs)
+}
 
 func TestCadence1Migration(t *testing.T) {
 
@@ -97,7 +139,7 @@ func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
 	storageMap := migratorRuntime.Storage.GetStorageMap(testAccountAddress, common.PathDomainStorage.Identifier(), false)
 	require.NotNil(t, storageMap)
 
-	//require.Equal(t, 12, int(storageMap.Count()))
+	require.Equal(t, 12, int(storageMap.Count()))
 
 	iterator := storageMap.Iterator(migratorRuntime.Interpreter)
 
@@ -145,18 +187,18 @@ func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
 		"Test.R",
 	)
 
-	//entitlementAuthorization := func() interpreter.EntitlementSetAuthorization {
-	//	return interpreter.NewEntitlementSetAuthorization(
-	//		nil,
-	//		func() (entitlements []common.TypeID) {
-	//			return []common.TypeID{
-	//				testContractLocation.TypeID(nil, "Test.E"),
-	//			}
-	//		},
-	//		1,
-	//		sema.Conjunction,
-	//	)
-	//}
+	entitlementAuthorization := func() interpreter.EntitlementSetAuthorization {
+		return interpreter.NewEntitlementSetAuthorization(
+			nil,
+			func() (entitlements []common.TypeID) {
+				return []common.TypeID{
+					testContractLocation.TypeID(nil, "Test.E"),
+				}
+			},
+			1,
+			sema.Conjunction,
+		)
+	}
 
 	expectedValues := []interpreter.Value{
 		// Both string values should be in the normalized form.
@@ -218,7 +260,7 @@ func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
 			common.CompositeKindResource,
 			[]interpreter.CompositeField{
 				{
-					Value: interpreter.NewUnmeteredUInt64Value(1369094286720630784),
+					Value: interpreter.NewUnmeteredUInt64Value(360287970189639680),
 					Name:  "uuid",
 				},
 			},
@@ -229,16 +271,15 @@ func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
 			interpreter.NewUnmeteredCapabilityValue(
 				interpreter.NewUnmeteredUInt64Value(2),
 				interpreter.NewAddressValue(nil, testAccountAddress),
-				interpreter.NewReferenceStaticType(nil, interpreter.UnauthorizedAccess, rResourceType),
+				interpreter.NewReferenceStaticType(nil, entitlementAuthorization(), rResourceType),
 			),
 		),
 
-		// TODO: Untyped Capability is not migrated?
-		//interpreter.NewUnmeteredCapabilityValue(
-		//	interpreter.NewUnmeteredUInt64Value(2),
-		//	interpreter.NewAddressValue(nil, address),
-		//	interpreter.NewReferenceStaticType(nil, interpreter.UnauthorizedAccess, rResourceType),
-		//),
+		interpreter.NewUnmeteredCapabilityValue(
+			interpreter.NewUnmeteredUInt64Value(2),
+			interpreter.NewAddressValue(nil, testAccountAddress),
+			interpreter.NewReferenceStaticType(nil, entitlementAuthorization(), rResourceType),
+		),
 
 		interpreter.NewDictionaryValue(
 			migratorRuntime.Interpreter,
@@ -279,7 +320,7 @@ func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
 			interpreter.NewUnmeteredTypeValue(
 				interpreter.NewReferenceStaticType(
 					nil,
-					interpreter.UnauthorizedAccess,
+					entitlementAuthorization(),
 					rResourceType,
 				),
 			),
@@ -296,7 +337,7 @@ func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
 			interpreter.NewUnmeteredTypeValue(
 				interpreter.NewReferenceStaticType(
 					nil,
-					interpreter.UnauthorizedAccess,
+					entitlementAuthorization(),
 					rResourceType,
 				),
 			),
@@ -315,7 +356,7 @@ func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
 					Name:  "balance",
 				},
 				{
-					Value: interpreter.NewUnmeteredUInt64Value(12321848580485677058),
+					Value: interpreter.NewUnmeteredUInt64Value(11240984669916758018),
 					Name:  "uuid",
 				},
 			},
@@ -344,6 +385,18 @@ func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
 
 	if len(expectedValues) != 0 {
 		assert.Fail(t, fmt.Sprintf("%d extra item(s) in expected values: %s", len(expectedValues), expectedValues))
+	}
+}
+
+func stagedContracts() []migrations.StagedContract {
+	return []migrations.StagedContract{
+		{
+			Contract: migrations.Contract{
+				Name: "Test",
+				Code: []byte(testContract),
+			},
+			Address: testAccountAddress,
+		},
 	}
 }
 
@@ -413,7 +466,7 @@ func TestLoadMigratedValuesInTransaction(t *testing.T) {
                 var cap1 = acct.storage.load<Capability<&Test.R>?>(from: /storage/capability)
                 log(cap1)
 
-                var cap2 = acct.storage.load<{Type: Int}>(from: /storage/untyped_capability)
+                var cap2 = acct.storage.load<Capability<auth(Test.E) &Test.R>>(from: /storage/untyped_capability)
                 log(cap2)
 
                 var dict3 = acct.storage.load<{Type: String}>(from: /storage/dictionary_with_reference_typed_key)
@@ -461,10 +514,10 @@ func TestLoadMigratedValuesInTransaction(t *testing.T) {
 			`Type<auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account>()`,
 			`{"H\u{e9}llo": 2, "Caf\u{e9}": 1}`,
 			`{Type<{A.01cf0e2f2f715450.Test.Bar, A.01cf0e2f2f715450.Test.Foo}>(): 1, Type<{A.01cf0e2f2f715450.Test.Foo, A.01cf0e2f2f715450.Test.Bar, A.01cf0e2f2f715450.Test.Baz}>(): 2}`,
-			`Capability<&A.01cf0e2f2f715450.Test.R>(address: 0x01cf0e2f2f715450, id: 2)`,
-			`nil`,
-			`{Type<&A.01cf0e2f2f715450.Test.R>(): "non_auth_ref"}`,
-			`{Type<&A.01cf0e2f2f715450.Test.R>(): "auth_ref"}`,
+			`Capability<auth(A.01cf0e2f2f715450.Test.E) &A.01cf0e2f2f715450.Test.R>(address: 0x01cf0e2f2f715450, id: 2)`,
+			`Capability<auth(A.01cf0e2f2f715450.Test.E) &A.01cf0e2f2f715450.Test.R>(address: 0x01cf0e2f2f715450, id: 2)`,
+			`{Type<auth(A.01cf0e2f2f715450.Test.E) &A.01cf0e2f2f715450.Test.R>(): "non_auth_ref"}`,
+			`{Type<auth(A.01cf0e2f2f715450.Test.E) &A.01cf0e2f2f715450.Test.R>(): "auth_ref"}`,
 		},
 		result.Logs,
 	)
@@ -476,40 +529,4 @@ func TestLoadMigratedValuesInTransaction(t *testing.T) {
 	tx1Result, err := adapter.GetTransactionResult(context.Background(), tx.ID())
 	require.NoError(t, err)
 	require.Equal(t, flowsdk.TransactionStatusSealed, tx1Result.Status)
-}
-
-func migrateEmulatorState(t *testing.T, tempEmulatorStatePath string) {
-	store, err := sqlite.New(tempEmulatorStatePath)
-	require.NoError(t, err)
-
-	defer func() {
-		err = store.Close()
-		require.NoError(t, err)
-	}()
-
-	logWriter := &writer{}
-	logger := zerolog.New(logWriter).Level(zerolog.ErrorLevel)
-
-	rwf := &NOOPReportWriterFactory{}
-	err = MigrateCadence1(store, nil, rwf, logger)
-	require.NoError(t, err)
-	require.Empty(t, logWriter.logs)
-}
-
-func createEmulatorStateTempCopy(t *testing.T) string {
-	tempEmulatorState, err := os.CreateTemp("test-data", "temp_emulator_state")
-	require.NoError(t, err)
-	defer func() {
-		err = tempEmulatorState.Close()
-		require.NoError(t, err)
-	}()
-
-	tempEmulatorStatePath := tempEmulatorState.Name()
-
-	content, err := os.ReadFile(emulatorStateFile)
-	require.NoError(t, err)
-
-	_, err = tempEmulatorState.Write(content)
-	require.NoError(t, err)
-	return tempEmulatorStatePath
 }
