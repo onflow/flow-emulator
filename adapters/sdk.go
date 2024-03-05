@@ -480,7 +480,7 @@ func (b *SDKAdapter) CreateAccount(ctx context.Context, publicKeys []*sdk.Accoun
 		return sdk.Address{}, err
 	}
 
-	tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+	tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetReferenceBlockID(sdk.Identifier(latestBlock.ID())).
 		SetProposalKey(serviceKey.Address, serviceKey.Index, serviceKey.SequenceNumber).
 		SetPayer(serviceKey.Address)

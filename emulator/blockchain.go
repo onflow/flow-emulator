@@ -1732,7 +1732,7 @@ func (b *Blockchain) systemChunkTransaction() (*flowgo.TransactionBody, error) {
 
 	tx := flowgo.NewTransactionBody().
 		SetScript([]byte(script)).
-		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		AddAuthorizer(b.GetChain().ServiceAddress()).
 		SetPayer(b.GetChain().ServiceAddress()).
 		SetReferenceBlockID(b.pendingBlock.parentID)

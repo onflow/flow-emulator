@@ -96,7 +96,7 @@ func deployContract(b *Blockchain, name string, contract []byte) error {
 		Source: string(contract),
 	})
 
-	tx.SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+	tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID())).
 		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
 		SetPayer(serviceAddress)
