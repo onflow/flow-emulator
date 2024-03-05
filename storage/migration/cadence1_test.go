@@ -50,68 +50,51 @@ var flowTokenAddress = func() common.Address {
 	return address
 }()
 
+var testAccountAddress = func() common.Address {
+	address, _ := common.HexToAddress("01cf0e2f2f715450")
+	return address
+}()
+
 const emulatorStateFile = "test-data/emulator_state_cadence_v0.42.6"
-const testAccountAddress = "01cf0e2f2f715450"
 
 func TestCadence1Migration(t *testing.T) {
 
 	// Work on a temp copy of the state,
 	// since the migration will be updating the state.
-	tempEmulatorState, err := os.CreateTemp("test-data", "temp_emulator_state")
-	require.NoError(t, err)
-
-	tempEmulatorStatePath := tempEmulatorState.Name()
-
-	defer tempEmulatorState.Close()
+	tempEmulatorStatePath := createEmulatorStateTempCopy(t)
 	defer os.Remove(tempEmulatorStatePath)
-
-	content, err := os.ReadFile(emulatorStateFile)
-	require.NoError(t, err)
-
-	_, err = tempEmulatorState.Write(content)
-	require.NoError(t, err)
 
 	// Migrate
 
-	store, err := sqlite.New(tempEmulatorStatePath)
-	require.NoError(t, err)
+	// Migrate
+	migrateEmulatorState(t, tempEmulatorStatePath)
 
-	logWriter := &writer{}
-	logger := zerolog.New(logWriter).Level(zerolog.ErrorLevel)
-
-	// Then migrate the values.
-	rwf := &NOOPReportWriterFactory{}
-	err = MigrateCadence1(store, nil, rwf, logger)
+	// Re-load the store from the file.
+	migratedStore, err := sqlite.New(tempEmulatorStatePath)
 	require.NoError(t, err)
-	require.Empty(t, logWriter.logs)
+	defer func() {
+		err = migratedStore.Close()
+		require.NoError(t, err)
+	}()
 
 	// Reload the payloads from the emulator state (store)
 	// and check whether the registers have migrated properly.
-	checkMigratedPayloads(t, store)
-
-	err = store.Close()
-	require.NoError(t, err)
-
-	require.Empty(t, logWriter.logs)
+	checkMigratedPayloads(t, migratedStore)
 }
 
 func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
-	address, err := common.HexToAddress(testAccountAddress)
-	if err != nil {
-		panic(err)
-	}
 
 	payloads, _, _, err := util.PayloadsAndAccountsFromEmulatorSnapshot(store.DB())
 	require.NoError(t, err)
 
 	migratorRuntime, err := migrations.NewMigratorRuntime(
-		address,
+		testAccountAddress,
 		payloads,
 		util.RuntimeInterfaceConfig{},
 	)
 	require.NoError(t, err)
 
-	storageMap := migratorRuntime.Storage.GetStorageMap(address, common.PathDomainStorage.Identifier(), false)
+	storageMap := migratorRuntime.Storage.GetStorageMap(testAccountAddress, common.PathDomainStorage.Identifier(), false)
 	require.NotNil(t, storageMap)
 
 	//require.Equal(t, 12, int(storageMap.Count()))
@@ -128,7 +111,7 @@ func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
 
 	testContractLocation := common.NewAddressLocation(
 		nil,
-		address,
+		testAccountAddress,
 		"Test",
 	)
 
@@ -239,13 +222,13 @@ func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
 					Name:  "uuid",
 				},
 			},
-			address,
+			testAccountAddress,
 		),
 
 		interpreter.NewUnmeteredSomeValueNonCopying(
 			interpreter.NewUnmeteredCapabilityValue(
 				interpreter.NewUnmeteredUInt64Value(2),
-				interpreter.NewAddressValue(nil, address),
+				interpreter.NewAddressValue(nil, testAccountAddress),
 				interpreter.NewReferenceStaticType(nil, interpreter.UnauthorizedAccess, rResourceType),
 			),
 		),
@@ -336,7 +319,7 @@ func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
 					Name:  "uuid",
 				},
 			},
-			address,
+			testAccountAddress,
 		),
 	}
 
@@ -379,41 +362,20 @@ func TestLoadMigratedValuesInTransaction(t *testing.T) {
 
 	t.Parallel()
 
-	tempEmulatorState, err := os.CreateTemp("test-data", "temp_emulator_state")
-	require.NoError(t, err)
-
-	tempEmulatorStatePath := tempEmulatorState.Name()
-
-	defer tempEmulatorState.Close()
+	// Create a temporary snapshot file to work on.
+	tempEmulatorStatePath := createEmulatorStateTempCopy(t)
 	defer os.Remove(tempEmulatorStatePath)
 
-	content, err := os.ReadFile(emulatorStateFile)
-	require.NoError(t, err)
-
-	_, err = tempEmulatorState.Write(content)
-	require.NoError(t, err)
-
 	// Migrate
+	migrateEmulatorState(t, tempEmulatorStatePath)
 
-	store, err := sqlite.New(tempEmulatorStatePath)
-	require.NoError(t, err)
-
-	logWriter := &writer{}
-	logger := zerolog.New(logWriter).Level(zerolog.ErrorLevel)
-
-	rwf := &NOOPReportWriterFactory{}
-	err = MigrateCadence1(store, nil, rwf, logger)
-	require.NoError(t, err)
-	require.Empty(t, logWriter.logs)
-
+	// Re-load the store from the file.
 	migratedStore, err := sqlite.New(tempEmulatorStatePath)
-	require.Nil(t, err)
-	defer migratedStore.Close()
-
-	address, err := common.HexToAddress(testAccountAddress)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
+	defer func() {
+		err = migratedStore.Close()
+		require.NoError(t, err)
+	}()
 
 	// Execute a transaction against the migrated storage.
 
@@ -470,7 +432,7 @@ func TestLoadMigratedValuesInTransaction(t *testing.T) {
 		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(blockchain.ServiceKey().Address, blockchain.ServiceKey().Index, blockchain.ServiceKey().SequenceNumber).
 		SetPayer(blockchain.ServiceKey().Address).
-		AddAuthorizer(flowsdk.Address(address))
+		AddAuthorizer(flowsdk.Address(testAccountAddress))
 
 	signer, err := blockchain.ServiceKey().Signer()
 	require.NoError(t, err)
@@ -514,4 +476,40 @@ func TestLoadMigratedValuesInTransaction(t *testing.T) {
 	tx1Result, err := adapter.GetTransactionResult(context.Background(), tx.ID())
 	require.NoError(t, err)
 	require.Equal(t, flowsdk.TransactionStatusSealed, tx1Result.Status)
+}
+
+func migrateEmulatorState(t *testing.T, tempEmulatorStatePath string) {
+	store, err := sqlite.New(tempEmulatorStatePath)
+	require.NoError(t, err)
+
+	defer func() {
+		err = store.Close()
+		require.NoError(t, err)
+	}()
+
+	logWriter := &writer{}
+	logger := zerolog.New(logWriter).Level(zerolog.ErrorLevel)
+
+	rwf := &NOOPReportWriterFactory{}
+	err = MigrateCadence1(store, nil, rwf, logger)
+	require.NoError(t, err)
+	require.Empty(t, logWriter.logs)
+}
+
+func createEmulatorStateTempCopy(t *testing.T) string {
+	tempEmulatorState, err := os.CreateTemp("test-data", "temp_emulator_state")
+	require.NoError(t, err)
+	defer func() {
+		err = tempEmulatorState.Close()
+		require.NoError(t, err)
+	}()
+
+	tempEmulatorStatePath := tempEmulatorState.Name()
+
+	content, err := os.ReadFile(emulatorStateFile)
+	require.NoError(t, err)
+
+	_, err = tempEmulatorState.Write(content)
+	require.NoError(t, err)
+	return tempEmulatorStatePath
 }
