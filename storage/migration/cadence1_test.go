@@ -19,6 +19,7 @@
 package migration
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -33,9 +34,14 @@ import (
 	"github.com/onflow/cadence/runtime/interpreter"
 	"github.com/onflow/cadence/runtime/sema"
 
+	flowsdk "github.com/onflow/flow-go-sdk"
+
 	"github.com/onflow/flow-go/cmd/util/ledger/migrations"
 	"github.com/onflow/flow-go/cmd/util/ledger/util"
+	flowgo "github.com/onflow/flow-go/model/flow"
 
+	"github.com/onflow/flow-emulator/adapters"
+	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-emulator/storage/sqlite"
 )
 
@@ -44,10 +50,10 @@ var flowTokenAddress = func() common.Address {
 	return address
 }()
 
+const emulatorStateFile = "test-data/emulator_state_cadence_v0.42.6"
 const testAccountAddress = "01cf0e2f2f715450"
 
 func TestCadence1Migration(t *testing.T) {
-	const emulatorStateFile = "test-data/emulator_state_cadence_v0.42.6"
 
 	// Work on a temp copy of the state,
 	// since the migration will be updating the state.
@@ -367,4 +373,145 @@ var _ io.Writer = &writer{}
 func (w *writer) Write(p []byte) (n int, err error) {
 	w.logs = append(w.logs, string(p))
 	return len(p), nil
+}
+
+func TestLoadMigratedValuesInTransaction(t *testing.T) {
+
+	t.Parallel()
+
+	tempEmulatorState, err := os.CreateTemp("test-data", "temp_emulator_state")
+	require.NoError(t, err)
+
+	tempEmulatorStatePath := tempEmulatorState.Name()
+
+	defer tempEmulatorState.Close()
+	defer os.Remove(tempEmulatorStatePath)
+
+	content, err := os.ReadFile(emulatorStateFile)
+	require.NoError(t, err)
+
+	_, err = tempEmulatorState.Write(content)
+	require.NoError(t, err)
+
+	// Migrate
+
+	store, err := sqlite.New(tempEmulatorStatePath)
+	require.NoError(t, err)
+
+	logWriter := &writer{}
+	logger := zerolog.New(logWriter).Level(zerolog.ErrorLevel)
+
+	rwf := &NOOPReportWriterFactory{}
+	err = MigrateCadence1(store, nil, rwf, logger)
+	require.NoError(t, err)
+	require.Empty(t, logWriter.logs)
+
+	migratedStore, err := sqlite.New(tempEmulatorStatePath)
+	require.Nil(t, err)
+	defer migratedStore.Close()
+
+	address, err := common.HexToAddress(testAccountAddress)
+	if err != nil {
+		panic(err)
+	}
+
+	// Execute a transaction against the migrated storage.
+
+	blockchain, err := emulator.New(
+		emulator.WithStore(migratedStore),
+		emulator.WithTransactionValidationEnabled(false),
+		emulator.WithTransactionFeesEnabled(false),
+		emulator.WithStorageLimitEnabled(false),
+	)
+	require.NoError(t, err)
+
+	txCode := `
+        import Test from 0x01cf0e2f2f715450
+
+        transaction {
+
+            prepare(acct: auth(Storage) &Account) {
+                var string1 = acct.storage.load<String>(from: /storage/string_value_1)
+                log(string1)
+
+                var string2 = acct.storage.load<String>(from: /storage/string_value_2)
+                log(string2)
+
+                var typeValue = acct.storage.load<Type>(from: /storage/type_value)
+                log(typeValue)
+
+                var dict1 = acct.storage.load<{String: Int}>(from: /storage/dictionary_with_string_keys)
+                log(dict1)
+
+                var dict2 = acct.storage.load<{Type: Int}>(from: /storage/dictionary_with_restricted_typed_keys)
+                log(dict2)
+
+                destroy acct.storage.load<@Test.R>(from: /storage/r)
+
+                var cap1 = acct.storage.load<Capability<&Test.R>?>(from: /storage/capability)
+                log(cap1)
+
+                var cap2 = acct.storage.load<{Type: Int}>(from: /storage/untyped_capability)
+                log(cap2)
+
+                var dict3 = acct.storage.load<{Type: String}>(from: /storage/dictionary_with_reference_typed_key)
+                log(dict3)
+
+                var dict4 = acct.storage.load<{Type: String}>(from: /storage/dictionary_with_auth_reference_typed_key)
+                log(dict4)
+            }
+
+            execute {}
+        }
+    `
+
+	tx := flowsdk.NewTransaction().
+		SetScript([]byte(txCode)).
+		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetProposalKey(blockchain.ServiceKey().Address, blockchain.ServiceKey().Index, blockchain.ServiceKey().SequenceNumber).
+		SetPayer(blockchain.ServiceKey().Address).
+		AddAuthorizer(flowsdk.Address(address))
+
+	signer, err := blockchain.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = tx.SignEnvelope(blockchain.ServiceKey().Address, blockchain.ServiceKey().Index, signer)
+	require.NoError(t, err)
+
+	// Submit tx
+	blockchainLogger := zerolog.Nop()
+	adapter := adapters.NewSDKAdapter(&blockchainLogger, blockchain)
+	err = adapter.SendTransaction(context.Background(), *tx)
+	require.NoError(t, err)
+
+	// Execute tx
+	result, err := blockchain.ExecuteNextTransaction()
+	require.NoError(t, err)
+
+	if !assert.True(t, result.Succeeded()) {
+		t.Error(result.Error)
+	}
+
+	require.Equal(t,
+		[]string{
+			`"Caf\u{e9}"`,
+			`"Caf\u{e9}"`,
+			`Type<auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account>()`,
+			`{"H\u{e9}llo": 2, "Caf\u{e9}": 1}`,
+			`{Type<{A.01cf0e2f2f715450.Test.Bar, A.01cf0e2f2f715450.Test.Foo}>(): 1, Type<{A.01cf0e2f2f715450.Test.Foo, A.01cf0e2f2f715450.Test.Bar, A.01cf0e2f2f715450.Test.Baz}>(): 2}`,
+			`Capability<&A.01cf0e2f2f715450.Test.R>(address: 0x01cf0e2f2f715450, id: 2)`,
+			`nil`,
+			`{Type<&A.01cf0e2f2f715450.Test.R>(): "non_auth_ref"}`,
+			`{Type<&A.01cf0e2f2f715450.Test.R>(): "auth_ref"}`,
+		},
+		result.Logs,
+	)
+
+	_, err = blockchain.CommitBlock()
+	require.NoError(t, err)
+
+	// tx status becomes TransactionStatusSealed
+	tx1Result, err := adapter.GetTransactionResult(context.Background(), tx.ID())
+	require.NoError(t, err)
+	require.Equal(t, flowsdk.TransactionStatusSealed, tx1Result.Status)
 }
