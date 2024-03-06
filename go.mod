@@ -16,7 +16,7 @@ require (
 	github.com/onflow/cadence v0.42.9
 	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.1
 	github.com/onflow/flow-go v0.33.2-0.20240306170028-bd1722d73820
-	github.com/onflow/flow-go-sdk v0.45.0
+	github.com/onflow/flow-go-sdk v0.46.0
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
 	github.com/onflow/flow/protobuf/go/flow v0.3.7
 	github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20221222181731-14b90207cead
@@ -138,7 +138,6 @@ require (
 	github.com/onflow/crypto v0.25.0 // indirect
 	github.com/onflow/flow-core-contracts/lib/go/contracts v0.15.1 // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20230711213910-baad011d2b13 // indirect
-	github.com/onflow/flow-go/crypto v0.24.9 // indirect
 	github.com/onflow/sdks v0.5.0 // indirect
 	github.com/onflow/wal v0.0.0-20240208022732-d756cd497d3b // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
