@@ -106,7 +106,6 @@ type Config struct {
 	MinimumStorageReservation cadence.UFix64
 	StorageMBPerFLOW          cadence.UFix64
 	TransactionFeesEnabled    bool
-	EVMEnabled                bool
 	TransactionMaxGasLimit    uint64
 	ScriptGasLimit            uint64
 	Persist                   bool

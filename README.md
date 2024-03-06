@@ -71,7 +71,6 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--chain-id`                  | `FLOW_CHAINID`               | `emulator`     | Chain to simulate, if 'mainnet' or 'testnet' values are used, you will be able to run transactions against that network and a local fork will be created..  Valid values are: 'emulator', 'testnet', 'mainnet'                                     |
 | `--redis-url`                 | `FLOW_REDIS_URL`             | ''             | Redis-server URL for persisting redis storage backend ( `redis://[[username:]password@]host[:port][/database]` )                                                                                                                                  |
 | `--start-block-height`        | `FLOW_STARTBLOCKHEIGHT`             | `0`             | Start block height to use when starting the network using 'testnet' or 'mainnet' as the chain-id    |
-| `--evm-enabled` | `FLOW_EVMENABLED` | `false`         | Enable evm support |
 
 | `--legacy-upgrade` | `FLOW_LEGACYUPGRADE` | `false`         | Enable upgrading of legacy contracts |
 

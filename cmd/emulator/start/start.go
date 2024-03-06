@@ -74,7 +74,6 @@ type Config struct {
 	SqliteURL                    string        `default:"" flag:"sqlite-url" info:"sqlite db URL for persisting sqlite storage backend "`
 	CoverageReportingEnabled     bool          `default:"false" flag:"coverage-reporting" info:"enable Cadence code coverage reporting"`
 	LegacyContractUpgradeEnabled bool          `default:"false" flag:"legacy-upgrade" info:"enable Cadence legacy contract upgrade"`
-	EVMEnabled                   bool          `default:"false" flag:"evm-enabled" info:"enable EVM support"`
 	// todo temporarily disabled until remote register endpoint is re-enabled
 	// StartBlockHeight         uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
 }
@@ -202,7 +201,6 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				SqliteURL:                    conf.SqliteURL,
 				CoverageReportingEnabled:     conf.CoverageReportingEnabled,
 				LegacyContractUpgradeEnabled: conf.LegacyContractUpgradeEnabled,
-				EVMEnabled:                   conf.EVMEnabled,
 				// todo temporarily disabled until remote register endpoint is re-enabled
 				// StartBlockHeight:          conf.StartBlockHeight,
 			}
