@@ -19,16 +19,39 @@
 package migration
 
 import (
+	_ "embed"
+	"fmt"
 	"io"
 	"os"
 	"testing"
 
 	"github.com/rs/zerolog"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/onflow/cadence/runtime/common"
+	"github.com/onflow/cadence/runtime/interpreter"
+	"github.com/onflow/cadence/runtime/sema"
+
+	"github.com/onflow/flow-go/cmd/util/ledger/migrations"
+	"github.com/onflow/flow-go/cmd/util/ledger/util"
 
 	"github.com/onflow/flow-emulator/storage/sqlite"
 )
+
+var flowTokenAddress = func() common.Address {
+	address, _ := common.HexToAddress("0ae53cb6e3f42a79")
+	return address
+}()
+
+var testAccountAddress = func() common.Address {
+	address, _ := common.HexToAddress("01cf0e2f2f715450")
+	return address
+}()
+
+//go:embed test-data/test_contract_upgraded.cdc
+var testContract string
 
 func TestCadence1Migration(t *testing.T) {
 	const emulatorStateFile = "test-data/emulator_state_cadence_v0.42.6"
@@ -59,10 +82,294 @@ func TestCadence1Migration(t *testing.T) {
 
 	// Then migrate the values.
 	rwf := &NOOPReportWriterFactory{}
-	err = MigrateCadence1(store, nil, rwf, logger)
+	stagedContracts := stagedContracts()
+	err = MigrateCadence1(store, stagedContracts, rwf, logger)
+	require.NoError(t, err)
+	require.Empty(t, logWriter.logs)
+
+	// Reload the payloads from the emulator state (store)
+	// and check whether the registers have migrated properly.
+	checkMigratedPayloads(t, store)
+
+	err = store.Close()
 	require.NoError(t, err)
 
 	require.Empty(t, logWriter.logs)
+}
+
+func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
+	payloads, _, _, err := util.PayloadsAndAccountsFromEmulatorSnapshot(store.DB())
+	require.NoError(t, err)
+
+	migratorRuntime, err := migrations.NewMigratorRuntime(
+		testAccountAddress,
+		payloads,
+		util.RuntimeInterfaceConfig{},
+	)
+	require.NoError(t, err)
+
+	storageMap := migratorRuntime.Storage.GetStorageMap(testAccountAddress, common.PathDomainStorage.Identifier(), false)
+	require.NotNil(t, storageMap)
+
+	require.Equal(t, 12, int(storageMap.Count()))
+
+	iterator := storageMap.Iterator(migratorRuntime.Interpreter)
+
+	fullyEntitledAccountReferenceType := interpreter.ConvertSemaToStaticType(nil, sema.FullyEntitledAccountReferenceType)
+	accountReferenceType := interpreter.ConvertSemaToStaticType(nil, sema.AccountReferenceType)
+
+	var values []interpreter.Value
+	for key, value := iterator.Next(); key != nil; key, value = iterator.Next() {
+		values = append(values, value)
+	}
+
+	testContractLocation := common.NewAddressLocation(
+		nil,
+		testAccountAddress,
+		"Test",
+	)
+
+	flowTokenLocation := common.NewAddressLocation(
+		nil,
+		flowTokenAddress,
+		"FlowToken",
+	)
+
+	fooInterfaceType := interpreter.NewInterfaceStaticTypeComputeTypeID(
+		nil,
+		testContractLocation,
+		"Test.Foo",
+	)
+
+	barInterfaceType := interpreter.NewInterfaceStaticTypeComputeTypeID(
+		nil,
+		testContractLocation,
+		"Test.Bar",
+	)
+
+	bazInterfaceType := interpreter.NewInterfaceStaticTypeComputeTypeID(
+		nil,
+		testContractLocation,
+		"Test.Baz",
+	)
+
+	rResourceType := interpreter.NewCompositeStaticTypeComputeTypeID(
+		nil,
+		testContractLocation,
+		"Test.R",
+	)
+
+	entitlementAuthorization := func() interpreter.EntitlementSetAuthorization {
+		return interpreter.NewEntitlementSetAuthorization(
+			nil,
+			func() (entitlements []common.TypeID) {
+				return []common.TypeID{
+					testContractLocation.TypeID(nil, "Test.E"),
+				}
+			},
+			1,
+			sema.Conjunction,
+		)
+	}
+
+	expectedValues := []interpreter.Value{
+		// Both string values should be in the normalized form.
+		interpreter.NewUnmeteredStringValue("Caf\u00E9"),
+		interpreter.NewUnmeteredStringValue("Caf\u00E9"),
+
+		interpreter.NewUnmeteredTypeValue(fullyEntitledAccountReferenceType),
+
+		interpreter.NewDictionaryValue(
+			migratorRuntime.Interpreter,
+			interpreter.EmptyLocationRange,
+			interpreter.NewDictionaryStaticType(
+				nil,
+				interpreter.PrimitiveStaticTypeString,
+				interpreter.PrimitiveStaticTypeInt,
+			),
+			interpreter.NewUnmeteredStringValue("Caf\u00E9"),
+			interpreter.NewUnmeteredIntValueFromInt64(1),
+			interpreter.NewUnmeteredStringValue("H\u00E9llo"),
+			interpreter.NewUnmeteredIntValueFromInt64(2),
+		),
+
+		interpreter.NewDictionaryValue(
+			migratorRuntime.Interpreter,
+			interpreter.EmptyLocationRange,
+			interpreter.NewDictionaryStaticType(
+				nil,
+				interpreter.PrimitiveStaticTypeMetaType,
+				interpreter.PrimitiveStaticTypeInt,
+			),
+			interpreter.NewUnmeteredTypeValue(
+				&interpreter.IntersectionStaticType{
+					Types: []*interpreter.InterfaceStaticType{
+						fooInterfaceType,
+						barInterfaceType,
+					},
+					LegacyType: interpreter.PrimitiveStaticTypeAnyStruct,
+				},
+			),
+			interpreter.NewUnmeteredIntValueFromInt64(1),
+			interpreter.NewUnmeteredTypeValue(
+				&interpreter.IntersectionStaticType{
+					Types: []*interpreter.InterfaceStaticType{
+						fooInterfaceType,
+						barInterfaceType,
+						bazInterfaceType,
+					},
+					LegacyType: interpreter.PrimitiveStaticTypeAnyStruct,
+				},
+			),
+			interpreter.NewUnmeteredIntValueFromInt64(2),
+		),
+
+		interpreter.NewCompositeValue(
+			migratorRuntime.Interpreter,
+			interpreter.EmptyLocationRange,
+			testContractLocation,
+			"Test.R",
+			common.CompositeKindResource,
+			[]interpreter.CompositeField{
+				{
+					Value: interpreter.NewUnmeteredUInt64Value(360287970189639680),
+					Name:  "uuid",
+				},
+			},
+			testAccountAddress,
+		),
+
+		interpreter.NewUnmeteredSomeValueNonCopying(
+			interpreter.NewUnmeteredCapabilityValue(
+				interpreter.NewUnmeteredUInt64Value(2),
+				interpreter.NewAddressValue(nil, testAccountAddress),
+				interpreter.NewReferenceStaticType(nil, entitlementAuthorization(), rResourceType),
+			),
+		),
+
+		interpreter.NewUnmeteredCapabilityValue(
+			interpreter.NewUnmeteredUInt64Value(2),
+			interpreter.NewAddressValue(nil, testAccountAddress),
+			interpreter.NewReferenceStaticType(nil, entitlementAuthorization(), rResourceType),
+		),
+
+		interpreter.NewDictionaryValue(
+			migratorRuntime.Interpreter,
+			interpreter.EmptyLocationRange,
+			interpreter.NewDictionaryStaticType(
+				nil,
+				interpreter.PrimitiveStaticTypeMetaType,
+				interpreter.PrimitiveStaticTypeInt,
+			),
+			interpreter.NewUnmeteredTypeValue(fullyEntitledAccountReferenceType),
+			interpreter.NewUnmeteredIntValueFromInt64(1),
+			interpreter.NewUnmeteredTypeValue(interpreter.PrimitiveStaticTypeAccount_Capabilities),
+			interpreter.NewUnmeteredIntValueFromInt64(2),
+			interpreter.NewUnmeteredTypeValue(interpreter.PrimitiveStaticTypeAccount_AccountCapabilities),
+			interpreter.NewUnmeteredIntValueFromInt64(3),
+			interpreter.NewUnmeteredTypeValue(interpreter.PrimitiveStaticTypeAccount_StorageCapabilities),
+			interpreter.NewUnmeteredIntValueFromInt64(4),
+			interpreter.NewUnmeteredTypeValue(interpreter.PrimitiveStaticTypeAccount_Contracts),
+			interpreter.NewUnmeteredIntValueFromInt64(5),
+			interpreter.NewUnmeteredTypeValue(interpreter.PrimitiveStaticTypeAccount_Keys),
+			interpreter.NewUnmeteredIntValueFromInt64(6),
+			interpreter.NewUnmeteredTypeValue(interpreter.PrimitiveStaticTypeAccount_Inbox),
+			interpreter.NewUnmeteredIntValueFromInt64(7),
+			interpreter.NewUnmeteredTypeValue(accountReferenceType),
+			interpreter.NewUnmeteredIntValueFromInt64(8),
+			interpreter.NewUnmeteredTypeValue(interpreter.AccountKeyStaticType),
+			interpreter.NewUnmeteredIntValueFromInt64(9),
+		),
+
+		interpreter.NewDictionaryValue(
+			migratorRuntime.Interpreter,
+			interpreter.EmptyLocationRange,
+			interpreter.NewDictionaryStaticType(
+				nil,
+				interpreter.PrimitiveStaticTypeMetaType,
+				interpreter.PrimitiveStaticTypeString,
+			),
+			interpreter.NewUnmeteredTypeValue(
+				interpreter.NewReferenceStaticType(
+					nil,
+					entitlementAuthorization(),
+					rResourceType,
+				),
+			),
+			interpreter.NewUnmeteredStringValue("non_auth_ref"),
+		),
+		interpreter.NewDictionaryValue(
+			migratorRuntime.Interpreter,
+			interpreter.EmptyLocationRange,
+			interpreter.NewDictionaryStaticType(
+				nil,
+				interpreter.PrimitiveStaticTypeMetaType,
+				interpreter.PrimitiveStaticTypeString,
+			),
+			interpreter.NewUnmeteredTypeValue(
+				interpreter.NewReferenceStaticType(
+					nil,
+					entitlementAuthorization(),
+					rResourceType,
+				),
+			),
+			interpreter.NewUnmeteredStringValue("auth_ref"),
+		),
+
+		interpreter.NewCompositeValue(
+			migratorRuntime.Interpreter,
+			interpreter.EmptyLocationRange,
+			flowTokenLocation,
+			"FlowToken.Vault",
+			common.CompositeKindResource,
+			[]interpreter.CompositeField{
+				{
+					Value: interpreter.NewUnmeteredUFix64Value(0.001 * sema.Fix64Factor),
+					Name:  "balance",
+				},
+				{
+					Value: interpreter.NewUnmeteredUInt64Value(11240984669916758018),
+					Name:  "uuid",
+				},
+			},
+			testAccountAddress,
+		),
+	}
+
+	require.Equal(t, len(expectedValues), len(values))
+
+	// Order is non-deterministic, so do a greedy compare.
+	for _, value := range values {
+		found := false
+		actualValue := value.(interpreter.EquatableValue)
+		for i, expectedValue := range expectedValues {
+			if actualValue.Equal(migratorRuntime.Interpreter, interpreter.EmptyLocationRange, expectedValue) {
+				expectedValues = append(expectedValues[:i], expectedValues[i+1:]...)
+				found = true
+				break
+			}
+
+		}
+		if !found {
+			assert.Fail(t, fmt.Sprintf("extra item in actual values: %s", actualValue))
+		}
+	}
+
+	if len(expectedValues) != 0 {
+		assert.Fail(t, fmt.Sprintf("%d extra item(s) in expected values: %s", len(expectedValues), expectedValues))
+	}
+}
+
+func stagedContracts() []migrations.StagedContract {
+	return []migrations.StagedContract{
+		{
+			Contract: migrations.Contract{
+				Name: "Test",
+				Code: []byte(testContract),
+			},
+			Address: testAccountAddress,
+		},
+	}
 }
 
 type writer struct {
