@@ -28,6 +28,7 @@ import (
 	grpcprometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/onflow/flow-go/access"
 	legacyaccess "github.com/onflow/flow-go/access/legacy"
+	"github.com/onflow/flow-go/engine/access/subscription"
 	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	accessproto "github.com/onflow/flow/protobuf/go/flow/access"
@@ -63,7 +64,7 @@ func NewGRPCServer(logger *zerolog.Logger, adapter *adapters.AccessAdapter, chai
 	me.On("NodeID").Return(flowgo.ZeroID)
 
 	legacyaccessproto.RegisterAccessAPIServer(grpcServer, legacyaccess.NewHandler(adapter, chain))
-	accessproto.RegisterAccessAPIServer(grpcServer, access.NewHandler(adapter, chain, mockHeaderCache{}, me))
+	accessproto.RegisterAccessAPIServer(grpcServer, access.NewHandler(adapter, chain, mockHeaderCache{}, me, subscription.DefaultMaxGlobalStreams))
 
 	grpcprometheus.Register(grpcServer)
 

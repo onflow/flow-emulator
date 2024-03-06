@@ -33,6 +33,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/onflow/flow-go/access"
+	"github.com/onflow/flow-go/engine/access/subscription"
 	"github.com/onflow/flow-go/engine/common/rpc/convert"
 	flowgo "github.com/onflow/flow-go/model/flow"
 )
@@ -491,6 +492,18 @@ func (a *AccessAdapter) GetNodeVersionInfo(
 	error,
 ) {
 	return nil, fmt.Errorf("not supported")
+}
+
+func (a *AccessAdapter) SubscribeBlocks(_ context.Context, _ flowgo.Identifier, _ uint64, _ flowgo.BlockStatus) subscription.Subscription {
+	return nil
+}
+
+func (a *AccessAdapter) SubscribeBlockHeaders(_ context.Context, _ flowgo.Identifier, _ uint64, _ flowgo.BlockStatus) subscription.Subscription {
+	return nil
+}
+
+func (a *AccessAdapter) SubscribeBlockDigests(_ context.Context, _ flowgo.Identifier, _ uint64, _ flowgo.BlockStatus) subscription.Subscription {
+	return nil
 }
 
 func ConvertCCFEventsToJsonEvents(events []flowgo.Event) ([]flowgo.Event, error) {
