@@ -106,7 +106,6 @@ type Config struct {
 	MinimumStorageReservation cadence.UFix64
 	StorageMBPerFLOW          cadence.UFix64
 	TransactionFeesEnabled    bool
-	EVMEnabled                bool
 	TransactionMaxGasLimit    uint64
 	ScriptGasLimit            uint64
 	Persist                   bool
@@ -371,7 +370,6 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		emulator.WithMinimumStorageReservation(conf.MinimumStorageReservation),
 		emulator.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
-		emulator.WithEVMEnabled(conf.EVMEnabled),
 		emulator.WithChainID(conf.ChainID),
 		emulator.WithContractRemovalEnabled(conf.ContractRemovalEnabled),
 	}

@@ -1996,8 +1996,8 @@ github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20240213220156-959b70719876 
 github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20240213220156-959b70719876/go.mod h1:PwsL8fC81cjnUnTfmyL/HOIyHnyaw/JA474Wfj2tl6A=
 github.com/onflow/flow-ft/lib/go/templates v0.7.1-0.20240213220156-959b70719876 h1:fZj39XxayIL7uvKvonNI3MtQM3wsFJ8oRl/XW/0rn7A=
 github.com/onflow/flow-ft/lib/go/templates v0.7.1-0.20240213220156-959b70719876/go.mod h1:uQ8XFqmMK2jxyBSVrmyuwdWjTEb+6zGjRYotfDJ5pAE=
-github.com/onflow/flow-go v0.34.0-crescendo-preview.5.0.20240304214716-9a2789f9b0eb h1:9Qabrpc4dhQJJHG0OYnNL42pvSrZMaX8xlhvPTPKs/U=
-github.com/onflow/flow-go v0.34.0-crescendo-preview.5.0.20240304214716-9a2789f9b0eb/go.mod h1:w8WQrc76969OVrVDVoCarEgPKting6IEThSC7CjIiz8=
+github.com/onflow/flow-go v0.34.0-crescendo-preview.5.0.20240305144514-8878690ed49e h1:7gvhYRK4dY+Q6okKp9lwM5TU8sKUALZ6N+ViSKQ8MT4=
+github.com/onflow/flow-go v0.34.0-crescendo-preview.5.0.20240305144514-8878690ed49e/go.mod h1:w8WQrc76969OVrVDVoCarEgPKting6IEThSC7CjIiz8=
 github.com/onflow/flow-go-sdk v1.0.0-M1/go.mod h1:TDW0MNuCs4SvqYRUzkbRnRmHQL1h4X8wURsCw9P9beo=
 github.com/onflow/flow-go-sdk v1.0.0-M8 h1:jnWA6X29sZlMsrIjdxoEkBAJsZBazXTcQJ/wPw1ZbfU=
 github.com/onflow/flow-go-sdk v1.0.0-M8/go.mod h1:qFy2LF0DKfYsEnyEaIxD0frA/zAMc5hURbnqTrSZBjA=
