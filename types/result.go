@@ -23,7 +23,7 @@ import (
 
 	"github.com/onflow/cadence"
 	flowsdk "github.com/onflow/flow-go-sdk"
-	"github.com/onflow/flow-go/crypto/hash"
+	cryptosdk "github.com/onflow/flow-go-sdk/crypto"
 	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
@@ -67,7 +67,7 @@ type TransactionResultDebug struct {
 func NewTransactionInvalidHashAlgo(
 	key flowgo.AccountPublicKey,
 	address flowgo.Address,
-	invalidAlgo hash.HashingAlgorithm,
+	invalidAlgo cryptosdk.HashAlgorithm,
 ) *TransactionResultDebug {
 	return &TransactionResultDebug{
 		Message: fmt.Sprintf(
