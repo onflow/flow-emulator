@@ -300,13 +300,6 @@ func WithCoverageReport(coverageReport *runtime.CoverageReport) Option {
 	}
 }
 
-// WithEVMEnabled enables/disables evm.
-func WithEVMEnabled(enabled bool) Option {
-	return func(c *config) {
-		c.EVMEnabled = enabled
-	}
-}
-
 // Contracts allows users to deploy the given contracts.
 // Some default common contracts are pre-configured in the `CommonContracts`
 // global variable. It includes contracts such as:
@@ -366,7 +359,6 @@ type config struct {
 	TransactionFeesEnabled       bool
 	ContractRemovalEnabled       bool
 	LegacyContractUpgradeEnabled bool
-	EVMEnabled                   bool
 	MinimumStorageReservation    cadence.UFix64
 	StorageMBPerFLOW             cadence.UFix64
 	Logger                       zerolog.Logger
@@ -621,7 +613,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		fvm.WithReusableCadenceRuntimePool(customRuntimePool),
 		fvm.WithEntropyProvider(blockchain.entropyProvider),
-		fvm.WithEVMEnabled(conf.EVMEnabled),
+		fvm.WithEVMEnabled(true),
 	}
 
 	if !conf.TransactionValidationEnabled {
@@ -629,11 +621,6 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 			fvmOptions,
 			fvm.WithAuthorizationChecksEnabled(false),
 			fvm.WithSequenceNumberCheckAndIncrementEnabled(false))
-	}
-
-	// todo temporary fix because the EVM storage account doesn't have sufficient funds
-	if conf.EVMEnabled {
-		fvmOptions = append(fvmOptions, fvm.WithAccountStorageLimit(false))
 	}
 
 	ctx := fvm.NewContext(
@@ -752,10 +739,6 @@ func bootstrapLedger(
 	ctx = fvm.NewContextFromParent(
 		ctx,
 		fvm.WithAccountStorageLimit(false),
-		// This one has to always be set to false for bootstraping
-		// otherwise during bootstraping we expect evm storage account to exist
-		// which would be bootstrapped later during this process.
-		fvm.WithEVMEnabled(false),
 	)
 
 	flowAccountKey := flowgo.AccountPublicKey{
@@ -784,7 +767,6 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 	options = append(options,
 		fvm.WithInitialTokenSupply(supply),
 		fvm.WithRestrictedAccountCreationEnabled(false),
-		fvm.WithSetupEVMEnabled(cadence.Bool(conf.EVMEnabled)),
 		// This enables variable transaction fees AND execution effort metering
 		// as described in Variable Transaction Fees:
 		// Execution Effort FLIP: https://github.com/onflow/flow/pull/753)
