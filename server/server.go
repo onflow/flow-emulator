@@ -371,7 +371,6 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		emulator.WithMinimumStorageReservation(conf.MinimumStorageReservation),
 		emulator.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
-		emulator.WithEVMEnabled(conf.EVMEnabled),
 		emulator.WithChainID(conf.ChainID),
 		emulator.WithContractRemovalEnabled(conf.ContractRemovalEnabled),
 	}

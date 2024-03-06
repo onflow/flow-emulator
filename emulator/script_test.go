@@ -290,7 +290,6 @@ func TestEVM(t *testing.T) {
 
 	b, err := emulator.New(
 		emulator.WithScriptGasLimit(gasLimit),
-		emulator.WithEVMEnabled(true),
 	)
 	require.NoError(t, err)
 

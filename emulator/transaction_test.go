@@ -2167,7 +2167,7 @@ func TestEVMTransaction(t *testing.T) {
 		serviceAddr.HexWithPrefix(),
 	))
 
-	b, adapter := setupTransactionTests(t, emulator.WithEVMEnabled(true))
+	b, adapter := setupTransactionTests(t)
 
 	// generate random address
 	genArr := make([]cadence.Value, 20)
