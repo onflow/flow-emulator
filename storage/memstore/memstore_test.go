@@ -24,7 +24,6 @@ import (
 	"testing"
 
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
-	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,7 +34,7 @@ func TestMemstore(t *testing.T) {
 	t.Parallel()
 
 	const blockHeight = 0
-	key := flow.NewRegisterID(flow.EmptyAddress, "foo")
+	key := flowgo.NewRegisterID(flowgo.EmptyAddress, "foo")
 	value := []byte("bar")
 	store := New()
 
@@ -75,7 +74,7 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 	t.Parallel()
 
 	store := New()
-	key := flow.NewRegisterID(flow.EmptyAddress, "foo")
+	key := flowgo.NewRegisterID(flowgo.EmptyAddress, "foo")
 	value := []byte("bar")
 	var nilByte []byte
 	nilValue := nilByte
@@ -93,7 +92,7 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 	// check initial value
 	ledger, err := store.LedgerByHeight(context.Background(), 0)
 	require.NoError(t, err)
-	register, err := ledger.Get(flow.NewRegisterID(flow.EmptyAddress, key.Key))
+	register, err := ledger.Get(key)
 	require.NoError(t, err)
 	require.Equal(t, string(value), string(register))
 
@@ -110,7 +109,7 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 	// check value is nil
 	ledger, err = store.LedgerByHeight(context.Background(), 1)
 	require.NoError(t, err)
-	register, err = ledger.Get(flow.NewRegisterID(flow.EmptyAddress, key.Key))
+	register, err = ledger.Get(key)
 	require.NoError(t, err)
 	require.Equal(t, string(nilValue), string(register))
 }
