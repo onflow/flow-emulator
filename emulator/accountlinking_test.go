@@ -61,7 +61,7 @@ func TestAccountLinking(t *testing.T) {
 
 	tx := flowsdk.NewTransaction().
 		SetScript(script).
-		SetGasLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		AddAuthorizer(serviceAccountAddress).
 		SetProposalKey(
 			serviceAccountAddress,

@@ -15,9 +15,8 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v0.42.9
 	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.1
-	github.com/onflow/flow-go v0.32.4-0.20231130134727-3c01c7f8966c
-	github.com/onflow/flow-go-sdk v0.44.0
-	github.com/onflow/flow-go/crypto v0.24.9
+	github.com/onflow/flow-go v0.33.2-0.20240306234901-64ab8d27ea30
+	github.com/onflow/flow-go-sdk v0.46.0
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
 	github.com/onflow/flow/protobuf/go/flow v0.3.7-0.20240305102946-3efec6679252
 	github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20221222181731-14b90207cead
@@ -210,4 +209,4 @@ require (
 )
 
 //TODO: Remove when merged
-replace github.com/onflow/flow-go v0.32.4-0.20231130134727-3c01c7f8966c => github.com/UlyanaAndrukhiv/flow-go v0.0.0-20240306093224-915da03cc613
+replace github.com/onflow/flow-go v0.33.2-0.20240306234901-64ab8d27ea30 => github.com/UlyanaAndrukhiv/flow-go v0.0.0-20240306093224-915da03cc613
