@@ -5,6 +5,7 @@
 //
 //	mockgen -destination=emulator/mocks/emulator.go -package=mocks github.com/onflow/flow-emulator/emulator Emulator
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
