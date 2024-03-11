@@ -19,14 +19,16 @@
 package migration
 
 import (
-	"github.com/onflow/flow-go/cmd/util/ledger/migrations"
-	"github.com/onflow/flow-go/model/flow"
+	"math"
+
 	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/storage/sqlite"
 
+	"github.com/onflow/flow-go/cmd/util/ledger/migrations"
 	"github.com/onflow/flow-go/cmd/util/ledger/reporters"
 	"github.com/onflow/flow-go/cmd/util/ledger/util"
+	"github.com/onflow/flow-go/model/flow"
 )
 
 func MigrateCadence1(
@@ -47,17 +49,26 @@ func MigrateCadence1(
 	// TODO: EVM contract is not deployed in snapshot yet, so can't update it
 	const evmContractChange = migrations.EVMContractChangeNone
 
+	const burnerContractChange = migrations.BurnerContractChangeDeploy
+
+	const maxAccountSize = math.MaxUint64
+
 	cadence1Migrations := migrations.NewCadence1Migrations(
 		logger,
 		rwf,
 		nWorker,
 		flow.Emulator,
+		false,
+		false,
 		evmContractChange,
+		burnerContractChange,
 		stagedContracts,
+		false,
+		maxAccountSize,
 	)
 
 	for _, migration := range cadence1Migrations {
-		payloads, err = migration(payloads)
+		payloads, err = migration.Migrate(payloads)
 		if err != nil {
 			return err
 		}
