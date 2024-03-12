@@ -203,6 +203,17 @@ To get better reports with source file references, you can utilize the `sourceFi
 #sourceFile("scripts/myScript.cdc")
 ```
 
+## Cadence Computation Profiling
+
+The admin API includes an endpoint for viewing the Cadence computation profiles for scripts & transactions.
+
+In order to use this functionality you need to run the emulator with the respective flag which enables computation profiling:
+```bash
+flow emulator --computation-profiling
+```
+
+To view the computation profiling report, visit this URL: http://localhost:8080/emulator/profiling
+
 ## Running the emulator with Docker
 
 Docker builds for the emulator are automatically built and pushed to
