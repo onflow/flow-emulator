@@ -19,6 +19,8 @@
 package migration
 
 import (
+	"runtime"
+
 	"github.com/onflow/flow-go/cmd/util/ledger/migrations"
 	"github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
@@ -31,33 +33,37 @@ import (
 
 func MigrateCadence1(
 	store *sqlite.Store,
+	evmContractChange migrations.EVMContractChange,
+	burnerContractChange migrations.BurnerContractChange,
 	stagedContracts []migrations.StagedContract,
 	rwf reporters.ReportWriterFactory,
 	logger zerolog.Logger,
+
 ) error {
 	payloads, payloadInfo, _, err := util.PayloadsAndAccountsFromEmulatorSnapshot(store.DB())
 	if err != nil {
 		return err
 	}
 
-	// TODO: >1 breaks atree storage map iteration
-	//   and requires LinkValueMigration.LinkValueMigration to be thread-safe
-	const nWorker = 1
-
-	// TODO: EVM contract is not deployed in snapshot yet, so can't update it
-	const evmContractChange = migrations.EVMContractChangeNone
+	nWorker := runtime.NumCPU()
 
 	cadence1Migrations := migrations.NewCadence1Migrations(
 		logger,
 		rwf,
 		nWorker,
 		flow.Emulator,
+		false,
+		false,
 		evmContractChange,
+		burnerContractChange,
 		stagedContracts,
+		false,
+		0,
 	)
 
 	for _, migration := range cadence1Migrations {
-		payloads, err = migration(payloads)
+		logger.Info().Str("migration", migration.Name).Msg("running migration")
+		payloads, err = migration.Migrate(payloads)
 		if err != nil {
 			return err
 		}
