@@ -19,8 +19,6 @@
 package emulator
 
 import (
-	"fmt"
-
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/flow-emulator/types"
 	"github.com/onflow/flow-go/fvm/environment"
@@ -50,7 +48,7 @@ func (cp *ComputationProfile) ReportScript(
 	scriptReport := ProcedureReport{
 		ID:              scriptResult.ScriptID.String(),
 		ComputationUsed: scriptResult.ComputationUsed,
-		Intensities:     mapIntensities(intensities),
+		Intensities:     transformIntensities(intensities),
 		MemoryEstimate:  scriptResult.MemoryEstimate,
 		Code:            code,
 		Arguments:       arguments,
@@ -67,7 +65,7 @@ func (cp *ComputationProfile) ReportTransaction(
 	txReport := ProcedureReport{
 		ID:              txResult.TransactionID.String(),
 		ComputationUsed: txResult.ComputationUsed,
-		Intensities:     mapIntensities(intensities),
+		Intensities:     transformIntensities(intensities),
 		MemoryEstimate:  txResult.MemoryEstimate,
 		Code:            code,
 		Arguments:       arguments,
@@ -75,7 +73,9 @@ func (cp *ComputationProfile) ReportTransaction(
 	cp.Transactions = append(cp.Transactions, txReport)
 }
 
-func mapIntensities(
+// transformIntensities maps a numeric common.ComputationKind value
+// to a human-friendly string value.
+func transformIntensities(
 	intensities meter.MeteredComputationIntensities,
 ) map[string]uint {
 	result := make(map[string]uint)
@@ -197,7 +197,7 @@ func mapIntensities(
 		case environment.ComputationKindEVMDecodeABI:
 			result["EVMDecodeABI"] = value
 		default:
-			result[fmt.Sprintf("%d", kind)] = value
+			result[kind.String()] = value
 		}
 	}
 
