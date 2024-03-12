@@ -73,6 +73,7 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--start-block-height`        | `FLOW_STARTBLOCKHEIGHT`             | `0`             | Start block height to use when starting the network using 'testnet' or 'mainnet' as the chain-id    |
 | `--rpc-host`                  | `FLOW_RPCHOST`             | ''             | RPC host (access node) to query for previous state when starting the network using 'testnet' or 'mainnet' as the chain-id    |
 | `--legacy-upgrade` | `FLOW_LEGACYUPGRADE` | `false`         | Enable upgrading of legacy contracts |
+| `--computation-profiling` | `FLOW_COMPUTATIONPROFILING` | `false`         | Enable reporting of computation profiles for Cadence scripts & transactions |
 
 ## Running the emulator with the Flow CLI
 
