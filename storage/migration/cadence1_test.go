@@ -94,7 +94,14 @@ func migrateEmulatorState(t *testing.T, tempEmulatorStatePath string) {
 	rwf := &NOOPReportWriterFactory{}
 	stagedContracts := stagedContracts()
 
-	err = MigrateCadence1(store, stagedContracts, rwf, logger)
+	err = MigrateCadence1(
+		store,
+		migrations.EVMContractChangeNone,
+		migrations.BurnerContractChangeDeploy,
+		stagedContracts,
+		rwf,
+		logger,
+	)
 	require.NoError(t, err)
 	require.Empty(t, logWriter.logs)
 }
