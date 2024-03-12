@@ -1305,7 +1305,8 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 		b.computationProfile.ReportTransaction(
 			tr,
 			b.currentCode,
-			arguments, output.ComputationIntensities,
+			arguments,
+			output.ComputationIntensities,
 		)
 	}
 
