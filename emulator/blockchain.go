@@ -96,8 +96,8 @@ func New(opts ...Option) (*Blockchain, error) {
 		sourceFileMap:          make(map[common.Location]string),
 		entropyProvider:        &blockHashEntropyProvider{},
 		computationProfile: &ComputationProfile{
-			Scripts:      []ProcedureReport{},
-			Transactions: []ProcedureReport{},
+			Scripts:      make(map[string]ProcedureReport),
+			Transactions: make(map[string]ProcedureReport),
 		},
 	}
 	err := b.ReloadBlockchain()

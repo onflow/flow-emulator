@@ -35,8 +35,8 @@ type ProcedureReport struct {
 }
 
 type ComputationProfile struct {
-	Scripts      []ProcedureReport `json:"scripts"`
-	Transactions []ProcedureReport `json:"transactions"`
+	Scripts      map[string]ProcedureReport `json:"scripts"`
+	Transactions map[string]ProcedureReport `json:"transactions"`
 }
 
 func (cp *ComputationProfile) ReportScript(
@@ -53,7 +53,7 @@ func (cp *ComputationProfile) ReportScript(
 		Code:            code,
 		Arguments:       arguments,
 	}
-	cp.Scripts = append(cp.Scripts, scriptReport)
+	cp.Scripts[scriptResult.ScriptID.String()] = scriptReport
 }
 
 func (cp *ComputationProfile) ReportTransaction(
@@ -70,7 +70,7 @@ func (cp *ComputationProfile) ReportTransaction(
 		Code:            code,
 		Arguments:       arguments,
 	}
-	cp.Transactions = append(cp.Transactions, txReport)
+	cp.Transactions[txResult.TransactionID.String()] = txReport
 }
 
 // transformIntensities maps a numeric common.ComputationKind value

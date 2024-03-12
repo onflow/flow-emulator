@@ -79,7 +79,7 @@ func TestComputationProfileForScript(t *testing.T) {
 	require.NotNil(t, computationProfile)
 	require.Len(t, computationProfile.Scripts, 1)
 
-	scriptProfile := computationProfile.Scripts[0]
+	scriptProfile := computationProfile.Scripts[scriptResult.ScriptID.String()]
 	assert.Equal(t, scriptResult.ScriptID.String(), scriptProfile.ID)
 	assert.Equal(t, uint64(2), scriptProfile.ComputationUsed)
 
@@ -136,7 +136,7 @@ func TestComputationProfileForTransaction(t *testing.T) {
 	// The 2nd transaction interacts with the Counting contract.
 	require.Len(t, computationProfile.Transactions, 2)
 
-	txProfile := computationProfile.Transactions[1]
+	txProfile := computationProfile.Transactions[txResult.TransactionID.String()]
 	assert.Equal(t, tx.ID().String(), txProfile.ID)
 	assert.Equal(t, uint64(57), txProfile.ComputationUsed)
 
