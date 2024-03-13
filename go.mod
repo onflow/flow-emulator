@@ -14,7 +14,7 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v0.42.9
 	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.1
-	github.com/onflow/flow-go v0.33.2-0.20240306234901-64ab8d27ea30
+	github.com/onflow/flow-go v0.33.2-0.20240313182108-0bb799709506
 	github.com/onflow/flow-go-sdk v0.46.0
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
 	github.com/onflow/flow/protobuf/go/flow v0.3.7-0.20240305102946-3efec6679252
@@ -207,6 +207,3 @@ require (
 	nhooyr.io/websocket v1.8.7 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
-
-//TODO: Remove when merged
-replace github.com/onflow/flow-go v0.33.2-0.20240306234901-64ab8d27ea30 => github.com/UlyanaAndrukhiv/flow-go v0.0.0-20240313173402-39d630796876
