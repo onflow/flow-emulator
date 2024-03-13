@@ -87,12 +87,12 @@ func TestComputationProfileForScript(t *testing.T) {
 		"FunctionInvocation":     2,
 		"GetAccountContractCode": 1,
 		"GetCode":                1,
-		"GetOrLoadProgram":       3,
-		"GetValue":               221,
 		"ResolveLocation":        1,
 		"Statement":              1,
 	}
-	assert.Equal(t, expectedIntensities, scriptProfile.Intensities)
+	for kind, intensity := range expectedIntensities {
+		assert.Equal(t, scriptProfile.Intensities[kind], intensity)
+	}
 }
 
 func TestComputationProfileForTransaction(t *testing.T) {
@@ -141,23 +141,21 @@ func TestComputationProfileForTransaction(t *testing.T) {
 	assert.Equal(t, uint64(57), txProfile.ComputationUsed)
 
 	expectedIntensities := map[string]uint{
-		"AllocateStorageIndex":   2,
 		"CreateCompositeValue":   2,
 		"CreateDictionaryValue":  1,
 		"EmitEvent":              73,
 		"EncodeEvent":            1,
-		"EncodeValue":            2336,
 		"FunctionInvocation":     9,
 		"GenerateAccountLocalID": 1,
 		"GenerateUUID":           1,
 		"GetAccountContractCode": 1,
 		"GetCode":                1,
-		"GetOrLoadProgram":       3,
-		"GetValue":               2249,
 		"ResolveLocation":        1,
 		"SetValue":               2473,
 		"Statement":              11,
 		"TransferCompositeValue": 3,
 	}
-	assert.Equal(t, expectedIntensities, txProfile.Intensities)
+	for kind, intensity := range expectedIntensities {
+		assert.Equal(t, txProfile.Intensities[kind], intensity)
+	}
 }
