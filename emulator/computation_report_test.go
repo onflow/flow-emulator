@@ -33,12 +33,12 @@ import (
 	"github.com/onflow/flow-emulator/emulator"
 )
 
-func TestComputationProfileForScript(t *testing.T) {
+func TestComputationReportingForScript(t *testing.T) {
 
 	t.Parallel()
 
 	b, err := emulator.New(
-		emulator.WithComputationProfiling(true),
+		emulator.WithComputationReporting(true),
 	)
 	require.NoError(t, err)
 
@@ -75,11 +75,11 @@ func TestComputationProfileForScript(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, cadence.NewInt(0), scriptResult.Value)
 
-	computationProfile := b.ComputationProfile()
-	require.NotNil(t, computationProfile)
-	require.Len(t, computationProfile.Scripts, 1)
+	computationReport := b.ComputationReport()
+	require.NotNil(t, computationReport)
+	require.Len(t, computationReport.Scripts, 1)
 
-	scriptProfile := computationProfile.Scripts[scriptResult.ScriptID.String()]
+	scriptProfile := computationReport.Scripts[scriptResult.ScriptID.String()]
 	assert.Equal(t, scriptResult.ScriptID.String(), scriptProfile.ID)
 	assert.Equal(t, uint64(2), scriptProfile.ComputationUsed)
 
@@ -95,12 +95,12 @@ func TestComputationProfileForScript(t *testing.T) {
 	}
 }
 
-func TestComputationProfileForTransaction(t *testing.T) {
+func TestComputationReportingForTransaction(t *testing.T) {
 
 	t.Parallel()
 
 	b, err := emulator.New(
-		emulator.WithComputationProfiling(true),
+		emulator.WithComputationReporting(true),
 	)
 	require.NoError(t, err)
 
@@ -130,13 +130,13 @@ func TestComputationProfileForTransaction(t *testing.T) {
 	require.NoError(t, err)
 	AssertTransactionSucceeded(t, txResult)
 
-	computationProfile := b.ComputationProfile()
-	require.NotNil(t, computationProfile)
+	computationReport := b.ComputationReport()
+	require.NotNil(t, computationReport)
 	// The 1st transaction creates a new account and deploys the Counting contract.
 	// The 2nd transaction interacts with the Counting contract.
-	require.Len(t, computationProfile.Transactions, 2)
+	require.Len(t, computationReport.Transactions, 2)
 
-	txProfile := computationProfile.Transactions[txResult.TransactionID.String()]
+	txProfile := computationReport.Transactions[txResult.TransactionID.String()]
 	assert.Equal(t, tx.ID().String(), txProfile.ID)
 	assert.Equal(t, uint64(57), txProfile.ComputationUsed)
 

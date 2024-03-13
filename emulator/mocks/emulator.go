@@ -74,18 +74,18 @@ func (mr *MockEmulatorMockRecorder) CommitBlock() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitBlock", reflect.TypeOf((*MockEmulator)(nil).CommitBlock))
 }
 
-// ComputationProfile mocks base method.
-func (m *MockEmulator) ComputationProfile() *emulator.ComputationProfile {
+// ComputationReport mocks base method.
+func (m *MockEmulator) ComputationReport() *emulator.ComputationReport {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ComputationProfile")
-	ret0, _ := ret[0].(*emulator.ComputationProfile)
+	ret := m.ctrl.Call(m, "ComputationReport")
+	ret0, _ := ret[0].(*emulator.ComputationReport)
 	return ret0
 }
 
-// ComputationProfile indicates an expected call of ComputationProfile.
-func (mr *MockEmulatorMockRecorder) ComputationProfile() *gomock.Call {
+// ComputationReport indicates an expected call of ComputationReport.
+func (mr *MockEmulatorMockRecorder) ComputationReport() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ComputationProfile", reflect.TypeOf((*MockEmulator)(nil).ComputationProfile))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ComputationReport", reflect.TypeOf((*MockEmulator)(nil).ComputationReport))
 }
 
 // CoverageReport mocks base method.

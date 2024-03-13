@@ -65,7 +65,7 @@ func NewEmulatorAPIServer(emulator emulator.Emulator, adapter *adapters.AccessAd
 	router.HandleFunc("/emulator/codeCoverage", r.CodeCoverage).Methods("GET")
 	router.HandleFunc("/emulator/codeCoverage/reset", r.ResetCodeCoverage).Methods("PUT")
 
-	router.HandleFunc("/emulator/profiling", r.ComputationProfiling).Methods("GET")
+	router.HandleFunc("/emulator/computationReport", r.ComputationReport).Methods("GET")
 
 	return r
 }
@@ -241,10 +241,10 @@ func (m EmulatorAPIServer) CodeCoverage(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (m EmulatorAPIServer) ComputationProfiling(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) ComputationReport(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	err := json.NewEncoder(w).Encode(m.emulator.ComputationProfile())
+	err := json.NewEncoder(w).Encode(m.emulator.ComputationReport())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

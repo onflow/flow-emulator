@@ -100,8 +100,8 @@ type CoverageReportCapable interface {
 	ResetCoverageReport()
 }
 
-type ComputationProfileCapable interface {
-	ComputationProfile() *ComputationProfile
+type ComputationReportCapable interface {
+	ComputationReport() *ComputationReport
 }
 
 type DebuggingCapable interface {
@@ -180,7 +180,7 @@ type Emulator interface {
 	AccessProvider
 
 	CoverageReportCapable
-	ComputationProfileCapable
+	ComputationReportCapable
 	DebuggingCapable
 	SnapshotCapable
 	RollbackCapable

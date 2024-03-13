@@ -26,20 +26,22 @@ import (
 )
 
 type ProcedureReport struct {
-	ID              string          `json:"ID"`
-	ComputationUsed uint64          `json:"computation"`
-	Intensities     map[string]uint `json:"intensities"`
-	MemoryEstimate  uint64          `json:"memory"`
-	Code            string          `json:"source"`
-	Arguments       []string        `json:"arguments"`
+	ID              string `json:"ID"`
+	ComputationUsed uint64 `json:"computation"`
+	// To get the computation from the intensities map, see:
+	// https://github.com/onflow/flow-go/blob/master/fvm/meter/computation_meter.go#L32-L39
+	Intensities    map[string]uint `json:"intensities"`
+	MemoryEstimate uint64          `json:"memory"`
+	Code           string          `json:"source"`
+	Arguments      []string        `json:"arguments"`
 }
 
-type ComputationProfile struct {
+type ComputationReport struct {
 	Scripts      map[string]ProcedureReport `json:"scripts"`
 	Transactions map[string]ProcedureReport `json:"transactions"`
 }
 
-func (cp *ComputationProfile) ReportScript(
+func (cr *ComputationReport) ReportScript(
 	scriptResult *types.ScriptResult,
 	code string,
 	arguments []string,
@@ -53,10 +55,10 @@ func (cp *ComputationProfile) ReportScript(
 		Code:            code,
 		Arguments:       arguments,
 	}
-	cp.Scripts[scriptResult.ScriptID.String()] = scriptReport
+	cr.Scripts[scriptResult.ScriptID.String()] = scriptReport
 }
 
-func (cp *ComputationProfile) ReportTransaction(
+func (cr *ComputationReport) ReportTransaction(
 	txResult *types.TransactionResult,
 	code string,
 	arguments []string,
@@ -70,7 +72,7 @@ func (cp *ComputationProfile) ReportTransaction(
 		Code:            code,
 		Arguments:       arguments,
 	}
-	cp.Transactions[txResult.TransactionID.String()] = txReport
+	cr.Transactions[txResult.TransactionID.String()] = txReport
 }
 
 // transformIntensities maps a numeric common.ComputationKind value

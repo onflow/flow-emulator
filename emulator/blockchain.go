@@ -95,7 +95,7 @@ func New(opts ...Option) (*Blockchain, error) {
 		clock:                  NewSystemClock(),
 		sourceFileMap:          make(map[common.Location]string),
 		entropyProvider:        &blockHashEntropyProvider{},
-		computationProfile: &ComputationProfile{
+		computationReport: &ComputationReport{
 			Scripts:      make(map[string]ProcedureReport),
 			Transactions: make(map[string]ProcedureReport),
 		},
@@ -304,9 +304,9 @@ func WithCoverageReport(coverageReport *runtime.CoverageReport) Option {
 	}
 }
 
-func WithComputationProfiling(enabled bool) Option {
+func WithComputationReporting(enabled bool) Option {
 	return func(c *config) {
-		c.ComputationProfilingEnabled = enabled
+		c.ComputationReportingEnabled = enabled
 	}
 }
 
@@ -353,8 +353,8 @@ type Blockchain struct {
 
 	sourceFileMap map[common.Location]string
 
-	entropyProvider    *blockHashEntropyProvider
-	computationProfile *ComputationProfile
+	entropyProvider   *blockHashEntropyProvider
+	computationReport *ComputationReport
 }
 
 // config is a set of configuration options for an emulated emulator.
@@ -379,7 +379,7 @@ type config struct {
 	CoverageReport               *runtime.CoverageReport
 	AutoMine                     bool
 	Contracts                    []ContractDescription
-	ComputationProfilingEnabled  bool
+	ComputationReportingEnabled  bool
 }
 
 func (conf config) GetStore() storage.Store {
@@ -439,7 +439,7 @@ var defaultConfig = func() config {
 		ChainID:                      flowgo.Emulator,
 		CoverageReport:               nil,
 		AutoMine:                     false,
-		ComputationProfilingEnabled:  false,
+		ComputationReportingEnabled:  false,
 	}
 }()
 
@@ -1297,12 +1297,12 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 		b.sourceFileMap[location] = sourceFile
 	}
 
-	if b.conf.ComputationProfilingEnabled {
+	if b.conf.ComputationReportingEnabled {
 		arguments := make([]string, 0)
 		for _, argument := range txnBody.Arguments {
 			arguments = append(arguments, string(argument))
 		}
-		b.computationProfile.ReportTransaction(
+		b.computationReport.ReportTransaction(
 			tr,
 			b.currentCode,
 			arguments,
@@ -1537,12 +1537,12 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 		MemoryEstimate:  output.MemoryEstimate,
 	}
 
-	if b.conf.ComputationProfilingEnabled {
+	if b.conf.ComputationReportingEnabled {
 		scriptArguments := make([]string, 0)
 		for _, argument := range arguments {
 			scriptArguments = append(scriptArguments, string(argument))
 		}
-		b.computationProfile.ReportScript(
+		b.computationReport.ReportScript(
 			scriptResult,
 			b.currentCode,
 			scriptArguments,
@@ -1648,8 +1648,8 @@ func (b *Blockchain) CoverageReport() *runtime.CoverageReport {
 	return b.coverageReportedRuntime.CoverageReport
 }
 
-func (b *Blockchain) ComputationProfile() *ComputationProfile {
-	return b.computationProfile
+func (b *Blockchain) ComputationReport() *ComputationReport {
+	return b.computationReport
 }
 
 func (b *Blockchain) ResetCoverageReport() {
