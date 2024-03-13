@@ -451,6 +451,12 @@ func TestAccess(t *testing.T) {
 		emulatorResult := types.ScriptResult{Value: stringValue}
 		expected, _ := convertScriptResult(&emulatorResult, nil)
 
+		// called once for each script execution
+		emu.EXPECT().
+			GetLatestBlock().
+			Return(&flowgo.Block{Header: &flowgo.Header{}}, nil).
+			Times(2)
+
 		//success
 		emu.EXPECT().
 			ExecuteScript(script, arguments).
