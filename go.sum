@@ -85,8 +85,8 @@ github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMx
 github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
 github.com/StackExchange/wmi v1.2.1 h1:VIkavFPXSjcnS+O8yTq7NI32k0R5Aj+v39y29VYDOSA=
 github.com/StackExchange/wmi v1.2.1/go.mod h1:rcmrprowKIVzvc+NUiLncP2uuArMWLCbu9SBzvHz7e8=
-github.com/UlyanaAndrukhiv/flow-go v0.0.0-20240311162104-2112249f41a0 h1:BHlkGvA46i7HfbERL9BJdFIgFVXRwnH2tqUyHmiRFLc=
-github.com/UlyanaAndrukhiv/flow-go v0.0.0-20240311162104-2112249f41a0/go.mod h1:IwdMip6NAVpmpxNqBawp8FwsZtIRXUbkzDK/NPGauuw=
+github.com/UlyanaAndrukhiv/flow-go v0.0.0-20240313173402-39d630796876 h1:LC8IQddI/FMzd46F1FJzbKPJsu7NULZDQVGZRD7TWKA=
+github.com/UlyanaAndrukhiv/flow-go v0.0.0-20240313173402-39d630796876/go.mod h1:IwdMip6NAVpmpxNqBawp8FwsZtIRXUbkzDK/NPGauuw=
 github.com/VictoriaMetrics/fastcache v1.5.3/go.mod h1:+jv9Ckb+za/P1ZRg/sulP5Ni1v49daAVERr0H3CuscE=
 github.com/VictoriaMetrics/fastcache v1.12.1 h1:i0mICQuojGDL3KblA7wUNlY5lOK6a4bwt3uRKnkZU40=
 github.com/VictoriaMetrics/fastcache v1.12.1/go.mod h1:tX04vaqcNoQeGLD+ra5pU5sWkuxnzWhEzLwhP9w653o=
