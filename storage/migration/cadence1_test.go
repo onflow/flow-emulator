@@ -57,7 +57,10 @@ var testAccountAddress = func() common.Address {
 }()
 
 //go:embed test-data/test_contract_upgraded.cdc
-var testContract string
+var testContractUpdated string
+
+//go:embed test-data/test_contract_old.cdc
+var testContractOld string
 
 const emulatorStateFile = "test-data/emulator_state_cadence_v0.42.6"
 
@@ -79,14 +82,7 @@ func createEmulatorStateTempCopy(t *testing.T) string {
 	return tempEmulatorStatePath
 }
 
-func migrateEmulatorState(t *testing.T, tempEmulatorStatePath string) {
-	store, err := sqlite.New(tempEmulatorStatePath)
-	require.NoError(t, err)
-
-	defer func() {
-		err = store.Close()
-		require.NoError(t, err)
-	}()
+func migrateEmulatorState(t *testing.T, store *sqlite.Store) {
 
 	logWriter := &writer{}
 	logger := zerolog.New(logWriter).Level(zerolog.ErrorLevel)
@@ -94,7 +90,7 @@ func migrateEmulatorState(t *testing.T, tempEmulatorStatePath string) {
 	rwf := &NOOPReportWriterFactory{}
 	stagedContracts := stagedContracts()
 
-	err = MigrateCadence1(
+	err := MigrateCadence1(
 		store,
 		migrations.EVMContractChangeNone,
 		migrations.BurnerContractChangeDeploy,
@@ -111,12 +107,23 @@ func TestCadence1Migration(t *testing.T) {
 	// Work on a temp copy of the state,
 	// since the migration will be updating the state.
 	tempEmulatorStatePath := createEmulatorStateTempCopy(t)
-	defer os.Remove(tempEmulatorStatePath)
+	defer func() {
+		err := os.Remove(tempEmulatorStatePath)
+		require.NoError(t, err)
+	}()
+
+	store, err := sqlite.New(tempEmulatorStatePath)
+	require.NoError(t, err)
+	defer func() {
+		err := store.Close()
+		require.NoError(t, err)
+	}()
+
+	// Check payloads before migration
+	checkPayloadsBeforeMigration(t, store)
 
 	// Migrate
-
-	// Migrate
-	migrateEmulatorState(t, tempEmulatorStatePath)
+	migrateEmulatorState(t, store)
 
 	// Re-load the store from the file.
 	migratedStore, err := sqlite.New(tempEmulatorStatePath)
@@ -129,6 +136,23 @@ func TestCadence1Migration(t *testing.T) {
 	// Reload the payloads from the emulator state (store)
 	// and check whether the registers have migrated properly.
 	checkMigratedPayloads(t, migratedStore)
+}
+
+func checkPayloadsBeforeMigration(t *testing.T, store *sqlite.Store) {
+	payloads, _, _, err := util.PayloadsAndAccountsFromEmulatorSnapshot(store.DB())
+	require.NoError(t, err)
+
+	for _, payload := range payloads {
+		key, err := payload.Key()
+		require.NoError(t, err)
+
+		// Check if the old contract uses old syntax,
+		// that are not supported in Cadence 1.0.
+		if string(key.KeyParts[1].Value) == "code.Test" {
+			assert.Equal(t, testContractOld, string(payload.Value()))
+			return
+		}
+	}
 }
 
 func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
@@ -267,7 +291,7 @@ func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
 			common.CompositeKindResource,
 			[]interpreter.CompositeField{
 				{
-					Value: interpreter.NewUnmeteredUInt64Value(360287970189639680),
+					Value: interpreter.NewUnmeteredUInt64Value(11457157452030541824),
 					Name:  "uuid",
 				},
 			},
@@ -363,7 +387,7 @@ func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
 					Name:  "balance",
 				},
 				{
-					Value: interpreter.NewUnmeteredUInt64Value(11240984669916758018),
+					Value: interpreter.NewUnmeteredUInt64Value(8791026472627208194),
 					Name:  "uuid",
 				},
 			},
@@ -400,7 +424,7 @@ func stagedContracts() []migrations.StagedContract {
 		{
 			Contract: migrations.Contract{
 				Name: "Test",
-				Code: []byte(testContract),
+				Code: []byte(testContractUpdated),
 			},
 			Address: testAccountAddress,
 		},
@@ -424,10 +448,23 @@ func TestLoadMigratedValuesInTransaction(t *testing.T) {
 
 	// Create a temporary snapshot file to work on.
 	tempEmulatorStatePath := createEmulatorStateTempCopy(t)
-	defer os.Remove(tempEmulatorStatePath)
+	defer func() {
+		err := os.Remove(tempEmulatorStatePath)
+		require.NoError(t, err)
+	}()
+
+	store, err := sqlite.New(tempEmulatorStatePath)
+	require.NoError(t, err)
+	defer func() {
+		err := store.Close()
+		require.NoError(t, err)
+	}()
+
+	// Check payloads before migration
+	checkPayloadsBeforeMigration(t, store)
 
 	// Migrate
-	migrateEmulatorState(t, tempEmulatorStatePath)
+	migrateEmulatorState(t, store)
 
 	// Re-load the store from the file.
 	migratedStore, err := sqlite.New(tempEmulatorStatePath)
