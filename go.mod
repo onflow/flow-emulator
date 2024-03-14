@@ -19,7 +19,7 @@ require (
 	github.com/onflow/flow-go v0.34.0-crescendo-preview.6.0.20240313030147-6c1b120ed2ac
 	github.com/onflow/flow-go-sdk v1.0.0-preview.11
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20240305213046-9026973838d7
-	github.com/onflow/flow/protobuf/go/flow v0.3.7
+	github.com/onflow/flow/protobuf/go/flow v0.3.7-0.20240305102946-3efec6679252
 	github.com/prometheus/client_golang v1.18.0
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
@@ -53,7 +53,6 @@ require (
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/crate-crypto/go-kzg-4844 v0.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/davidlazar/go-crypto v0.0.0-20200604182044-b73af7476f6c // indirect
 	github.com/deckarep/golang-set/v2 v2.1.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
@@ -105,7 +104,6 @@ require (
 	github.com/ipfs/go-log v1.0.5 // indirect
 	github.com/ipfs/go-log/v2 v2.5.1 // indirect
 	github.com/ipfs/go-metrics-interface v0.0.1 // indirect
-	github.com/jbenet/go-temp-err-catcher v0.1.0 // indirect
 	github.com/jbenet/goprocess v0.1.4 // indirect
 	github.com/k0kubun/pp v3.0.1+incompatible // indirect
 	github.com/kevinburke/go-bindata v3.24.0+incompatible // indirect
@@ -161,7 +159,6 @@ require (
 	github.com/sethvargo/go-retry v0.2.3 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
 	github.com/slok/go-http-metrics v0.10.0 // indirect
-	github.com/sony/gobreaker v0.5.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/afero v1.10.0 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
@@ -211,8 +208,11 @@ require (
 	lukechampine.com/blake3 v1.2.1 // indirect
 	modernc.org/libc v1.37.6 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
-	modernc.org/memory v1.7.2 // indirect
+	modernc.org/memory v1.7.2 // indirects
 	modernc.org/sqlite v1.28.0 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
+
+//TODO: Remove when updated v0.34.0-crescendo-preview.6.0 by last changes from master, merge pull request commit 0bb799709506
+replace github.com/onflow/flow-go v0.34.0-crescendo-preview.6.0.20240313030147-6c1b120ed2ac => github.com/onflow/flow-go v0.33.2-0.20240313182108-0bb799709506

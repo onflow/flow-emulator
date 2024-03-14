@@ -31,6 +31,7 @@ import (
 	legacyaccess "github.com/onflow/flow-go/access/legacy"
 	"github.com/onflow/flow-go/engine/access/state_stream"
 	"github.com/onflow/flow-go/engine/access/state_stream/backend"
+	"github.com/onflow/flow-go/engine/access/subscription"
 	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	accessproto "github.com/onflow/flow/protobuf/go/flow/access"
@@ -67,7 +68,7 @@ func NewGRPCServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 	me.On("NodeID").Return(flowgo.ZeroID)
 
 	legacyaccessproto.RegisterAccessAPIServer(grpcServer, legacyaccess.NewHandler(adapter, chain))
-	accessproto.RegisterAccessAPIServer(grpcServer, access.NewHandler(adapter, chain, mockHeaderCache{}, me))
+	accessproto.RegisterAccessAPIServer(grpcServer, access.NewHandler(adapter, chain, mockHeaderCache{}, me, subscription.DefaultMaxGlobalStreams))
 
 	grpcprometheus.Register(grpcServer)
 
@@ -78,11 +79,11 @@ func NewGRPCServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 	streamConfig := backend.Config{
 		EventFilterConfig:    state_stream.DefaultEventFilterConfig,
 		RpcMetricsEnabled:    false,
-		MaxGlobalStreams:     state_stream.DefaultMaxGlobalStreams,
-		ClientSendTimeout:    state_stream.DefaultSendTimeout,
-		ClientSendBufferSize: state_stream.DefaultSendBufferSize,
-		ResponseLimit:        state_stream.DefaultResponseLimit,
-		HeartbeatInterval:    state_stream.DefaultHeartbeatInterval,
+		MaxGlobalStreams:     subscription.DefaultMaxGlobalStreams,
+		ClientSendTimeout:    subscription.DefaultSendTimeout,
+		ClientSendBufferSize: subscription.DefaultSendBufferSize,
+		ResponseLimit:        subscription.DefaultResponseLimit,
+		HeartbeatInterval:    subscription.DefaultHeartbeatInterval,
 	}
 	streamBackend := NewStateStreamBackend(blockchain, *logger)
 	handler := backend.NewHandler(streamBackend, chain, streamConfig)
