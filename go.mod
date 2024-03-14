@@ -214,5 +214,5 @@ require (
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
 
-//TODO: Remove when updated v0.34.0-crescendo-preview.6.0 by last changes from master, merge pull request commit 0bb799709506
+//TODO: Remove when updated v0.34.0-crescendo-preview.6.0 with last changes from master, merge pull request commit https://github.com/onflow/flow-go/commit/0bb7997095065d672a2ed226ecfb684a615d1c25
 replace github.com/onflow/flow-go v0.34.0-crescendo-preview.6.0.20240313030147-6c1b120ed2ac => github.com/onflow/flow-go v0.33.2-0.20240313182108-0bb799709506
