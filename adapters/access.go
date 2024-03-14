@@ -537,6 +537,10 @@ func (a *AccessAdapter) SubscribeBlockDigestsFromLatest(_ context.Context, _ flo
 	return nil
 }
 
+func (a *AccessAdapter) SubscribeTransactionStatuses(_ context.Context, _ *flowgo.TransactionBody) subscription.Subscription {
+	return nil
+}
+
 func ConvertCCFEventsToJsonEvents(events []flowgo.Event) ([]flowgo.Event, error) {
 	converted := make([]flowgo.Event, 0, len(events))
 
