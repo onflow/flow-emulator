@@ -1298,12 +1298,14 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 	}
 
 	if b.conf.ComputationReportingEnabled {
+		location := common.NewTransactionLocation(nil, tr.TransactionID.Bytes())
 		arguments := make([]string, 0)
 		for _, argument := range txnBody.Arguments {
 			arguments = append(arguments, string(argument))
 		}
 		b.computationReport.ReportTransaction(
 			tr,
+			b.sourceFileMap[location],
 			b.currentCode,
 			arguments,
 			output.ComputationIntensities,
@@ -1538,12 +1540,14 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 	}
 
 	if b.conf.ComputationReportingEnabled {
+		location := common.NewScriptLocation(nil, scriptID.Bytes())
 		scriptArguments := make([]string, 0)
 		for _, argument := range arguments {
 			scriptArguments = append(scriptArguments, string(argument))
 		}
 		b.computationReport.ReportScript(
 			scriptResult,
+			b.sourceFileMap[location],
 			b.currentCode,
 			scriptArguments,
 			output.ComputationIntensities,

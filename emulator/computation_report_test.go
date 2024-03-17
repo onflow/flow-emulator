@@ -80,7 +80,6 @@ func TestComputationReportingForScript(t *testing.T) {
 	require.Len(t, computationReport.Scripts, 1)
 
 	scriptProfile := computationReport.Scripts[scriptResult.ScriptID.String()]
-	assert.Equal(t, scriptResult.ScriptID.String(), scriptProfile.ID)
 	assert.GreaterOrEqual(t, scriptProfile.ComputationUsed, uint64(1))
 
 	expectedIntensities := map[string]uint{
@@ -137,7 +136,6 @@ func TestComputationReportingForTransaction(t *testing.T) {
 	require.Len(t, computationReport.Transactions, 2)
 
 	txProfile := computationReport.Transactions[txResult.TransactionID.String()]
-	assert.Equal(t, tx.ID().String(), txProfile.ID)
 	assert.GreaterOrEqual(t, txProfile.ComputationUsed, uint64(1))
 
 	expectedIntensities := map[string]uint{

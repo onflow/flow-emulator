@@ -26,7 +26,7 @@ import (
 )
 
 type ProcedureReport struct {
-	ID              string `json:"ID"`
+	Path            string `json:"path"`
 	ComputationUsed uint64 `json:"computation"`
 	// To get the computation from the intensities map, see:
 	// https://github.com/onflow/flow-go/blob/master/fvm/meter/computation_meter.go#L32-L39
@@ -43,12 +43,13 @@ type ComputationReport struct {
 
 func (cr *ComputationReport) ReportScript(
 	scriptResult *types.ScriptResult,
+	path string,
 	code string,
 	arguments []string,
 	intensities meter.MeteredComputationIntensities,
 ) {
 	scriptReport := ProcedureReport{
-		ID:              scriptResult.ScriptID.String(),
+		Path:            path,
 		ComputationUsed: scriptResult.ComputationUsed,
 		Intensities:     transformIntensities(intensities),
 		MemoryEstimate:  scriptResult.MemoryEstimate,
@@ -60,12 +61,13 @@ func (cr *ComputationReport) ReportScript(
 
 func (cr *ComputationReport) ReportTransaction(
 	txResult *types.TransactionResult,
+	path string,
 	code string,
 	arguments []string,
 	intensities meter.MeteredComputationIntensities,
 ) {
 	txReport := ProcedureReport{
-		ID:              txResult.TransactionID.String(),
+		Path:            path,
 		ComputationUsed: txResult.ComputationUsed,
 		Intensities:     transformIntensities(intensities),
 		MemoryEstimate:  txResult.MemoryEstimate,
