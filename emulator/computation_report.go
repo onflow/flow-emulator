@@ -26,7 +26,7 @@ import (
 )
 
 type ProcedureReport struct {
-	Path            string `json:"path"`
+	Path            string `json:"path,omitempty"`
 	ComputationUsed uint64 `json:"computation"`
 	// To get the computation from the intensities map, see:
 	// https://github.com/onflow/flow-go/blob/master/fvm/meter/computation_meter.go#L32-L39
