@@ -38,6 +38,7 @@ import (
 	"github.com/onflow/flow-emulator/server/debugger"
 	"github.com/onflow/flow-emulator/server/utils"
 	"github.com/onflow/flow-emulator/storage"
+	"github.com/onflow/flow-emulator/storage/remote"
 	"github.com/onflow/flow-emulator/storage/sqlite"
 	"github.com/onflow/flow-emulator/storage/util"
 )
@@ -137,6 +138,8 @@ type Config struct {
 	CoverageReportingEnabled bool
 	// LegacyUpgradeEnabled enables/disables Cadence legacy contracts upgrades
 	LegacyContractUpgradeEnabled bool
+	// RPCHost is the address of the access node to use when using a forked network.
+	RPCHost string
 	// StartBlockHeight is the height at which to start the emulator.
 	StartBlockHeight uint64
 }
@@ -149,7 +152,7 @@ type listener interface {
 func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	conf = sanitizeConfig(conf)
 
-	store, err := configureStorage(conf)
+	store, err := configureStorage(logger, conf)
 	if err != nil {
 		logger.Error().Err(err).Msg("❗  Failed to configure storage")
 		return nil
@@ -309,7 +312,7 @@ func (s *EmulatorServer) Stop() {
 	s.logger.Info().Msg("🛑  Server stopped")
 }
 
-func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
+func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider storage.Store, err error) {
 	if conf.RedisURL != "" {
 		storageProvider, err = util.NewRedisStorage(conf.RedisURL)
 		if err != nil {
@@ -343,6 +346,23 @@ func configureStorage(conf *Config) (storageProvider storage.Store, err error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if conf.ChainID == flowgo.Testnet || conf.ChainID == flowgo.Mainnet {
+		// TODO: any reason redis shouldn't work?
+		baseProvider, ok := storageProvider.(*sqlite.Store)
+		if !ok {
+			return nil, fmt.Errorf("only sqlite is supported with forked networks")
+		}
+
+		provider, err := remote.New(baseProvider, logger,
+			remote.WithRPCHost(conf.RPCHost, conf.ChainID),
+			remote.WithStartBlockHeight(conf.StartBlockHeight),
+		)
+		if err != nil {
+			return nil, err
+		}
+		storageProvider = provider
 	}
 
 	if conf.Snapshot {

@@ -53,7 +53,7 @@ func NewAccessAdapter(logger *zerolog.Logger, emulator emulator.Emulator) *Acces
 	}
 }
 
-func convertError(err error) error {
+func convertError(err error, defaultStatusCode codes.Code) error {
 	if err != nil {
 		switch err.(type) {
 		case types.InvalidArgumentError:
@@ -61,14 +61,14 @@ func convertError(err error) error {
 		case types.NotFoundError:
 			return status.Error(codes.NotFound, err.Error())
 		default:
-			return status.Error(codes.Internal, err.Error())
+			return status.Error(defaultStatusCode, err.Error())
 		}
 	}
 	return nil
 }
 
 func (a *AccessAdapter) Ping(_ context.Context) error {
-	return convertError(a.emulator.Ping())
+	return convertError(a.emulator.Ping(), codes.Internal)
 }
 
 func (a *AccessAdapter) GetNetworkParameters(_ context.Context) access.NetworkParameters {
@@ -78,7 +78,7 @@ func (a *AccessAdapter) GetNetworkParameters(_ context.Context) access.NetworkPa
 func (a *AccessAdapter) GetLatestBlockHeader(_ context.Context, _ bool) (*flowgo.Header, flowgo.BlockStatus, error) {
 	block, err := a.emulator.GetLatestBlock()
 	if err != nil {
-		return nil, flowgo.BlockStatusUnknown, convertError(err)
+		return nil, flowgo.BlockStatusUnknown, convertError(err, codes.Internal)
 	}
 
 	a.logger.Debug().Fields(map[string]any{
@@ -92,7 +92,7 @@ func (a *AccessAdapter) GetLatestBlockHeader(_ context.Context, _ bool) (*flowgo
 func (a *AccessAdapter) GetBlockHeaderByHeight(_ context.Context, height uint64) (*flowgo.Header, flowgo.BlockStatus, error) {
 	block, err := a.emulator.GetBlockByHeight(height)
 	if err != nil {
-		return nil, flowgo.BlockStatusUnknown, convertError(err)
+		return nil, flowgo.BlockStatusUnknown, convertError(err, codes.Internal)
 	}
 
 	a.logger.Debug().Fields(map[string]any{
@@ -106,7 +106,7 @@ func (a *AccessAdapter) GetBlockHeaderByHeight(_ context.Context, height uint64)
 func (a *AccessAdapter) GetBlockHeaderByID(_ context.Context, id flowgo.Identifier) (*flowgo.Header, flowgo.BlockStatus, error) {
 	block, err := a.emulator.GetBlockByID(id)
 	if err != nil {
-		return nil, flowgo.BlockStatusUnknown, convertError(err)
+		return nil, flowgo.BlockStatusUnknown, convertError(err, codes.Internal)
 	}
 
 	a.logger.Debug().Fields(map[string]any{
@@ -120,7 +120,7 @@ func (a *AccessAdapter) GetBlockHeaderByID(_ context.Context, id flowgo.Identifi
 func (a *AccessAdapter) GetLatestBlock(_ context.Context, _ bool) (*flowgo.Block, flowgo.BlockStatus, error) {
 	block, err := a.emulator.GetLatestBlock()
 	if err != nil {
-		return nil, flowgo.BlockStatusUnknown, convertError(err)
+		return nil, flowgo.BlockStatusUnknown, convertError(err, codes.Internal)
 	}
 
 	a.logger.Debug().Fields(map[string]any{
@@ -134,7 +134,7 @@ func (a *AccessAdapter) GetLatestBlock(_ context.Context, _ bool) (*flowgo.Block
 func (a *AccessAdapter) GetBlockByHeight(_ context.Context, height uint64) (*flowgo.Block, flowgo.BlockStatus, error) {
 	block, err := a.emulator.GetBlockByHeight(height)
 	if err != nil {
-		return nil, flowgo.BlockStatusUnknown, convertError(err)
+		return nil, flowgo.BlockStatusUnknown, convertError(err, codes.Internal)
 	}
 
 	a.logger.Debug().Fields(map[string]any{
@@ -148,7 +148,7 @@ func (a *AccessAdapter) GetBlockByHeight(_ context.Context, height uint64) (*flo
 func (a *AccessAdapter) GetBlockByID(_ context.Context, id flowgo.Identifier) (*flowgo.Block, flowgo.BlockStatus, error) {
 	block, err := a.emulator.GetBlockByID(id)
 	if err != nil {
-		return nil, flowgo.BlockStatusUnknown, convertError(err)
+		return nil, flowgo.BlockStatusUnknown, convertError(err, codes.Internal)
 	}
 
 	a.logger.Debug().Fields(map[string]any{
@@ -162,7 +162,7 @@ func (a *AccessAdapter) GetBlockByID(_ context.Context, id flowgo.Identifier) (*
 func (a *AccessAdapter) GetCollectionByID(_ context.Context, id flowgo.Identifier) (*flowgo.LightCollection, error) {
 	collection, err := a.emulator.GetCollectionByID(id)
 	if err != nil {
-		return nil, convertError(err)
+		return nil, convertError(err, codes.Internal)
 	}
 
 	a.logger.Debug().
@@ -175,7 +175,7 @@ func (a *AccessAdapter) GetCollectionByID(_ context.Context, id flowgo.Identifie
 func (a *AccessAdapter) GetTransaction(_ context.Context, id flowgo.Identifier) (*flowgo.TransactionBody, error) {
 	tx, err := a.emulator.GetTransaction(id)
 	if err != nil {
-		return nil, convertError(err)
+		return nil, convertError(err, codes.Internal)
 	}
 
 	a.logger.Debug().
@@ -197,14 +197,14 @@ func (a *AccessAdapter) GetTransactionResult(
 ) {
 	result, err := a.emulator.GetTransactionResult(id)
 	if err != nil {
-		return nil, convertError(err)
+		return nil, convertError(err, codes.Internal)
 	}
 
 	// Convert CCF events to JSON events, else return CCF encoded version
 	if requiredEventEncodingVersion == entities.EventEncodingVersion_JSON_CDC_V0 {
 		result.Events, err = ConvertCCFEventsToJsonEvents(result.Events)
 		if err != nil {
-			return nil, convertError(err)
+			return nil, convertError(err, codes.Internal)
 		}
 	}
 	a.logger.Debug().
@@ -217,7 +217,7 @@ func (a *AccessAdapter) GetTransactionResult(
 func (a *AccessAdapter) GetAccount(_ context.Context, address flowgo.Address) (*flowgo.Account, error) {
 	account, err := a.emulator.GetAccount(address)
 	if err != nil {
-		return nil, convertError(err)
+		return nil, convertError(err, codes.Internal)
 	}
 
 	a.logger.Debug().
@@ -230,7 +230,7 @@ func (a *AccessAdapter) GetAccount(_ context.Context, address flowgo.Address) (*
 func (a *AccessAdapter) GetAccountAtLatestBlock(ctx context.Context, address flowgo.Address) (*flowgo.Account, error) {
 	account, err := a.GetAccount(ctx, address)
 	if err != nil {
-		return nil, convertError(err)
+		return nil, convertError(err, codes.Internal)
 	}
 
 	a.logger.Debug().
@@ -253,7 +253,7 @@ func (a *AccessAdapter) GetAccountAtBlockHeight(
 
 	account, err := a.emulator.GetAccountAtBlockHeight(address, height)
 	if err != nil {
-		return nil, convertError(err)
+		return nil, convertError(err, codes.Internal)
 	}
 	return account, nil
 }
@@ -264,12 +264,12 @@ func convertScriptResult(result *types.ScriptResult, err error) ([]byte, error) 
 	}
 
 	if !result.Succeeded() {
-		return nil, result.Error
+		return nil, status.Error(codes.InvalidArgument, result.Error.Error())
 	}
 
 	valueBytes, err := jsoncdc.Encode(result.Value)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, convertError(err, codes.InvalidArgument)
 	}
 
 	return valueBytes, nil
@@ -280,7 +280,14 @@ func (a *AccessAdapter) ExecuteScriptAtLatestBlock(
 	script []byte,
 	arguments [][]byte,
 ) ([]byte, error) {
-	a.logger.Debug().Msg("👤  ExecuteScriptAtLatestBlock called")
+	latestBlock, err := a.emulator.GetLatestBlock()
+	if err != nil {
+		return nil, err
+	}
+	a.logger.Debug().
+		Uint64("blockHeight", latestBlock.Header.Height).
+		Msg("👤  ExecuteScriptAtLatestBlock called")
+
 	result, err := a.emulator.ExecuteScript(script, arguments)
 	if err == nil {
 		utils.PrintScriptResult(a.logger, result)
@@ -332,7 +339,7 @@ func (a *AccessAdapter) GetEventsForHeightRange(
 ) ([]flowgo.BlockEvents, error) {
 	events, err := a.emulator.GetEventsForHeightRange(eventType, startHeight, endHeight)
 	if err != nil {
-		return nil, convertError(err)
+		return nil, convertError(err, codes.Internal)
 	}
 
 	eventCount := 0
@@ -343,7 +350,7 @@ func (a *AccessAdapter) GetEventsForHeightRange(
 			events[i].Events, err = ConvertCCFEventsToJsonEvents(events[i].Events)
 			eventCount = eventCount + len(events[i].Events)
 			if err != nil {
-				return nil, convertError(err)
+				return nil, convertError(err, codes.Internal)
 			}
 		}
 	}
@@ -366,7 +373,7 @@ func (a *AccessAdapter) GetEventsForBlockIDs(
 ) ([]flowgo.BlockEvents, error) {
 	events, err := a.emulator.GetEventsForBlockIDs(eventType, blockIDs)
 	if err != nil {
-		return nil, convertError(err)
+		return nil, convertError(err, codes.Internal)
 	}
 
 	eventCount := 0
@@ -377,7 +384,7 @@ func (a *AccessAdapter) GetEventsForBlockIDs(
 			events[i].Events, err = ConvertCCFEventsToJsonEvents(events[i].Events)
 			eventCount = eventCount + len(events[i].Events)
 			if err != nil {
-				return nil, convertError(err)
+				return nil, convertError(err, codes.Internal)
 			}
 		}
 	}
@@ -426,10 +433,10 @@ func (a *AccessAdapter) GetTransactionResultByIndex(
 ) (*access.TransactionResult, error) {
 	results, err := a.emulator.GetTransactionResultsByBlockID(blockID)
 	if err != nil {
-		return nil, convertError(err)
+		return nil, convertError(err, codes.Internal)
 	}
 	if len(results) <= int(index) {
-		return nil, convertError(&types.TransactionNotFoundError{ID: flowgo.Identifier{}})
+		return nil, convertError(&types.TransactionNotFoundError{ID: flowgo.Identifier{}}, codes.Internal)
 	}
 
 	// Convert CCF events to JSON events, else return CCF encoded version
@@ -437,7 +444,7 @@ func (a *AccessAdapter) GetTransactionResultByIndex(
 		for i := range results {
 			results[i].Events, err = ConvertCCFEventsToJsonEvents(results[i].Events)
 			if err != nil {
-				return nil, convertError(err)
+				return nil, convertError(err, codes.Internal)
 			}
 		}
 	}
@@ -448,7 +455,7 @@ func (a *AccessAdapter) GetTransactionResultByIndex(
 func (a *AccessAdapter) GetTransactionsByBlockID(_ context.Context, blockID flowgo.Identifier) ([]*flowgo.TransactionBody, error) {
 	result, err := a.emulator.GetTransactionsByBlockID(blockID)
 	if err != nil {
-		return nil, convertError(err)
+		return nil, convertError(err, codes.Internal)
 	}
 	return result, nil
 }
@@ -460,7 +467,7 @@ func (a *AccessAdapter) GetTransactionResultsByBlockID(
 ) ([]*access.TransactionResult, error) {
 	result, err := a.emulator.GetTransactionResultsByBlockID(blockID)
 	if err != nil {
-		return nil, convertError(err)
+		return nil, convertError(err, codes.Internal)
 	}
 
 	// Convert CCF events to JSON events, else return CCF encoded version
@@ -468,7 +475,7 @@ func (a *AccessAdapter) GetTransactionResultsByBlockID(
 		for i := range result {
 			result[i].Events, err = ConvertCCFEventsToJsonEvents(result[i].Events)
 			if err != nil {
-				return nil, convertError(err)
+				return nil, convertError(err, codes.Internal)
 			}
 		}
 	}
@@ -481,7 +488,7 @@ func (a *AccessAdapter) SendTransaction(_ context.Context, tx *flowgo.Transactio
 		Str("txID", tx.ID().String()).
 		Msg(`✉️   Transaction submitted`)
 
-	return convertError(a.emulator.SendTransaction(tx))
+	return convertError(a.emulator.SendTransaction(tx), codes.Internal)
 }
 
 func (a *AccessAdapter) GetNodeVersionInfo(
