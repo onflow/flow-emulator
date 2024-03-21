@@ -95,6 +95,10 @@ func New(opts ...Option) (*Blockchain, error) {
 		clock:                  NewSystemClock(),
 		sourceFileMap:          make(map[common.Location]string),
 		entropyProvider:        &blockHashEntropyProvider{},
+		computationReport: &ComputationReport{
+			Scripts:      make(map[string]ProcedureReport),
+			Transactions: make(map[string]ProcedureReport),
+		},
 	}
 	err := b.ReloadBlockchain()
 	if err != nil {
@@ -300,6 +304,12 @@ func WithCoverageReport(coverageReport *runtime.CoverageReport) Option {
 	}
 }
 
+func WithComputationReporting(enabled bool) Option {
+	return func(c *config) {
+		c.ComputationReportingEnabled = enabled
+	}
+}
+
 // Contracts allows users to deploy the given contracts.
 // Some default common contracts are pre-configured in the `CommonContracts`
 // global variable. It includes contracts such as:
@@ -343,7 +353,8 @@ type Blockchain struct {
 
 	sourceFileMap map[common.Location]string
 
-	entropyProvider *blockHashEntropyProvider
+	entropyProvider   *blockHashEntropyProvider
+	computationReport *ComputationReport
 }
 
 // config is a set of configuration options for an emulated emulator.
@@ -368,6 +379,7 @@ type config struct {
 	CoverageReport               *runtime.CoverageReport
 	AutoMine                     bool
 	Contracts                    []ContractDescription
+	ComputationReportingEnabled  bool
 }
 
 func (conf config) GetStore() storage.Store {
@@ -427,6 +439,7 @@ var defaultConfig = func() config {
 		ChainID:                      flowgo.Emulator,
 		CoverageReport:               nil,
 		AutoMine:                     false,
+		ComputationReportingEnabled:  false,
 	}
 }()
 
@@ -1284,6 +1297,21 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 		b.sourceFileMap[location] = sourceFile
 	}
 
+	if b.conf.ComputationReportingEnabled {
+		location := common.NewTransactionLocation(nil, tr.TransactionID.Bytes())
+		arguments := make([]string, 0)
+		for _, argument := range txnBody.Arguments {
+			arguments = append(arguments, string(argument))
+		}
+		b.computationReport.ReportTransaction(
+			tr,
+			b.sourceFileMap[location],
+			b.currentCode,
+			arguments,
+			output.ComputationIntensities,
+		)
+	}
+
 	return tr, nil
 }
 
@@ -1501,7 +1529,7 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 		b.sourceFileMap[location] = sourceFile
 	}
 
-	return &types.ScriptResult{
+	scriptResult := &types.ScriptResult{
 		ScriptID:        scriptID,
 		Value:           convertedValue,
 		Error:           scriptError,
@@ -1509,7 +1537,24 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 		Events:          events,
 		ComputationUsed: output.ComputationUsed,
 		MemoryEstimate:  output.MemoryEstimate,
-	}, nil
+	}
+
+	if b.conf.ComputationReportingEnabled {
+		location := common.NewScriptLocation(nil, scriptID.Bytes())
+		scriptArguments := make([]string, 0)
+		for _, argument := range arguments {
+			scriptArguments = append(scriptArguments, string(argument))
+		}
+		b.computationReport.ReportScript(
+			scriptResult,
+			b.sourceFileMap[location],
+			b.currentCode,
+			scriptArguments,
+			output.ComputationIntensities,
+		)
+	}
+
+	return scriptResult, nil
 }
 
 func (b *Blockchain) ExecuteScriptAtBlockHeight(
@@ -1605,6 +1650,10 @@ func (b *Blockchain) EndDebugging() {
 
 func (b *Blockchain) CoverageReport() *runtime.CoverageReport {
 	return b.coverageReportedRuntime.CoverageReport
+}
+
+func (b *Blockchain) ComputationReport() *ComputationReport {
+	return b.computationReport
 }
 
 func (b *Blockchain) ResetCoverageReport() {

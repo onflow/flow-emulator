@@ -76,6 +76,7 @@ type Config struct {
 	LegacyContractUpgradeEnabled bool          `default:"false" flag:"legacy-upgrade" info:"enable Cadence legacy contract upgrade"`
 	StartBlockHeight             uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
 	RPCHost                      string        `default:"" flag:"rpc-host" info:"rpc host to query when forking Mainnet or Testnet"`
+	ComputationReportingEnabled  bool          `default:"false" flag:"computation-reporting" info:"enable Cadence computation reporting"`
 }
 
 const EnvPrefix = "FLOW"
@@ -206,6 +207,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				LegacyContractUpgradeEnabled: conf.LegacyContractUpgradeEnabled,
 				StartBlockHeight:             conf.StartBlockHeight,
 				RPCHost:                      conf.RPCHost,
+				ComputationReportingEnabled:  conf.ComputationReportingEnabled,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
@@ -288,7 +290,7 @@ func getSDKChainID(chainID string) (flowgo.ChainID, error) {
 	case "mainnet":
 		return flowgo.Mainnet, nil
 	default:
-		return "", fmt.Errorf("Invalid ChainID %s, valid values are: emulator, testnet, mainnet", chainID)
+		return "", fmt.Errorf("invalid ChainID %s, valid values are: emulator, testnet, mainnet", chainID)
 	}
 }
 

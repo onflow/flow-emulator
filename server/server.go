@@ -142,6 +142,8 @@ type Config struct {
 	RPCHost string
 	// StartBlockHeight is the height at which to start the emulator.
 	StartBlockHeight uint64
+	// ComputationReportingEnabled enables/disables Cadence computation reporting.
+	ComputationReportingEnabled bool
 }
 
 type listener interface {
@@ -431,6 +433,13 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		options = append(
 			options,
 			emulator.WithLegacyUpgradeEnabled(),
+		)
+	}
+
+	if conf.ComputationReportingEnabled {
+		options = append(
+			options,
+			emulator.WithComputationReporting(true),
 		)
 	}
 
