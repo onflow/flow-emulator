@@ -72,8 +72,8 @@ github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53/go.mod h1:+3
 github.com/CloudyKit/jet/v3 v3.0.0/go.mod h1:HKQPgSJmdK8hdoAbKUUWajkHyHo4RaU5rMdUywE7VMo=
 github.com/DataDog/zstd v1.5.2 h1:vUG4lAyuPCXO0TLbXvPv7EB7cNK1QV/luu55UHLrrn8=
 github.com/DataDog/zstd v1.5.2/go.mod h1:g4AWEaM3yOg3HYfnJ3YIawPnVdXJh9QME85blwSAmyw=
-github.com/Guitarheroua/flow-go v0.0.0-20240313194452-c74a3b6a40a7 h1:pFSQsI6AejcQeVrlQc+bDtjO7psItNBJYZF3O0iO3Sw=
-github.com/Guitarheroua/flow-go v0.0.0-20240313194452-c74a3b6a40a7/go.mod h1:IwdMip6NAVpmpxNqBawp8FwsZtIRXUbkzDK/NPGauuw=
+github.com/Guitarheroua/flow-go v0.33.2-0.20240321090914-a2eb6f7d3549 h1:r6qNl/yRxE8l3iUzznkt4fPbgeWxjTAvR8n6kT6ypVI=
+github.com/Guitarheroua/flow-go v0.33.2-0.20240321090914-a2eb6f7d3549/go.mod h1:IwdMip6NAVpmpxNqBawp8FwsZtIRXUbkzDK/NPGauuw=
 github.com/Joker/hpp v1.0.0/go.mod h1:8x5n+M1Hp5hC0g8okX3sR3vFQwynaX/UgSOM9MeBKzY=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
 github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migciow=
