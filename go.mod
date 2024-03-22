@@ -14,7 +14,7 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v0.42.9
 	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.1
-	github.com/onflow/flow-go v0.33.2-0.20240313182108-0bb799709506
+	github.com/onflow/flow-go v0.33.2-0.20240321224153-02cdb601e0b0
 	github.com/onflow/flow-go-sdk v0.46.0
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
 	github.com/onflow/flow/protobuf/go/flow v0.3.7-0.20240305102946-3efec6679252
@@ -36,7 +36,7 @@ require (
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/VictoriaMetrics/fastcache v1.12.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bits-and-blooms/bitset v1.7.0 // indirect
+	github.com/bits-and-blooms/bitset v1.10.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
@@ -62,7 +62,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ef-ds/deque v1.0.4 // indirect
 	github.com/ethereum/c-kzg-4844 v0.4.0 // indirect
-	github.com/ethereum/go-ethereum v1.13.5 // indirect
+	github.com/ethereum/go-ethereum v1.13.10 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fxamacker/circlehash v0.3.0 // indirect
 	github.com/getsentry/sentry-go v0.18.0 // indirect
@@ -89,7 +89,7 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/holiman/bloomfilter/v2 v2.0.3 // indirect
-	github.com/holiman/uint256 v1.2.3 // indirect
+	github.com/holiman/uint256 v1.2.4 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/go-block-format v0.2.0 // indirect
@@ -136,6 +136,7 @@ require (
 	github.com/onflow/crypto v0.25.0 // indirect
 	github.com/onflow/flow-core-contracts/lib/go/contracts v0.15.1 // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20230711213910-baad011d2b13 // indirect
+	github.com/onflow/go-ethereum v1.13.4 // indirect
 	github.com/onflow/sdks v0.5.0 // indirect
 	github.com/onflow/wal v0.0.0-20240208022732-d756cd497d3b // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
