@@ -100,6 +100,10 @@ type CoverageReportCapable interface {
 	ResetCoverageReport()
 }
 
+type ComputationReportCapable interface {
+	ComputationReport() *ComputationReport
+}
+
 type DebuggingCapable interface {
 	StartDebugger() *interpreter.Debugger
 	EndDebugging()
@@ -176,6 +180,7 @@ type Emulator interface {
 	AccessProvider
 
 	CoverageReportCapable
+	ComputationReportCapable
 	DebuggingCapable
 	SnapshotCapable
 	RollbackCapable

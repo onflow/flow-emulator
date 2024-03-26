@@ -73,6 +73,7 @@ and if you plan to run the emulator with Docker you must use the environment var
 | `--start-block-height`        | `FLOW_STARTBLOCKHEIGHT`             | `0`             | Start block height to use when starting the network using 'testnet' or 'mainnet' as the chain-id    |
 | `--rpc-host`                  | `FLOW_RPCHOST`             | ''             | RPC host (access node) to query for previous state when starting the network using 'testnet' or 'mainnet' as the chain-id    |
 | `--legacy-upgrade` | `FLOW_LEGACYUPGRADE` | `false`         | Enable upgrading of legacy contracts |
+| `--computation-reporting` | `FLOW_COMPUTATIONREPORTING` | `false`         | Enable computation reporting for Cadence scripts & transactions |
 
 ## Running the emulator with the Flow CLI
 
@@ -201,6 +202,17 @@ To get better reports with source file references, you can utilize the `sourceFi
 ```cadence
 #sourceFile("scripts/myScript.cdc")
 ```
+
+## Cadence Computation Reporting
+
+The admin API includes an endpoint for viewing the Cadence computation reports for scripts & transactions.
+
+In order to use this functionality you need to run the emulator with the respective flag which enables computation reporting:
+```bash
+flow emulator --computation-reporting
+```
+
+To view the computation report, visit this URL: http://localhost:8080/emulator/computationReport
 
 ## Running the emulator with Docker
 

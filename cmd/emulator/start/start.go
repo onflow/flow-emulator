@@ -78,6 +78,7 @@ type Config struct {
 	RPCHost                      string        `default:"" flag:"rpc-host" info:"rpc host to query when forking Mainnet or Testnet"`
 	CheckpointPath               string        `default:"" flag:"checkpoint-dir" info:"checkpoint directory to load the emulator state from"`
 	StateHash                    string        `default:"" flag:"state-hash" info:"state hash of the checkpoint to load the emulator state from"`
+	ComputationReportingEnabled  bool          `default:"false" flag:"computation-reporting" info:"enable Cadence computation reporting"`
 }
 
 const EnvPrefix = "FLOW"
@@ -210,6 +211,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				RPCHost:                      conf.RPCHost,
 				CheckpointPath:               conf.CheckpointPath,
 				StateHash:                    conf.StateHash,
+				ComputationReportingEnabled:  conf.ComputationReportingEnabled,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
@@ -292,7 +294,7 @@ func getSDKChainID(chainID string) (flowgo.ChainID, error) {
 	case "mainnet":
 		return flowgo.Mainnet, nil
 	default:
-		return "", fmt.Errorf("Invalid ChainID %s, valid values are: emulator, testnet, mainnet", chainID)
+		return "", fmt.Errorf("invalid ChainID %s, valid values are: emulator, testnet, mainnet", chainID)
 	}
 }
 

@@ -149,6 +149,8 @@ type Config struct {
 	// StateHash is the state hash to use when starting the network on top of existing state.
 	// CheckpointPath should be provided as well.
 	StateHash string
+	// ComputationReportingEnabled enables/disables Cadence computation reporting.
+	ComputationReportingEnabled bool
 }
 
 type listener interface {
@@ -452,6 +454,13 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		options = append(
 			options,
 			emulator.WithLegacyUpgradeEnabled(),
+		)
+	}
+
+	if conf.ComputationReportingEnabled {
+		options = append(
+			options,
+			emulator.WithComputationReporting(true),
 		)
 	}
 
