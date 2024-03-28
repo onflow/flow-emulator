@@ -7,17 +7,16 @@ require (
 	github.com/fxamacker/cbor/v2 v2.4.1-0.20230228173756-c0c9f774e40c
 	github.com/glebarez/go-sqlite v1.22.0
 	github.com/go-redis/redis/v8 v8.11.5
-	github.com/golang/mock v1.6.0
 	github.com/google/go-dap v0.11.0
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.0.0-preview.13
+	github.com/onflow/cadence v1.0.0-preview.16
 	github.com/onflow/crypto v0.25.0
 	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.2-0.20240305214031-d81e0c3b42f3
-	github.com/onflow/flow-go v0.34.0-crescendo-preview.6.0.20240313030147-6c1b120ed2ac
-	github.com/onflow/flow-go-sdk v1.0.0-preview.11
+	github.com/onflow/flow-go v0.34.0-crescendo-preview.7.0.20240321165924-533df912cb67
+	github.com/onflow/flow-go-sdk v1.0.0-preview.14
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20240305213046-9026973838d7
 	github.com/onflow/flow/protobuf/go/flow v0.3.7-0.20240305102946-3efec6679252
 	github.com/prometheus/client_golang v1.18.0
@@ -26,6 +25,7 @@ require (
 	github.com/rs/zerolog v1.29.0
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.8.4
+	go.uber.org/mock v0.4.0
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a
 	google.golang.org/grpc v1.60.1
 )
@@ -208,11 +208,11 @@ require (
 	lukechampine.com/blake3 v1.2.1 // indirect
 	modernc.org/libc v1.37.6 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
-	modernc.org/memory v1.7.2 // indirects
+	modernc.org/memory v1.7.2 // indirect; indirects
 	modernc.org/sqlite v1.28.0 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
 
 //TODO: Remove when updated v0.34.0-crescendo-preview.6.0 with last changes from master, merge pull request commit https://github.com/onflow/flow-go/commit/0bb7997095065d672a2ed226ecfb684a615d1c25
-replace github.com/onflow/flow-go v0.34.0-crescendo-preview.6.0.20240313030147-6c1b120ed2ac => github.com/onflow/flow-go v0.33.2-0.20240313182108-0bb799709506
+replace github.com/onflow/flow-go v0.34.0-crescendo-preview.7.0.20240321165924-533df912cb67 => github.com/onflow/flow-go v0.33.2-0.20240313182108-0bb799709506

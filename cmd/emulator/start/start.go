@@ -74,8 +74,9 @@ type Config struct {
 	SqliteURL                    string        `default:"" flag:"sqlite-url" info:"sqlite db URL for persisting sqlite storage backend "`
 	CoverageReportingEnabled     bool          `default:"false" flag:"coverage-reporting" info:"enable Cadence code coverage reporting"`
 	LegacyContractUpgradeEnabled bool          `default:"false" flag:"legacy-upgrade" info:"enable Cadence legacy contract upgrade"`
-	// todo temporarily disabled until remote register endpoint is re-enabled
-	// StartBlockHeight         uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
+	StartBlockHeight             uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
+	RPCHost                      string        `default:"" flag:"rpc-host" info:"rpc host to query when forking Mainnet or Testnet"`
+	ComputationReportingEnabled  bool          `default:"false" flag:"computation-reporting" info:"enable Cadence computation reporting"`
 }
 
 const EnvPrefix = "FLOW"
@@ -133,10 +134,13 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				Exit(1, err.Error())
 			}
 
-			// todo temporarily disabled until remote register endpoint is re-enabled
-			//if conf.StartBlockHeight > 0 && flowChainID != flowgo.Mainnet && flowChainID != flowgo.Testnet {
-			//	Exit(1, "❗  --start-block-height is only valid when forking Mainnet or Testnet")
-			//}
+			if conf.StartBlockHeight > 0 && flowChainID != flowgo.Mainnet && flowChainID != flowgo.Testnet {
+				Exit(1, "❗  --start-block-height is only valid when forking Mainnet or Testnet")
+			}
+
+			if (flowChainID == flowgo.Mainnet || flowChainID == flowgo.Testnet) && conf.RPCHost == "" {
+				Exit(1, "❗  --rpc-host must be provided when forking Mainnet or Testnet")
+			}
 
 			serviceAddress := sdk.ServiceAddress(sdk.ChainID(flowChainID))
 			if conf.SimpleAddresses {
@@ -201,8 +205,9 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				SqliteURL:                    conf.SqliteURL,
 				CoverageReportingEnabled:     conf.CoverageReportingEnabled,
 				LegacyContractUpgradeEnabled: conf.LegacyContractUpgradeEnabled,
-				// todo temporarily disabled until remote register endpoint is re-enabled
-				// StartBlockHeight:          conf.StartBlockHeight,
+				StartBlockHeight:             conf.StartBlockHeight,
+				RPCHost:                      conf.RPCHost,
+				ComputationReportingEnabled:  conf.ComputationReportingEnabled,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
@@ -285,7 +290,7 @@ func getSDKChainID(chainID string) (flowgo.ChainID, error) {
 	case "mainnet":
 		return flowgo.Mainnet, nil
 	default:
-		return "", fmt.Errorf("Invalid ChainID %s, valid values are: emulator, testnet, mainnet", chainID)
+		return "", fmt.Errorf("invalid ChainID %s, valid values are: emulator, testnet, mainnet", chainID)
 	}
 }
 

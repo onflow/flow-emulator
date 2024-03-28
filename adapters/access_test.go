@@ -23,20 +23,20 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/onflow/flow/protobuf/go/flow/entities"
-
+	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
-	"github.com/golang/mock/gomock"
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/encoding/ccf"
-	"github.com/onflow/flow-emulator/emulator/mocks"
-	"github.com/onflow/flow-emulator/types"
 	"github.com/onflow/flow-go/access"
 	"github.com/onflow/flow-go/engine/common/rpc/convert"
 	flowgo "github.com/onflow/flow-go/model/flow"
-	"github.com/rs/zerolog"
-	"github.com/stretchr/testify/assert"
+	"github.com/onflow/flow/protobuf/go/flow/entities"
+
+	"github.com/onflow/flow-emulator/emulator/mocks"
+	"github.com/onflow/flow-emulator/types"
 )
 
 func accessTest(f func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator)) func(t *testing.T) {
@@ -450,6 +450,12 @@ func TestAccess(t *testing.T) {
 		stringValue, _ := cadence.NewString("42")
 		emulatorResult := types.ScriptResult{Value: stringValue}
 		expected, _ := convertScriptResult(&emulatorResult, nil)
+
+		// called once for each script execution
+		emu.EXPECT().
+			GetLatestBlock().
+			Return(&flowgo.Block{Header: &flowgo.Header{}}, nil).
+			Times(2)
 
 		//success
 		emu.EXPECT().
