@@ -76,6 +76,8 @@ type Config struct {
 	LegacyContractUpgradeEnabled bool          `default:"false" flag:"legacy-upgrade" info:"enable Cadence legacy contract upgrade"`
 	StartBlockHeight             uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
 	RPCHost                      string        `default:"" flag:"rpc-host" info:"rpc host to query when forking Mainnet or Testnet"`
+	CheckpointPath               string        `default:"" flag:"checkpoint-dir" info:"checkpoint directory to load the emulator state from"`
+	StateHash                    string        `default:"" flag:"state-hash" info:"state hash of the checkpoint to load the emulator state from"`
 	ComputationReportingEnabled  bool          `default:"false" flag:"computation-reporting" info:"enable Cadence computation reporting"`
 }
 
@@ -207,6 +209,8 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				LegacyContractUpgradeEnabled: conf.LegacyContractUpgradeEnabled,
 				StartBlockHeight:             conf.StartBlockHeight,
 				RPCHost:                      conf.RPCHost,
+				CheckpointPath:               conf.CheckpointPath,
+				StateHash:                    conf.StateHash,
 				ComputationReportingEnabled:  conf.ComputationReportingEnabled,
 			}
 
