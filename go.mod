@@ -208,3 +208,9 @@ require (
 	nhooyr.io/websocket v1.8.7 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
+
+// TODO: Remove when it will be merged
+replace github.com/onflow/flow/protobuf/go/flow v0.3.7-0.20240305102946-3efec6679252 => github.com/The-K-R-O-K/flow/protobuf/go/flow v0.0.0-20240325091550-e992f45aaa3e
+
+// TODO: Remove when it will be merged
+replace github.com/onflow/flow-go v0.33.2-0.20240321224153-02cdb601e0b0 => github.com/The-K-R-O-K/flow-go v0.0.0-20240327190034-0048cab3d3ca
