@@ -12,12 +12,12 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.0.0-preview.16
+	github.com/onflow/cadence v1.0.0-preview.18
 	github.com/onflow/crypto v0.25.0
-	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.2-0.20240305214031-d81e0c3b42f3
-	github.com/onflow/flow-go v0.34.0-crescendo-preview.7.0.20240321165924-533df912cb67
-	github.com/onflow/flow-go-sdk v1.0.0-preview.14
-	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20240305213046-9026973838d7
+	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.2-0.20240327170024-10241fffd864
+	github.com/onflow/flow-go v0.34.0-crescendo-preview.8.0.20240328003708-11040f76d0cd
+	github.com/onflow/flow-go-sdk v1.0.0-preview.16
+	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20240326155818-c01c72c091c0
 	github.com/onflow/flow/protobuf/go/flow v0.3.7
 	github.com/prometheus/client_golang v1.18.0
 	github.com/psiemens/graceland v1.0.0
@@ -139,10 +139,10 @@ require (
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/onflow/atree v0.6.1-0.20240308163425-dc825c20b1a2 // indirect
-	github.com/onflow/flow-core-contracts/lib/go/contracts v0.15.2-0.20240305214031-d81e0c3b42f3 // indirect
-	github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20240305212555-29d91e18f0c1 // indirect
-	github.com/onflow/flow-ft/lib/go/templates v0.7.1-0.20240305212555-29d91e18f0c1 // indirect
-	github.com/onflow/flow-nft/lib/go/templates v0.0.0-20240305213046-9026973838d7 // indirect
+	github.com/onflow/flow-core-contracts/lib/go/contracts v0.15.2-0.20240327170024-10241fffd864 // indirect
+	github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20240327162334-bd133114f87a // indirect
+	github.com/onflow/flow-ft/lib/go/templates v0.7.1-0.20240327162334-bd133114f87a // indirect
+	github.com/onflow/flow-nft/lib/go/templates v0.0.0-20240326155818-c01c72c091c0 // indirect
 	github.com/onflow/sdks v0.5.1-0.20230912225508-b35402f12bba // indirect
 	github.com/onflow/wal v0.0.0-20240208022732-d756cd497d3b // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
