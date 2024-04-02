@@ -42,6 +42,8 @@ import (
 // Store is jus a memstore, but the starting state is loaded from a checkpoint folder
 // any new blocks exist in memory only and are not persisted to disk.
 type Store struct {
+	// Store is a memstore
+	// Theoretically this could also be a persistent store
 	*memstore.Store
 }
 

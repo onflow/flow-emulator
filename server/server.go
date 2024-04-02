@@ -344,6 +344,10 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 			return nil, fmt.Errorf("both checkpoint path and state hash should be provided")
 		}
 
+		if conf.Persist {
+			return nil, fmt.Errorf("you cannot use persist with checkpoint")
+		}
+
 		if storageProvider != nil {
 			return nil, fmt.Errorf("you cannot define more than one storage")
 		}
