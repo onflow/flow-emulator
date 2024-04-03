@@ -38,6 +38,7 @@ import (
 	"github.com/onflow/flow-emulator/server/debugger"
 	"github.com/onflow/flow-emulator/server/utils"
 	"github.com/onflow/flow-emulator/storage"
+	"github.com/onflow/flow-emulator/storage/checkpoint"
 	"github.com/onflow/flow-emulator/storage/remote"
 	"github.com/onflow/flow-emulator/storage/sqlite"
 	"github.com/onflow/flow-emulator/storage/util"
@@ -142,6 +143,12 @@ type Config struct {
 	RPCHost string
 	// StartBlockHeight is the height at which to start the emulator.
 	StartBlockHeight uint64
+	// CheckpointPath is the path to the checkpoint folder to use when starting the network on top of existing state.
+	// StateHash should be provided as well.
+	CheckpointPath string
+	// StateHash is the state hash to use when starting the network on top of existing state.
+	// CheckpointPath should be provided as well.
+	StateHash string
 	// ComputationReportingEnabled enables/disables Cadence computation reporting.
 	ComputationReportingEnabled bool
 }
@@ -327,6 +334,24 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 			return nil, fmt.Errorf("you cannot define more than one storage")
 		}
 		storageProvider, err = util.NewSqliteStorage(conf.SqliteURL)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if conf.CheckpointPath != "" || conf.StateHash != "" {
+		if conf.CheckpointPath == "" || conf.StateHash == "" {
+			return nil, fmt.Errorf("both checkpoint path and state hash should be provided")
+		}
+
+		if conf.Persist {
+			return nil, fmt.Errorf("you cannot use persist with checkpoint")
+		}
+
+		if storageProvider != nil {
+			return nil, fmt.Errorf("you cannot define more than one storage")
+		}
+		storageProvider, err = checkpoint.New(*logger, conf.CheckpointPath, conf.StateHash, conf.ChainID)
 		if err != nil {
 			return nil, err
 		}
