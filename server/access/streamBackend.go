@@ -225,6 +225,18 @@ func (b StateStreamBackend) SubscribeEvents(ctx context.Context, startBlockID fl
 	return sub
 }
 
+func (b StateStreamBackend) SubscribeAccountStatusesFromStartBlockID(ctx context.Context, startBlockID flow.Identifier, filter state_stream.AccountStatusFilter) subscription.Subscription {
+	return nil
+}
+
+func (b StateStreamBackend) SubscribeAccountStatusesFromStartHeight(ctx context.Context, startHeight uint64, filter state_stream.AccountStatusFilter) subscription.Subscription {
+	return nil
+}
+
+func (b StateStreamBackend) SubscribeAccountStatusesFromLatestBlock(context.Context, state_stream.AccountStatusFilter) subscription.Subscription {
+	return nil
+}
+
 func (b StateStreamBackend) SubscribeEventsFromStartBlockID(ctx context.Context, startBlockID flow.Identifier, filter state_stream.EventFilter) subscription.Subscription {
 	return nil
 }

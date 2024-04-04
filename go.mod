@@ -17,7 +17,7 @@ require (
 	github.com/onflow/flow-go v0.33.2-0.20240321224153-02cdb601e0b0
 	github.com/onflow/flow-go-sdk v0.46.0
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
-	github.com/onflow/flow/protobuf/go/flow v0.3.7-0.20240305102946-3efec6679252
+	github.com/onflow/flow/protobuf/go/flow v0.3.7-0.20240329135840-9f04832ba3a1
 	github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20221222181731-14b90207cead
 	github.com/prometheus/client_golang v1.18.0
 	github.com/psiemens/graceland v1.0.0
@@ -133,7 +133,7 @@ require (
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/onflow/atree v0.6.0 // indirect
-	github.com/onflow/crypto v0.25.0 // indirect
+	github.com/onflow/crypto v0.25.1 // indirect
 	github.com/onflow/flow-core-contracts/lib/go/contracts v0.15.1 // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20230711213910-baad011d2b13 // indirect
 	github.com/onflow/go-ethereum v1.13.4 // indirect
@@ -210,7 +210,7 @@ require (
 )
 
 // TODO: Remove when it will be merged
-replace github.com/onflow/flow/protobuf/go/flow v0.3.7-0.20240305102946-3efec6679252 => github.com/The-K-R-O-K/flow/protobuf/go/flow v0.0.0-20240325091550-e992f45aaa3e
+replace github.com/onflow/flow/protobuf/go/flow v0.3.7-0.20240329135840-9f04832ba3a1 => github.com/The-K-R-O-K/flow/protobuf/go/flow v0.0.0-20240403101026-bc18dca2e2f7
 
 // TODO: Remove when it will be merged
-replace github.com/onflow/flow-go v0.33.2-0.20240321224153-02cdb601e0b0 => github.com/The-K-R-O-K/flow-go v0.0.0-20240327190034-0048cab3d3ca
+replace github.com/onflow/flow-go v0.33.2-0.20240321224153-02cdb601e0b0 => github.com/The-K-R-O-K/flow-go v0.0.0-20240404085611-7041efe85b40
