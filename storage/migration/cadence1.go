@@ -54,6 +54,7 @@ func MigrateCadence1(
 		flow.Emulator,
 		false,
 		false,
+		false,
 		evmContractChange,
 		burnerContractChange,
 		stagedContracts,
