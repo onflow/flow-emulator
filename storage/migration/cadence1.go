@@ -22,13 +22,12 @@ import (
 	"runtime"
 
 	"github.com/onflow/flow-go/cmd/util/ledger/migrations"
+	"github.com/onflow/flow-go/cmd/util/ledger/reporters"
+	"github.com/onflow/flow-go/cmd/util/ledger/util"
 	"github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/storage/sqlite"
-
-	"github.com/onflow/flow-go/cmd/util/ledger/reporters"
-	"github.com/onflow/flow-go/cmd/util/ledger/util"
 )
 
 func MigrateCadence1(
@@ -50,16 +49,18 @@ func MigrateCadence1(
 	cadence1Migrations := migrations.NewCadence1Migrations(
 		logger,
 		rwf,
-		nWorker,
-		flow.Emulator,
-		false,
-		false,
-		false,
-		evmContractChange,
-		burnerContractChange,
-		stagedContracts,
-		false,
-		0,
+		migrations.Options{
+			NWorker:                           nWorker,
+			DiffMigrations:                    false,
+			LogVerboseDiff:                    false,
+			CheckStorageHealthBeforeMigration: false,
+			ChainID:                           flow.Emulator,
+			EVMContractChange:                 evmContractChange,
+			BurnerContractChange:              burnerContractChange,
+			StagedContracts:                   stagedContracts,
+			Prune:                             false,
+			MaxAccountSize:                    0,
+		},
 	)
 
 	for _, migration := range cadence1Migrations {

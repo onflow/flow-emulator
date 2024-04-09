@@ -22,19 +22,19 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/onflow/flow/protobuf/go/flow/entities"
-
 	jsoncdc "github.com/onflow/cadence/encoding/json"
-	"github.com/onflow/flow-emulator/emulator"
-	"github.com/onflow/flow-emulator/types"
-	"github.com/onflow/flow-emulator/utils"
+	"github.com/onflow/flow-go/access"
+	"github.com/onflow/flow-go/engine/access/subscription"
+	"github.com/onflow/flow-go/engine/common/rpc/convert"
+	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow/protobuf/go/flow/entities"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/onflow/flow-go/access"
-	"github.com/onflow/flow-go/engine/common/rpc/convert"
-	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow-emulator/emulator"
+	"github.com/onflow/flow-emulator/types"
+	"github.com/onflow/flow-emulator/utils"
 )
 
 var _ access.API = &AccessAdapter{}
@@ -43,6 +43,56 @@ var _ access.API = &AccessAdapter{}
 type AccessAdapter struct {
 	logger   *zerolog.Logger
 	emulator emulator.Emulator
+}
+
+func (a *AccessAdapter) SubscribeBlocksFromStartBlockID(ctx context.Context, startBlockID flowgo.Identifier, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (a *AccessAdapter) SubscribeBlocksFromStartHeight(ctx context.Context, startHeight uint64, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (a *AccessAdapter) SubscribeBlocksFromLatest(ctx context.Context, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (a *AccessAdapter) SubscribeBlockHeadersFromStartBlockID(ctx context.Context, startBlockID flowgo.Identifier, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (a *AccessAdapter) SubscribeBlockHeadersFromStartHeight(ctx context.Context, startHeight uint64, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (a *AccessAdapter) SubscribeBlockHeadersFromLatest(ctx context.Context, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (a *AccessAdapter) SubscribeBlockDigestsFromStartBlockID(ctx context.Context, startBlockID flowgo.Identifier, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (a *AccessAdapter) SubscribeBlockDigestsFromStartHeight(ctx context.Context, startHeight uint64, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (a *AccessAdapter) SubscribeBlockDigestsFromLatest(ctx context.Context, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (a *AccessAdapter) SubscribeTransactionStatuses(ctx context.Context, tx *flowgo.TransactionBody) subscription.Subscription {
+	//TODO implement me
+	panic("implement me")
 }
 
 // NewAccessAdapter returns a new AccessAdapter.
