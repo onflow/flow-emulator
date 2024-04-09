@@ -26,20 +26,19 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/onflow/flow-go/engine/access/state_stream"
-	"github.com/onflow/flow-go/engine/access/state_stream/backend"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/rs/zerolog"
-
-	"github.com/onflow/flow-emulator/emulator"
-
 	"github.com/onflow/flow-go/engine/access/rest"
 	"github.com/onflow/flow-go/engine/access/rest/routes"
+	"github.com/onflow/flow-go/engine/access/state_stream"
+	"github.com/onflow/flow-go/engine/access/state_stream/backend"
+	"github.com/onflow/flow-go/engine/access/subscription"
 	"github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module"
 	"github.com/onflow/flow-go/module/metrics"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/adapters"
+	"github.com/onflow/flow-emulator/emulator"
 )
 
 type RestServer struct {
@@ -101,11 +100,11 @@ func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 	streamConfig := backend.Config{
 		EventFilterConfig:    state_stream.DefaultEventFilterConfig,
 		RpcMetricsEnabled:    false,
-		MaxGlobalStreams:     state_stream.DefaultMaxGlobalStreams,
-		ClientSendTimeout:    state_stream.DefaultSendTimeout,
-		ClientSendBufferSize: state_stream.DefaultSendBufferSize,
-		ResponseLimit:        state_stream.DefaultResponseLimit,
-		HeartbeatInterval:    state_stream.DefaultHeartbeatInterval,
+		MaxGlobalStreams:     subscription.DefaultMaxGlobalStreams,
+		ClientSendTimeout:    subscription.DefaultSendTimeout,
+		ClientSendBufferSize: subscription.DefaultSendBufferSize,
+		ResponseLimit:        subscription.DefaultResponseLimit,
+		HeartbeatInterval:    subscription.DefaultHeartbeatInterval,
 	}
 
 	srv, err := rest.NewServer(
