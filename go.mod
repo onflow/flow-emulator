@@ -15,7 +15,7 @@ require (
 	github.com/onflow/cadence v1.0.0-preview.19
 	github.com/onflow/crypto v0.25.1
 	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.2-0.20240402184019-90048578066e
-	github.com/onflow/flow-go v0.34.0-crescendo-preview.9.0.20240403221216-33c1de004dc1
+	github.com/onflow/flow-go v0.34.0-crescendo-preview.9.0.20240409075958-ccbe91096438
 	github.com/onflow/flow-go-sdk v1.0.0-preview.17
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20240402163945-74687e7a5b9d
 	github.com/onflow/flow/protobuf/go/flow v0.4.0
@@ -39,7 +39,7 @@ require (
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/VictoriaMetrics/fastcache v1.12.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bits-and-blooms/bitset v1.7.0 // indirect
+	github.com/bits-and-blooms/bitset v1.10.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
@@ -54,7 +54,6 @@ require (
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/crate-crypto/go-kzg-4844 v0.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/davidlazar/go-crypto v0.0.0-20200604182044-b73af7476f6c // indirect
 	github.com/deckarep/golang-set/v2 v2.1.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
@@ -66,7 +65,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ef-ds/deque v1.0.4 // indirect
 	github.com/ethereum/c-kzg-4844 v0.4.0 // indirect
-	github.com/ethereum/go-ethereum v1.13.5 // indirect
+	github.com/ethereum/go-ethereum v1.13.10 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fxamacker/circlehash v0.3.0 // indirect
 	github.com/getsentry/sentry-go v0.18.0 // indirect
@@ -93,7 +92,7 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/holiman/bloomfilter/v2 v2.0.3 // indirect
-	github.com/holiman/uint256 v1.2.3 // indirect
+	github.com/holiman/uint256 v1.2.4 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/go-block-format v0.2.0 // indirect
@@ -106,7 +105,6 @@ require (
 	github.com/ipfs/go-log v1.0.5 // indirect
 	github.com/ipfs/go-log/v2 v2.5.1 // indirect
 	github.com/ipfs/go-metrics-interface v0.0.1 // indirect
-	github.com/jbenet/go-temp-err-catcher v0.1.0 // indirect
 	github.com/jbenet/goprocess v0.1.4 // indirect
 	github.com/k0kubun/pp v3.0.1+incompatible // indirect
 	github.com/kevinburke/go-bindata v3.24.0+incompatible // indirect
@@ -143,6 +141,7 @@ require (
 	github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20240402160548-a9c331660956 // indirect
 	github.com/onflow/flow-ft/lib/go/templates v0.7.1-0.20240402160548-a9c331660956 // indirect
 	github.com/onflow/flow-nft/lib/go/templates v0.0.0-20240402163945-74687e7a5b9d // indirect
+	github.com/onflow/go-ethereum v1.13.4 // indirect
 	github.com/onflow/sdks v0.5.1-0.20230912225508-b35402f12bba // indirect
 	github.com/onflow/wal v0.0.0-20240208022732-d756cd497d3b // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
@@ -162,7 +161,6 @@ require (
 	github.com/sethvargo/go-retry v0.2.3 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
 	github.com/slok/go-http-metrics v0.10.0 // indirect
-	github.com/sony/gobreaker v0.5.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/afero v1.10.0 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
