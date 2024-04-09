@@ -52,36 +52,6 @@ type StateStreamBackend struct {
 	getStartHeight   GetStartHeightFunc
 }
 
-func (b *StateStreamBackend) SubscribeEventsFromStartBlockID(ctx context.Context, startBlockID flow.Identifier, filter state_stream.EventFilter) subscription.Subscription {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (b *StateStreamBackend) SubscribeEventsFromStartHeight(ctx context.Context, startHeight uint64, filter state_stream.EventFilter) subscription.Subscription {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (b *StateStreamBackend) SubscribeEventsFromLatest(ctx context.Context, filter state_stream.EventFilter) subscription.Subscription {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (b *StateStreamBackend) SubscribeAccountStatusesFromStartBlockID(ctx context.Context, startBlockID flow.Identifier, filter state_stream.AccountStatusFilter) subscription.Subscription {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (b *StateStreamBackend) SubscribeAccountStatusesFromStartHeight(ctx context.Context, startHeight uint64, filter state_stream.AccountStatusFilter) subscription.Subscription {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (b *StateStreamBackend) SubscribeAccountStatusesFromLatestBlock(ctx context.Context, filter state_stream.AccountStatusFilter) subscription.Subscription {
-	//TODO implement me
-	panic("implement me")
-}
-
 func NewStateStreamBackend(blockchain *emulator.Blockchain, log zerolog.Logger) *StateStreamBackend {
 	return &StateStreamBackend{
 		blockchain:       blockchain,
@@ -95,6 +65,52 @@ func NewStateStreamBackend(blockchain *emulator.Blockchain, log zerolog.Logger) 
 }
 
 var _ state_stream.API = &StateStreamBackend{}
+
+func (b *StateStreamBackend) SubscribeEventsFromStartBlockID(
+	ctx context.Context,
+	startBlockID flow.Identifier,
+	filter state_stream.EventFilter,
+) subscription.Subscription {
+	return nil
+}
+
+func (b *StateStreamBackend) SubscribeEventsFromStartHeight(
+	ctx context.Context,
+	startHeight uint64,
+	filter state_stream.EventFilter,
+) subscription.Subscription {
+	return nil
+}
+
+func (b *StateStreamBackend) SubscribeEventsFromLatest(
+	ctx context.Context,
+	filter state_stream.EventFilter,
+) subscription.Subscription {
+	return nil
+}
+
+func (b *StateStreamBackend) SubscribeAccountStatusesFromStartBlockID(
+	ctx context.Context,
+	startBlockID flow.Identifier,
+	filter state_stream.AccountStatusFilter,
+) subscription.Subscription {
+	return nil
+}
+
+func (b *StateStreamBackend) SubscribeAccountStatusesFromStartHeight(
+	ctx context.Context,
+	startHeight uint64,
+	filter state_stream.AccountStatusFilter,
+) subscription.Subscription {
+	return nil
+}
+
+func (b *StateStreamBackend) SubscribeAccountStatusesFromLatestBlock(
+	ctx context.Context,
+	filter state_stream.AccountStatusFilter,
+) subscription.Subscription {
+	return nil
+}
 
 func getStartHeightFunc(blockchain *emulator.Blockchain) GetStartHeightFunc {
 	return func(blockID flow.Identifier, height uint64) (uint64, error) {
