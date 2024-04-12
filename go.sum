@@ -2009,11 +2009,11 @@ github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20240402160548-a9c331660956 
 github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20240402160548-a9c331660956/go.mod h1:PwsL8fC81cjnUnTfmyL/HOIyHnyaw/JA474Wfj2tl6A=
 github.com/onflow/flow-ft/lib/go/templates v0.7.1-0.20240402160548-a9c331660956 h1:Ef9UKtwNcHVG2R8YskYiwRoaTZFhAVmQ0ZN3c0eDUGU=
 github.com/onflow/flow-ft/lib/go/templates v0.7.1-0.20240402160548-a9c331660956/go.mod h1:uQ8XFqmMK2jxyBSVrmyuwdWjTEb+6zGjRYotfDJ5pAE=
-github.com/onflow/flow-go v0.34.0-crescendo-preview.9.0.20240409075958-ccbe91096438 h1:ciH5Mtb0j3KPogSUPNinho/QNckvO7l0XbzMsmNNucc=
-github.com/onflow/flow-go v0.34.0-crescendo-preview.9.0.20240409075958-ccbe91096438/go.mod h1:EZYgaYQ8SUpvUL+0Dr+NRNgmrCz7UFy4dIu35b+qF2c=
+github.com/onflow/flow-go v0.34.0-crescendo-preview.10.0.20240412141002-8081bde9d8a7 h1:53ofx8aMwv9DGdt/4XRtA2iCOalc2jCVFxYb3H8CNhM=
+github.com/onflow/flow-go v0.34.0-crescendo-preview.10.0.20240412141002-8081bde9d8a7/go.mod h1:EZYgaYQ8SUpvUL+0Dr+NRNgmrCz7UFy4dIu35b+qF2c=
 github.com/onflow/flow-go-sdk v1.0.0-M1/go.mod h1:TDW0MNuCs4SvqYRUzkbRnRmHQL1h4X8wURsCw9P9beo=
-github.com/onflow/flow-go-sdk v1.0.0-preview.17 h1:RDW+FCKWJBCX7U6bK7ZEBVqBrhdNS9CIAV+xvVeLLYY=
-github.com/onflow/flow-go-sdk v1.0.0-preview.17/go.mod h1:2XygOoc/RN2c28o3vebEc3TLhzfAviOEwpn2yQJHojQ=
+github.com/onflow/flow-go-sdk v1.0.0-preview.18 h1:ExyiHH5TieLfBiLdCU7vFJBPAmlvKMIDuD7ge0OXt/A=
+github.com/onflow/flow-go-sdk v1.0.0-preview.18/go.mod h1:G7uxASqRqcV8a5NBLEfNf/TInF0OjEdjRzxwW00xPOU=
 github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20240402163945-74687e7a5b9d h1:CeM0F/t8f6UYKIP/PzHApt0BfX5FLCbFiSW3tkXHLyA=
 github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20240402163945-74687e7a5b9d/go.mod h1:2gpbza+uzs1k7x31hkpBPlggIRkI53Suo0n2AyA2HcE=
 github.com/onflow/flow-nft/lib/go/templates v0.0.0-20240402163945-74687e7a5b9d h1:9BUEgH1oFUMeOab++UNgok9Jk+rejQIrIHYKNe/TD20=
