@@ -16,7 +16,7 @@ require (
 	github.com/onflow/crypto v0.25.1
 	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.2-0.20240402184019-90048578066e
 	github.com/onflow/flow-go v0.34.0-crescendo-preview.10.0.20240410171307-f2cd877870b0
-	github.com/onflow/flow-go-sdk v1.0.0-preview.17
+	github.com/onflow/flow-go-sdk v1.0.0-preview.18
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20240402163945-74687e7a5b9d
 	github.com/onflow/flow/protobuf/go/flow v0.4.0
 	github.com/prometheus/client_golang v1.18.0
