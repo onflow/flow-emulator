@@ -537,7 +537,7 @@ func (a *AccessAdapter) SubscribeBlockDigestsFromLatest(_ context.Context, _ flo
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeTransactionStatuses(_ context.Context, _ *flowgo.TransactionBody) subscription.Subscription {
+func (a *AccessAdapter) SubscribeTransactionStatuses(_ context.Context, _ *flowgo.TransactionBody, _ entities.EventEncodingVersion) subscription.Subscription {
 	return nil
 }
 

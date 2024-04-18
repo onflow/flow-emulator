@@ -17,7 +17,7 @@ require (
 	github.com/onflow/flow-go v0.33.2-0.20240412174857-015156b297b5
 	github.com/onflow/flow-go-sdk v0.46.2
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.0
-	github.com/onflow/flow/protobuf/go/flow v0.4.0
+	github.com/onflow/flow/protobuf/go/flow v0.4.1-0.20240412170550-911321113030
 	github.com/onflow/nft-storefront/lib/go/contracts v0.0.0-20221222181731-14b90207cead
 	github.com/prometheus/client_golang v1.18.0
 	github.com/psiemens/graceland v1.0.0
@@ -208,3 +208,5 @@ require (
 	nhooyr.io/websocket v1.8.7 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
+
+replace github.com/onflow/flow-go v0.33.2-0.20240412174857-015156b297b5 => github.com/The-K-R-O-K/flow-go v0.33.2-0.20240417215248-2a6c870d6e32
