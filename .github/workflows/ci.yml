@@ -10,6 +10,7 @@ on:
       - "release/**"
     tags:
       - "v*"
+      - "release/*"
   pull_request:
     branches:
       - master

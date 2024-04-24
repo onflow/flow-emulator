@@ -21,6 +21,8 @@ package emulator_test
 import (
 	"context"
 	"encoding/hex"
+	"testing"
+
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
@@ -30,7 +32,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestSourceFilePragmaForScript(t *testing.T) {

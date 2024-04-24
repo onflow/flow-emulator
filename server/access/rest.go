@@ -26,6 +26,12 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/zerolog"
+
+	"github.com/onflow/flow-emulator/adapters"
+	"github.com/onflow/flow-emulator/emulator"
+
 	"github.com/onflow/flow-go/engine/access/rest"
 	"github.com/onflow/flow-go/engine/access/rest/routes"
 	"github.com/onflow/flow-go/engine/access/state_stream"
@@ -34,11 +40,6 @@ import (
 	"github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module"
 	"github.com/onflow/flow-go/module/metrics"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/rs/zerolog"
-
-	"github.com/onflow/flow-emulator/adapters"
-	"github.com/onflow/flow-emulator/emulator"
 )
 
 type RestServer struct {

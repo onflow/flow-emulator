@@ -500,43 +500,43 @@ func (a *AccessAdapter) GetNodeVersionInfo(
 	return nil, fmt.Errorf("not supported")
 }
 
-func (a *AccessAdapter) SubscribeBlocksFromStartBlockID(ctx context.Context, startBlockID flowgo.Identifier, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlocksFromStartBlockID(_ context.Context, _ flowgo.Identifier, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeBlocksFromStartHeight(ctx context.Context, startHeight uint64, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlocksFromStartHeight(_ context.Context, _ uint64, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeBlocksFromLatest(ctx context.Context, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlocksFromLatest(_ context.Context, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeBlockHeadersFromStartBlockID(ctx context.Context, startBlockID flowgo.Identifier, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlockHeadersFromStartBlockID(_ context.Context, _ flowgo.Identifier, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeBlockHeadersFromStartHeight(ctx context.Context, startHeight uint64, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlockHeadersFromStartHeight(_ context.Context, _ uint64, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeBlockHeadersFromLatest(ctx context.Context, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlockHeadersFromLatest(_ context.Context, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeBlockDigestsFromStartBlockID(ctx context.Context, startBlockID flowgo.Identifier, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlockDigestsFromStartBlockID(_ context.Context, _ flowgo.Identifier, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeBlockDigestsFromStartHeight(ctx context.Context, startHeight uint64, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlockDigestsFromStartHeight(_ context.Context, _ uint64, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeBlockDigestsFromLatest(ctx context.Context, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlockDigestsFromLatest(_ context.Context, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeTransactionStatuses(ctx context.Context, tx *flowgo.TransactionBody) subscription.Subscription {
+func (a *AccessAdapter) SubscribeTransactionStatuses(_ context.Context, _ *flowgo.TransactionBody, _ entities.EventEncodingVersion) subscription.Subscription {
 	return nil
 }
 

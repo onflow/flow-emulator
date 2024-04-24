@@ -79,6 +79,7 @@ values.
 | `--computation-reporting`     | `FLOW_COMPUTATIONREPORTING`      | `false`        | Enable computation reporting for Cadence scripts & transactions                                                                                                                                               |
 | `--checkpoint-dir`            | `FLOW_CHECKPOINTDIR`             | ''             | Checkpoint directory to load the emulator state from, if starting the emulator from a checkpoint                                                                                                              |
 | `--state-hash`                | `FLOW_STATEHASH`                 | ''             | State hash of the checkpoint, if starting the emulator from a checkpoint                                                                                                                                      |
+| `--evm-enabled`               | `FLOW_EVMENABLED`                | `false`        | Enable evm support |
 
 ## Running the emulator with the Flow CLI
 
@@ -283,8 +284,7 @@ You can also store all of your changes and cached registers to a persistent db b
 along with the other sqlite settings.
 
 To submit transactions as a different account, you can use the `--skip-tx-validation` flag to disable transaction
-signature
-verification. Then submit transactions from any account using any valid private key.
+signature verification. Then submit transactions from any account using any valid private key.
 
 ## Debugging
 

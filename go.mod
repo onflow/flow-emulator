@@ -9,7 +9,6 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/go-dap v0.11.0
 	github.com/gorilla/mux v1.8.1
-	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v1.0.0-preview.19
@@ -18,7 +17,7 @@ require (
 	github.com/onflow/flow-go v0.34.0-crescendo-preview.10.0.20240412141002-8081bde9d8a7
 	github.com/onflow/flow-go-sdk v1.0.0-preview.18
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20240402163945-74687e7a5b9d
-	github.com/onflow/flow/protobuf/go/flow v0.4.0
+	github.com/onflow/flow/protobuf/go/flow v0.4.1-0.20240412170550-911321113030
 	github.com/prometheus/client_golang v1.18.0
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
@@ -85,6 +84,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/zerolog/v2 v2.0.0-rc.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0-rc.2 // indirect
+	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -214,3 +214,5 @@ require (
 	nhooyr.io/websocket v1.8.7 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
+
+replace github.com/onflow/flow-go v0.33.2-0.20240412174857-015156b297b5 => github.com/The-K-R-O-K/flow-go v0.33.2-0.20240417215248-2a6c870d6e32

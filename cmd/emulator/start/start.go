@@ -79,6 +79,7 @@ type Config struct {
 	CheckpointPath               string        `default:"" flag:"checkpoint-dir" info:"checkpoint directory to load the emulator state from"`
 	StateHash                    string        `default:"" flag:"state-hash" info:"state hash of the checkpoint to load the emulator state from"`
 	ComputationReportingEnabled  bool          `default:"false" flag:"computation-reporting" info:"enable Cadence computation reporting"`
+	EVMEnabled                   bool          `default:"false" flag:"evm-enabled" info:"enable EVM support"`
 }
 
 const EnvPrefix = "FLOW"
@@ -212,6 +213,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				CheckpointPath:               conf.CheckpointPath,
 				StateHash:                    conf.StateHash,
 				ComputationReportingEnabled:  conf.ComputationReportingEnabled,
+				EVMEnabled:                   conf.EVMEnabled,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
