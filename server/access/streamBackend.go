@@ -243,6 +243,18 @@ func (b *StateStreamBackend) SubscribeExecutionData(ctx context.Context, startBl
 	return sub
 }
 
+func (b *StateStreamBackend) SubscribeExecutionDataFromStartBlockID(ctx context.Context, startBlockID flow.Identifier) subscription.Subscription {
+	return nil
+}
+
+func (b *StateStreamBackend) SubscribeExecutionDataFromStartBlockHeight(ctx context.Context, startBlockHeight uint64) subscription.Subscription {
+	return nil
+}
+
+func (b *StateStreamBackend) SubscribeExecutionDataFromLatest(ctx context.Context) subscription.Subscription {
+	return nil
+}
+
 func (b *StateStreamBackend) getResponse(ctx context.Context, height uint64) (interface{}, error) {
 	executionData, err := b.getExecutionData(ctx, height)
 	if err != nil {
