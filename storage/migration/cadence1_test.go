@@ -163,10 +163,12 @@ func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
 	require.NoError(t, err)
 
 	migratorRuntime, err := migrations.NewMigratorRuntime(
+		zerolog.New(zerolog.NewTestWriter(t)),
 		payloads,
 		flowgo.Emulator,
 		migrations.MigratorRuntimeConfig{},
 		snapshot.LargeChangeSetOrReadonlySnapshot,
+		1,
 	)
 	require.NoError(t, err)
 
