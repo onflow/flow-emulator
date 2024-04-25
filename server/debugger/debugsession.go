@@ -203,7 +203,7 @@ func (s *session) handleVariablesRequest(request *dap.VariablesRequest) {
 				continue
 			}
 
-			value := variable.GetValue()
+			value := variable.GetValue(inter)
 
 			cadenceValue, err := runtime.ExportValue(value, inter, interpreter.EmptyLocationRange)
 			if err != nil {
@@ -302,7 +302,8 @@ func (s *session) handleEvaluateRequest(request *dap.EvaluateRequest) {
 
 	variableName := request.Arguments.Expression
 
-	activation := s.debugger.CurrentActivation(s.stop.Interpreter)
+	inter := s.stop.Interpreter
+	activation := s.debugger.CurrentActivation(inter)
 
 	variable := activation.Find(variableName)
 	if variable == nil {
@@ -318,7 +319,7 @@ func (s *session) handleEvaluateRequest(request *dap.EvaluateRequest) {
 		return
 	}
 
-	value := variable.GetValue()
+	value := variable.GetValue(inter)
 	s.send(&dap.EvaluateResponse{
 		Response: newDAPSuccessResponse(request.GetRequest()),
 		Body: dap.EvaluateResponseBody{
