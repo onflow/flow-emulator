@@ -15,7 +15,7 @@ require (
 	github.com/onflow/cadence v1.0.0-preview.22
 	github.com/onflow/crypto v0.25.1
 	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.2-0.20240424213425-0fc367fc56cb
-	github.com/onflow/flow-go v0.34.0-crescendo-preview.15
+	github.com/onflow/flow-go v0.34.0-crescendo-preview.10-staged-contracts-3.0.20240426162902-1640cba0aa74
 	github.com/onflow/flow-go-sdk v1.0.0-preview.21
 	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20240424144730-4a6f42d2a372
 	github.com/onflow/flow/protobuf/go/flow v0.4.1-0.20240412170550-911321113030
@@ -84,7 +84,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/zerolog/v2 v2.0.0-rc.2 // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0-rc.2 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect

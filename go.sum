@@ -1591,6 +1591,7 @@ github.com/grpc-ecosystem/go-grpc-middleware/providers/zerolog/v2 v2.0.0-rc.2/go
 github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0-20200501113911-9a95f0fdbfea/go.mod h1:GugMBs30ZSAkckqXEAIEGyYdDH6EgqowG8ppA3Zt+AY=
 github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0-rc.2 h1:1aeRCnE2CkKYqyzBu0+B2lgTcZPc3ea2lGpijeHbI1c=
 github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0-rc.2/go.mod h1:GhphxcdlaRyAuBSvo6rV71BvQcvB/vuX8ugCyybuS2k=
+github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0/go.mod h1:XKMd7iuf/RGPSMJ/U4HP0zS2Z9Fh8Ps9a+6X26m/tmI=
 github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 h1:Ovs26xHkKqVztRpIrF/92BcuyuQ/YW4NSIpoGtfXNho=
 github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0/go.mod h1:8NvIoxWQoOIhqOTXgfV/d3M/q6VIi02HzZEHgUlZvzk=
 github.com/grpc-ecosystem/grpc-gateway v1.9.0/go.mod h1:vNeuVxBJEsws4ogUvrchl83t/GYV9WGTSLVdBhOQFDY=
@@ -2014,6 +2015,8 @@ github.com/onflow/flow-ft/lib/go/templates v0.7.1-0.20240424211859-3ff4c0fe2a1e 
 github.com/onflow/flow-ft/lib/go/templates v0.7.1-0.20240424211859-3ff4c0fe2a1e/go.mod h1:uQ8XFqmMK2jxyBSVrmyuwdWjTEb+6zGjRYotfDJ5pAE=
 github.com/onflow/flow-go v0.34.0-crescendo-preview.15 h1:H9OXoTo5DEFLcuL/TXBaYCoD3CFhKirKyj0vgLM9eVg=
 github.com/onflow/flow-go v0.34.0-crescendo-preview.15/go.mod h1:VipGu83nkV4wQNhI6RWlToFgvlX+Q7m+D/q5w/Glly8=
+github.com/onflow/flow-go v0.34.0-crescendo-preview.10-staged-contracts-3.0.20240426162902-1640cba0aa74 h1:siwl4X3JUNBgSZZrEzIbmR5rSuJs5QT5mOfO1cpqgTs=
+github.com/onflow/flow-go v0.34.0-crescendo-preview.10-staged-contracts-3.0.20240426162902-1640cba0aa74/go.mod h1:3pFNo6SgB2LGhPyro8Zod8aZ7nhL8A/BXJj8Djp2hzo=
 github.com/onflow/flow-go-sdk v1.0.0-M1/go.mod h1:TDW0MNuCs4SvqYRUzkbRnRmHQL1h4X8wURsCw9P9beo=
 github.com/onflow/flow-go-sdk v1.0.0-preview.21 h1:7MOAVOnHgvF0Xvm+5FjcOKHWqcEOhsXfqK2OkK98iwY=
 github.com/onflow/flow-go-sdk v1.0.0-preview.21/go.mod h1:c5XHJ+a8/DNs6ntpbxyqXX6v+Cmm+yZj/F327O3vrPE=
