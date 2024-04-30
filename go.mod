@@ -2,8 +2,6 @@ module github.com/onflow/flow-emulator
 
 go 1.21
 
-toolchain go1.21.4
-
 require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
 	github.com/fxamacker/cbor/v2 v2.4.1-0.20230228173756-c0c9f774e40c
