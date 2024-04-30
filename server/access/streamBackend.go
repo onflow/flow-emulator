@@ -148,10 +148,9 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 	return func(_ context.Context, height uint64) (*execution_data.BlockExecutionDataEntity, error) {
 		block, err := blockchain.GetBlockByHeight(height)
 		if err != nil {
-			var blockNotFoundByIDError *types.BlockNotFoundByIDError
-			isNotFound := errors.As(err, &blockNotFoundByIDError)
-			if !isNotFound {
-				return nil, storage.ErrNotFound
+			var blockNotFoundByHeightError *types.BlockNotFoundByHeightError
+			if errors.As(err, &blockNotFoundByHeightError) {
+				return nil, errors.Join(err, subscription.ErrBlockNotReady)
 			}
 			return nil, err
 		}

@@ -1,6 +1,6 @@
 module github.com/onflow/flow-emulator
 
-go 1.20
+go 1.21
 
 require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
@@ -12,12 +12,12 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.0.0-preview.22
+	github.com/onflow/cadence v1.0.0-preview.23
 	github.com/onflow/crypto v0.25.1
-	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.2-0.20240424213425-0fc367fc56cb
-	github.com/onflow/flow-go v0.34.0-crescendo-preview.15
-	github.com/onflow/flow-go-sdk v1.0.0-preview.21
-	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20240424144730-4a6f42d2a372
+	github.com/onflow/flow-core-contracts/lib/go/templates v0.15.2-0.20240429192223-e696a8e439b5
+	github.com/onflow/flow-go v0.34.0-crescendo-preview.16
+	github.com/onflow/flow-go-sdk v1.0.0-preview.22
+	github.com/onflow/flow-nft/lib/go/contracts v1.1.1-0.20240429184308-40c3de711140
 	github.com/onflow/flow/protobuf/go/flow v0.4.1-0.20240412170550-911321113030
 	github.com/prometheus/client_golang v1.18.0
 	github.com/psiemens/graceland v1.0.0
@@ -83,8 +83,7 @@ require (
 	github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware/providers/zerolog/v2 v2.0.0-rc.2 // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0-rc.2 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -95,14 +94,12 @@ require (
 	github.com/holiman/uint256 v1.2.4 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect
+	github.com/ipfs/boxo v0.19.0 // indirect
 	github.com/ipfs/go-block-format v0.2.0 // indirect
 	github.com/ipfs/go-cid v0.4.1 // indirect
 	github.com/ipfs/go-datastore v0.6.0 // indirect
-	github.com/ipfs/go-ipfs-blockstore v1.3.0 // indirect
-	github.com/ipfs/go-ipfs-ds-help v1.1.0 // indirect
 	github.com/ipfs/go-ipfs-util v0.0.3 // indirect
 	github.com/ipfs/go-ipld-format v0.6.0 // indirect
-	github.com/ipfs/go-log v1.0.5 // indirect
 	github.com/ipfs/go-log/v2 v2.5.1 // indirect
 	github.com/ipfs/go-metrics-interface v0.0.1 // indirect
 	github.com/jbenet/goprocess v0.1.4 // indirect
@@ -137,14 +134,13 @@ require (
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/onflow/atree v0.6.1-0.20240416233652-f4568c0c03df // indirect
-	github.com/onflow/flow-core-contracts/lib/go/contracts v0.15.2-0.20240424213425-0fc367fc56cb // indirect
+	github.com/onflow/flow-core-contracts/lib/go/contracts v0.15.2-0.20240429192223-e696a8e439b5 // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v0.7.1-0.20240424211859-3ff4c0fe2a1e // indirect
 	github.com/onflow/flow-ft/lib/go/templates v0.7.1-0.20240424211859-3ff4c0fe2a1e // indirect
-	github.com/onflow/flow-nft/lib/go/templates v0.0.0-20240424144730-4a6f42d2a372 // indirect
+	github.com/onflow/flow-nft/lib/go/templates v0.0.0-20240429184308-40c3de711140 // indirect
 	github.com/onflow/go-ethereum v1.13.4 // indirect
 	github.com/onflow/sdks v0.5.1-0.20230912225508-b35402f12bba // indirect
 	github.com/onflow/wal v0.0.0-20240208022732-d756cd497d3b // indirect
-	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
