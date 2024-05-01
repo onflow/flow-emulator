@@ -612,14 +612,9 @@ func (s *session) convertCadenceValueMembersToDAPVariables(cadenceValue cadence.
 	members := make([]dap.Variable, 0)
 
 	switch value := cadenceValue.(type) {
-	case cadence.Resource:
-		for i, field := range value.ResourceType.Fields {
-			variable := s.convertValueToDAPVariable(field.Identifier, value.Fields[i])
-			members = append(members, variable)
-		}
-	case cadence.Struct:
-		for i, field := range value.StructType.Fields {
-			variable := s.convertValueToDAPVariable(field.Identifier, value.Fields[i])
+	case cadence.Composite:
+		for fieldName, fieldValue := range cadence.FieldsMappedByName(value) {
+			variable := s.convertValueToDAPVariable(fieldName, fieldValue)
 			members = append(members, variable)
 		}
 

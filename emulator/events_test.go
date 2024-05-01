@@ -23,9 +23,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/rs/zerolog"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
-	"github.com/rs/zerolog"
 
 	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/flow-go-sdk/templates"
@@ -151,11 +152,20 @@ func TestEventEmitted(t *testing.T) {
 		assert.Equal(t, string(expectedType), actualEvent.Type)
 		assert.Equal(t, expectedID, actualEvent.ID())
 		assert.Equal(t, "x", decodedEventType.Fields[0].Identifier)
-		assert.Equal(t, cadence.NewInt(1), decodedEvent.Fields[0])
 		assert.Equal(t, "y", decodedEventType.Fields[1].Identifier)
-		assert.Equal(t, cadence.NewInt(2), decodedEvent.Fields[1])
 
-		events, err = adapter.GetEventsForBlockIDs(context.Background(), string(expectedType), []flowsdk.Identifier{flowsdk.Identifier(block.Header.ID())})
+		fields := cadence.FieldsMappedByName(decodedEvent)
+
+		assert.Equal(t, cadence.NewInt(1), fields["x"])
+		assert.Equal(t, cadence.NewInt(2), fields["y"])
+
+		events, err = adapter.GetEventsForBlockIDs(
+			context.Background(),
+			string(expectedType),
+			[]flowsdk.Identifier{
+				flowsdk.Identifier(block.Header.ID()),
+			},
+		)
 		require.NoError(t, err)
 		require.Len(t, events, 1)
 
@@ -167,9 +177,12 @@ func TestEventEmitted(t *testing.T) {
 		assert.Equal(t, string(expectedType), actualEvent.Type)
 		assert.Equal(t, expectedID, actualEvent.ID())
 		assert.Equal(t, "x", decodedEventType.Fields[0].Identifier)
-		assert.Equal(t, cadence.NewInt(1), decodedEvent.Fields[0])
 		assert.Equal(t, "y", decodedEventType.Fields[1].Identifier)
-		assert.Equal(t, cadence.NewInt(2), decodedEvent.Fields[1])
+
+		fields = cadence.FieldsMappedByName(decodedEvent)
+
+		assert.Equal(t, cadence.NewInt(1), fields["x"])
+		assert.Equal(t, cadence.NewInt(2), fields["y"])
 
 	})
 }

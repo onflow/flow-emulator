@@ -23,9 +23,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/onflow/cadence/runtime/stdlib"
+	"github.com/rs/zerolog"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
-	"github.com/rs/zerolog"
 
 	"github.com/onflow/cadence"
 	flowsdk "github.com/onflow/flow-go-sdk"
@@ -141,7 +143,11 @@ func LastCreatedAccount(b *emulator.Blockchain, result *types.TransactionResult)
 func LastCreatedAccountAddress(result *types.TransactionResult) (flowsdk.Address, error) {
 	for _, event := range result.Events {
 		if event.Type == flowsdk.EventAccountCreated {
-			return flowsdk.Address(event.Value.Fields[0].(cadence.Address)), nil
+			addressFieldValue := cadence.SearchFieldByName(
+				event.Value,
+				stdlib.AccountEventAddressParameter.Identifier,
+			)
+			return flowsdk.Address(addressFieldValue.(cadence.Address)), nil
 		}
 	}
 
