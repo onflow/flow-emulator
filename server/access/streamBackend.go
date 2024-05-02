@@ -71,7 +71,7 @@ func (b *StateStreamBackend) SubscribeEventsFromStartBlockID(
 	startBlockID flow.Identifier,
 	filter state_stream.EventFilter,
 ) subscription.Subscription {
-	return nil
+	return b.SubscribeEvents(ctx, startBlockID, 0, filter)
 }
 
 func (b *StateStreamBackend) SubscribeEventsFromStartHeight(
@@ -79,68 +79,44 @@ func (b *StateStreamBackend) SubscribeEventsFromStartHeight(
 	startHeight uint64,
 	filter state_stream.EventFilter,
 ) subscription.Subscription {
-	return nil
+	return b.SubscribeEvents(ctx, flow.ZeroID, startHeight, filter)
 }
 
 func (b *StateStreamBackend) SubscribeEventsFromLatest(
 	ctx context.Context,
 	filter state_stream.EventFilter,
 ) subscription.Subscription {
-	return nil
-}
-
-func (b *StateStreamBackend) SubscribeAccountStatusesFromStartBlockID(
-	ctx context.Context,
-	startBlockID flow.Identifier,
-	filter state_stream.AccountStatusFilter,
-) subscription.Subscription {
-	return nil
-}
-
-func (b *StateStreamBackend) SubscribeAccountStatusesFromStartHeight(
-	ctx context.Context,
-	startHeight uint64,
-	filter state_stream.AccountStatusFilter,
-) subscription.Subscription {
-	return nil
-}
-
-func (b *StateStreamBackend) SubscribeAccountStatusesFromLatestBlock(
-	ctx context.Context,
-	filter state_stream.AccountStatusFilter,
-) subscription.Subscription {
-	return nil
+	return b.SubscribeEvents(ctx, flow.ZeroID, 0, filter)
 }
 
 func getStartHeightFunc(blockchain *emulator.Blockchain) GetStartHeightFunc {
 	return func(blockID flow.Identifier, height uint64) (uint64, error) {
-		// try with start at blockID
-		block, err := blockchain.GetBlockByID(blockID)
 
-		if err != nil {
-			var blockNotFoundByIDError *types.BlockNotFoundByIDError
-			isNotFound := errors.As(err, &blockNotFoundByIDError)
-			if !isNotFound {
+		//check latest block request
+		if blockID != flow.ZeroID && height == 0 {
+			block, err := blockchain.GetLatestBlock()
+			if err != nil {
 				return 0, storage.ErrNotFound
 			}
-		} else {
+			return block.Header.Height, nil
+		}
+
+		// try with start at blockID
+		if blockID != flow.ZeroID {
+			block, err := blockchain.GetBlockByID(blockID)
+			if err != nil {
+				return 0, storage.ErrNotFound
+			}
 			return block.Header.Height, nil
 		}
 
 		// try with start at blockHeight
-		block, err = blockchain.GetBlockByHeight(height)
+		_, err := blockchain.GetBlockByHeight(height)
 		if err != nil {
-			var blockNotFoundByIDError *types.BlockNotFoundByIDError
-			isNotFound := errors.As(err, &blockNotFoundByIDError)
-			if !isNotFound {
-				return 0, storage.ErrNotFound
-			}
-		} else {
-			return block.Header.Height, nil
+			return 0, storage.ErrNotFound
 		}
 
-		// both arguments are wrong
-		return 0, storage.ErrNotFound
+		return height, nil
 	}
 }
 
@@ -258,20 +234,20 @@ type GetExecutionDataFunc func(context.Context, uint64) (*execution_data.BlockEx
 
 type GetStartHeightFunc func(flow.Identifier, uint64) (uint64, error)
 
-func (b StateStreamBackend) SubscribeEvents(ctx context.Context, startBlockID flow.Identifier, startHeight uint64, filter state_stream.EventFilter) subscription.Subscription {
+func (b *StateStreamBackend) SubscribeEvents(ctx context.Context, startBlockID flow.Identifier, startHeight uint64, filter state_stream.EventFilter) subscription.Subscription {
 	nextHeight, err := b.getStartHeight(startBlockID, startHeight)
 	if err != nil {
 		return subscription.NewFailedSubscription(err, "could not get start height")
 	}
 
-	sub := subscription.NewHeightBasedSubscription(b.sendBufferSize, nextHeight, b.getResponseFactory(filter))
+	sub := subscription.NewHeightBasedSubscription(b.sendBufferSize, nextHeight, b.getEventsFactory(filter))
 
 	go subscription.NewStreamer(b.log, b.blockchain.Broadcaster(), b.sendTimeout, b.responseLimit, sub).Stream(ctx)
 
 	return sub
 }
 
-func (b StateStreamBackend) getResponseFactory(filter state_stream.EventFilter) subscription.GetDataByHeightFunc {
+func (b *StateStreamBackend) getEventsFactory(filter state_stream.EventFilter) subscription.GetDataByHeightFunc {
 	return func(ctx context.Context, height uint64) (interface{}, error) {
 		executionData, err := b.getExecutionData(ctx, height)
 		if err != nil {
@@ -296,6 +272,71 @@ func (b StateStreamBackend) getResponseFactory(filter state_stream.EventFilter) 
 	}
 }
 
-func (b StateStreamBackend) GetRegisterValues(registerIDs flow.RegisterIDs, height uint64) ([]flow.RegisterValue, error) {
+func (b *StateStreamBackend) SubscribeAccountStatus(ctx context.Context, startBlockID flow.Identifier, startHeight uint64, filter state_stream.AccountStatusFilter) subscription.Subscription {
+	nextHeight, err := b.getStartHeight(startBlockID, startHeight)
+	if err != nil {
+		return subscription.NewFailedSubscription(err, "could not get start height")
+	}
+	sub := subscription.NewHeightBasedSubscription(b.sendBufferSize, nextHeight, b.getAccountStatusFactory(filter))
+	go subscription.NewStreamer(b.log, b.blockchain.Broadcaster(), b.sendTimeout, b.responseLimit, sub).Stream(ctx)
+	return sub
+}
+
+func (b *StateStreamBackend) SubscribeAccountStatusesFromStartBlockID(
+	ctx context.Context,
+	startBlockID flow.Identifier,
+	filter state_stream.AccountStatusFilter,
+) subscription.Subscription {
+	return b.SubscribeAccountStatus(ctx, startBlockID, 0, filter)
+}
+
+func (b *StateStreamBackend) SubscribeAccountStatusesFromStartHeight(
+	ctx context.Context,
+	startHeight uint64,
+	filter state_stream.AccountStatusFilter,
+) subscription.Subscription {
+	return b.SubscribeAccountStatus(ctx, flow.ZeroID, startHeight, filter)
+}
+
+func (b *StateStreamBackend) SubscribeAccountStatusesFromLatestBlock(
+	ctx context.Context,
+	filter state_stream.AccountStatusFilter,
+) subscription.Subscription {
+	return b.SubscribeAccountStatus(ctx, flow.ZeroID, 0, filter)
+}
+
+func (b *StateStreamBackend) getAccountStatusFactory(filter state_stream.AccountStatusFilter) subscription.GetDataByHeightFunc {
+	return func(ctx context.Context, height uint64) (interface{}, error) {
+
+		executionData, err := b.getExecutionData(ctx, height)
+		if err != nil {
+			return nil, fmt.Errorf("could not get execution data for block %d: %w", height, err)
+		}
+
+		if err != nil {
+			if errors.Is(err, storage.ErrNotFound) ||
+				errors.Is(err, storage.ErrHeightNotIndexed) {
+				return nil, fmt.Errorf("block %d is not available yet: %w", height, subscription.ErrBlockNotReady)
+			}
+			return nil, err
+		}
+
+		filteredProtocolEvents := []flow.Event{}
+		for _, chunkExecutionData := range executionData.ChunkExecutionDatas {
+			filteredProtocolEvents = append(filteredProtocolEvents, filter.Filter(chunkExecutionData.Events)...)
+		}
+
+		allAccountProtocolEvents := filter.GroupCoreEventsByAccountAddress(filteredProtocolEvents, b.log)
+
+		return &backend.AccountStatusesResponse{
+			BlockID:       executionData.BlockID,
+			Height:        height,
+			AccountEvents: allAccountProtocolEvents,
+		}, nil
+
+	}
+}
+
+func (b *StateStreamBackend) GetRegisterValues(registerIDs flow.RegisterIDs, height uint64) ([]flow.RegisterValue, error) {
 	return nil, status.Errorf(codes.Unimplemented, "not implemented")
 }
