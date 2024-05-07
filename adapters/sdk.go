@@ -24,8 +24,7 @@ import (
 
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
-	"github.com/onflow/flow-emulator/convert"
-	emulator "github.com/onflow/flow-emulator/emulator"
+	"github.com/onflow/cadence/runtime/stdlib"
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go/access"
@@ -34,6 +33,9 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/onflow/flow-emulator/convert"
+	"github.com/onflow/flow-emulator/emulator"
 )
 
 // SDKAdapter wraps an emulated emulator and implements the RPC handlers
@@ -519,7 +521,11 @@ func (b *SDKAdapter) CreateAccount(ctx context.Context, publicKeys []*sdk.Accoun
 
 	for _, event := range lastResult.Events {
 		if event.Type == sdk.EventAccountCreated {
-			address = sdk.Address(event.Value.Fields[0].(cadence.Address))
+			addressFieldValue := cadence.SearchFieldByName(
+				event.Value,
+				stdlib.AccountEventAddressParameter.Identifier,
+			)
+			address = sdk.Address(addressFieldValue.(cadence.Address))
 			break
 		}
 	}

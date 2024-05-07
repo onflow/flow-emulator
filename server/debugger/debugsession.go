@@ -203,7 +203,7 @@ func (s *session) handleVariablesRequest(request *dap.VariablesRequest) {
 				continue
 			}
 
-			value := variable.GetValue()
+			value := variable.GetValue(inter)
 
 			cadenceValue, err := runtime.ExportValue(value, inter, interpreter.EmptyLocationRange)
 			if err != nil {
@@ -302,7 +302,8 @@ func (s *session) handleEvaluateRequest(request *dap.EvaluateRequest) {
 
 	variableName := request.Arguments.Expression
 
-	activation := s.debugger.CurrentActivation(s.stop.Interpreter)
+	inter := s.stop.Interpreter
+	activation := s.debugger.CurrentActivation(inter)
 
 	variable := activation.Find(variableName)
 	if variable == nil {
@@ -318,7 +319,7 @@ func (s *session) handleEvaluateRequest(request *dap.EvaluateRequest) {
 		return
 	}
 
-	value := variable.GetValue()
+	value := variable.GetValue(inter)
 	s.send(&dap.EvaluateResponse{
 		Response: newDAPSuccessResponse(request.GetRequest()),
 		Body: dap.EvaluateResponseBody{
@@ -611,14 +612,9 @@ func (s *session) convertCadenceValueMembersToDAPVariables(cadenceValue cadence.
 	members := make([]dap.Variable, 0)
 
 	switch value := cadenceValue.(type) {
-	case cadence.Resource:
-		for i, field := range value.ResourceType.Fields {
-			variable := s.convertValueToDAPVariable(field.Identifier, value.Fields[i])
-			members = append(members, variable)
-		}
-	case cadence.Struct:
-		for i, field := range value.StructType.Fields {
-			variable := s.convertValueToDAPVariable(field.Identifier, value.Fields[i])
+	case cadence.Composite:
+		for fieldName, fieldValue := range cadence.FieldsMappedByName(value) {
+			variable := s.convertValueToDAPVariable(fieldName, fieldValue)
 			members = append(members, variable)
 		}
 

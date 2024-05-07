@@ -1457,8 +1457,12 @@ func TestGetTransactionResult(t *testing.T) {
 	assert.Equal(t, tx.ID(), event.TransactionID)
 	assert.Equal(t, string(eventType), event.Type)
 	assert.Equal(t, 0, event.EventIndex)
-	assert.Equal(t, 1, len(event.Value.Fields))
-	assert.Equal(t, cadence.NewInt(2), event.Value.Fields[0])
+	fields := cadence.FieldsMappedByName(event.Value)
+	assert.Len(t, fields, 1)
+	assert.Equal(t,
+		cadence.NewInt(2),
+		fields["count"],
+	)
 }
 
 // TestGetTxByBlockIDMethods tests the GetTransactionByBlockID and GetTransactionResultByBlockID
@@ -2076,8 +2080,13 @@ func IncrementHelper(t *testing.T, b emulator.Emulator, adapter *adapters.SDKAda
 	assert.Equal(t, tx.ID(), event.TransactionID)
 	assert.Equal(t, string(eventType), event.Type)
 	assert.Equal(t, 0, event.EventIndex)
-	assert.Equal(t, cadence.NewInt(expected), event.Value.Fields[0])
 
+	fields := cadence.FieldsMappedByName(event.Value)
+	assert.Len(t, fields, 1)
+	assert.Equal(t,
+		cadence.NewInt(expected),
+		fields["count"],
+	)
 }
 
 func TestRollbackTransaction(t *testing.T) {

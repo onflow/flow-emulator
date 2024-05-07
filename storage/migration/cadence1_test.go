@@ -26,6 +26,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/onflow/flow-go/cmd/util/ledger/util/snapshot"
 	"github.com/rs/zerolog"
 
 	"github.com/stretchr/testify/assert"
@@ -92,6 +93,7 @@ func migrateEmulatorState(t *testing.T, store *sqlite.Store) {
 
 	err := MigrateCadence1(
 		store,
+		t.TempDir(),
 		migrations.EVMContractChangeNone,
 		migrations.BurnerContractChangeDeploy,
 		stagedContracts,
@@ -161,9 +163,12 @@ func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
 	require.NoError(t, err)
 
 	migratorRuntime, err := migrations.NewMigratorRuntime(
-		testAccountAddress,
+		zerolog.New(zerolog.NewTestWriter(t)),
 		payloads,
-		util.RuntimeInterfaceConfig{},
+		flowgo.Emulator,
+		migrations.MigratorRuntimeConfig{},
+		snapshot.LargeChangeSetOrReadonlySnapshot,
+		1,
 	)
 	require.NoError(t, err)
 

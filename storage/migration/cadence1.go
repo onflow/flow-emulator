@@ -32,6 +32,7 @@ import (
 
 func MigrateCadence1(
 	store *sqlite.Store,
+	outputDir string,
 	evmContractChange migrations.EVMContractChange,
 	burnerContractChange migrations.BurnerContractChange,
 	stagedContracts []migrations.StagedContract,
@@ -48,6 +49,7 @@ func MigrateCadence1(
 
 	cadence1Migrations := migrations.NewCadence1Migrations(
 		logger,
+		outputDir,
 		rwf,
 		migrations.Options{
 			NWorker:                           nWorker,
