@@ -18,7 +18,7 @@ require (
 	github.com/onflow/flow-go v0.34.0-crescendo-preview.18
 	github.com/onflow/flow-go-sdk v1.0.0-preview.26
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.0
-	github.com/onflow/flow/protobuf/go/flow v0.4.1
+	github.com/onflow/flow/protobuf/go/flow v0.4.2
 	github.com/prometheus/client_golang v1.18.0
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
