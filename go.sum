@@ -975,8 +975,6 @@ github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMx
 github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
 github.com/StackExchange/wmi v1.2.1 h1:VIkavFPXSjcnS+O8yTq7NI32k0R5Aj+v39y29VYDOSA=
 github.com/StackExchange/wmi v1.2.1/go.mod h1:rcmrprowKIVzvc+NUiLncP2uuArMWLCbu9SBzvHz7e8=
-github.com/The-K-R-O-K/flow-go v0.34.0-crescendo-preview.9.0.20240508085818-dd583cbc9a7b h1:cXcwYXLYHQwjLoNNzJBJW5C1e8QtLaCGHKsfCgiXMqQ=
-github.com/The-K-R-O-K/flow-go v0.34.0-crescendo-preview.9.0.20240508085818-dd583cbc9a7b/go.mod h1:UF6kQy34hAzC+poSydTsfnpVo7LBxp1pWyxGR+xrgA0=
 github.com/VictoriaMetrics/fastcache v1.6.0/go.mod h1:0qHz5QP0GMX4pfmMA/zt5RgfNuXJrTP0zS7DqpHGGTw=
 github.com/VictoriaMetrics/fastcache v1.12.1 h1:i0mICQuojGDL3KblA7wUNlY5lOK6a4bwt3uRKnkZU40=
 github.com/VictoriaMetrics/fastcache v1.12.1/go.mod h1:tX04vaqcNoQeGLD+ra5pU5sWkuxnzWhEzLwhP9w653o=
@@ -1999,6 +1997,8 @@ github.com/onflow/flow-ft/lib/go/contracts v1.0.0 h1:mToacZ5NWqtlWwk/7RgIl/jeKB/
 github.com/onflow/flow-ft/lib/go/contracts v1.0.0/go.mod h1:PwsL8fC81cjnUnTfmyL/HOIyHnyaw/JA474Wfj2tl6A=
 github.com/onflow/flow-ft/lib/go/templates v1.0.0 h1:6cMS/lUJJ17HjKBfMO/eh0GGvnpElPgBXx7h5aoWJhs=
 github.com/onflow/flow-ft/lib/go/templates v1.0.0/go.mod h1:uQ8XFqmMK2jxyBSVrmyuwdWjTEb+6zGjRYotfDJ5pAE=
+github.com/onflow/flow-go v0.35.0-crescendo-preview.20.0.20240508235454-08aa027bb351 h1:F/+CR3wRmoiyShvzOk/PwP2jyjTka96UiH5rNEo5nOA=
+github.com/onflow/flow-go v0.35.0-crescendo-preview.20.0.20240508235454-08aa027bb351/go.mod h1:xzlHMiZl1m99/PXKGPRfB9f6mT5RRFO56XJ5TdA/rOk=
 github.com/onflow/flow-go-sdk v1.0.0-M1/go.mod h1:TDW0MNuCs4SvqYRUzkbRnRmHQL1h4X8wURsCw9P9beo=
 github.com/onflow/flow-go-sdk v1.0.0-preview.26 h1:bxnbjcoaNICy4eR7snh8sk5EsmJUA0lBViVOtyBgOQ0=
 github.com/onflow/flow-go-sdk v1.0.0-preview.26/go.mod h1:tYb83v2vHO+ew1g0VkPKf7w0geNuTqKOV9zyzqQxN5M=
