@@ -1,6 +1,8 @@
 module github.com/onflow/flow-emulator
 
-go 1.20
+go 1.21
+
+toolchain go1.21.0
 
 require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
@@ -12,11 +14,11 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.0.0-preview.26
+	github.com/onflow/cadence v1.0.0-preview.28
 	github.com/onflow/crypto v0.25.1
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.0.0
-	github.com/onflow/flow-go v0.34.0-crescendo-preview.18
-	github.com/onflow/flow-go-sdk v1.0.0-preview.26
+	github.com/onflow/flow-go v0.34.0-crescendo-preview.16
+	github.com/onflow/flow-go-sdk v1.0.0-preview.28
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.0
 	github.com/onflow/flow/protobuf/go/flow v0.4.1
 	github.com/prometheus/client_golang v1.18.0
@@ -92,11 +94,9 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/holiman/bloomfilter/v2 v2.0.3 // indirect
 	github.com/holiman/uint256 v1.2.4 // indirect
-	github.com/huandu/go-clone v1.6.0 // indirect
-	github.com/huandu/go-clone/generic v1.7.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect
-	github.com/ipfs/boxo v0.17.1-0.20240131173518-89bceff34bf1 // indirect
+	github.com/ipfs/boxo v0.19.0 // indirect
 	github.com/ipfs/go-block-format v0.2.0 // indirect
 	github.com/ipfs/go-cid v0.4.1 // indirect
 	github.com/ipfs/go-datastore v0.6.0 // indirect
@@ -135,7 +135,7 @@ require (
 	github.com/multiformats/go-multistream v0.5.0 // indirect
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/onflow/atree v0.7.0-rc.1 // indirect
+	github.com/onflow/atree v0.7.0-rc.2 // indirect
 	github.com/onflow/flow-core-contracts/lib/go/contracts v1.0.0 // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v1.0.0 // indirect
 	github.com/onflow/flow-ft/lib/go/templates v1.0.0 // indirect
