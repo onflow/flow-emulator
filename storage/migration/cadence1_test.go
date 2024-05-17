@@ -26,7 +26,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/onflow/flow-go/cmd/util/ledger/util/snapshot"
+	"github.com/onflow/flow-go/cmd/util/ledger/util/registers"
 	"github.com/rs/zerolog"
 
 	"github.com/stretchr/testify/assert"
@@ -162,13 +162,14 @@ func checkMigratedPayloads(t *testing.T, store *sqlite.Store) {
 	payloads, _, _, err := util.PayloadsAndAccountsFromEmulatorSnapshot(store.DB())
 	require.NoError(t, err)
 
-	migratorRuntime, err := migrations.NewMigratorRuntime(
-		zerolog.New(zerolog.NewTestWriter(t)),
-		payloads,
+	byAccountRegisters, err := registers.NewByAccountFromPayloads(payloads)
+	require.NoError(t, err)
+
+	migratorRuntime, err := migrations.NewInterpreterMigrationRuntime(
+
+		byAccountRegisters,
 		flowgo.Emulator,
-		migrations.MigratorRuntimeConfig{},
-		snapshot.LargeChangeSetOrReadonlySnapshot,
-		1,
+		migrations.InterpreterMigrationRuntimeConfig{},
 	)
 	require.NoError(t, err)
 

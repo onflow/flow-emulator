@@ -24,6 +24,7 @@ import (
 	"github.com/onflow/flow-go/cmd/util/ledger/migrations"
 	"github.com/onflow/flow-go/cmd/util/ledger/reporters"
 	"github.com/onflow/flow-go/cmd/util/ledger/util"
+	"github.com/onflow/flow-go/cmd/util/ledger/util/registers"
 	"github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
 
@@ -65,13 +66,20 @@ func MigrateCadence1(
 		},
 	)
 
+	byAccountRegisters, err := registers.NewByAccountFromPayloads(payloads)
+	if err != nil {
+		return err
+	}
+
 	for _, migration := range cadence1Migrations {
 		logger.Info().Str("migration", migration.Name).Msg("running migration")
-		payloads, err = migration.Migrate(payloads)
+		err = migration.Migrate(byAccountRegisters)
 		if err != nil {
 			return err
 		}
 	}
 
-	return WritePayloadsToSnapshot(store, payloads, payloadInfo)
+	newPayloads := byAccountRegisters.DestructIntoPayloads(nWorker)
+
+	return WritePayloadsToSnapshot(store, newPayloads, payloadInfo)
 }
