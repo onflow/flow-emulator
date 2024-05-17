@@ -12,13 +12,13 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.0.0-preview.26
+	github.com/onflow/cadence v1.0.0-preview.29
 	github.com/onflow/crypto v0.25.1
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.0.0
-	github.com/onflow/flow-go v0.35.0-crescendo-preview.20.0.20240508235454-08aa027bb351
-	github.com/onflow/flow-go-sdk v1.0.0-preview.26
-	github.com/onflow/flow-nft/lib/go/contracts v1.2.0
-	github.com/onflow/flow/protobuf/go/flow v0.4.1
+	github.com/onflow/flow-go v0.35.5-0.20240517202625-55f862b45dfd
+	github.com/onflow/flow-go-sdk v1.0.0-preview.30
+	github.com/onflow/flow-nft/lib/go/contracts v1.2.1
+	github.com/onflow/flow/protobuf/go/flow v0.4.3
 	github.com/prometheus/client_golang v1.18.0
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
@@ -135,14 +135,14 @@ require (
 	github.com/multiformats/go-multistream v0.5.0 // indirect
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/onflow/atree v0.7.0-rc.1 // indirect
-	github.com/onflow/flow-core-contracts/lib/go/contracts v1.0.0 // indirect
+	github.com/onflow/atree v0.7.0-rc.2 // indirect
+	github.com/onflow/flow-core-contracts/lib/go/contracts v1.1.0 // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v1.0.0 // indirect
 	github.com/onflow/flow-ft/lib/go/templates v1.0.0 // indirect
 	github.com/onflow/flow-nft/lib/go/templates v1.2.0 // indirect
 	github.com/onflow/go-ethereum v1.13.4 // indirect
 	github.com/onflow/sdks v0.5.1-0.20230912225508-b35402f12bba // indirect
-	github.com/onflow/wal v0.0.0-20240208022732-d756cd497d3b // indirect
+	github.com/onflow/wal v1.0.2 // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
