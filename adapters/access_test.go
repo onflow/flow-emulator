@@ -23,17 +23,16 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/rs/zerolog"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/mock/gomock"
-
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/encoding/ccf"
 	"github.com/onflow/flow-go/access"
 	"github.com/onflow/flow-go/engine/common/rpc/convert"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow/protobuf/go/flow/entities"
+	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	"github.com/onflow/flow-emulator/emulator/mocks"
 	"github.com/onflow/flow-emulator/types"
@@ -761,11 +760,9 @@ func TestAccess(t *testing.T) {
 	}))
 
 	t.Run("GetNodeVersionInfo", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
-
-		//fail
-		_, err := adapter.GetNodeVersionInfo(context.Background())
-		assert.Error(t, err)
-
+		info, err := adapter.GetNodeVersionInfo(context.Background())
+		assert.NoError(t, err)
+		require.Equal(t, uint64(0), info.NodeRootBlockHeight)
 	}))
 
 }
