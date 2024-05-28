@@ -46,3 +46,15 @@ func StorableTransactionResultFixture() types.StorableTransactionResult {
 		},
 	}
 }
+
+func FullCollectionFixture(n int) flowgo.Collection {
+	transactions := make([]*flowgo.TransactionBody, n)
+	for i := 0; i < n; i++ {
+		tx := TransactionFixture()
+		transactions[i] = &tx
+	}
+
+	return flowgo.Collection{
+		Transactions: transactions,
+	}
+}
