@@ -217,6 +217,32 @@ func (s *Store) CollectionByID(
 	return tx, nil
 }
 
+func (s *Store) FullCollectionByID(
+	_ context.Context,
+	collectionID flowgo.Identifier,
+) (flowgo.Collection, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	light, ok := s.collections[collectionID]
+	if !ok {
+		return flowgo.Collection{}, storage.ErrNotFound
+	}
+
+	txs := make([]*flowgo.TransactionBody, len(light.Transactions))
+	for i, txID := range light.Transactions {
+		tx, ok := s.transactions[txID]
+		if !ok {
+			return flowgo.Collection{}, storage.ErrNotFound
+		}
+		txs[i] = &tx
+	}
+
+	return flowgo.Collection{
+		Transactions: txs,
+	}, nil
+}
+
 func (s *Store) TransactionByID(
 	_ context.Context,
 	transactionID flowgo.Identifier,
