@@ -131,6 +131,7 @@ type AccessProvider interface {
 	GetBlockByHeight(height uint64) (*flowgo.Block, error)
 
 	GetCollectionByID(colID flowgo.Identifier) (*flowgo.LightCollection, error)
+	GetFullCollectionByID(colID flowgo.Identifier) (*flowgo.Collection, error)
 
 	GetTransaction(txID flowgo.Identifier) (*flowgo.TransactionBody, error)
 	GetTransactionResult(txID flowgo.Identifier) (*access.TransactionResult, error)
