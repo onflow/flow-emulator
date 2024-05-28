@@ -133,16 +133,8 @@ func TestCollections(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	ids := test.IdentifierGenerator()
-
 	// collection with 3 transactions
-	col := flowgo.LightCollection{
-		Transactions: []flowgo.Identifier{
-			flowgo.Identifier(ids.New()),
-			flowgo.Identifier(ids.New()),
-			flowgo.Identifier(ids.New()),
-		},
-	}
+	col := unittest.FullCollectionFixture(3)
 
 	t.Run("should return error for not found", func(t *testing.T) {
 		_, err := store.CollectionByID(context.Background(), col.ID())
@@ -152,13 +144,13 @@ func TestCollections(t *testing.T) {
 	})
 
 	t.Run("should be able to insert collection", func(t *testing.T) {
-		err := store.InsertCollection(context.Background(), col)
+		err := store.InsertCollection(context.Background(), col.Light())
 		assert.NoError(t, err)
 
 		t.Run("should be able to get inserted collection", func(t *testing.T) {
 			storedCol, err := store.CollectionByID(context.Background(), col.ID())
 			require.NoError(t, err)
-			assert.Equal(t, col, storedCol)
+			assert.Equal(t, col.Light(), storedCol)
 		})
 	})
 }
@@ -192,6 +184,38 @@ func TestTransactions(t *testing.T) {
 			assert.Equal(t, tx.ID(), storedTx.ID())
 		})
 	})
+}
+
+func TestFullCollection(t *testing.T) {
+	t.Parallel()
+	store, dir := setupStore(t)
+	defer func() {
+		require.NoError(t, store.Close())
+		require.NoError(t, os.RemoveAll(dir))
+	}()
+
+	col := unittest.FullCollectionFixture(3)
+
+	t.Run("should be able to insert full collection", func(t *testing.T) {
+		_, err := store.CollectionByID(context.Background(), col.ID())
+		require.Error(t, storage.ErrNotFound, err)
+
+		_, err = store.FullCollectionByID(context.Background(), col.ID())
+		require.Error(t, storage.ErrNotFound, err)
+
+		err = store.InsertCollection(context.Background(), col.Light())
+		require.NoError(t, err)
+
+		for _, tx := range col.Transactions {
+			err = store.InsertTransaction(context.Background(), *tx)
+			require.NoError(t, err)
+		}
+
+		c, err := store.FullCollectionByID(context.Background(), col.ID())
+		require.NoError(t, err)
+		require.Equal(t, col, c)
+	})
+
 }
 
 func TestTransactionResults(t *testing.T) {

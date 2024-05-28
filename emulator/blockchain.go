@@ -938,6 +938,24 @@ func (b *Blockchain) getCollectionByID(colID flowgo.Identifier) (*flowgo.LightCo
 	return &col, nil
 }
 
+func (b *Blockchain) GetFullCollectionByID(colID flowgo.Identifier) (*flowgo.Collection, error) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	return b.getFullCollectionByID(colID)
+}
+
+func (b *Blockchain) getFullCollectionByID(colID flowgo.Identifier) (*flowgo.Collection, error) {
+	col, err := b.storage.FullCollectionByID(context.Background(), colID)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return nil, &types.CollectionNotFoundError{ID: colID}
+		}
+		return nil, err
+	}
+
+	return &col, nil
+}
+
 // GetTransaction gets an existing transaction by ID.
 //
 // The function first looks in the pending block, then the current emulator state.

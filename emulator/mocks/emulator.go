@@ -374,6 +374,21 @@ func (mr *MockEmulatorMockRecorder) GetEventsForHeightRange(arg0, arg1, arg2 int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventsForHeightRange", reflect.TypeOf((*MockEmulator)(nil).GetEventsForHeightRange), arg0, arg1, arg2)
 }
 
+// GetFullCollectionByID mocks base method.
+func (m *MockEmulator) GetFullCollectionByID(arg0 flow.Identifier) (*flow.Collection, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFullCollectionByID", arg0)
+	ret0, _ := ret[0].(*flow.Collection)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFullCollectionByID indicates an expected call of GetFullCollectionByID.
+func (mr *MockEmulatorMockRecorder) GetFullCollectionByID(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFullCollectionByID", reflect.TypeOf((*MockEmulator)(nil).GetFullCollectionByID), arg0)
+}
+
 // GetLatestBlock mocks base method.
 func (m *MockEmulator) GetLatestBlock() (*flow.Block, error) {
 	m.ctrl.T.Helper()

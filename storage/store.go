@@ -86,6 +86,9 @@ type Store interface {
 	// CollectionByID gets the collection (transaction IDs only) with the given ID.
 	CollectionByID(ctx context.Context, collectionID flowgo.Identifier) (flowgo.LightCollection, error)
 
+	// FullCollectionByID gets the full collection (including transaction bodies) with the given ID.
+	FullCollectionByID(ctx context.Context, collectionID flowgo.Identifier) (flowgo.Collection, error)
+
 	// TransactionByID gets the transaction with the given ID.
 	TransactionByID(ctx context.Context, transactionID flowgo.Identifier) (flowgo.TransactionBody, error)
 
@@ -246,6 +249,44 @@ func (s *DefaultStore) CollectionByID(ctx context.Context, colID flowgo.Identifi
 		return
 	}
 	err = decodeCollection(&col, encCol)
+	return
+}
+
+func (s *DefaultStore) FullCollectionByID(
+	ctx context.Context,
+	colID flowgo.Identifier,
+) (
+	col flowgo.Collection,
+	err error,
+) {
+	light := flowgo.LightCollection{}
+	encCol, err := s.DataGetter.GetBytes(
+		ctx,
+		s.KeyGenerator.Storage(collectionStoreName),
+		s.KeyGenerator.Identifier(colID),
+	)
+	if err != nil {
+		return
+	}
+
+	err = decodeCollection(&light, encCol)
+	if err != nil {
+		return
+	}
+
+	txs := make([]*flowgo.TransactionBody, len(light.Transactions))
+	for i, txID := range light.Transactions {
+		tx, err := s.TransactionByID(ctx, txID)
+		if err != nil {
+			return col, err
+		}
+		txs[i] = &tx
+	}
+
+	col = flowgo.Collection{
+		Transactions: txs,
+	}
+
 	return
 }
 
