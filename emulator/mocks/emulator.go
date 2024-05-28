@@ -348,6 +348,21 @@ func (mr *MockEmulatorMockRecorder) GetCollectionByID(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCollectionByID", reflect.TypeOf((*MockEmulator)(nil).GetCollectionByID), arg0)
 }
 
+// GetFullCollectionByID mocks base method.
+func (m *MockEmulator) GetFullCollectionByID(arg0 flow.Identifier) (*flow.Collection, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFullCollectionByID", arg0)
+	ret0, _ := ret[0].(*flow.Collection)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFullCollectionByID indicates an expected call of GetFullCollectionByID.
+func (mr *MockEmulatorMockRecorder) GetFullCollectionByID(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFullCollectionByID", reflect.TypeOf((*MockEmulator)(nil).GetFullCollectionByID), arg0)
+}
+
 // GetEventsByHeight mocks base method.
 func (m *MockEmulator) GetEventsByHeight(arg0 uint64, arg1 string) ([]flow.Event, error) {
 	m.ctrl.T.Helper()
