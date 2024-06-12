@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	flow2 "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	"github.com/onflow/flow-go/model/flow"
@@ -384,7 +385,7 @@ func TestInsertEvents(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	events := test.EventGenerator()
+	events := test.EventGenerator(flow2.EventEncodingVersionCCF)
 
 	t.Run("should be able to insert events", func(t *testing.T) {
 		event, _ := convert.SDKEventToFlow(events.New())
@@ -413,7 +414,7 @@ func TestEventsByHeight(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	events := test.EventGenerator()
+	events := test.EventGenerator(flow2.EventEncodingVersionCCF)
 
 	var (
 		nonEmptyBlockHeight    uint64 = 1
