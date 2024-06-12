@@ -24,7 +24,7 @@ require (
 	github.com/prometheus/client_golang v1.18.0
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
-	github.com/rs/zerolog v1.29.0
+	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/atomic v1.11.0
