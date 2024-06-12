@@ -19,9 +19,11 @@
 package unittest
 
 import (
-	"github.com/onflow/flow-emulator/convert"
+	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/test"
 	flowgo "github.com/onflow/flow-go/model/flow"
+
+	"github.com/onflow/flow-emulator/convert"
 
 	"github.com/onflow/flow-emulator/types"
 )
@@ -31,7 +33,7 @@ func TransactionFixture() flowgo.TransactionBody {
 }
 
 func StorableTransactionResultFixture() types.StorableTransactionResult {
-	events := test.EventGenerator()
+	events := test.EventGenerator(flow.EventEncodingVersionCCF)
 
 	eventA, _ := convert.SDKEventToFlow(events.New())
 	eventB, _ := convert.SDKEventToFlow(events.New())

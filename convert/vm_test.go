@@ -21,12 +21,14 @@ package convert_test
 import (
 	"testing"
 
+	"github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/onflow/flow-go/fvm"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/onflow/flow-emulator/convert"
 	flowgo "github.com/onflow/flow-go/model/flow"
+
+	"github.com/onflow/flow-emulator/convert"
 )
 
 func TestVm(t *testing.T) {
@@ -39,7 +41,7 @@ func TestVm(t *testing.T) {
 
 		idGenerator := test.IdentifierGenerator()
 
-		eventGenerator := test.EventGenerator()
+		eventGenerator := test.EventGenerator(flow.EventEncodingVersionCCF)
 		event1, err := convert.SDKEventToFlow(eventGenerator.New())
 		assert.NoError(t, err)
 
