@@ -23,6 +23,7 @@ import (
 
 	"github.com/onflow/flow-go-sdk/test"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow/protobuf/go/flow/entities"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -50,16 +51,26 @@ func TestEncodeTransactionResult(t *testing.T) {
 
 	t.Parallel()
 
-	result := unittest.StorableTransactionResultFixture()
+	test := func(eventEncodingVersion entities.EventEncodingVersion) {
 
-	data, err := encodeTransactionResult(result)
-	require.Nil(t, err)
+		t.Run(eventEncodingVersion.String(), func(t *testing.T) {
+			t.Parallel()
 
-	var decodedResult types.StorableTransactionResult
-	err = decodeTransactionResult(&decodedResult, data)
-	require.Nil(t, err)
+			result := unittest.StorableTransactionResultFixture(eventEncodingVersion)
 
-	assert.Equal(t, result, decodedResult)
+			data, err := encodeTransactionResult(result)
+			require.Nil(t, err)
+
+			var decodedResult types.StorableTransactionResult
+			err = decodeTransactionResult(&decodedResult, data)
+			require.Nil(t, err)
+
+			assert.Equal(t, result, decodedResult)
+		})
+	}
+
+	test(entities.EventEncodingVersion_CCF_V0)
+	test(entities.EventEncodingVersion_JSON_CDC_V0)
 }
 
 func TestEncodeBlock(t *testing.T) {
@@ -115,19 +126,29 @@ func TestEncodeEvents(t *testing.T) {
 
 	t.Parallel()
 
-	event1, _ := convert.SDKEventToFlow(test.EventGenerator().New())
-	event2, _ := convert.SDKEventToFlow(test.EventGenerator().New())
+	test := func(eventEncodingVersion entities.EventEncodingVersion) {
 
-	events := []flowgo.Event{
-		event1,
-		event2,
+		t.Run(eventEncodingVersion.String(), func(t *testing.T) {
+			t.Parallel()
+
+			event1, _ := convert.SDKEventToFlow(test.EventGenerator(eventEncodingVersion).New())
+			event2, _ := convert.SDKEventToFlow(test.EventGenerator(eventEncodingVersion).New())
+
+			events := []flowgo.Event{
+				event1,
+				event2,
+			}
+
+			data, err := encodeEvents(events)
+			require.Nil(t, err)
+
+			var decodedEvents []flowgo.Event
+			err = decodeEvents(&decodedEvents, data)
+			require.Nil(t, err)
+			assert.Equal(t, events, decodedEvents)
+		})
 	}
 
-	data, err := encodeEvents(events)
-	require.Nil(t, err)
-
-	var decodedEvents []flowgo.Event
-	err = decodeEvents(&decodedEvents, data)
-	require.Nil(t, err)
-	assert.Equal(t, events, decodedEvents)
+	test(entities.EventEncodingVersion_CCF_V0)
+	test(entities.EventEncodingVersion_JSON_CDC_V0)
 }
