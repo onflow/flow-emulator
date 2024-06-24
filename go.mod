@@ -16,7 +16,7 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v1.0.0-preview.34
 	github.com/onflow/crypto v0.25.1
-	github.com/onflow/flow-core-contracts/lib/go/templates v1.0.0
+	github.com/onflow/flow-core-contracts/lib/go/templates v1.3.0
 	github.com/onflow/flow-go v0.35.14-crescendo-preview.27
 	github.com/onflow/flow-go-sdk v1.0.0-preview.36
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.1
@@ -151,7 +151,7 @@ require (
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/onflow/atree v0.7.0-rc.2 // indirect
-	github.com/onflow/flow-core-contracts/lib/go/contracts v1.1.0 // indirect
+	github.com/onflow/flow-core-contracts/lib/go/contracts v1.3.0 // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v1.0.0 // indirect
 	github.com/onflow/flow-ft/lib/go/templates v1.0.0 // indirect
 	github.com/onflow/flow-nft/lib/go/templates v1.2.0 // indirect
@@ -236,3 +236,7 @@ require (
 	nhooyr.io/websocket v1.8.7 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
+
+replace github.com/onflow/flow-go v0.35.14-crescendo-preview.27 => github.com/The-K-R-O-K/flow-go v0.35.14-crescendo-preview.27.0.20240619124437-3ec044729481
+
+replace github.com/onflow/flow-core-contracts/lib/go/templates v1.3.0 => github.com/The-K-R-O-K/flow-core-contracts/lib/go/templates v0.15.2-0.20240624091211-1812579d3242

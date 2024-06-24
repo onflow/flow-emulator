@@ -467,7 +467,10 @@ func (b *Blockchain) ReloadBlockchain() error {
 	}
 
 	b.pendingBlock = newPendingBlock(latestBlock, latestLedger, b.clock)
-	b.transactionValidator = configureTransactionValidator(b.conf, blocks)
+	b.transactionValidator, err = configureTransactionValidator(b.conf, blocks)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -808,7 +811,7 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 	)
 }
 
-func configureTransactionValidator(conf config, blocks *blocks) *access.TransactionValidator {
+func configureTransactionValidator(conf config, blocks *blocks) (*access.TransactionValidator, error) {
 	return access.NewTransactionValidator(
 		blocks,
 		conf.GetChainID().Chain(),
@@ -821,7 +824,9 @@ func configureTransactionValidator(conf config, blocks *blocks) *access.Transact
 			CheckScriptsParse:            true,
 			MaxTransactionByteSize:       flowgo.DefaultMaxTransactionByteSize,
 			MaxCollectionByteSize:        flowgo.DefaultMaxCollectionByteSize,
+			CheckPayerBalance:            false,
 		},
+		nil,
 	)
 }
 
@@ -1208,7 +1213,7 @@ func (b *Blockchain) addTransaction(tx flowgo.TransactionBody) error {
 		return fmt.Errorf("failed to check storage for transaction %w", err)
 	}
 
-	err = b.transactionValidator.Validate(&tx)
+	err = b.transactionValidator.Validate(context.Background(), &tx)
 	if err != nil {
 		return types.ConvertAccessError(err)
 	}
