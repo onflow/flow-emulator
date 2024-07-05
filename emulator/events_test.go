@@ -151,13 +151,16 @@ func TestEventEmitted(t *testing.T) {
 
 		assert.Equal(t, string(expectedType), actualEvent.Type)
 		assert.Equal(t, expectedID, actualEvent.ID())
-		assert.Equal(t, "x", decodedEventType.Fields[0].Identifier)
-		assert.Equal(t, "y", decodedEventType.Fields[1].Identifier)
 
-		fields := cadence.FieldsMappedByName(decodedEvent)
+		fields := decodedEventType.FieldsMappedByName()
 
-		assert.Equal(t, cadence.NewInt(1), fields["x"])
-		assert.Equal(t, cadence.NewInt(2), fields["y"])
+		assert.Contains(t, fields, "x")
+		assert.Contains(t, fields, "y")
+
+		fieldValues := decodedEvent.FieldsMappedByName()
+
+		assert.Equal(t, cadence.NewInt(1), fieldValues["x"])
+		assert.Equal(t, cadence.NewInt(2), fieldValues["y"])
 
 		events, err = adapter.GetEventsForBlockIDs(
 			context.Background(),
@@ -176,13 +179,16 @@ func TestEventEmitted(t *testing.T) {
 
 		assert.Equal(t, string(expectedType), actualEvent.Type)
 		assert.Equal(t, expectedID, actualEvent.ID())
-		assert.Equal(t, "x", decodedEventType.Fields[0].Identifier)
-		assert.Equal(t, "y", decodedEventType.Fields[1].Identifier)
 
-		fields = cadence.FieldsMappedByName(decodedEvent)
+		fields = decodedEventType.FieldsMappedByName()
 
-		assert.Equal(t, cadence.NewInt(1), fields["x"])
-		assert.Equal(t, cadence.NewInt(2), fields["y"])
+		assert.Contains(t, fields, "x")
+		assert.Contains(t, fields, "y")
+
+		fieldValues = decodedEvent.FieldsMappedByName()
+
+		assert.Equal(t, cadence.NewInt(1), fieldValues["x"])
+		assert.Equal(t, cadence.NewInt(2), fieldValues["y"])
 
 	})
 }

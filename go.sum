@@ -982,8 +982,6 @@ github.com/StackExchange/wmi v1.2.1 h1:VIkavFPXSjcnS+O8yTq7NI32k0R5Aj+v39y29VYDO
 github.com/StackExchange/wmi v1.2.1/go.mod h1:rcmrprowKIVzvc+NUiLncP2uuArMWLCbu9SBzvHz7e8=
 github.com/The-K-R-O-K/flow-core-contracts/lib/go/templates v0.15.2-0.20240624091211-1812579d3242 h1:7vLo/AXTu0QdiRE04o1gctyB+u7NQz6K9GqENjW2O8Q=
 github.com/The-K-R-O-K/flow-core-contracts/lib/go/templates v0.15.2-0.20240624091211-1812579d3242/go.mod h1:NgbMOYnMh0GN48VsNKZuiwK7uyk38Wyo8jN9+C9QE30=
-github.com/The-K-R-O-K/flow-go v0.35.14-crescendo-preview.27.0.20240705100918-3f0e13f6872c h1:SQl2p5Bp2FqrNIonzNlamlJBzAcyCHT3mZej0wWTUTY=
-github.com/The-K-R-O-K/flow-go v0.35.14-crescendo-preview.27.0.20240705100918-3f0e13f6872c/go.mod h1:DD5MSzUcPD79tE/cz7xhYE7+4/on8Mxzv4CAvgLunf0=
 github.com/VictoriaMetrics/fastcache v1.6.0/go.mod h1:0qHz5QP0GMX4pfmMA/zt5RgfNuXJrTP0zS7DqpHGGTw=
 github.com/VictoriaMetrics/fastcache v1.12.1 h1:i0mICQuojGDL3KblA7wUNlY5lOK6a4bwt3uRKnkZU40=
 github.com/VictoriaMetrics/fastcache v1.12.1/go.mod h1:tX04vaqcNoQeGLD+ra5pU5sWkuxnzWhEzLwhP9w653o=
@@ -2065,6 +2063,8 @@ github.com/onflow/flow-ft/lib/go/contracts v1.0.0 h1:mToacZ5NWqtlWwk/7RgIl/jeKB/
 github.com/onflow/flow-ft/lib/go/contracts v1.0.0/go.mod h1:PwsL8fC81cjnUnTfmyL/HOIyHnyaw/JA474Wfj2tl6A=
 github.com/onflow/flow-ft/lib/go/templates v1.0.0 h1:6cMS/lUJJ17HjKBfMO/eh0GGvnpElPgBXx7h5aoWJhs=
 github.com/onflow/flow-ft/lib/go/templates v1.0.0/go.mod h1:uQ8XFqmMK2jxyBSVrmyuwdWjTEb+6zGjRYotfDJ5pAE=
+github.com/onflow/flow-go v0.35.14-crescendo-preview.27.0.20240626210601-604590f19db9 h1:9GfHBXy9T8QEAkwX+KkmZjJadSOAVgiyn2n8s7sSueY=
+github.com/onflow/flow-go v0.35.14-crescendo-preview.27.0.20240626210601-604590f19db9/go.mod h1:SE4kph7kpF6ydOXObtueEecGk3Hrjy/if/0UHY/eRO8=
 github.com/onflow/flow-go-sdk v1.0.0-M1/go.mod h1:TDW0MNuCs4SvqYRUzkbRnRmHQL1h4X8wURsCw9P9beo=
 github.com/onflow/flow-go-sdk v1.0.0-preview.37 h1:ujeIQheD+skzFt9+eOT9nXcc1rFxVLSCzwisEI3+2DA=
 github.com/onflow/flow-go-sdk v1.0.0-preview.37/go.mod h1:2aSN7RdKzxWoCtCyOJz9W/ZNqkLgQDQS3hKLYwPlvGw=
