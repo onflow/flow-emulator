@@ -214,19 +214,27 @@ func (b *SDKAdapter) GetBlockByID(
 }
 
 func convertBlockPayload(payload *flowgo.Payload) sdk.BlockPayload {
-	seals := make([]*sdk.BlockSeal, 0)
-	for _, seal := range payload.Seals {
-		seals = append(seals, &sdk.BlockSeal{
-			BlockID:            sdk.Identifier(seal.BlockID),
-			ExecutionReceiptID: sdk.Identifier(seal.ResultID),
-		})
+	var seals []*sdk.BlockSeal
+	sealCount := len(payload.Seals)
+	if sealCount > 0 {
+		seals = make([]*sdk.BlockSeal, 0, sealCount)
+		for _, seal := range payload.Seals {
+			seals = append(seals, &sdk.BlockSeal{
+				BlockID:            sdk.Identifier(seal.BlockID),
+				ExecutionReceiptID: sdk.Identifier(seal.ResultID),
+			})
+		}
 	}
 
-	collectionGuarantees := make([]*sdk.CollectionGuarantee, 0)
-	for _, guarantee := range payload.Guarantees {
-		collectionGuarantees = append(collectionGuarantees, &sdk.CollectionGuarantee{
-			CollectionID: sdk.Identifier(guarantee.CollectionID),
-		})
+	var collectionGuarantees []*sdk.CollectionGuarantee
+	guaranteesCount := len(payload.Guarantees)
+	if guaranteesCount > 0 {
+		collectionGuarantees = make([]*sdk.CollectionGuarantee, 0, guaranteesCount)
+		for _, guarantee := range payload.Guarantees {
+			collectionGuarantees = append(collectionGuarantees, &sdk.CollectionGuarantee{
+				CollectionID: sdk.Identifier(guarantee.CollectionID),
+			})
+		}
 	}
 
 	return sdk.BlockPayload{
