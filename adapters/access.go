@@ -20,7 +20,6 @@ package adapters
 
 import (
 	"context"
-	"fmt"
 
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/flow-go/access"
@@ -511,7 +510,7 @@ func (a *AccessAdapter) GetNodeVersionInfo(
 	*access.NodeVersionInfo,
 	error,
 ) {
-	return nil, fmt.Errorf("not supported")
+	return &access.NodeVersionInfo{}, nil
 }
 
 func (a *AccessAdapter) SubscribeBlocksFromStartBlockID(ctx context.Context, startBlockID flowgo.Identifier, blockStatus flowgo.BlockStatus) subscription.Subscription {
