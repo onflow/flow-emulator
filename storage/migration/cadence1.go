@@ -56,6 +56,7 @@ func MigrateCadence1(
 			NWorker:                           nWorker,
 			DiffMigrations:                    false,
 			LogVerboseDiff:                    false,
+			VerboseErrorOutput:                true, // turn on verbose error output for emulator
 			CheckStorageHealthBeforeMigration: false,
 			ChainID:                           flow.Emulator,
 			EVMContractChange:                 evmContractChange,

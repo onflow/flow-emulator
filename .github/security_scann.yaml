@@ -24,7 +24,7 @@ jobs:
       - name: Running govulncheck
         uses: Templum/govulncheck-action@latest
         with:
-          go-version: 1.21
+          go-version: ${{ env.GO_VERSION }}
           vulncheck-version: latest
           package: ./...
           github-token: ${{ secrets.GITHUB_TOKEN }}

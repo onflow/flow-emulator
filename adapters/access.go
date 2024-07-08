@@ -171,6 +171,20 @@ func (a *AccessAdapter) GetCollectionByID(_ context.Context, id flowgo.Identifie
 	return collection, nil
 }
 
+func (a *AccessAdapter) GetFullCollectionByID(_ context.Context, id flowgo.Identifier) (*flowgo.Collection, error) {
+	collection, err := a.emulator.GetFullCollectionByID(id)
+	if err != nil {
+		return nil, convertError(err, codes.Internal)
+	}
+
+	a.logger.Debug().
+		Str("colID", id.String()).
+		Msg("📚  GetFullCollectionByID called")
+
+	return collection, nil
+
+}
+
 func (a *AccessAdapter) GetTransaction(_ context.Context, id flowgo.Identifier) (*flowgo.TransactionBody, error) {
 	tx, err := a.emulator.GetTransaction(id)
 	if err != nil {

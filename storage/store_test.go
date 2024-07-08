@@ -29,6 +29,7 @@ import (
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow/protobuf/go/flow/entities"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -133,16 +134,8 @@ func TestCollections(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	ids := test.IdentifierGenerator()
-
 	// collection with 3 transactions
-	col := flowgo.LightCollection{
-		Transactions: []flowgo.Identifier{
-			flowgo.Identifier(ids.New()),
-			flowgo.Identifier(ids.New()),
-			flowgo.Identifier(ids.New()),
-		},
-	}
+	col := unittest.FullCollectionFixture(3)
 
 	t.Run("should return error for not found", func(t *testing.T) {
 		_, err := store.CollectionByID(context.Background(), col.ID())
@@ -152,13 +145,13 @@ func TestCollections(t *testing.T) {
 	})
 
 	t.Run("should be able to insert collection", func(t *testing.T) {
-		err := store.InsertCollection(context.Background(), col)
+		err := store.InsertCollection(context.Background(), col.Light())
 		assert.NoError(t, err)
 
 		t.Run("should be able to get inserted collection", func(t *testing.T) {
 			storedCol, err := store.CollectionByID(context.Background(), col.ID())
 			require.NoError(t, err)
-			assert.Equal(t, col, storedCol)
+			assert.Equal(t, col.Light(), storedCol)
 		})
 	})
 }
@@ -194,41 +187,83 @@ func TestTransactions(t *testing.T) {
 	})
 }
 
-func TestTransactionResults(t *testing.T) {
-
+func TestFullCollection(t *testing.T) {
 	t.Parallel()
-
 	store, dir := setupStore(t)
 	defer func() {
 		require.NoError(t, store.Close())
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	ids := test.IdentifierGenerator()
+	col := unittest.FullCollectionFixture(3)
 
-	result := unittest.StorableTransactionResultFixture()
+	t.Run("should be able to insert full collection", func(t *testing.T) {
+		_, err := store.CollectionByID(context.Background(), col.ID())
+		require.Error(t, storage.ErrNotFound, err)
 
-	t.Run("should return error for not found", func(t *testing.T) {
-		txID := flowgo.Identifier(ids.New())
+		_, err = store.FullCollectionByID(context.Background(), col.ID())
+		require.Error(t, storage.ErrNotFound, err)
 
-		_, err := store.TransactionResultByID(context.Background(), txID)
-		if assert.Error(t, err) {
-			assert.Equal(t, storage.ErrNotFound, err)
-		}
-	})
+		err = store.InsertCollection(context.Background(), col.Light())
+		require.NoError(t, err)
 
-	t.Run("should be able to insert result", func(t *testing.T) {
-		txID := flowgo.Identifier(ids.New())
-
-		err := store.InsertTransactionResult(context.Background(), txID, result)
-		assert.NoError(t, err)
-
-		t.Run("should be able to get inserted result", func(t *testing.T) {
-			storedResult, err := store.TransactionResultByID(context.Background(), txID)
+		for _, tx := range col.Transactions {
+			err = store.InsertTransaction(context.Background(), *tx)
 			require.NoError(t, err)
-			assert.Equal(t, result, storedResult)
-		})
+		}
+
+		c, err := store.FullCollectionByID(context.Background(), col.ID())
+		require.NoError(t, err)
+		require.Equal(t, col, c)
 	})
+
+}
+
+func TestTransactionResults(t *testing.T) {
+
+	t.Parallel()
+
+	test := func(eventEncodingVersion entities.EventEncodingVersion) {
+
+		t.Run(eventEncodingVersion.String(), func(t *testing.T) {
+			t.Parallel()
+
+			store, dir := setupStore(t)
+			defer func() {
+				require.NoError(t, store.Close())
+				require.NoError(t, os.RemoveAll(dir))
+			}()
+
+			ids := test.IdentifierGenerator()
+
+			result := unittest.StorableTransactionResultFixture(eventEncodingVersion)
+
+			t.Run("should return error for not found", func(t *testing.T) {
+				txID := flowgo.Identifier(ids.New())
+
+				_, err := store.TransactionResultByID(context.Background(), txID)
+				if assert.Error(t, err) {
+					assert.Equal(t, storage.ErrNotFound, err)
+				}
+			})
+
+			t.Run("should be able to insert result", func(t *testing.T) {
+				txID := flowgo.Identifier(ids.New())
+
+				err := store.InsertTransactionResult(context.Background(), txID, result)
+				assert.NoError(t, err)
+
+				t.Run("should be able to get inserted result", func(t *testing.T) {
+					storedResult, err := store.TransactionResultByID(context.Background(), txID)
+					require.NoError(t, err)
+					assert.Equal(t, result, storedResult)
+				})
+			})
+		})
+	}
+
+	test(entities.EventEncodingVersion_CCF_V0)
+	test(entities.EventEncodingVersion_JSON_CDC_V0)
 }
 
 func TestLedger(t *testing.T) {
@@ -354,112 +389,131 @@ func TestInsertEvents(t *testing.T) {
 
 	t.Parallel()
 
-	store, dir := setupStore(t)
-	defer func() {
-		require.NoError(t, store.Close())
-		require.NoError(t, os.RemoveAll(dir))
-	}()
+	test := func(eventEncodingVersion entities.EventEncodingVersion) {
 
-	events := test.EventGenerator()
+		t.Run(eventEncodingVersion.String(), func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("should be able to insert events", func(t *testing.T) {
-		event, _ := convert.SDKEventToFlow(events.New())
-		events := []flowgo.Event{event}
+			store, dir := setupStore(t)
+			defer func() {
+				require.NoError(t, store.Close())
+				require.NoError(t, os.RemoveAll(dir))
+			}()
 
-		var blockHeight uint64 = 1
+			events := test.EventGenerator(eventEncodingVersion)
 
-		err := store.InsertEvents(context.Background(), blockHeight, events)
-		assert.NoError(t, err)
+			t.Run("should be able to insert events", func(t *testing.T) {
+				event, _ := convert.SDKEventToFlow(events.New())
+				events := []flowgo.Event{event}
 
-		t.Run("should be able to get inserted events", func(t *testing.T) {
-			gotEvents, err := store.EventsByHeight(context.Background(), blockHeight, "")
-			assert.NoError(t, err)
-			assert.Equal(t, events, gotEvents)
+				var blockHeight uint64 = 1
+
+				err := store.InsertEvents(context.Background(), blockHeight, events)
+				assert.NoError(t, err)
+
+				t.Run("should be able to get inserted events", func(t *testing.T) {
+					gotEvents, err := store.EventsByHeight(context.Background(), blockHeight, "")
+					assert.NoError(t, err)
+					assert.Equal(t, events, gotEvents)
+				})
+			})
 		})
-	})
+	}
+
+	test(entities.EventEncodingVersion_CCF_V0)
+	test(entities.EventEncodingVersion_JSON_CDC_V0)
 }
 
 func TestEventsByHeight(t *testing.T) {
 
 	t.Parallel()
+	test := func(eventEncodingVersion entities.EventEncodingVersion) {
 
-	store, dir := setupStore(t)
-	defer func() {
-		require.NoError(t, store.Close())
-		require.NoError(t, os.RemoveAll(dir))
-	}()
+		t.Run(eventEncodingVersion.String(), func(t *testing.T) {
+			t.Parallel()
 
-	events := test.EventGenerator()
+			store, dir := setupStore(t)
+			defer func() {
+				require.NoError(t, store.Close())
+				require.NoError(t, os.RemoveAll(dir))
+			}()
 
-	var (
-		nonEmptyBlockHeight    uint64 = 1
-		emptyBlockHeight       uint64 = 2
-		nonExistentBlockHeight uint64 = 3
+			events := test.EventGenerator(eventEncodingVersion)
 
-		allEvents = make([]flowgo.Event, 10)
-		eventsA   = make([]flowgo.Event, 0, 5)
-		eventsB   = make([]flowgo.Event, 0, 5)
-	)
+			var (
+				nonEmptyBlockHeight    uint64 = 1
+				emptyBlockHeight       uint64 = 2
+				nonExistentBlockHeight uint64 = 3
 
-	for i := range allEvents {
-		event, _ := convert.SDKEventToFlow(events.New())
+				allEvents = make([]flowgo.Event, 10)
+				eventsA   = make([]flowgo.Event, 0, 5)
+				eventsB   = make([]flowgo.Event, 0, 5)
+			)
 
-		event.TransactionIndex = uint32(i)
-		event.EventIndex = uint32(i * 2)
+			for i := range allEvents {
+				event, _ := convert.SDKEventToFlow(events.New())
 
-		// interleave events of both types
-		if i%2 == 0 {
-			event.Type = "A"
-			eventsA = append(eventsA, event)
-		} else {
-			event.Type = "B"
-			eventsB = append(eventsB, event)
-		}
+				event.TransactionIndex = uint32(i)
+				event.EventIndex = uint32(i * 2)
 
-		allEvents[i] = event
+				// interleave events of both types
+				if i%2 == 0 {
+					event.Type = "A"
+					eventsA = append(eventsA, event)
+				} else {
+					event.Type = "B"
+					eventsB = append(eventsB, event)
+				}
+
+				allEvents[i] = event
+			}
+
+			err := store.InsertEvents(context.Background(), nonEmptyBlockHeight, allEvents)
+			assert.NoError(t, err)
+
+			err = store.InsertEvents(context.Background(), emptyBlockHeight, nil)
+			assert.NoError(t, err)
+
+			t.Run("should be able to query by block", func(t *testing.T) {
+				t.Run("non-empty block", func(t *testing.T) {
+					events, err := store.EventsByHeight(context.Background(), nonEmptyBlockHeight, "")
+					assert.NoError(t, err)
+					assert.Equal(t, allEvents, events)
+				})
+
+				t.Run("empty block", func(t *testing.T) {
+					events, err := store.EventsByHeight(context.Background(), emptyBlockHeight, "")
+					assert.NoError(t, err)
+					assert.Empty(t, events)
+				})
+
+				t.Run("non-existent block", func(t *testing.T) {
+					events, err := store.EventsByHeight(context.Background(), nonExistentBlockHeight, "")
+					assert.NoError(t, err)
+					assert.Empty(t, events)
+				})
+			})
+
+			t.Run("should be able to query by event type", func(t *testing.T) {
+				t.Run("type=A, block=1", func(t *testing.T) {
+					// should be one event type=1 in block 1
+					events, err := store.EventsByHeight(context.Background(), nonEmptyBlockHeight, "A")
+					assert.NoError(t, err)
+					assert.Equal(t, eventsA, events)
+				})
+
+				t.Run("type=B, block=1", func(t *testing.T) {
+					// should be 0 type=2 events here
+					events, err := store.EventsByHeight(context.Background(), nonEmptyBlockHeight, "B")
+					assert.NoError(t, err)
+					assert.Equal(t, eventsB, events)
+				})
+			})
+		})
 	}
 
-	err := store.InsertEvents(context.Background(), nonEmptyBlockHeight, allEvents)
-	assert.NoError(t, err)
-
-	err = store.InsertEvents(context.Background(), emptyBlockHeight, nil)
-	assert.NoError(t, err)
-
-	t.Run("should be able to query by block", func(t *testing.T) {
-		t.Run("non-empty block", func(t *testing.T) {
-			events, err := store.EventsByHeight(context.Background(), nonEmptyBlockHeight, "")
-			assert.NoError(t, err)
-			assert.Equal(t, allEvents, events)
-		})
-
-		t.Run("empty block", func(t *testing.T) {
-			events, err := store.EventsByHeight(context.Background(), emptyBlockHeight, "")
-			assert.NoError(t, err)
-			assert.Empty(t, events)
-		})
-
-		t.Run("non-existent block", func(t *testing.T) {
-			events, err := store.EventsByHeight(context.Background(), nonExistentBlockHeight, "")
-			assert.NoError(t, err)
-			assert.Empty(t, events)
-		})
-	})
-
-	t.Run("should be able to query by event type", func(t *testing.T) {
-		t.Run("type=A, block=1", func(t *testing.T) {
-			// should be one event type=1 in block 1
-			events, err := store.EventsByHeight(context.Background(), nonEmptyBlockHeight, "A")
-			assert.NoError(t, err)
-			assert.Equal(t, eventsA, events)
-		})
-
-		t.Run("type=B, block=1", func(t *testing.T) {
-			// should be 0 type=2 events here
-			events, err := store.EventsByHeight(context.Background(), nonEmptyBlockHeight, "B")
-			assert.NoError(t, err)
-			assert.Equal(t, eventsB, events)
-		})
-	})
+	test(entities.EventEncodingVersion_CCF_V0)
+	test(entities.EventEncodingVersion_JSON_CDC_V0)
 }
 
 // setupStore creates a temporary file for the Sqlite and creates a

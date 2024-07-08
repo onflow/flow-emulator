@@ -116,6 +116,21 @@ func (mr *MockStoreMockRecorder) EventsByHeight(arg0, arg1, arg2 any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EventsByHeight", reflect.TypeOf((*MockStore)(nil).EventsByHeight), arg0, arg1, arg2)
 }
 
+// FullCollectionByID mocks base method.
+func (m *MockStore) FullCollectionByID(arg0 context.Context, arg1 flow.Identifier) (flow.Collection, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FullCollectionByID", arg0, arg1)
+	ret0, _ := ret[0].(flow.Collection)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FullCollectionByID indicates an expected call of FullCollectionByID.
+func (mr *MockStoreMockRecorder) FullCollectionByID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FullCollectionByID", reflect.TypeOf((*MockStore)(nil).FullCollectionByID), arg0, arg1)
+}
+
 // LatestBlock mocks base method.
 func (m *MockStore) LatestBlock(arg0 context.Context) (flow.Block, error) {
 	m.ctrl.T.Helper()
