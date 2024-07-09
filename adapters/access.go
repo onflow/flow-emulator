@@ -438,6 +438,30 @@ func (a *AccessAdapter) GetSystemTransactionResult(_ context.Context, _ flowgo.I
 	return nil, nil
 }
 
+func (a *AccessAdapter) GetAccountBalanceAtLatestBlock(ctx context.Context, address flowgo.Address) (uint64, error) {
+	return 0, nil
+}
+
+func (a *AccessAdapter) GetAccountBalanceAtBlockHeight(ctx context.Context, address flowgo.Address, height uint64) (uint64, error) {
+	return 0, nil
+}
+
+func (a *AccessAdapter) GetAccountKeyAtLatestBlock(ctx context.Context, address flowgo.Address, keyIndex uint64) (*flowgo.AccountPublicKey, error) {
+	return nil, nil
+}
+
+func (a *AccessAdapter) GetAccountKeyAtBlockHeight(ctx context.Context, address flowgo.Address, keyIndex uint64, height uint64) (*flowgo.AccountPublicKey, error) {
+	return nil, nil
+}
+
+func (a *AccessAdapter) GetAccountKeysAtLatestBlock(ctx context.Context, address flowgo.Address) ([]flowgo.AccountPublicKey, error) {
+	return nil, nil
+}
+
+func (a *AccessAdapter) GetAccountKeysAtBlockHeight(ctx context.Context, address flowgo.Address, height uint64) ([]flowgo.AccountPublicKey, error) {
+	return nil, nil
+}
+
 func (a *AccessAdapter) GetTransactionResultByIndex(
 	_ context.Context,
 	blockID flowgo.Identifier,
