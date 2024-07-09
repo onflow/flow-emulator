@@ -185,12 +185,38 @@ func TestSDK(t *testing.T) {
 			Header: &flowgo.Header{
 				Height: 42,
 			},
+			Payload: &flowgo.Payload{
+				Guarantees: []*flowgo.CollectionGuarantee{
+					{
+						CollectionID: flowgo.MustHexStringToIdentifier("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
+					},
+				},
+				Seals: []*flowgo.Seal{
+					{
+						BlockID:  flowgo.MustHexStringToIdentifier("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
+						ResultID: flowgo.MustHexStringToIdentifier("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
+					},
+				},
+			},
 		}
 
 		block := flowgosdk.Block{
 			BlockHeader: flowgosdk.BlockHeader{
 				ID:     flowgosdk.Identifier{0x8c, 0x3c, 0xf9, 0x36, 0xbf, 0x2d, 0x3, 0x8d, 0x21, 0x71, 0xb4, 0x80, 0x1f, 0xba, 0x30, 0x36, 0x3c, 0xd5, 0x76, 0xc3, 0x21, 0xb4, 0x3d, 0xbd, 0xa2, 0x69, 0xa1, 0xe2, 0x7c, 0x6f, 0x58, 0x28},
 				Height: 42,
+			},
+			BlockPayload: flowgosdk.BlockPayload{
+				CollectionGuarantees: []*flowgosdk.CollectionGuarantee{
+					{
+						CollectionID: flowgosdk.HexToID("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
+					},
+				},
+				Seals: []*flowgosdk.BlockSeal{
+					{
+						BlockID:            flowgosdk.HexToID("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
+						ExecutionReceiptID: flowgosdk.HexToID("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
+					},
+				},
 			},
 		}
 
@@ -224,12 +250,38 @@ func TestSDK(t *testing.T) {
 			Header: &flowgo.Header{
 				Height: 42,
 			},
+			Payload: &flowgo.Payload{
+				Guarantees: []*flowgo.CollectionGuarantee{
+					{
+						CollectionID: flowgo.MustHexStringToIdentifier("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
+					},
+				},
+				Seals: []*flowgo.Seal{
+					{
+						BlockID:  flowgo.MustHexStringToIdentifier("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
+						ResultID: flowgo.MustHexStringToIdentifier("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
+					},
+				},
+			},
 		}
 
 		block := flowgosdk.Block{
 			BlockHeader: flowgosdk.BlockHeader{
 				ID:     flowgosdk.Identifier{0x8c, 0x3c, 0xf9, 0x36, 0xbf, 0x2d, 0x3, 0x8d, 0x21, 0x71, 0xb4, 0x80, 0x1f, 0xba, 0x30, 0x36, 0x3c, 0xd5, 0x76, 0xc3, 0x21, 0xb4, 0x3d, 0xbd, 0xa2, 0x69, 0xa1, 0xe2, 0x7c, 0x6f, 0x58, 0x28},
 				Height: 42,
+			},
+			BlockPayload: flowgosdk.BlockPayload{
+				CollectionGuarantees: []*flowgosdk.CollectionGuarantee{
+					{
+						CollectionID: flowgosdk.HexToID("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
+					},
+				},
+				Seals: []*flowgosdk.BlockSeal{
+					{
+						BlockID:            flowgosdk.HexToID("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
+						ExecutionReceiptID: flowgosdk.HexToID("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
+					},
+				},
 			},
 		}
 
@@ -264,12 +316,38 @@ func TestSDK(t *testing.T) {
 			Header: &flowgo.Header{
 				Height: 42,
 			},
+			Payload: &flowgo.Payload{
+				Guarantees: []*flowgo.CollectionGuarantee{
+					{
+						CollectionID: flowgo.MustHexStringToIdentifier("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
+					},
+				},
+				Seals: []*flowgo.Seal{
+					{
+						BlockID:  flowgo.MustHexStringToIdentifier("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
+						ResultID: flowgo.MustHexStringToIdentifier("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
+					},
+				},
+			},
 		}
 
 		block := flowgosdk.Block{
 			BlockHeader: flowgosdk.BlockHeader{
 				ID:     flowgosdk.Identifier{0x8c, 0x3c, 0xf9, 0x36, 0xbf, 0x2d, 0x3, 0x8d, 0x21, 0x71, 0xb4, 0x80, 0x1f, 0xba, 0x30, 0x36, 0x3c, 0xd5, 0x76, 0xc3, 0x21, 0xb4, 0x3d, 0xbd, 0xa2, 0x69, 0xa1, 0xe2, 0x7c, 0x6f, 0x58, 0x28},
 				Height: 42,
+			},
+			BlockPayload: flowgosdk.BlockPayload{
+				CollectionGuarantees: []*flowgosdk.CollectionGuarantee{
+					{
+						CollectionID: flowgosdk.HexToID("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
+					},
+				},
+				Seals: []*flowgosdk.BlockSeal{
+					{
+						BlockID:            flowgosdk.HexToID("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
+						ExecutionReceiptID: flowgosdk.HexToID("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
+					},
+				},
 			},
 		}
 
