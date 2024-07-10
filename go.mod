@@ -20,7 +20,7 @@ require (
 	github.com/onflow/flow-go v0.35.14-crescendo-preview.27.0.20240626210601-604590f19db9
 	github.com/onflow/flow-go-sdk v1.0.0-preview.38
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.1
-	github.com/onflow/flow/protobuf/go/flow v0.4.4
+	github.com/onflow/flow/protobuf/go/flow v0.4.5
 	github.com/prometheus/client_golang v1.18.0
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
@@ -237,5 +237,4 @@ require (
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
 
-replace github.com/onflow/flow-go v0.35.14-crescendo-preview.27.0.20240626210601-604590f19db9 => github.com/AndriiDiachuk/flow-go v0.0.0-20240709145943-0448e0b56c71
-
+replace github.com/onflow/flow-go v0.35.14-crescendo-preview.27.0.20240626210601-604590f19db9 => github.com/AndriiDiachuk/flow-go v0.0.0-20240710112622-86a53fba96e0
