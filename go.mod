@@ -237,4 +237,4 @@ require (
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
 
-replace github.com/onflow/flow-go v0.35.14-crescendo-preview.27.0.20240626210601-604590f19db9 => github.com/AndriiDiachuk/flow-go v0.0.0-20240711134519-7c668bb8c0a6
+replace github.com/onflow/flow-go v0.35.14-crescendo-preview.27.0.20240626210601-604590f19db9 => github.com/AndriiDiachuk/flow-go v0.0.0-20240711140457-69e2f4007091
