@@ -1443,21 +1443,31 @@ func TestGetTransactionResult(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, flowsdk.TransactionStatusSealed, result.Status)
 
-	require.Len(t, result.Events, 1)
+	require.Len(t, result.Events, 3)
 
-	event := result.Events[0]
+	event1 := result.Events[0]
+	assert.Equal(t, tx.ID(), event1.TransactionID)
+	assert.Equal(t, "flow.StorageCapabilityControllerIssued", event1.Type)
+	assert.Equal(t, 0, event1.EventIndex)
 
+	event2 := result.Events[1]
+	assert.Equal(t, tx.ID(), event2.TransactionID)
+	assert.Equal(t, "flow.CapabilityPublished", event2.Type)
+	assert.Equal(t, 1, event2.EventIndex)
+
+	event3 := result.Events[2]
 	addr, _ := common.BytesToAddress(counterAddress.Bytes())
 	location := common.AddressLocation{
 		Address: addr,
 		Name:    "Counting",
 	}
-	eventType := location.TypeID(nil, "Counting.CountIncremented")
-
-	assert.Equal(t, tx.ID(), event.TransactionID)
-	assert.Equal(t, string(eventType), event.Type)
-	assert.Equal(t, 0, event.EventIndex)
-	fields := cadence.FieldsMappedByName(event.Value)
+	assert.Equal(t, tx.ID(), event3.TransactionID)
+	assert.Equal(t,
+		string(location.TypeID(nil, "Counting.CountIncremented")),
+		event3.Type,
+	)
+	assert.Equal(t, 2, event3.EventIndex)
+	fields := cadence.FieldsMappedByName(event3.Value)
 	assert.Len(t, fields, 1)
 	assert.Equal(t,
 		cadence.NewInt(2),
@@ -2023,8 +2033,15 @@ type MeteredComputationIntensities map[common.ComputationKind]uint
 
 type MeteredMemoryIntensities map[common.MemoryKind]uint
 
-func IncrementHelper(t *testing.T, b emulator.Emulator, adapter *adapters.SDKAdapter, counterAddress flowsdk.Address, addTwoScript string, expected int) {
-
+func IncrementHelper(
+	t *testing.T,
+	b emulator.Emulator,
+	adapter *adapters.SDKAdapter,
+	counterAddress flowsdk.Address,
+	addTwoScript string,
+	expected int,
+	expectSetup bool,
+) {
 	tx := flowsdk.NewTransaction().
 		SetScript([]byte(addTwoScript)).
 		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
@@ -2066,22 +2083,39 @@ func IncrementHelper(t *testing.T, b emulator.Emulator, adapter *adapters.SDKAda
 	assert.NoError(t, err)
 	assert.Equal(t, flowsdk.TransactionStatusSealed, result.Status)
 
-	require.Len(t, result.Events, 1)
+	var expectedEventIndex int
+	if expectSetup {
+		require.Len(t, result.Events, 3)
 
-	event := result.Events[0]
+		event1 := result.Events[0]
+		assert.Equal(t, tx.ID(), event1.TransactionID)
+		assert.Equal(t, "flow.StorageCapabilityControllerIssued", event1.Type)
+		assert.Equal(t, 0, event1.EventIndex)
+
+		event2 := result.Events[1]
+		assert.Equal(t, tx.ID(), event2.TransactionID)
+		assert.Equal(t, "flow.CapabilityPublished", event2.Type)
+		assert.Equal(t, 1, event2.EventIndex)
+
+		expectedEventIndex = 2
+	} else {
+		require.Len(t, result.Events, 1)
+		expectedEventIndex = 0
+	}
+	incrementedEvent := result.Events[expectedEventIndex]
 
 	addr, _ := common.BytesToAddress(counterAddress.Bytes())
 	location := common.AddressLocation{
 		Address: addr,
 		Name:    "Counting",
 	}
-	eventType := location.TypeID(nil, "Counting.CountIncremented")
-
-	assert.Equal(t, tx.ID(), event.TransactionID)
-	assert.Equal(t, string(eventType), event.Type)
-	assert.Equal(t, 0, event.EventIndex)
-
-	fields := cadence.FieldsMappedByName(event.Value)
+	assert.Equal(t, tx.ID(), incrementedEvent.TransactionID)
+	assert.Equal(t,
+		string(location.TypeID(nil, "Counting.CountIncremented")),
+		incrementedEvent.Type,
+	)
+	assert.Equal(t, expectedEventIndex, incrementedEvent.EventIndex)
+	fields := cadence.FieldsMappedByName(incrementedEvent.Value)
 	assert.Len(t, fields, 1)
 	assert.Equal(t,
 		cadence.NewInt(expected),
@@ -2105,23 +2139,23 @@ func TestRollbackTransaction(t *testing.T) {
 	blockWhenNoCounter, err := b.GetLatestBlock()
 	require.NoError(t, err)
 
-	IncrementHelper(t, b, adapter, counterAddress, addTwoScript, 2)
+	IncrementHelper(t, b, adapter, counterAddress, addTwoScript, 2, true)
 	blockWhenCounterIsTwo, err := b.GetLatestBlock()
 	require.NoError(t, err)
 
-	IncrementHelper(t, b, adapter, counterAddress, addTwoScript, 4)
+	IncrementHelper(t, b, adapter, counterAddress, addTwoScript, 4, false)
 
 	//try rollback to when counter is two
 	err = b.RollbackToBlockHeight(blockWhenCounterIsTwo.Header.Height)
 	require.NoError(t, err)
 
-	IncrementHelper(t, b, adapter, counterAddress, addTwoScript, 4)
+	IncrementHelper(t, b, adapter, counterAddress, addTwoScript, 4, false)
 
 	//try rollback to no counter state
 	err = b.RollbackToBlockHeight(blockWhenNoCounter.Header.Height)
 	require.NoError(t, err)
 
-	IncrementHelper(t, b, adapter, counterAddress, addTwoScript, 2)
+	IncrementHelper(t, b, adapter, counterAddress, addTwoScript, 2, true)
 
 }
 
