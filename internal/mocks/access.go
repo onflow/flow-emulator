@@ -161,6 +161,126 @@ func (mr *MockAccessAPIClientMockRecorder) GetAccountAtLatestBlock(arg0, arg1 an
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountAtLatestBlock", reflect.TypeOf((*MockAccessAPIClient)(nil).GetAccountAtLatestBlock), varargs...)
 }
 
+// GetAccountBalanceAtBlockHeight mocks base method.
+func (m *MockAccessAPIClient) GetAccountBalanceAtBlockHeight(arg0 context.Context, arg1 *access.GetAccountBalanceAtBlockHeightRequest, arg2 ...grpc.CallOption) (*access.AccountBalanceResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetAccountBalanceAtBlockHeight", varargs...)
+	ret0, _ := ret[0].(*access.AccountBalanceResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountBalanceAtBlockHeight indicates an expected call of GetAccountBalanceAtBlockHeight.
+func (mr *MockAccessAPIClientMockRecorder) GetAccountBalanceAtBlockHeight(arg0, arg1 any, arg2 ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountBalanceAtBlockHeight", reflect.TypeOf((*MockAccessAPIClient)(nil).GetAccountBalanceAtBlockHeight), varargs...)
+}
+
+// GetAccountBalanceAtLatestBlock mocks base method.
+func (m *MockAccessAPIClient) GetAccountBalanceAtLatestBlock(arg0 context.Context, arg1 *access.GetAccountBalanceAtLatestBlockRequest, arg2 ...grpc.CallOption) (*access.AccountBalanceResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetAccountBalanceAtLatestBlock", varargs...)
+	ret0, _ := ret[0].(*access.AccountBalanceResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountBalanceAtLatestBlock indicates an expected call of GetAccountBalanceAtLatestBlock.
+func (mr *MockAccessAPIClientMockRecorder) GetAccountBalanceAtLatestBlock(arg0, arg1 any, arg2 ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountBalanceAtLatestBlock", reflect.TypeOf((*MockAccessAPIClient)(nil).GetAccountBalanceAtLatestBlock), varargs...)
+}
+
+// GetAccountKeyAtBlockHeight mocks base method.
+func (m *MockAccessAPIClient) GetAccountKeyAtBlockHeight(arg0 context.Context, arg1 *access.GetAccountKeyAtBlockHeightRequest, arg2 ...grpc.CallOption) (*access.AccountKeyResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetAccountKeyAtBlockHeight", varargs...)
+	ret0, _ := ret[0].(*access.AccountKeyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountKeyAtBlockHeight indicates an expected call of GetAccountKeyAtBlockHeight.
+func (mr *MockAccessAPIClientMockRecorder) GetAccountKeyAtBlockHeight(arg0, arg1 any, arg2 ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountKeyAtBlockHeight", reflect.TypeOf((*MockAccessAPIClient)(nil).GetAccountKeyAtBlockHeight), varargs...)
+}
+
+// GetAccountKeyAtLatestBlock mocks base method.
+func (m *MockAccessAPIClient) GetAccountKeyAtLatestBlock(arg0 context.Context, arg1 *access.GetAccountKeyAtLatestBlockRequest, arg2 ...grpc.CallOption) (*access.AccountKeyResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetAccountKeyAtLatestBlock", varargs...)
+	ret0, _ := ret[0].(*access.AccountKeyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountKeyAtLatestBlock indicates an expected call of GetAccountKeyAtLatestBlock.
+func (mr *MockAccessAPIClientMockRecorder) GetAccountKeyAtLatestBlock(arg0, arg1 any, arg2 ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountKeyAtLatestBlock", reflect.TypeOf((*MockAccessAPIClient)(nil).GetAccountKeyAtLatestBlock), varargs...)
+}
+
+// GetAccountKeysAtBlockHeight mocks base method.
+func (m *MockAccessAPIClient) GetAccountKeysAtBlockHeight(arg0 context.Context, arg1 *access.GetAccountKeysAtBlockHeightRequest, arg2 ...grpc.CallOption) (*access.AccountKeysResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetAccountKeysAtBlockHeight", varargs...)
+	ret0, _ := ret[0].(*access.AccountKeysResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountKeysAtBlockHeight indicates an expected call of GetAccountKeysAtBlockHeight.
+func (mr *MockAccessAPIClientMockRecorder) GetAccountKeysAtBlockHeight(arg0, arg1 any, arg2 ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountKeysAtBlockHeight", reflect.TypeOf((*MockAccessAPIClient)(nil).GetAccountKeysAtBlockHeight), varargs...)
+}
+
+// GetAccountKeysAtLatestBlock mocks base method.
+func (m *MockAccessAPIClient) GetAccountKeysAtLatestBlock(arg0 context.Context, arg1 *access.GetAccountKeysAtLatestBlockRequest, arg2 ...grpc.CallOption) (*access.AccountKeysResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetAccountKeysAtLatestBlock", varargs...)
+	ret0, _ := ret[0].(*access.AccountKeysResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountKeysAtLatestBlock indicates an expected call of GetAccountKeysAtLatestBlock.
+func (mr *MockAccessAPIClientMockRecorder) GetAccountKeysAtLatestBlock(arg0, arg1 any, arg2 ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountKeysAtLatestBlock", reflect.TypeOf((*MockAccessAPIClient)(nil).GetAccountKeysAtLatestBlock), varargs...)
+}
+
 // GetBlockByHeight mocks base method.
 func (m *MockAccessAPIClient) GetBlockByHeight(arg0 context.Context, arg1 *access.GetBlockByHeightRequest, arg2 ...grpc.CallOption) (*access.BlockResponse, error) {
 	m.ctrl.T.Helper()
