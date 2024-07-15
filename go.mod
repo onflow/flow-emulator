@@ -14,11 +14,11 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.0.0-preview.37
+	github.com/onflow/cadence v1.0.0-preview.37.0.20240715155222-3860a034ebfa
 	github.com/onflow/crypto v0.25.1
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.3.0
-	github.com/onflow/flow-go v0.36.1-0.20240712213451-aa5cd6ac0360
-	github.com/onflow/flow-go-sdk v1.0.0-preview.39
+	github.com/onflow/flow-go v0.36.1-0.20240715172335-192f26e669b0
+	github.com/onflow/flow-go-sdk v1.0.0-preview.39.0.20240715160201-3f4dc11e843a
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.1
 	github.com/onflow/flow/protobuf/go/flow v0.4.5
 	github.com/prometheus/client_golang v1.18.0
