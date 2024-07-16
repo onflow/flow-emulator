@@ -270,7 +270,7 @@ to connect to.
 
 ```
 flow emulator --chain-id mainnet --rpc-host access.mainnet.nodes.onflow.org:9000
-flow emulator --chain-id mainnet --rpc-host access-002.devnet49.nodes.onflow.org:9000
+flow emulator --chain-id mainnet --rpc-host access.devnet.nodes.onflow.org:9000
 ```
 
 Please note, the actual execution on the real network may differ depending on the exact state when the transaction is
