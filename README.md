@@ -269,7 +269,7 @@ you must specify the network name for the chain ID flag as well as the RPC host
 to connect to.
 
 ```
-flow emulator --chain-id mainnet --rpc-host access-008.mainnet24.nodes.onflow.org:9000
+flow emulator --chain-id mainnet --rpc-host access.mainnet.nodes.onflow.org:9000
 flow emulator --chain-id mainnet --rpc-host access-002.devnet49.nodes.onflow.org:9000
 ```
 
