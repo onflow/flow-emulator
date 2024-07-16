@@ -980,8 +980,7 @@ github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMx
 github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
 github.com/StackExchange/wmi v1.2.1 h1:VIkavFPXSjcnS+O8yTq7NI32k0R5Aj+v39y29VYDOSA=
 github.com/StackExchange/wmi v1.2.1/go.mod h1:rcmrprowKIVzvc+NUiLncP2uuArMWLCbu9SBzvHz7e8=
-github.com/The-K-R-O-K/flow-go v0.35.14-crescendo-preview.27.0.20240716113854-817db93c5860 h1:WLU4uJAqDbTklYAkt3H8bRypAC7fKNAhzC5rPRoW2M8=
-github.com/The-K-R-O-K/flow-go v0.35.14-crescendo-preview.27.0.20240716113854-817db93c5860/go.mod h1:h/vv58zjd/tCwPvUnr6OrT89zQCLViVLCj+ucUm0GxU=
+github.com/The-K-R-O-K/flow-go v0.35.14-crescendo-preview.27.0.20240716115708-5866b5c41fb5 h1:qsi3F6xPgl2gACQcWvA2Kjmh9PV+ZvH19N8RDkW1yLw=
 github.com/The-K-R-O-K/flow-go v0.35.14-crescendo-preview.27.0.20240716115708-5866b5c41fb5/go.mod h1:h/vv58zjd/tCwPvUnr6OrT89zQCLViVLCj+ucUm0GxU=
 github.com/VictoriaMetrics/fastcache v1.6.0/go.mod h1:0qHz5QP0GMX4pfmMA/zt5RgfNuXJrTP0zS7DqpHGGTw=
 github.com/VictoriaMetrics/fastcache v1.12.1 h1:i0mICQuojGDL3KblA7wUNlY5lOK6a4bwt3uRKnkZU40=

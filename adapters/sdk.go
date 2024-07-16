@@ -158,7 +158,7 @@ func (b *SDKAdapter) GetLatestBlock(
 			Height:    flowBlock.Header.Height,
 			Timestamp: flowBlock.Header.Timestamp,
 		},
-		BlockPayload: sdk.BlockPayload{},
+		BlockPayload: convertBlockPayload(flowBlock.Payload),
 	}
 	return &block, sdk.BlockStatusSealed, nil
 }
@@ -183,7 +183,7 @@ func (b *SDKAdapter) GetBlockByHeight(
 			Height:    flowBlock.Header.Height,
 			Timestamp: flowBlock.Header.Timestamp,
 		},
-		BlockPayload: sdk.BlockPayload{},
+		BlockPayload: convertBlockPayload(flowBlock.Payload),
 	}
 	return &block, sdk.BlockStatusSealed, nil
 }
@@ -208,9 +208,39 @@ func (b *SDKAdapter) GetBlockByID(
 			Height:    flowBlock.Header.Height,
 			Timestamp: flowBlock.Header.Timestamp,
 		},
-		BlockPayload: sdk.BlockPayload{},
+		BlockPayload: convertBlockPayload(flowBlock.Payload),
 	}
 	return &block, sdk.BlockStatusSealed, nil
+}
+
+func convertBlockPayload(payload *flowgo.Payload) sdk.BlockPayload {
+	var seals []*sdk.BlockSeal
+	sealCount := len(payload.Seals)
+	if sealCount > 0 {
+		seals = make([]*sdk.BlockSeal, 0, sealCount)
+		for _, seal := range payload.Seals {
+			seals = append(seals, &sdk.BlockSeal{
+				BlockID:            sdk.Identifier(seal.BlockID),
+				ExecutionReceiptID: sdk.Identifier(seal.ResultID),
+			})
+		}
+	}
+
+	var collectionGuarantees []*sdk.CollectionGuarantee
+	guaranteesCount := len(payload.Guarantees)
+	if guaranteesCount > 0 {
+		collectionGuarantees = make([]*sdk.CollectionGuarantee, 0, guaranteesCount)
+		for _, guarantee := range payload.Guarantees {
+			collectionGuarantees = append(collectionGuarantees, &sdk.CollectionGuarantee{
+				CollectionID: sdk.Identifier(guarantee.CollectionID),
+			})
+		}
+	}
+
+	return sdk.BlockPayload{
+		Seals:                seals,
+		CollectionGuarantees: collectionGuarantees,
+	}
 }
 
 // GetCollectionByID gets a collection by ID.

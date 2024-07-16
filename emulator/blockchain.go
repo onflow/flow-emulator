@@ -1099,7 +1099,7 @@ func (b *Blockchain) getAccountAtBlock(address flowgo.Address, blockHeight uint6
 		return nil, err
 	}
 
-	account, err := b.vm.GetAccount(b.vmCtx, address, ledger)
+	account, err := fvm.GetAccount(b.vmCtx, address, ledger)
 	if fvmerrors.IsAccountNotFoundError(err) {
 		return nil, &types.AccountNotFoundError{Address: address}
 	}
