@@ -466,41 +466,41 @@ func (a *AccessAdapter) GetAccountBalanceAtBlockHeight(ctx context.Context, addr
 	return account.Balance, nil
 }
 
-func (a *AccessAdapter) GetAccountKeyAtLatestBlock(_ context.Context, address flowgo.Address, keyIndex uint64) (*flowgo.AccountPublicKey, error) {
+func (a *AccessAdapter) GetAccountKeyAtLatestBlock(_ context.Context, address flowgo.Address, keyIndex uint32) (*flowgo.AccountPublicKey, error) {
 	account, err := a.emulator.GetAccount(address)
 	if err != nil {
 		return nil, convertError(err, codes.Internal)
 	}
 
 	for _, key := range account.Keys {
-		if uint64(key.Index) == keyIndex {
+		if key.Index == keyIndex {
 			return &key, nil
 		}
 	}
 
 	a.logger.Debug().
 		Stringer("address", address).
-		Uint64("keyIndex", keyIndex).
+		Uint32("keyIndex", keyIndex).
 		Msg("👤  GetAccountKeyAtLatestBlock called")
 
 	return nil, status.Errorf(codes.NotFound, "failed to get account key by index: %d", keyIndex)
 }
 
-func (a *AccessAdapter) GetAccountKeyAtBlockHeight(_ context.Context, address flowgo.Address, keyIndex uint64, height uint64) (*flowgo.AccountPublicKey, error) {
+func (a *AccessAdapter) GetAccountKeyAtBlockHeight(_ context.Context, address flowgo.Address, keyIndex uint32, height uint64) (*flowgo.AccountPublicKey, error) {
 	account, err := a.emulator.GetAccountAtBlockHeight(address, height)
 	if err != nil {
 		return nil, convertError(err, codes.Internal)
 	}
 
 	for _, key := range account.Keys {
-		if uint64(key.Index) == keyIndex {
+		if key.Index == keyIndex {
 			return &key, nil
 		}
 	}
 
 	a.logger.Debug().
 		Stringer("address", address).
-		Uint64("keyIndex", keyIndex).
+		Uint32("keyIndex", keyIndex).
 		Uint64("height", height).
 		Msg("👤  GetAccountKeyAtBlockHeight called")
 

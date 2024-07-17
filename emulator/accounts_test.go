@@ -677,7 +677,7 @@ func TestAddAccountKey(t *testing.T) {
 
 		script := []byte("transaction { execute {} }")
 
-		var newKeyID = 1 // new key will have ID 1
+		var newKeyID = uint32(1) // new key will have ID 1
 		var newKeySequenceNum uint64 = 0
 
 		tx2 := flowsdk.NewTransaction().

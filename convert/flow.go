@@ -58,7 +58,7 @@ func FlowIdentifiersToSDK(flowIdentifiers []flowgo.Identifier) []sdk.Identifier 
 func SDKProposalKeyToFlow(sdkProposalKey sdk.ProposalKey) flowgo.ProposalKey {
 	return flowgo.ProposalKey{
 		Address:        SDKAddressToFlow(sdkProposalKey.Address),
-		KeyIndex:       uint64(sdkProposalKey.KeyIndex),
+		KeyIndex:       sdkProposalKey.KeyIndex,
 		SequenceNumber: sdkProposalKey.SequenceNumber,
 	}
 }
@@ -66,7 +66,7 @@ func SDKProposalKeyToFlow(sdkProposalKey sdk.ProposalKey) flowgo.ProposalKey {
 func FlowProposalKeyToSDK(flowProposalKey flowgo.ProposalKey) sdk.ProposalKey {
 	return sdk.ProposalKey{
 		Address:        FlowAddressToSDK(flowProposalKey.Address),
-		KeyIndex:       int(flowProposalKey.KeyIndex),
+		KeyIndex:       flowProposalKey.KeyIndex,
 		SequenceNumber: flowProposalKey.SequenceNumber,
 	}
 }
@@ -99,7 +99,7 @@ func SDKTransactionSignatureToFlow(sdkTransactionSignature sdk.TransactionSignat
 	return flowgo.TransactionSignature{
 		Address:     SDKAddressToFlow(sdkTransactionSignature.Address),
 		SignerIndex: sdkTransactionSignature.SignerIndex,
-		KeyIndex:    uint64(sdkTransactionSignature.KeyIndex),
+		KeyIndex:    sdkTransactionSignature.KeyIndex,
 		Signature:   sdkTransactionSignature.Signature,
 	}
 }
@@ -108,7 +108,7 @@ func FlowTransactionSignatureToSDK(flowTransactionSignature flowgo.TransactionSi
 	return sdk.TransactionSignature{
 		Address:     FlowAddressToSDK(flowTransactionSignature.Address),
 		SignerIndex: flowTransactionSignature.SignerIndex,
-		KeyIndex:    int(flowTransactionSignature.KeyIndex),
+		KeyIndex:    flowTransactionSignature.KeyIndex,
 		Signature:   flowTransactionSignature.Signature,
 	}
 }
@@ -228,7 +228,7 @@ func FlowEventsToSDK(flowEvents []flowgo.Event) ([]sdk.Event, error) {
 	return ret, nil
 }
 
-func FlowAccountPublicKeyToSDK(flowPublicKey flowgo.AccountPublicKey, index int) (sdk.AccountKey, error) {
+func FlowAccountPublicKeyToSDK(flowPublicKey flowgo.AccountPublicKey, index uint32) (sdk.AccountKey, error) {
 
 	return sdk.AccountKey{
 		Index:          index,
@@ -272,7 +272,7 @@ func SDKAccountKeysToFlow(keys []*sdk.AccountKey) ([]flowgo.AccountPublicKey, er
 func FlowAccountPublicKeysToSDK(flowPublicKeys []flowgo.AccountPublicKey) ([]*sdk.AccountKey, error) {
 	ret := make([]*sdk.AccountKey, len(flowPublicKeys))
 	for i, flowPublicKey := range flowPublicKeys {
-		v, err := FlowAccountPublicKeyToSDK(flowPublicKey, i)
+		v, err := FlowAccountPublicKeyToSDK(flowPublicKey, uint32(i))
 		if err != nil {
 			return nil, err
 		}

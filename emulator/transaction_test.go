@@ -505,7 +505,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 			GasLimit:         flowgo.DefaultMaxTransactionGasLimit,
 			ProposalKey: flowgo.ProposalKey{
 				Address:        convert.SDKAddressToFlow(b.ServiceKey().Address),
-				KeyIndex:       uint64(b.ServiceKey().Index),
+				KeyIndex:       b.ServiceKey().Index,
 				SequenceNumber: b.ServiceKey().SequenceNumber,
 			},
 			Payer:              convert.SDKAddressToFlow(b.ServiceKey().Address),
