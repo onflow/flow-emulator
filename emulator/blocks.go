@@ -65,6 +65,15 @@ func (b *blocks) FinalizedHeader() (*flowgo.Header, error) {
 	return block.Header, nil
 }
 
+func (b *blocks) SealedHeader() (*flowgo.Header, error) {
+	block, err := b.blockchain.storage.LatestBlock(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	return block.Header, nil
+}
+
 // We don't have to do anything complex here, as emulator does not fork the chain
 func (b *blocks) ByHeightFrom(height uint64, header *flowgo.Header) (*flowgo.Header, error) {
 	if height > header.Height {
