@@ -263,26 +263,26 @@ flow keys generate
 
 ## Emulating mainnet and testnet transactions
 
-The emulator allows you to simulate the execution of transactions as if they were
-performed on the Mainnet or Testnet. In order to activate this feature,
-you must specify the network name for the chain ID flag as well as the RPC host
+The emulator allows you to simulate the execution of transactions as if 
+performed on the Mainnet or Testnet. To activate this feature,
+you must specify the network name for the chain ID flag and the RPC host
 to connect to.
 
 ```
-flow emulator --chain-id mainnet --rpc-host access-008.mainnet24.nodes.onflow.org:9000
-flow emulator --chain-id mainnet --rpc-host access-002.devnet49.nodes.onflow.org:9000
+flow emulator --chain-id mainnet --rpc-host access.mainnet.nodes.onflow.org:9000
+flow emulator --chain-id mainnet --rpc-host access.devnet.nodes.onflow.org:9000
 ```
 
-Please note, the actual execution on the real network may differ depending on the exact state when the transaction is
+Please note, that the actual execution on the real network may differ depending on the exact state when the transaction is
 executed.
 
 By default, the forked network will start from the latest sealed block when the emulator
 is started. You can specify a different starting block height by using the `--start-block-height` flag.
 
 You can also store all of your changes and cached registers to a persistent db by using the `--persist` flag,
-along with the other sqlite settings.
+along with the other SQLite settings.
 
-To submit transactions as a different account, you can use the `--skip-tx-validation` flag to disable transaction
+To submit transactions as a different account, you can use the `--skip-tx-validation` flag to disable the transaction
 signature
 verification. Then submit transactions from any account using any valid private key.
 

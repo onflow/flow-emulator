@@ -33,7 +33,7 @@ import (
 )
 
 type ServiceKey struct {
-	Index          int
+	Index          uint32
 	Address        flowgosdk.Address
 	SequenceNumber uint64
 	PrivateKey     sdkcrypto.PrivateKey
