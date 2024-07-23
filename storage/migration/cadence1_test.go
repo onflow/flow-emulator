@@ -94,7 +94,7 @@ func migrateEmulatorState(t *testing.T, store *sqlite.Store) {
 	err := MigrateCadence1(
 		store,
 		t.TempDir(),
-		migrations.EVMContractChangeNone,
+		migrations.EVMContractChangeDeployMinimalAndUpdateFull,
 		migrations.BurnerContractChangeDeploy,
 		stagedContracts,
 		rwf,
@@ -572,15 +572,11 @@ func TestLoadMigratedValuesInTransaction(t *testing.T) {
 		result.Logs,
 	)
 
-	// TEMP: Disable for now, as block commitment requires
-	// the EVM contract to be deployed. The system chunk
-	// transaction is calling the EVM.Heartbeat.heartbeat()
-	// method, to advance the EVM blocks.
-	// _, err = blockchain.CommitBlock()
-	// require.NoError(t, err)
+	_, err = blockchain.CommitBlock()
+	require.NoError(t, err)
 
 	// tx status becomes TransactionStatusSealed
-	// tx1Result, err := adapter.GetTransactionResult(context.Background(), tx.ID())
-	// require.NoError(t, err)
-	// require.Equal(t, flowsdk.TransactionStatusSealed, tx1Result.Status)
+	tx1Result, err := adapter.GetTransactionResult(context.Background(), tx.ID())
+	require.NoError(t, err)
+	require.Equal(t, flowsdk.TransactionStatusSealed, tx1Result.Status)
 }
