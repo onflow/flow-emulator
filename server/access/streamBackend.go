@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/flow-go/engine/access/state_stream"
 	"github.com/onflow/flow-go/engine/access/state_stream/backend"
 	"github.com/onflow/flow-go/engine/access/subscription"
@@ -200,14 +201,13 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 		// The `EVM.BlockExecuted` event is only emitted from the
 		// system chunk transaction, and we need to make it available
 		// in the returned response.
-		evmBlockExecutedEventType := fmt.Sprintf(
-			"A.%s.%s",
-			blockchain.GetChain().ServiceAddress().Hex(),
-			string(evmTypes.EventTypeBlockExecuted),
-		)
+		evmBlockExecutedEventType := common.AddressLocation{
+			Address: common.Address(blockchain.GetChain().ServiceAddress()),
+			Name:    string(evmTypes.EventTypeBlockExecuted),
+		}
 		events, err := blockchain.GetEventsByHeight(
 			height,
-			evmBlockExecutedEventType,
+			evmBlockExecutedEventType.ID(),
 		)
 		if err != nil {
 			return nil, err
