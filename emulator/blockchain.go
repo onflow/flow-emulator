@@ -1802,6 +1802,9 @@ func (b *Blockchain) systemChunkTransaction() (*flowgo.TransactionBody, error) {
 		},
 	)
 
+	// We should move this to `templates.Environment` struct
+	script = strings.ReplaceAll(script, "\"EVM\"", b.GetChain().ServiceAddress().HexWithPrefix())
+
 	tx := flowgo.NewTransactionBody().
 		SetScript([]byte(script)).
 		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).

@@ -1,4 +1,5 @@
 import RandomBeaconHistory from "RandomBeaconHistory"
+import EVM from "EVM"
 
 transaction {
     prepare(serviceAccount: auth(BorrowValue) &Account) {
@@ -6,5 +7,12 @@ transaction {
             .borrow<&RandomBeaconHistory.Heartbeat>(from: RandomBeaconHistory.HeartbeatStoragePath)
             ?? panic("Couldn't borrow RandomBeaconHistory.Heartbeat Resource")
         randomBeaconHistoryHeartbeat.heartbeat(randomSourceHistory: randomSourceHistory())
+
+        let evmHeartbeat = serviceAccount.storage.borrow<&EVM.Heartbeat>(from: /storage/EVMHeartbeat)
+        if evmHeartbeat != nil { // skip if not available
+            evmHeartbeat!.heartbeat()
+        } else {
+            panic("Couldn't borrow EVM.Heartbeat Resource")
+        }
     }
 }
