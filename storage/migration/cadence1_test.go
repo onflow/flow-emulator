@@ -94,7 +94,7 @@ func migrateEmulatorState(t *testing.T, store *sqlite.Store) {
 	err := MigrateCadence1(
 		store,
 		t.TempDir(),
-		migrations.EVMContractChangeNone,
+		migrations.EVMContractChangeDeployMinimalAndUpdateFull,
 		migrations.BurnerContractChangeDeploy,
 		stagedContracts,
 		rwf,

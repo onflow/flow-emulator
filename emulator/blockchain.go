@@ -1795,18 +1795,30 @@ func (b *Blockchain) GetSourceFile(location common.Location) string {
 }
 
 func (b *Blockchain) systemChunkTransaction() (*flowgo.TransactionBody, error) {
+	serviceAddress := b.GetChain().ServiceAddress()
+
 	script := templates.ReplaceAddresses(
 		systemChunkTransactionTemplate,
 		templates.Environment{
-			RandomBeaconHistoryAddress: b.GetChain().ServiceAddress().Hex(),
+			RandomBeaconHistoryAddress: serviceAddress.Hex(),
 		},
+	)
+
+	// TODO: move this to `templates.Environment` struct
+	script = strings.ReplaceAll(
+		script,
+		`import EVM from "EVM"`,
+		fmt.Sprintf(
+			"import EVM from %s",
+			serviceAddress.HexWithPrefix(),
+		),
 	)
 
 	tx := flowgo.NewTransactionBody().
 		SetScript([]byte(script)).
 		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
-		AddAuthorizer(b.GetChain().ServiceAddress()).
-		SetPayer(b.GetChain().ServiceAddress()).
+		AddAuthorizer(serviceAddress).
+		SetPayer(serviceAddress).
 		SetReferenceBlockID(b.pendingBlock.parentID)
 
 	return tx, nil

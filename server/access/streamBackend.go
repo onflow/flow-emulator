@@ -24,10 +24,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/onflow/cadence/runtime/common"
 	"github.com/onflow/flow-go/engine/access/state_stream"
 	"github.com/onflow/flow-go/engine/access/state_stream/backend"
 	"github.com/onflow/flow-go/engine/access/subscription"
 	"github.com/onflow/flow-go/engine/common/rpc"
+	evmEvents "github.com/onflow/flow-go/fvm/evm/events"
 	"github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module/executiondatasync/execution_data"
 	"github.com/onflow/flow-go/storage"
@@ -194,6 +196,30 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 				TransactionResults: txResults,
 			}
 			chunks[i] = chunk
+		}
+
+		// The `EVM.BlockExecuted` event is only emitted from the
+		// system chunk transaction, and we need to make it available
+		// in the returned response.
+		evmBlockExecutedEventType := common.AddressLocation{
+			Address: common.Address(blockchain.GetChain().ServiceAddress()),
+			Name:    string(evmEvents.EventTypeBlockExecuted),
+		}
+
+		events, err := blockchain.GetEventsByHeight(
+			height,
+			evmBlockExecutedEventType.ID(),
+		)
+		if err != nil {
+			return nil, err
+		}
+		// Add the `EVM.BlockExecuted` event to the events of the last
+		// chunk.
+		if len(chunks) > 0 {
+			lastChunk := chunks[len(chunks)-1]
+			for _, event := range events {
+				lastChunk.Events = append(lastChunk.Events, event)
+			}
 		}
 
 		executionData := &execution_data.BlockExecutionData{
