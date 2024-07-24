@@ -29,7 +29,7 @@ import (
 	"github.com/onflow/flow-go/engine/access/state_stream/backend"
 	"github.com/onflow/flow-go/engine/access/subscription"
 	"github.com/onflow/flow-go/engine/common/rpc"
-	evmTypes "github.com/onflow/flow-go/fvm/evm/types"
+	evmEvents "github.com/onflow/flow-go/fvm/evm/events"
 	"github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module/executiondatasync/execution_data"
 	"github.com/onflow/flow-go/storage"
@@ -203,8 +203,9 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 		// in the returned response.
 		evmBlockExecutedEventType := common.AddressLocation{
 			Address: common.Address(blockchain.GetChain().ServiceAddress()),
-			Name:    string(evmTypes.EventTypeBlockExecuted),
+			Name:    string(evmEvents.EventTypeBlockExecuted),
 		}
+
 		events, err := blockchain.GetEventsByHeight(
 			height,
 			evmBlockExecutedEventType.ID(),
