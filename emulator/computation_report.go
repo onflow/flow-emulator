@@ -20,9 +20,10 @@ package emulator
 
 import (
 	"github.com/onflow/cadence/runtime/common"
-	"github.com/onflow/flow-emulator/types"
 	"github.com/onflow/flow-go/fvm/environment"
 	"github.com/onflow/flow-go/fvm/meter"
+
+	"github.com/onflow/flow-emulator/types"
 )
 
 type ProcedureReport struct {
@@ -130,8 +131,8 @@ func transformIntensities(
 			result["AddAccountKey"] = value
 		case environment.ComputationKindAddEncodedAccountKey:
 			result["AddEncodedAccountKey"] = value
-		case environment.ComputationKindAllocateStorageIndex:
-			result["AllocateStorageIndex"] = value
+		case environment.ComputationKindAllocateSlabIndex:
+			result["AllocateSlabIndex"] = value
 		case environment.ComputationKindCreateAccount:
 			result["CreateAccount"] = value
 		case environment.ComputationKindEmitEvent:
