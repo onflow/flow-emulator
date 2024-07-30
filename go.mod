@@ -14,11 +14,11 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.0.0-preview.39
+	github.com/onflow/cadence v1.0.0-preview.41
 	github.com/onflow/crypto v0.25.1
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.3.1
-	github.com/onflow/flow-go v0.36.4-0.20240724205438-14f9fddeda2b
-	github.com/onflow/flow-go-sdk v1.0.0-preview.42
+	github.com/onflow/flow-go v0.36.8-0.20240729205403-18c8533fa521
+	github.com/onflow/flow-go-sdk v1.0.0-preview.44
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.1
 	github.com/onflow/flow/protobuf/go/flow v0.4.5
 	github.com/prometheus/client_golang v1.18.0
@@ -152,7 +152,7 @@ require (
 	github.com/multiformats/go-multistream v0.5.0 // indirect
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/onflow/atree v0.7.0-rc.2 // indirect
+	github.com/onflow/atree v0.8.0-rc.5 // indirect
 	github.com/onflow/flow-core-contracts/lib/go/contracts v1.3.1 // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v1.0.0 // indirect
 	github.com/onflow/flow-ft/lib/go/templates v1.0.0 // indirect
@@ -228,7 +228,7 @@ require (
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	lukechampine.com/blake3 v1.2.1 // indirect
+	lukechampine.com/blake3 v1.3.0 // indirect
 	modernc.org/libc v1.37.6 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.7.2 // indirect
