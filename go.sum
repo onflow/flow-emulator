@@ -979,8 +979,8 @@ github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMx
 github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
 github.com/StackExchange/wmi v1.2.1 h1:VIkavFPXSjcnS+O8yTq7NI32k0R5Aj+v39y29VYDOSA=
 github.com/StackExchange/wmi v1.2.1/go.mod h1:rcmrprowKIVzvc+NUiLncP2uuArMWLCbu9SBzvHz7e8=
-github.com/The-K-R-O-K/flow-go v0.0.0-20240730110432-67088f13720b h1:Nea7uffCekIOZ4Rl2hHVULdRevea8DWB1gQdKhx6r1Y=
-github.com/The-K-R-O-K/flow-go v0.0.0-20240730110432-67088f13720b/go.mod h1:8ALdV6VGy3JT7IzL5yopjG9n6KG8Mg6zJT1WW8+AY2s=
+github.com/The-K-R-O-K/flow-go v0.0.0-20240813131330-b967f3c366f6 h1:RxL7gf/YfTba7Mwjy6IvYv9gCZUKx/2fAD6AQEGuz0g=
+github.com/The-K-R-O-K/flow-go v0.0.0-20240813131330-b967f3c366f6/go.mod h1:hLFem+cwkq6650p4+0DUp36GH2QEuuFDCDUzDg0QZNE=
 github.com/VictoriaMetrics/fastcache v1.6.0/go.mod h1:0qHz5QP0GMX4pfmMA/zt5RgfNuXJrTP0zS7DqpHGGTw=
 github.com/VictoriaMetrics/fastcache v1.12.1/go.mod h1:tX04vaqcNoQeGLD+ra5pU5sWkuxnzWhEzLwhP9w653o=
 github.com/VictoriaMetrics/fastcache v1.12.2 h1:N0y9ASrJ0F6h0QaC3o6uJb3NIZ9VKLjCM7NQbSmF7WI=
@@ -2047,8 +2047,8 @@ github.com/onflow/atree v0.6.1-0.20230711151834-86040b30171f/go.mod h1:xvP61FoOs
 github.com/onflow/atree v0.8.0-rc.5 h1:1sU+c6UfDzq/EjM8nTw4EI8GvEMarcxkWkJKy6piFSY=
 github.com/onflow/atree v0.8.0-rc.5/go.mod h1:yccR+LR7xc1Jdic0mrjocbHvUD7lnVvg8/Ct1AA5zBo=
 github.com/onflow/cadence v1.0.0-M3/go.mod h1:odXGZZ/wGNA5mwT8bC9v8u8EXACHllB2ABSZK65TGL8=
-github.com/onflow/cadence v1.0.0-preview.41 h1:nEfnCF8IA/+i31twFKOimzbDVUo4tOlaqBtlDaGB4qM=
-github.com/onflow/cadence v1.0.0-preview.41/go.mod h1:BCoenp1TYp+SmG7FGWStjehvvzcvNQ3xvpK5rkthq3Y=
+github.com/onflow/cadence v1.0.0-preview.48 h1:WkgU0z6H/oRe44kLL6OO+wkGeKULWChoCT8i7sgiWdg=
+github.com/onflow/cadence v1.0.0-preview.48/go.mod h1:BCoenp1TYp+SmG7FGWStjehvvzcvNQ3xvpK5rkthq3Y=
 github.com/onflow/crypto v0.25.0/go.mod h1:C8FbaX0x8y+FxWjbkHy0Q4EASCDR9bSPWZqlpCLYyVI=
 github.com/onflow/crypto v0.25.1 h1:0txy2PKPMM873JbpxQNbJmuOJtD56bfs48RQfm0ts5A=
 github.com/onflow/crypto v0.25.1/go.mod h1:C8FbaX0x8y+FxWjbkHy0Q4EASCDR9bSPWZqlpCLYyVI=
@@ -2061,8 +2061,8 @@ github.com/onflow/flow-ft/lib/go/contracts v1.0.0/go.mod h1:PwsL8fC81cjnUnTfmyL/
 github.com/onflow/flow-ft/lib/go/templates v1.0.0 h1:6cMS/lUJJ17HjKBfMO/eh0GGvnpElPgBXx7h5aoWJhs=
 github.com/onflow/flow-ft/lib/go/templates v1.0.0/go.mod h1:uQ8XFqmMK2jxyBSVrmyuwdWjTEb+6zGjRYotfDJ5pAE=
 github.com/onflow/flow-go-sdk v1.0.0-M1/go.mod h1:TDW0MNuCs4SvqYRUzkbRnRmHQL1h4X8wURsCw9P9beo=
-github.com/onflow/flow-go-sdk v1.0.0-preview.44 h1:KgO5OedGS94UPDRpnvPH4bEfNKt4VI8BP16rY+LCuQE=
-github.com/onflow/flow-go-sdk v1.0.0-preview.44/go.mod h1:TWKQyGN2rrTlMem1g8ATOHOKJfjjzLUwjJsoe7vLfxY=
+github.com/onflow/flow-go-sdk v1.0.0-preview.50 h1:j5HotrV/ieo5JckmMxR2dMxO3x1j7YO8SP2EuGMEwRQ=
+github.com/onflow/flow-go-sdk v1.0.0-preview.50/go.mod h1:Ykk4PS7fgWuc6BB073tdzHu/VtzOd0CVNIoDjaqFHLg=
 github.com/onflow/flow-nft/lib/go/contracts v1.2.1 h1:woAAS5z651sDpi7ihAHll8NvRS9uFXIXkL6xR+bKFZY=
 github.com/onflow/flow-nft/lib/go/contracts v1.2.1/go.mod h1:2gpbza+uzs1k7x31hkpBPlggIRkI53Suo0n2AyA2HcE=
 github.com/onflow/flow-nft/lib/go/templates v1.2.0 h1:JSQyh9rg0RC+D1930BiRXN8lrtMs+ubVMK6aQPon6Yc=

@@ -14,11 +14,11 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.0.0-preview.42
+	github.com/onflow/cadence v1.0.0-preview.48
 	github.com/onflow/crypto v0.25.1
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.3.1
 	github.com/onflow/flow-go v0.37.0-crescendo-RC3.0.20240808013212-1dd0921e5306
-	github.com/onflow/flow-go-sdk v1.0.0-preview.45
+	github.com/onflow/flow-go-sdk v1.0.0-preview.50
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.1
 	github.com/onflow/flow/protobuf/go/flow v0.4.5
 	github.com/prometheus/client_golang v1.18.0
@@ -237,4 +237,4 @@ require (
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
 
-replace github.com/onflow/flow-go v0.36.8-0.20240729205403-18c8533fa521 => github.com/The-K-R-O-K/flow-go v0.0.0-20240730110432-67088f13720b
+replace github.com/onflow/flow-go v0.37.0-crescendo-RC3.0.20240808013212-1dd0921e5306 => github.com/The-K-R-O-K/flow-go v0.0.0-20240813131330-b967f3c366f6
