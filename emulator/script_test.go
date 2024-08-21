@@ -178,7 +178,7 @@ func TestInfiniteScript(t *testing.T) {
 
 	t.Parallel()
 
-	const limit = 90
+	const limit = 18
 	b, err := emulator.New(
 		emulator.WithScriptGasLimit(limit),
 	)
