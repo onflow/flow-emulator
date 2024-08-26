@@ -20,6 +20,9 @@ package emulator_test
 
 import (
 	"context"
+	"github.com/onflow/cadence/runtime/common"
+	"github.com/onflow/flow-go/fvm/environment"
+	"github.com/onflow/flow-go/fvm/meter"
 	"testing"
 
 	"github.com/onflow/cadence"
@@ -39,6 +42,15 @@ func TestComputationReportingForScript(t *testing.T) {
 
 	b, err := emulator.New(
 		emulator.WithComputationReporting(true),
+		// computation weights shifted by meter.MeterExecutionInternalPrecisionBytes
+		// so that they correspond directly to computation used.
+		emulator.WithExecutionEffortWeights(meter.ExecutionEffortWeights{
+			common.ComputationKindFunctionInvocation:          2 << meter.MeterExecutionInternalPrecisionBytes,
+			environment.ComputationKindGetCode:                3 << meter.MeterExecutionInternalPrecisionBytes,
+			environment.ComputationKindGetAccountContractCode: 5 << meter.MeterExecutionInternalPrecisionBytes,
+			environment.ComputationKindResolveLocation:        7 << meter.MeterExecutionInternalPrecisionBytes,
+			common.ComputationKindStatement:                   11 << meter.MeterExecutionInternalPrecisionBytes,
+		}),
 	)
 	require.NoError(t, err)
 
@@ -80,7 +92,7 @@ func TestComputationReportingForScript(t *testing.T) {
 	require.Len(t, computationReport.Scripts, 1)
 
 	scriptProfile := computationReport.Scripts[scriptResult.ScriptID.String()]
-	assert.GreaterOrEqual(t, scriptProfile.ComputationUsed, uint64(1))
+	assert.GreaterOrEqual(t, scriptProfile.ComputationUsed, uint64(2*2+3+5+7+11))
 
 	expectedIntensities := map[string]uint{
 		"FunctionInvocation":     2,

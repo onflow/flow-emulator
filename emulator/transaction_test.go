@@ -1796,7 +1796,7 @@ func TestInfiniteTransaction(t *testing.T) {
 
 	t.Parallel()
 
-	const limit = 90
+	const limit = 18
 
 	b, adapter := setupTransactionTests(
 		t,
