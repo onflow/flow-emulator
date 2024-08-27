@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright Dapper Labs, Inc.
+ * Copyright Flow Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -178,7 +178,7 @@ func TestInfiniteScript(t *testing.T) {
 
 	t.Parallel()
 
-	const limit = 90
+	const limit = 18
 	b, err := emulator.New(
 		emulator.WithScriptGasLimit(limit),
 	)
