@@ -1,7 +1,7 @@
 /*
  * Flow Emulator
  *
- * Copyright Dapper Labs, Inc.
+ * Copyright Flow Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -267,6 +267,14 @@ func WithTransactionFeesEnabled(enabled bool) Option {
 	}
 }
 
+// WithExecutionEffortWeights sets the execution effort weights.
+// default is the Mainnet values.
+func WithExecutionEffortWeights(weights meter.ExecutionEffortWeights) Option {
+	return func(c *config) {
+		c.ExecutionEffortWeights = weights
+	}
+}
+
 // WithContractRemovalEnabled restricts/allows removal of already deployed contracts.
 //
 // The default is provided by on-chain value.
@@ -368,6 +376,7 @@ type config struct {
 	TransactionExpiry            uint
 	StorageLimitEnabled          bool
 	TransactionFeesEnabled       bool
+	ExecutionEffortWeights       meter.ExecutionEffortWeights
 	ContractRemovalEnabled       bool
 	LegacyContractUpgradeEnabled bool
 	MinimumStorageReservation    cadence.UFix64
@@ -789,15 +798,14 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 		fvm.WithTransactionFee(fvm.DefaultTransactionFees),
 		fvm.WithExecutionMemoryLimit(math.MaxUint32),
 		fvm.WithExecutionMemoryWeights(meter.DefaultMemoryWeights),
-		fvm.WithExecutionEffortWeights(map[common.ComputationKind]uint64{
-			common.ComputationKindStatement:          1569,
-			common.ComputationKindLoop:               1569,
-			common.ComputationKindFunctionInvocation: 1569,
-			environment.ComputationKindGetValue:      808,
-			environment.ComputationKindCreateAccount: 2837670,
-			environment.ComputationKindSetValue:      765,
-		}),
+		fvm.WithExecutionEffortWeights(environment.MainnetExecutionEffortWeights),
 	)
+
+	if conf.ExecutionEffortWeights != nil {
+		options = append(options,
+			fvm.WithExecutionEffortWeights(conf.ExecutionEffortWeights),
+		)
+	}
 	if conf.StorageLimitEnabled {
 		options = append(options,
 			fvm.WithAccountCreationFee(conf.MinimumStorageReservation),
