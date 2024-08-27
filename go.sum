@@ -932,7 +932,8 @@ dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7
 gioui.org v0.0.0-20210308172011-57750fc8a0a6/go.mod h1:RSH6KIUZ0p2xy5zHDxgAM4zumjgTw83q2ge/PI+yyw8=
 git.sr.ht/~sbinet/gg v0.3.1/go.mod h1:KGYtlADtqsqANL9ueOFkWymvzUvLMQllU5Ixo+8v3pc=
 github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
-github.com/AndriiDiachuk/flow-go v0.0.0-20240815094652-ffd6bcc8df84/go.mod h1:sR087wpCqDpdidyXhhinD5z4bBdQZeNQcC7P67FL+HE=
+github.com/AndriiDiachuk/flow-go v0.34.0-crescendo-preview.15-atree-inlining.0.20240827085712-ae63dd63990f h1:RCiBuIFaaS8ge/4gB/UuSQxCPrvw8fG8ixzWdH7eWNY=
+github.com/AndriiDiachuk/flow-go v0.34.0-crescendo-preview.15-atree-inlining.0.20240827085712-ae63dd63990f/go.mod h1:enp027y6GD0GP/PU9x2Ki5E6X+BSLvNN88Ma4RklZDA=
 github.com/Azure/azure-sdk-for-go/sdk/azcore v0.21.1/go.mod h1:fBF9PQNqB8scdgpZ3ufzaLntG0AG7C1WjPMsiFOmfHM=
 github.com/Azure/azure-sdk-for-go/sdk/azcore v1.0.0/go.mod h1:uGG2W01BaETf0Ozp+QxxKJdMBNRWPdstHG0Fmdwn1/U=
 github.com/Azure/azure-sdk-for-go/sdk/azcore v1.6.0/go.mod h1:bjGvMhVMb+EEm3VRNQawDMUyMMjo+S5ewNjflkep/0Q=
@@ -2060,8 +2061,6 @@ github.com/onflow/flow-ft/lib/go/contracts v1.0.0 h1:mToacZ5NWqtlWwk/7RgIl/jeKB/
 github.com/onflow/flow-ft/lib/go/contracts v1.0.0/go.mod h1:PwsL8fC81cjnUnTfmyL/HOIyHnyaw/JA474Wfj2tl6A=
 github.com/onflow/flow-ft/lib/go/templates v1.0.0 h1:6cMS/lUJJ17HjKBfMO/eh0GGvnpElPgBXx7h5aoWJhs=
 github.com/onflow/flow-ft/lib/go/templates v1.0.0/go.mod h1:uQ8XFqmMK2jxyBSVrmyuwdWjTEb+6zGjRYotfDJ5pAE=
-github.com/onflow/flow-go v0.37.7-0.20240826193109-e211841b59f5 h1:rgX5DJC++uXpeVUiUeOY1fvvQlTWuhrstDz+OTluWIw=
-github.com/onflow/flow-go v0.37.7-0.20240826193109-e211841b59f5/go.mod h1:enp027y6GD0GP/PU9x2Ki5E6X+BSLvNN88Ma4RklZDA=
 github.com/onflow/flow-go-sdk v1.0.0-M1/go.mod h1:TDW0MNuCs4SvqYRUzkbRnRmHQL1h4X8wURsCw9P9beo=
 github.com/onflow/flow-go-sdk v1.0.0-preview.53 h1:hF6X5b9gVQoc/wUa5JTcYU6tw1B7aW71XDdfsFhU5Gw=
 github.com/onflow/flow-go-sdk v1.0.0-preview.53/go.mod h1:FtsoOHw5RNmMMwC7jI1hc99ZVJWhnm/gE3OMvFaZjyg=
