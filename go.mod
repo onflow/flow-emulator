@@ -17,7 +17,7 @@ require (
 	github.com/onflow/cadence v1.0.0-preview.50
 	github.com/onflow/crypto v0.25.2
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.3.1
-	github.com/onflow/flow-go v0.37.1
+	github.com/onflow/flow-go v0.37.7-0.20240826193109-e211841b59f5
 	github.com/onflow/flow-go-sdk v1.0.0-preview.53
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.1
 	github.com/onflow/flow/protobuf/go/flow v0.4.6
@@ -238,4 +238,4 @@ require (
 )
 
 // TODO: remove it when merged
-replace github.com/onflow/flow-go v0.37.1 => github.com/The-K-R-O-K/flow-go v0.0.0-20240826093757-b2cb76881a35
+replace github.com/onflow/flow-go v0.37.7-0.20240826193109-e211841b59f5 => github.com/The-K-R-O-K/flow-go v0.0.0-20240826093757-b2cb76881a35
