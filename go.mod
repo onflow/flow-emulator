@@ -238,4 +238,4 @@ require (
 )
 
 // TODO: remove it when merged
-replace github.com/onflow/flow-go v0.37.7-0.20240826193109-e211841b59f5 => github.com/The-K-R-O-K/flow-go v0.0.0-20240826093757-b2cb76881a35
+replace github.com/onflow/flow-go v0.37.7-0.20240826193109-e211841b59f5 => github.com/The-K-R-O-K/flow-go v0.0.0-20240827111248-50dcd73fdd3f

@@ -603,10 +603,10 @@ func (a *AccessAdapter) SendTransaction(_ context.Context, tx *flowgo.Transactio
 func (a *AccessAdapter) GetNodeVersionInfo(
 	_ context.Context,
 ) (
-	*flowgo.NodeVersionInfo,
+	*access.NodeVersionInfo,
 	error,
 ) {
-	return &flowgo.NodeVersionInfo{}, nil
+	return &access.NodeVersionInfo{}, nil
 }
 
 func (a *AccessAdapter) SubscribeBlocksFromStartBlockID(ctx context.Context, startBlockID flowgo.Identifier, blockStatus flowgo.BlockStatus) subscription.Subscription {
