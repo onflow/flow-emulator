@@ -979,8 +979,6 @@ github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMx
 github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
 github.com/StackExchange/wmi v1.2.1 h1:VIkavFPXSjcnS+O8yTq7NI32k0R5Aj+v39y29VYDOSA=
 github.com/StackExchange/wmi v1.2.1/go.mod h1:rcmrprowKIVzvc+NUiLncP2uuArMWLCbu9SBzvHz7e8=
-github.com/The-K-R-O-K/flow-go v0.35.15-crescendo-preview.28-atree-inlining.0.20240827101202-47513fe78ced h1:xOF0ybiVydfK+OsZ7Xni/HYrCAzNvhOBU2jzNi3bBK0=
-github.com/The-K-R-O-K/flow-go v0.35.15-crescendo-preview.28-atree-inlining.0.20240827101202-47513fe78ced/go.mod h1:enp027y6GD0GP/PU9x2Ki5E6X+BSLvNN88Ma4RklZDA=
 github.com/VictoriaMetrics/fastcache v1.6.0/go.mod h1:0qHz5QP0GMX4pfmMA/zt5RgfNuXJrTP0zS7DqpHGGTw=
 github.com/VictoriaMetrics/fastcache v1.12.1/go.mod h1:tX04vaqcNoQeGLD+ra5pU5sWkuxnzWhEzLwhP9w653o=
 github.com/VictoriaMetrics/fastcache v1.12.2 h1:N0y9ASrJ0F6h0QaC3o6uJb3NIZ9VKLjCM7NQbSmF7WI=
@@ -2061,6 +2059,10 @@ github.com/onflow/flow-ft/lib/go/contracts v1.0.0 h1:mToacZ5NWqtlWwk/7RgIl/jeKB/
 github.com/onflow/flow-ft/lib/go/contracts v1.0.0/go.mod h1:PwsL8fC81cjnUnTfmyL/HOIyHnyaw/JA474Wfj2tl6A=
 github.com/onflow/flow-ft/lib/go/templates v1.0.0 h1:6cMS/lUJJ17HjKBfMO/eh0GGvnpElPgBXx7h5aoWJhs=
 github.com/onflow/flow-ft/lib/go/templates v1.0.0/go.mod h1:uQ8XFqmMK2jxyBSVrmyuwdWjTEb+6zGjRYotfDJ5pAE=
+github.com/onflow/flow-go v0.37.7-0.20240826193109-e211841b59f5 h1:rgX5DJC++uXpeVUiUeOY1fvvQlTWuhrstDz+OTluWIw=
+github.com/onflow/flow-go v0.37.7-0.20240826193109-e211841b59f5/go.mod h1:enp027y6GD0GP/PU9x2Ki5E6X+BSLvNN88Ma4RklZDA=
+github.com/onflow/flow-go v0.37.7-0.20240829173042-9708618afd98 h1:IPTibfA1CnWLN2Ct3woHVEh+7A+ff4PG4OPYJd+pN08=
+github.com/onflow/flow-go v0.37.7-0.20240829173042-9708618afd98/go.mod h1:7ZwLTHAdY/T9ulmcgprxyiNxweQwAnBmp+jq2LyJ654=
 github.com/onflow/flow-go-sdk v1.0.0-M1/go.mod h1:TDW0MNuCs4SvqYRUzkbRnRmHQL1h4X8wURsCw9P9beo=
 github.com/onflow/flow-go-sdk v1.0.0-preview.53 h1:hF6X5b9gVQoc/wUa5JTcYU6tw1B7aW71XDdfsFhU5Gw=
 github.com/onflow/flow-go-sdk v1.0.0-preview.53/go.mod h1:FtsoOHw5RNmMMwC7jI1hc99ZVJWhnm/gE3OMvFaZjyg=
