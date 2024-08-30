@@ -397,5 +397,5 @@ func (b *StateStreamBackend) getAccountStatusResponseFactory(
 }
 
 func (b *StateStreamBackend) GetRegisterValues(registerIDs flow.RegisterIDs, height uint64) ([]flow.RegisterValue, error) {
-	return nil, status.Errorf(codes.Unimplemented, "not implemented")
+	return b.blockchain.GetRegisterValues(registerIDs, height)
 }
