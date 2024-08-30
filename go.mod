@@ -17,7 +17,7 @@ require (
 	github.com/onflow/cadence v1.0.0-preview.50
 	github.com/onflow/crypto v0.25.2
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.3.1
-	github.com/onflow/flow-go v0.37.7-0.20240826193109-e211841b59f5
+	github.com/onflow/flow-go v0.37.7-0.20240829173042-9708618afd98
 	github.com/onflow/flow-go-sdk v1.0.0-preview.53
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.1
 	github.com/onflow/flow/protobuf/go/flow v0.4.6
@@ -236,5 +236,3 @@ require (
 	nhooyr.io/websocket v1.8.7 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
-
-replace github.com/onflow/flow-go v0.37.7-0.20240826193109-e211841b59f5 => github.com/The-K-R-O-K/flow-go v0.35.15-crescendo-preview.28-atree-inlining.0.20240827101202-47513fe78ced
