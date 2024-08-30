@@ -333,7 +333,7 @@ type GetExecutionDataFunc func(context.Context, uint64) (*execution_data.BlockEx
 
 type GetStartHeightFunc func(flow.Identifier, uint64) (uint64, error)
 
-func (b StateStreamBackend) SubscribeEvents(ctx context.Context, startBlockID flow.Identifier, startHeight uint64, filter state_stream.EventFilter) subscription.Subscription {
+func (b *StateStreamBackend) SubscribeEvents(ctx context.Context, startBlockID flow.Identifier, startHeight uint64, filter state_stream.EventFilter) subscription.Subscription {
 	nextHeight, err := b.getStartHeight(startBlockID, startHeight)
 	if err != nil {
 		return subscription.NewFailedSubscription(err, "could not get start height")
@@ -346,7 +346,7 @@ func (b StateStreamBackend) SubscribeEvents(ctx context.Context, startBlockID fl
 	return sub
 }
 
-func (b StateStreamBackend) getEventsResponseFactory(filter state_stream.EventFilter) subscription.GetDataByHeightFunc {
+func (b *StateStreamBackend) getEventsResponseFactory(filter state_stream.EventFilter) subscription.GetDataByHeightFunc {
 	return func(ctx context.Context, height uint64) (interface{}, error) {
 		executionData, err := b.getExecutionData(ctx, height)
 		if err != nil {
@@ -396,6 +396,6 @@ func (b *StateStreamBackend) getAccountStatusResponseFactory(
 	}
 }
 
-func (b StateStreamBackend) GetRegisterValues(registerIDs flow.RegisterIDs, height uint64) ([]flow.RegisterValue, error) {
+func (b *StateStreamBackend) GetRegisterValues(registerIDs flow.RegisterIDs, height uint64) ([]flow.RegisterValue, error) {
 	return nil, status.Errorf(codes.Unimplemented, "not implemented")
 }
