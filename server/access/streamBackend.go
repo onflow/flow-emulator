@@ -385,7 +385,6 @@ func (b *StateStreamBackend) getAccountStatusResponseFactory(
 			events = append(events, filter.Filter(chunkExecutionData.Events)...)
 		}
 
-		filteredProtocolEvents := filter.Filter(events)
 		allAccountProtocolEvents := filter.GroupCoreEventsByAccountAddress(filteredProtocolEvents, b.log)
 
 		return &backend.AccountStatusesResponse{
