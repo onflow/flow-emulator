@@ -20,7 +20,7 @@ require (
 	github.com/onflow/flow-go v0.37.7-0.20240826193109-e211841b59f5
 	github.com/onflow/flow-go-sdk v1.0.0-preview.53
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.1
-	github.com/onflow/flow/protobuf/go/flow v0.4.5
+	github.com/onflow/flow/protobuf/go/flow v0.4.6
 	github.com/prometheus/client_golang v1.18.0
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
