@@ -59,7 +59,6 @@ import (
 	reusableRuntime "github.com/onflow/flow-go/fvm/runtime"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	flowgo "github.com/onflow/flow-go/model/flow"
-	"github.com/onflow/flow-go/module/metrics"
 	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/convert"
@@ -824,7 +823,6 @@ func configureTransactionValidator(conf config, blocks *blocks) (*access.Transac
 	return access.NewTransactionValidator(
 		blocks,
 		conf.GetChainID().Chain(),
-		metrics.NewNoopCollector(),
 		access.TransactionValidationOptions{
 			Expiry:                       conf.TransactionExpiry,
 			ExpiryBuffer:                 0,
@@ -1869,4 +1867,19 @@ func (b *Blockchain) executeSystemChunkTransaction() error {
 	}
 
 	return nil
+}
+
+func (b *Blockchain) GetRegisterValues(registerIDs flowgo.RegisterIDs, height uint64) (values []flowgo.RegisterValue, err error) {
+	ledger, err := b.storage.LedgerByHeight(context.Background(), height)
+	if err != nil {
+		return nil, err
+	}
+	for _, registerID := range registerIDs {
+		value, err := ledger.Get(registerID)
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, value)
+	}
+	return values, nil
 }
