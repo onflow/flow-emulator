@@ -34,6 +34,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/onflow/flow-go/module/metrics"
 	"math"
 	"strings"
 	"sync"
@@ -823,7 +824,7 @@ func configureTransactionValidator(conf config, blocks *blocks) (*access.Transac
 	return access.NewTransactionValidator(
 		blocks,
 		conf.GetChainID().Chain(),
-		nil,
+		metrics.NewNoopCollector(),
 		access.TransactionValidationOptions{
 			Expiry:                       conf.TransactionExpiry,
 			ExpiryBuffer:                 0,
