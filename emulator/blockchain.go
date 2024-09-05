@@ -823,6 +823,7 @@ func configureTransactionValidator(conf config, blocks *blocks) (*access.Transac
 	return access.NewTransactionValidator(
 		blocks,
 		conf.GetChainID().Chain(),
+		nil,
 		access.TransactionValidationOptions{
 			Expiry:                       conf.TransactionExpiry,
 			ExpiryBuffer:                 0,

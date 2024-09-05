@@ -932,8 +932,8 @@ dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7
 gioui.org v0.0.0-20210308172011-57750fc8a0a6/go.mod h1:RSH6KIUZ0p2xy5zHDxgAM4zumjgTw83q2ge/PI+yyw8=
 git.sr.ht/~sbinet/gg v0.3.1/go.mod h1:KGYtlADtqsqANL9ueOFkWymvzUvLMQllU5Ixo+8v3pc=
 github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
-github.com/AndriiDiachuk/flow-go v0.34.0-crescendo-preview.15-atree-inlining.0.20240903134606-a4a4cefea99c h1:KubJ7M75A8k6CYX/Ww2CivUEk4JyG+po3E3B4c7f32w=
-github.com/AndriiDiachuk/flow-go v0.34.0-crescendo-preview.15-atree-inlining.0.20240903134606-a4a4cefea99c/go.mod h1:A3/V6VO8ASI0pHyL5iEWXVd9qdNHYSPxdNt0tMxUYeY=
+github.com/AndriiDiachuk/flow-go v0.34.0-crescendo-preview.15-atree-inlining.0.20240905122853-af7264b602cf h1:WNRPdCaw2a0zgDOCpNtkXBfskN72OmCmmcxBILZn1Qg=
+github.com/AndriiDiachuk/flow-go v0.34.0-crescendo-preview.15-atree-inlining.0.20240905122853-af7264b602cf/go.mod h1:A3/V6VO8ASI0pHyL5iEWXVd9qdNHYSPxdNt0tMxUYeY=
 github.com/Azure/azure-sdk-for-go/sdk/azcore v0.21.1/go.mod h1:fBF9PQNqB8scdgpZ3ufzaLntG0AG7C1WjPMsiFOmfHM=
 github.com/Azure/azure-sdk-for-go/sdk/azcore v1.0.0/go.mod h1:uGG2W01BaETf0Ozp+QxxKJdMBNRWPdstHG0Fmdwn1/U=
 github.com/Azure/azure-sdk-for-go/sdk/azcore v1.6.0/go.mod h1:bjGvMhVMb+EEm3VRNQawDMUyMMjo+S5ewNjflkep/0Q=
@@ -2061,11 +2061,6 @@ github.com/onflow/flow-ft/lib/go/contracts v1.0.0 h1:mToacZ5NWqtlWwk/7RgIl/jeKB/
 github.com/onflow/flow-ft/lib/go/contracts v1.0.0/go.mod h1:PwsL8fC81cjnUnTfmyL/HOIyHnyaw/JA474Wfj2tl6A=
 github.com/onflow/flow-ft/lib/go/templates v1.0.0 h1:6cMS/lUJJ17HjKBfMO/eh0GGvnpElPgBXx7h5aoWJhs=
 github.com/onflow/flow-ft/lib/go/templates v1.0.0/go.mod h1:uQ8XFqmMK2jxyBSVrmyuwdWjTEb+6zGjRYotfDJ5pAE=
-<<<<<<< HEAD
-=======
-github.com/onflow/flow-go v0.37.10 h1:Nz2Gp63+0ubb9FuQaEZgCsXNXM5WsXq/j0ukC74N5Vw=
-github.com/onflow/flow-go v0.37.10/go.mod h1:bfOCsCk0v1J93vXd+zrYkCmRIVOaL9oAXvNFWgVOujE=
->>>>>>> 96c4f80d690b7d22bede611e9a8f129ac396a999
 github.com/onflow/flow-go-sdk v1.0.0-M1/go.mod h1:TDW0MNuCs4SvqYRUzkbRnRmHQL1h4X8wURsCw9P9beo=
 github.com/onflow/flow-go-sdk v1.0.0-preview.55 h1:tUM8K7GcWltM0YSzei/g2Gq4z3BwGFTdpq2QwvB6ubk=
 github.com/onflow/flow-go-sdk v1.0.0-preview.55/go.mod h1:rBRNboXaTprn7M0MeO6/R1bxNpctbrx66I2FLp0V6fM=
