@@ -34,7 +34,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/onflow/flow-go/module/metrics"
 	"math"
 	"strings"
 	"sync"
@@ -60,6 +59,7 @@ import (
 	reusableRuntime "github.com/onflow/flow-go/fvm/runtime"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow-go/module/metrics"
 	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/convert"
