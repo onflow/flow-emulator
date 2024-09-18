@@ -59,6 +59,7 @@ import (
 	reusableRuntime "github.com/onflow/flow-go/fvm/runtime"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow-go/module/metrics"
 	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/convert"
@@ -823,6 +824,7 @@ func configureTransactionValidator(conf config, blocks *blocks) (*access.Transac
 	return access.NewTransactionValidator(
 		blocks,
 		conf.GetChainID().Chain(),
+		metrics.NewNoopCollector(),
 		access.TransactionValidationOptions{
 			Expiry:                       conf.TransactionExpiry,
 			ExpiryBuffer:                 0,
@@ -1321,7 +1323,7 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 		tr.Debug = b.debugSignatureError(tr.Error, txnBody)
 	}
 
-	//add to source map if any pragma
+	// add to source map if any pragma
 	if pragmas.Contains(PragmaSourceFile) {
 		location := common.NewTransactionLocation(nil, tr.TransactionID.Bytes())
 		sourceFile := pragmas.FilterByName(PragmaSourceFile).First().Argument()
@@ -1410,7 +1412,7 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 		return nil, err
 	}
 
-	//notify listeners on new block
+	// notify listeners on new block
 	b.broadcaster.Publish()
 
 	// reset pending block using current block and ledger state
@@ -1553,7 +1555,7 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 		scriptError = convert.VMErrorToEmulator(output.Err)
 	}
 
-	//add to source map if any pragma
+	// add to source map if any pragma
 	if pragmas.Contains(PragmaSourceFile) {
 		location := common.NewScriptLocation(nil, scriptID.Bytes())
 		sourceFile := pragmas.FilterByName(PragmaSourceFile).First().Argument()
