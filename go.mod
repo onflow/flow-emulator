@@ -17,10 +17,10 @@ require (
 	github.com/onflow/cadence v1.0.0-preview.52
 	github.com/onflow/crypto v0.25.2
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.3.1
-	github.com/onflow/flow-go v0.37.7-0.20240830182756-9ac9e1889c34
+	github.com/onflow/flow-go v0.38.0-preview.0
 	github.com/onflow/flow-go-sdk v1.0.0-preview.55
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.1
-	github.com/onflow/flow/protobuf/go/flow v0.4.6
+	github.com/onflow/flow/protobuf/go/flow v0.4.7
 	github.com/prometheus/client_golang v1.18.0
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
@@ -237,4 +237,4 @@ require (
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
 
-replace github.com/onflow/flow-go v0.37.7-0.20240830182756-9ac9e1889c34 => github.com/The-K-R-O-K/flow-go v0.0.0-20240903093254-2a0462191007
+replace github.com/onflow/flow-go v0.38.0-preview.0 => github.com/The-K-R-O-K/flow-go v0.0.0-20240926130756-162e6244a810

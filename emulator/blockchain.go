@@ -1323,7 +1323,7 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 		tr.Debug = b.debugSignatureError(tr.Error, txnBody)
 	}
 
-	//add to source map if any pragma
+	// add to source map if any pragma
 	if pragmas.Contains(PragmaSourceFile) {
 		location := common.NewTransactionLocation(nil, tr.TransactionID.Bytes())
 		sourceFile := pragmas.FilterByName(PragmaSourceFile).First().Argument()
@@ -1412,7 +1412,7 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 		return nil, err
 	}
 
-	//notify listeners on new block
+	// notify listeners on new block
 	b.broadcaster.Publish()
 
 	// reset pending block using current block and ledger state
@@ -1555,7 +1555,7 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 		scriptError = convert.VMErrorToEmulator(output.Err)
 	}
 
-	//add to source map if any pragma
+	// add to source map if any pragma
 	if pragmas.Contains(PragmaSourceFile) {
 		location := common.NewScriptLocation(nil, scriptID.Bytes())
 		sourceFile := pragmas.FilterByName(PragmaSourceFile).First().Argument()
@@ -1869,4 +1869,19 @@ func (b *Blockchain) executeSystemChunkTransaction() error {
 	}
 
 	return nil
+}
+
+func (b *Blockchain) GetRegisterValues(registerIDs flowgo.RegisterIDs, height uint64) (values []flowgo.RegisterValue, err error) {
+	ledger, err := b.storage.LedgerByHeight(context.Background(), height)
+	if err != nil {
+		return nil, err
+	}
+	for _, registerID := range registerIDs {
+		value, err := ledger.Get(registerID)
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, value)
+	}
+	return values, nil
 }
