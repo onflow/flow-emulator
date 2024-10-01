@@ -834,7 +834,7 @@ func configureTransactionValidator(conf config, blocks *blocks) (*access.Transac
 			CheckScriptsParse:            true,
 			MaxTransactionByteSize:       flowgo.DefaultMaxTransactionByteSize,
 			MaxCollectionByteSize:        flowgo.DefaultMaxCollectionByteSize,
-			CheckPayerBalance:            false,
+			CheckPayerBalanceMode:        access.Disabled,
 		},
 		nil,
 	)
