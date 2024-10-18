@@ -13,8 +13,8 @@ import (
 	reflect "reflect"
 
 	runtime "github.com/onflow/cadence/runtime"
-	common "github.com/onflow/cadence/runtime/common"
-	interpreter "github.com/onflow/cadence/runtime/interpreter"
+	common "github.com/onflow/cadence/common"
+	interpreter "github.com/onflow/cadence/interpreter"
 	emulator "github.com/onflow/flow-emulator/emulator"
 	types "github.com/onflow/flow-emulator/types"
 	access "github.com/onflow/flow-go/access"

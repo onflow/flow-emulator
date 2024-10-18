@@ -20,10 +20,11 @@ package emulator_test
 
 import (
 	"context"
-	"github.com/onflow/cadence/runtime/common"
+	"testing"
+
+	"github.com/onflow/cadence/common"
 	"github.com/onflow/flow-go/fvm/environment"
 	"github.com/onflow/flow-go/fvm/meter"
-	"testing"
 
 	"github.com/onflow/cadence"
 	flowsdk "github.com/onflow/flow-go-sdk"

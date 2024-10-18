@@ -30,8 +30,8 @@ import (
 	"testing"
 
 	"github.com/onflow/cadence"
-	"github.com/onflow/cadence/runtime/common"
-	"github.com/onflow/cadence/runtime/interpreter"
+	"github.com/onflow/cadence/common"
+	"github.com/onflow/cadence/interpreter"
 	"github.com/onflow/flow-go-sdk"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"

@@ -23,8 +23,8 @@ import (
 	"testing"
 
 	"github.com/onflow/cadence"
+	"github.com/onflow/cadence/common"
 	"github.com/onflow/cadence/runtime"
-	"github.com/onflow/cadence/runtime/common"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"

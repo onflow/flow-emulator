@@ -19,8 +19,8 @@
 package emulator
 
 import (
-	"github.com/onflow/cadence/runtime/ast"
-	"github.com/onflow/cadence/runtime/parser"
+	"github.com/onflow/cadence/ast"
+	"github.com/onflow/cadence/parser"
 )
 
 var (

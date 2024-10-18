@@ -24,7 +24,7 @@ import (
 
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
-	"github.com/onflow/cadence/runtime/stdlib"
+	"github.com/onflow/cadence/stdlib"
 	sdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go/access"
