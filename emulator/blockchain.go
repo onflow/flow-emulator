@@ -41,9 +41,9 @@ import (
 
 	"github.com/logrusorgru/aurora"
 	"github.com/onflow/cadence"
+	"github.com/onflow/cadence/common"
+	"github.com/onflow/cadence/interpreter"
 	"github.com/onflow/cadence/runtime"
-	"github.com/onflow/cadence/runtime/common"
-	"github.com/onflow/cadence/runtime/interpreter"
 	"github.com/onflow/crypto"
 	"github.com/onflow/crypto/hash"
 	"github.com/onflow/flow-core-contracts/lib/go/templates"

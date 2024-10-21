@@ -12,9 +12,9 @@ package mocks
 import (
 	reflect "reflect"
 
+	common "github.com/onflow/cadence/common"
+	interpreter "github.com/onflow/cadence/interpreter"
 	runtime "github.com/onflow/cadence/runtime"
-	common "github.com/onflow/cadence/runtime/common"
-	interpreter "github.com/onflow/cadence/runtime/interpreter"
 	emulator "github.com/onflow/flow-emulator/emulator"
 	types "github.com/onflow/flow-emulator/types"
 	access "github.com/onflow/flow-go/access"
@@ -26,6 +26,7 @@ import (
 type MockEmulator struct {
 	ctrl     *gomock.Controller
 	recorder *MockEmulatorMockRecorder
+	isgomock struct{}
 }
 
 // MockEmulatorMockRecorder is the mock recorder for MockEmulator.
@@ -46,17 +47,17 @@ func (m *MockEmulator) EXPECT() *MockEmulatorMockRecorder {
 }
 
 // AddTransaction mocks base method.
-func (m *MockEmulator) AddTransaction(arg0 flow.TransactionBody) error {
+func (m *MockEmulator) AddTransaction(tx flow.TransactionBody) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddTransaction", arg0)
+	ret := m.ctrl.Call(m, "AddTransaction", tx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddTransaction indicates an expected call of AddTransaction.
-func (mr *MockEmulatorMockRecorder) AddTransaction(arg0 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) AddTransaction(tx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTransaction", reflect.TypeOf((*MockEmulator)(nil).AddTransaction), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTransaction", reflect.TypeOf((*MockEmulator)(nil).AddTransaction), tx)
 }
 
 // CommitBlock mocks base method.
@@ -103,17 +104,17 @@ func (mr *MockEmulatorMockRecorder) CoverageReport() *gomock.Call {
 }
 
 // CreateSnapshot mocks base method.
-func (m *MockEmulator) CreateSnapshot(arg0 string) error {
+func (m *MockEmulator) CreateSnapshot(name string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateSnapshot", arg0)
+	ret := m.ctrl.Call(m, "CreateSnapshot", name)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateSnapshot indicates an expected call of CreateSnapshot.
-func (mr *MockEmulatorMockRecorder) CreateSnapshot(arg0 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) CreateSnapshot(name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSnapshot", reflect.TypeOf((*MockEmulator)(nil).CreateSnapshot), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSnapshot", reflect.TypeOf((*MockEmulator)(nil).CreateSnapshot), name)
 }
 
 // DisableAutoMine mocks base method.
@@ -199,78 +200,78 @@ func (mr *MockEmulatorMockRecorder) ExecuteNextTransaction() *gomock.Call {
 }
 
 // ExecuteScript mocks base method.
-func (m *MockEmulator) ExecuteScript(arg0 []byte, arg1 [][]byte) (*types.ScriptResult, error) {
+func (m *MockEmulator) ExecuteScript(script []byte, arguments [][]byte) (*types.ScriptResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExecuteScript", arg0, arg1)
+	ret := m.ctrl.Call(m, "ExecuteScript", script, arguments)
 	ret0, _ := ret[0].(*types.ScriptResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ExecuteScript indicates an expected call of ExecuteScript.
-func (mr *MockEmulatorMockRecorder) ExecuteScript(arg0, arg1 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) ExecuteScript(script, arguments any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteScript", reflect.TypeOf((*MockEmulator)(nil).ExecuteScript), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteScript", reflect.TypeOf((*MockEmulator)(nil).ExecuteScript), script, arguments)
 }
 
 // ExecuteScriptAtBlockHeight mocks base method.
-func (m *MockEmulator) ExecuteScriptAtBlockHeight(arg0 []byte, arg1 [][]byte, arg2 uint64) (*types.ScriptResult, error) {
+func (m *MockEmulator) ExecuteScriptAtBlockHeight(script []byte, arguments [][]byte, blockHeight uint64) (*types.ScriptResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExecuteScriptAtBlockHeight", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "ExecuteScriptAtBlockHeight", script, arguments, blockHeight)
 	ret0, _ := ret[0].(*types.ScriptResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ExecuteScriptAtBlockHeight indicates an expected call of ExecuteScriptAtBlockHeight.
-func (mr *MockEmulatorMockRecorder) ExecuteScriptAtBlockHeight(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) ExecuteScriptAtBlockHeight(script, arguments, blockHeight any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteScriptAtBlockHeight", reflect.TypeOf((*MockEmulator)(nil).ExecuteScriptAtBlockHeight), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteScriptAtBlockHeight", reflect.TypeOf((*MockEmulator)(nil).ExecuteScriptAtBlockHeight), script, arguments, blockHeight)
 }
 
 // ExecuteScriptAtBlockID mocks base method.
-func (m *MockEmulator) ExecuteScriptAtBlockID(arg0 []byte, arg1 [][]byte, arg2 flow.Identifier) (*types.ScriptResult, error) {
+func (m *MockEmulator) ExecuteScriptAtBlockID(script []byte, arguments [][]byte, id flow.Identifier) (*types.ScriptResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExecuteScriptAtBlockID", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "ExecuteScriptAtBlockID", script, arguments, id)
 	ret0, _ := ret[0].(*types.ScriptResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ExecuteScriptAtBlockID indicates an expected call of ExecuteScriptAtBlockID.
-func (mr *MockEmulatorMockRecorder) ExecuteScriptAtBlockID(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) ExecuteScriptAtBlockID(script, arguments, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteScriptAtBlockID", reflect.TypeOf((*MockEmulator)(nil).ExecuteScriptAtBlockID), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteScriptAtBlockID", reflect.TypeOf((*MockEmulator)(nil).ExecuteScriptAtBlockID), script, arguments, id)
 }
 
 // GetAccount mocks base method.
-func (m *MockEmulator) GetAccount(arg0 flow.Address) (*flow.Account, error) {
+func (m *MockEmulator) GetAccount(address flow.Address) (*flow.Account, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAccount", arg0)
+	ret := m.ctrl.Call(m, "GetAccount", address)
 	ret0, _ := ret[0].(*flow.Account)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAccount indicates an expected call of GetAccount.
-func (mr *MockEmulatorMockRecorder) GetAccount(arg0 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) GetAccount(address any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccount", reflect.TypeOf((*MockEmulator)(nil).GetAccount), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccount", reflect.TypeOf((*MockEmulator)(nil).GetAccount), address)
 }
 
 // GetAccountAtBlockHeight mocks base method.
-func (m *MockEmulator) GetAccountAtBlockHeight(arg0 flow.Address, arg1 uint64) (*flow.Account, error) {
+func (m *MockEmulator) GetAccountAtBlockHeight(address flow.Address, blockHeight uint64) (*flow.Account, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAccountAtBlockHeight", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetAccountAtBlockHeight", address, blockHeight)
 	ret0, _ := ret[0].(*flow.Account)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAccountAtBlockHeight indicates an expected call of GetAccountAtBlockHeight.
-func (mr *MockEmulatorMockRecorder) GetAccountAtBlockHeight(arg0, arg1 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) GetAccountAtBlockHeight(address, blockHeight any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountAtBlockHeight", reflect.TypeOf((*MockEmulator)(nil).GetAccountAtBlockHeight), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountAtBlockHeight", reflect.TypeOf((*MockEmulator)(nil).GetAccountAtBlockHeight), address, blockHeight)
 }
 
 // GetAccountByIndex mocks base method.
@@ -289,123 +290,123 @@ func (mr *MockEmulatorMockRecorder) GetAccountByIndex(arg0 any) *gomock.Call {
 }
 
 // GetAccountUnsafe mocks base method.
-func (m *MockEmulator) GetAccountUnsafe(arg0 flow.Address) (*flow.Account, error) {
+func (m *MockEmulator) GetAccountUnsafe(address flow.Address) (*flow.Account, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAccountUnsafe", arg0)
+	ret := m.ctrl.Call(m, "GetAccountUnsafe", address)
 	ret0, _ := ret[0].(*flow.Account)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAccountUnsafe indicates an expected call of GetAccountUnsafe.
-func (mr *MockEmulatorMockRecorder) GetAccountUnsafe(arg0 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) GetAccountUnsafe(address any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountUnsafe", reflect.TypeOf((*MockEmulator)(nil).GetAccountUnsafe), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountUnsafe", reflect.TypeOf((*MockEmulator)(nil).GetAccountUnsafe), address)
 }
 
 // GetBlockByHeight mocks base method.
-func (m *MockEmulator) GetBlockByHeight(arg0 uint64) (*flow.Block, error) {
+func (m *MockEmulator) GetBlockByHeight(height uint64) (*flow.Block, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBlockByHeight", arg0)
+	ret := m.ctrl.Call(m, "GetBlockByHeight", height)
 	ret0, _ := ret[0].(*flow.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetBlockByHeight indicates an expected call of GetBlockByHeight.
-func (mr *MockEmulatorMockRecorder) GetBlockByHeight(arg0 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) GetBlockByHeight(height any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockByHeight", reflect.TypeOf((*MockEmulator)(nil).GetBlockByHeight), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockByHeight", reflect.TypeOf((*MockEmulator)(nil).GetBlockByHeight), height)
 }
 
 // GetBlockByID mocks base method.
-func (m *MockEmulator) GetBlockByID(arg0 flow.Identifier) (*flow.Block, error) {
+func (m *MockEmulator) GetBlockByID(id flow.Identifier) (*flow.Block, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBlockByID", arg0)
+	ret := m.ctrl.Call(m, "GetBlockByID", id)
 	ret0, _ := ret[0].(*flow.Block)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetBlockByID indicates an expected call of GetBlockByID.
-func (mr *MockEmulatorMockRecorder) GetBlockByID(arg0 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) GetBlockByID(id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockByID", reflect.TypeOf((*MockEmulator)(nil).GetBlockByID), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockByID", reflect.TypeOf((*MockEmulator)(nil).GetBlockByID), id)
 }
 
 // GetCollectionByID mocks base method.
-func (m *MockEmulator) GetCollectionByID(arg0 flow.Identifier) (*flow.LightCollection, error) {
+func (m *MockEmulator) GetCollectionByID(colID flow.Identifier) (*flow.LightCollection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCollectionByID", arg0)
+	ret := m.ctrl.Call(m, "GetCollectionByID", colID)
 	ret0, _ := ret[0].(*flow.LightCollection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetCollectionByID indicates an expected call of GetCollectionByID.
-func (mr *MockEmulatorMockRecorder) GetCollectionByID(arg0 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) GetCollectionByID(colID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCollectionByID", reflect.TypeOf((*MockEmulator)(nil).GetCollectionByID), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCollectionByID", reflect.TypeOf((*MockEmulator)(nil).GetCollectionByID), colID)
 }
 
 // GetEventsByHeight mocks base method.
-func (m *MockEmulator) GetEventsByHeight(arg0 uint64, arg1 string) ([]flow.Event, error) {
+func (m *MockEmulator) GetEventsByHeight(blockHeight uint64, eventType string) ([]flow.Event, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEventsByHeight", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetEventsByHeight", blockHeight, eventType)
 	ret0, _ := ret[0].([]flow.Event)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEventsByHeight indicates an expected call of GetEventsByHeight.
-func (mr *MockEmulatorMockRecorder) GetEventsByHeight(arg0, arg1 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) GetEventsByHeight(blockHeight, eventType any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventsByHeight", reflect.TypeOf((*MockEmulator)(nil).GetEventsByHeight), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventsByHeight", reflect.TypeOf((*MockEmulator)(nil).GetEventsByHeight), blockHeight, eventType)
 }
 
 // GetEventsForBlockIDs mocks base method.
-func (m *MockEmulator) GetEventsForBlockIDs(arg0 string, arg1 []flow.Identifier) ([]flow.BlockEvents, error) {
+func (m *MockEmulator) GetEventsForBlockIDs(eventType string, blockIDs []flow.Identifier) ([]flow.BlockEvents, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEventsForBlockIDs", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetEventsForBlockIDs", eventType, blockIDs)
 	ret0, _ := ret[0].([]flow.BlockEvents)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEventsForBlockIDs indicates an expected call of GetEventsForBlockIDs.
-func (mr *MockEmulatorMockRecorder) GetEventsForBlockIDs(arg0, arg1 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) GetEventsForBlockIDs(eventType, blockIDs any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventsForBlockIDs", reflect.TypeOf((*MockEmulator)(nil).GetEventsForBlockIDs), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventsForBlockIDs", reflect.TypeOf((*MockEmulator)(nil).GetEventsForBlockIDs), eventType, blockIDs)
 }
 
 // GetEventsForHeightRange mocks base method.
-func (m *MockEmulator) GetEventsForHeightRange(arg0 string, arg1, arg2 uint64) ([]flow.BlockEvents, error) {
+func (m *MockEmulator) GetEventsForHeightRange(eventType string, startHeight, endHeight uint64) ([]flow.BlockEvents, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEventsForHeightRange", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetEventsForHeightRange", eventType, startHeight, endHeight)
 	ret0, _ := ret[0].([]flow.BlockEvents)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEventsForHeightRange indicates an expected call of GetEventsForHeightRange.
-func (mr *MockEmulatorMockRecorder) GetEventsForHeightRange(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) GetEventsForHeightRange(eventType, startHeight, endHeight any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventsForHeightRange", reflect.TypeOf((*MockEmulator)(nil).GetEventsForHeightRange), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventsForHeightRange", reflect.TypeOf((*MockEmulator)(nil).GetEventsForHeightRange), eventType, startHeight, endHeight)
 }
 
 // GetFullCollectionByID mocks base method.
-func (m *MockEmulator) GetFullCollectionByID(arg0 flow.Identifier) (*flow.Collection, error) {
+func (m *MockEmulator) GetFullCollectionByID(colID flow.Identifier) (*flow.Collection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFullCollectionByID", arg0)
+	ret := m.ctrl.Call(m, "GetFullCollectionByID", colID)
 	ret0, _ := ret[0].(*flow.Collection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetFullCollectionByID indicates an expected call of GetFullCollectionByID.
-func (mr *MockEmulatorMockRecorder) GetFullCollectionByID(arg0 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) GetFullCollectionByID(colID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFullCollectionByID", reflect.TypeOf((*MockEmulator)(nil).GetFullCollectionByID), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFullCollectionByID", reflect.TypeOf((*MockEmulator)(nil).GetFullCollectionByID), colID)
 }
 
 // GetLatestBlock mocks base method.
@@ -453,91 +454,91 @@ func (mr *MockEmulatorMockRecorder) GetNetworkParameters() *gomock.Call {
 }
 
 // GetSourceFile mocks base method.
-func (m *MockEmulator) GetSourceFile(arg0 common.Location) string {
+func (m *MockEmulator) GetSourceFile(location common.Location) string {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSourceFile", arg0)
+	ret := m.ctrl.Call(m, "GetSourceFile", location)
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
 // GetSourceFile indicates an expected call of GetSourceFile.
-func (mr *MockEmulatorMockRecorder) GetSourceFile(arg0 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) GetSourceFile(location any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSourceFile", reflect.TypeOf((*MockEmulator)(nil).GetSourceFile), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSourceFile", reflect.TypeOf((*MockEmulator)(nil).GetSourceFile), location)
 }
 
 // GetTransaction mocks base method.
-func (m *MockEmulator) GetTransaction(arg0 flow.Identifier) (*flow.TransactionBody, error) {
+func (m *MockEmulator) GetTransaction(txID flow.Identifier) (*flow.TransactionBody, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTransaction", arg0)
+	ret := m.ctrl.Call(m, "GetTransaction", txID)
 	ret0, _ := ret[0].(*flow.TransactionBody)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetTransaction indicates an expected call of GetTransaction.
-func (mr *MockEmulatorMockRecorder) GetTransaction(arg0 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) GetTransaction(txID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransaction", reflect.TypeOf((*MockEmulator)(nil).GetTransaction), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransaction", reflect.TypeOf((*MockEmulator)(nil).GetTransaction), txID)
 }
 
 // GetTransactionResult mocks base method.
-func (m *MockEmulator) GetTransactionResult(arg0 flow.Identifier) (*access.TransactionResult, error) {
+func (m *MockEmulator) GetTransactionResult(txID flow.Identifier) (*access.TransactionResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTransactionResult", arg0)
+	ret := m.ctrl.Call(m, "GetTransactionResult", txID)
 	ret0, _ := ret[0].(*access.TransactionResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetTransactionResult indicates an expected call of GetTransactionResult.
-func (mr *MockEmulatorMockRecorder) GetTransactionResult(arg0 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) GetTransactionResult(txID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionResult", reflect.TypeOf((*MockEmulator)(nil).GetTransactionResult), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionResult", reflect.TypeOf((*MockEmulator)(nil).GetTransactionResult), txID)
 }
 
 // GetTransactionResultsByBlockID mocks base method.
-func (m *MockEmulator) GetTransactionResultsByBlockID(arg0 flow.Identifier) ([]*access.TransactionResult, error) {
+func (m *MockEmulator) GetTransactionResultsByBlockID(blockID flow.Identifier) ([]*access.TransactionResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTransactionResultsByBlockID", arg0)
+	ret := m.ctrl.Call(m, "GetTransactionResultsByBlockID", blockID)
 	ret0, _ := ret[0].([]*access.TransactionResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetTransactionResultsByBlockID indicates an expected call of GetTransactionResultsByBlockID.
-func (mr *MockEmulatorMockRecorder) GetTransactionResultsByBlockID(arg0 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) GetTransactionResultsByBlockID(blockID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionResultsByBlockID", reflect.TypeOf((*MockEmulator)(nil).GetTransactionResultsByBlockID), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionResultsByBlockID", reflect.TypeOf((*MockEmulator)(nil).GetTransactionResultsByBlockID), blockID)
 }
 
 // GetTransactionsByBlockID mocks base method.
-func (m *MockEmulator) GetTransactionsByBlockID(arg0 flow.Identifier) ([]*flow.TransactionBody, error) {
+func (m *MockEmulator) GetTransactionsByBlockID(blockID flow.Identifier) ([]*flow.TransactionBody, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTransactionsByBlockID", arg0)
+	ret := m.ctrl.Call(m, "GetTransactionsByBlockID", blockID)
 	ret0, _ := ret[0].([]*flow.TransactionBody)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetTransactionsByBlockID indicates an expected call of GetTransactionsByBlockID.
-func (mr *MockEmulatorMockRecorder) GetTransactionsByBlockID(arg0 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) GetTransactionsByBlockID(blockID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionsByBlockID", reflect.TypeOf((*MockEmulator)(nil).GetTransactionsByBlockID), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionsByBlockID", reflect.TypeOf((*MockEmulator)(nil).GetTransactionsByBlockID), blockID)
 }
 
 // LoadSnapshot mocks base method.
-func (m *MockEmulator) LoadSnapshot(arg0 string) error {
+func (m *MockEmulator) LoadSnapshot(name string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LoadSnapshot", arg0)
+	ret := m.ctrl.Call(m, "LoadSnapshot", name)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // LoadSnapshot indicates an expected call of LoadSnapshot.
-func (mr *MockEmulatorMockRecorder) LoadSnapshot(arg0 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) LoadSnapshot(name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadSnapshot", reflect.TypeOf((*MockEmulator)(nil).LoadSnapshot), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadSnapshot", reflect.TypeOf((*MockEmulator)(nil).LoadSnapshot), name)
 }
 
 // Ping mocks base method.
@@ -567,31 +568,31 @@ func (mr *MockEmulatorMockRecorder) ResetCoverageReport() *gomock.Call {
 }
 
 // RollbackToBlockHeight mocks base method.
-func (m *MockEmulator) RollbackToBlockHeight(arg0 uint64) error {
+func (m *MockEmulator) RollbackToBlockHeight(height uint64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RollbackToBlockHeight", arg0)
+	ret := m.ctrl.Call(m, "RollbackToBlockHeight", height)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RollbackToBlockHeight indicates an expected call of RollbackToBlockHeight.
-func (mr *MockEmulatorMockRecorder) RollbackToBlockHeight(arg0 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) RollbackToBlockHeight(height any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RollbackToBlockHeight", reflect.TypeOf((*MockEmulator)(nil).RollbackToBlockHeight), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RollbackToBlockHeight", reflect.TypeOf((*MockEmulator)(nil).RollbackToBlockHeight), height)
 }
 
 // SendTransaction mocks base method.
-func (m *MockEmulator) SendTransaction(arg0 *flow.TransactionBody) error {
+func (m *MockEmulator) SendTransaction(tx *flow.TransactionBody) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendTransaction", arg0)
+	ret := m.ctrl.Call(m, "SendTransaction", tx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SendTransaction indicates an expected call of SendTransaction.
-func (mr *MockEmulatorMockRecorder) SendTransaction(arg0 any) *gomock.Call {
+func (mr *MockEmulatorMockRecorder) SendTransaction(tx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendTransaction", reflect.TypeOf((*MockEmulator)(nil).SendTransaction), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendTransaction", reflect.TypeOf((*MockEmulator)(nil).SendTransaction), tx)
 }
 
 // ServiceKey mocks base method.

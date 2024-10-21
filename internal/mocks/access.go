@@ -22,6 +22,7 @@ import (
 type MockAccessAPIClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockAccessAPIClientMockRecorder
+	isgomock struct{}
 }
 
 // MockAccessAPIClientMockRecorder is the mock recorder for MockAccessAPIClient.
@@ -42,10 +43,10 @@ func (m *MockAccessAPIClient) EXPECT() *MockAccessAPIClientMockRecorder {
 }
 
 // ExecuteScriptAtBlockHeight mocks base method.
-func (m *MockAccessAPIClient) ExecuteScriptAtBlockHeight(arg0 context.Context, arg1 *access.ExecuteScriptAtBlockHeightRequest, arg2 ...grpc.CallOption) (*access.ExecuteScriptResponse, error) {
+func (m *MockAccessAPIClient) ExecuteScriptAtBlockHeight(ctx context.Context, in *access.ExecuteScriptAtBlockHeightRequest, opts ...grpc.CallOption) (*access.ExecuteScriptResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ExecuteScriptAtBlockHeight", varargs...)
@@ -55,17 +56,17 @@ func (m *MockAccessAPIClient) ExecuteScriptAtBlockHeight(arg0 context.Context, a
 }
 
 // ExecuteScriptAtBlockHeight indicates an expected call of ExecuteScriptAtBlockHeight.
-func (mr *MockAccessAPIClientMockRecorder) ExecuteScriptAtBlockHeight(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) ExecuteScriptAtBlockHeight(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteScriptAtBlockHeight", reflect.TypeOf((*MockAccessAPIClient)(nil).ExecuteScriptAtBlockHeight), varargs...)
 }
 
 // ExecuteScriptAtBlockID mocks base method.
-func (m *MockAccessAPIClient) ExecuteScriptAtBlockID(arg0 context.Context, arg1 *access.ExecuteScriptAtBlockIDRequest, arg2 ...grpc.CallOption) (*access.ExecuteScriptResponse, error) {
+func (m *MockAccessAPIClient) ExecuteScriptAtBlockID(ctx context.Context, in *access.ExecuteScriptAtBlockIDRequest, opts ...grpc.CallOption) (*access.ExecuteScriptResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ExecuteScriptAtBlockID", varargs...)
@@ -75,17 +76,17 @@ func (m *MockAccessAPIClient) ExecuteScriptAtBlockID(arg0 context.Context, arg1 
 }
 
 // ExecuteScriptAtBlockID indicates an expected call of ExecuteScriptAtBlockID.
-func (mr *MockAccessAPIClientMockRecorder) ExecuteScriptAtBlockID(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) ExecuteScriptAtBlockID(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteScriptAtBlockID", reflect.TypeOf((*MockAccessAPIClient)(nil).ExecuteScriptAtBlockID), varargs...)
 }
 
 // ExecuteScriptAtLatestBlock mocks base method.
-func (m *MockAccessAPIClient) ExecuteScriptAtLatestBlock(arg0 context.Context, arg1 *access.ExecuteScriptAtLatestBlockRequest, arg2 ...grpc.CallOption) (*access.ExecuteScriptResponse, error) {
+func (m *MockAccessAPIClient) ExecuteScriptAtLatestBlock(ctx context.Context, in *access.ExecuteScriptAtLatestBlockRequest, opts ...grpc.CallOption) (*access.ExecuteScriptResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "ExecuteScriptAtLatestBlock", varargs...)
@@ -95,17 +96,17 @@ func (m *MockAccessAPIClient) ExecuteScriptAtLatestBlock(arg0 context.Context, a
 }
 
 // ExecuteScriptAtLatestBlock indicates an expected call of ExecuteScriptAtLatestBlock.
-func (mr *MockAccessAPIClientMockRecorder) ExecuteScriptAtLatestBlock(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) ExecuteScriptAtLatestBlock(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteScriptAtLatestBlock", reflect.TypeOf((*MockAccessAPIClient)(nil).ExecuteScriptAtLatestBlock), varargs...)
 }
 
 // GetAccount mocks base method.
-func (m *MockAccessAPIClient) GetAccount(arg0 context.Context, arg1 *access.GetAccountRequest, arg2 ...grpc.CallOption) (*access.GetAccountResponse, error) {
+func (m *MockAccessAPIClient) GetAccount(ctx context.Context, in *access.GetAccountRequest, opts ...grpc.CallOption) (*access.GetAccountResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetAccount", varargs...)
@@ -115,17 +116,17 @@ func (m *MockAccessAPIClient) GetAccount(arg0 context.Context, arg1 *access.GetA
 }
 
 // GetAccount indicates an expected call of GetAccount.
-func (mr *MockAccessAPIClientMockRecorder) GetAccount(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetAccount(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccount", reflect.TypeOf((*MockAccessAPIClient)(nil).GetAccount), varargs...)
 }
 
 // GetAccountAtBlockHeight mocks base method.
-func (m *MockAccessAPIClient) GetAccountAtBlockHeight(arg0 context.Context, arg1 *access.GetAccountAtBlockHeightRequest, arg2 ...grpc.CallOption) (*access.AccountResponse, error) {
+func (m *MockAccessAPIClient) GetAccountAtBlockHeight(ctx context.Context, in *access.GetAccountAtBlockHeightRequest, opts ...grpc.CallOption) (*access.AccountResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetAccountAtBlockHeight", varargs...)
@@ -135,17 +136,17 @@ func (m *MockAccessAPIClient) GetAccountAtBlockHeight(arg0 context.Context, arg1
 }
 
 // GetAccountAtBlockHeight indicates an expected call of GetAccountAtBlockHeight.
-func (mr *MockAccessAPIClientMockRecorder) GetAccountAtBlockHeight(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetAccountAtBlockHeight(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountAtBlockHeight", reflect.TypeOf((*MockAccessAPIClient)(nil).GetAccountAtBlockHeight), varargs...)
 }
 
 // GetAccountAtLatestBlock mocks base method.
-func (m *MockAccessAPIClient) GetAccountAtLatestBlock(arg0 context.Context, arg1 *access.GetAccountAtLatestBlockRequest, arg2 ...grpc.CallOption) (*access.AccountResponse, error) {
+func (m *MockAccessAPIClient) GetAccountAtLatestBlock(ctx context.Context, in *access.GetAccountAtLatestBlockRequest, opts ...grpc.CallOption) (*access.AccountResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetAccountAtLatestBlock", varargs...)
@@ -155,17 +156,17 @@ func (m *MockAccessAPIClient) GetAccountAtLatestBlock(arg0 context.Context, arg1
 }
 
 // GetAccountAtLatestBlock indicates an expected call of GetAccountAtLatestBlock.
-func (mr *MockAccessAPIClientMockRecorder) GetAccountAtLatestBlock(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetAccountAtLatestBlock(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountAtLatestBlock", reflect.TypeOf((*MockAccessAPIClient)(nil).GetAccountAtLatestBlock), varargs...)
 }
 
 // GetAccountBalanceAtBlockHeight mocks base method.
-func (m *MockAccessAPIClient) GetAccountBalanceAtBlockHeight(arg0 context.Context, arg1 *access.GetAccountBalanceAtBlockHeightRequest, arg2 ...grpc.CallOption) (*access.AccountBalanceResponse, error) {
+func (m *MockAccessAPIClient) GetAccountBalanceAtBlockHeight(ctx context.Context, in *access.GetAccountBalanceAtBlockHeightRequest, opts ...grpc.CallOption) (*access.AccountBalanceResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetAccountBalanceAtBlockHeight", varargs...)
@@ -175,17 +176,17 @@ func (m *MockAccessAPIClient) GetAccountBalanceAtBlockHeight(arg0 context.Contex
 }
 
 // GetAccountBalanceAtBlockHeight indicates an expected call of GetAccountBalanceAtBlockHeight.
-func (mr *MockAccessAPIClientMockRecorder) GetAccountBalanceAtBlockHeight(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetAccountBalanceAtBlockHeight(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountBalanceAtBlockHeight", reflect.TypeOf((*MockAccessAPIClient)(nil).GetAccountBalanceAtBlockHeight), varargs...)
 }
 
 // GetAccountBalanceAtLatestBlock mocks base method.
-func (m *MockAccessAPIClient) GetAccountBalanceAtLatestBlock(arg0 context.Context, arg1 *access.GetAccountBalanceAtLatestBlockRequest, arg2 ...grpc.CallOption) (*access.AccountBalanceResponse, error) {
+func (m *MockAccessAPIClient) GetAccountBalanceAtLatestBlock(ctx context.Context, in *access.GetAccountBalanceAtLatestBlockRequest, opts ...grpc.CallOption) (*access.AccountBalanceResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetAccountBalanceAtLatestBlock", varargs...)
@@ -195,17 +196,17 @@ func (m *MockAccessAPIClient) GetAccountBalanceAtLatestBlock(arg0 context.Contex
 }
 
 // GetAccountBalanceAtLatestBlock indicates an expected call of GetAccountBalanceAtLatestBlock.
-func (mr *MockAccessAPIClientMockRecorder) GetAccountBalanceAtLatestBlock(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetAccountBalanceAtLatestBlock(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountBalanceAtLatestBlock", reflect.TypeOf((*MockAccessAPIClient)(nil).GetAccountBalanceAtLatestBlock), varargs...)
 }
 
 // GetAccountKeyAtBlockHeight mocks base method.
-func (m *MockAccessAPIClient) GetAccountKeyAtBlockHeight(arg0 context.Context, arg1 *access.GetAccountKeyAtBlockHeightRequest, arg2 ...grpc.CallOption) (*access.AccountKeyResponse, error) {
+func (m *MockAccessAPIClient) GetAccountKeyAtBlockHeight(ctx context.Context, in *access.GetAccountKeyAtBlockHeightRequest, opts ...grpc.CallOption) (*access.AccountKeyResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetAccountKeyAtBlockHeight", varargs...)
@@ -215,17 +216,17 @@ func (m *MockAccessAPIClient) GetAccountKeyAtBlockHeight(arg0 context.Context, a
 }
 
 // GetAccountKeyAtBlockHeight indicates an expected call of GetAccountKeyAtBlockHeight.
-func (mr *MockAccessAPIClientMockRecorder) GetAccountKeyAtBlockHeight(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetAccountKeyAtBlockHeight(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountKeyAtBlockHeight", reflect.TypeOf((*MockAccessAPIClient)(nil).GetAccountKeyAtBlockHeight), varargs...)
 }
 
 // GetAccountKeyAtLatestBlock mocks base method.
-func (m *MockAccessAPIClient) GetAccountKeyAtLatestBlock(arg0 context.Context, arg1 *access.GetAccountKeyAtLatestBlockRequest, arg2 ...grpc.CallOption) (*access.AccountKeyResponse, error) {
+func (m *MockAccessAPIClient) GetAccountKeyAtLatestBlock(ctx context.Context, in *access.GetAccountKeyAtLatestBlockRequest, opts ...grpc.CallOption) (*access.AccountKeyResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetAccountKeyAtLatestBlock", varargs...)
@@ -235,17 +236,17 @@ func (m *MockAccessAPIClient) GetAccountKeyAtLatestBlock(arg0 context.Context, a
 }
 
 // GetAccountKeyAtLatestBlock indicates an expected call of GetAccountKeyAtLatestBlock.
-func (mr *MockAccessAPIClientMockRecorder) GetAccountKeyAtLatestBlock(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetAccountKeyAtLatestBlock(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountKeyAtLatestBlock", reflect.TypeOf((*MockAccessAPIClient)(nil).GetAccountKeyAtLatestBlock), varargs...)
 }
 
 // GetAccountKeysAtBlockHeight mocks base method.
-func (m *MockAccessAPIClient) GetAccountKeysAtBlockHeight(arg0 context.Context, arg1 *access.GetAccountKeysAtBlockHeightRequest, arg2 ...grpc.CallOption) (*access.AccountKeysResponse, error) {
+func (m *MockAccessAPIClient) GetAccountKeysAtBlockHeight(ctx context.Context, in *access.GetAccountKeysAtBlockHeightRequest, opts ...grpc.CallOption) (*access.AccountKeysResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetAccountKeysAtBlockHeight", varargs...)
@@ -255,17 +256,17 @@ func (m *MockAccessAPIClient) GetAccountKeysAtBlockHeight(arg0 context.Context, 
 }
 
 // GetAccountKeysAtBlockHeight indicates an expected call of GetAccountKeysAtBlockHeight.
-func (mr *MockAccessAPIClientMockRecorder) GetAccountKeysAtBlockHeight(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetAccountKeysAtBlockHeight(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountKeysAtBlockHeight", reflect.TypeOf((*MockAccessAPIClient)(nil).GetAccountKeysAtBlockHeight), varargs...)
 }
 
 // GetAccountKeysAtLatestBlock mocks base method.
-func (m *MockAccessAPIClient) GetAccountKeysAtLatestBlock(arg0 context.Context, arg1 *access.GetAccountKeysAtLatestBlockRequest, arg2 ...grpc.CallOption) (*access.AccountKeysResponse, error) {
+func (m *MockAccessAPIClient) GetAccountKeysAtLatestBlock(ctx context.Context, in *access.GetAccountKeysAtLatestBlockRequest, opts ...grpc.CallOption) (*access.AccountKeysResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetAccountKeysAtLatestBlock", varargs...)
@@ -275,17 +276,17 @@ func (m *MockAccessAPIClient) GetAccountKeysAtLatestBlock(arg0 context.Context, 
 }
 
 // GetAccountKeysAtLatestBlock indicates an expected call of GetAccountKeysAtLatestBlock.
-func (mr *MockAccessAPIClientMockRecorder) GetAccountKeysAtLatestBlock(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetAccountKeysAtLatestBlock(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountKeysAtLatestBlock", reflect.TypeOf((*MockAccessAPIClient)(nil).GetAccountKeysAtLatestBlock), varargs...)
 }
 
 // GetBlockByHeight mocks base method.
-func (m *MockAccessAPIClient) GetBlockByHeight(arg0 context.Context, arg1 *access.GetBlockByHeightRequest, arg2 ...grpc.CallOption) (*access.BlockResponse, error) {
+func (m *MockAccessAPIClient) GetBlockByHeight(ctx context.Context, in *access.GetBlockByHeightRequest, opts ...grpc.CallOption) (*access.BlockResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetBlockByHeight", varargs...)
@@ -295,17 +296,17 @@ func (m *MockAccessAPIClient) GetBlockByHeight(arg0 context.Context, arg1 *acces
 }
 
 // GetBlockByHeight indicates an expected call of GetBlockByHeight.
-func (mr *MockAccessAPIClientMockRecorder) GetBlockByHeight(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetBlockByHeight(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockByHeight", reflect.TypeOf((*MockAccessAPIClient)(nil).GetBlockByHeight), varargs...)
 }
 
 // GetBlockByID mocks base method.
-func (m *MockAccessAPIClient) GetBlockByID(arg0 context.Context, arg1 *access.GetBlockByIDRequest, arg2 ...grpc.CallOption) (*access.BlockResponse, error) {
+func (m *MockAccessAPIClient) GetBlockByID(ctx context.Context, in *access.GetBlockByIDRequest, opts ...grpc.CallOption) (*access.BlockResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetBlockByID", varargs...)
@@ -315,17 +316,17 @@ func (m *MockAccessAPIClient) GetBlockByID(arg0 context.Context, arg1 *access.Ge
 }
 
 // GetBlockByID indicates an expected call of GetBlockByID.
-func (mr *MockAccessAPIClientMockRecorder) GetBlockByID(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetBlockByID(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockByID", reflect.TypeOf((*MockAccessAPIClient)(nil).GetBlockByID), varargs...)
 }
 
 // GetBlockHeaderByHeight mocks base method.
-func (m *MockAccessAPIClient) GetBlockHeaderByHeight(arg0 context.Context, arg1 *access.GetBlockHeaderByHeightRequest, arg2 ...grpc.CallOption) (*access.BlockHeaderResponse, error) {
+func (m *MockAccessAPIClient) GetBlockHeaderByHeight(ctx context.Context, in *access.GetBlockHeaderByHeightRequest, opts ...grpc.CallOption) (*access.BlockHeaderResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetBlockHeaderByHeight", varargs...)
@@ -335,17 +336,17 @@ func (m *MockAccessAPIClient) GetBlockHeaderByHeight(arg0 context.Context, arg1 
 }
 
 // GetBlockHeaderByHeight indicates an expected call of GetBlockHeaderByHeight.
-func (mr *MockAccessAPIClientMockRecorder) GetBlockHeaderByHeight(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetBlockHeaderByHeight(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockHeaderByHeight", reflect.TypeOf((*MockAccessAPIClient)(nil).GetBlockHeaderByHeight), varargs...)
 }
 
 // GetBlockHeaderByID mocks base method.
-func (m *MockAccessAPIClient) GetBlockHeaderByID(arg0 context.Context, arg1 *access.GetBlockHeaderByIDRequest, arg2 ...grpc.CallOption) (*access.BlockHeaderResponse, error) {
+func (m *MockAccessAPIClient) GetBlockHeaderByID(ctx context.Context, in *access.GetBlockHeaderByIDRequest, opts ...grpc.CallOption) (*access.BlockHeaderResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetBlockHeaderByID", varargs...)
@@ -355,17 +356,17 @@ func (m *MockAccessAPIClient) GetBlockHeaderByID(arg0 context.Context, arg1 *acc
 }
 
 // GetBlockHeaderByID indicates an expected call of GetBlockHeaderByID.
-func (mr *MockAccessAPIClientMockRecorder) GetBlockHeaderByID(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetBlockHeaderByID(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockHeaderByID", reflect.TypeOf((*MockAccessAPIClient)(nil).GetBlockHeaderByID), varargs...)
 }
 
 // GetCollectionByID mocks base method.
-func (m *MockAccessAPIClient) GetCollectionByID(arg0 context.Context, arg1 *access.GetCollectionByIDRequest, arg2 ...grpc.CallOption) (*access.CollectionResponse, error) {
+func (m *MockAccessAPIClient) GetCollectionByID(ctx context.Context, in *access.GetCollectionByIDRequest, opts ...grpc.CallOption) (*access.CollectionResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetCollectionByID", varargs...)
@@ -375,17 +376,17 @@ func (m *MockAccessAPIClient) GetCollectionByID(arg0 context.Context, arg1 *acce
 }
 
 // GetCollectionByID indicates an expected call of GetCollectionByID.
-func (mr *MockAccessAPIClientMockRecorder) GetCollectionByID(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetCollectionByID(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCollectionByID", reflect.TypeOf((*MockAccessAPIClient)(nil).GetCollectionByID), varargs...)
 }
 
 // GetEventsForBlockIDs mocks base method.
-func (m *MockAccessAPIClient) GetEventsForBlockIDs(arg0 context.Context, arg1 *access.GetEventsForBlockIDsRequest, arg2 ...grpc.CallOption) (*access.EventsResponse, error) {
+func (m *MockAccessAPIClient) GetEventsForBlockIDs(ctx context.Context, in *access.GetEventsForBlockIDsRequest, opts ...grpc.CallOption) (*access.EventsResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetEventsForBlockIDs", varargs...)
@@ -395,17 +396,17 @@ func (m *MockAccessAPIClient) GetEventsForBlockIDs(arg0 context.Context, arg1 *a
 }
 
 // GetEventsForBlockIDs indicates an expected call of GetEventsForBlockIDs.
-func (mr *MockAccessAPIClientMockRecorder) GetEventsForBlockIDs(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetEventsForBlockIDs(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventsForBlockIDs", reflect.TypeOf((*MockAccessAPIClient)(nil).GetEventsForBlockIDs), varargs...)
 }
 
 // GetEventsForHeightRange mocks base method.
-func (m *MockAccessAPIClient) GetEventsForHeightRange(arg0 context.Context, arg1 *access.GetEventsForHeightRangeRequest, arg2 ...grpc.CallOption) (*access.EventsResponse, error) {
+func (m *MockAccessAPIClient) GetEventsForHeightRange(ctx context.Context, in *access.GetEventsForHeightRangeRequest, opts ...grpc.CallOption) (*access.EventsResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetEventsForHeightRange", varargs...)
@@ -415,17 +416,17 @@ func (m *MockAccessAPIClient) GetEventsForHeightRange(arg0 context.Context, arg1
 }
 
 // GetEventsForHeightRange indicates an expected call of GetEventsForHeightRange.
-func (mr *MockAccessAPIClientMockRecorder) GetEventsForHeightRange(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetEventsForHeightRange(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventsForHeightRange", reflect.TypeOf((*MockAccessAPIClient)(nil).GetEventsForHeightRange), varargs...)
 }
 
 // GetExecutionResultByID mocks base method.
-func (m *MockAccessAPIClient) GetExecutionResultByID(arg0 context.Context, arg1 *access.GetExecutionResultByIDRequest, arg2 ...grpc.CallOption) (*access.ExecutionResultByIDResponse, error) {
+func (m *MockAccessAPIClient) GetExecutionResultByID(ctx context.Context, in *access.GetExecutionResultByIDRequest, opts ...grpc.CallOption) (*access.ExecutionResultByIDResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetExecutionResultByID", varargs...)
@@ -435,17 +436,17 @@ func (m *MockAccessAPIClient) GetExecutionResultByID(arg0 context.Context, arg1 
 }
 
 // GetExecutionResultByID indicates an expected call of GetExecutionResultByID.
-func (mr *MockAccessAPIClientMockRecorder) GetExecutionResultByID(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetExecutionResultByID(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExecutionResultByID", reflect.TypeOf((*MockAccessAPIClient)(nil).GetExecutionResultByID), varargs...)
 }
 
 // GetExecutionResultForBlockID mocks base method.
-func (m *MockAccessAPIClient) GetExecutionResultForBlockID(arg0 context.Context, arg1 *access.GetExecutionResultForBlockIDRequest, arg2 ...grpc.CallOption) (*access.ExecutionResultForBlockIDResponse, error) {
+func (m *MockAccessAPIClient) GetExecutionResultForBlockID(ctx context.Context, in *access.GetExecutionResultForBlockIDRequest, opts ...grpc.CallOption) (*access.ExecutionResultForBlockIDResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetExecutionResultForBlockID", varargs...)
@@ -455,17 +456,17 @@ func (m *MockAccessAPIClient) GetExecutionResultForBlockID(arg0 context.Context,
 }
 
 // GetExecutionResultForBlockID indicates an expected call of GetExecutionResultForBlockID.
-func (mr *MockAccessAPIClientMockRecorder) GetExecutionResultForBlockID(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetExecutionResultForBlockID(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExecutionResultForBlockID", reflect.TypeOf((*MockAccessAPIClient)(nil).GetExecutionResultForBlockID), varargs...)
 }
 
 // GetFullCollectionByID mocks base method.
-func (m *MockAccessAPIClient) GetFullCollectionByID(arg0 context.Context, arg1 *access.GetFullCollectionByIDRequest, arg2 ...grpc.CallOption) (*access.FullCollectionResponse, error) {
+func (m *MockAccessAPIClient) GetFullCollectionByID(ctx context.Context, in *access.GetFullCollectionByIDRequest, opts ...grpc.CallOption) (*access.FullCollectionResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetFullCollectionByID", varargs...)
@@ -475,17 +476,17 @@ func (m *MockAccessAPIClient) GetFullCollectionByID(arg0 context.Context, arg1 *
 }
 
 // GetFullCollectionByID indicates an expected call of GetFullCollectionByID.
-func (mr *MockAccessAPIClientMockRecorder) GetFullCollectionByID(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetFullCollectionByID(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFullCollectionByID", reflect.TypeOf((*MockAccessAPIClient)(nil).GetFullCollectionByID), varargs...)
 }
 
 // GetLatestBlock mocks base method.
-func (m *MockAccessAPIClient) GetLatestBlock(arg0 context.Context, arg1 *access.GetLatestBlockRequest, arg2 ...grpc.CallOption) (*access.BlockResponse, error) {
+func (m *MockAccessAPIClient) GetLatestBlock(ctx context.Context, in *access.GetLatestBlockRequest, opts ...grpc.CallOption) (*access.BlockResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetLatestBlock", varargs...)
@@ -495,17 +496,17 @@ func (m *MockAccessAPIClient) GetLatestBlock(arg0 context.Context, arg1 *access.
 }
 
 // GetLatestBlock indicates an expected call of GetLatestBlock.
-func (mr *MockAccessAPIClientMockRecorder) GetLatestBlock(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetLatestBlock(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestBlock", reflect.TypeOf((*MockAccessAPIClient)(nil).GetLatestBlock), varargs...)
 }
 
 // GetLatestBlockHeader mocks base method.
-func (m *MockAccessAPIClient) GetLatestBlockHeader(arg0 context.Context, arg1 *access.GetLatestBlockHeaderRequest, arg2 ...grpc.CallOption) (*access.BlockHeaderResponse, error) {
+func (m *MockAccessAPIClient) GetLatestBlockHeader(ctx context.Context, in *access.GetLatestBlockHeaderRequest, opts ...grpc.CallOption) (*access.BlockHeaderResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetLatestBlockHeader", varargs...)
@@ -515,17 +516,17 @@ func (m *MockAccessAPIClient) GetLatestBlockHeader(arg0 context.Context, arg1 *a
 }
 
 // GetLatestBlockHeader indicates an expected call of GetLatestBlockHeader.
-func (mr *MockAccessAPIClientMockRecorder) GetLatestBlockHeader(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetLatestBlockHeader(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestBlockHeader", reflect.TypeOf((*MockAccessAPIClient)(nil).GetLatestBlockHeader), varargs...)
 }
 
 // GetLatestProtocolStateSnapshot mocks base method.
-func (m *MockAccessAPIClient) GetLatestProtocolStateSnapshot(arg0 context.Context, arg1 *access.GetLatestProtocolStateSnapshotRequest, arg2 ...grpc.CallOption) (*access.ProtocolStateSnapshotResponse, error) {
+func (m *MockAccessAPIClient) GetLatestProtocolStateSnapshot(ctx context.Context, in *access.GetLatestProtocolStateSnapshotRequest, opts ...grpc.CallOption) (*access.ProtocolStateSnapshotResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetLatestProtocolStateSnapshot", varargs...)
@@ -535,17 +536,17 @@ func (m *MockAccessAPIClient) GetLatestProtocolStateSnapshot(arg0 context.Contex
 }
 
 // GetLatestProtocolStateSnapshot indicates an expected call of GetLatestProtocolStateSnapshot.
-func (mr *MockAccessAPIClientMockRecorder) GetLatestProtocolStateSnapshot(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetLatestProtocolStateSnapshot(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestProtocolStateSnapshot", reflect.TypeOf((*MockAccessAPIClient)(nil).GetLatestProtocolStateSnapshot), varargs...)
 }
 
 // GetNetworkParameters mocks base method.
-func (m *MockAccessAPIClient) GetNetworkParameters(arg0 context.Context, arg1 *access.GetNetworkParametersRequest, arg2 ...grpc.CallOption) (*access.GetNetworkParametersResponse, error) {
+func (m *MockAccessAPIClient) GetNetworkParameters(ctx context.Context, in *access.GetNetworkParametersRequest, opts ...grpc.CallOption) (*access.GetNetworkParametersResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetNetworkParameters", varargs...)
@@ -555,17 +556,17 @@ func (m *MockAccessAPIClient) GetNetworkParameters(arg0 context.Context, arg1 *a
 }
 
 // GetNetworkParameters indicates an expected call of GetNetworkParameters.
-func (mr *MockAccessAPIClientMockRecorder) GetNetworkParameters(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetNetworkParameters(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetworkParameters", reflect.TypeOf((*MockAccessAPIClient)(nil).GetNetworkParameters), varargs...)
 }
 
 // GetNodeVersionInfo mocks base method.
-func (m *MockAccessAPIClient) GetNodeVersionInfo(arg0 context.Context, arg1 *access.GetNodeVersionInfoRequest, arg2 ...grpc.CallOption) (*access.GetNodeVersionInfoResponse, error) {
+func (m *MockAccessAPIClient) GetNodeVersionInfo(ctx context.Context, in *access.GetNodeVersionInfoRequest, opts ...grpc.CallOption) (*access.GetNodeVersionInfoResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetNodeVersionInfo", varargs...)
@@ -575,17 +576,17 @@ func (m *MockAccessAPIClient) GetNodeVersionInfo(arg0 context.Context, arg1 *acc
 }
 
 // GetNodeVersionInfo indicates an expected call of GetNodeVersionInfo.
-func (mr *MockAccessAPIClientMockRecorder) GetNodeVersionInfo(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetNodeVersionInfo(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNodeVersionInfo", reflect.TypeOf((*MockAccessAPIClient)(nil).GetNodeVersionInfo), varargs...)
 }
 
 // GetProtocolStateSnapshotByBlockID mocks base method.
-func (m *MockAccessAPIClient) GetProtocolStateSnapshotByBlockID(arg0 context.Context, arg1 *access.GetProtocolStateSnapshotByBlockIDRequest, arg2 ...grpc.CallOption) (*access.ProtocolStateSnapshotResponse, error) {
+func (m *MockAccessAPIClient) GetProtocolStateSnapshotByBlockID(ctx context.Context, in *access.GetProtocolStateSnapshotByBlockIDRequest, opts ...grpc.CallOption) (*access.ProtocolStateSnapshotResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetProtocolStateSnapshotByBlockID", varargs...)
@@ -595,17 +596,17 @@ func (m *MockAccessAPIClient) GetProtocolStateSnapshotByBlockID(arg0 context.Con
 }
 
 // GetProtocolStateSnapshotByBlockID indicates an expected call of GetProtocolStateSnapshotByBlockID.
-func (mr *MockAccessAPIClientMockRecorder) GetProtocolStateSnapshotByBlockID(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetProtocolStateSnapshotByBlockID(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProtocolStateSnapshotByBlockID", reflect.TypeOf((*MockAccessAPIClient)(nil).GetProtocolStateSnapshotByBlockID), varargs...)
 }
 
 // GetProtocolStateSnapshotByHeight mocks base method.
-func (m *MockAccessAPIClient) GetProtocolStateSnapshotByHeight(arg0 context.Context, arg1 *access.GetProtocolStateSnapshotByHeightRequest, arg2 ...grpc.CallOption) (*access.ProtocolStateSnapshotResponse, error) {
+func (m *MockAccessAPIClient) GetProtocolStateSnapshotByHeight(ctx context.Context, in *access.GetProtocolStateSnapshotByHeightRequest, opts ...grpc.CallOption) (*access.ProtocolStateSnapshotResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetProtocolStateSnapshotByHeight", varargs...)
@@ -615,17 +616,17 @@ func (m *MockAccessAPIClient) GetProtocolStateSnapshotByHeight(arg0 context.Cont
 }
 
 // GetProtocolStateSnapshotByHeight indicates an expected call of GetProtocolStateSnapshotByHeight.
-func (mr *MockAccessAPIClientMockRecorder) GetProtocolStateSnapshotByHeight(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetProtocolStateSnapshotByHeight(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProtocolStateSnapshotByHeight", reflect.TypeOf((*MockAccessAPIClient)(nil).GetProtocolStateSnapshotByHeight), varargs...)
 }
 
 // GetSystemTransaction mocks base method.
-func (m *MockAccessAPIClient) GetSystemTransaction(arg0 context.Context, arg1 *access.GetSystemTransactionRequest, arg2 ...grpc.CallOption) (*access.TransactionResponse, error) {
+func (m *MockAccessAPIClient) GetSystemTransaction(ctx context.Context, in *access.GetSystemTransactionRequest, opts ...grpc.CallOption) (*access.TransactionResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetSystemTransaction", varargs...)
@@ -635,17 +636,17 @@ func (m *MockAccessAPIClient) GetSystemTransaction(arg0 context.Context, arg1 *a
 }
 
 // GetSystemTransaction indicates an expected call of GetSystemTransaction.
-func (mr *MockAccessAPIClientMockRecorder) GetSystemTransaction(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetSystemTransaction(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSystemTransaction", reflect.TypeOf((*MockAccessAPIClient)(nil).GetSystemTransaction), varargs...)
 }
 
 // GetSystemTransactionResult mocks base method.
-func (m *MockAccessAPIClient) GetSystemTransactionResult(arg0 context.Context, arg1 *access.GetSystemTransactionResultRequest, arg2 ...grpc.CallOption) (*access.TransactionResultResponse, error) {
+func (m *MockAccessAPIClient) GetSystemTransactionResult(ctx context.Context, in *access.GetSystemTransactionResultRequest, opts ...grpc.CallOption) (*access.TransactionResultResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetSystemTransactionResult", varargs...)
@@ -655,17 +656,17 @@ func (m *MockAccessAPIClient) GetSystemTransactionResult(arg0 context.Context, a
 }
 
 // GetSystemTransactionResult indicates an expected call of GetSystemTransactionResult.
-func (mr *MockAccessAPIClientMockRecorder) GetSystemTransactionResult(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetSystemTransactionResult(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSystemTransactionResult", reflect.TypeOf((*MockAccessAPIClient)(nil).GetSystemTransactionResult), varargs...)
 }
 
 // GetTransaction mocks base method.
-func (m *MockAccessAPIClient) GetTransaction(arg0 context.Context, arg1 *access.GetTransactionRequest, arg2 ...grpc.CallOption) (*access.TransactionResponse, error) {
+func (m *MockAccessAPIClient) GetTransaction(ctx context.Context, in *access.GetTransactionRequest, opts ...grpc.CallOption) (*access.TransactionResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetTransaction", varargs...)
@@ -675,17 +676,17 @@ func (m *MockAccessAPIClient) GetTransaction(arg0 context.Context, arg1 *access.
 }
 
 // GetTransaction indicates an expected call of GetTransaction.
-func (mr *MockAccessAPIClientMockRecorder) GetTransaction(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetTransaction(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransaction", reflect.TypeOf((*MockAccessAPIClient)(nil).GetTransaction), varargs...)
 }
 
 // GetTransactionResult mocks base method.
-func (m *MockAccessAPIClient) GetTransactionResult(arg0 context.Context, arg1 *access.GetTransactionRequest, arg2 ...grpc.CallOption) (*access.TransactionResultResponse, error) {
+func (m *MockAccessAPIClient) GetTransactionResult(ctx context.Context, in *access.GetTransactionRequest, opts ...grpc.CallOption) (*access.TransactionResultResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetTransactionResult", varargs...)
@@ -695,17 +696,17 @@ func (m *MockAccessAPIClient) GetTransactionResult(arg0 context.Context, arg1 *a
 }
 
 // GetTransactionResult indicates an expected call of GetTransactionResult.
-func (mr *MockAccessAPIClientMockRecorder) GetTransactionResult(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetTransactionResult(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionResult", reflect.TypeOf((*MockAccessAPIClient)(nil).GetTransactionResult), varargs...)
 }
 
 // GetTransactionResultByIndex mocks base method.
-func (m *MockAccessAPIClient) GetTransactionResultByIndex(arg0 context.Context, arg1 *access.GetTransactionByIndexRequest, arg2 ...grpc.CallOption) (*access.TransactionResultResponse, error) {
+func (m *MockAccessAPIClient) GetTransactionResultByIndex(ctx context.Context, in *access.GetTransactionByIndexRequest, opts ...grpc.CallOption) (*access.TransactionResultResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetTransactionResultByIndex", varargs...)
@@ -715,17 +716,17 @@ func (m *MockAccessAPIClient) GetTransactionResultByIndex(arg0 context.Context, 
 }
 
 // GetTransactionResultByIndex indicates an expected call of GetTransactionResultByIndex.
-func (mr *MockAccessAPIClientMockRecorder) GetTransactionResultByIndex(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetTransactionResultByIndex(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionResultByIndex", reflect.TypeOf((*MockAccessAPIClient)(nil).GetTransactionResultByIndex), varargs...)
 }
 
 // GetTransactionResultsByBlockID mocks base method.
-func (m *MockAccessAPIClient) GetTransactionResultsByBlockID(arg0 context.Context, arg1 *access.GetTransactionsByBlockIDRequest, arg2 ...grpc.CallOption) (*access.TransactionResultsResponse, error) {
+func (m *MockAccessAPIClient) GetTransactionResultsByBlockID(ctx context.Context, in *access.GetTransactionsByBlockIDRequest, opts ...grpc.CallOption) (*access.TransactionResultsResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetTransactionResultsByBlockID", varargs...)
@@ -735,17 +736,17 @@ func (m *MockAccessAPIClient) GetTransactionResultsByBlockID(arg0 context.Contex
 }
 
 // GetTransactionResultsByBlockID indicates an expected call of GetTransactionResultsByBlockID.
-func (mr *MockAccessAPIClientMockRecorder) GetTransactionResultsByBlockID(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetTransactionResultsByBlockID(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionResultsByBlockID", reflect.TypeOf((*MockAccessAPIClient)(nil).GetTransactionResultsByBlockID), varargs...)
 }
 
 // GetTransactionsByBlockID mocks base method.
-func (m *MockAccessAPIClient) GetTransactionsByBlockID(arg0 context.Context, arg1 *access.GetTransactionsByBlockIDRequest, arg2 ...grpc.CallOption) (*access.TransactionsResponse, error) {
+func (m *MockAccessAPIClient) GetTransactionsByBlockID(ctx context.Context, in *access.GetTransactionsByBlockIDRequest, opts ...grpc.CallOption) (*access.TransactionsResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetTransactionsByBlockID", varargs...)
@@ -755,17 +756,17 @@ func (m *MockAccessAPIClient) GetTransactionsByBlockID(arg0 context.Context, arg
 }
 
 // GetTransactionsByBlockID indicates an expected call of GetTransactionsByBlockID.
-func (mr *MockAccessAPIClientMockRecorder) GetTransactionsByBlockID(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) GetTransactionsByBlockID(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionsByBlockID", reflect.TypeOf((*MockAccessAPIClient)(nil).GetTransactionsByBlockID), varargs...)
 }
 
 // Ping mocks base method.
-func (m *MockAccessAPIClient) Ping(arg0 context.Context, arg1 *access.PingRequest, arg2 ...grpc.CallOption) (*access.PingResponse, error) {
+func (m *MockAccessAPIClient) Ping(ctx context.Context, in *access.PingRequest, opts ...grpc.CallOption) (*access.PingResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Ping", varargs...)
@@ -775,17 +776,17 @@ func (m *MockAccessAPIClient) Ping(arg0 context.Context, arg1 *access.PingReques
 }
 
 // Ping indicates an expected call of Ping.
-func (mr *MockAccessAPIClientMockRecorder) Ping(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) Ping(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockAccessAPIClient)(nil).Ping), varargs...)
 }
 
 // SendAndSubscribeTransactionStatuses mocks base method.
-func (m *MockAccessAPIClient) SendAndSubscribeTransactionStatuses(arg0 context.Context, arg1 *access.SendAndSubscribeTransactionStatusesRequest, arg2 ...grpc.CallOption) (access.AccessAPI_SendAndSubscribeTransactionStatusesClient, error) {
+func (m *MockAccessAPIClient) SendAndSubscribeTransactionStatuses(ctx context.Context, in *access.SendAndSubscribeTransactionStatusesRequest, opts ...grpc.CallOption) (access.AccessAPI_SendAndSubscribeTransactionStatusesClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SendAndSubscribeTransactionStatuses", varargs...)
@@ -795,17 +796,17 @@ func (m *MockAccessAPIClient) SendAndSubscribeTransactionStatuses(arg0 context.C
 }
 
 // SendAndSubscribeTransactionStatuses indicates an expected call of SendAndSubscribeTransactionStatuses.
-func (mr *MockAccessAPIClientMockRecorder) SendAndSubscribeTransactionStatuses(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) SendAndSubscribeTransactionStatuses(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendAndSubscribeTransactionStatuses", reflect.TypeOf((*MockAccessAPIClient)(nil).SendAndSubscribeTransactionStatuses), varargs...)
 }
 
 // SendTransaction mocks base method.
-func (m *MockAccessAPIClient) SendTransaction(arg0 context.Context, arg1 *access.SendTransactionRequest, arg2 ...grpc.CallOption) (*access.SendTransactionResponse, error) {
+func (m *MockAccessAPIClient) SendTransaction(ctx context.Context, in *access.SendTransactionRequest, opts ...grpc.CallOption) (*access.SendTransactionResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SendTransaction", varargs...)
@@ -815,17 +816,17 @@ func (m *MockAccessAPIClient) SendTransaction(arg0 context.Context, arg1 *access
 }
 
 // SendTransaction indicates an expected call of SendTransaction.
-func (mr *MockAccessAPIClientMockRecorder) SendTransaction(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) SendTransaction(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendTransaction", reflect.TypeOf((*MockAccessAPIClient)(nil).SendTransaction), varargs...)
 }
 
 // SubscribeBlockDigestsFromLatest mocks base method.
-func (m *MockAccessAPIClient) SubscribeBlockDigestsFromLatest(arg0 context.Context, arg1 *access.SubscribeBlockDigestsFromLatestRequest, arg2 ...grpc.CallOption) (access.AccessAPI_SubscribeBlockDigestsFromLatestClient, error) {
+func (m *MockAccessAPIClient) SubscribeBlockDigestsFromLatest(ctx context.Context, in *access.SubscribeBlockDigestsFromLatestRequest, opts ...grpc.CallOption) (access.AccessAPI_SubscribeBlockDigestsFromLatestClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeBlockDigestsFromLatest", varargs...)
@@ -835,17 +836,17 @@ func (m *MockAccessAPIClient) SubscribeBlockDigestsFromLatest(arg0 context.Conte
 }
 
 // SubscribeBlockDigestsFromLatest indicates an expected call of SubscribeBlockDigestsFromLatest.
-func (mr *MockAccessAPIClientMockRecorder) SubscribeBlockDigestsFromLatest(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) SubscribeBlockDigestsFromLatest(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeBlockDigestsFromLatest", reflect.TypeOf((*MockAccessAPIClient)(nil).SubscribeBlockDigestsFromLatest), varargs...)
 }
 
 // SubscribeBlockDigestsFromStartBlockID mocks base method.
-func (m *MockAccessAPIClient) SubscribeBlockDigestsFromStartBlockID(arg0 context.Context, arg1 *access.SubscribeBlockDigestsFromStartBlockIDRequest, arg2 ...grpc.CallOption) (access.AccessAPI_SubscribeBlockDigestsFromStartBlockIDClient, error) {
+func (m *MockAccessAPIClient) SubscribeBlockDigestsFromStartBlockID(ctx context.Context, in *access.SubscribeBlockDigestsFromStartBlockIDRequest, opts ...grpc.CallOption) (access.AccessAPI_SubscribeBlockDigestsFromStartBlockIDClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeBlockDigestsFromStartBlockID", varargs...)
@@ -855,17 +856,17 @@ func (m *MockAccessAPIClient) SubscribeBlockDigestsFromStartBlockID(arg0 context
 }
 
 // SubscribeBlockDigestsFromStartBlockID indicates an expected call of SubscribeBlockDigestsFromStartBlockID.
-func (mr *MockAccessAPIClientMockRecorder) SubscribeBlockDigestsFromStartBlockID(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) SubscribeBlockDigestsFromStartBlockID(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeBlockDigestsFromStartBlockID", reflect.TypeOf((*MockAccessAPIClient)(nil).SubscribeBlockDigestsFromStartBlockID), varargs...)
 }
 
 // SubscribeBlockDigestsFromStartHeight mocks base method.
-func (m *MockAccessAPIClient) SubscribeBlockDigestsFromStartHeight(arg0 context.Context, arg1 *access.SubscribeBlockDigestsFromStartHeightRequest, arg2 ...grpc.CallOption) (access.AccessAPI_SubscribeBlockDigestsFromStartHeightClient, error) {
+func (m *MockAccessAPIClient) SubscribeBlockDigestsFromStartHeight(ctx context.Context, in *access.SubscribeBlockDigestsFromStartHeightRequest, opts ...grpc.CallOption) (access.AccessAPI_SubscribeBlockDigestsFromStartHeightClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeBlockDigestsFromStartHeight", varargs...)
@@ -875,17 +876,17 @@ func (m *MockAccessAPIClient) SubscribeBlockDigestsFromStartHeight(arg0 context.
 }
 
 // SubscribeBlockDigestsFromStartHeight indicates an expected call of SubscribeBlockDigestsFromStartHeight.
-func (mr *MockAccessAPIClientMockRecorder) SubscribeBlockDigestsFromStartHeight(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) SubscribeBlockDigestsFromStartHeight(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeBlockDigestsFromStartHeight", reflect.TypeOf((*MockAccessAPIClient)(nil).SubscribeBlockDigestsFromStartHeight), varargs...)
 }
 
 // SubscribeBlockHeadersFromLatest mocks base method.
-func (m *MockAccessAPIClient) SubscribeBlockHeadersFromLatest(arg0 context.Context, arg1 *access.SubscribeBlockHeadersFromLatestRequest, arg2 ...grpc.CallOption) (access.AccessAPI_SubscribeBlockHeadersFromLatestClient, error) {
+func (m *MockAccessAPIClient) SubscribeBlockHeadersFromLatest(ctx context.Context, in *access.SubscribeBlockHeadersFromLatestRequest, opts ...grpc.CallOption) (access.AccessAPI_SubscribeBlockHeadersFromLatestClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeBlockHeadersFromLatest", varargs...)
@@ -895,17 +896,17 @@ func (m *MockAccessAPIClient) SubscribeBlockHeadersFromLatest(arg0 context.Conte
 }
 
 // SubscribeBlockHeadersFromLatest indicates an expected call of SubscribeBlockHeadersFromLatest.
-func (mr *MockAccessAPIClientMockRecorder) SubscribeBlockHeadersFromLatest(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) SubscribeBlockHeadersFromLatest(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeBlockHeadersFromLatest", reflect.TypeOf((*MockAccessAPIClient)(nil).SubscribeBlockHeadersFromLatest), varargs...)
 }
 
 // SubscribeBlockHeadersFromStartBlockID mocks base method.
-func (m *MockAccessAPIClient) SubscribeBlockHeadersFromStartBlockID(arg0 context.Context, arg1 *access.SubscribeBlockHeadersFromStartBlockIDRequest, arg2 ...grpc.CallOption) (access.AccessAPI_SubscribeBlockHeadersFromStartBlockIDClient, error) {
+func (m *MockAccessAPIClient) SubscribeBlockHeadersFromStartBlockID(ctx context.Context, in *access.SubscribeBlockHeadersFromStartBlockIDRequest, opts ...grpc.CallOption) (access.AccessAPI_SubscribeBlockHeadersFromStartBlockIDClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeBlockHeadersFromStartBlockID", varargs...)
@@ -915,17 +916,17 @@ func (m *MockAccessAPIClient) SubscribeBlockHeadersFromStartBlockID(arg0 context
 }
 
 // SubscribeBlockHeadersFromStartBlockID indicates an expected call of SubscribeBlockHeadersFromStartBlockID.
-func (mr *MockAccessAPIClientMockRecorder) SubscribeBlockHeadersFromStartBlockID(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) SubscribeBlockHeadersFromStartBlockID(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeBlockHeadersFromStartBlockID", reflect.TypeOf((*MockAccessAPIClient)(nil).SubscribeBlockHeadersFromStartBlockID), varargs...)
 }
 
 // SubscribeBlockHeadersFromStartHeight mocks base method.
-func (m *MockAccessAPIClient) SubscribeBlockHeadersFromStartHeight(arg0 context.Context, arg1 *access.SubscribeBlockHeadersFromStartHeightRequest, arg2 ...grpc.CallOption) (access.AccessAPI_SubscribeBlockHeadersFromStartHeightClient, error) {
+func (m *MockAccessAPIClient) SubscribeBlockHeadersFromStartHeight(ctx context.Context, in *access.SubscribeBlockHeadersFromStartHeightRequest, opts ...grpc.CallOption) (access.AccessAPI_SubscribeBlockHeadersFromStartHeightClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeBlockHeadersFromStartHeight", varargs...)
@@ -935,17 +936,17 @@ func (m *MockAccessAPIClient) SubscribeBlockHeadersFromStartHeight(arg0 context.
 }
 
 // SubscribeBlockHeadersFromStartHeight indicates an expected call of SubscribeBlockHeadersFromStartHeight.
-func (mr *MockAccessAPIClientMockRecorder) SubscribeBlockHeadersFromStartHeight(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) SubscribeBlockHeadersFromStartHeight(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeBlockHeadersFromStartHeight", reflect.TypeOf((*MockAccessAPIClient)(nil).SubscribeBlockHeadersFromStartHeight), varargs...)
 }
 
 // SubscribeBlocksFromLatest mocks base method.
-func (m *MockAccessAPIClient) SubscribeBlocksFromLatest(arg0 context.Context, arg1 *access.SubscribeBlocksFromLatestRequest, arg2 ...grpc.CallOption) (access.AccessAPI_SubscribeBlocksFromLatestClient, error) {
+func (m *MockAccessAPIClient) SubscribeBlocksFromLatest(ctx context.Context, in *access.SubscribeBlocksFromLatestRequest, opts ...grpc.CallOption) (access.AccessAPI_SubscribeBlocksFromLatestClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeBlocksFromLatest", varargs...)
@@ -955,17 +956,17 @@ func (m *MockAccessAPIClient) SubscribeBlocksFromLatest(arg0 context.Context, ar
 }
 
 // SubscribeBlocksFromLatest indicates an expected call of SubscribeBlocksFromLatest.
-func (mr *MockAccessAPIClientMockRecorder) SubscribeBlocksFromLatest(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) SubscribeBlocksFromLatest(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeBlocksFromLatest", reflect.TypeOf((*MockAccessAPIClient)(nil).SubscribeBlocksFromLatest), varargs...)
 }
 
 // SubscribeBlocksFromStartBlockID mocks base method.
-func (m *MockAccessAPIClient) SubscribeBlocksFromStartBlockID(arg0 context.Context, arg1 *access.SubscribeBlocksFromStartBlockIDRequest, arg2 ...grpc.CallOption) (access.AccessAPI_SubscribeBlocksFromStartBlockIDClient, error) {
+func (m *MockAccessAPIClient) SubscribeBlocksFromStartBlockID(ctx context.Context, in *access.SubscribeBlocksFromStartBlockIDRequest, opts ...grpc.CallOption) (access.AccessAPI_SubscribeBlocksFromStartBlockIDClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeBlocksFromStartBlockID", varargs...)
@@ -975,17 +976,17 @@ func (m *MockAccessAPIClient) SubscribeBlocksFromStartBlockID(arg0 context.Conte
 }
 
 // SubscribeBlocksFromStartBlockID indicates an expected call of SubscribeBlocksFromStartBlockID.
-func (mr *MockAccessAPIClientMockRecorder) SubscribeBlocksFromStartBlockID(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) SubscribeBlocksFromStartBlockID(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeBlocksFromStartBlockID", reflect.TypeOf((*MockAccessAPIClient)(nil).SubscribeBlocksFromStartBlockID), varargs...)
 }
 
 // SubscribeBlocksFromStartHeight mocks base method.
-func (m *MockAccessAPIClient) SubscribeBlocksFromStartHeight(arg0 context.Context, arg1 *access.SubscribeBlocksFromStartHeightRequest, arg2 ...grpc.CallOption) (access.AccessAPI_SubscribeBlocksFromStartHeightClient, error) {
+func (m *MockAccessAPIClient) SubscribeBlocksFromStartHeight(ctx context.Context, in *access.SubscribeBlocksFromStartHeightRequest, opts ...grpc.CallOption) (access.AccessAPI_SubscribeBlocksFromStartHeightClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeBlocksFromStartHeight", varargs...)
@@ -995,8 +996,8 @@ func (m *MockAccessAPIClient) SubscribeBlocksFromStartHeight(arg0 context.Contex
 }
 
 // SubscribeBlocksFromStartHeight indicates an expected call of SubscribeBlocksFromStartHeight.
-func (mr *MockAccessAPIClientMockRecorder) SubscribeBlocksFromStartHeight(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockAccessAPIClientMockRecorder) SubscribeBlocksFromStartHeight(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeBlocksFromStartHeight", reflect.TypeOf((*MockAccessAPIClient)(nil).SubscribeBlocksFromStartHeight), varargs...)
 }

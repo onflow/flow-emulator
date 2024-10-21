@@ -21,16 +21,18 @@ package emulator_test
 import (
 	"context"
 	"encoding/hex"
-	"github.com/onflow/cadence/runtime/common"
-	"github.com/onflow/flow-emulator/adapters"
-	"github.com/onflow/flow-emulator/emulator"
+	"testing"
+
+	"github.com/onflow/cadence/common"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
+
+	"github.com/onflow/flow-emulator/adapters"
+	"github.com/onflow/flow-emulator/emulator"
 )
 
 func TestSourceFilePragmaForScript(t *testing.T) {

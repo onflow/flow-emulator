@@ -22,6 +22,7 @@ import (
 type MockExecutionDataAPIClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockExecutionDataAPIClientMockRecorder
+	isgomock struct{}
 }
 
 // MockExecutionDataAPIClientMockRecorder is the mock recorder for MockExecutionDataAPIClient.
@@ -42,10 +43,10 @@ func (m *MockExecutionDataAPIClient) EXPECT() *MockExecutionDataAPIClientMockRec
 }
 
 // GetExecutionDataByBlockID mocks base method.
-func (m *MockExecutionDataAPIClient) GetExecutionDataByBlockID(arg0 context.Context, arg1 *executiondata.GetExecutionDataByBlockIDRequest, arg2 ...grpc.CallOption) (*executiondata.GetExecutionDataByBlockIDResponse, error) {
+func (m *MockExecutionDataAPIClient) GetExecutionDataByBlockID(ctx context.Context, in *executiondata.GetExecutionDataByBlockIDRequest, opts ...grpc.CallOption) (*executiondata.GetExecutionDataByBlockIDResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetExecutionDataByBlockID", varargs...)
@@ -55,17 +56,17 @@ func (m *MockExecutionDataAPIClient) GetExecutionDataByBlockID(arg0 context.Cont
 }
 
 // GetExecutionDataByBlockID indicates an expected call of GetExecutionDataByBlockID.
-func (mr *MockExecutionDataAPIClientMockRecorder) GetExecutionDataByBlockID(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockExecutionDataAPIClientMockRecorder) GetExecutionDataByBlockID(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExecutionDataByBlockID", reflect.TypeOf((*MockExecutionDataAPIClient)(nil).GetExecutionDataByBlockID), varargs...)
 }
 
 // GetRegisterValues mocks base method.
-func (m *MockExecutionDataAPIClient) GetRegisterValues(arg0 context.Context, arg1 *executiondata.GetRegisterValuesRequest, arg2 ...grpc.CallOption) (*executiondata.GetRegisterValuesResponse, error) {
+func (m *MockExecutionDataAPIClient) GetRegisterValues(ctx context.Context, in *executiondata.GetRegisterValuesRequest, opts ...grpc.CallOption) (*executiondata.GetRegisterValuesResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetRegisterValues", varargs...)
@@ -75,17 +76,17 @@ func (m *MockExecutionDataAPIClient) GetRegisterValues(arg0 context.Context, arg
 }
 
 // GetRegisterValues indicates an expected call of GetRegisterValues.
-func (mr *MockExecutionDataAPIClientMockRecorder) GetRegisterValues(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockExecutionDataAPIClientMockRecorder) GetRegisterValues(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRegisterValues", reflect.TypeOf((*MockExecutionDataAPIClient)(nil).GetRegisterValues), varargs...)
 }
 
 // SubscribeAccountStatusesFromLatestBlock mocks base method.
-func (m *MockExecutionDataAPIClient) SubscribeAccountStatusesFromLatestBlock(arg0 context.Context, arg1 *executiondata.SubscribeAccountStatusesFromLatestBlockRequest, arg2 ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeAccountStatusesFromLatestBlockClient, error) {
+func (m *MockExecutionDataAPIClient) SubscribeAccountStatusesFromLatestBlock(ctx context.Context, in *executiondata.SubscribeAccountStatusesFromLatestBlockRequest, opts ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeAccountStatusesFromLatestBlockClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeAccountStatusesFromLatestBlock", varargs...)
@@ -95,17 +96,17 @@ func (m *MockExecutionDataAPIClient) SubscribeAccountStatusesFromLatestBlock(arg
 }
 
 // SubscribeAccountStatusesFromLatestBlock indicates an expected call of SubscribeAccountStatusesFromLatestBlock.
-func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeAccountStatusesFromLatestBlock(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeAccountStatusesFromLatestBlock(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeAccountStatusesFromLatestBlock", reflect.TypeOf((*MockExecutionDataAPIClient)(nil).SubscribeAccountStatusesFromLatestBlock), varargs...)
 }
 
 // SubscribeAccountStatusesFromStartBlockID mocks base method.
-func (m *MockExecutionDataAPIClient) SubscribeAccountStatusesFromStartBlockID(arg0 context.Context, arg1 *executiondata.SubscribeAccountStatusesFromStartBlockIDRequest, arg2 ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeAccountStatusesFromStartBlockIDClient, error) {
+func (m *MockExecutionDataAPIClient) SubscribeAccountStatusesFromStartBlockID(ctx context.Context, in *executiondata.SubscribeAccountStatusesFromStartBlockIDRequest, opts ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeAccountStatusesFromStartBlockIDClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeAccountStatusesFromStartBlockID", varargs...)
@@ -115,17 +116,17 @@ func (m *MockExecutionDataAPIClient) SubscribeAccountStatusesFromStartBlockID(ar
 }
 
 // SubscribeAccountStatusesFromStartBlockID indicates an expected call of SubscribeAccountStatusesFromStartBlockID.
-func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeAccountStatusesFromStartBlockID(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeAccountStatusesFromStartBlockID(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeAccountStatusesFromStartBlockID", reflect.TypeOf((*MockExecutionDataAPIClient)(nil).SubscribeAccountStatusesFromStartBlockID), varargs...)
 }
 
 // SubscribeAccountStatusesFromStartHeight mocks base method.
-func (m *MockExecutionDataAPIClient) SubscribeAccountStatusesFromStartHeight(arg0 context.Context, arg1 *executiondata.SubscribeAccountStatusesFromStartHeightRequest, arg2 ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeAccountStatusesFromStartHeightClient, error) {
+func (m *MockExecutionDataAPIClient) SubscribeAccountStatusesFromStartHeight(ctx context.Context, in *executiondata.SubscribeAccountStatusesFromStartHeightRequest, opts ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeAccountStatusesFromStartHeightClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeAccountStatusesFromStartHeight", varargs...)
@@ -135,17 +136,17 @@ func (m *MockExecutionDataAPIClient) SubscribeAccountStatusesFromStartHeight(arg
 }
 
 // SubscribeAccountStatusesFromStartHeight indicates an expected call of SubscribeAccountStatusesFromStartHeight.
-func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeAccountStatusesFromStartHeight(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeAccountStatusesFromStartHeight(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeAccountStatusesFromStartHeight", reflect.TypeOf((*MockExecutionDataAPIClient)(nil).SubscribeAccountStatusesFromStartHeight), varargs...)
 }
 
 // SubscribeEvents mocks base method.
-func (m *MockExecutionDataAPIClient) SubscribeEvents(arg0 context.Context, arg1 *executiondata.SubscribeEventsRequest, arg2 ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeEventsClient, error) {
+func (m *MockExecutionDataAPIClient) SubscribeEvents(ctx context.Context, in *executiondata.SubscribeEventsRequest, opts ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeEventsClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeEvents", varargs...)
@@ -155,17 +156,17 @@ func (m *MockExecutionDataAPIClient) SubscribeEvents(arg0 context.Context, arg1 
 }
 
 // SubscribeEvents indicates an expected call of SubscribeEvents.
-func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeEvents(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeEvents(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeEvents", reflect.TypeOf((*MockExecutionDataAPIClient)(nil).SubscribeEvents), varargs...)
 }
 
 // SubscribeEventsFromLatest mocks base method.
-func (m *MockExecutionDataAPIClient) SubscribeEventsFromLatest(arg0 context.Context, arg1 *executiondata.SubscribeEventsFromLatestRequest, arg2 ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeEventsFromLatestClient, error) {
+func (m *MockExecutionDataAPIClient) SubscribeEventsFromLatest(ctx context.Context, in *executiondata.SubscribeEventsFromLatestRequest, opts ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeEventsFromLatestClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeEventsFromLatest", varargs...)
@@ -175,17 +176,17 @@ func (m *MockExecutionDataAPIClient) SubscribeEventsFromLatest(arg0 context.Cont
 }
 
 // SubscribeEventsFromLatest indicates an expected call of SubscribeEventsFromLatest.
-func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeEventsFromLatest(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeEventsFromLatest(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeEventsFromLatest", reflect.TypeOf((*MockExecutionDataAPIClient)(nil).SubscribeEventsFromLatest), varargs...)
 }
 
 // SubscribeEventsFromStartBlockID mocks base method.
-func (m *MockExecutionDataAPIClient) SubscribeEventsFromStartBlockID(arg0 context.Context, arg1 *executiondata.SubscribeEventsFromStartBlockIDRequest, arg2 ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeEventsFromStartBlockIDClient, error) {
+func (m *MockExecutionDataAPIClient) SubscribeEventsFromStartBlockID(ctx context.Context, in *executiondata.SubscribeEventsFromStartBlockIDRequest, opts ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeEventsFromStartBlockIDClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeEventsFromStartBlockID", varargs...)
@@ -195,17 +196,17 @@ func (m *MockExecutionDataAPIClient) SubscribeEventsFromStartBlockID(arg0 contex
 }
 
 // SubscribeEventsFromStartBlockID indicates an expected call of SubscribeEventsFromStartBlockID.
-func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeEventsFromStartBlockID(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeEventsFromStartBlockID(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeEventsFromStartBlockID", reflect.TypeOf((*MockExecutionDataAPIClient)(nil).SubscribeEventsFromStartBlockID), varargs...)
 }
 
 // SubscribeEventsFromStartHeight mocks base method.
-func (m *MockExecutionDataAPIClient) SubscribeEventsFromStartHeight(arg0 context.Context, arg1 *executiondata.SubscribeEventsFromStartHeightRequest, arg2 ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeEventsFromStartHeightClient, error) {
+func (m *MockExecutionDataAPIClient) SubscribeEventsFromStartHeight(ctx context.Context, in *executiondata.SubscribeEventsFromStartHeightRequest, opts ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeEventsFromStartHeightClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeEventsFromStartHeight", varargs...)
@@ -215,17 +216,17 @@ func (m *MockExecutionDataAPIClient) SubscribeEventsFromStartHeight(arg0 context
 }
 
 // SubscribeEventsFromStartHeight indicates an expected call of SubscribeEventsFromStartHeight.
-func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeEventsFromStartHeight(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeEventsFromStartHeight(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeEventsFromStartHeight", reflect.TypeOf((*MockExecutionDataAPIClient)(nil).SubscribeEventsFromStartHeight), varargs...)
 }
 
 // SubscribeExecutionData mocks base method.
-func (m *MockExecutionDataAPIClient) SubscribeExecutionData(arg0 context.Context, arg1 *executiondata.SubscribeExecutionDataRequest, arg2 ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeExecutionDataClient, error) {
+func (m *MockExecutionDataAPIClient) SubscribeExecutionData(ctx context.Context, in *executiondata.SubscribeExecutionDataRequest, opts ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeExecutionDataClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeExecutionData", varargs...)
@@ -235,17 +236,17 @@ func (m *MockExecutionDataAPIClient) SubscribeExecutionData(arg0 context.Context
 }
 
 // SubscribeExecutionData indicates an expected call of SubscribeExecutionData.
-func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeExecutionData(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeExecutionData(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeExecutionData", reflect.TypeOf((*MockExecutionDataAPIClient)(nil).SubscribeExecutionData), varargs...)
 }
 
 // SubscribeExecutionDataFromLatest mocks base method.
-func (m *MockExecutionDataAPIClient) SubscribeExecutionDataFromLatest(arg0 context.Context, arg1 *executiondata.SubscribeExecutionDataFromLatestRequest, arg2 ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeExecutionDataFromLatestClient, error) {
+func (m *MockExecutionDataAPIClient) SubscribeExecutionDataFromLatest(ctx context.Context, in *executiondata.SubscribeExecutionDataFromLatestRequest, opts ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeExecutionDataFromLatestClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeExecutionDataFromLatest", varargs...)
@@ -255,17 +256,17 @@ func (m *MockExecutionDataAPIClient) SubscribeExecutionDataFromLatest(arg0 conte
 }
 
 // SubscribeExecutionDataFromLatest indicates an expected call of SubscribeExecutionDataFromLatest.
-func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeExecutionDataFromLatest(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeExecutionDataFromLatest(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeExecutionDataFromLatest", reflect.TypeOf((*MockExecutionDataAPIClient)(nil).SubscribeExecutionDataFromLatest), varargs...)
 }
 
 // SubscribeExecutionDataFromStartBlockHeight mocks base method.
-func (m *MockExecutionDataAPIClient) SubscribeExecutionDataFromStartBlockHeight(arg0 context.Context, arg1 *executiondata.SubscribeExecutionDataFromStartBlockHeightRequest, arg2 ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeExecutionDataFromStartBlockHeightClient, error) {
+func (m *MockExecutionDataAPIClient) SubscribeExecutionDataFromStartBlockHeight(ctx context.Context, in *executiondata.SubscribeExecutionDataFromStartBlockHeightRequest, opts ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeExecutionDataFromStartBlockHeightClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeExecutionDataFromStartBlockHeight", varargs...)
@@ -275,17 +276,17 @@ func (m *MockExecutionDataAPIClient) SubscribeExecutionDataFromStartBlockHeight(
 }
 
 // SubscribeExecutionDataFromStartBlockHeight indicates an expected call of SubscribeExecutionDataFromStartBlockHeight.
-func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeExecutionDataFromStartBlockHeight(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeExecutionDataFromStartBlockHeight(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeExecutionDataFromStartBlockHeight", reflect.TypeOf((*MockExecutionDataAPIClient)(nil).SubscribeExecutionDataFromStartBlockHeight), varargs...)
 }
 
 // SubscribeExecutionDataFromStartBlockID mocks base method.
-func (m *MockExecutionDataAPIClient) SubscribeExecutionDataFromStartBlockID(arg0 context.Context, arg1 *executiondata.SubscribeExecutionDataFromStartBlockIDRequest, arg2 ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeExecutionDataFromStartBlockIDClient, error) {
+func (m *MockExecutionDataAPIClient) SubscribeExecutionDataFromStartBlockID(ctx context.Context, in *executiondata.SubscribeExecutionDataFromStartBlockIDRequest, opts ...grpc.CallOption) (executiondata.ExecutionDataAPI_SubscribeExecutionDataFromStartBlockIDClient, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []any{ctx, in}
+	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "SubscribeExecutionDataFromStartBlockID", varargs...)
@@ -295,8 +296,8 @@ func (m *MockExecutionDataAPIClient) SubscribeExecutionDataFromStartBlockID(arg0
 }
 
 // SubscribeExecutionDataFromStartBlockID indicates an expected call of SubscribeExecutionDataFromStartBlockID.
-func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeExecutionDataFromStartBlockID(arg0, arg1 any, arg2 ...any) *gomock.Call {
+func (mr *MockExecutionDataAPIClientMockRecorder) SubscribeExecutionDataFromStartBlockID(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{arg0, arg1}, arg2...)
+	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeExecutionDataFromStartBlockID", reflect.TypeOf((*MockExecutionDataAPIClient)(nil).SubscribeExecutionDataFromStartBlockID), varargs...)
 }
