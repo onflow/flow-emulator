@@ -189,7 +189,7 @@ func TestCreateAccount(t *testing.T) {
 			nil,
 			b.ServiceKey().Address,
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -231,7 +231,7 @@ func TestCreateAccount(t *testing.T) {
 			nil,
 			b.ServiceKey().Address,
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -272,7 +272,7 @@ func TestCreateAccount(t *testing.T) {
 			nil,
 			b.ServiceKey().Address,
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -321,7 +321,7 @@ func TestCreateAccount(t *testing.T) {
 			contracts,
 			b.ServiceKey().Address,
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -393,7 +393,7 @@ func TestCreateAccount(t *testing.T) {
 			contracts,
 			b.ServiceKey().Address,
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -444,7 +444,7 @@ func TestCreateAccount(t *testing.T) {
 			contracts,
 			b.ServiceKey().Address,
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -495,7 +495,7 @@ func TestCreateAccount(t *testing.T) {
 			contracts,
 			b.ServiceKey().Address,
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -547,7 +547,7 @@ func TestCreateAccount(t *testing.T) {
 			nil,
 			b.ServiceKey().Address,
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -583,7 +583,7 @@ func TestCreateAccount(t *testing.T) {
 			contracts,
 			b.ServiceKey().Address,
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -619,7 +619,7 @@ func TestCreateAccount(t *testing.T) {
 			contracts,
 			b.ServiceKey().Address,
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
@@ -1037,7 +1037,7 @@ func TestImportAccountCode(t *testing.T) {
 	}
 
 	address, err := adapter.CreateAccount(context.Background(), nil, accountContracts)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	script := []byte(fmt.Sprintf(`
 		// address imports can omit leading zeros
@@ -1107,7 +1107,7 @@ func TestAccountAccess(t *testing.T) {
 		[]*flowsdk.AccountKey{accountKey1},
 		accountContracts,
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Deploy another contract B to the same account
 	// which accesses the field in contract A
@@ -1163,7 +1163,7 @@ func TestAccountAccess(t *testing.T) {
 		[]*flowsdk.AccountKey{accountKey2},
 		nil,
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Deploy a contract C to the second account
 	// which accesses the field in contract A of the first account

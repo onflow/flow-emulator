@@ -99,7 +99,7 @@ func TestEventEmitted(t *testing.T) {
 			[]*flowsdk.AccountKey{publicKey},
 			accountContracts,
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		script := []byte(fmt.Sprintf(`
 			import 0x%s

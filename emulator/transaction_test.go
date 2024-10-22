@@ -421,7 +421,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		accountKeyB.Weight = flowsdk.AccountKeyWeightThreshold
 
 		accountAddressB, err := adapter.CreateAccount(context.Background(), []*flowsdk.AccountKey{accountKeyB}, nil)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		tx := flowsdk.NewTransaction().
 			SetScript([]byte(`
@@ -611,7 +611,7 @@ func TestSubmitTransaction_Authorizers(t *testing.T) {
 	accountKeyB.SetWeight(flowsdk.AccountKeyWeightThreshold)
 
 	accountAddressB, err := adapter.CreateAccount(context.Background(), []*flowsdk.AccountKey{accountKeyB}, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	t.Run("Extra authorizers", func(t *testing.T) {
 		// script only supports one account
@@ -873,7 +873,7 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		accountKeyB.SetWeight(flowsdk.AccountKeyWeightThreshold / 2)
 
 		accountAddressA, err := adapter.CreateAccount(context.Background(), []*flowsdk.AccountKey{accountKeyA, accountKeyB}, nil)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		script := []byte(`
 		  transaction {
@@ -942,7 +942,7 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 		accountKeyB.SetWeight(flowsdk.AccountKeyWeightThreshold)
 
 		accountAddressB, err := adapter.CreateAccount(context.Background(), []*flowsdk.AccountKey{accountKeyB}, nil)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		tx := flowsdk.NewTransaction().
 			SetScript([]byte(addTwoScript)).
@@ -981,7 +981,7 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 		accountKeyB.SetWeight(flowsdk.AccountKeyWeightThreshold)
 
 		accountAddressB, err := adapter.CreateAccount(context.Background(), []*flowsdk.AccountKey{accountKeyB}, nil)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		multipleAccountScript := []byte(`
 		  transaction {
@@ -1693,7 +1693,7 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 		contracts,
 		b.ServiceKey().Address,
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	createAccountTx.
 		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
@@ -1821,7 +1821,7 @@ func TestInfiniteTransaction(t *testing.T) {
 	accountKeys := test.AccountKeyGenerator()
 	accountKey, signer := accountKeys.NewWithSigner()
 	accountAddress, err := adapter.CreateAccount(context.Background(), []*flowsdk.AccountKey{accountKey}, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Sign the transaction using the new account.
 	// Do not test using the service account,
@@ -1887,7 +1887,7 @@ func TestTransactionExecutionLimit(t *testing.T) {
 		accountKeys := test.AccountKeyGenerator()
 		accountKey, signer := accountKeys.NewWithSigner()
 		accountAddress, err := adapter.CreateAccount(context.Background(), []*flowsdk.AccountKey{accountKey}, nil)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// Sign the transaction using the new account.
 		// Do not test using the service account,
