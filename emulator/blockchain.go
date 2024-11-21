@@ -610,7 +610,6 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 
 	runtimeConfig := runtime.Config{
 		Debugger:                     blockchain.debugger,
-		AttachmentsEnabled:           true,
 		LegacyContractUpgradeEnabled: conf.LegacyContractUpgradeEnabled,
 		CoverageReport:               conf.CoverageReport,
 	}
