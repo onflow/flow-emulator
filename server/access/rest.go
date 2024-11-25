@@ -22,6 +22,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/onflow/flow-go/engine/access/rest/websockets"
 	"net"
 	"net/http"
 	"os"
@@ -120,6 +121,7 @@ func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 		restCollector,
 		NewStateStreamBackend(blockchain, debugLogger),
 		streamConfig,
+		websockets.NewDefaultWebsocketConfig(),
 	)
 
 	if err != nil {
