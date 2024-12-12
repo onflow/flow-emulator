@@ -649,7 +649,7 @@ func (s *session) convertStorageMapToDAPVariables(
 	value *interpreter.StorageMap,
 ) []dap.Variable {
 
-	members := make([]dap.Variable, value.Count())
+	members := make([]dap.Variable, 0, value.Count())
 
 	it := value.Iterator(inter)
 	for {
