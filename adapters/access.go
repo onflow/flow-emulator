@@ -662,3 +662,19 @@ func ConvertCCFEventsToJsonEvents(events []flowgo.Event) ([]flowgo.Event, error)
 
 	return converted, nil
 }
+
+func (a *AccessAdapter) SubscribeTransactionStatusesFromStartBlockID(ctx context.Context, txID flowgo.Identifier, startBlockID flowgo.Identifier, requiredEventEncodingVersion entities.EventEncodingVersion) subscription.Subscription {
+	return nil
+}
+
+func (a *AccessAdapter) SubscribeTransactionStatusesFromStartHeight(ctx context.Context, txID flowgo.Identifier, startHeight uint64, requiredEventEncodingVersion entities.EventEncodingVersion) subscription.Subscription {
+	return nil
+}
+
+func (a *AccessAdapter) SubscribeTransactionStatusesFromLatest(ctx context.Context, txID flowgo.Identifier, requiredEventEncodingVersion entities.EventEncodingVersion) subscription.Subscription {
+	return nil
+}
+
+func (a *AccessAdapter) SendAndSubscribeTransactionStatuses(ctx context.Context, tx *flowgo.TransactionBody, requiredEventEncodingVersion entities.EventEncodingVersion) subscription.Subscription {
+	return nil
+}
