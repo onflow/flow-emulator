@@ -39,7 +39,7 @@ import (
 	"github.com/onflow/flow-emulator/storage/memstore"
 )
 
-// Store is jus a memstore, but the starting state is loaded from a checkpoint folder
+// Store is just a memstore, but the starting state is loaded from a checkpoint folder
 // any new blocks exist in memory only and are not persisted to disk.
 type Store struct {
 	// Store is a memstore

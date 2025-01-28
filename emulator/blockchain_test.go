@@ -63,7 +63,7 @@ const counterScript = `
   }
 `
 
-// generateAddTwoToCounterScript generates a script that increments a counter.
+// GenerateAddTwoToCounterScript generates a script that increments a counter.
 // If no counter exists, it is created.
 func GenerateAddTwoToCounterScript(counterAddress flowsdk.Address) string {
 	return fmt.Sprintf(
