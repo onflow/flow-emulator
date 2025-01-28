@@ -27,7 +27,8 @@ import (
 	"os"
 
 	"github.com/onflow/flow-go/engine/access/rest"
-	"github.com/onflow/flow-go/engine/access/rest/routes"
+	"github.com/onflow/flow-go/engine/access/rest/router"
+	"github.com/onflow/flow-go/engine/access/rest/websockets"
 	"github.com/onflow/flow-go/engine/access/state_stream"
 	"github.com/onflow/flow-go/engine/access/state_stream/backend"
 	"github.com/onflow/flow-go/engine/access/subscription"
@@ -91,7 +92,7 @@ func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 	// only collect metrics if not test
 	if flag.Lookup("test.v") == nil {
 		var err error
-		restCollector, err = metrics.NewRestCollector(routes.URLToRoute, prometheus.DefaultRegisterer)
+		restCollector, err = metrics.NewRestCollector(router.URLToRoute, prometheus.DefaultRegisterer)
 		if err != nil {
 			return nil, err
 		}
@@ -120,6 +121,7 @@ func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 		restCollector,
 		NewStateStreamBackend(blockchain, debugLogger),
 		streamConfig,
+		websockets.NewDefaultWebsocketConfig(),
 	)
 
 	if err != nil {

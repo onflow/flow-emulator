@@ -247,9 +247,10 @@ func (s *session) handleVariablesRequest(request *dap.VariablesRequest) {
 		switch value := valueRequested.(type) {
 
 		case *sdk.Account:
-			storage := inter.SharedState.Config.Storage.GetStorageMap(
+			storage := inter.SharedState.Config.Storage.GetDomainStorageMap(
+				inter,
 				common.Address(value.Address),
-				common.PathDomainStorage.Identifier(),
+				common.StorageDomainPathStorage,
 				false,
 			)
 			responseVariables = s.convertStorageMapToDAPVariables(inter, storage)
@@ -646,10 +647,10 @@ func (s *session) convertInterpreterValueToDAPVariables(
 
 func (s *session) convertStorageMapToDAPVariables(
 	inter *interpreter.Interpreter,
-	value *interpreter.StorageMap,
+	value *interpreter.DomainStorageMap,
 ) []dap.Variable {
 
-	members := make([]dap.Variable, value.Count())
+	members := make([]dap.Variable, 0, value.Count())
 
 	it := value.Iterator(inter)
 	for {
