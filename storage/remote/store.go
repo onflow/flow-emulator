@@ -96,7 +96,7 @@ func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*St
 			return nil, fmt.Errorf("rpc host must be provided")
 		}
 
-		conn, err := grpc.Dial(
+		conn, err := grpc.NewClient(
 			store.host,
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 			grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1024*1024*1024)),

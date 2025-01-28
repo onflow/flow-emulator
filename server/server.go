@@ -137,7 +137,7 @@ type Config struct {
 	SqliteURL string
 	// CoverageReportingEnabled enables/disables Cadence code coverage reporting.
 	CoverageReportingEnabled bool
-	// LegacyUpgradeEnabled enables/disables Cadence legacy contracts upgrades
+	// LegacyContractUpgradeEnabled enables/disables Cadence legacy contracts upgrades
 	LegacyContractUpgradeEnabled bool
 	// RPCHost is the address of the access node to use when using a forked network.
 	RPCHost string
