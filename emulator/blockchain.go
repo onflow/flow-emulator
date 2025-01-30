@@ -321,8 +321,8 @@ func WithComputationReporting(enabled bool) Option {
 
 // Contracts allows users to deploy the given contracts.
 // Some default common contracts are pre-configured in the `CommonContracts`
-// global variable. It includes contracts such as:
-// NonFungibleToken, MetadataViews, NFTStorefront, ExampleNFT
+// global variable. It includes contracts such as ExampleNFT but could
+// contain more contracts in the future.
 // The default value is []ContractDescription{}.
 func Contracts(contracts []ContractDescription) Option {
 	return func(c *config) {
