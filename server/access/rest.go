@@ -27,6 +27,7 @@ import (
 	"os"
 
 	"github.com/onflow/flow-go/engine/access/rest"
+	"github.com/onflow/flow-go/engine/access/rest/common"
 	"github.com/onflow/flow-go/engine/access/rest/router"
 	"github.com/onflow/flow-go/engine/access/rest/websockets"
 	"github.com/onflow/flow-go/engine/access/state_stream"
@@ -111,10 +112,11 @@ func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 	srv, err := rest.NewServer(
 		adapter,
 		rest.Config{
-			ListenAddress: fmt.Sprintf("%s:3333", host),
-			WriteTimeout:  rest.DefaultWriteTimeout,
-			ReadTimeout:   rest.DefaultReadTimeout,
-			IdleTimeout:   rest.DefaultIdleTimeout,
+			ListenAddress:  fmt.Sprintf("%s:3333", host),
+			WriteTimeout:   rest.DefaultWriteTimeout,
+			ReadTimeout:    rest.DefaultReadTimeout,
+			IdleTimeout:    rest.DefaultIdleTimeout,
+			MaxRequestSize: common.DefaultMaxRequestSize,
 		},
 		debugLogger,
 		chain,
