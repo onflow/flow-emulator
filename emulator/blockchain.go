@@ -612,6 +612,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		Debugger:                     blockchain.debugger,
 		LegacyContractUpgradeEnabled: conf.LegacyContractUpgradeEnabled,
 		CoverageReport:               conf.CoverageReport,
+		StorageFormatV2Enabled:       true,
 	}
 	coverageReportedRuntime := &CoverageReportedRuntime{
 		Runtime:        runtime.NewInterpreterRuntime(runtimeConfig),
