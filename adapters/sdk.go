@@ -330,7 +330,7 @@ func (b *SDKAdapter) GetAccountAtBlockHeight(
 	return convert.FlowAccountToSDK(*account)
 }
 
-// ExecuteScriptAtLatestBlock executes a script at a the latest block
+// ExecuteScriptAtLatestBlock executes a script at the latest block
 func (b *SDKAdapter) ExecuteScriptAtLatestBlock(
 	ctx context.Context,
 	script []byte,
