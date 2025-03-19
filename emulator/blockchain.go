@@ -34,8 +34,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/onflow/flow-go/fvm/blueprints"
-	"github.com/onflow/flow-go/fvm/systemcontracts"
 	"math"
 	"strings"
 	"sync"
@@ -780,6 +778,8 @@ func bootstrapLedger(
 
 	// additional custom bootstrapping
 	customBootstrap := NewCustomBootstrap(bootstrap, func(ctx fvm.Context, executor *CustomBootStrapExecutor) error {
+
+		/* Example usage:
 		deployTo, err := conf.GetChainID().Chain().AddressAtIndex(systemcontracts.FlowFeesAccountIndex)
 		if err != nil {
 			return err
@@ -793,6 +793,8 @@ func bootstrapLedger(
 		if err != nil {
 			return err
 		}
+		*/
+
 		return nil
 	})
 
