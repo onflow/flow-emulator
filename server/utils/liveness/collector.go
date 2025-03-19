@@ -95,7 +95,7 @@ func (c *CheckCollector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// IsLive checks if we are still live against the given the tolerance between hearbeats.
+// IsLive checks if we are still live against the given the tolerance between heartbeats.
 //
 // If tolerance is 0, the default tolerance is used.
 func (c *CheckCollector) IsLive(tolerance time.Duration) bool {

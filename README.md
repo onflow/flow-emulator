@@ -34,7 +34,7 @@ There is also a block explorer GUI for the emulator, that will help you speed up
 
 ## Configuration
 
-The Flow Emulator can be run in different modes and settings, all of them are described in the table bellow.
+The Flow Emulator can be run in different modes and settings, all of them are described in the table below.
 
 Please note that if you will run the emulator using the Flow CLI you must use flags to pass configuration values
 and if you plan to run the emulator with Docker you must use the environment variables (Env) to pass configuration
@@ -48,7 +48,7 @@ values.
 | `--verbose`, `-v`             | `FLOW_VERBOSE`                   | `false`        | Enable verbose logging (useful for debugging)                                                                                                                                                                 |
 | `--log-format`                | `FLOW_LOGFORMAT`                 | `text`         | Output log format (valid values `text`, `JSON`)                                                                                                                                                               |
 | `--block-time`, `-b`          | `FLOW_BLOCKTIME`                 | `0`            | Time between sealed blocks. Valid units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`                                                                                                                         |
-| `--contracts`                 | `FLOW_WITHCONTRACTS`             | `false`        | Start with contracts like [NFT](https://github.com/onflow/flow-nft/blob/master/contracts/NonFungibleToken.cdc) and an [NFT Marketplace](https://github.com/onflow/nft-storefront), when the emulator starts   |
+| `--contracts`                 | `FLOW_WITHCONTRACTS`             | `false`        | Start with contracts like [ExampleNFT](https://github.com/onflow/flow-nft/blob/master/contracts/NonFungibleToken.cdc) when the emulator starts   |
 | `--service-priv-key`          | `FLOW_SERVICEPRIVATEKEY`         | random         | Private key used for the [service account](https://docs.onflow.org/flow-token/concepts/#flow-service-account)                                                                                                 |
 | `--service-sig-algo`          | `FLOW_SERVICEKEYSIGALGO`         | `ECDSA_P256`   | Service account key [signature algorithm](https://docs.onflow.org/cadence/language/crypto/#signing-algorithms)                                                                                                |
 | `--service-hash-algo`         | `FLOW_SERVICEKEYHASHALGO`        | `SHA3_256`     | Service account key [hash algorithm](https://docs.onflow.org/cadence/language/crypto/#hashing)                                                                                                                |
@@ -64,7 +64,7 @@ values.
 | `--storage-limit`             | `FLOW_STORAGELIMITENABLED`       | `true`         | Enable [account storage limit](https://docs.onflow.org/cadence/language/accounts/#storage-limit)                                                                                                              |
 | `--storage-per-flow`          | `FLOW_STORAGEMBPERFLOW`          |                | Specify size of the storage in MB for each FLOW in account balance. Default value from the flow-go                                                                                                            |
 | `--min-account-balance`       | `FLOW_MINIMUMACCOUNTBALANCE`     |                | Specify minimum balance the account must have. Default value from the flow-go                                                                                                                                 |
-| `--transaction-fees`          | `FLOW_TRANSACTIONFEESENABLED`    | `false`        | Enable variable transaction fees and execution effort metering <br> as decribed in [Variable Transaction Fees: Execution Effort](https://github.com/onflow/flow/pull/753) FLIP                                |
+| `--transaction-fees`          | `FLOW_TRANSACTIONFEESENABLED`    | `false`        | Enable variable transaction fees and execution effort metering <br> as described in [Variable Transaction Fees: Execution Effort](https://github.com/onflow/flow/pull/753) FLIP                                |
 | `--transaction-max-gas-limit` | `FLOW_TRANSACTIONMAXGASLIMIT`    | `9999`         | Maximum [gas limit for transactions](https://docs.onflow.org/flow-go-sdk/building-transactions/#gas-limit)                                                                                                    |
 | `--script-gas-limit`          | `FLOW_SCRIPTGASLIMIT`            | `100000`       | Specify gas limit for script execution                                                                                                                                                                        |
 | `--coverage-reporting`        | `FLOW_COVERAGEREPORTING`         | `false`        | Enable Cadence code coverage reporting                                                                                                                                                                        |

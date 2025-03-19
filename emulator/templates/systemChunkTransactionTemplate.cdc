@@ -1,4 +1,4 @@
-import RandomBeaconHistory from "RandomBeaconHistory"
+import "RandomBeaconHistory"
 import EVM from "EVM"
 
 transaction {

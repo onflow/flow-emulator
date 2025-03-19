@@ -71,22 +71,20 @@ const (
 	defaultDBGCRatio              = 0.5
 )
 
-var (
-	defaultHTTPHeaders = []utils.HTTPHeader{
-		{
-			Key:   "Access-Control-Allow-Origin",
-			Value: "*",
-		},
-		{
-			Key:   "Access-Control-Allow-Methods",
-			Value: "POST, GET, OPTIONS, PUT, DELETE",
-		},
-		{
-			Key:   "Access-Control-Allow-Headers",
-			Value: "*",
-		},
-	}
-)
+var defaultHTTPHeaders = []utils.HTTPHeader{
+	{
+		Key:   "Access-Control-Allow-Origin",
+		Value: "*",
+	},
+	{
+		Key:   "Access-Control-Allow-Methods",
+		Value: "POST, GET, OPTIONS, PUT, DELETE",
+	},
+	{
+		Key:   "Access-Control-Allow-Headers",
+		Value: "*",
+	},
+}
 
 // Config is the configuration for an emulator server.
 type Config struct {
@@ -129,15 +127,15 @@ type Config struct {
 	SkipTransactionValidation bool
 	// Host listen on for the emulator servers (REST/GRPC/Admin)
 	Host string
-	//Chain to emulation
+	// Chain to emulation
 	ChainID flowgo.ChainID
-	//Redis URL for redis storage backend
+	// Redis URL for redis storage backend
 	RedisURL string
-	//Sqlite URL for sqlite storage backend
+	// Sqlite URL for sqlite storage backend
 	SqliteURL string
 	// CoverageReportingEnabled enables/disables Cadence code coverage reporting.
 	CoverageReportingEnabled bool
-	// LegacyUpgradeEnabled enables/disables Cadence legacy contracts upgrades
+	// LegacyContractUpgradeEnabled enables/disables Cadence legacy contracts upgrades
 	LegacyContractUpgradeEnabled bool
 	// RPCHost is the address of the access node to use when using a forked network.
 	RPCHost string
@@ -257,10 +255,8 @@ func (s *EmulatorServer) Listen() error {
 // Start starts the Flow Emulator server.
 //
 // This is a blocking call that listens and starts the emulator server.
-func (s *EmulatorServer) Start() {
-	s.Stop()
-
-	s.group = graceland.NewGroup()
+func (s *EmulatorServer) AddToGroup(group *graceland.Group) {
+	s.group = group
 	// only start blocks ticker if it exists
 	if s.blocks != nil {
 		s.group.Add(s.blocks)
@@ -291,9 +287,13 @@ func (s *EmulatorServer) Start() {
 	if s.blocks != nil {
 		s.group.Add(s.blocks)
 	}
-
 	// routines are shut down in insertion order, so database is added last
 	s.group.Add(s.storage)
+}
+
+func (s *EmulatorServer) Start() {
+	s.Stop()
+	s.AddToGroup(graceland.NewGroup())
 
 	err := s.group.Start()
 	if err != nil {

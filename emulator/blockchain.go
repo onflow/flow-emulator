@@ -323,8 +323,8 @@ func WithComputationReporting(enabled bool) Option {
 
 // Contracts allows users to deploy the given contracts.
 // Some default common contracts are pre-configured in the `CommonContracts`
-// global variable. It includes contracts such as:
-// NonFungibleToken, MetadataViews, NFTStorefront, NFTStorefrontV2, ExampleNFT
+// global variable. It includes contracts such as ExampleNFT but could
+// contain more contracts in the future.
 // The default value is []ContractDescription{}.
 func Contracts(contracts []ContractDescription) Option {
 	return func(c *config) {
@@ -614,6 +614,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		Debugger:                     blockchain.debugger,
 		LegacyContractUpgradeEnabled: conf.LegacyContractUpgradeEnabled,
 		CoverageReport:               conf.CoverageReport,
+		StorageFormatV2Enabled:       true,
 	}
 	coverageReportedRuntime := &CoverageReportedRuntime{
 		Runtime:        runtime.NewInterpreterRuntime(runtimeConfig),
@@ -1112,13 +1113,7 @@ func (b *Blockchain) getAccount(address flowgo.Address) (*flowgo.Account, error)
 func (b *Blockchain) GetAccountAtBlockHeight(address flowgo.Address, blockHeight uint64) (*flowgo.Account, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
-
-	account, err := b.getAccountAtBlock(address, blockHeight)
-	if err != nil {
-		return nil, err
-	}
-
-	return account, nil
+	return b.getAccountAtBlock(address, blockHeight)
 }
 
 // GetAccountAtBlock returns the account for the given address at specified block height.
@@ -1133,7 +1128,7 @@ func (b *Blockchain) getAccountAtBlock(address flowgo.Address, blockHeight uint6
 		return nil, &types.AccountNotFoundError{Address: address}
 	}
 
-	return account, nil
+	return account, err
 }
 
 func (b *Blockchain) GetEventsForBlockIDs(eventType string, blockIDs []flowgo.Identifier) (result []flowgo.BlockEvents, err error) {
