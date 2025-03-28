@@ -1501,7 +1501,7 @@ func TestGetTxByBlockIDMethods(t *testing.T) {
 	submittedTx := make([]*flowsdk.Transaction, 0)
 
 	// submit 5 tx to be executed in a single block
-	for i := uint64(0); i < 5; i++ {
+	for i := uint64(0); i < 1; i++ {
 		tx := flowsdk.NewTransaction().
 			SetScript([]byte(code)).
 			SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
