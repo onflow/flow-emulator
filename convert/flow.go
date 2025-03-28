@@ -101,6 +101,7 @@ func SDKTransactionSignatureToFlow(sdkTransactionSignature sdk.TransactionSignat
 		SignerIndex: sdkTransactionSignature.SignerIndex,
 		KeyIndex:    sdkTransactionSignature.KeyIndex,
 		Signature:   sdkTransactionSignature.Signature,
+		Info:        sdkTransactionSignature.Info,
 	}
 }
 
@@ -110,6 +111,7 @@ func FlowTransactionSignatureToSDK(flowTransactionSignature flowgo.TransactionSi
 		SignerIndex: flowTransactionSignature.SignerIndex,
 		KeyIndex:    flowTransactionSignature.KeyIndex,
 		Signature:   flowTransactionSignature.Signature,
+		Info:        flowTransactionSignature.Info,
 	}
 }
 

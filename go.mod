@@ -17,10 +17,10 @@ require (
 	github.com/onflow/cadence v1.3.1
 	github.com/onflow/crypto v0.25.2
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.5.1-preview
-	github.com/onflow/flow-go v0.38.1-0.20250218174738-2181389f9f7d
-	github.com/onflow/flow-go-sdk v1.3.1
+	github.com/onflow/flow-go v0.38.1-0.20250328232626-fa40c6897b2f
+	github.com/onflow/flow-go-sdk v1.3.2-0.20250328231322-d61dfb34a9d6
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.3
-	github.com/onflow/flow/protobuf/go/flow v0.4.9
+	github.com/onflow/flow/protobuf/go/flow v0.4.11-0.20250328223356-fe93658d6757
 	github.com/prometheus/client_golang v1.20.5
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
