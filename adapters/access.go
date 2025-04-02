@@ -20,6 +20,7 @@ package adapters
 
 import (
 	"context"
+	"fmt"
 
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/flow-go/access"
@@ -194,6 +195,8 @@ func (a *AccessAdapter) GetTransaction(_ context.Context, id flowgo.Identifier) 
 	a.logger.Debug().
 		Str("txID", id.String()).
 		Msg("💵  GetTransaction called")
+
+	fmt.Println("get transaction", tx.ID())
 
 	return tx, nil
 }
@@ -596,6 +599,8 @@ func (a *AccessAdapter) SendTransaction(_ context.Context, tx *flowgo.Transactio
 	a.logger.Debug().
 		Str("txID", tx.ID().String()).
 		Msg(`✉️   Transaction submitted`)
+
+	fmt.Println("transaction submitted", tx.ID(), tx.EnvelopeSignatures[0].String())
 
 	return convertError(a.emulator.SendTransaction(tx), codes.Internal)
 }
