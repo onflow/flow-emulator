@@ -82,6 +82,12 @@ func (r *RestServer) Stop() {
 	_ = r.server.Shutdown(context.Background())
 }
 
+func (r *RestServer) UseMiddleware(middleware func(http.Handler) http.Handler) {
+	if r.server != nil {
+		r.server.Handler = middleware(r.server.Handler)
+	}
+}
+
 func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adapter *adapters.AccessAdapter, chain flow.Chain, host string, port int, debug bool) (*RestServer, error) {
 
 	debugLogger := zerolog.Logger{}

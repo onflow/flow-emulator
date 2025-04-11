@@ -20,6 +20,7 @@ package server
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"sort"
 	"time"
@@ -510,4 +511,10 @@ func sanitizeConfig(conf *Config) *Config {
 	}
 
 	return conf
+}
+
+func (s *EmulatorServer) UseRestMiddleware(middleware func(http.Handler) http.Handler) {
+	if s.rest != nil {
+		s.rest.UseMiddleware(middleware)
+	}
 }
