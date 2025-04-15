@@ -94,7 +94,12 @@ type serviceKeyFunc func(
 
 type HttpMiddleware func(http.Handler) http.Handler
 
-func Cmd(getServiceKey serviceKeyFunc, httpMiddlewares ...HttpMiddleware) *cobra.Command {
+type StartConfig struct {
+	GetServiceKey   serviceKeyFunc
+	RestMiddlewares []HttpMiddleware
+}
+
+func Cmd(config StartConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Starts the Flow emulator server",
@@ -126,7 +131,7 @@ func Cmd(getServiceKey serviceKeyFunc, httpMiddlewares ...HttpMiddleware) *cobra
 
 				servicePublicKey = servicePrivateKey.PublicKey()
 			} else { // if we don't provide any config values use the serviceKeyFunc to obtain the key
-				servicePrivateKey, serviceKeySigAlgo, serviceKeyHashAlgo = getServiceKey(
+				servicePrivateKey, serviceKeySigAlgo, serviceKeyHashAlgo = config.GetServiceKey(
 					conf.Init,
 					serviceKeySigAlgo,
 					serviceKeyHashAlgo,
@@ -219,9 +224,8 @@ func Cmd(getServiceKey serviceKeyFunc, httpMiddlewares ...HttpMiddleware) *cobra
 
 			emu := server.NewEmulatorServer(logger, serverConf)
 			if emu != nil {
-				// We use a variadic parameter to make rest middleware optional and avoid a breaking change
-				if len(httpMiddlewares) > 0 {
-					emu.UseRestMiddleware(httpMiddlewares[0])
+				for _, middleware := range config.RestMiddlewares {
+					emu.UseRestMiddleware(middleware)
 				}
 				emu.Start()
 			} else {
