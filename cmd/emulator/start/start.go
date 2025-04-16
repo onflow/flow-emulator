@@ -22,6 +22,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -91,7 +92,14 @@ type serviceKeyFunc func(
 	hashAlgo crypto.HashAlgorithm,
 ) (crypto.PrivateKey, crypto.SignatureAlgorithm, crypto.HashAlgorithm)
 
-func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
+type HttpMiddleware func(http.Handler) http.Handler
+
+type StartConfig struct {
+	GetServiceKey   serviceKeyFunc
+	RestMiddlewares []HttpMiddleware
+}
+
+func Cmd(config StartConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Starts the Flow emulator server",
@@ -123,7 +131,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 
 				servicePublicKey = servicePrivateKey.PublicKey()
 			} else { // if we don't provide any config values use the serviceKeyFunc to obtain the key
-				servicePrivateKey, serviceKeySigAlgo, serviceKeyHashAlgo = getServiceKey(
+				servicePrivateKey, serviceKeySigAlgo, serviceKeyHashAlgo = config.GetServiceKey(
 					conf.Init,
 					serviceKeySigAlgo,
 					serviceKeyHashAlgo,
@@ -216,6 +224,9 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 
 			emu := server.NewEmulatorServer(logger, serverConf)
 			if emu != nil {
+				for _, middleware := range config.RestMiddlewares {
+					emu.UseRestMiddleware(middleware)
+				}
 				emu.Start()
 			} else {
 				Exit(-1, "")

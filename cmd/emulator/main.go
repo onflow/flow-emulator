@@ -43,7 +43,12 @@ func defaultServiceKey(
 }
 
 func main() {
-	if err := start.Cmd(defaultServiceKey).Execute(); err != nil {
+	config := start.StartConfig{
+		GetServiceKey:   defaultServiceKey,
+		RestMiddlewares: []start.HttpMiddleware{},
+	}
+
+	if err := start.Cmd(config).Execute(); err != nil {
 		start.Exit(1, err.Error())
 	}
 }
