@@ -6,7 +6,7 @@ toolchain go1.23.4
 
 require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
-	github.com/fxamacker/cbor/v2 v2.4.1-0.20230228173756-c0c9f774e40c
+	github.com/fxamacker/cbor/v2 v2.8.1-0.20250402194037-6f932b086829
 	github.com/glebarez/go-sqlite v1.22.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/go-dap v0.11.0
@@ -14,13 +14,13 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.3.1
+	github.com/onflow/cadence v1.3.4
 	github.com/onflow/crypto v0.25.2
-	github.com/onflow/flow-core-contracts/lib/go/templates v1.5.1-preview
-	github.com/onflow/flow-go v0.38.1-0.20250218174738-2181389f9f7d
-	github.com/onflow/flow-go-sdk v1.3.1
+	github.com/onflow/flow-core-contracts/lib/go/templates v1.6.0
+	github.com/onflow/flow-go v0.40.0
+	github.com/onflow/flow-go-sdk v1.3.3
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.3
-	github.com/onflow/flow/protobuf/go/flow v0.4.9
+	github.com/onflow/flow/protobuf/go/flow v0.4.10
 	github.com/prometheus/client_golang v1.20.5
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
@@ -143,9 +143,9 @@ require (
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/onflow/atree v0.9.0 // indirect
+	github.com/onflow/atree v0.10.0 // indirect
 	github.com/onflow/bridged-usdc/lib/go/contracts v1.0.0 // indirect
-	github.com/onflow/flow-core-contracts/lib/go/contracts v1.5.1-preview // indirect
+	github.com/onflow/flow-core-contracts/lib/go/contracts v1.6.0 // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v1.0.1 // indirect
 	github.com/onflow/flow-ft/lib/go/templates v1.0.1 // indirect
 	github.com/onflow/flow-nft/lib/go/templates v1.2.1 // indirect
@@ -214,7 +214,7 @@ require (
 	google.golang.org/protobuf v1.36.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	lukechampine.com/blake3 v1.3.0 // indirect
+	lukechampine.com/blake3 v1.4.0 // indirect
 	modernc.org/libc v1.37.6 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.7.2 // indirect
