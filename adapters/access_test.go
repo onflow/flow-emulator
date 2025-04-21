@@ -25,8 +25,8 @@ import (
 
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/encoding/ccf"
-	"github.com/onflow/flow-go/access"
 	"github.com/onflow/flow-go/engine/common/rpc/convert"
+	accessmodel "github.com/onflow/flow-go/model/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow/protobuf/go/flow/entities"
 	"github.com/rs/zerolog"
@@ -63,7 +63,7 @@ func TestAccess(t *testing.T) {
 	}))
 
 	t.Run("GetNetworkParameters", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
-		expected := access.NetworkParameters{
+		expected := accessmodel.NetworkParameters{
 			ChainID: flowgo.MonotonicEmulator,
 		}
 
@@ -325,12 +325,12 @@ func TestAccess(t *testing.T) {
 		blockID := flowgo.Identifier{}
 		collectionID := flowgo.Identifier{}
 
-		emuResult := access.TransactionResult{
+		emuResult := accessmodel.TransactionResult{
 			Events: []flowgo.Event{
 				ccfEventFixture(t),
 			},
 		}
-		expected := access.TransactionResult{
+		expected := accessmodel.TransactionResult{
 			Events: []flowgo.Event{
 				jsonCDCEventFixture(t),
 			},
@@ -632,13 +632,13 @@ func TestAccess(t *testing.T) {
 		blockID := flowgo.Identifier{}
 		index := uint32(0)
 
-		txResult := &access.TransactionResult{
+		txResult := &accessmodel.TransactionResult{
 			Events: []flowgo.Event{
 				ccfEventFixture(t),
 			},
 		}
-		results := []*access.TransactionResult{txResult}
-		convertedTXResult := &access.TransactionResult{
+		results := []*accessmodel.TransactionResult{txResult}
+		convertedTXResult := &accessmodel.TransactionResult{
 			Events: []flowgo.Event{
 				jsonCDCEventFixture(t),
 			},
@@ -698,14 +698,14 @@ func TestAccess(t *testing.T) {
 
 		blockID := flowgo.Identifier{}
 
-		results := []*access.TransactionResult{
+		results := []*accessmodel.TransactionResult{
 			{
 				Events: []flowgo.Event{
 					ccfEventFixture(t),
 				},
 			},
 		}
-		expected := []*access.TransactionResult{
+		expected := []*accessmodel.TransactionResult{
 			{
 				Events: []flowgo.Event{
 					jsonCDCEventFixture(t),
