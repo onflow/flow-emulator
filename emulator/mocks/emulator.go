@@ -17,7 +17,7 @@ import (
 	runtime "github.com/onflow/cadence/runtime"
 	emulator "github.com/onflow/flow-emulator/emulator"
 	types "github.com/onflow/flow-emulator/types"
-	access "github.com/onflow/flow-go/access"
+	access "github.com/onflow/flow-go/model/access"
 	flow "github.com/onflow/flow-go/model/flow"
 	gomock "go.uber.org/mock/gomock"
 )

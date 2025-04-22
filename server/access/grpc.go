@@ -23,8 +23,8 @@ import (
 	"net"
 
 	grpcprometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"github.com/onflow/flow-go/access"
 	legacyaccess "github.com/onflow/flow-go/access/legacy"
+	"github.com/onflow/flow-go/engine/access/rpc"
 	"github.com/onflow/flow-go/engine/access/state_stream"
 	"github.com/onflow/flow-go/engine/access/state_stream/backend"
 	"github.com/onflow/flow-go/engine/access/subscription"
@@ -68,7 +68,7 @@ func NewGRPCServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 	me.On("NodeID").Return(flowgo.ZeroID)
 
 	legacyaccessproto.RegisterAccessAPIServer(grpcServer, legacyaccess.NewHandler(adapter, chain))
-	accessproto.RegisterAccessAPIServer(grpcServer, access.NewHandler(adapter, chain, mockHeaderCache{}, me, subscription.DefaultMaxGlobalStreams))
+	accessproto.RegisterAccessAPIServer(grpcServer, rpc.NewHandler(adapter, chain, mockHeaderCache{}, me, subscription.DefaultMaxGlobalStreams))
 
 	grpcprometheus.Register(grpcServer)
 
