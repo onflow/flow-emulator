@@ -1265,6 +1265,29 @@ func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 		results = append(results, result)
 	}
 
+	// add transaction to schedule callbacks
+	b.pendingBlock.AddTransaction(scheduleCallbackTransaction())
+	result, err := b.executeNextTransaction(blockContext)
+	if err != nil {
+		return results, err
+	}
+	results = append(results, result)
+
+	// execute callbacks we receive from events of the schedule transaction
+	executeTxs, err := executeCallbackTransactions(result.Events)
+	if err != nil {
+		return results, err
+	}
+
+	for _, tx := range executeTxs {
+		b.pendingBlock.AddTransaction(tx)
+		result, err := b.executeNextTransaction(blockContext)
+		if err != nil {
+			return results, err
+		}
+		results = append(results, result)
+	}
+
 	return results, nil
 }
 
