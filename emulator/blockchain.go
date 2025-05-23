@@ -320,6 +320,12 @@ func WithComputationReporting(enabled bool) Option {
 	}
 }
 
+func WithScheduledCallbacks(enabled bool) Option {
+	return func(c *config) {
+		c.ScheduledCallbacksEnabled = enabled
+	}
+}
+
 // Contracts allows users to deploy the given contracts.
 // Some default common contracts are pre-configured in the `CommonContracts`
 // global variable. It includes contracts such as ExampleNFT but could
@@ -391,6 +397,7 @@ type config struct {
 	AutoMine                     bool
 	Contracts                    []ContractDescription
 	ComputationReportingEnabled  bool
+	ScheduledCallbacksEnabled    bool
 }
 
 func (conf config) GetStore() storage.Store {
@@ -1265,27 +1272,21 @@ func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 		results = append(results, result)
 	}
 
-	// add transaction to schedule callbacks
-	b.pendingBlock.AddTransaction(scheduleCallbackTransaction())
-	result, err := b.executeNextTransaction(blockContext)
-	if err != nil {
-		return results, err
-	}
-	results = append(results, result)
+	// lastly execute any scheduled callbacks if the feature is enabled
+	if b.conf.ScheduledCallbacksEnabled {
+		// todo refactor after bootstrap deploys CallbackScheduler
+		// this is a temporary workaround since deployment of CallbackScheduler is not
+		// yet part of bootstrap procedure, so it must be deployed in the first block
+		// during emulator startup, so we shouldn't support scheduling in these first blocks
+		if b.pendingBlock.height < 2 {
+			return results, nil
+		}
 
-	// execute callbacks we receive from events of the schedule transaction
-	executeTxs, err := executeCallbackTransactions(result.Events)
-	if err != nil {
-		return results, err
-	}
-
-	for _, tx := range executeTxs {
-		b.pendingBlock.AddTransaction(tx)
-		result, err := b.executeNextTransaction(blockContext)
+		callbacks, err := b.executeScheduledCallbacks(blockContext)
 		if err != nil {
 			return results, err
 		}
-		results = append(results, result)
+		results = append(results, callbacks...)
 	}
 
 	return results, nil
@@ -1887,6 +1888,44 @@ func (b *Blockchain) executeSystemChunkTransaction() error {
 	}
 
 	return nil
+}
+
+func (b *Blockchain) executeScheduledCallbacks(blockContext fvm.Context) ([]*types.TransactionResult, error) {
+	var results []*types.TransactionResult
+
+	serviceAddress := b.GetChain().ServiceAddress()
+	parentID := b.pendingBlock.parentID
+	// disable checks for signatures and keys since we are executing a system transaction
+	ctx := fvm.NewContextFromParent(
+		blockContext,
+		fvm.WithAuthorizationChecksEnabled(false),
+		fvm.WithSequenceNumberCheckAndIncrementEnabled(false),
+	)
+
+	// add transaction to schedule callbacks
+	b.pendingBlock.AddTransaction(processCallbackTransaction(serviceAddress, parentID))
+	result, err := b.executeNextTransaction(ctx)
+	if err != nil {
+		return results, err
+	}
+	results = append(results, result)
+
+	// execute callbacks we receive from events of the schedule transaction
+	executeTxs, err := executeCallbackTransactions(result.Events, serviceAddress, parentID)
+	if err != nil {
+		return results, err
+	}
+
+	for _, tx := range executeTxs {
+		b.pendingBlock.AddTransaction(tx)
+		result, err := b.executeNextTransaction(ctx)
+		if err != nil {
+			return results, err
+		}
+		results = append(results, result)
+	}
+
+	return results, nil
 }
 
 func (b *Blockchain) GetRegisterValues(registerIDs flowgo.RegisterIDs, height uint64) (values []flowgo.RegisterValue, err error) {
