@@ -80,6 +80,7 @@ type Config struct {
 	CheckpointPath               string        `default:"" flag:"checkpoint-dir" info:"checkpoint directory to load the emulator state from"`
 	StateHash                    string        `default:"" flag:"state-hash" info:"state hash of the checkpoint to load the emulator state from"`
 	ComputationReportingEnabled  bool          `default:"false" flag:"computation-reporting" info:"enable Cadence computation reporting"`
+	ScheduledCallbacksEnabled    bool          `default:"false" flag:"scheduled-callbacks" info:"enable Cadence scheduled callbacks"`
 }
 
 const EnvPrefix = "FLOW"
@@ -220,6 +221,7 @@ func Cmd(config StartConfig) *cobra.Command {
 				CheckpointPath:               conf.CheckpointPath,
 				StateHash:                    conf.StateHash,
 				ComputationReportingEnabled:  conf.ComputationReportingEnabled,
+				ScheduledCallbacksEnabled:    conf.ScheduledCallbacksEnabled,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)

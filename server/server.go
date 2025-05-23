@@ -19,6 +19,7 @@
 package server
 
 import (
+	_ "embed"
 	"fmt"
 	"net/http"
 	"os"
@@ -44,6 +45,11 @@ import (
 	"github.com/onflow/flow-emulator/storage/sqlite"
 	"github.com/onflow/flow-emulator/storage/util"
 )
+
+// todo refactor this once the SchedulerContract is created in core-contracts
+//
+//go:embed utils/scheduler/unsafeCallbackScheduler.cdc
+var unsafeCallbackSchedulerContract []byte
 
 // EmulatorServer is a local server that runs a Flow Emulator instance.
 //
@@ -150,6 +156,8 @@ type Config struct {
 	StateHash string
 	// ComputationReportingEnabled enables/disables Cadence computation reporting.
 	ComputationReportingEnabled bool
+	// ScheduledCallbacksEnabled enables an experimental feature for scheduling callbacks.
+	ScheduledCallbacksEnabled bool
 }
 
 type listener interface {
@@ -176,6 +184,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 
 	sc := systemcontracts.SystemContractsForChain(chain.ChainID())
 	contracts := sc.All()
+
 	// sort contracts to always have the same order
 	sort.Slice(contracts, func(i, j int) bool {
 		return contracts[i].Name < contracts[j].Name
@@ -189,6 +198,15 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 
 	if conf.WithContracts {
 		commonContracts := emulator.NewCommonContracts(chain)
+
+		// todo refactor this once the SchedulerContract is created in core-contracts
+		if conf.ScheduledCallbacksEnabled {
+			commonContracts = append(commonContracts, emulator.ContractDescription{
+				Name:   "UnsafeCallbackScheduler",
+				Source: unsafeCallbackSchedulerContract,
+			})
+		}
+
 		err := emulator.DeployContracts(emulatedBlockchain, commonContracts)
 		if err != nil {
 			logger.Error().Err(err).Msg("❗  Failed to deploy contracts")
@@ -466,6 +484,13 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		options = append(
 			options,
 			emulator.WithComputationReporting(true),
+		)
+	}
+
+	if conf.ScheduledCallbacksEnabled {
+		options = append(
+			options,
+			emulator.WithScheduledCallbacks(true),
 		)
 	}
 
