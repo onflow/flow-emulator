@@ -1,7 +1,8 @@
-import "CallbackScheduler"
+import "UnsafeCallbackScheduler"
 
-transaction(id: UInt64) {
+transaction(callbackID: UInt64) {
     execute {
-        CallbackScheduler.execute(id: id)
+        log("[system.execute_callback] executing callback ".concat(callbackID.toString()))
+        UnsafeCallbackScheduler.executeCallback(ID: callbackID)
     }
 }
