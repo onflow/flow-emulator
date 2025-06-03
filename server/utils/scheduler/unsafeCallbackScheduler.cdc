@@ -31,22 +31,24 @@ access(all) contract UnsafeCallbackScheduler {
     access(all) struct ScheduledCallback {
         access(all) let ID: UInt64
         access(all) let timestamp: UFix64?
-        access(all) let cancel: fun(): @FlowToken.Vault
+        access(all) let cancel: (fun(): @FlowToken.Vault)?
+        access(all) var fees: @FlowToken.Vault?
         access(all) var status: Status
 
-        access(contract) init(id: UInt64, timestamp: UFix64?, cancel: fun(): @FlowToken.Vault) {
+        access(contract) init(id: UInt64, status: Status, timestamp: UFix64?, fees: @FlowToken.Vault?, cancel: (fun(): @FlowToken.Vault)?) {
             self.ID = id
             self.status = Status.Scheduled
             self.timestamp = timestamp
             self.cancel = cancel
+            self.fees <- fees
         }
     }
 
     access(all) struct EstimatedCallback {
-        access(all) var flowFee: UFix64
-        access(all) var timestamp: UFix64
+        access(all) let flowFee: UFix64
+        access(all) let timestamp: UFix64
 
-        init(flowFee: UFix64, timestamp: UFix64) {
+        access(contract) init(flowFee: UFix64, timestamp: UFix64) {
             self.flowFee = flowFee
             self.timestamp = timestamp
         }
@@ -57,7 +59,7 @@ access(all) contract UnsafeCallbackScheduler {
     access(all) event CallbackExecuted(id: UInt64)
     access(all) event CallbackCanceled(id: UInt64)
 
-    access(all) resource CallbackData {
+    access(contract) resource CallbackData {
         access(all) let handler: Capability<auth(Callback) &{CallbackHandler}>
         access(all) let data: AnyStruct?
         access(all) let originalTimestamp: UFix64
@@ -67,7 +69,7 @@ access(all) contract UnsafeCallbackScheduler {
         access(all) var status: Status
         access(all) let scheduledTimestamp: UFix64
 
-        init(
+        access(contract) init(
             handler: Capability<auth(Callback) &{CallbackHandler}>,
             data: AnyStruct?,
             originalTimestamp: UFix64,
@@ -86,7 +88,7 @@ access(all) contract UnsafeCallbackScheduler {
             self.scheduledTimestamp = scheduledTimestamp
         }
 
-        access(all) fun setStatus(newStatus: Status) {
+        access(contract) fun setStatus(newStatus: Status) {
             self.status = newStatus
         }
     }
@@ -101,7 +103,7 @@ access(all) contract UnsafeCallbackScheduler {
     access(self) let MEDIUM_MULTIPLIER: UFix64
     access(self) let LOW_MULTIPLIER: UFix64
 
-    init() {
+    access(all) init() {
         self.nextID = 0
         self.callbacks <- {}
         self.timestampQueue = {}
@@ -142,8 +144,18 @@ access(all) contract UnsafeCallbackScheduler {
 
     // Helper to convert execution effort to Flow tokens
     // test implementation for simplicity
-    access(all) fun executionEffortToFlow(executionEffort: UInt64): UFix64 {
+    access(self) fun executionEffortToFlow(executionEffort: UInt64): UFix64 {
         return UFix64(executionEffort) / 10000.0
+    }
+
+    access(self) fun rejected(fees: @FlowToken.Vault?): ScheduledCallback {
+        return ScheduledCallback(
+            id: 0,
+            status: Status.Rejected,
+            timestamp: nil,
+            fees: <-fees,
+            cancel: nil
+        )
     }
 
     access(all) fun schedule(
@@ -156,17 +168,13 @@ access(all) contract UnsafeCallbackScheduler {
     ): ScheduledCallback? {
         // Validate timestamp is in future
         if timestamp <= getCurrentBlock().timestamp {
-            // todo we shouldn't destroy fees here, we should return the vault as part of
-            // the scheduled callback with status rejeceted
-            destroy fees
-            return nil
+            return self.rejected(fees: <-fees)
         }
 
         // Calculate required fee
         let requiredFee = self.calculateFee(executionEffort: executionEffort, priority: priority)
         if fees.balance < requiredFee {
-            destroy fees
-            return nil
+            return self.rejected(fees: <-fees)
         }
 
         var scheduledTimestamp: UFix64? = self.calculateScheduledTimestamp(timestamp: timestamp, priority: priority)
@@ -221,7 +229,13 @@ access(all) contract UnsafeCallbackScheduler {
             return <- refundFees
         }
 
-        return ScheduledCallback(id: callbackID, timestamp: scheduledTimestamp, cancel: cancel)
+        return ScheduledCallback(
+            id: callbackID,
+            status: Status.Scheduled,
+            timestamp: scheduledTimestamp,
+            fees: nil,
+            cancel: cancel,
+        )
     }
 
     access(all) fun estimate(
@@ -246,7 +260,7 @@ access(all) contract UnsafeCallbackScheduler {
         return EstimatedCallback(flowFee: fee, timestamp: scheduledTimestamp)
     }
 
-    access(all) fun process() {
+    access(self) fun process() {
         log("[scheduler.process] processing callbacks")
 
         let currentTimestamp = getCurrentBlock().timestamp
@@ -273,7 +287,7 @@ access(all) contract UnsafeCallbackScheduler {
         }
     }
 
-    access(all) fun executeCallback(ID: UInt64) {
+    access(self) fun executeCallback(ID: UInt64) {
         log("[scheduler.executeCallback] executing callback ".concat(ID.toString()))
 
         let callback = &self.callbacks[ID] as &CallbackData?
@@ -309,7 +323,7 @@ access(all) contract UnsafeCallbackScheduler {
         }
     }
 
-    access(all) fun statusToString(status: Status): String {
+    access(self) fun statusToString(status: Status): String {
         switch status {
             case Status.Scheduled:
                 return "scheduled"
@@ -326,7 +340,7 @@ access(all) contract UnsafeCallbackScheduler {
         }
     }
 
-    access(all) fun priorityToString(priority: Priority): String {
+    access(self) fun priorityToString(priority: Priority): String {
         switch priority {
             case Priority.High:
                 return "high"
