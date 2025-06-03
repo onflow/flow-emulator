@@ -25,22 +25,19 @@ access(all) contract UnsafeCallbackScheduler {
         access(all) case Processed
         access(all) case Executed
         access(all) case Canceled
-        access(all) case Rejected
     }
 
     access(all) struct ScheduledCallback {
         access(all) let ID: UInt64
         access(all) let timestamp: UFix64?
-        access(all) let cancel: (fun(): @FlowToken.Vault)?
-        access(all) var fees: @FlowToken.Vault?
+        access(all) let cancel: fun(): @FlowToken.Vault
         access(all) var status: Status
 
-        access(contract) init(id: UInt64, status: Status, timestamp: UFix64?, fees: @FlowToken.Vault?, cancel: (fun(): @FlowToken.Vault)?) {
+        access(contract) init(id: UInt64, status: Status, timestamp: UFix64?, cancel: fun(): @FlowToken.Vault) {
             self.ID = id
             self.status = Status.Scheduled
             self.timestamp = timestamp
             self.cancel = cancel
-            self.fees <- fees
         }
     }
 
@@ -59,7 +56,7 @@ access(all) contract UnsafeCallbackScheduler {
     access(all) event CallbackExecuted(id: UInt64)
     access(all) event CallbackCanceled(id: UInt64)
 
-    access(contract) resource CallbackData {
+    access(all) resource CallbackData {
         access(all) let handler: Capability<auth(Callback) &{CallbackHandler}>
         access(all) let data: AnyStruct?
         access(all) let originalTimestamp: UFix64
@@ -148,16 +145,6 @@ access(all) contract UnsafeCallbackScheduler {
         return UFix64(executionEffort) / 10000.0
     }
 
-    access(self) fun rejected(fees: @FlowToken.Vault?): ScheduledCallback {
-        return ScheduledCallback(
-            id: 0,
-            status: Status.Rejected,
-            timestamp: nil,
-            fees: <-fees,
-            cancel: nil
-        )
-    }
-
     access(all) fun schedule(
         callback: Capability<auth(Callback) &{CallbackHandler}>,
         data: AnyStruct?,
@@ -165,16 +152,16 @@ access(all) contract UnsafeCallbackScheduler {
         priority: Priority,
         executionEffort: UInt64,
         fees: @FlowToken.Vault
-    ): ScheduledCallback? {
+    ): ScheduledCallback {
         // Validate timestamp is in future
         if timestamp <= getCurrentBlock().timestamp {
-            return self.rejected(fees: <-fees)
+            panic("Timestamp ".concat(timestamp.toString()).concat(" is in the past"))
         }
 
         // Calculate required fee
         let requiredFee = self.calculateFee(executionEffort: executionEffort, priority: priority)
         if fees.balance < requiredFee {
-            return self.rejected(fees: <-fees)
+            panic("Provided fee: ".concat(fees.balance.toString()).concat(" less than required fee: ".concat(requiredFee.toString())))
         }
 
         var scheduledTimestamp: UFix64? = self.calculateScheduledTimestamp(timestamp: timestamp, priority: priority)
@@ -233,7 +220,6 @@ access(all) contract UnsafeCallbackScheduler {
             id: callbackID,
             status: Status.Scheduled,
             timestamp: scheduledTimestamp,
-            fees: nil,
             cancel: cancel,
         )
     }
@@ -260,7 +246,7 @@ access(all) contract UnsafeCallbackScheduler {
         return EstimatedCallback(flowFee: fee, timestamp: scheduledTimestamp)
     }
 
-    access(self) fun process() {
+    access(all) fun process() {
         log("[scheduler.process] processing callbacks")
 
         let currentTimestamp = getCurrentBlock().timestamp
@@ -287,7 +273,7 @@ access(all) contract UnsafeCallbackScheduler {
         }
     }
 
-    access(self) fun executeCallback(ID: UInt64) {
+    access(all) fun executeCallback(ID: UInt64) {
         log("[scheduler.executeCallback] executing callback ".concat(ID.toString()))
 
         let callback = &self.callbacks[ID] as &CallbackData?
@@ -333,8 +319,6 @@ access(all) contract UnsafeCallbackScheduler {
                 return "executed"
             case Status.Canceled:
                 return "canceled"
-            case Status.Rejected:
-                return "rejected"
             default:
                 panic("Invalid status ".concat(status.rawValue.toString()))
         }
