@@ -206,12 +206,19 @@ access(all) contract UnsafeCallbackScheduler {
             let callback <- self.callbacks.remove(key: callbackID)
                 ?? panic("Callback not found ".concat(callbackID.toString()))
 
+            // Remove from timestamp queue
+            self.timestampQueue.remove(key: callback.scheduledTimestamp)
+
+            // Return half the fees
+            let halfAmount = callback.fees.balance / 2.0
+            let refundFees <- callback.fees.withdraw(amount: halfAmount) as! @FlowToken.Vault
+
             destroy callback
 
             log("[scheduler.cancel] callback canceled: ".concat(callbackID.toString()))
 
             emit CallbackCanceled(id: callbackID)
-            return <- callback.fees
+            return <- refundFees
         }
 
         return ScheduledCallback(id: callbackID, timestamp: scheduledTimestamp, cancel: cancel)
@@ -237,26 +244,6 @@ access(all) contract UnsafeCallbackScheduler {
         let scheduledTimestamp = self.calculateScheduledTimestamp(timestamp: timestamp, priority: priority)
 
         return EstimatedCallback(flowFee: fee, timestamp: scheduledTimestamp)
-    }
-
-    access(all) fun cancel(scheduledCallback: ScheduledCallback): @FlowToken.Vault {
-        let callbackID = scheduledCallback.getID()
-
-        let callback <- self.callbacks.remove(key: callbackID)
-            ?? panic("Callback not found ".concat(callbackID.toString()))
-
-        // Remove from timestamp queue
-        self.timestampQueue.remove(key: callback.scheduledTimestamp)
-
-        // Return half the fees
-        let halfAmount = callback.fees.balance / 2.0
-        let refund <- callback.fees.withdraw(amount: halfAmount) as! @FlowToken.Vault
-
-        emit CallbackCanceled(id: callbackID)
-
-        destroy callback
-
-        return <- refund
     }
 
     access(all) fun process() {
