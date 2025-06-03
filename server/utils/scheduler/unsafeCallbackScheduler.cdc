@@ -25,18 +25,21 @@ access(all) contract UnsafeCallbackScheduler {
         access(all) case Processed
         access(all) case Executed
         access(all) case Canceled
+        access(all) case Rejected
     }
 
-    access(all) resource ScheduledCallback {
+    access(all) struct ScheduledCallback {
         access(all) var ID: UInt64
         access(all) var status: Status
         access(all) var timestamp: UFix64?
 
-        init(id: UInt64, timestamp: UFix64?) {
+        access(contract) init(id: UInt64, timestamp: UFix64?) {
             self.ID = id
             self.status = Status.Scheduled
             self.timestamp = timestamp
         }
+
+        access(all) let cancel: fun(): @FlowToken.Vault
     }
 
     access(all) struct EstimatedCallback {
@@ -150,7 +153,7 @@ access(all) contract UnsafeCallbackScheduler {
         priority: Priority,
         executionEffort: UInt64,
         fees: @FlowToken.Vault
-    ): @ScheduledCallback? {
+    ): ScheduledCallback? {
         // Validate timestamp is in future
         if timestamp <= getCurrentBlock().timestamp {
             // todo we shouldn't destroy fees here, we should return the vault as part of
@@ -199,7 +202,19 @@ access(all) contract UnsafeCallbackScheduler {
             executionEffort: executionEffort
         )
 
-        return <- create ScheduledCallback(id: callbackID, timestamp: scheduledTimestamp)
+        let cancel = fun(): @FlowToken.Vault {
+            let callback <- self.callbacks.remove(key: callbackID)
+                ?? panic("Callback not found ".concat(callbackID.toString()))
+
+            destroy callback
+
+            log("[scheduler.cancel] callback canceled: ".concat(callbackID.toString()))
+
+            emit CallbackCanceled(id: callbackID)
+            return <- callback.fees
+        }
+
+        return ScheduledCallback(id: callbackID, timestamp: scheduledTimestamp, cancel: cancel)
     }
 
     access(all) fun estimate(
@@ -224,9 +239,8 @@ access(all) contract UnsafeCallbackScheduler {
         return EstimatedCallback(flowFee: fee, timestamp: scheduledTimestamp)
     }
 
-    access(all) fun cancel(scheduledCallback: @ScheduledCallback): @FlowToken.Vault {
-        let callbackID = scheduledCallback.ID
-        destroy scheduledCallback
+    access(all) fun cancel(scheduledCallback: ScheduledCallback): @FlowToken.Vault {
+        let callbackID = scheduledCallback.getID()
 
         let callback <- self.callbacks.remove(key: callbackID)
             ?? panic("Callback not found ".concat(callbackID.toString()))
@@ -318,6 +332,8 @@ access(all) contract UnsafeCallbackScheduler {
                 return "executed"
             case Status.Canceled:
                 return "canceled"
+            case Status.Rejected:
+                return "rejected"
             default:
                 panic("Invalid status ".concat(status.rawValue.toString()))
         }
