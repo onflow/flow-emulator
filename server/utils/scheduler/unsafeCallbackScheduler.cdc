@@ -29,17 +29,17 @@ access(all) contract UnsafeCallbackScheduler {
     }
 
     access(all) struct ScheduledCallback {
-        access(all) var ID: UInt64
+        access(all) let ID: UInt64
+        access(all) let timestamp: UFix64?
+        access(all) let cancel: fun(): @FlowToken.Vault
         access(all) var status: Status
-        access(all) var timestamp: UFix64?
 
-        access(contract) init(id: UInt64, timestamp: UFix64?) {
+        access(contract) init(id: UInt64, timestamp: UFix64?, cancel: fun(): @FlowToken.Vault) {
             self.ID = id
             self.status = Status.Scheduled
             self.timestamp = timestamp
+            self.cancel = cancel
         }
-
-        access(all) let cancel: fun(): @FlowToken.Vault
     }
 
     access(all) struct EstimatedCallback {
