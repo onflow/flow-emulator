@@ -88,6 +88,10 @@ access(all) contract UnsafeCallbackScheduler {
         access(contract) fun setStatus(newStatus: Status) {
             self.status = newStatus
         }
+
+        access(contract) fun toString(): String {
+            return "callback (id: ".concat(self.ID.toString()).concat(", status: ").concat(self.status.toString()).concat(", timestamp: ").concat(self.scheduledTimestamp.toString()).concat(", priority: ").concat(self.priority.toString()).concat(", executionEffort: ").concat(self.executionEffort.toString()).concat(", fees: ").concat(self.fees.balance.toString()))
+        }
     }
 
 
@@ -257,25 +261,40 @@ access(all) contract UnsafeCallbackScheduler {
         }
         let eligibleTimestamps = self.timestampQueue.keys.filter(timestampShouldBeProcessed)
 
+        // Process callbacks
         for timestamp in eligibleTimestamps {
+            var executedTimestamp = false
+
             if let callbackIDs = self.timestampQueue[timestamp] {
                 for callbackID in callbackIDs {
-                    let callback = &self.callbacks[callbackID] as &CallbackData?
-                    if callback != nil && callback!.status == Status.Scheduled {
-                        log("  | callback processed: ".concat(callbackID.toString()))
+                    let callback: &UnsafeCallbackScheduler.CallbackData? = &self.callbacks[callbackID] as &CallbackData?
+                    if callback == nil {
+                        panic("[scheduler.process] found nil callback")
+                    }
+
+                    if callback!.status == Status.Scheduled {
+                        log("  | callback processed: ".concat(callback!.toString()))
                         callback!.setStatus(newStatus: Status.Processed)
                         emit CallbackProcessed(id: callbackID, executionEffort: callback!.executionEffort)
-                    } else if callback != nil {
-                        log("Ingoring already processed callback ".concat(callbackID.toString()))
+                    } else if callback!.status == Status.Executed || callback!.status == Status.Canceled {
+                        let callback <- self.callbacks.remove(key: callbackID)
+                            ?? panic("callback not found ".concat(callbackID.toString()))
+                        destroy callback
+                        log("  | garbage collected callback: ".concat(callback!.toString()))
+                        executedTimestamp = true
                     }
                 }
+            }
+
+            // if this timestamp was executed already, remove it from the queue
+            if executedTimestamp {
+                self.timestampQueue.remove(key: timestamp)
+                log("  | garbage collected timestamp: ".concat(timestamp.toString()))
             }
         }
     }
 
     access(all) fun executeCallback(ID: UInt64) {
-        log("[scheduler.executeCallback] executing callback ".concat(ID.toString()))
-
         let callback = &self.callbacks[ID] as &CallbackData?
         if callback == nil {
             panic("Callback not found ".concat(ID.toString()))
@@ -288,6 +307,8 @@ access(all) contract UnsafeCallbackScheduler {
         let handlerRef = callback!.handler.borrow()
             ?? panic("Cannot borrow callback handler")
         handlerRef.executeCallback(data: callback!.data)
+
+        log("[scheduler.executeCallback] callback executed: ".concat(callback!.toString()))
 
         callback!.setStatus(newStatus: Status.Executed)
         emit CallbackExecuted(id: ID)
