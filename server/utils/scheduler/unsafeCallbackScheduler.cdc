@@ -135,6 +135,11 @@ access(all) contract UnsafeCallbackScheduler {
             self.status = newStatus
         }
 
+        // Helper method to withdraw fees (for refunds)
+        access(all) fun withdrawFees(amount: UFix64): @FlowToken.Vault {
+            return <-self.fees.withdraw(amount: amount) as! @FlowToken.Vault
+        }
+
         access(contract) fun toString(): String {
             return "callback (status: ".concat(self.status.rawValue.toString())
                 .concat(", timestamp: ").concat(self.scheduledTimestamp.toString())
@@ -273,12 +278,20 @@ access(all) contract UnsafeCallbackScheduler {
         }
 
         access(mayCancelCallback) fun cancel(ID: UInt64): @FlowToken.Vault {
-            let callback <- self.callbacks.remove(key: ID) ?? panic("Callback not found")
-            self.timestampQueue[callback.scheduledTimestamp]?.remove(at: ID)
-
+            // Get reference to callback (don't remove it)
+            let callback = &self.callbacks[ID] as &CallbackData? ?? panic("Callback not found")
+            
+            // Only allow cancellation if callback is currently scheduled
+            if callback.status != Status.Scheduled {
+                panic("Can only cancel callbacks in Scheduled status. Current status: ".concat(self.statusToString(status: callback.status)))
+            }
+            
+            // Set status to canceled
+            callback.setStatus(newStatus: Status.Canceled)
+       
+            // Provide refund (half of the original fee)
             let halfAmount = callback.fees.balance / 2.0
-            let refund <- callback.fees.withdraw(amount: halfAmount) as! @FlowToken.Vault
-            destroy callback
+            let refund <- callback.withdrawFees(amount: halfAmount) as! @FlowToken.Vault
 
             emit CallbackCanceled(ID: ID)
             return <-refund
