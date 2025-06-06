@@ -88,7 +88,7 @@ func parseSchedulerProcessedEvent(event flowsdk.Event, serviceAddress flow.Addre
 		serviceAddress.String(),
 	)
 	const (
-		IDField        = "id"
+		IDField        = "ID"
 		executionField = "executionEffort"
 	)
 
