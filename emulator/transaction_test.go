@@ -2017,7 +2017,7 @@ func TestSubmitTransactionWithCustomLogger(t *testing.T) {
 	assert.Greater(t, meter.ComputationUsed, 0)
 	assert.Greater(t, meter.MemoryEstimate, 0)
 	assert.Greater(t, len(meter.ComputationIntensities), 0)
-	assert.Greater(t, len(meter.MemoryIntensities), 0)
+	assert.Greater(t, len(meter.MemoryAmounts), 0)
 
 }
 
@@ -2026,12 +2026,12 @@ type Meter struct {
 	ComputationUsed        int                           `json:"computationUsed"`
 	MemoryEstimate         int                           `json:"memoryEstimate"`
 	ComputationIntensities MeteredComputationIntensities `json:"computationIntensities"`
-	MemoryIntensities      MeteredMemoryIntensities      `json:"memoryIntensities"`
+	MemoryAmounts          MemoryAmounts                 `json:"memoryAmounts"`
 }
 
 type MeteredComputationIntensities map[common.ComputationKind]uint
 
-type MeteredMemoryIntensities map[common.MemoryKind]uint
+type MemoryAmounts map[common.MemoryKind]uint
 
 func IncrementHelper(
 	t *testing.T,

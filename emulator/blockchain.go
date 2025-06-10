@@ -610,13 +610,11 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 	cadenceLogger := conf.Logger.Hook(CadenceHook{MainLogger: &conf.ServerLogger}).Level(zerolog.DebugLevel)
 
 	runtimeConfig := runtime.Config{
-		Debugger:                     blockchain.debugger,
-		LegacyContractUpgradeEnabled: conf.LegacyContractUpgradeEnabled,
-		CoverageReport:               conf.CoverageReport,
-		StorageFormatV2Enabled:       true,
+		Debugger:       blockchain.debugger,
+		CoverageReport: conf.CoverageReport,
 	}
 	coverageReportedRuntime := &CoverageReportedRuntime{
-		Runtime:        runtime.NewInterpreterRuntime(runtimeConfig),
+		Runtime:        runtime.NewRuntime(runtimeConfig),
 		CoverageReport: conf.CoverageReport,
 		Environment:    runtime.NewBaseInterpreterEnvironment(runtimeConfig),
 	}

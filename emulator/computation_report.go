@@ -31,10 +31,10 @@ type ProcedureReport struct {
 	ComputationUsed uint64 `json:"computation"`
 	// To get the computation from the intensities map, see:
 	// https://github.com/onflow/flow-go/blob/master/fvm/meter/computation_meter.go#L32-L39
-	Intensities    map[string]uint `json:"intensities"`
-	MemoryEstimate uint64          `json:"memory"`
-	Code           string          `json:"source"`
-	Arguments      []string        `json:"arguments"`
+	Intensities    map[string]uint64 `json:"intensities"`
+	MemoryEstimate uint64            `json:"memory"`
+	Code           string            `json:"source"`
+	Arguments      []string          `json:"arguments"`
 }
 
 type ComputationReport struct {
@@ -82,8 +82,8 @@ func (cr *ComputationReport) ReportTransaction(
 // to a human-friendly string value.
 func transformIntensities(
 	intensities meter.MeteredComputationIntensities,
-) map[string]uint {
-	result := make(map[string]uint)
+) map[string]uint64 {
+	result := make(map[string]uint64)
 
 	for kind, value := range intensities {
 		switch kind {

@@ -95,7 +95,7 @@ func TestComputationReportingForScript(t *testing.T) {
 	scriptProfile := computationReport.Scripts[scriptResult.ScriptID.String()]
 	assert.GreaterOrEqual(t, scriptProfile.ComputationUsed, uint64(2*2+3+5+7+11))
 
-	expectedIntensities := map[string]uint{
+	expectedIntensities := map[string]uint64{
 		"FunctionInvocation":     2,
 		"GetAccountContractCode": 1,
 		"GetCode":                1,
@@ -151,7 +151,7 @@ func TestComputationReportingForTransaction(t *testing.T) {
 	txProfile := computationReport.Transactions[txResult.TransactionID.String()]
 	assert.GreaterOrEqual(t, txProfile.ComputationUsed, uint64(1))
 
-	expectedIntensities := map[string]uint{
+	expectedIntensities := map[string]uint64{
 		"CreateCompositeValue":   2,
 		"CreateDictionaryValue":  1,
 		"EmitEvent":              73,
