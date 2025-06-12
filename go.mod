@@ -2,8 +2,6 @@ module github.com/onflow/flow-emulator
 
 go 1.23.7
 
-toolchain go1.23.10
-
 require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
 	github.com/fxamacker/cbor/v2 v2.8.1-0.20250402194037-6f932b086829
@@ -17,7 +15,7 @@ require (
 	github.com/onflow/cadence v1.6.0
 	github.com/onflow/crypto v0.25.3
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.6.1
-	github.com/onflow/flow-go v0.42.0
+	github.com/onflow/flow-go v0.41.0-rc.1.0.20250612202352-c000365f7daf
 	github.com/onflow/flow-go-sdk v1.6.0
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.4
 	github.com/onflow/flow/protobuf/go/flow v0.4.10
