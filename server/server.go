@@ -467,12 +467,14 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 	if conf.SetupEVMEnabled {
 		options = append(
 			options,
+			emulator.WithSetupEVMEnabled(true),
 		)
 	}
 
 	if conf.SetupVMBridgeEnabled {
 		options = append(
 			options,
+			emulator.WithSetupVMBridgeEnabled(true),
 		)
 	}
 
