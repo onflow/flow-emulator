@@ -136,8 +136,6 @@ type Config struct {
 	SqliteURL string
 	// CoverageReportingEnabled enables/disables Cadence code coverage reporting.
 	CoverageReportingEnabled bool
-	// LegacyContractUpgradeEnabled enables/disables Cadence legacy contracts upgrades
-	LegacyContractUpgradeEnabled bool
 	// RPCHost is the address of the access node to use when using a forked network.
 	RPCHost string
 	// StartBlockHeight is the height at which to start the emulator.
@@ -150,6 +148,10 @@ type Config struct {
 	StateHash string
 	// ComputationReportingEnabled enables/disables Cadence computation reporting.
 	ComputationReportingEnabled bool
+	// SetupEVMEnabled enables the EVM setup for the emulator, defaults to true.
+	SetupEVMEnabled bool
+	// SetupVMBridgeEnabled enables the VM bridge setup for the emulator, defaults to true.
+	SetupVMBridgeEnabled bool
 }
 
 type listener interface {
@@ -455,17 +457,24 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		)
 	}
 
-	if conf.LegacyContractUpgradeEnabled {
-		options = append(
-			options,
-			emulator.WithLegacyUpgradeEnabled(),
-		)
-	}
-
 	if conf.ComputationReportingEnabled {
 		options = append(
 			options,
 			emulator.WithComputationReporting(true),
+		)
+	}
+
+	if conf.SetupEVMEnabled {
+		options = append(
+			options,
+			emulator.WithSetupEVMEnabled(true),
+		)
+	}
+
+	if conf.SetupVMBridgeEnabled {
+		options = append(
+			options,
+			emulator.WithSetupVMBridgeEnabled(true),
 		)
 	}
 

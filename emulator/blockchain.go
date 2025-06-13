@@ -182,13 +182,6 @@ func WithSimpleAddresses() Option {
 	}
 }
 
-// WithLegacyUpgradeEnabled enables parsing of old contracts for legacy upgrade purposes
-func WithLegacyUpgradeEnabled() Option {
-	return func(c *config) {
-		c.LegacyContractUpgradeEnabled = true
-	}
-}
-
 // WithGenesisTokenSupply sets the genesis token supply.
 func WithGenesisTokenSupply(supply cadence.UFix64) Option {
 	return func(c *config) {
@@ -320,6 +313,20 @@ func WithComputationReporting(enabled bool) Option {
 	}
 }
 
+// WithSetupEVMEnabled enables/disables the EVM setup.
+func WithSetupEVMEnabled(enabled bool) Option {
+	return func(c *config) {
+		c.SetupEVMEnabled = enabled
+	}
+}
+
+// WithSetupVMBridgeEnabled enables/disables the VM bridge setup.
+func WithSetupVMBridgeEnabled(enabled bool) Option {
+	return func(c *config) {
+		c.SetupVMBridgeEnabled = enabled
+	}
+}
+
 // Contracts allows users to deploy the given contracts.
 // Some default common contracts are pre-configured in the `CommonContracts`
 // global variable. It includes contracts such as ExampleNFT but could
@@ -380,7 +387,6 @@ type config struct {
 	TransactionFeesEnabled       bool
 	ExecutionEffortWeights       meter.ExecutionEffortWeights
 	ContractRemovalEnabled       bool
-	LegacyContractUpgradeEnabled bool
 	MinimumStorageReservation    cadence.UFix64
 	StorageMBPerFLOW             cadence.UFix64
 	Logger                       zerolog.Logger
@@ -391,6 +397,8 @@ type config struct {
 	AutoMine                     bool
 	Contracts                    []ContractDescription
 	ComputationReportingEnabled  bool
+	SetupEVMEnabled              bool
+	SetupVMBridgeEnabled         bool
 }
 
 func (conf config) GetStore() storage.Store {
@@ -451,6 +459,8 @@ var defaultConfig = func() config {
 		CoverageReport:               nil,
 		AutoMine:                     false,
 		ComputationReportingEnabled:  false,
+		SetupEVMEnabled:              true,
+		SetupVMBridgeEnabled:         true,
 	}
 }()
 
@@ -610,13 +620,11 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 	cadenceLogger := conf.Logger.Hook(CadenceHook{MainLogger: &conf.ServerLogger}).Level(zerolog.DebugLevel)
 
 	runtimeConfig := runtime.Config{
-		Debugger:                     blockchain.debugger,
-		LegacyContractUpgradeEnabled: conf.LegacyContractUpgradeEnabled,
-		CoverageReport:               conf.CoverageReport,
-		StorageFormatV2Enabled:       true,
+		Debugger:       blockchain.debugger,
+		CoverageReport: conf.CoverageReport,
 	}
 	coverageReportedRuntime := &CoverageReportedRuntime{
-		Runtime:        runtime.NewInterpreterRuntime(runtimeConfig),
+		Runtime:        runtime.NewRuntime(runtimeConfig),
 		CoverageReport: conf.CoverageReport,
 		Environment:    runtime.NewBaseInterpreterEnvironment(runtimeConfig),
 	}
@@ -801,6 +809,8 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 		fvm.WithExecutionMemoryLimit(math.MaxUint32),
 		fvm.WithExecutionMemoryWeights(meter.DefaultMemoryWeights),
 		fvm.WithExecutionEffortWeights(environment.MainnetExecutionEffortWeights),
+		fvm.WithSetupVMBridgeEnabled(cadence.NewBool(conf.SetupVMBridgeEnabled)),
+		fvm.WithSetupEVMEnabled(cadence.NewBool(conf.SetupEVMEnabled)),
 	)
 
 	if conf.ExecutionEffortWeights != nil {
@@ -815,6 +825,7 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 			fvm.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		)
 	}
+
 	return fvm.Bootstrap(
 		flowAccountKey,
 		options...,

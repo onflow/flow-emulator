@@ -190,7 +190,7 @@ func (s *session) handleVariablesRequest(request *dap.VariablesRequest) {
 
 		activation := s.debugger.CurrentActivation(inter)
 		location := s.stop.Interpreter.Location
-		functionValues := activation.FunctionValues()
+		functionValues := activation.ValuesInFunction()
 
 		for name, variable := range functionValues {
 
