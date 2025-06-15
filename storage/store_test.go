@@ -28,7 +28,6 @@ import (
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	"github.com/onflow/flow-go/model/flow"
-	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow/protobuf/go/flow/entities"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -49,13 +48,13 @@ func TestBlocks(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	block1 := &flowgo.Block{
-		Header: &flowgo.Header{
+	block1 := &flow.Block{
+		Header: &flow.Header{
 			Height: 1,
 		},
 	}
-	block2 := &flowgo.Block{
-		Header: &flowgo.Header{
+	block2 := &flow.Block{
+		Header: &flow.Header{
 			Height: 2,
 		},
 	}
@@ -63,7 +62,7 @@ func TestBlocks(t *testing.T) {
 	t.Run("should return error for not found", func(t *testing.T) {
 		t.Run("BlockByID", func(t *testing.T) {
 			freshId := test.IdentifierGenerator().New()
-			_, err := store.BlockByID(context.Background(), flowgo.Identifier(freshId))
+			_, err := store.BlockByID(context.Background(), flow.Identifier(freshId))
 			if assert.Error(t, err) {
 				assert.Equal(t, storage.ErrNotFound, err)
 			}
@@ -239,7 +238,7 @@ func TestTransactionResults(t *testing.T) {
 			result := unittest.StorableTransactionResultFixture(eventEncodingVersion)
 
 			t.Run("should return error for not found", func(t *testing.T) {
-				txID := flowgo.Identifier(ids.New())
+				txID := flow.Identifier(ids.New())
 
 				_, err := store.TransactionResultByID(context.Background(), txID)
 				if assert.Error(t, err) {
@@ -248,7 +247,7 @@ func TestTransactionResults(t *testing.T) {
 			})
 
 			t.Run("should be able to insert result", func(t *testing.T) {
-				txID := flowgo.Identifier(ids.New())
+				txID := flow.Identifier(ids.New())
 
 				err := store.InsertTransactionResult(context.Background(), txID, result)
 				assert.NoError(t, err)
@@ -404,7 +403,7 @@ func TestInsertEvents(t *testing.T) {
 
 			t.Run("should be able to insert events", func(t *testing.T) {
 				event, _ := convert.SDKEventToFlow(events.New())
-				events := []flowgo.Event{event}
+				events := []flow.Event{event}
 
 				var blockHeight uint64 = 1
 
@@ -445,9 +444,9 @@ func TestEventsByHeight(t *testing.T) {
 				emptyBlockHeight       uint64 = 2
 				nonExistentBlockHeight uint64 = 3
 
-				allEvents = make([]flowgo.Event, 10)
-				eventsA   = make([]flowgo.Event, 0, 5)
-				eventsB   = make([]flowgo.Event, 0, 5)
+				allEvents = make([]flow.Event, 10)
+				eventsA   = make([]flow.Event, 0, 5)
+				eventsB   = make([]flow.Event, 0, 5)
 			)
 
 			for i := range allEvents {
