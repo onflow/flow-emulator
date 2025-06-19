@@ -12,11 +12,11 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.6.0
+	github.com/onflow/cadence v1.6.2
 	github.com/onflow/crypto v0.25.3
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.6.1
-	github.com/onflow/flow-go v0.41.0-rc.1.0.20250612202352-c000365f7daf
-	github.com/onflow/flow-go-sdk v1.6.0
+	github.com/onflow/flow-go v0.41.0-rc.1.0.20250618213905-cfbf84027792
+	github.com/onflow/flow-go-sdk v1.6.1
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.4
 	github.com/onflow/flow/protobuf/go/flow v0.4.10
 	github.com/prometheus/client_golang v1.20.5
@@ -213,7 +213,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gonum.org/v1/gonum v0.16.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250414145226-207652e42e2e // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250505200425-f936aa4a68b2 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250428153025-10db94c68c34 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
