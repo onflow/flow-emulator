@@ -32,7 +32,12 @@ import (
 
 func TestParseSchedulerProcessedEvent(t *testing.T) {
 	serviceAddress := flow.HexToAddress("0x01")
-	expectedEventType := fmt.Sprintf("A.%s.UnsafeCallbackScheduler.CallbackProcessed", serviceAddress.String())
+	const contractName = "UnsafeCallbackScheduler"
+	contractLocation := common.AddressLocation{
+		Address: common.Address(serviceAddress),
+		Name:    contractName,
+	}
+	expectedEventType := contractLocation.TypeID(nil, contractName+".CallbackProcessed")
 
 	tests := []struct {
 		name           string
