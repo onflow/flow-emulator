@@ -110,7 +110,7 @@ func parseSchedulerProcessedEvent(event flowsdk.Event, serviceAddress flow.Addre
 	if !ok {
 		return 0, nil, fmt.Errorf("invalid effort value type: %v", effort)
 	}
-	computeLimit := binary.BigEndian.Uint64(effort.ToBigEndianBytes())
+	computeLimit := uint64(effort)
 
 	return computeLimit, encodedID, nil
 }
