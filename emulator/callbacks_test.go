@@ -38,7 +38,7 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 		Address: common.Address(serviceAddress),
 		Name:    contractName,
 	}
-	expectedEventType := contractLocation.TypeID(nil, contractName+".CallbackProcessed")
+	expectedEventType := string(contractLocation.TypeID(nil, contractName+".CallbackProcessed"))
 
 	tests := []struct {
 		name           string
