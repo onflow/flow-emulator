@@ -81,6 +81,8 @@ type Config struct {
 	StateHash                    string        `default:"" flag:"state-hash" info:"state hash of the checkpoint to load the emulator state from"`
 	ComputationReportingEnabled  bool          `default:"false" flag:"computation-reporting" info:"enable Cadence computation reporting"`
 	ScheduledCallbacksEnabled    bool          `default:"false" flag:"scheduled-callbacks" info:"enable Cadence scheduled callbacks"`
+	SetupEVMEnabled              bool          `default:"true" flag:"setup-evm" info:"enable EVM setup for the emulator, this will deploy the EVM contracts"`
+	SetupVMBridgeEnabled         bool          `default:"true" flag:"setup-vm-bridge" info:"enable VM Bridge setup for the emulator, this will deploy the VM Bridge contracts"`
 }
 
 const EnvPrefix = "FLOW"
@@ -210,18 +212,19 @@ func Cmd(config StartConfig) *cobra.Command {
 				SkipTransactionValidation:    conf.SkipTxValidation,
 				SimpleAddressesEnabled:       conf.SimpleAddresses,
 				Host:                         conf.Host,
-				ChainID:                      flowChainID,
+        ChainID:                      flowChainID,
 				RedisURL:                     conf.RedisURL,
 				ContractRemovalEnabled:       conf.ContractRemovalEnabled,
 				SqliteURL:                    conf.SqliteURL,
 				CoverageReportingEnabled:     conf.CoverageReportingEnabled,
-				LegacyContractUpgradeEnabled: conf.LegacyContractUpgradeEnabled,
 				StartBlockHeight:             conf.StartBlockHeight,
 				RPCHost:                      conf.RPCHost,
 				CheckpointPath:               conf.CheckpointPath,
 				StateHash:                    conf.StateHash,
 				ComputationReportingEnabled:  conf.ComputationReportingEnabled,
 				ScheduledCallbacksEnabled:    conf.ScheduledCallbacksEnabled,
+				SetupEVMEnabled:              conf.SetupEVMEnabled,
+				SetupVMBridgeEnabled:         conf.SetupVMBridgeEnabled,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
