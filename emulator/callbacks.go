@@ -20,7 +20,6 @@ package emulator
 
 import (
 	_ "embed"
-	"encoding/binary"
 	"fmt"
 	"strings"
 
