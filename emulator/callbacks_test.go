@@ -33,12 +33,22 @@ import (
 
 func TestParseSchedulerProcessedEvent(t *testing.T) {
 	serviceAddress := flow.HexToAddress("0x01")
-	const contractName = "UnsafeCallbackScheduler"
 	contractLocation := common.AddressLocation{
 		Address: common.Address(serviceAddress),
 		Name:    contractName,
 	}
+	eventName := fmt.Sprintf("A.%s.%s.%s", serviceAddress.String(), contractName, callbackProcessedEvent)
+
 	expectedEventType := string(contractLocation.TypeID(nil, contractName+".CallbackProcessed"))
+	eventType := cadence.NewEventType(
+		nil,
+		eventName,
+		[]cadence.Field{
+			{Identifier: "ID", Type: cadence.UInt64Type},
+			{Identifier: "executionEffort", Type: cadence.UInt64Type},
+		},
+		nil,
+	)
 
 	tests := []struct {
 		name           string
@@ -56,15 +66,7 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 				Value: cadence.NewEvent([]cadence.Value{
 					cadence.NewUInt64(1),    // ID
 					cadence.NewUInt64(1000), // executionEffort
-				}).WithType(cadence.NewEventType(
-					nil,
-					"A.01.UnsafeCallbackScheduler.CallbackProcessed",
-					[]cadence.Field{
-						{Identifier: "ID", Type: cadence.UInt64Type},
-						{Identifier: "executionEffort", Type: cadence.UInt64Type},
-					},
-					nil,
-				)),
+				}).WithType(eventType),
 			},
 			serviceAddress: serviceAddress,
 			expectedLimit:  1000,
@@ -78,15 +80,7 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 				Value: cadence.NewEvent([]cadence.Value{
 					cadence.NewUInt64(42),   // ID
 					cadence.NewUInt64(5000), // executionEffort
-				}).WithType(cadence.NewEventType(
-					nil,
-					"A.01.UnsafeCallbackScheduler.CallbackProcessed",
-					[]cadence.Field{
-						{Identifier: "ID", Type: cadence.UInt64Type},
-						{Identifier: "executionEffort", Type: cadence.UInt64Type},
-					},
-					nil,
-				)),
+				}).WithType(eventType),
 			},
 			serviceAddress: serviceAddress,
 			expectedLimit:  5000,
@@ -100,15 +94,7 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 				Value: cadence.NewEvent([]cadence.Value{
 					cadence.NewUInt64(100), // ID
 					cadence.NewUInt64(0),   // executionEffort
-				}).WithType(cadence.NewEventType(
-					nil,
-					"A.01.UnsafeCallbackScheduler.CallbackProcessed",
-					[]cadence.Field{
-						{Identifier: "ID", Type: cadence.UInt64Type},
-						{Identifier: "executionEffort", Type: cadence.UInt64Type},
-					},
-					nil,
-				)),
+				}).WithType(eventType),
 			},
 			serviceAddress: serviceAddress,
 			expectedLimit:  0,
@@ -118,19 +104,11 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 		{
 			name: "invalid event type",
 			event: flowsdk.Event{
-				Type: "A.01.SomeOtherContract.SomeOtherEvent",
+				Type: "A.0000000000000001.SomeOtherContract.SomeOtherEvent",
 				Value: cadence.NewEvent([]cadence.Value{
 					cadence.NewUInt64(1),    // ID
 					cadence.NewUInt64(1000), // executionEffort
-				}).WithType(cadence.NewEventType(
-					nil,
-					"A.01.SomeOtherContract.SomeOtherEvent",
-					[]cadence.Field{
-						{Identifier: "ID", Type: cadence.UInt64Type},
-						{Identifier: "executionEffort", Type: cadence.UInt64Type},
-					},
-					nil,
-				)),
+				}).WithType(eventType),
 			},
 			serviceAddress: serviceAddress,
 			expectError:    true,
@@ -144,7 +122,7 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 					cadence.NewUInt64(1000), // executionEffort
 				}).WithType(cadence.NewEventType(
 					nil,
-					"A.01.UnsafeCallbackScheduler.CallbackProcessed",
+					eventName,
 					[]cadence.Field{
 						{Identifier: "executionEffort", Type: cadence.UInt64Type},
 					},
@@ -163,7 +141,7 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 					cadence.NewUInt64(1), // ID
 				}).WithType(cadence.NewEventType(
 					nil,
-					"A.01.UnsafeCallbackScheduler.CallbackProcessed",
+					eventName,
 					[]cadence.Field{
 						{Identifier: "ID", Type: cadence.UInt64Type},
 					},
@@ -183,7 +161,7 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 					cadence.NewUInt64(1000),        // executionEffort
 				}).WithType(cadence.NewEventType(
 					nil,
-					"A.01.UnsafeCallbackScheduler.CallbackProcessed",
+					eventName,
 					[]cadence.Field{
 						{Identifier: "ID", Type: cadence.StringType},
 						{Identifier: "executionEffort", Type: cadence.UInt64Type},
@@ -204,7 +182,7 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 					cadence.String("not-a-number"), // executionEffort (wrong type)
 				}).WithType(cadence.NewEventType(
 					nil,
-					"A.01.UnsafeCallbackScheduler.CallbackProcessed",
+					eventName,
 					[]cadence.Field{
 						{Identifier: "ID", Type: cadence.UInt64Type},
 						{Identifier: "executionEffort", Type: cadence.StringType},

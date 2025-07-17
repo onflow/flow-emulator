@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/onflow/cadence"
+	"github.com/onflow/cadence/common"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go/model/flow"
@@ -34,6 +35,14 @@ var executeCallbackScript []byte
 
 //go:embed templates/processCallbackTransaction.cdc
 var processCallbackScript []byte
+
+const (
+	contractName           = "UnsafeCallbackScheduler"
+	callbackProcessedEvent = "CallbackProcessed"
+)
+
+// todo: replace all the functions bellow with flow-go implementation once it's done
+// issue: https://github.com/onflow/flow-emulator/issues/829
 
 func processCallbackTransaction(
 	serviceAddress flow.Address,
@@ -82,16 +91,18 @@ func executeCallbackTransactions(
 // - ID of the event encoded as bytes
 // - error in case the event type is not correct
 func parseSchedulerProcessedEvent(event flowsdk.Event, serviceAddress flow.Address) (uint64, []byte, error) {
-	callbackScheduledEvent := fmt.Sprintf(
-		"A.%s.UnsafeCallbackScheduler.CallbackProcessed",
-		serviceAddress.String(),
-	)
+	contractLocation := common.AddressLocation{
+		Address: common.Address(serviceAddress),
+		Name:    contractName,
+	}
+	callbackScheduledEvent := contractLocation.TypeID(nil, fmt.Sprintf("%s.%s", contractName, callbackProcessedEvent))
+
 	const (
 		IDField        = "ID"
 		executionField = "executionEffort"
 	)
 
-	if event.Type != callbackScheduledEvent {
+	if event.Type != string(callbackScheduledEvent) {
 		return 0, nil, fmt.Errorf("invalid event type, got: %s, expected: %s", event.Type, callbackScheduledEvent)
 	}
 

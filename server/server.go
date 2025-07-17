@@ -198,17 +198,20 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 			Msg("📜 Flow contract")
 	}
 
+	commonContracts := emulator.NewCommonContracts(chain)
+	// todo: remove this feature flag after its implemented in flow-go
+	// issue: https://github.com/onflow/flow-emulator/issues/829
+	if conf.ScheduledCallbacksEnabled {
+		commonContracts = append(commonContracts, emulator.ContractDescription{
+			Name:   "UnsafeCallbackScheduler",
+			Source: unsafeCallbackSchedulerContract,
+		})
+
+		// automatically enable contracts since they are needed for scheduled callbacks
+		conf.WithContracts = true
+	}
+
 	if conf.WithContracts {
-		commonContracts := emulator.NewCommonContracts(chain)
-
-		// todo refactor this once the SchedulerContract is created in core-contracts
-		if conf.ScheduledCallbacksEnabled {
-			commonContracts = append(commonContracts, emulator.ContractDescription{
-				Name:   "UnsafeCallbackScheduler",
-				Source: unsafeCallbackSchedulerContract,
-			})
-		}
-
 		err := emulator.DeployContracts(emulatedBlockchain, commonContracts)
 		if err != nil {
 			logger.Error().Err(err).Msg("❗  Failed to deploy contracts")
