@@ -580,7 +580,8 @@ access(all) contract FlowCallbackScheduler {
         access(all) fun process() {
 
             let lowPriorityTimestamp = self.lowPriorityScheduledTimestamp
-            let lowPriorityCallbacks = self.slotQueue[lowPriorityTimestamp]!
+            let lowPriorityCallbacks = self.slotQueue[lowPriorityTimestamp]
+                ?? {}
 
             let currentTimestamp = getCurrentBlock().timestamp
             
