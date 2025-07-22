@@ -37,69 +37,85 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 		Address: common.Address(serviceAddress),
 		Name:    contractName,
 	}
-	eventName := fmt.Sprintf("A.%s.%s.%s", serviceAddress.String(), contractName, callbackProcessedEvent)
 
 	expectedEventType := string(contractLocation.TypeID(nil, contractName+".CallbackProcessed"))
+
 	eventType := cadence.NewEventType(
 		nil,
-		eventName,
+		expectedEventType,
 		[]cadence.Field{
-			{Identifier: "ID", Type: cadence.UInt64Type},
+			{Identifier: "id", Type: cadence.UInt64Type},
+			{Identifier: "priority", Type: cadence.UInt64Type},
 			{Identifier: "executionEffort", Type: cadence.UInt64Type},
+			{Identifier: "callbackOwner", Type: cadence.AddressType},
 		},
 		nil,
 	)
 
 	tests := []struct {
-		name           string
-		event          flowsdk.Event
-		serviceAddress flow.Address
-		expectedLimit  uint64
-		expectedID     []byte
-		expectError    bool
-		errorContains  string
+		name             string
+		event            flowsdk.Event
+		serviceAddress   flow.Address
+		expectedLimit    uint64
+		expectedID       []byte
+		expectedPriority []byte
+		expectedOwner    cadence.Address
+		expectError      bool
+		errorContains    string
 	}{
 		{
-			name: "valid event with ID=1 and effort=1000",
+			name: "valid event with ID=1, priority=1, and effort=1000",
 			event: flowsdk.Event{
 				Type: expectedEventType,
 				Value: cadence.NewEvent([]cadence.Value{
-					cadence.NewUInt64(1),    // ID
-					cadence.NewUInt64(1000), // executionEffort
+					cadence.NewUInt64(1),               // ID
+					cadence.NewUInt64(1),               // priority
+					cadence.NewUInt64(1000),            // executionEffort
+					cadence.NewAddress(serviceAddress), // callbackOwner
 				}).WithType(eventType),
 			},
-			serviceAddress: serviceAddress,
-			expectedLimit:  1000,
-			expectedID:     mustEncodeJSON(cadence.NewUInt64(1)),
-			expectError:    false,
+			serviceAddress:   serviceAddress,
+			expectedLimit:    1000,
+			expectedID:       mustEncodeJSON(cadence.NewUInt64(1)),
+			expectedPriority: mustEncodeJSON(cadence.NewUInt64(1)),
+			expectedOwner:    cadence.NewAddress(serviceAddress),
+			expectError:      false,
 		},
 		{
-			name: "valid event with ID=42 and effort=5000",
+			name: "valid event with ID=42, priority=1, and effort=5000",
 			event: flowsdk.Event{
 				Type: expectedEventType,
 				Value: cadence.NewEvent([]cadence.Value{
-					cadence.NewUInt64(42),   // ID
-					cadence.NewUInt64(5000), // executionEffort
+					cadence.NewUInt64(42),              // ID
+					cadence.NewUInt64(1),               // priority
+					cadence.NewUInt64(5000),            // executionEffort
+					cadence.NewAddress(serviceAddress), // callbackOwner
 				}).WithType(eventType),
 			},
-			serviceAddress: serviceAddress,
-			expectedLimit:  5000,
-			expectedID:     mustEncodeJSON(cadence.NewUInt64(42)),
-			expectError:    false,
+			serviceAddress:   serviceAddress,
+			expectedLimit:    5000,
+			expectedID:       mustEncodeJSON(cadence.NewUInt64(42)),
+			expectedPriority: mustEncodeJSON(cadence.NewUInt64(1)),
+			expectedOwner:    cadence.NewAddress(serviceAddress),
+			expectError:      false,
 		},
 		{
-			name: "valid event with ID=100 and effort=0",
+			name: "valid event with ID=100, priority=1, and effort=0",
 			event: flowsdk.Event{
 				Type: expectedEventType,
 				Value: cadence.NewEvent([]cadence.Value{
-					cadence.NewUInt64(100), // ID
-					cadence.NewUInt64(0),   // executionEffort
+					cadence.NewUInt64(100),             // ID
+					cadence.NewUInt64(1),               // priority
+					cadence.NewUInt64(0),               // executionEffort
+					cadence.NewAddress(serviceAddress), // callbackOwner
 				}).WithType(eventType),
 			},
-			serviceAddress: serviceAddress,
-			expectedLimit:  0,
-			expectedID:     mustEncodeJSON(cadence.NewUInt64(100)),
-			expectError:    false,
+			serviceAddress:   serviceAddress,
+			expectedLimit:    0,
+			expectedID:       mustEncodeJSON(cadence.NewUInt64(100)),
+			expectedPriority: mustEncodeJSON(cadence.NewUInt64(1)),
+			expectedOwner:    cadence.NewAddress(serviceAddress),
+			expectError:      false,
 		},
 		{
 			name: "invalid event type",
@@ -119,12 +135,16 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 			event: flowsdk.Event{
 				Type: expectedEventType,
 				Value: cadence.NewEvent([]cadence.Value{
-					cadence.NewUInt64(1000), // executionEffort
+					cadence.NewUInt64(1),               // priority
+					cadence.NewUInt64(1000),            // executionEffort
+					cadence.NewAddress(serviceAddress), // callbackOwner
 				}).WithType(cadence.NewEventType(
 					nil,
-					eventName,
+					expectedEventType,
 					[]cadence.Field{
+						{Identifier: "priority", Type: cadence.UInt64Type},
 						{Identifier: "executionEffort", Type: cadence.UInt64Type},
+						{Identifier: "callbackOwner", Type: cadence.AddressType},
 					},
 					nil,
 				)),
@@ -138,12 +158,16 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 			event: flowsdk.Event{
 				Type: expectedEventType,
 				Value: cadence.NewEvent([]cadence.Value{
-					cadence.NewUInt64(1), // ID
+					cadence.NewUInt64(1),               // ID
+					cadence.NewUInt64(1),               // priority
+					cadence.NewAddress(serviceAddress), // callbackOwner
 				}).WithType(cadence.NewEventType(
 					nil,
-					eventName,
+					expectedEventType,
 					[]cadence.Field{
-						{Identifier: "ID", Type: cadence.UInt64Type},
+						{Identifier: "id", Type: cadence.UInt64Type},
+						{Identifier: "priority", Type: cadence.UInt64Type},
+						{Identifier: "callbackOwner", Type: cadence.AddressType},
 					},
 					nil,
 				)),
@@ -157,14 +181,18 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 			event: flowsdk.Event{
 				Type: expectedEventType,
 				Value: cadence.NewEvent([]cadence.Value{
-					cadence.String("not-a-number"), // ID (wrong type)
-					cadence.NewUInt64(1000),        // executionEffort
+					cadence.String("not-a-number"),     // ID (wrong type)
+					cadence.NewUInt64(1),               // priority
+					cadence.NewUInt64(1000),            // executionEffort
+					cadence.NewAddress(serviceAddress), // callbackOwner
 				}).WithType(cadence.NewEventType(
 					nil,
-					eventName,
+					expectedEventType,
 					[]cadence.Field{
-						{Identifier: "ID", Type: cadence.StringType},
+						{Identifier: "id", Type: cadence.StringType},
+						{Identifier: "priority", Type: cadence.UInt64Type},
 						{Identifier: "executionEffort", Type: cadence.UInt64Type},
+						{Identifier: "callbackOwner", Type: cadence.AddressType},
 					},
 					nil,
 				)),
@@ -178,14 +206,18 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 			event: flowsdk.Event{
 				Type: expectedEventType,
 				Value: cadence.NewEvent([]cadence.Value{
-					cadence.NewUInt64(1),           // ID
-					cadence.String("not-a-number"), // executionEffort (wrong type)
+					cadence.NewUInt64(1),               // ID
+					cadence.NewUInt64(1),               // priority
+					cadence.String("not-a-number"),     // executionEffort (wrong type)
+					cadence.NewAddress(serviceAddress), // callbackOwner
 				}).WithType(cadence.NewEventType(
 					nil,
-					eventName,
+					expectedEventType,
 					[]cadence.Field{
-						{Identifier: "ID", Type: cadence.UInt64Type},
+						{Identifier: "id", Type: cadence.UInt64Type},
+						{Identifier: "priority", Type: cadence.UInt64Type},
 						{Identifier: "executionEffort", Type: cadence.StringType},
+						{Identifier: "callbackOwner", Type: cadence.AddressType},
 					},
 					nil,
 				)),
@@ -198,7 +230,7 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			limit, id, err := parseSchedulerProcessedEvent(tt.event, tt.serviceAddress)
+			limit, id, priority, owner, err := parseSchedulerProcessedEvent(tt.event, tt.serviceAddress)
 
 			if tt.expectError {
 				require.Error(t, err)
@@ -211,6 +243,8 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedLimit, limit)
 			assert.Equal(t, tt.expectedID, id)
+			assert.Equal(t, tt.expectedPriority, priority)
+			assert.Equal(t, tt.expectedOwner, owner)
 		})
 	}
 }

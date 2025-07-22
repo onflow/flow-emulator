@@ -37,7 +37,7 @@ var executeCallbackScript []byte
 var processCallbackScript []byte
 
 const (
-	contractName           = "UnsafeCallbackScheduler"
+	contractName           = "FlowCallbackScheduler"
 	callbackProcessedEvent = "CallbackProcessed"
 )
 
@@ -66,7 +66,7 @@ func executeCallbackTransactions(
 	script := replaceSchedulerAddress(executeCallbackScript, serviceAddress)
 
 	for _, e := range scheduleEvent {
-		limit, id, err := parseSchedulerProcessedEvent(e, serviceAddress)
+		limit, id, _, _, err := parseSchedulerProcessedEvent(e, serviceAddress)
 		if err != nil {
 			return nil, err
 		}
@@ -90,7 +90,7 @@ func executeCallbackTransactions(
 // - execution effort
 // - ID of the event encoded as bytes
 // - error in case the event type is not correct
-func parseSchedulerProcessedEvent(event flowsdk.Event, serviceAddress flow.Address) (uint64, []byte, error) {
+func parseSchedulerProcessedEvent(event flowsdk.Event, serviceAddress flow.Address) (uint64, []byte, []byte, cadence.Address, error) {
 	contractLocation := common.AddressLocation{
 		Address: common.Address(serviceAddress),
 		Name:    contractName,
@@ -98,38 +98,54 @@ func parseSchedulerProcessedEvent(event flowsdk.Event, serviceAddress flow.Addre
 	callbackScheduledEvent := contractLocation.TypeID(nil, fmt.Sprintf("%s.%s", contractName, callbackProcessedEvent))
 
 	const (
-		IDField        = "ID"
+		IDField        = "id"
+		priorityField  = "priority"
 		executionField = "executionEffort"
+		ownerField     = "callbackOwner"
 	)
 
 	if event.Type != string(callbackScheduledEvent) {
-		return 0, nil, fmt.Errorf("invalid event type, got: %s, expected: %s", event.Type, callbackScheduledEvent)
+		return 0, nil, nil, cadence.BytesToAddress([]byte{}), fmt.Errorf("invalid event type, got: %s, expected: %s", event.Type, callbackScheduledEvent)
 	}
 
 	id, ok := event.Value.SearchFieldByName(IDField).(cadence.UInt64)
 	if !ok {
-		return 0, nil, fmt.Errorf("invalid ID value type: %v", id)
+		return 0, nil, nil, cadence.BytesToAddress([]byte{}), fmt.Errorf("invalid ID value type: %v", id)
 	}
 
 	encodedID, err := jsoncdc.Encode(id)
 	if err != nil {
-		return 0, nil, err
+		return 0, nil, nil, cadence.BytesToAddress([]byte{}), err
 	}
 
 	effort, ok := event.Value.SearchFieldByName(executionField).(cadence.UInt64)
 	if !ok {
-		return 0, nil, fmt.Errorf("invalid effort value type: %v", effort)
+		return 0, nil, nil, cadence.BytesToAddress([]byte{}), fmt.Errorf("invalid effort value type: %v", effort)
 	}
 	computeLimit := uint64(effort)
 
-	return computeLimit, encodedID, nil
+	priority, ok := event.Value.SearchFieldByName(priorityField).(cadence.UInt64)
+	if !ok {
+		return 0, nil, nil, cadence.BytesToAddress([]byte{}), fmt.Errorf("invalid priority value type: %v", priority)
+	}
+	encodedPriority, err := jsoncdc.Encode(priority)
+	if err != nil {
+		return 0, nil, nil, cadence.BytesToAddress([]byte{}), err
+	}
+
+	owner, ok := event.Value.SearchFieldByName(ownerField).(cadence.Address)
+	if !ok {
+		return 0, nil, nil, cadence.BytesToAddress([]byte{}), fmt.Errorf("invalid owner value type: %v", owner)
+	}
+
+	return computeLimit, encodedID, encodedPriority, owner, nil
 }
 
 func replaceSchedulerAddress(script []byte, serviceAddress flow.Address) []byte {
 	s := strings.ReplaceAll(
 		string(script),
-		`import "UnsafeCallbackScheduler"`,
-		fmt.Sprintf("import UnsafeCallbackScheduler from %s", serviceAddress.HexWithPrefix()),
+		`import "FlowCallbackScheduler"`,
+		fmt.Sprintf("import FlowCallbackScheduler from %s", serviceAddress.HexWithPrefix()),
 	)
 
 	return []byte(s)

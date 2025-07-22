@@ -48,8 +48,8 @@ import (
 
 // todo refactor this once the SchedulerContract is created in core-contracts
 //
-//go:embed utils/scheduler/unsafeCallbackScheduler.cdc
-var unsafeCallbackSchedulerContract []byte
+//go:embed utils/scheduler/FlowCallbackScheduler.cdc
+var FlowCallbackSchedulerContract []byte
 
 // EmulatorServer is a local server that runs a Flow Emulator instance.
 //
@@ -203,8 +203,8 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	// issue: https://github.com/onflow/flow-emulator/issues/829
 	if conf.ScheduledCallbacksEnabled {
 		commonContracts = append(commonContracts, emulator.ContractDescription{
-			Name:   "UnsafeCallbackScheduler",
-			Source: unsafeCallbackSchedulerContract,
+			Name:   "FlowCallbackScheduler",
+			Source: FlowCallbackSchedulerContract,
 		})
 
 		// automatically enable contracts since they are needed for scheduled callbacks
