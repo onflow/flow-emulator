@@ -316,7 +316,7 @@ func WithComputationReporting(enabled bool) Option {
 func WithScheduledCallbacks(enabled bool) Option {
 	return func(c *config) {
 		c.ScheduledCallbacksEnabled = enabled
-  }
+	}
 }
 
 // WithSetupEVMEnabled enables/disables the EVM setup.
@@ -1913,7 +1913,7 @@ func (b *Blockchain) executeScheduledCallbacks(blockContext fvm.Context) ([]*typ
 		fvm.WithSequenceNumberCheckAndIncrementEnabled(false),
 	)
 
-	// add transaction to schedule callbacks
+	// add transaction to process callbacks
 	b.pendingBlock.AddTransaction(processCallbackTransaction(serviceAddress, parentID))
 	result, err := b.executeNextTransaction(ctx)
 	if err != nil {
