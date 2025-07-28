@@ -27,7 +27,7 @@ import (
 	"github.com/onflow/cadence/encoding/ccf"
 
 	sdk "github.com/onflow/flow-go-sdk"
-	"github.com/onflow/flow-go/access"
+	accessmodel "github.com/onflow/flow-go/model/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
@@ -158,7 +158,7 @@ func FlowTransactionToSDK(flowTx flowgo.TransactionBody) sdk.Transaction {
 	return transaction
 }
 
-func FlowTransactionResultToSDK(result *access.TransactionResult) (*sdk.TransactionResult, error) {
+func FlowTransactionResultToSDK(result *accessmodel.TransactionResult) (*sdk.TransactionResult, error) {
 
 	events, err := FlowEventsToSDK(result.Events)
 	if err != nil {

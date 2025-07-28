@@ -49,7 +49,7 @@ import (
 	"github.com/onflow/flow-core-contracts/lib/go/templates"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
-	"github.com/onflow/flow-go/access"
+	"github.com/onflow/flow-go/access/validator"
 	"github.com/onflow/flow-go/engine"
 	"github.com/onflow/flow-go/fvm"
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
@@ -58,6 +58,7 @@ import (
 	"github.com/onflow/flow-go/fvm/meter"
 	reusableRuntime "github.com/onflow/flow-go/fvm/runtime"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
+	accessmodel "github.com/onflow/flow-go/model/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module/metrics"
 	"github.com/rs/zerolog"
@@ -178,13 +179,6 @@ func WithStore(store storage.Store) Option {
 func WithSimpleAddresses() Option {
 	return func(c *config) {
 		c.SimpleAddresses = true
-	}
-}
-
-// WithLegacyUpgradeEnabled enables parsing of old contracts for legacy upgrade purposes
-func WithLegacyUpgradeEnabled() Option {
-	return func(c *config) {
-		c.LegacyContractUpgradeEnabled = true
 	}
 }
 
@@ -319,6 +313,20 @@ func WithComputationReporting(enabled bool) Option {
 	}
 }
 
+// WithSetupEVMEnabled enables/disables the EVM setup.
+func WithSetupEVMEnabled(enabled bool) Option {
+	return func(c *config) {
+		c.SetupEVMEnabled = enabled
+	}
+}
+
+// WithSetupVMBridgeEnabled enables/disables the VM bridge setup.
+func WithSetupVMBridgeEnabled(enabled bool) Option {
+	return func(c *config) {
+		c.SetupVMBridgeEnabled = enabled
+	}
+}
+
 // Contracts allows users to deploy the given contracts.
 // Some default common contracts are pre-configured in the `CommonContracts`
 // global variable. It includes contracts such as ExampleNFT but could
@@ -347,7 +355,7 @@ type Blockchain struct {
 	vm    *fvm.VirtualMachine
 	vmCtx fvm.Context
 
-	transactionValidator *access.TransactionValidator
+	transactionValidator *validator.TransactionValidator
 
 	serviceKey ServiceKey
 
@@ -379,7 +387,6 @@ type config struct {
 	TransactionFeesEnabled       bool
 	ExecutionEffortWeights       meter.ExecutionEffortWeights
 	ContractRemovalEnabled       bool
-	LegacyContractUpgradeEnabled bool
 	MinimumStorageReservation    cadence.UFix64
 	StorageMBPerFLOW             cadence.UFix64
 	Logger                       zerolog.Logger
@@ -390,6 +397,8 @@ type config struct {
 	AutoMine                     bool
 	Contracts                    []ContractDescription
 	ComputationReportingEnabled  bool
+	SetupEVMEnabled              bool
+	SetupVMBridgeEnabled         bool
 }
 
 func (conf config) GetStore() storage.Store {
@@ -450,6 +459,8 @@ var defaultConfig = func() config {
 		CoverageReport:               nil,
 		AutoMine:                     false,
 		ComputationReportingEnabled:  false,
+		SetupEVMEnabled:              true,
+		SetupVMBridgeEnabled:         true,
 	}
 }()
 
@@ -505,8 +516,8 @@ func (b *Blockchain) GetChain() flowgo.Chain {
 	return b.vmCtx.Chain
 }
 
-func (b *Blockchain) GetNetworkParameters() access.NetworkParameters {
-	return access.NetworkParameters{
+func (b *Blockchain) GetNetworkParameters() accessmodel.NetworkParameters {
+	return accessmodel.NetworkParameters{
 		ChainID: b.GetChain().ChainID(),
 	}
 }
@@ -609,12 +620,11 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 	cadenceLogger := conf.Logger.Hook(CadenceHook{MainLogger: &conf.ServerLogger}).Level(zerolog.DebugLevel)
 
 	runtimeConfig := runtime.Config{
-		Debugger:                     blockchain.debugger,
-		LegacyContractUpgradeEnabled: conf.LegacyContractUpgradeEnabled,
-		CoverageReport:               conf.CoverageReport,
+		Debugger:       blockchain.debugger,
+		CoverageReport: conf.CoverageReport,
 	}
 	coverageReportedRuntime := &CoverageReportedRuntime{
-		Runtime:        runtime.NewInterpreterRuntime(runtimeConfig),
+		Runtime:        runtime.NewRuntime(runtimeConfig),
 		CoverageReport: conf.CoverageReport,
 		Environment:    runtime.NewBaseInterpreterEnvironment(runtimeConfig),
 	}
@@ -799,6 +809,8 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 		fvm.WithExecutionMemoryLimit(math.MaxUint32),
 		fvm.WithExecutionMemoryWeights(meter.DefaultMemoryWeights),
 		fvm.WithExecutionEffortWeights(environment.MainnetExecutionEffortWeights),
+		fvm.WithSetupVMBridgeEnabled(cadence.NewBool(conf.SetupVMBridgeEnabled)),
+		fvm.WithSetupEVMEnabled(cadence.NewBool(conf.SetupEVMEnabled)),
 	)
 
 	if conf.ExecutionEffortWeights != nil {
@@ -813,18 +825,19 @@ func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPubli
 			fvm.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		)
 	}
+
 	return fvm.Bootstrap(
 		flowAccountKey,
 		options...,
 	)
 }
 
-func configureTransactionValidator(conf config, blocks *blocks) (*access.TransactionValidator, error) {
-	return access.NewTransactionValidator(
+func configureTransactionValidator(conf config, blocks *blocks) (*validator.TransactionValidator, error) {
+	return validator.NewTransactionValidator(
 		blocks,
 		conf.GetChainID().Chain(),
 		metrics.NewNoopCollector(),
-		access.TransactionValidationOptions{
+		validator.TransactionValidationOptions{
 			Expiry:                       conf.TransactionExpiry,
 			ExpiryBuffer:                 0,
 			AllowEmptyReferenceBlockID:   conf.TransactionExpiry == 0,
@@ -833,7 +846,7 @@ func configureTransactionValidator(conf config, blocks *blocks) (*access.Transac
 			CheckScriptsParse:            true,
 			MaxTransactionByteSize:       flowgo.DefaultMaxTransactionByteSize,
 			MaxCollectionByteSize:        flowgo.DefaultMaxCollectionByteSize,
-			CheckPayerBalanceMode:        access.Disabled,
+			CheckPayerBalanceMode:        validator.Disabled,
 		},
 		nil,
 	)
@@ -1006,16 +1019,16 @@ func (b *Blockchain) getTransaction(txID flowgo.Identifier) (*flowgo.Transaction
 	return &tx, nil
 }
 
-func (b *Blockchain) GetTransactionResult(txID flowgo.Identifier) (*access.TransactionResult, error) {
+func (b *Blockchain) GetTransactionResult(txID flowgo.Identifier) (*accessmodel.TransactionResult, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
 	return b.getTransactionResult(txID)
 }
 
-func (b *Blockchain) getTransactionResult(txID flowgo.Identifier) (*access.TransactionResult, error) {
+func (b *Blockchain) getTransactionResult(txID flowgo.Identifier) (*accessmodel.TransactionResult, error) {
 	if b.pendingBlock.ContainsTransaction(txID) {
-		return &access.TransactionResult{
+		return &accessmodel.TransactionResult{
 			Status: flowgo.TransactionStatusPending,
 		}, nil
 	}
@@ -1023,7 +1036,7 @@ func (b *Blockchain) getTransactionResult(txID flowgo.Identifier) (*access.Trans
 	storedResult, err := b.storage.TransactionResultByID(context.Background(), txID)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			return &access.TransactionResult{
+			return &accessmodel.TransactionResult{
 				Status: flowgo.TransactionStatusUnknown,
 			}, nil
 		}
@@ -1034,7 +1047,7 @@ func (b *Blockchain) getTransactionResult(txID flowgo.Identifier) (*access.Trans
 	if storedResult.ErrorCode > 0 {
 		statusCode = 1
 	}
-	result := access.TransactionResult{
+	result := accessmodel.TransactionResult{
 		Status:        flowgo.TransactionStatusSealed,
 		StatusCode:    uint(statusCode),
 		ErrorMessage:  storedResult.ErrorMessage,
@@ -1092,13 +1105,7 @@ func (b *Blockchain) getAccount(address flowgo.Address) (*flowgo.Account, error)
 func (b *Blockchain) GetAccountAtBlockHeight(address flowgo.Address, blockHeight uint64) (*flowgo.Account, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
-
-	account, err := b.getAccountAtBlock(address, blockHeight)
-	if err != nil {
-		return nil, err
-	}
-
-	return account, nil
+	return b.getAccountAtBlock(address, blockHeight)
 }
 
 // GetAccountAtBlock returns the account for the given address at specified block height.
@@ -1113,7 +1120,7 @@ func (b *Blockchain) getAccountAtBlock(address flowgo.Address, blockHeight uint6
 		return nil, &types.AccountNotFoundError{Address: address}
 	}
 
-	return account, nil
+	return account, err
 }
 
 func (b *Blockchain) GetEventsForBlockIDs(eventType string, blockIDs []flowgo.Identifier) (result []flowgo.BlockEvents, err error) {
@@ -1719,7 +1726,7 @@ func (b *Blockchain) GetTransactionsByBlockID(blockID flowgo.Identifier) ([]*flo
 	return transactions, nil
 }
 
-func (b *Blockchain) GetTransactionResultsByBlockID(blockID flowgo.Identifier) ([]*access.TransactionResult, error) {
+func (b *Blockchain) GetTransactionResultsByBlockID(blockID flowgo.Identifier) ([]*accessmodel.TransactionResult, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
@@ -1728,7 +1735,7 @@ func (b *Blockchain) GetTransactionResultsByBlockID(blockID flowgo.Identifier) (
 		return nil, fmt.Errorf("failed to get block %s: %w", blockID, err)
 	}
 
-	var results []*access.TransactionResult
+	var results []*accessmodel.TransactionResult
 	for i, guarantee := range block.Payload.Guarantees {
 		c, err := b.getCollectionByID(guarantee.CollectionID)
 		if err != nil {

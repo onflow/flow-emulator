@@ -29,7 +29,7 @@ import (
 
 	"github.com/onflow/cadence"
 	flowgosdk "github.com/onflow/flow-go-sdk"
-	"github.com/onflow/flow-go/access"
+	accessmodel "github.com/onflow/flow-go/model/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/onflow/flow-emulator/convert"
@@ -438,7 +438,7 @@ func TestSDK(t *testing.T) {
 		expected := flowgosdk.TransactionResult{
 			Events: []flowgosdk.Event{},
 		}
-		flowResult := access.TransactionResult{}
+		flowResult := accessmodel.TransactionResult{}
 
 		//success
 		emu.EXPECT().
@@ -776,7 +776,7 @@ func TestSDK(t *testing.T) {
 
 		blockID := flowgosdk.Identifier{}
 
-		flowTransactionResults := []*access.TransactionResult{}
+		flowTransactionResults := []*accessmodel.TransactionResult{}
 		expected := []*flowgosdk.TransactionResult{}
 
 		//success

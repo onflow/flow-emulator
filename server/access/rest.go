@@ -35,7 +35,9 @@ import (
 	"github.com/onflow/flow-go/engine/access/subscription"
 	"github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module"
+	"github.com/onflow/flow-go/module/irrecoverable"
 	"github.com/onflow/flow-go/module/metrics"
+	modutil "github.com/onflow/flow-go/module/util"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 
@@ -82,6 +84,12 @@ func (r *RestServer) Stop() {
 	_ = r.server.Shutdown(context.Background())
 }
 
+func (r *RestServer) UseMiddleware(middleware func(http.Handler) http.Handler) {
+	if r.server != nil {
+		r.server.Handler = middleware(r.server.Handler)
+	}
+}
+
 func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adapter *adapters.AccessAdapter, chain flow.Chain, host string, port int, debug bool) (*RestServer, error) {
 
 	debugLogger := zerolog.Logger{}
@@ -109,7 +117,16 @@ func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 		HeartbeatInterval:    subscription.DefaultHeartbeatInterval,
 	}
 
+	irrCtx, errCh := irrecoverable.WithSignaler(context.Background())
+	go func() {
+		err := modutil.WaitError(errCh, irrCtx.Done())
+		if err != nil {
+			logger.Fatal().Err(err).Msg("Rest server error")
+		}
+	}()
+
 	srv, err := rest.NewServer(
+		irrCtx,
 		adapter,
 		rest.Config{
 			ListenAddress:  fmt.Sprintf("%s:3333", host),

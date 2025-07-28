@@ -22,8 +22,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/onflow/flow-go/access"
-
+	"github.com/onflow/flow-go/access/validator"
 	"github.com/onflow/flow-go/fvm/environment"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
@@ -31,7 +30,7 @@ import (
 )
 
 var _ environment.Blocks = &blocks{}
-var _ access.Blocks = &blocks{}
+var _ validator.Blocks = &blocks{}
 
 type blocks struct {
 	blockchain *Blockchain

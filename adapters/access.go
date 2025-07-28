@@ -25,6 +25,7 @@ import (
 	"github.com/onflow/flow-go/access"
 	"github.com/onflow/flow-go/engine/access/subscription"
 	"github.com/onflow/flow-go/engine/common/rpc/convert"
+	accessmodel "github.com/onflow/flow-go/model/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow/protobuf/go/flow/entities"
 	"github.com/rs/zerolog"
@@ -38,7 +39,7 @@ import (
 
 var _ access.API = &AccessAdapter{}
 
-// AccessAdapter wraps the emulator adapters to be compatible with access.API.
+// AccessAdapter wraps the emulator adapters to be compatible with accessmodel.API.
 type AccessAdapter struct {
 	logger   *zerolog.Logger
 	emulator emulator.Emulator
@@ -70,7 +71,7 @@ func (a *AccessAdapter) Ping(_ context.Context) error {
 	return convertError(a.emulator.Ping(), codes.Internal)
 }
 
-func (a *AccessAdapter) GetNetworkParameters(_ context.Context) access.NetworkParameters {
+func (a *AccessAdapter) GetNetworkParameters(_ context.Context) accessmodel.NetworkParameters {
 	return a.emulator.GetNetworkParameters()
 }
 
@@ -205,7 +206,7 @@ func (a *AccessAdapter) GetTransactionResult(
 	_ flowgo.Identifier,
 	requiredEventEncodingVersion entities.EventEncodingVersion,
 ) (
-	*access.TransactionResult,
+	*accessmodel.TransactionResult,
 	error,
 ) {
 	result, err := a.emulator.GetTransactionResult(id)
@@ -434,7 +435,7 @@ func (a *AccessAdapter) GetSystemTransaction(_ context.Context, _ flowgo.Identif
 	return nil, nil
 }
 
-func (a *AccessAdapter) GetSystemTransactionResult(_ context.Context, _ flowgo.Identifier, _ entities.EventEncodingVersion) (*access.TransactionResult, error) {
+func (a *AccessAdapter) GetSystemTransactionResult(_ context.Context, _ flowgo.Identifier, _ entities.EventEncodingVersion) (*accessmodel.TransactionResult, error) {
 	return nil, nil
 }
 
@@ -539,7 +540,7 @@ func (a *AccessAdapter) GetTransactionResultByIndex(
 	blockID flowgo.Identifier,
 	index uint32,
 	requiredEventEncodingVersion entities.EventEncodingVersion,
-) (*access.TransactionResult, error) {
+) (*accessmodel.TransactionResult, error) {
 	results, err := a.emulator.GetTransactionResultsByBlockID(blockID)
 	if err != nil {
 		return nil, convertError(err, codes.Internal)
@@ -573,7 +574,7 @@ func (a *AccessAdapter) GetTransactionResultsByBlockID(
 	_ context.Context,
 	blockID flowgo.Identifier,
 	requiredEventEncodingVersion entities.EventEncodingVersion,
-) ([]*access.TransactionResult, error) {
+) ([]*accessmodel.TransactionResult, error) {
 	result, err := a.emulator.GetTransactionResultsByBlockID(blockID)
 	if err != nil {
 		return nil, convertError(err, codes.Internal)
@@ -603,10 +604,10 @@ func (a *AccessAdapter) SendTransaction(_ context.Context, tx *flowgo.Transactio
 func (a *AccessAdapter) GetNodeVersionInfo(
 	_ context.Context,
 ) (
-	*access.NodeVersionInfo,
+	*accessmodel.NodeVersionInfo,
 	error,
 ) {
-	return &access.NodeVersionInfo{}, nil
+	return &accessmodel.NodeVersionInfo{}, nil
 }
 
 func (a *AccessAdapter) SubscribeBlocksFromStartBlockID(ctx context.Context, startBlockID flowgo.Identifier, blockStatus flowgo.BlockStatus) subscription.Subscription {
@@ -645,7 +646,7 @@ func (a *AccessAdapter) SubscribeBlockDigestsFromLatest(ctx context.Context, blo
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeTransactionStatuses(ctx context.Context, tx *flowgo.TransactionBody, _ entities.EventEncodingVersion) subscription.Subscription {
+func (a *AccessAdapter) SubscribeTransactionStatuses(ctx context.Context, _ flowgo.Identifier, _ entities.EventEncodingVersion) subscription.Subscription {
 	return nil
 }
 

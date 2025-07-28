@@ -19,8 +19,9 @@ package emulator_test
 
 import (
 	"fmt"
-	flowgo "github.com/onflow/flow-go/model/flow"
 	"testing"
+
+	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/stretchr/testify/require"

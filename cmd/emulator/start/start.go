@@ -22,6 +22,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -79,6 +80,8 @@ type Config struct {
 	CheckpointPath               string        `default:"" flag:"checkpoint-dir" info:"checkpoint directory to load the emulator state from"`
 	StateHash                    string        `default:"" flag:"state-hash" info:"state hash of the checkpoint to load the emulator state from"`
 	ComputationReportingEnabled  bool          `default:"false" flag:"computation-reporting" info:"enable Cadence computation reporting"`
+	SetupEVMEnabled              bool          `default:"true" flag:"setup-evm" info:"enable EVM setup for the emulator, this will deploy the EVM contracts"`
+	SetupVMBridgeEnabled         bool          `default:"true" flag:"setup-vm-bridge" info:"enable VM Bridge setup for the emulator, this will deploy the VM Bridge contracts"`
 }
 
 const EnvPrefix = "FLOW"
@@ -91,7 +94,14 @@ type serviceKeyFunc func(
 	hashAlgo crypto.HashAlgorithm,
 ) (crypto.PrivateKey, crypto.SignatureAlgorithm, crypto.HashAlgorithm)
 
-func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
+type HttpMiddleware func(http.Handler) http.Handler
+
+type StartConfig struct {
+	GetServiceKey   serviceKeyFunc
+	RestMiddlewares []HttpMiddleware
+}
+
+func Cmd(config StartConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Starts the Flow emulator server",
@@ -123,7 +133,7 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 
 				servicePublicKey = servicePrivateKey.PublicKey()
 			} else { // if we don't provide any config values use the serviceKeyFunc to obtain the key
-				servicePrivateKey, serviceKeySigAlgo, serviceKeyHashAlgo = getServiceKey(
+				servicePrivateKey, serviceKeySigAlgo, serviceKeyHashAlgo = config.GetServiceKey(
 					conf.Init,
 					serviceKeySigAlgo,
 					serviceKeyHashAlgo,
@@ -180,42 +190,46 @@ func Cmd(getServiceKey serviceKeyFunc) *cobra.Command {
 				RESTPort:     conf.RestPort,
 				RESTDebug:    conf.RESTDebug,
 				// TODO: allow headers to be parsed from environment
-				HTTPHeaders:                  nil,
-				BlockTime:                    conf.BlockTime,
-				ServicePublicKey:             servicePublicKey,
-				ServicePrivateKey:            servicePrivateKey,
-				ServiceKeySigAlgo:            serviceKeySigAlgo,
-				ServiceKeyHashAlgo:           serviceKeyHashAlgo,
-				Persist:                      conf.Persist,
-				Snapshot:                     conf.Snapshot,
-				DBPath:                       conf.DBPath,
-				GenesisTokenSupply:           parseCadenceUFix64(conf.TokenSupply, "token-supply"),
-				TransactionMaxGasLimit:       uint64(conf.TransactionMaxGasLimit),
-				ScriptGasLimit:               uint64(conf.ScriptGasLimit),
-				TransactionExpiry:            uint(conf.TransactionExpiry),
-				StorageLimitEnabled:          conf.StorageLimitEnabled,
-				StorageMBPerFLOW:             storageMBPerFLOW,
-				MinimumStorageReservation:    minimumStorageReservation,
-				TransactionFeesEnabled:       conf.TransactionFeesEnabled,
-				WithContracts:                conf.Contracts,
-				SkipTransactionValidation:    conf.SkipTxValidation,
-				SimpleAddressesEnabled:       conf.SimpleAddresses,
-				Host:                         conf.Host,
-				ChainID:                      flowChainID,
-				RedisURL:                     conf.RedisURL,
-				ContractRemovalEnabled:       conf.ContractRemovalEnabled,
-				SqliteURL:                    conf.SqliteURL,
-				CoverageReportingEnabled:     conf.CoverageReportingEnabled,
-				LegacyContractUpgradeEnabled: conf.LegacyContractUpgradeEnabled,
-				StartBlockHeight:             conf.StartBlockHeight,
-				RPCHost:                      conf.RPCHost,
-				CheckpointPath:               conf.CheckpointPath,
-				StateHash:                    conf.StateHash,
-				ComputationReportingEnabled:  conf.ComputationReportingEnabled,
+				HTTPHeaders:                 nil,
+				BlockTime:                   conf.BlockTime,
+				ServicePublicKey:            servicePublicKey,
+				ServicePrivateKey:           servicePrivateKey,
+				ServiceKeySigAlgo:           serviceKeySigAlgo,
+				ServiceKeyHashAlgo:          serviceKeyHashAlgo,
+				Persist:                     conf.Persist,
+				Snapshot:                    conf.Snapshot,
+				DBPath:                      conf.DBPath,
+				GenesisTokenSupply:          parseCadenceUFix64(conf.TokenSupply, "token-supply"),
+				TransactionMaxGasLimit:      uint64(conf.TransactionMaxGasLimit),
+				ScriptGasLimit:              uint64(conf.ScriptGasLimit),
+				TransactionExpiry:           uint(conf.TransactionExpiry),
+				StorageLimitEnabled:         conf.StorageLimitEnabled,
+				StorageMBPerFLOW:            storageMBPerFLOW,
+				MinimumStorageReservation:   minimumStorageReservation,
+				TransactionFeesEnabled:      conf.TransactionFeesEnabled,
+				WithContracts:               conf.Contracts,
+				SkipTransactionValidation:   conf.SkipTxValidation,
+				SimpleAddressesEnabled:      conf.SimpleAddresses,
+				Host:                        conf.Host,
+				ChainID:                     flowChainID,
+				RedisURL:                    conf.RedisURL,
+				ContractRemovalEnabled:      conf.ContractRemovalEnabled,
+				SqliteURL:                   conf.SqliteURL,
+				CoverageReportingEnabled:    conf.CoverageReportingEnabled,
+				StartBlockHeight:            conf.StartBlockHeight,
+				RPCHost:                     conf.RPCHost,
+				CheckpointPath:              conf.CheckpointPath,
+				StateHash:                   conf.StateHash,
+				ComputationReportingEnabled: conf.ComputationReportingEnabled,
+				SetupEVMEnabled:             conf.SetupEVMEnabled,
+				SetupVMBridgeEnabled:        conf.SetupVMBridgeEnabled,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
 			if emu != nil {
+				for _, middleware := range config.RestMiddlewares {
+					emu.UseRestMiddleware(middleware)
+				}
 				emu.Start()
 			} else {
 				Exit(-1, "")

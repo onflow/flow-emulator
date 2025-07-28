@@ -21,10 +21,10 @@ package types
 import (
 	"fmt"
 
+	"github.com/onflow/flow-go/access/validator"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 
 	"github.com/onflow/flow-go-sdk/crypto"
-	"github.com/onflow/flow-go/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
@@ -257,13 +257,13 @@ func (f *FVMError) Unwrap() error {
 
 func ConvertAccessError(err error) error {
 	switch typedErr := err.(type) {
-	case access.IncompleteTransactionError:
+	case validator.IncompleteTransactionError:
 		return &IncompleteTransactionError{MissingFields: typedErr.MissingFields}
-	case access.ExpiredTransactionError:
+	case validator.ExpiredTransactionError:
 		return &ExpiredTransactionError{RefHeight: typedErr.RefHeight, FinalHeight: typedErr.FinalHeight}
-	case access.InvalidGasLimitError:
+	case validator.InvalidGasLimitError:
 		return &InvalidTransactionGasLimitError{Maximum: typedErr.Maximum, Actual: typedErr.Actual}
-	case access.InvalidScriptError:
+	case validator.InvalidScriptError:
 		return &InvalidTransactionScriptError{ParserErr: typedErr.ParserErr}
 	}
 
