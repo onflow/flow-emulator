@@ -38,14 +38,14 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 		Name:    contractName,
 	}
 
-	expectedEventType := string(contractLocation.TypeID(nil, contractName+".CallbackProcessed"))
+	expectedEventType := string(contractLocation.TypeID(nil, contractName+".Processed"))
 
 	eventType := cadence.NewEventType(
 		nil,
 		expectedEventType,
 		[]cadence.Field{
 			{Identifier: "id", Type: cadence.UInt64Type},
-			{Identifier: "priority", Type: cadence.UInt64Type},
+			{Identifier: "priority", Type: cadence.UInt8Type},
 			{Identifier: "executionEffort", Type: cadence.UInt64Type},
 			{Identifier: "callbackOwner", Type: cadence.AddressType},
 		},
@@ -58,7 +58,7 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 		serviceAddress   flow.Address
 		expectedLimit    uint64
 		expectedID       []byte
-		expectedPriority []byte
+		expectedPriority uint8
 		expectedOwner    cadence.Address
 		expectError      bool
 		errorContains    string
@@ -69,15 +69,15 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 				Type: expectedEventType,
 				Value: cadence.NewEvent([]cadence.Value{
 					cadence.NewUInt64(1),               // ID
-					cadence.NewUInt64(1),               // priority
+					cadence.NewUInt8(1),                // priority
 					cadence.NewUInt64(1000),            // executionEffort
 					cadence.NewAddress(serviceAddress), // callbackOwner
 				}).WithType(eventType),
 			},
 			serviceAddress:   serviceAddress,
-			expectedLimit:    1000,
 			expectedID:       mustEncodeJSON(cadence.NewUInt64(1)),
-			expectedPriority: mustEncodeJSON(cadence.NewUInt64(1)),
+			expectedPriority: uint8(1),
+			expectedLimit:    1000,
 			expectedOwner:    cadence.NewAddress(serviceAddress),
 			expectError:      false,
 		},
@@ -87,15 +87,15 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 				Type: expectedEventType,
 				Value: cadence.NewEvent([]cadence.Value{
 					cadence.NewUInt64(42),              // ID
-					cadence.NewUInt64(1),               // priority
+					cadence.NewUInt8(1),                // priority
 					cadence.NewUInt64(5000),            // executionEffort
 					cadence.NewAddress(serviceAddress), // callbackOwner
 				}).WithType(eventType),
 			},
 			serviceAddress:   serviceAddress,
-			expectedLimit:    5000,
 			expectedID:       mustEncodeJSON(cadence.NewUInt64(42)),
-			expectedPriority: mustEncodeJSON(cadence.NewUInt64(1)),
+			expectedPriority: uint8(1),
+			expectedLimit:    5000,
 			expectedOwner:    cadence.NewAddress(serviceAddress),
 			expectError:      false,
 		},
@@ -105,15 +105,15 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 				Type: expectedEventType,
 				Value: cadence.NewEvent([]cadence.Value{
 					cadence.NewUInt64(100),             // ID
-					cadence.NewUInt64(1),               // priority
+					cadence.NewUInt8(1),                // priority
 					cadence.NewUInt64(0),               // executionEffort
 					cadence.NewAddress(serviceAddress), // callbackOwner
 				}).WithType(eventType),
 			},
 			serviceAddress:   serviceAddress,
-			expectedLimit:    0,
 			expectedID:       mustEncodeJSON(cadence.NewUInt64(100)),
-			expectedPriority: mustEncodeJSON(cadence.NewUInt64(1)),
+			expectedPriority: uint8(1),
+			expectedLimit:    0,
 			expectedOwner:    cadence.NewAddress(serviceAddress),
 			expectError:      false,
 		},
@@ -135,14 +135,14 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 			event: flowsdk.Event{
 				Type: expectedEventType,
 				Value: cadence.NewEvent([]cadence.Value{
-					cadence.NewUInt64(1),               // priority
+					cadence.NewUInt8(1),                // priority
 					cadence.NewUInt64(1000),            // executionEffort
 					cadence.NewAddress(serviceAddress), // callbackOwner
 				}).WithType(cadence.NewEventType(
 					nil,
 					expectedEventType,
 					[]cadence.Field{
-						{Identifier: "priority", Type: cadence.UInt64Type},
+						{Identifier: "priority", Type: cadence.UInt8Type},
 						{Identifier: "executionEffort", Type: cadence.UInt64Type},
 						{Identifier: "callbackOwner", Type: cadence.AddressType},
 					},
@@ -159,14 +159,14 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 				Type: expectedEventType,
 				Value: cadence.NewEvent([]cadence.Value{
 					cadence.NewUInt64(1),               // ID
-					cadence.NewUInt64(1),               // priority
+					cadence.NewUInt8(1),                // priority
 					cadence.NewAddress(serviceAddress), // callbackOwner
 				}).WithType(cadence.NewEventType(
 					nil,
 					expectedEventType,
 					[]cadence.Field{
 						{Identifier: "id", Type: cadence.UInt64Type},
-						{Identifier: "priority", Type: cadence.UInt64Type},
+						{Identifier: "priority", Type: cadence.UInt8Type},
 						{Identifier: "callbackOwner", Type: cadence.AddressType},
 					},
 					nil,
@@ -182,7 +182,7 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 				Type: expectedEventType,
 				Value: cadence.NewEvent([]cadence.Value{
 					cadence.String("not-a-number"),     // ID (wrong type)
-					cadence.NewUInt64(1),               // priority
+					cadence.NewUInt8(1),                // priority
 					cadence.NewUInt64(1000),            // executionEffort
 					cadence.NewAddress(serviceAddress), // callbackOwner
 				}).WithType(cadence.NewEventType(
@@ -190,7 +190,7 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 					expectedEventType,
 					[]cadence.Field{
 						{Identifier: "id", Type: cadence.StringType},
-						{Identifier: "priority", Type: cadence.UInt64Type},
+						{Identifier: "priority", Type: cadence.UInt8Type},
 						{Identifier: "executionEffort", Type: cadence.UInt64Type},
 						{Identifier: "callbackOwner", Type: cadence.AddressType},
 					},
@@ -207,7 +207,7 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 				Type: expectedEventType,
 				Value: cadence.NewEvent([]cadence.Value{
 					cadence.NewUInt64(1),               // ID
-					cadence.NewUInt64(1),               // priority
+					cadence.NewUInt8(1),                // priority
 					cadence.String("not-a-number"),     // executionEffort (wrong type)
 					cadence.NewAddress(serviceAddress), // callbackOwner
 				}).WithType(cadence.NewEventType(
@@ -215,7 +215,7 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 					expectedEventType,
 					[]cadence.Field{
 						{Identifier: "id", Type: cadence.UInt64Type},
-						{Identifier: "priority", Type: cadence.UInt64Type},
+						{Identifier: "priority", Type: cadence.UInt8Type},
 						{Identifier: "executionEffort", Type: cadence.StringType},
 						{Identifier: "callbackOwner", Type: cadence.AddressType},
 					},
@@ -230,7 +230,7 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			limit, id, priority, owner, err := parseSchedulerProcessedEvent(tt.event, tt.serviceAddress)
+			id, priority, limit, owner, err := parseSchedulerProcessedEvent(tt.event, tt.serviceAddress)
 
 			if tt.expectError {
 				require.Error(t, err)
@@ -241,9 +241,9 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.expectedLimit, limit)
 			assert.Equal(t, tt.expectedID, id)
 			assert.Equal(t, tt.expectedPriority, priority)
+			assert.Equal(t, tt.expectedLimit, limit)
 			assert.Equal(t, tt.expectedOwner, owner)
 		})
 	}
