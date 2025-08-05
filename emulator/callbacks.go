@@ -21,20 +21,14 @@ package emulator
 import (
 	_ "embed"
 	"fmt"
-	"strings"
 
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/common"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
+	"github.com/onflow/flow-core-contracts/lib/go/templates"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go/model/flow"
 )
-
-//go:embed templates/executeCallbackTransaction.cdc
-var executeCallbackScript []byte
-
-//go:embed templates/processCallbackTransaction.cdc
-var processCallbackScript []byte
 
 const (
 	contractName               = "FlowCallbackScheduler"
@@ -48,7 +42,11 @@ func processCallbackTransaction(
 	serviceAddress flow.Address,
 	parentID flow.Identifier,
 ) flow.TransactionBody {
-	script := replaceSchedulerAddress(processCallbackScript, serviceAddress)
+	env := templates.Environment{
+		FlowCallbackSchedulerAddress: serviceAddress.HexWithPrefix(),
+	}
+
+	script := templates.GenerateProcessCallbackScript(env)
 
 	return *flow.NewTransactionBody().
 		SetScript(script).
@@ -63,7 +61,11 @@ func executeCallbackTransactions(
 	parentID flow.Identifier,
 ) ([]flow.TransactionBody, error) {
 	var transactions []flow.TransactionBody
-	script := replaceSchedulerAddress(executeCallbackScript, serviceAddress)
+	env := templates.Environment{
+		FlowCallbackSchedulerAddress: serviceAddress.HexWithPrefix(),
+	}
+
+	script := templates.GenerateExecuteCallbackScript(env)
 
 	for _, e := range processedEvents {
 		id, _, limit, _, err := parseSchedulerProcessedEvent(e, serviceAddress)
@@ -138,14 +140,4 @@ func parseSchedulerProcessedEvent(event flowsdk.Event, serviceAddress flow.Addre
 	}
 
 	return encodedID, priority, executionEffort, owner, nil
-}
-
-func replaceSchedulerAddress(script []byte, serviceAddress flow.Address) []byte {
-	s := strings.ReplaceAll(
-		string(script),
-		`import "FlowCallbackScheduler"`,
-		fmt.Sprintf("import FlowCallbackScheduler from %s", serviceAddress.HexWithPrefix()),
-	)
-
-	return []byte(s)
 }

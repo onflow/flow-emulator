@@ -34,6 +34,9 @@ import (
 	"github.com/psiemens/graceland"
 	"github.com/rs/zerolog"
 
+	core_contracts "github.com/onflow/flow-core-contracts/lib/go/contracts"
+	"github.com/onflow/flow-core-contracts/lib/go/templates"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-emulator/server/access"
@@ -45,11 +48,6 @@ import (
 	"github.com/onflow/flow-emulator/storage/sqlite"
 	"github.com/onflow/flow-emulator/storage/util"
 )
-
-// todo refactor this once the SchedulerContract is created in core-contracts
-//
-//go:embed utils/scheduler/FlowCallbackScheduler.cdc
-var FlowCallbackSchedulerContract []byte
 
 // EmulatorServer is a local server that runs a Flow Emulator instance.
 //
@@ -202,9 +200,14 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	// todo: remove this feature flag after its implemented in flow-go
 	// issue: https://github.com/onflow/flow-emulator/issues/829
 	if conf.ScheduledCallbacksEnabled {
+		env := templates.Environment{
+			FlowTokenAddress:   sc.FlowToken.Address.String(),
+			FlowFeesAddress:    sc.FlowFees.Address.String(),
+			StorageFeesAddress: sc.FlowStorageFees.Address.String(),
+		}
 		commonContracts = append(commonContracts, emulator.ContractDescription{
 			Name:   "FlowCallbackScheduler",
-			Source: FlowCallbackSchedulerContract,
+			Source: core_contracts.FlowCallbackScheduler(env),
 		})
 
 		// automatically enable contracts since they are needed for scheduled callbacks

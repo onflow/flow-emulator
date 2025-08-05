@@ -14,7 +14,7 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v1.6.2
 	github.com/onflow/crypto v0.25.3
-	github.com/onflow/flow-core-contracts/lib/go/templates v1.6.1
+	github.com/onflow/flow-core-contracts/lib/go/templates v1.7.2-0.20250805160452-9155d5fc4cfd
 	github.com/onflow/flow-go v0.41.0-rc.1.0.20250618213905-cfbf84027792
 	github.com/onflow/flow-go-sdk v1.6.1
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.4
@@ -143,7 +143,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/onflow/atree v0.10.0 // indirect
-	github.com/onflow/flow-core-contracts/lib/go/contracts v1.6.1 // indirect
+	github.com/onflow/flow-core-contracts/lib/go/contracts v1.7.4-0.20250805160452-9155d5fc4cfd // indirect
 	github.com/onflow/flow-evm-bridge v0.1.0 // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v1.0.1 // indirect
 	github.com/onflow/flow-ft/lib/go/templates v1.0.1 // indirect
