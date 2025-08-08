@@ -19,6 +19,7 @@
 package server
 
 import (
+	_ "embed"
 	"fmt"
 	"net/http"
 	"os"
@@ -32,6 +33,9 @@ import (
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/psiemens/graceland"
 	"github.com/rs/zerolog"
+
+	core_contracts "github.com/onflow/flow-core-contracts/lib/go/contracts"
+	"github.com/onflow/flow-core-contracts/lib/go/templates"
 
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
@@ -148,6 +152,8 @@ type Config struct {
 	StateHash string
 	// ComputationReportingEnabled enables/disables Cadence computation reporting.
 	ComputationReportingEnabled bool
+	// ScheduledCallbacksEnabled enables an experimental feature for scheduling callbacks.
+	ScheduledCallbacksEnabled bool
 	// SetupEVMEnabled enables the EVM setup for the emulator, defaults to true.
 	SetupEVMEnabled bool
 	// SetupVMBridgeEnabled enables the VM bridge setup for the emulator, defaults to true.
@@ -178,6 +184,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 
 	sc := systemcontracts.SystemContractsForChain(chain.ChainID())
 	contracts := sc.All()
+
 	// sort contracts to always have the same order
 	sort.Slice(contracts, func(i, j int) bool {
 		return contracts[i].Name < contracts[j].Name
@@ -189,8 +196,25 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 			Msg("📜 Flow contract")
 	}
 
+	commonContracts := emulator.NewCommonContracts(chain)
+	// todo: remove this feature flag after its implemented in flow-go
+	// issue: https://github.com/onflow/flow-emulator/issues/829
+	if conf.ScheduledCallbacksEnabled {
+		env := templates.Environment{
+			FlowTokenAddress:   sc.FlowToken.Address.String(),
+			FlowFeesAddress:    sc.FlowFees.Address.String(),
+			StorageFeesAddress: sc.FlowStorageFees.Address.String(),
+		}
+		commonContracts = append(commonContracts, emulator.ContractDescription{
+			Name:   "FlowCallbackScheduler",
+			Source: core_contracts.FlowCallbackScheduler(env),
+		})
+
+		// automatically enable contracts since they are needed for scheduled callbacks
+		conf.WithContracts = true
+	}
+
 	if conf.WithContracts {
-		commonContracts := emulator.NewCommonContracts(chain)
 		err := emulator.DeployContracts(emulatedBlockchain, commonContracts)
 		if err != nil {
 			logger.Error().Err(err).Msg("❗  Failed to deploy contracts")
@@ -475,6 +499,13 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		options = append(
 			options,
 			emulator.WithSetupVMBridgeEnabled(true),
+		)
+	}
+
+	if conf.ScheduledCallbacksEnabled {
+		options = append(
+			options,
+			emulator.WithScheduledCallbacks(true),
 		)
 	}
 
