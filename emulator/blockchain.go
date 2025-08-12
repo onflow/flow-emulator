@@ -1262,7 +1262,7 @@ func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 	blockContext := b.setFVMContextFromHeader(header)
 
 	// cannot execute a block that has already executed (only relevant for non-empty blocks)
-	if !b.pendingBlock.Empty() && b.pendingBlock.ExecutionComplete() {
+	if b.pendingBlock.ExecutionComplete() && !b.pendingBlock.Empty() {
 		return results, &types.PendingBlockTransactionsExhaustedError{
 			BlockID: b.pendingBlock.ID(),
 		}
