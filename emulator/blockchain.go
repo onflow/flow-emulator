@@ -1258,11 +1258,6 @@ func (b *Blockchain) ExecuteBlock() ([]*types.TransactionResult, error) {
 func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 	results := make([]*types.TransactionResult, 0)
 
-	// empty blocks do not require execution, treat as a no-op
-	if b.pendingBlock.Empty() {
-		return results, nil
-	}
-
 	header := b.pendingBlock.Block().Header
 	blockContext := b.setFVMContextFromHeader(header)
 
