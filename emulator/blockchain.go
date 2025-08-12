@@ -1258,23 +1258,18 @@ func (b *Blockchain) ExecuteBlock() ([]*types.TransactionResult, error) {
 func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 	results := make([]*types.TransactionResult, 0)
 
-	// empty blocks do not require execution, treat as a no-op
-	if b.pendingBlock.Empty() {
-		return results, nil
-	}
-
 	header := b.pendingBlock.Block().Header
 	blockContext := b.setFVMContextFromHeader(header)
 
-	// cannot execute a block that has already executed
-	if b.pendingBlock.ExecutionComplete() {
+	// cannot execute a block that has already executed (only relevant for non-empty blocks)
+	if b.pendingBlock.ExecutionComplete() && !b.pendingBlock.Empty() {
 		return results, &types.PendingBlockTransactionsExhaustedError{
 			BlockID: b.pendingBlock.ID(),
 		}
 	}
 
-	// continue executing transactions until execution is complete
-	for !b.pendingBlock.ExecutionComplete() {
+	// continue executing transactions until execution is complete (skip for empty blocks)
+	for !b.pendingBlock.ExecutionComplete() && !b.pendingBlock.Empty() {
 		result, err := b.executeNextTransaction(blockContext)
 		if err != nil {
 			return results, err
