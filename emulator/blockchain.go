@@ -1261,6 +1261,29 @@ func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 	header := b.pendingBlock.Block().Header
 	blockContext := b.setFVMContextFromHeader(header)
 
+	// empty blocks do not require execution, treat as a no-op
+	if b.pendingBlock.Empty() {
+		// todo refactor after CallbackScheduler implementation is completed
+		// still try to execute scheduled callbacks for empty blocks
+		if b.conf.ScheduledCallbacksEnabled {
+			// todo refactor after bootstrap deploys CallbackScheduler
+			// this is a temporary workaround since deployment of CallbackScheduler is not
+			// yet part of bootstrap procedure, so it must be deployed in the first block
+			// during emulator startup, so we shouldn't support scheduling in these first blocks
+			if b.pendingBlock.height < 2 {
+				return results, nil
+			}
+
+			callbacks, err := b.executeScheduledCallbacks(blockContext)
+			if err != nil {
+				return results, err
+			}
+			results = append(results, callbacks...)
+		}
+
+		return results, nil
+	}
+
 	// cannot execute a block that has already executed
 	if b.pendingBlock.ExecutionComplete() {
 		return results, &types.PendingBlockTransactionsExhaustedError{
