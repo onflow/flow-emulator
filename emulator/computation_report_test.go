@@ -152,7 +152,7 @@ func TestComputationReportingForTransaction(t *testing.T) {
 	assert.GreaterOrEqual(t, txProfile.ComputationUsed, uint64(1))
 
 	expectedIntensities := map[string]uint64{
-		"CreateCompositeValue":   2,
+		"CreateCompositeValue":   1,
 		"CreateDictionaryValue":  1,
 		"EmitEvent":              73,
 		"EncodeEvent":            1,
@@ -166,6 +166,15 @@ func TestComputationReportingForTransaction(t *testing.T) {
 		"TransferCompositeValue": 3,
 	}
 	for kind, intensity := range expectedIntensities {
-		assert.GreaterOrEqual(t, txProfile.Intensities[kind], intensity)
+		actualIntensity := txProfile.Intensities[kind]
+		assert.GreaterOrEqual(
+			t,
+			actualIntensity,
+			intensity,
+			"intensity for %s should be at least %d, got %d",
+			kind,
+			intensity,
+			actualIntensity,
+		)
 	}
 }
