@@ -2195,6 +2195,8 @@ func TestTransactionWithCadenceRandom(t *testing.T) {
 }
 
 func TestEVMTransaction(t *testing.T) {
+	t.Parallel()
+
 	serviceAddr := flowgo.Emulator.Chain().ServiceAddress()
 	code := []byte(fmt.Sprintf(
 		`

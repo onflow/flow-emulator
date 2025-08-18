@@ -1211,6 +1211,6 @@ func TestAccountAccess(t *testing.T) {
 	require.Contains(
 		t,
 		result.Error.Error(),
-		"error: cannot access `a`: field requires `account` authorization",
+		"access denied: cannot access `a` because field requires `account` authorization",
 	)
 }
