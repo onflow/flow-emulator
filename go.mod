@@ -4,7 +4,7 @@ go 1.23.7
 
 require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
-	github.com/fxamacker/cbor/v2 v2.8.1-0.20250402194037-6f932b086829
+	github.com/fxamacker/cbor/v2 v2.9.0
 	github.com/glebarez/go-sqlite v1.22.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/go-dap v0.11.0
