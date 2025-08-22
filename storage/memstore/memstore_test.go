@@ -25,7 +25,6 @@ import (
 
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	"github.com/onflow/flow-go/model/flow"
-	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,14 +34,14 @@ func TestMemstore(t *testing.T) {
 	t.Parallel()
 
 	const blockHeight = 0
-	key := flow.NewRegisterID(flowgo.EmptyAddress, "foo")
+	key := flow.NewRegisterID(flow.EmptyAddress, "foo")
 	value := []byte("bar")
 	store := New()
 
 	err := store.insertExecutionSnapshot(
 		blockHeight,
 		&snapshot.ExecutionSnapshot{
-			WriteSet: map[flowgo.RegisterID]flowgo.RegisterValue{
+			WriteSet: map[flow.RegisterID]flow.RegisterValue{
 				key: value,
 			},
 		},
@@ -75,7 +74,7 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 	t.Parallel()
 
 	store := New()
-	key := flow.NewRegisterID(flowgo.EmptyAddress, "foo")
+	key := flow.NewRegisterID(flow.EmptyAddress, "foo")
 	value := []byte("bar")
 	var nilByte []byte
 	nilValue := nilByte
@@ -84,7 +83,7 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 	err := store.insertExecutionSnapshot(
 		0,
 		&snapshot.ExecutionSnapshot{
-			WriteSet: map[flowgo.RegisterID]flowgo.RegisterValue{
+			WriteSet: map[flow.RegisterID]flow.RegisterValue{
 				key: value,
 			},
 		})
@@ -101,7 +100,7 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 	err = store.insertExecutionSnapshot(
 		1,
 		&snapshot.ExecutionSnapshot{
-			WriteSet: map[flowgo.RegisterID]flowgo.RegisterValue{
+			WriteSet: map[flow.RegisterID]flow.RegisterValue{
 				key: nilValue,
 			},
 		})
