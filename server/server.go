@@ -201,9 +201,10 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	// issue: https://github.com/onflow/flow-emulator/issues/829
 	if conf.ScheduledCallbacksEnabled {
 		env := templates.Environment{
-			FlowTokenAddress:   sc.FlowToken.Address.String(),
-			FlowFeesAddress:    sc.FlowFees.Address.String(),
-			StorageFeesAddress: sc.FlowStorageFees.Address.String(),
+			FungibleTokenAddress: sc.FungibleToken.Address.String(),
+			FlowTokenAddress:     sc.FlowToken.Address.String(),
+			FlowFeesAddress:      sc.FlowFees.Address.String(),
+			StorageFeesAddress:   sc.FlowStorageFees.Address.String(),
 		}
 		commonContracts = append(commonContracts, emulator.ContractDescription{
 			Name:   "FlowCallbackScheduler",

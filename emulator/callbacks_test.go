@@ -31,14 +31,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseSchedulerProcessedEvent(t *testing.T) {
+func TestParseSchedulerPendingExecutionEvent(t *testing.T) {
 	serviceAddress := flow.HexToAddress("0x01")
 	contractLocation := common.AddressLocation{
 		Address: common.Address(serviceAddress),
 		Name:    contractName,
 	}
 
-	expectedEventType := string(contractLocation.TypeID(nil, contractName+".Processed"))
+	expectedEventType := string(contractLocation.TypeID(nil, contractName+".PendingExecution"))
 
 	eventType := cadence.NewEventType(
 		nil,
@@ -230,7 +230,7 @@ func TestParseSchedulerProcessedEvent(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			id, priority, limit, owner, err := parseSchedulerProcessedEvent(tt.event, tt.serviceAddress)
+			id, priority, limit, owner, err := parseSchedulerPendingExecutionEvent(tt.event, tt.serviceAddress)
 
 			if tt.expectError {
 				require.Error(t, err)

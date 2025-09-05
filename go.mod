@@ -14,8 +14,8 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v1.7.0-preview.1
 	github.com/onflow/crypto v0.25.3
-	github.com/onflow/flow-core-contracts/lib/go/contracts v1.7.4-0.20250807122906-29940d8821f0
-	github.com/onflow/flow-core-contracts/lib/go/templates v1.7.2-0.20250807122906-29940d8821f0
+	github.com/onflow/flow-core-contracts/lib/go/contracts v1.7.4-0.20250905214304-819c6e946442
+	github.com/onflow/flow-core-contracts/lib/go/templates v1.7.2-0.20250905214304-819c6e946442
 	github.com/onflow/flow-go v0.42.3-util-fix.0.20250819165158-ea886bab7c19
 	github.com/onflow/flow-go-sdk v1.7.0
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.4
