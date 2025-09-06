@@ -446,6 +446,7 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		emulator.WithChainID(conf.ChainID),
 		emulator.WithContractRemovalEnabled(conf.ContractRemovalEnabled),
+		emulator.WithSetupVMBridgeEnabled(conf.SetupVMBridgeEnabled),
 	}
 
 	if conf.SkipTransactionValidation {
@@ -492,13 +493,6 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		options = append(
 			options,
 			emulator.WithSetupEVMEnabled(true),
-		)
-	}
-
-	if conf.SetupVMBridgeEnabled {
-		options = append(
-			options,
-			emulator.WithSetupVMBridgeEnabled(true),
 		)
 	}
 
