@@ -90,7 +90,6 @@ func TestSDK(t *testing.T) {
 		result, blockStatus, err := adapter.GetLatestBlockHeader(context.Background(), true)
 		// check all values match except timestamp (explicitly  not checked in assert)
 		assert.Equal(t, &block.BlockHeader, result)
-		assert.equl
 		assert.Equal(t, block.Timestamp.Equal(result.Timestamp), true)
 		assert.Equal(t, flowgosdk.BlockStatusSealed, blockStatus)
 		assert.NoError(t, err)
