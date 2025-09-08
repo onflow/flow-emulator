@@ -50,13 +50,15 @@ func TestBlocks(t *testing.T) {
 	}()
 
 	block1 := &flowgo.Block{
-		Header: &flowgo.Header{
-			Height: 1,
+		HeaderBody: flowgo.HeaderBody{
+			Height:  1,
+			ChainID: flow.Emulator,
 		},
 	}
 	block2 := &flowgo.Block{
-		Header: &flowgo.Header{
-			Height: 2,
+		HeaderBody: flowgo.HeaderBody{
+			Height:  2,
+			ChainID: flow.Emulator,
 		},
 	}
 
@@ -70,7 +72,7 @@ func TestBlocks(t *testing.T) {
 		})
 
 		t.Run("BlockByHeight", func(t *testing.T) {
-			_, err := store.BlockByHeight(context.Background(), block1.Header.Height)
+			_, err := store.BlockByHeight(context.Background(), block1.Height)
 			if assert.Error(t, err) {
 				assert.Equal(t, storage.ErrNotFound, err)
 			}
@@ -95,7 +97,7 @@ func TestBlocks(t *testing.T) {
 
 	t.Run("should be able to get inserted block", func(t *testing.T) {
 		t.Run("BlockByHeight", func(t *testing.T) {
-			block, err := store.BlockByHeight(context.Background(), block1.Header.Height)
+			block, err := store.BlockByHeight(context.Background(), block1.Height)
 			assert.NoError(t, err)
 			assert.Equal(t, block1, block)
 		})
@@ -145,7 +147,7 @@ func TestCollections(t *testing.T) {
 	})
 
 	t.Run("should be able to insert collection", func(t *testing.T) {
-		err := store.InsertCollection(context.Background(), col.Light())
+		err := store.InsertCollection(context.Background(), *col.Light())
 		assert.NoError(t, err)
 
 		t.Run("should be able to get inserted collection", func(t *testing.T) {
@@ -204,7 +206,7 @@ func TestFullCollection(t *testing.T) {
 		_, err = store.FullCollectionByID(context.Background(), col.ID())
 		require.Error(t, storage.ErrNotFound, err)
 
-		err = store.InsertCollection(context.Background(), col.Light())
+		err = store.InsertCollection(context.Background(), *col.Light())
 		require.NoError(t, err)
 
 		for _, tx := range col.Transactions {

@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/encoding/ccf"
@@ -63,6 +64,7 @@ func TestAccess(t *testing.T) {
 	}))
 
 	t.Run("GetNetworkParameters", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
+
 		expected := accessmodel.NetworkParameters{
 			ChainID: flowgo.MonotonicEmulator,
 		}
@@ -79,10 +81,7 @@ func TestAccess(t *testing.T) {
 
 	t.Run("GetLatestBlockHeader", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
-		header := flowgo.Header{
-			Height: 42,
-		}
-		expected := flowgo.Block{Header: &header}
+		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UnixMilli())}}
 
 		//success
 		emu.EXPECT().
@@ -91,7 +90,7 @@ func TestAccess(t *testing.T) {
 			Times(1)
 
 		result, blockStatus, err := adapter.GetLatestBlockHeader(context.Background(), true)
-		assert.Equal(t, expected.Header, result)
+		assert.Equal(t, expected.ToHeader(), result)
 		assert.Equal(t, flowgo.BlockStatusSealed, blockStatus)
 		assert.NoError(t, err)
 
@@ -110,10 +109,7 @@ func TestAccess(t *testing.T) {
 
 	t.Run("GetBlockHeaderByHeight", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
-		header := flowgo.Header{
-			Height: 42,
-		}
-		expected := flowgo.Block{Header: &header}
+		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UnixMilli())}}
 
 		//success
 		emu.EXPECT().
@@ -122,7 +118,7 @@ func TestAccess(t *testing.T) {
 			Times(1)
 
 		result, blockStatus, err := adapter.GetBlockHeaderByHeight(context.Background(), 42)
-		assert.Equal(t, expected.Header, result)
+		assert.Equal(t, expected.ToHeader(), result)
 		assert.Equal(t, flowgo.BlockStatusSealed, blockStatus)
 		assert.NoError(t, err)
 
@@ -142,10 +138,7 @@ func TestAccess(t *testing.T) {
 	t.Run("GetBlockHeaderByID", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
 		id := flowgo.Identifier{}
-		header := flowgo.Header{
-			Height: 42,
-		}
-		expected := flowgo.Block{Header: &header}
+		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UnixMilli())}}
 
 		//success
 		emu.EXPECT().
@@ -154,7 +147,7 @@ func TestAccess(t *testing.T) {
 			Times(1)
 
 		result, blockStatus, err := adapter.GetBlockHeaderByID(context.Background(), id)
-		assert.Equal(t, expected.Header, result)
+		assert.Equal(t, expected.ToHeader(), result)
 		assert.Equal(t, flowgo.BlockStatusSealed, blockStatus)
 		assert.NoError(t, err)
 
@@ -173,10 +166,7 @@ func TestAccess(t *testing.T) {
 
 	t.Run("GetLatestBlock", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
-		header := flowgo.Header{
-			Height: 42,
-		}
-		expected := flowgo.Block{Header: &header}
+		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UnixMilli())}}
 
 		//success
 		emu.EXPECT().
@@ -204,10 +194,7 @@ func TestAccess(t *testing.T) {
 
 	t.Run("GetBlockByHeight", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
-		header := flowgo.Header{
-			Height: 42,
-		}
-		expected := flowgo.Block{Header: &header}
+		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UnixMilli())}}
 
 		//success
 		emu.EXPECT().
@@ -236,10 +223,7 @@ func TestAccess(t *testing.T) {
 	t.Run("GetBlockByID", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
 		id := flowgo.Identifier{}
-		header := flowgo.Header{
-			Height: 42,
-		}
-		expected := flowgo.Block{Header: &header}
+		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UnixMilli())}}
 
 		//success
 		emu.EXPECT().
@@ -453,7 +437,7 @@ func TestAccess(t *testing.T) {
 		// called once for each script execution
 		emu.EXPECT().
 			GetLatestBlock().
-			Return(&flowgo.Block{Header: &flowgo.Header{}}, nil).
+			Return(&flowgo.Block{HeaderBody: flowgo.HeaderBody{}}, nil).
 			Times(2)
 
 		//success

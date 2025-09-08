@@ -80,7 +80,7 @@ func (s *Store) LatestBlockHeight(ctx context.Context) (uint64, error) {
 		return 0, err
 	}
 
-	return b.Header.Height, nil
+	return b.Height, nil
 }
 
 func (s *Store) LatestBlock(_ context.Context) (flowgo.Block, error) {
@@ -102,11 +102,11 @@ func (s *Store) StoreBlock(_ context.Context, block *flowgo.Block) error {
 }
 
 func (s *Store) storeBlock(block *flowgo.Block) error {
-	s.blocks[block.Header.Height] = *block
-	s.blockIDToHeight[block.ID()] = block.Header.Height
+	s.blocks[block.Height] = *block
+	s.blockIDToHeight[block.ID()] = block.Height
 
-	if block.Header.Height > s.blockHeight {
-		s.blockHeight = block.Header.Height
+	if block.Height > s.blockHeight {
+		s.blockHeight = block.Height
 	}
 
 	return nil
@@ -189,13 +189,13 @@ func (s *Store) CommitBlock(
 	}
 
 	err = s.insertExecutionSnapshot(
-		block.Header.Height,
+		block.Height,
 		executionSnapshot)
 	if err != nil {
 		return err
 	}
 
-	err = s.insertEvents(block.Header.Height, events)
+	err = s.insertEvents(block.Height, events)
 	if err != nil {
 		return err
 	}

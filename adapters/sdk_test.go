@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
@@ -63,16 +64,20 @@ func TestSDK(t *testing.T) {
 
 	t.Run("GetLatestBlockHeader", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
+		timestamp := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 		flowBlock := &flowgo.Block{
-			Header: &flowgo.Header{
-				Height: 42,
+			HeaderBody: flowgo.HeaderBody{
+				Height:    42,
+				ChainID:   flowgo.Emulator,
+				Timestamp: uint64(timestamp.UnixMilli()),
 			},
 		}
 
 		block := flowgosdk.Block{
 			BlockHeader: flowgosdk.BlockHeader{
-				ID:     flowgosdk.Identifier{0x8c, 0x3c, 0xf9, 0x36, 0xbf, 0x2d, 0x3, 0x8d, 0x21, 0x71, 0xb4, 0x80, 0x1f, 0xba, 0x30, 0x36, 0x3c, 0xd5, 0x76, 0xc3, 0x21, 0xb4, 0x3d, 0xbd, 0xa2, 0x69, 0xa1, 0xe2, 0x7c, 0x6f, 0x58, 0x28},
-				Height: 42,
+				ID:        flowgosdk.Identifier{0xef, 0x7a, 0x85, 0xb0, 0xe1, 0xa9, 0x5b, 0xb5, 0xd2, 0x86, 0xe8, 0x9a, 0x55, 0x30, 0x7a, 0x95, 0x64, 0x1d, 0x8, 0x89, 0x53, 0x74, 0xa2, 0x2d, 0x0, 0xc7, 0xe2, 0xee, 0x1f, 0x85, 0x9, 0x7},
+				Height:    42,
+				Timestamp: timestamp,
 			},
 		}
 
@@ -83,7 +88,10 @@ func TestSDK(t *testing.T) {
 			Times(1)
 
 		result, blockStatus, err := adapter.GetLatestBlockHeader(context.Background(), true)
+		// check all values match except timestamp (explicitly  not checked in assert)
 		assert.Equal(t, &block.BlockHeader, result)
+		assert.equl
+		assert.Equal(t, block.Timestamp.Equal(result.Timestamp), true)
 		assert.Equal(t, flowgosdk.BlockStatusSealed, blockStatus)
 		assert.NoError(t, err)
 
@@ -102,16 +110,20 @@ func TestSDK(t *testing.T) {
 
 	t.Run("GetBlockHeaderByHeight", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
+		timestamp := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 		flowBlock := &flowgo.Block{
-			Header: &flowgo.Header{
-				Height: 42,
+			HeaderBody: flowgo.HeaderBody{
+				Height:    42,
+				ChainID:   flowgo.Emulator,
+				Timestamp: uint64(timestamp.UnixMilli()),
 			},
 		}
 
 		block := flowgosdk.Block{
 			BlockHeader: flowgosdk.BlockHeader{
-				ID:     flowgosdk.Identifier{0x8c, 0x3c, 0xf9, 0x36, 0xbf, 0x2d, 0x3, 0x8d, 0x21, 0x71, 0xb4, 0x80, 0x1f, 0xba, 0x30, 0x36, 0x3c, 0xd5, 0x76, 0xc3, 0x21, 0xb4, 0x3d, 0xbd, 0xa2, 0x69, 0xa1, 0xe2, 0x7c, 0x6f, 0x58, 0x28},
-				Height: 42,
+				ID:        flowgosdk.Identifier{0xef, 0x7a, 0x85, 0xb0, 0xe1, 0xa9, 0x5b, 0xb5, 0xd2, 0x86, 0xe8, 0x9a, 0x55, 0x30, 0x7a, 0x95, 0x64, 0x1d, 0x8, 0x89, 0x53, 0x74, 0xa2, 0x2d, 0x0, 0xc7, 0xe2, 0xee, 0x1f, 0x85, 0x9, 0x7},
+				Height:    42,
+				Timestamp: timestamp,
 			},
 		}
 
@@ -141,17 +153,21 @@ func TestSDK(t *testing.T) {
 
 	t.Run("GetBlockHeaderByID", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
+		timestamp := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 		id := flowgosdk.Identifier{}
 		flowBlock := &flowgo.Block{
-			Header: &flowgo.Header{
-				Height: 42,
+			HeaderBody: flowgo.HeaderBody{
+				Height:    42,
+				ChainID:   flowgo.Emulator,
+				Timestamp: uint64(timestamp.UnixMilli()),
 			},
 		}
 
 		block := flowgosdk.Block{
 			BlockHeader: flowgosdk.BlockHeader{
-				ID:     flowgosdk.Identifier{0x8c, 0x3c, 0xf9, 0x36, 0xbf, 0x2d, 0x3, 0x8d, 0x21, 0x71, 0xb4, 0x80, 0x1f, 0xba, 0x30, 0x36, 0x3c, 0xd5, 0x76, 0xc3, 0x21, 0xb4, 0x3d, 0xbd, 0xa2, 0x69, 0xa1, 0xe2, 0x7c, 0x6f, 0x58, 0x28},
-				Height: 42,
+				ID:        flowgosdk.Identifier{0xef, 0x7a, 0x85, 0xb0, 0xe1, 0xa9, 0x5b, 0xb5, 0xd2, 0x86, 0xe8, 0x9a, 0x55, 0x30, 0x7a, 0x95, 0x64, 0x1d, 0x8, 0x89, 0x53, 0x74, 0xa2, 0x2d, 0x0, 0xc7, 0xe2, 0xee, 0x1f, 0x85, 0x9, 0x7},
+				Height:    42,
+				Timestamp: timestamp,
 			},
 		}
 
@@ -182,10 +198,10 @@ func TestSDK(t *testing.T) {
 	t.Run("GetLatestBlock", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
 		flowBlock := &flowgo.Block{
-			Header: &flowgo.Header{
+			HeaderBody: flowgo.HeaderBody{
 				Height: 42,
 			},
-			Payload: &flowgo.Payload{
+			Payload: flowgo.Payload{
 				Guarantees: []*flowgo.CollectionGuarantee{
 					{
 						CollectionID: flowgo.MustHexStringToIdentifier("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
@@ -247,10 +263,10 @@ func TestSDK(t *testing.T) {
 	t.Run("GetBlockByHeight", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
 		flowBlock := &flowgo.Block{
-			Header: &flowgo.Header{
+			HeaderBody: flowgo.HeaderBody{
 				Height: 42,
 			},
-			Payload: &flowgo.Payload{
+			Payload: flowgo.Payload{
 				Guarantees: []*flowgo.CollectionGuarantee{
 					{
 						CollectionID: flowgo.MustHexStringToIdentifier("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
@@ -313,10 +329,10 @@ func TestSDK(t *testing.T) {
 
 		id := flowgosdk.Identifier{}
 		flowBlock := &flowgo.Block{
-			Header: &flowgo.Header{
+			HeaderBody: flowgo.HeaderBody{
 				Height: 42,
 			},
-			Payload: &flowgo.Payload{
+			Payload: flowgo.Payload{
 				Guarantees: []*flowgo.CollectionGuarantee{
 					{
 						CollectionID: flowgo.MustHexStringToIdentifier("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
@@ -564,7 +580,7 @@ func TestSDK(t *testing.T) {
 		expected, _ := convertScriptResult(&emulatorResult, nil)
 
 		flowBlock := &flowgo.Block{
-			Header: &flowgo.Header{
+			HeaderBody: flowgo.HeaderBody{
 				Height: 42,
 			},
 		}
@@ -644,7 +660,7 @@ func TestSDK(t *testing.T) {
 		expected, _ := convertScriptResult(&emulatorResult, nil)
 
 		flowBlock := &flowgo.Block{
-			Header: &flowgo.Header{
+			HeaderBody: flowgo.HeaderBody{
 				Height: 42,
 			},
 		}

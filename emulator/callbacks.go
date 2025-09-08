@@ -48,11 +48,18 @@ func processCallbackTransaction(
 
 	script := templates.GenerateProcessCallbackScript(env)
 
-	return *flow.NewTransactionBody().
+	txBuilder := flow.NewTransactionBodyBuilder().
 		SetScript(script).
 		SetComputeLimit(defaultTransactionMaxGasLimit).
 		SetPayer(serviceAddress).
 		SetReferenceBlockID(parentID)
+
+	tx, err := txBuilder.Build()
+	if err != nil {
+		panic(err)
+	}
+
+	return *tx
 }
 
 func executeCallbackTransactions(
@@ -73,12 +80,17 @@ func executeCallbackTransactions(
 			return nil, err
 		}
 
-		tx := flow.NewTransactionBody().
+		txBuilder := flow.NewTransactionBodyBuilder().
 			SetScript(script).
 			AddArgument(id).
 			SetPayer(serviceAddress).
 			SetReferenceBlockID(parentID).
 			SetComputeLimit(limit)
+
+		tx, err := txBuilder.Build()
+		if err != nil {
+			return nil, err
+		}
 
 		transactions = append(transactions, *tx)
 	}

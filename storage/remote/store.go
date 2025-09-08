@@ -25,6 +25,7 @@ import (
 	"github.com/onflow/flow-go/engine/common/rpc/convert"
 	"github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
+	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow/protobuf/go/flow/access"
 	"github.com/onflow/flow/protobuf/go/flow/entities"
@@ -176,7 +177,7 @@ func (s *Store) BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flow
 	var height uint64
 	block, err := s.DefaultStore.BlockByID(ctx, blockID)
 	if err == nil {
-		height = block.Header.Height
+		height = block.Height
 	} else if errors.Is(err, storage.ErrNotFound) {
 		heightRes, err := s.accessClient.GetBlockHeaderByID(ctx, &access.GetBlockHeaderByIDRequest{Id: blockID[:]})
 		if err != nil {
@@ -228,10 +229,10 @@ func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block
 		return nil, err
 	}
 
-	payload := flowgo.EmptyPayload()
+	payload := flow.NewEmptyPayload()
 	return &flowgo.Block{
-		Payload: &payload,
-		Header:  header,
+		Payload:    *payload,
+		HeaderBody: header.HeaderBody,
 	}, nil
 }
 

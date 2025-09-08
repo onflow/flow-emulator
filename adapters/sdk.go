@@ -21,6 +21,7 @@ package adapters
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
@@ -87,9 +88,9 @@ func (b *SDKAdapter) GetLatestBlockHeader(
 	}
 	blockHeader := sdk.BlockHeader{
 		ID:        sdk.Identifier(block.ID()),
-		ParentID:  sdk.Identifier(block.Header.ParentID),
-		Height:    block.Header.Height,
-		Timestamp: block.Header.Timestamp,
+		ParentID:  sdk.Identifier(block.ParentID),
+		Height:    block.Height,
+		Timestamp: time.Unix(0, int64(block.Timestamp)),
 	}
 	return &blockHeader, sdk.BlockStatusSealed, nil
 }
@@ -109,9 +110,9 @@ func (b *SDKAdapter) GetBlockHeaderByHeight(
 	}
 	blockHeader := sdk.BlockHeader{
 		ID:        sdk.Identifier(block.ID()),
-		ParentID:  sdk.Identifier(block.Header.ParentID),
-		Height:    block.Header.Height,
-		Timestamp: block.Header.Timestamp,
+		ParentID:  sdk.Identifier(block.ParentID),
+		Height:    block.Height,
+		Timestamp: time.Unix(0, int64(block.Timestamp)),
 	}
 	return &blockHeader, sdk.BlockStatusSealed, nil
 }
@@ -131,9 +132,9 @@ func (b *SDKAdapter) GetBlockHeaderByID(
 	}
 	blockHeader := sdk.BlockHeader{
 		ID:        sdk.Identifier(block.ID()),
-		ParentID:  sdk.Identifier(block.Header.ParentID),
-		Height:    block.Header.Height,
-		Timestamp: block.Header.Timestamp,
+		ParentID:  sdk.Identifier(block.ParentID),
+		Height:    block.Height,
+		Timestamp: time.Unix(0, int64(block.Timestamp)),
 	}
 	return &blockHeader, sdk.BlockStatusSealed, nil
 }
@@ -154,11 +155,11 @@ func (b *SDKAdapter) GetLatestBlock(
 	block := sdk.Block{
 		BlockHeader: sdk.BlockHeader{
 			ID:        sdk.Identifier(flowBlock.ID()),
-			ParentID:  sdk.Identifier(flowBlock.Header.ParentID),
-			Height:    flowBlock.Header.Height,
-			Timestamp: flowBlock.Header.Timestamp,
+			ParentID:  sdk.Identifier(flowBlock.ParentID),
+			Height:    flowBlock.Height,
+			Timestamp: time.Unix(0, int64(flowBlock.Timestamp)),
 		},
-		BlockPayload: convertBlockPayload(flowBlock.Payload),
+		BlockPayload: convertBlockPayload(&flowBlock.Payload),
 	}
 	return &block, sdk.BlockStatusSealed, nil
 }
@@ -179,11 +180,11 @@ func (b *SDKAdapter) GetBlockByHeight(
 	block := sdk.Block{
 		BlockHeader: sdk.BlockHeader{
 			ID:        sdk.Identifier(flowBlock.ID()),
-			ParentID:  sdk.Identifier(flowBlock.Header.ParentID),
-			Height:    flowBlock.Header.Height,
-			Timestamp: flowBlock.Header.Timestamp,
+			ParentID:  sdk.Identifier(flowBlock.ParentID),
+			Height:    flowBlock.Height,
+			Timestamp: time.Unix(0, int64(flowBlock.Timestamp)),
 		},
-		BlockPayload: convertBlockPayload(flowBlock.Payload),
+		BlockPayload: convertBlockPayload(&flowBlock.Payload),
 	}
 	return &block, sdk.BlockStatusSealed, nil
 }
@@ -204,11 +205,11 @@ func (b *SDKAdapter) GetBlockByID(
 	block := sdk.Block{
 		BlockHeader: sdk.BlockHeader{
 			ID:        sdk.Identifier(flowBlock.ID()),
-			ParentID:  sdk.Identifier(flowBlock.Header.ParentID),
-			Height:    flowBlock.Header.Height,
-			Timestamp: flowBlock.Header.Timestamp,
+			ParentID:  sdk.Identifier(flowBlock.ParentID),
+			Height:    flowBlock.Height,
+			Timestamp: time.Unix(0, int64(flowBlock.Timestamp)),
 		},
-		BlockPayload: convertBlockPayload(flowBlock.Payload),
+		BlockPayload: convertBlockPayload(&flowBlock.Payload),
 	}
 	return &block, sdk.BlockStatusSealed, nil
 }
@@ -340,7 +341,7 @@ func (b *SDKAdapter) ExecuteScriptAtLatestBlock(
 	if err != nil {
 		return nil, err
 	}
-	return b.executeScriptAtBlock(script, arguments, block.Header.Height)
+	return b.executeScriptAtBlock(script, arguments, block.Height)
 }
 
 // ExecuteScriptAtBlockHeight executes a script at a specific block height
@@ -364,7 +365,7 @@ func (b *SDKAdapter) ExecuteScriptAtBlockID(
 	if err != nil {
 		return nil, err
 	}
-	return b.executeScriptAtBlock(script, arguments, block.Header.Height)
+	return b.executeScriptAtBlock(script, arguments, block.Height)
 }
 
 // executeScriptAtBlock is a helper for executing a script at a specific block

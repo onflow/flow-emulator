@@ -34,6 +34,7 @@ import (
 	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow-go/utils/unittest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -66,9 +67,9 @@ func TestInitialization(t *testing.T) {
 		latestBlock, err := b.GetLatestBlock()
 		require.NoError(t, err)
 
-		assert.EqualValues(t, 0, latestBlock.Header.Height)
+		assert.EqualValues(t, 0, latestBlock.Height)
 		assert.Equal(t,
-			flowgo.Genesis(flowgo.Emulator).ID(),
+			unittest.Block.Genesis(flowgo.Emulator).ID(),
 			latestBlock.ID(),
 		)
 	})
@@ -146,7 +147,7 @@ func TestInitialization(t *testing.T) {
 		minedTx, err := adapter.GetTransaction(context.Background(), tx.ID())
 		require.NoError(t, err)
 
-		minedEvents, err := adapter.GetEventsForHeightRange(context.Background(), "", block.Header.Height, block.Header.Height)
+		minedEvents, err := adapter.GetEventsForHeightRange(context.Background(), "", block.Height, block.Height)
 		require.NoError(t, err)
 
 		// Create a new emulator with the same store
@@ -159,7 +160,7 @@ func TestInitialization(t *testing.T) {
 
 			assert.Equal(t, flowsdk.Identifier(block.ID()), latestBlock.ID)
 
-			blockByHeight, _, err := adapter.GetBlockByHeight(context.Background(), block.Header.Height)
+			blockByHeight, _, err := adapter.GetBlockByHeight(context.Background(), block.Height)
 			require.NoError(t, err)
 
 			assert.Equal(t, flowsdk.Identifier(block.ID()), blockByHeight.ID)
@@ -178,7 +179,7 @@ func TestInitialization(t *testing.T) {
 		})
 
 		t.Run("should be able to read events", func(t *testing.T) {
-			gotEvents, err := adapter.GetEventsForHeightRange(context.Background(), "", block.Header.Height, block.Header.Height)
+			gotEvents, err := adapter.GetEventsForHeightRange(context.Background(), "", block.Height, block.Height)
 			require.NoError(t, err)
 
 			assert.Equal(t, minedEvents[0].Events, gotEvents[0].Events)

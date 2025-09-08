@@ -52,7 +52,7 @@ func (b *blocks) HeaderByID(id flowgo.Identifier) (*flowgo.Header, error) {
 		return nil, err
 	}
 
-	return block.Header, nil
+	return block.ToHeader(), nil
 }
 
 func (b *blocks) FinalizedHeader() (*flowgo.Header, error) {
@@ -61,7 +61,7 @@ func (b *blocks) FinalizedHeader() (*flowgo.Header, error) {
 		return nil, err
 	}
 
-	return block.Header, nil
+	return block.ToHeader(), nil
 }
 
 func (b *blocks) SealedHeader() (*flowgo.Header, error) {
@@ -70,7 +70,7 @@ func (b *blocks) SealedHeader() (*flowgo.Header, error) {
 		return nil, err
 	}
 
-	return block.Header, nil
+	return block.ToHeader(), nil
 }
 
 func (b *blocks) IndexedHeight() (uint64, error) {
@@ -79,7 +79,7 @@ func (b *blocks) IndexedHeight() (uint64, error) {
 		return 0, err
 	}
 
-	return block.Header.Height, nil
+	return block.Height, nil
 }
 
 // We don't have to do anything complex here, as emulator does not fork the chain
@@ -92,5 +92,7 @@ func (b *blocks) ByHeightFrom(height uint64, header *flowgo.Header) (*flowgo.Hea
 		return nil, err
 	}
 
-	return block.Header, nil
+	b.blockchain.ExecuteAndCommitBlock()
+
+	return block.ToHeader(), nil
 }

@@ -34,6 +34,7 @@ import (
 	"github.com/onflow/flow-go/ledger/complete/wal"
 	"github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module/metrics"
+	"github.com/onflow/flow-go/utils/unittest"
 
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/memstore"
@@ -71,7 +72,7 @@ func New(
 	}
 
 	// pretend this state was the genesis state
-	genesis := flow.Genesis(chainID)
+	genesis := unittest.Block.Genesis(chainID)
 	err = store.CommitBlock(
 		context.Background(),
 		*genesis,

@@ -82,11 +82,11 @@ func (a *AccessAdapter) GetLatestBlockHeader(_ context.Context, _ bool) (*flowgo
 	}
 
 	a.logger.Debug().Fields(map[string]any{
-		"blockHeight": block.Header.Height,
+		"blockHeight": block.Height,
 		"blockID":     block.ID().String(),
 	}).Msg("🎁  GetLatestBlockHeader called")
 
-	return block.Header, flowgo.BlockStatusSealed, nil
+	return block.ToHeader(), flowgo.BlockStatusSealed, nil
 }
 
 func (a *AccessAdapter) GetBlockHeaderByHeight(_ context.Context, height uint64) (*flowgo.Header, flowgo.BlockStatus, error) {
@@ -96,11 +96,11 @@ func (a *AccessAdapter) GetBlockHeaderByHeight(_ context.Context, height uint64)
 	}
 
 	a.logger.Debug().Fields(map[string]any{
-		"blockHeight": block.Header.Height,
+		"blockHeight": block.Height,
 		"blockID":     block.ID().String(),
 	}).Msg("🎁  GetBlockHeaderByHeight called")
 
-	return block.Header, flowgo.BlockStatusSealed, nil
+	return block.ToHeader(), flowgo.BlockStatusSealed, nil
 }
 
 func (a *AccessAdapter) GetBlockHeaderByID(_ context.Context, id flowgo.Identifier) (*flowgo.Header, flowgo.BlockStatus, error) {
@@ -110,11 +110,11 @@ func (a *AccessAdapter) GetBlockHeaderByID(_ context.Context, id flowgo.Identifi
 	}
 
 	a.logger.Debug().Fields(map[string]any{
-		"blockHeight": block.Header.Height,
+		"blockHeight": block.Height,
 		"blockID":     block.ID().String(),
 	}).Msg("🎁  GetBlockHeaderByID called")
 
-	return block.Header, flowgo.BlockStatusSealed, nil
+	return block.ToHeader(), flowgo.BlockStatusSealed, nil
 }
 
 func (a *AccessAdapter) GetLatestBlock(_ context.Context, _ bool) (*flowgo.Block, flowgo.BlockStatus, error) {
@@ -124,7 +124,7 @@ func (a *AccessAdapter) GetLatestBlock(_ context.Context, _ bool) (*flowgo.Block
 	}
 
 	a.logger.Debug().Fields(map[string]any{
-		"blockHeight": block.Header.Height,
+		"blockHeight": block.Height,
 		"blockID":     block.ID().String(),
 	}).Msg("🎁  GetLatestBlock called")
 
@@ -138,7 +138,7 @@ func (a *AccessAdapter) GetBlockByHeight(_ context.Context, height uint64) (*flo
 	}
 
 	a.logger.Debug().Fields(map[string]any{
-		"blockHeight": block.Header.Height,
+		"blockHeight": block.Height,
 		"blockID":     block.ID().String(),
 	}).Msg("🎁  GetBlockByHeight called")
 
@@ -152,7 +152,7 @@ func (a *AccessAdapter) GetBlockByID(_ context.Context, id flowgo.Identifier) (*
 	}
 
 	a.logger.Debug().Fields(map[string]any{
-		"blockHeight": block.Header.Height,
+		"blockHeight": block.Height,
 		"blockID":     block.ID().String(),
 	}).Msg("🎁  GetBlockByID called")
 
@@ -299,7 +299,7 @@ func (a *AccessAdapter) ExecuteScriptAtLatestBlock(
 		return nil, err
 	}
 	a.logger.Debug().
-		Uint64("blockHeight", latestBlock.Header.Height).
+		Uint64("blockHeight", latestBlock.Height).
 		Msg("👤  ExecuteScriptAtLatestBlock called")
 
 	result, err := a.emulator.ExecuteScript(script, arguments)
