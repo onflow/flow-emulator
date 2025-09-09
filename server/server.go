@@ -205,6 +205,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 			FlowTokenAddress:     sc.FlowToken.Address.String(),
 			FlowFeesAddress:      sc.FlowFees.Address.String(),
 			StorageFeesAddress:   sc.FlowStorageFees.Address.String(),
+			ViewResolverAddress:  sc.ViewResolver.Address.String(),
 		}
 		commonContracts = append(commonContracts, emulator.ContractDescription{
 			Name:   "FlowTransactionScheduler",
