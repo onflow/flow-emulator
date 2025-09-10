@@ -34,7 +34,6 @@ import (
 	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
 	flowgo "github.com/onflow/flow-go/model/flow"
-	"github.com/onflow/flow-go/utils/unittest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -67,9 +66,11 @@ func TestInitialization(t *testing.T) {
 		latestBlock, err := b.GetLatestBlock()
 		require.NoError(t, err)
 
+		gen := emulator.Genesis(flowgo.Emulator)
+
 		assert.EqualValues(t, 0, latestBlock.Height)
 		assert.Equal(t,
-			unittest.Block.Genesis(flowgo.Emulator).ID(),
+			gen.ID(),
 			latestBlock.ID(),
 		)
 	})

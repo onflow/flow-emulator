@@ -59,9 +59,9 @@ import (
 	reusableRuntime "github.com/onflow/flow-go/fvm/runtime"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	accessmodel "github.com/onflow/flow-go/model/access"
+	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module/metrics"
-	"github.com/onflow/flow-go/utils/unittest"
 	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/convert"
@@ -721,7 +721,7 @@ func configureNewLedger(
 	}
 
 	// commit the genesis block to storage
-	genesis := unittest.Block.Genesis(conf.GetChainID())
+	genesis := Genesis(conf.GetChainID())
 
 	err = store.CommitBlock(
 		context.Background(),
@@ -901,7 +901,7 @@ func (b *Blockchain) PendingBlockView() uint64 {
 
 // PendingBlockTimestamp returns the Timestamp of the pending block.
 func (b *Blockchain) PendingBlockTimestamp() time.Time {
-	return time.Unix(0, int64(b.pendingBlock.Block().Timestamp))
+	return time.UnixMilli(int64(b.pendingBlock.Block().Timestamp))
 }
 
 // GetLatestBlock gets the latest sealed block.
@@ -1147,7 +1147,7 @@ func (b *Blockchain) GetEventsForBlockIDs(eventType string, blockIDs []flowgo.Id
 		result = append(result, flowgo.BlockEvents{
 			BlockID:        block.ID(),
 			BlockHeight:    block.Height,
-			BlockTimestamp: time.Unix(0, int64(block.Timestamp)),
+			BlockTimestamp: time.UnixMilli(int64(block.Timestamp)),
 			Events:         events,
 		})
 	}
@@ -1173,7 +1173,7 @@ func (b *Blockchain) GetEventsForHeightRange(eventType string, startHeight, endH
 		result = append(result, flowgo.BlockEvents{
 			BlockID:        block.ID(),
 			BlockHeight:    block.Height,
-			BlockTimestamp: time.Unix(0, int64(block.Timestamp)),
+			BlockTimestamp: time.UnixMilli(int64(block.Timestamp)),
 			Events:         events,
 		})
 	}
@@ -1306,10 +1306,8 @@ func (b *Blockchain) ExecuteNextTransaction() (*types.TransactionResult, error) 
 
 	block := b.pendingBlock.Block()
 
-	header, _ := flowgo.NewHeader(flowgo.UntrustedHeader{
-		HeaderBody: block.HeaderBody,
-	})
-	blockContext := b.setFVMContextFromHeader(header)
+	// Use a trusted header derived from the block to avoid nil header cases
+	blockContext := b.setFVMContextFromHeader(block.ToHeader())
 	return b.executeNextTransaction(blockContext)
 }
 
@@ -1959,4 +1957,24 @@ func (b *Blockchain) GetRegisterValues(registerIDs flowgo.RegisterIDs, height ui
 		values = append(values, value)
 	}
 	return values, nil
+}
+
+// Helper (TODO: @jribbink delete later)
+func Genesis(chainID flow.ChainID) *flow.Block {
+	// create the headerBody
+	headerBody := flow.HeaderBody{
+		ChainID:   chainID,
+		ParentID:  flow.ZeroID,
+		Height:    0,
+		Timestamp: uint64(flow.GenesisTime.UnixMilli()),
+		View:      0,
+	}
+
+	// combine to block
+	block := &flow.Block{
+		HeaderBody: headerBody,
+		Payload:    *flow.NewEmptyPayload(),
+	}
+
+	return block
 }

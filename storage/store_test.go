@@ -51,14 +51,16 @@ func TestBlocks(t *testing.T) {
 
 	block1 := &flowgo.Block{
 		HeaderBody: flowgo.HeaderBody{
-			Height:  1,
-			ChainID: flow.Emulator,
+			Height:    1,
+			ChainID:   flow.Emulator,
+			Timestamp: uint64(flow.GenesisTime.UnixMilli()),
 		},
 	}
 	block2 := &flowgo.Block{
 		HeaderBody: flowgo.HeaderBody{
-			Height:  2,
-			ChainID: flow.Emulator,
+			Height:    2,
+			ChainID:   flow.Emulator,
+			Timestamp: uint64(flow.GenesisTime.UnixMilli()),
 		},
 	}
 
@@ -153,7 +155,7 @@ func TestCollections(t *testing.T) {
 		t.Run("should be able to get inserted collection", func(t *testing.T) {
 			storedCol, err := store.CollectionByID(context.Background(), col.ID())
 			require.NoError(t, err)
-			assert.Equal(t, col.Light(), storedCol)
+			assert.Equal(t, *col.Light(), storedCol)
 		})
 	})
 }

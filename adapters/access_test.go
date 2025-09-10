@@ -758,7 +758,9 @@ func ccfEventFixture(t *testing.T) flowgo.Event {
 	require.NoError(t, err)
 
 	return flowgo.Event{
-		Payload: ccfEvent,
+		Type:          "SomeEvent",
+		TransactionID: flowgo.Identifier{1},
+		Payload:       ccfEvent,
 	}
 }
 

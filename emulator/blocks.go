@@ -92,7 +92,5 @@ func (b *blocks) ByHeightFrom(height uint64, header *flowgo.Header) (*flowgo.Hea
 		return nil, err
 	}
 
-	b.blockchain.ExecuteAndCommitBlock()
-
 	return block.ToHeader(), nil
 }

@@ -90,7 +90,7 @@ func (b *SDKAdapter) GetLatestBlockHeader(
 		ID:        sdk.Identifier(block.ID()),
 		ParentID:  sdk.Identifier(block.ParentID),
 		Height:    block.Height,
-		Timestamp: time.Unix(0, int64(block.Timestamp)),
+		Timestamp: time.UnixMilli(int64(block.Timestamp)).UTC(),
 	}
 	return &blockHeader, sdk.BlockStatusSealed, nil
 }
@@ -112,7 +112,7 @@ func (b *SDKAdapter) GetBlockHeaderByHeight(
 		ID:        sdk.Identifier(block.ID()),
 		ParentID:  sdk.Identifier(block.ParentID),
 		Height:    block.Height,
-		Timestamp: time.Unix(0, int64(block.Timestamp)),
+		Timestamp: time.UnixMilli(int64(block.Timestamp)).UTC(),
 	}
 	return &blockHeader, sdk.BlockStatusSealed, nil
 }
@@ -134,7 +134,7 @@ func (b *SDKAdapter) GetBlockHeaderByID(
 		ID:        sdk.Identifier(block.ID()),
 		ParentID:  sdk.Identifier(block.ParentID),
 		Height:    block.Height,
-		Timestamp: time.Unix(0, int64(block.Timestamp)),
+		Timestamp: time.UnixMilli(int64(block.Timestamp)).UTC(),
 	}
 	return &blockHeader, sdk.BlockStatusSealed, nil
 }
@@ -157,7 +157,7 @@ func (b *SDKAdapter) GetLatestBlock(
 			ID:        sdk.Identifier(flowBlock.ID()),
 			ParentID:  sdk.Identifier(flowBlock.ParentID),
 			Height:    flowBlock.Height,
-			Timestamp: time.Unix(0, int64(flowBlock.Timestamp)),
+			Timestamp: time.UnixMilli(int64(flowBlock.Timestamp)).UTC(),
 		},
 		BlockPayload: convertBlockPayload(&flowBlock.Payload),
 	}
@@ -182,7 +182,7 @@ func (b *SDKAdapter) GetBlockByHeight(
 			ID:        sdk.Identifier(flowBlock.ID()),
 			ParentID:  sdk.Identifier(flowBlock.ParentID),
 			Height:    flowBlock.Height,
-			Timestamp: time.Unix(0, int64(flowBlock.Timestamp)),
+			Timestamp: time.UnixMilli(int64(flowBlock.Timestamp)).UTC(),
 		},
 		BlockPayload: convertBlockPayload(&flowBlock.Payload),
 	}
@@ -207,7 +207,7 @@ func (b *SDKAdapter) GetBlockByID(
 			ID:        sdk.Identifier(flowBlock.ID()),
 			ParentID:  sdk.Identifier(flowBlock.ParentID),
 			Height:    flowBlock.Height,
-			Timestamp: time.Unix(0, int64(flowBlock.Timestamp)),
+			Timestamp: time.UnixMilli(int64(flowBlock.Timestamp)).UTC(),
 		},
 		BlockPayload: convertBlockPayload(&flowBlock.Payload),
 	}

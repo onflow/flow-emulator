@@ -34,7 +34,6 @@ import (
 	"github.com/onflow/flow-go/ledger/complete/wal"
 	"github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module/metrics"
-	"github.com/onflow/flow-go/utils/unittest"
 
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/memstore"
@@ -72,7 +71,7 @@ func New(
 	}
 
 	// pretend this state was the genesis state
-	genesis := unittest.Block.Genesis(chainID)
+	genesis := Genesis(chainID)
 	err = store.CommitBlock(
 		context.Background(),
 		*genesis,
@@ -171,3 +170,23 @@ func loadSnapshotFromCheckpoint(
 }
 
 var _ storage.Store = &Store{}
+
+// Helper (TODO: @jribbink delete later)
+func Genesis(chainID flow.ChainID) *flow.Block {
+	// create the headerBody
+	headerBody := flow.HeaderBody{
+		ChainID:   chainID,
+		ParentID:  flow.ZeroID,
+		Height:    0,
+		Timestamp: uint64(flow.GenesisTime.UnixMilli()),
+		View:      0,
+	}
+
+	// combine to block
+	block := &flow.Block{
+		HeaderBody: headerBody,
+		Payload:    *flow.NewEmptyPayload(),
+	}
+
+	return block
+}

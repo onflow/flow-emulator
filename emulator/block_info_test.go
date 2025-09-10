@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/rs/zerolog"
 
@@ -84,7 +85,7 @@ func TestBlockInfo(t *testing.T) {
 		assert.Equal(t, fmt.Sprintf("Block(height: %v, view: %v, id: 0x%x, timestamp: %.8f)", block2.Height+1,
 			b.PendingBlockView(), b.PendingBlockID(), float64(b.PendingBlockTimestamp().Unix())), result.Logs[0])
 		assert.Equal(t, fmt.Sprintf("Block(height: %v, view: %v, id: 0x%x, timestamp: %.8f)", block2.Height,
-			block2.View, block2.ID(), float64(block2.Timestamp)), result.Logs[1])
+			block2.View, block2.ID(), float64(time.UnixMilli(int64(block2.Timestamp)).Unix())), result.Logs[1])
 	})
 
 	t.Run("works as script", func(t *testing.T) {
@@ -105,8 +106,8 @@ func TestBlockInfo(t *testing.T) {
 
 		require.Len(t, result.Logs, 2)
 		assert.Equal(t, fmt.Sprintf("Block(height: %v, view: %v, id: 0x%x, timestamp: %.8f)", block2.Height,
-			block2.View, block2.ID(), float64(block2.Timestamp)), result.Logs[0])
+			block2.View, block2.ID(), float64(time.UnixMilli(int64(block2.Timestamp)).Unix())), result.Logs[0])
 		assert.Equal(t, fmt.Sprintf("Block(height: %v, view: %v, id: 0x%x, timestamp: %.8f)", block1.Height,
-			block1.View, block1.ID(), float64(block1.Timestamp)), result.Logs[1])
+			block1.View, block1.ID(), float64(time.UnixMilli(int64(block1.Timestamp)).Unix())), result.Logs[1])
 	})
 }

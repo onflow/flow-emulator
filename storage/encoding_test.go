@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/onflow/flow-go-sdk/test"
+	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow/protobuf/go/flow/entities"
 	"github.com/stretchr/testify/assert"
@@ -81,10 +82,17 @@ func TestEncodeBlock(t *testing.T) {
 
 	block, err := flowgo.NewBlock(flowgo.UntrustedBlock{
 		HeaderBody: flowgo.HeaderBody{
-			Height:   1234,
-			ParentID: flowgo.Identifier(ids.New()),
+			Height:             1234,
+			ParentID:           flowgo.Identifier(ids.New()),
+			ChainID:            flowgo.Emulator,
+			Timestamp:          uint64(flow.GenesisTime.UnixMilli()),
+			View:               1,
+			ParentVoterIndices: []uint8{0},
+			ParentVoterSigData: []byte{0},
+			ProposerID:         flowgo.Identifier(ids.New()),
 		},
 		Payload: flowgo.Payload{
+			ProtocolStateID: flowgo.Identifier(ids.New()),
 			Guarantees: []*flowgo.CollectionGuarantee{
 				{
 					CollectionID: flowgo.Identifier(ids.New()),
@@ -106,11 +114,11 @@ func TestEncodeBlock(t *testing.T) {
 	assert.Equal(t, block.Payload, decodedBlock.Payload)
 }
 
-/*func TestEncodeGenesisBlock(t *testing.T) {
+func TestEncodeGenesisBlock(t *testing.T) {
 
 	t.Parallel()
 
-	block := flowgo.Genesis(flowgo.Emulator)
+	block := Genesis(flowgo.Emulator)
 
 	data, err := encodeBlock(*block)
 	require.Nil(t, err)
@@ -120,9 +128,9 @@ func TestEncodeBlock(t *testing.T) {
 	require.Nil(t, err)
 
 	assert.Equal(t, block.ID(), decodedBlock.ID())
-	assert.Equal(t, *block.Header, *decodedBlock.Header)
-	assert.Equal(t, *block.Payload, *decodedBlock.Payload)
-}*/
+	assert.Equal(t, *block.ToHeader(), *decodedBlock.ToHeader())
+	assert.Equal(t, *&block.Payload, *&decodedBlock.Payload)
+}
 
 func TestEncodeEvents(t *testing.T) {
 
@@ -153,4 +161,24 @@ func TestEncodeEvents(t *testing.T) {
 
 	test(entities.EventEncodingVersion_CCF_V0)
 	test(entities.EventEncodingVersion_JSON_CDC_V0)
+}
+
+// Helper (TODO: @jribbink delete later)
+func Genesis(chainID flow.ChainID) *flow.Block {
+	// create the headerBody
+	headerBody := flow.HeaderBody{
+		ChainID:   chainID,
+		ParentID:  flow.ZeroID,
+		Height:    0,
+		Timestamp: uint64(flow.GenesisTime.UnixMilli()),
+		View:      0,
+	}
+
+	// combine to block
+	block := &flow.Block{
+		HeaderBody: headerBody,
+		Payload:    *flow.NewEmptyPayload(),
+	}
+
+	return block
 }

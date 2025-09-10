@@ -104,7 +104,7 @@ func TestCollections(t *testing.T) {
 
 		i := 0
 		for _, guarantee := range block.Payload.Guarantees {
-			collection, err := adapter.GetCollectionByID(context.Background(), convert.FlowIdentifierToSDK(guarantee.ID()))
+			collection, err := adapter.GetCollectionByID(context.Background(), convert.FlowIdentifierToSDK(guarantee.CollectionID))
 			require.NoError(t, err)
 
 			for _, txID := range collection.TransactionIDs {
