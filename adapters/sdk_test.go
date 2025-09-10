@@ -231,8 +231,8 @@ func TestSDK(t *testing.T) {
 				},
 				Seals: []*flowsdk.BlockSeal{
 					{
-						BlockID:            flowsdk.HexToID("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
-						ExecutionReceiptID: flowsdk.HexToID("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
+						BlockID:  flowsdk.HexToID("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
+						ResultId: flowsdk.HexToID("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
 					},
 				},
 			},
@@ -299,8 +299,8 @@ func TestSDK(t *testing.T) {
 				},
 				Seals: []*flowsdk.BlockSeal{
 					{
-						BlockID:            flowsdk.HexToID("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
-						ExecutionReceiptID: flowsdk.HexToID("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
+						BlockID:  flowsdk.HexToID("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
+						ResultId: flowsdk.HexToID("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
 					},
 				},
 			},
@@ -368,8 +368,8 @@ func TestSDK(t *testing.T) {
 				},
 				Seals: []*flowsdk.BlockSeal{
 					{
-						BlockID:            flowsdk.HexToID("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
-						ExecutionReceiptID: flowsdk.HexToID("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
+						BlockID:  flowsdk.HexToID("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
+						ResultId: flowsdk.HexToID("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
 					},
 				},
 			},
