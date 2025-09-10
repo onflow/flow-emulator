@@ -222,7 +222,7 @@ func convertBlockPayload(payload *flowgo.Payload) flowsdk.BlockPayload {
 		for _, seal := range payload.Seals {
 			seals = append(seals, &flowsdk.BlockSeal{
 				BlockID:            flowsdk.Identifier(seal.BlockID),
-				ExecutionReceiptID: flowsdk.Identifier(seal.ResultID),
+				ResultId: flowsdk.Identifier(seal.ResultID),
 			})
 		}
 	}
