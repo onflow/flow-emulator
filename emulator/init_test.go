@@ -52,7 +52,9 @@ func TestInitialization(t *testing.T) {
 		require.Nil(t, err)
 		store, err := sqlite.New(file.Name())
 		require.Nil(t, err)
-		defer store.Close()
+		defer func() {
+			_ = store.Close()
+		}()
 
 		b, _ := emulator.New(emulator.WithStore(store))
 		logger := zerolog.Nop()
@@ -83,7 +85,9 @@ func TestInitialization(t *testing.T) {
 		require.Nil(t, err)
 		store, err := sqlite.New(file.Name())
 		require.Nil(t, err)
-		defer store.Close()
+		defer func() {
+			_ = store.Close()
+		}()
 
 		b, _ := emulator.New(emulator.WithStore(store), emulator.WithStorageLimitEnabled(false))
 		logger := zerolog.Nop()

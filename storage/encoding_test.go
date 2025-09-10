@@ -128,7 +128,7 @@ func TestEncodeGenesisBlock(t *testing.T) {
 
 	assert.Equal(t, block.ID(), decodedBlock.ID())
 	assert.Equal(t, *block.ToHeader(), *decodedBlock.ToHeader())
-	assert.Equal(t, *&block.Payload, *&decodedBlock.Payload)
+	assert.Equal(t, block.Payload, decodedBlock.Payload)
 }
 
 func TestEncodeEvents(t *testing.T) {

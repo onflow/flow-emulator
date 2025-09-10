@@ -299,11 +299,12 @@ func (s *Store) SetBytesWithVersion(_ context.Context, store string, key []byte,
 	return nil
 }
 
-func (s *Store) GetBytesAtVersion(_ context.Context, store string, key []byte, version uint64) ([]byte, error) {
+func (s *Store) GetBytesAtVersion(_ context.Context, store string, key []byte, version uint64) (res []byte, err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	rows, err := s.db.Query(
+	var rows *sql.Rows
+	rows, err = s.db.Query(
 		fmt.Sprintf(
 			"SELECT value from %s WHERE key = ? and version <= ? order by version desc LIMIT 1",
 			store,
@@ -314,7 +315,9 @@ func (s *Store) GetBytesAtVersion(_ context.Context, store string, key []byte, v
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		err = rows.Close()
+	}()
 
 	for rows.Next() {
 		var value string

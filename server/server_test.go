@@ -33,8 +33,10 @@ func TestNoPersistence(t *testing.T) {
 
 	dbPath := "test_no_persistence"
 
-	os.RemoveAll(dbPath)
-	defer os.RemoveAll(dbPath)
+	_ = os.RemoveAll(dbPath)
+	defer func() {
+		_ = os.RemoveAll(dbPath)
+	}()
 
 	conf := &Config{DBPath: dbPath}
 	server := NewEmulatorServer(&logger, conf)
@@ -50,8 +52,10 @@ func TestPersistenceWithPersistFlag(t *testing.T) {
 
 	dbPath := "test_persistence"
 
-	os.RemoveAll(dbPath)
-	defer os.RemoveAll(dbPath)
+	_ = os.RemoveAll(dbPath)
+	defer func() {
+		_ = os.RemoveAll(dbPath)
+	}()
 
 	conf := &Config{Persist: true, DBPath: dbPath}
 	server := NewEmulatorServer(&logger, conf)
@@ -67,8 +71,10 @@ func TestPersistenceWithSnapshotFlag(t *testing.T) {
 
 	dbPath := "test_persistence_with_snapshot"
 
-	os.RemoveAll(dbPath)
-	defer os.RemoveAll(dbPath)
+	_ = os.RemoveAll(dbPath)
+	defer func() {
+		_ = os.RemoveAll(dbPath)
+	}()
 
 	conf := &Config{Snapshot: true, DBPath: dbPath}
 	server := NewEmulatorServer(&logger, conf)

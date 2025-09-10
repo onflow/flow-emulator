@@ -26,8 +26,9 @@ import (
 	"sync"
 
 	"github.com/google/go-dap"
-	"github.com/onflow/flow-emulator/emulator"
 	"github.com/rs/zerolog"
+
+	"github.com/onflow/flow-emulator/emulator"
 )
 
 type Debugger struct {
@@ -50,14 +51,17 @@ func New(logger *zerolog.Logger, emulator emulator.Emulator, port int) *Debugger
 	}
 }
 
-func (d *Debugger) Start() error {
+func (d *Debugger) Start() (err error) {
 
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", d.port))
+	var listener net.Listener
+	listener, err = net.Listen("tcp", fmt.Sprintf(":%d", d.port))
 	if err != nil {
 		return err
 	}
 	d.listener = listener
-	defer listener.Close()
+	defer func() {
+		err = listener.Close()
+	}()
 
 	d.wg.Add(1)
 	go d.serve()
@@ -109,7 +113,7 @@ func (d *Debugger) handleConnection(conn net.Conn) {
 			}
 			if opError {
 				close(session.sendQueue)
-				conn.Close()
+				_ = conn.Close()
 				return
 			}
 			d.logger.Fatal().Err(err).Msg("Debug Server error")
@@ -117,17 +121,17 @@ func (d *Debugger) handleConnection(conn net.Conn) {
 	}
 	session.sendWg.Wait()
 	close(session.sendQueue)
-	conn.Close()
+	_ = conn.Close()
 }
 
 func (d *Debugger) Stop() {
 	d.stopOnce.Do(func() {
 		close(d.quit)
 		if d.listener != nil {
-			d.listener.Close()
+			_ = d.listener.Close()
 		}
 		for _, conn := range d.connections {
-			conn.Close()
+			_ = conn.Close()
 		}
 	})
 }
