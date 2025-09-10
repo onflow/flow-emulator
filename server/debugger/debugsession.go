@@ -39,7 +39,7 @@ import (
 	"github.com/onflow/cadence/common"
 	"github.com/onflow/cadence/interpreter"
 	"github.com/onflow/cadence/runtime"
-	sdk "github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 )
 
 type ScopeIdentifier uint
@@ -246,7 +246,7 @@ func (s *session) handleVariablesRequest(request *dap.VariablesRequest) {
 		valueRequested := s.variables[variableRequested]
 		switch value := valueRequested.(type) {
 
-		case *sdk.Account:
+		case *flowsdk.Account:
 			storage := inter.SharedState.Config.Storage.GetDomainStorageMap(
 				inter,
 				common.Address(value.Address),
@@ -481,7 +481,7 @@ func (s *session) handleLaunchRequest(request *dap.LaunchRequest) {
 	stopOnEntryArg := args["stopOnEntry"]
 	s.stopOnEntry, _ = stopOnEntryArg.(bool)
 
-	scriptID := sdk.Identifier(flowgo.MakeIDFromFingerPrint([]byte(s.code)))
+	scriptID := flowsdk.Identifier(flowgo.MakeIDFromFingerPrint([]byte(s.code)))
 
 	s.scriptID = hex.EncodeToString(scriptID[:])
 	s.scriptLocation = common.StringLocation(programArg.(string))

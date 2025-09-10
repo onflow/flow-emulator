@@ -29,7 +29,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/onflow/cadence"
-	flowgosdk "github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	accessmodel "github.com/onflow/flow-go/model/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
@@ -73,9 +73,9 @@ func TestSDK(t *testing.T) {
 			},
 		}
 
-		block := flowgosdk.Block{
-			BlockHeader: flowgosdk.BlockHeader{
-				ID:        flowgosdk.Identifier{0xef, 0x7a, 0x85, 0xb0, 0xe1, 0xa9, 0x5b, 0xb5, 0xd2, 0x86, 0xe8, 0x9a, 0x55, 0x30, 0x7a, 0x95, 0x64, 0x1d, 0x8, 0x89, 0x53, 0x74, 0xa2, 0x2d, 0x0, 0xc7, 0xe2, 0xee, 0x1f, 0x85, 0x9, 0x7},
+		block := flowsdk.Block{
+			BlockHeader: flowsdk.BlockHeader{
+				ID:        flowsdk.Identifier{0xef, 0x7a, 0x85, 0xb0, 0xe1, 0xa9, 0x5b, 0xb5, 0xd2, 0x86, 0xe8, 0x9a, 0x55, 0x30, 0x7a, 0x95, 0x64, 0x1d, 0x8, 0x89, 0x53, 0x74, 0xa2, 0x2d, 0x0, 0xc7, 0xe2, 0xee, 0x1f, 0x85, 0x9, 0x7},
 				Height:    42,
 				Timestamp: timestamp,
 			},
@@ -91,7 +91,7 @@ func TestSDK(t *testing.T) {
 		// check all values match except timestamp (explicitly  not checked in assert)
 		assert.Equal(t, &block.BlockHeader, result)
 		assert.Equal(t, block.Timestamp.Equal(result.Timestamp), true)
-		assert.Equal(t, flowgosdk.BlockStatusSealed, blockStatus)
+		assert.Equal(t, flowsdk.BlockStatusSealed, blockStatus)
 		assert.NoError(t, err)
 
 		//fail
@@ -102,7 +102,7 @@ func TestSDK(t *testing.T) {
 
 		result, blockStatus, err = adapter.GetLatestBlockHeader(context.Background(), true)
 		assert.Nil(t, result)
-		assert.Equal(t, flowgosdk.BlockStatusUnknown, blockStatus)
+		assert.Equal(t, flowsdk.BlockStatusUnknown, blockStatus)
 		assert.Error(t, err)
 
 	}))
@@ -118,9 +118,9 @@ func TestSDK(t *testing.T) {
 			},
 		}
 
-		block := flowgosdk.Block{
-			BlockHeader: flowgosdk.BlockHeader{
-				ID:        flowgosdk.Identifier{0xef, 0x7a, 0x85, 0xb0, 0xe1, 0xa9, 0x5b, 0xb5, 0xd2, 0x86, 0xe8, 0x9a, 0x55, 0x30, 0x7a, 0x95, 0x64, 0x1d, 0x8, 0x89, 0x53, 0x74, 0xa2, 0x2d, 0x0, 0xc7, 0xe2, 0xee, 0x1f, 0x85, 0x9, 0x7},
+		block := flowsdk.Block{
+			BlockHeader: flowsdk.BlockHeader{
+				ID:        flowsdk.Identifier{0xef, 0x7a, 0x85, 0xb0, 0xe1, 0xa9, 0x5b, 0xb5, 0xd2, 0x86, 0xe8, 0x9a, 0x55, 0x30, 0x7a, 0x95, 0x64, 0x1d, 0x8, 0x89, 0x53, 0x74, 0xa2, 0x2d, 0x0, 0xc7, 0xe2, 0xee, 0x1f, 0x85, 0x9, 0x7},
 				Height:    42,
 				Timestamp: timestamp,
 			},
@@ -134,7 +134,7 @@ func TestSDK(t *testing.T) {
 
 		result, blockStatus, err := adapter.GetBlockHeaderByHeight(context.Background(), 42)
 		assert.Equal(t, &block.BlockHeader, result)
-		assert.Equal(t, flowgosdk.BlockStatusSealed, blockStatus)
+		assert.Equal(t, flowsdk.BlockStatusSealed, blockStatus)
 		assert.NoError(t, err)
 
 		//fail
@@ -145,7 +145,7 @@ func TestSDK(t *testing.T) {
 
 		result, blockStatus, err = adapter.GetBlockHeaderByHeight(context.Background(), 42)
 		assert.Nil(t, result)
-		assert.Equal(t, flowgosdk.BlockStatusUnknown, blockStatus)
+		assert.Equal(t, flowsdk.BlockStatusUnknown, blockStatus)
 		assert.Error(t, err)
 
 	}))
@@ -153,7 +153,7 @@ func TestSDK(t *testing.T) {
 	t.Run("GetBlockHeaderByID", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
 		timestamp := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-		id := flowgosdk.Identifier{}
+		id := flowsdk.Identifier{}
 		flowBlock := &flowgo.Block{
 			HeaderBody: flowgo.HeaderBody{
 				Height:    42,
@@ -162,9 +162,9 @@ func TestSDK(t *testing.T) {
 			},
 		}
 
-		block := flowgosdk.Block{
-			BlockHeader: flowgosdk.BlockHeader{
-				ID:        flowgosdk.Identifier{0xef, 0x7a, 0x85, 0xb0, 0xe1, 0xa9, 0x5b, 0xb5, 0xd2, 0x86, 0xe8, 0x9a, 0x55, 0x30, 0x7a, 0x95, 0x64, 0x1d, 0x8, 0x89, 0x53, 0x74, 0xa2, 0x2d, 0x0, 0xc7, 0xe2, 0xee, 0x1f, 0x85, 0x9, 0x7},
+		block := flowsdk.Block{
+			BlockHeader: flowsdk.BlockHeader{
+				ID:        flowsdk.Identifier{0xef, 0x7a, 0x85, 0xb0, 0xe1, 0xa9, 0x5b, 0xb5, 0xd2, 0x86, 0xe8, 0x9a, 0x55, 0x30, 0x7a, 0x95, 0x64, 0x1d, 0x8, 0x89, 0x53, 0x74, 0xa2, 0x2d, 0x0, 0xc7, 0xe2, 0xee, 0x1f, 0x85, 0x9, 0x7},
 				Height:    42,
 				Timestamp: timestamp,
 			},
@@ -178,7 +178,7 @@ func TestSDK(t *testing.T) {
 
 		result, blockStatus, err := adapter.GetBlockHeaderByID(context.Background(), id)
 		assert.Equal(t, &block.BlockHeader, result)
-		assert.Equal(t, flowgosdk.BlockStatusSealed, blockStatus)
+		assert.Equal(t, flowsdk.BlockStatusSealed, blockStatus)
 		assert.NoError(t, err)
 
 		//fail
@@ -189,7 +189,7 @@ func TestSDK(t *testing.T) {
 
 		result, blockStatus, err = adapter.GetBlockHeaderByID(context.Background(), id)
 		assert.Nil(t, result)
-		assert.Equal(t, flowgosdk.BlockStatusUnknown, blockStatus)
+		assert.Equal(t, flowsdk.BlockStatusUnknown, blockStatus)
 		assert.Error(t, err)
 
 	}))
@@ -217,22 +217,22 @@ func TestSDK(t *testing.T) {
 			},
 		}
 
-		block := flowgosdk.Block{
-			BlockHeader: flowgosdk.BlockHeader{
-				ID:        flowgosdk.Identifier{0xc7, 0xd7, 0x53, 0x11, 0xee, 0x39, 0x6b, 0x54, 0x1a, 0x0c, 0x2e, 0x55, 0xcf, 0x80, 0xab, 0xce, 0x09, 0x2d, 0x86, 0x11, 0xb7, 0xce, 0xa4, 0xc9, 0x79, 0x13, 0x7e, 0x73, 0x1f, 0x52, 0x3b, 0x1a},
+		block := flowsdk.Block{
+			BlockHeader: flowsdk.BlockHeader{
+				ID:        flowsdk.Identifier{0xc7, 0xd7, 0x53, 0x11, 0xee, 0x39, 0x6b, 0x54, 0x1a, 0x0c, 0x2e, 0x55, 0xcf, 0x80, 0xab, 0xce, 0x09, 0x2d, 0x86, 0x11, 0xb7, 0xce, 0xa4, 0xc9, 0x79, 0x13, 0x7e, 0x73, 0x1f, 0x52, 0x3b, 0x1a},
 				Height:    42,
 				Timestamp: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
-			BlockPayload: flowgosdk.BlockPayload{
-				CollectionGuarantees: []*flowgosdk.CollectionGuarantee{
+			BlockPayload: flowsdk.BlockPayload{
+				CollectionGuarantees: []*flowsdk.CollectionGuarantee{
 					{
-						CollectionID: flowgosdk.HexToID("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
+						CollectionID: flowsdk.HexToID("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
 					},
 				},
-				Seals: []*flowgosdk.BlockSeal{
+				Seals: []*flowsdk.BlockSeal{
 					{
-						BlockID:            flowgosdk.HexToID("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
-						ExecutionReceiptID: flowgosdk.HexToID("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
+						BlockID:            flowsdk.HexToID("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
+						ExecutionReceiptID: flowsdk.HexToID("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
 					},
 				},
 			},
@@ -246,7 +246,7 @@ func TestSDK(t *testing.T) {
 
 		result, blockStatus, err := adapter.GetLatestBlock(context.Background(), true)
 		assert.Equal(t, &block, result)
-		assert.Equal(t, flowgosdk.BlockStatusSealed, blockStatus)
+		assert.Equal(t, flowsdk.BlockStatusSealed, blockStatus)
 		assert.NoError(t, err)
 
 		//fail
@@ -257,7 +257,7 @@ func TestSDK(t *testing.T) {
 
 		result, blockStatus, err = adapter.GetLatestBlock(context.Background(), true)
 		assert.Nil(t, result)
-		assert.Equal(t, flowgosdk.BlockStatusUnknown, blockStatus)
+		assert.Equal(t, flowsdk.BlockStatusUnknown, blockStatus)
 		assert.Error(t, err)
 
 	}))
@@ -285,22 +285,22 @@ func TestSDK(t *testing.T) {
 			},
 		}
 
-		block := flowgosdk.Block{
-			BlockHeader: flowgosdk.BlockHeader{
-				ID:        flowgosdk.Identifier{0xc7, 0xd7, 0x53, 0x11, 0xee, 0x39, 0x6b, 0x54, 0x1a, 0x0c, 0x2e, 0x55, 0xcf, 0x80, 0xab, 0xce, 0x09, 0x2d, 0x86, 0x11, 0xb7, 0xce, 0xa4, 0xc9, 0x79, 0x13, 0x7e, 0x73, 0x1f, 0x52, 0x3b, 0x1a},
+		block := flowsdk.Block{
+			BlockHeader: flowsdk.BlockHeader{
+				ID:        flowsdk.Identifier{0xc7, 0xd7, 0x53, 0x11, 0xee, 0x39, 0x6b, 0x54, 0x1a, 0x0c, 0x2e, 0x55, 0xcf, 0x80, 0xab, 0xce, 0x09, 0x2d, 0x86, 0x11, 0xb7, 0xce, 0xa4, 0xc9, 0x79, 0x13, 0x7e, 0x73, 0x1f, 0x52, 0x3b, 0x1a},
 				Height:    42,
 				Timestamp: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
-			BlockPayload: flowgosdk.BlockPayload{
-				CollectionGuarantees: []*flowgosdk.CollectionGuarantee{
+			BlockPayload: flowsdk.BlockPayload{
+				CollectionGuarantees: []*flowsdk.CollectionGuarantee{
 					{
-						CollectionID: flowgosdk.HexToID("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
+						CollectionID: flowsdk.HexToID("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
 					},
 				},
-				Seals: []*flowgosdk.BlockSeal{
+				Seals: []*flowsdk.BlockSeal{
 					{
-						BlockID:            flowgosdk.HexToID("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
-						ExecutionReceiptID: flowgosdk.HexToID("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
+						BlockID:            flowsdk.HexToID("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
+						ExecutionReceiptID: flowsdk.HexToID("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
 					},
 				},
 			},
@@ -314,7 +314,7 @@ func TestSDK(t *testing.T) {
 
 		result, blockStatus, err := adapter.GetBlockByHeight(context.Background(), 42)
 		assert.Equal(t, &block, result)
-		assert.Equal(t, flowgosdk.BlockStatusSealed, blockStatus)
+		assert.Equal(t, flowsdk.BlockStatusSealed, blockStatus)
 		assert.NoError(t, err)
 
 		//fail
@@ -325,14 +325,14 @@ func TestSDK(t *testing.T) {
 
 		result, blockStatus, err = adapter.GetBlockByHeight(context.Background(), 42)
 		assert.Nil(t, result)
-		assert.Equal(t, flowgosdk.BlockStatusUnknown, blockStatus)
+		assert.Equal(t, flowsdk.BlockStatusUnknown, blockStatus)
 		assert.Error(t, err)
 
 	}))
 
 	t.Run("GetBlockByID", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
-		id := flowgosdk.Identifier{}
+		id := flowsdk.Identifier{}
 		flowBlock := &flowgo.Block{
 			HeaderBody: flowgo.HeaderBody{
 				Height:    42,
@@ -354,22 +354,22 @@ func TestSDK(t *testing.T) {
 			},
 		}
 
-		block := flowgosdk.Block{
-			BlockHeader: flowgosdk.BlockHeader{
-				ID:        flowgosdk.Identifier{0xc7, 0xd7, 0x53, 0x11, 0xee, 0x39, 0x6b, 0x54, 0x1a, 0x0c, 0x2e, 0x55, 0xcf, 0x80, 0xab, 0xce, 0x09, 0x2d, 0x86, 0x11, 0xb7, 0xce, 0xa4, 0xc9, 0x79, 0x13, 0x7e, 0x73, 0x1f, 0x52, 0x3b, 0x1a},
+		block := flowsdk.Block{
+			BlockHeader: flowsdk.BlockHeader{
+				ID:        flowsdk.Identifier{0xc7, 0xd7, 0x53, 0x11, 0xee, 0x39, 0x6b, 0x54, 0x1a, 0x0c, 0x2e, 0x55, 0xcf, 0x80, 0xab, 0xce, 0x09, 0x2d, 0x86, 0x11, 0xb7, 0xce, 0xa4, 0xc9, 0x79, 0x13, 0x7e, 0x73, 0x1f, 0x52, 0x3b, 0x1a},
 				Height:    42,
 				Timestamp: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
-			BlockPayload: flowgosdk.BlockPayload{
-				CollectionGuarantees: []*flowgosdk.CollectionGuarantee{
+			BlockPayload: flowsdk.BlockPayload{
+				CollectionGuarantees: []*flowsdk.CollectionGuarantee{
 					{
-						CollectionID: flowgosdk.HexToID("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
+						CollectionID: flowsdk.HexToID("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
 					},
 				},
-				Seals: []*flowgosdk.BlockSeal{
+				Seals: []*flowsdk.BlockSeal{
 					{
-						BlockID:            flowgosdk.HexToID("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
-						ExecutionReceiptID: flowgosdk.HexToID("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
+						BlockID:            flowsdk.HexToID("890581b4ee0666d2a90b7e9212aaa37535f7bcec76f571c3402bc4bc58ee2918"),
+						ExecutionReceiptID: flowsdk.HexToID("a7990b0bab754a68844de3698bb2d2c7966acb9ef65fd5a3a5be53a93a764edf"),
 					},
 				},
 			},
@@ -383,7 +383,7 @@ func TestSDK(t *testing.T) {
 
 		result, blockStatus, err := adapter.GetBlockByID(context.Background(), id)
 		assert.Equal(t, &block, result)
-		assert.Equal(t, flowgosdk.BlockStatusSealed, blockStatus)
+		assert.Equal(t, flowsdk.BlockStatusSealed, blockStatus)
 		assert.NoError(t, err)
 
 		//fail
@@ -394,14 +394,14 @@ func TestSDK(t *testing.T) {
 
 		result, blockStatus, err = adapter.GetBlockByID(context.Background(), id)
 		assert.Nil(t, result)
-		assert.Equal(t, flowgosdk.BlockStatusUnknown, blockStatus)
+		assert.Equal(t, flowsdk.BlockStatusUnknown, blockStatus)
 		assert.Error(t, err)
 
 	}))
 
 	t.Run("GetCollectionByID", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
-		id := flowgosdk.Identifier{}
+		id := flowsdk.Identifier{}
 		flowCollection := flowgo.LightCollection{}
 		collection := convert.FlowLightCollectionToSDK(flowCollection)
 
@@ -429,7 +429,7 @@ func TestSDK(t *testing.T) {
 
 	t.Run("GetTransaction", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
-		id := flowgosdk.Identifier{}
+		id := flowsdk.Identifier{}
 		transaction := flowgo.TransactionBody{}
 		expected := convert.FlowTransactionToSDK(transaction)
 
@@ -457,10 +457,10 @@ func TestSDK(t *testing.T) {
 
 	t.Run("GetTransactionResult", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
-		txID := flowgosdk.Identifier{}
+		txID := flowsdk.Identifier{}
 
-		expected := flowgosdk.TransactionResult{
-			Events: []flowgosdk.Event{},
+		expected := flowsdk.TransactionResult{
+			Events: []flowsdk.Event{},
 		}
 		flowResult := accessmodel.TransactionResult{}
 
@@ -488,7 +488,7 @@ func TestSDK(t *testing.T) {
 
 	t.Run("GetAccount", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
-		address := flowgosdk.Address{}
+		address := flowsdk.Address{}
 		account := flowgo.Account{}
 
 		expected, err := convert.FlowAccountToSDK(account)
@@ -518,7 +518,7 @@ func TestSDK(t *testing.T) {
 
 	t.Run("GetAccountAtLatestBlock", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
-		address := flowgosdk.Address{}
+		address := flowsdk.Address{}
 		account := flowgo.Account{}
 
 		expected, err := convert.FlowAccountToSDK(account)
@@ -550,7 +550,7 @@ func TestSDK(t *testing.T) {
 
 		height := uint64(42)
 
-		address := flowgosdk.Address{}
+		address := flowsdk.Address{}
 		account := flowgo.Account{}
 
 		expected, err := convert.FlowAccountToSDK(account)
@@ -662,7 +662,7 @@ func TestSDK(t *testing.T) {
 		script := []byte("some cadence code here")
 		var arguments [][]byte
 
-		id := flowgosdk.Identifier{}
+		id := flowsdk.Identifier{}
 		stringValue, _ := cadence.NewString("42")
 		emulatorResult := types.ScriptResult{Value: stringValue}
 		expected, _ := convertScriptResult(&emulatorResult, nil)
@@ -711,7 +711,7 @@ func TestSDK(t *testing.T) {
 		startHeight := uint64(0)
 		endHeight := uint64(42)
 
-		expected := []*flowgosdk.BlockEvents{}
+		expected := []*flowsdk.BlockEvents{}
 		flowEvents := []flowgo.BlockEvents{}
 
 		//success
@@ -739,9 +739,9 @@ func TestSDK(t *testing.T) {
 	t.Run("GetEventsForBlockIDs", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
 		eventType := "testEvent"
-		blockIDs := []flowgosdk.Identifier{flowgosdk.Identifier{}}
+		blockIDs := []flowsdk.Identifier{flowsdk.Identifier{}}
 
-		expected := []*flowgosdk.BlockEvents{}
+		expected := []*flowsdk.BlockEvents{}
 		flowEvents := []flowgo.BlockEvents{}
 
 		//success
@@ -768,11 +768,11 @@ func TestSDK(t *testing.T) {
 
 	t.Run("GetTransactionsByBlockID", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
-		blockID := flowgosdk.Identifier{}
+		blockID := flowsdk.Identifier{}
 
 		flowTransactions := []*flowgo.TransactionBody{}
 
-		expected := []*flowgosdk.Transaction{}
+		expected := []*flowsdk.Transaction{}
 
 		//success
 		emu.EXPECT().
@@ -798,10 +798,10 @@ func TestSDK(t *testing.T) {
 
 	t.Run("GetTransactionResultsByBlockID", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
-		blockID := flowgosdk.Identifier{}
+		blockID := flowsdk.Identifier{}
 
 		flowTransactionResults := []*accessmodel.TransactionResult{}
-		expected := []*flowgosdk.TransactionResult{}
+		expected := []*flowsdk.TransactionResult{}
 
 		//success
 		emu.EXPECT().
@@ -827,7 +827,7 @@ func TestSDK(t *testing.T) {
 
 	t.Run("SendTransaction", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
-		transaction := flowgosdk.Transaction{}
+		transaction := flowsdk.Transaction{}
 		flowTransaction := convert.SDKTransactionToFlow(transaction)
 
 		//success

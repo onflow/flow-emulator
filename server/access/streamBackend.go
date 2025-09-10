@@ -30,7 +30,7 @@ import (
 	"github.com/onflow/flow-go/engine/access/subscription"
 	"github.com/onflow/flow-go/engine/common/rpc"
 	evmEvents "github.com/onflow/flow-go/fvm/evm/events"
-	"github.com/onflow/flow-go/model/flow"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module/executiondatasync/execution_data"
 	"github.com/onflow/flow-go/storage"
 	"github.com/onflow/flow-go/utils/logging"
@@ -70,7 +70,7 @@ var _ state_stream.API = &StateStreamBackend{}
 
 func (b *StateStreamBackend) newSubscriptionByBlockId(
 	ctx context.Context,
-	startBlockID flow.Identifier,
+	startBlockID flowgo.Identifier,
 	f subscription.GetDataByHeightFunc,
 ) subscription.Subscription {
 	block, err := b.blockchain.GetBlockByID(startBlockID)
@@ -107,7 +107,7 @@ func (b *StateStreamBackend) newSubscriptionByLatestHeight(
 
 func (b *StateStreamBackend) SubscribeEventsFromStartBlockID(
 	ctx context.Context,
-	startBlockID flow.Identifier,
+	startBlockID flowgo.Identifier,
 	filter state_stream.EventFilter,
 ) subscription.Subscription {
 	return b.newSubscriptionByBlockId(ctx, startBlockID, b.getEventsResponseFactory(filter))
@@ -130,7 +130,7 @@ func (b *StateStreamBackend) SubscribeEventsFromLatest(
 
 func (b *StateStreamBackend) SubscribeAccountStatusesFromStartBlockID(
 	ctx context.Context,
-	startBlockID flow.Identifier,
+	startBlockID flowgo.Identifier,
 	filter state_stream.AccountStatusFilter,
 ) subscription.Subscription {
 	return b.newSubscriptionByBlockId(ctx, startBlockID, b.getAccountStatusResponseFactory(filter))
@@ -152,7 +152,7 @@ func (b *StateStreamBackend) SubscribeAccountStatusesFromLatestBlock(
 }
 
 func getStartHeightFunc(blockchain *emulator.Blockchain) GetStartHeightFunc {
-	return func(blockID flow.Identifier, height uint64) (uint64, error) {
+	return func(blockID flowgo.Identifier, height uint64) (uint64, error) {
 		// try with start at blockID
 		block, err := blockchain.GetBlockByID(blockID)
 
@@ -202,9 +202,9 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 				return nil, err
 			}
 
-			collection := &flow.Collection{}
-			var events []flow.Event
-			var txResults []flow.LightTransactionResult
+			collection := &flowgo.Collection{}
+			var events []flowgo.Event
+			var txResults []flowgo.LightTransactionResult
 
 			for _, transactionId := range lightCollection.Transactions {
 				tx, err := blockchain.GetTransaction(transactionId)
@@ -219,7 +219,7 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 				}
 				events = append(events, txResult.Events...)
 
-				lightResult := flow.LightTransactionResult{
+				lightResult := flowgo.LightTransactionResult{
 					TransactionID: txResult.TransactionID,
 					Failed:        txResult.ErrorMessage != "",
 				}
@@ -265,14 +265,14 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 		}
 
 		result := execution_data.NewBlockExecutionDataEntity(
-			flow.ZeroID,
+			flowgo.ZeroID,
 			executionData,
 		)
 		return result, nil
 	}
 }
 
-func (b *StateStreamBackend) GetExecutionDataByBlockID(ctx context.Context, blockID flow.Identifier) (*execution_data.BlockExecutionData, error) {
+func (b *StateStreamBackend) GetExecutionDataByBlockID(ctx context.Context, blockID flowgo.Identifier) (*execution_data.BlockExecutionData, error) {
 	block, err := b.blockchain.GetBlockByID(blockID)
 	if err != nil {
 		return nil, fmt.Errorf("could not get block header for %s: %w", blockID, err)
@@ -292,7 +292,7 @@ func (b *StateStreamBackend) GetExecutionDataByBlockID(ctx context.Context, bloc
 	return executionData.BlockExecutionData, nil
 }
 
-func (b *StateStreamBackend) SubscribeExecutionData(ctx context.Context, startBlockID flow.Identifier, startHeight uint64) subscription.Subscription {
+func (b *StateStreamBackend) SubscribeExecutionData(ctx context.Context, startBlockID flowgo.Identifier, startHeight uint64) subscription.Subscription {
 	nextHeight, err := b.getStartHeight(startBlockID, startHeight)
 	if err != nil {
 		return subscription.NewFailedSubscription(err, "could not get start height")
@@ -305,7 +305,7 @@ func (b *StateStreamBackend) SubscribeExecutionData(ctx context.Context, startBl
 	return sub
 }
 
-func (b *StateStreamBackend) SubscribeExecutionDataFromStartBlockID(ctx context.Context, startBlockID flow.Identifier) subscription.Subscription {
+func (b *StateStreamBackend) SubscribeExecutionDataFromStartBlockID(ctx context.Context, startBlockID flowgo.Identifier) subscription.Subscription {
 	return b.newSubscriptionByBlockId(ctx, startBlockID, b.getExecutionDataResponse)
 }
 
@@ -331,9 +331,9 @@ func (b *StateStreamBackend) getExecutionDataResponse(ctx context.Context, heigh
 
 type GetExecutionDataFunc func(context.Context, uint64) (*execution_data.BlockExecutionDataEntity, error)
 
-type GetStartHeightFunc func(flow.Identifier, uint64) (uint64, error)
+type GetStartHeightFunc func(flowgo.Identifier, uint64) (uint64, error)
 
-func (b *StateStreamBackend) SubscribeEvents(ctx context.Context, startBlockID flow.Identifier, startHeight uint64, filter state_stream.EventFilter) subscription.Subscription {
+func (b *StateStreamBackend) SubscribeEvents(ctx context.Context, startBlockID flowgo.Identifier, startHeight uint64, filter state_stream.EventFilter) subscription.Subscription {
 	nextHeight, err := b.getStartHeight(startBlockID, startHeight)
 	if err != nil {
 		return subscription.NewFailedSubscription(err, "could not get start height")
@@ -353,7 +353,7 @@ func (b *StateStreamBackend) getEventsResponseFactory(filter state_stream.EventF
 			return nil, fmt.Errorf("could not get execution data for block %d: %w", height, err)
 		}
 
-		events := []flow.Event{}
+		events := []flowgo.Event{}
 		for _, chunkExecutionData := range executionData.ChunkExecutionDatas {
 			events = append(events, filter.Filter(chunkExecutionData.Events)...)
 		}
@@ -380,7 +380,7 @@ func (b *StateStreamBackend) getAccountStatusResponseFactory(
 			return nil, fmt.Errorf("could not get execution data for block %d: %w", height, err)
 		}
 
-		events := []flow.Event{}
+		events := []flowgo.Event{}
 		for _, chunkExecutionData := range executionData.ChunkExecutionDatas {
 			events = append(events, filter.Filter(chunkExecutionData.Events)...)
 		}
@@ -395,6 +395,6 @@ func (b *StateStreamBackend) getAccountStatusResponseFactory(
 	}
 }
 
-func (b *StateStreamBackend) GetRegisterValues(registerIDs flow.RegisterIDs, height uint64) ([]flow.RegisterValue, error) {
+func (b *StateStreamBackend) GetRegisterValues(registerIDs flowgo.RegisterIDs, height uint64) ([]flowgo.RegisterValue, error) {
 	return b.blockchain.GetRegisterValues(registerIDs, height)
 }

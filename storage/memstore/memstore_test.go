@@ -24,7 +24,6 @@ import (
 	"testing"
 
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
-	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,7 +34,7 @@ func TestMemstore(t *testing.T) {
 	t.Parallel()
 
 	const blockHeight = 0
-	key := flow.NewRegisterID(flowgo.EmptyAddress, "foo")
+	key := flowgo.NewRegisterID(flowgo.EmptyAddress, "foo")
 	value := []byte("bar")
 	store := New()
 
@@ -75,7 +74,7 @@ func TestMemstoreSetValueToNil(t *testing.T) {
 	t.Parallel()
 
 	store := New()
-	key := flow.NewRegisterID(flowgo.EmptyAddress, "foo")
+	key := flowgo.NewRegisterID(flowgo.EmptyAddress, "foo")
 	value := []byte("bar")
 	var nilByte []byte
 	nilValue := nilByte

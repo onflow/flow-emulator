@@ -59,7 +59,6 @@ import (
 	reusableRuntime "github.com/onflow/flow-go/fvm/runtime"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	accessmodel "github.com/onflow/flow-go/model/access"
-	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module/metrics"
 	"github.com/rs/zerolog"
@@ -1960,20 +1959,20 @@ func (b *Blockchain) GetRegisterValues(registerIDs flowgo.RegisterIDs, height ui
 }
 
 // Helper (TODO: @jribbink delete later)
-func Genesis(chainID flow.ChainID) *flow.Block {
+func Genesis(chainID flowgo.ChainID) *flowgo.Block {
 	// create the headerBody
-	headerBody := flow.HeaderBody{
+	headerBody := flowgo.HeaderBody{
 		ChainID:   chainID,
-		ParentID:  flow.ZeroID,
+		ParentID:  flowgo.ZeroID,
 		Height:    0,
-		Timestamp: uint64(flow.GenesisTime.UnixMilli()),
+		Timestamp: uint64(flowgo.GenesisTime.UnixMilli()),
 		View:      0,
 	}
 
 	// combine to block
-	block := &flow.Block{
+	block := &flowgo.Block{
 		HeaderBody: headerBody,
-		Payload:    *flow.NewEmptyPayload(),
+		Payload:    *flowgo.NewEmptyPayload(),
 	}
 
 	return block

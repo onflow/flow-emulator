@@ -27,7 +27,7 @@ import (
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/flow-core-contracts/lib/go/templates"
 	flowsdk "github.com/onflow/flow-go-sdk"
-	"github.com/onflow/flow-go/model/flow"
+	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
 const (
@@ -36,7 +36,7 @@ const (
 )
 
 // filterPendingExecutionEvents filters events to only include PendingExecution events
-func filterPendingExecutionEvents(events []flowsdk.Event, serviceAddress flow.Address) []flowsdk.Event {
+func filterPendingExecutionEvents(events []flowsdk.Event, serviceAddress flowgo.Address) []flowsdk.Event {
 	var filteredEvents []flowsdk.Event
 
 	contractLocation := common.AddressLocation{
@@ -58,16 +58,16 @@ func filterPendingExecutionEvents(events []flowsdk.Event, serviceAddress flow.Ad
 // issue: https://github.com/onflow/flow-emulator/issues/829
 
 func processCallbackTransaction(
-	serviceAddress flow.Address,
-	parentID flow.Identifier,
-) flow.TransactionBody {
+	serviceAddress flowgo.Address,
+	parentID flowgo.Identifier,
+) flowgo.TransactionBody {
 	env := templates.Environment{
 		FlowCallbackSchedulerAddress: serviceAddress.HexWithPrefix(),
 	}
 
 	script := templates.GenerateProcessCallbackScript(env)
 
-	txBuilder := flow.NewTransactionBodyBuilder().
+	txBuilder := flowgo.NewTransactionBodyBuilder().
 		SetScript(script).
 		SetComputeLimit(defaultTransactionMaxGasLimit).
 		SetPayer(serviceAddress).
@@ -84,10 +84,10 @@ func processCallbackTransaction(
 
 func executeCallbackTransactions(
 	pendingExecutionEvents []flowsdk.Event,
-	serviceAddress flow.Address,
-	parentID flow.Identifier,
-) ([]flow.TransactionBody, error) {
-	var transactions []flow.TransactionBody
+	serviceAddress flowgo.Address,
+	parentID flowgo.Identifier,
+) ([]flowgo.TransactionBody, error) {
+	var transactions []flowgo.TransactionBody
 	env := templates.Environment{
 		FlowCallbackSchedulerAddress: serviceAddress.HexWithPrefix(),
 	}
@@ -100,7 +100,7 @@ func executeCallbackTransactions(
 			return nil, err
 		}
 
-		txBuilder := flow.NewTransactionBodyBuilder().
+		txBuilder := flowgo.NewTransactionBodyBuilder().
 			SetScript(script).
 			AddArgument(id).
 			SetPayer(serviceAddress).
@@ -127,7 +127,7 @@ func executeCallbackTransactions(
 // - execution effort
 // - The address of the account that owns the callback
 // - error in case the event type is not correct
-func parseSchedulerPendingExecutionEvent(event flowsdk.Event, serviceAddress flow.Address) ([]byte, uint8, uint64, cadence.Address, error) {
+func parseSchedulerPendingExecutionEvent(event flowsdk.Event, serviceAddress flowgo.Address) ([]byte, uint8, uint64, cadence.Address, error) {
 	contractLocation := common.AddressLocation{
 		Address: common.Address(serviceAddress),
 		Name:    contractName,

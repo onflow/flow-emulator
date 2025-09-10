@@ -29,7 +29,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/atomic"
 
-	"github.com/onflow/flow-go-sdk"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
 	executionState "github.com/onflow/flow-go/engine/execution/state"
@@ -54,7 +53,7 @@ func Test_Checkpoint_Storage(t *testing.T) {
 
 	dir := t.TempDir()
 
-	chainID := flow.Emulator
+	chainID := flowsdk.Emulator
 	log := zerolog.New(zerolog.NewTestWriter(t))
 
 	stateHash := createCheckpoint(t, log, dir, chainID)
@@ -155,7 +154,7 @@ func Test_Checkpoint_Storage(t *testing.T) {
 	require.Equal(t, flowsdk.TransactionStatusSealed, tx1Result.Status)
 }
 
-func createCheckpoint(t *testing.T, log zerolog.Logger, dir string, chainID flow.ChainID) flowgo.StateCommitment {
+func createCheckpoint(t *testing.T, log zerolog.Logger, dir string, chainID flowsdk.ChainID) flowgo.StateCommitment {
 	const (
 		checkpointDistance = math.MaxInt // A large number to prevent checkpoint creation.
 		checkpointsToKeep  = 1

@@ -26,13 +26,13 @@ import (
 	"github.com/onflow/cadence/common"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	flowsdk "github.com/onflow/flow-go-sdk"
-	"github.com/onflow/flow-go/model/flow"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestParseSchedulerPendingExecutionEvent(t *testing.T) {
-	serviceAddress := flow.HexToAddress("0x01")
+	serviceAddress := flowgo.HexToAddress("0x01")
 	contractLocation := common.AddressLocation{
 		Address: common.Address(serviceAddress),
 		Name:    contractName,
@@ -54,9 +54,9 @@ func TestParseSchedulerPendingExecutionEvent(t *testing.T) {
 
 	tests := []struct {
 		name             string
-		event            flowsdk.Event
-		serviceAddress   flow.Address
-		expectedLimit    uint64
+		event          flowsdk.Event
+		serviceAddress flowgo.Address
+		expectedLimit  uint64
 		expectedID       []byte
 		expectedPriority uint8
 		expectedOwner    cadence.Address

@@ -21,13 +21,13 @@ package convert
 import (
 	"github.com/onflow/flow-go/fvm"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
-	"github.com/onflow/flow-go/model/flow"
+	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/onflow/flow-emulator/types"
 )
 
 func VMTransactionResultToEmulator(
-	txnId flow.Identifier,
+	txnId flowgo.Identifier,
 	output fvm.ProcedureOutput,
 ) (
 	*types.TransactionResult,
