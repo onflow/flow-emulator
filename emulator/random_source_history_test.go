@@ -78,7 +78,7 @@ func TestRandomSourceHistoryAtBlockHeight(t *testing.T) {
 	for {
 		block, err := b.GetLatestBlock()
 		require.NoError(t, err)
-		if block.Header.Height > 2 {
+		if block.Height > 2 {
 			break
 		}
 		_, err = b.CommitBlock()

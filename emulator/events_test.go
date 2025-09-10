@@ -140,7 +140,7 @@ func TestEventEmitted(t *testing.T) {
 		}
 		expectedType := location.TypeID(nil, "Test.MyEvent")
 
-		events, err := adapter.GetEventsForHeightRange(context.Background(), string(expectedType), block.Header.Height, block.Header.Height)
+		events, err := adapter.GetEventsForHeightRange(context.Background(), string(expectedType), block.Height, block.Height)
 		require.NoError(t, err)
 		require.Len(t, events, 1)
 
@@ -166,7 +166,7 @@ func TestEventEmitted(t *testing.T) {
 			context.Background(),
 			string(expectedType),
 			[]flowsdk.Identifier{
-				flowsdk.Identifier(block.Header.ID()),
+				flowsdk.Identifier(block.ID()),
 			},
 		)
 		require.NoError(t, err)

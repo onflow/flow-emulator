@@ -42,7 +42,7 @@ type internalCheck struct {
 // CheckIn adds a heartbeat at the current time.
 func (c *internalCheck) CheckIn() {
 	c.lock.Lock()
-	c.lastCheckIn = time.Now()
+	c.lastCheckIn = time.Now().UTC()
 	c.lock.Unlock()
 }
 
@@ -56,5 +56,5 @@ func (c *internalCheck) IsLive(tolerance time.Duration) bool {
 		tolerance = c.defaultTolerance
 	}
 
-	return c.lastCheckIn.Add(tolerance).After(time.Now())
+	return c.lastCheckIn.Add(tolerance).After(time.Now().UTC())
 }

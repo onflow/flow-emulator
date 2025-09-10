@@ -1,10 +1,9 @@
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable:
-    - govet
-    - gosimple
     - errcheck
-    - staticcheck
+    - govet
     - ineffassign
-    - typecheck
     - misspell
+    - staticcheck

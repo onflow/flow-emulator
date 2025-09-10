@@ -167,9 +167,9 @@ type DefaultStore struct {
 
 func (s *DefaultStore) SetBlockHeight(height uint64) error {
 	s.CurrentHeight = height
-	return s.DataSetter.SetBytes(
+	return s.SetBytes(
 		context.Background(),
-		s.KeyGenerator.Storage(globalStoreName),
+		s.Storage(globalStoreName),
 		s.KeyGenerator.LatestBlock(),
 		mustEncodeUint64(height),
 	)
@@ -182,9 +182,9 @@ func (s *DefaultStore) Start() error {
 func (s *DefaultStore) Stop() {}
 
 func (s *DefaultStore) LatestBlockHeight(ctx context.Context) (latestBlockHeight uint64, err error) {
-	latestBlockHeightEnc, err := s.DataGetter.GetBytes(
+	latestBlockHeightEnc, err := s.GetBytes(
 		ctx,
-		s.KeyGenerator.Storage(globalStoreName),
+		s.Storage(globalStoreName),
 		s.KeyGenerator.LatestBlock(),
 	)
 	if err != nil {
@@ -202,10 +202,10 @@ func (s *DefaultStore) LatestBlock(ctx context.Context) (block flowgo.Block, err
 		return
 	}
 
-	encBlock, err := s.DataGetter.GetBytes(
+	encBlock, err := s.GetBytes(
 		ctx,
 		BlockStoreName,
-		s.KeyGenerator.BlockHeight(latestBlockHeight),
+		s.BlockHeight(latestBlockHeight),
 	)
 	if err != nil {
 		return
@@ -216,7 +216,7 @@ func (s *DefaultStore) LatestBlock(ctx context.Context) (block flowgo.Block, err
 }
 
 func (s *DefaultStore) StoreBlock(ctx context.Context, block *flowgo.Block) error {
-	s.CurrentHeight = block.Header.Height
+	s.CurrentHeight = block.Height
 
 	encBlock, err := encodeBlock(*block)
 	if err != nil {
@@ -229,32 +229,32 @@ func (s *DefaultStore) StoreBlock(ctx context.Context, block *flowgo.Block) erro
 	}
 
 	// insert the block by block height
-	if err := s.DataSetter.SetBytes(
+	if err := s.SetBytes(
 		ctx,
-		s.KeyGenerator.Storage(BlockStoreName),
-		s.KeyGenerator.BlockHeight(block.Header.Height),
+		s.Storage(BlockStoreName),
+		s.BlockHeight(block.Height),
 		encBlock,
 	); err != nil {
 		return err
 	}
 
 	// add block ID to ID->height lookup
-	if err := s.DataSetter.SetBytes(
+	if err := s.SetBytes(
 		ctx,
-		s.KeyGenerator.Storage(BlockIndexStoreName),
-		s.KeyGenerator.Identifier(block.ID()),
-		mustEncodeUint64(block.Header.Height),
+		s.Storage(BlockIndexStoreName),
+		s.Identifier(block.ID()),
+		mustEncodeUint64(block.Height),
 	); err != nil {
 		return err
 	}
 
 	// if this is latest block, set latest block
-	if block.Header.Height >= latestBlockHeight {
-		return s.DataSetter.SetBytes(
+	if block.Height >= latestBlockHeight {
+		return s.SetBytes(
 			ctx,
-			s.KeyGenerator.Storage(globalStoreName),
+			s.Storage(globalStoreName),
 			s.KeyGenerator.LatestBlock(),
-			mustEncodeUint64(block.Header.Height),
+			mustEncodeUint64(block.Height),
 		)
 	}
 	return nil
@@ -263,7 +263,7 @@ func (s *DefaultStore) StoreBlock(ctx context.Context, block *flowgo.Block) erro
 // ForkedBlockHeight returns the height of the block at which the chain forked from a live network.
 // All blocks after this height were produced by the emulator.
 func (s *DefaultStore) ForkedBlockHeight(ctx context.Context) (forkedBlockHeight uint64, err error) {
-	forkedBlockHeightEnc, err := s.DataGetter.GetBytes(ctx, s.KeyGenerator.Storage(globalStoreName), s.KeyGenerator.ForkedBlock())
+	forkedBlockHeightEnc, err := s.GetBytes(ctx, s.Storage(globalStoreName), s.ForkedBlock())
 	if err != nil {
 		return
 	}
@@ -272,15 +272,15 @@ func (s *DefaultStore) ForkedBlockHeight(ctx context.Context) (forkedBlockHeight
 }
 
 func (s *DefaultStore) StoreForkedBlockHeight(ctx context.Context, height uint64) error {
-	return s.DataSetter.SetBytes(ctx, s.KeyGenerator.Storage(globalStoreName), s.KeyGenerator.ForkedBlock(), mustEncodeUint64(height))
+	return s.SetBytes(ctx, s.Storage(globalStoreName), s.ForkedBlock(), mustEncodeUint64(height))
 }
 
 func (s *DefaultStore) BlockByHeight(ctx context.Context, blockHeight uint64) (block *flowgo.Block, err error) {
 	// get block by block height and decode
-	encBlock, err := s.DataGetter.GetBytes(
+	encBlock, err := s.GetBytes(
 		ctx,
-		s.KeyGenerator.Storage(BlockStoreName),
-		s.KeyGenerator.BlockHeight(blockHeight),
+		s.Storage(BlockStoreName),
+		s.BlockHeight(blockHeight),
 	)
 	if err != nil {
 		return
@@ -291,10 +291,10 @@ func (s *DefaultStore) BlockByHeight(ctx context.Context, blockHeight uint64) (b
 }
 
 func (s *DefaultStore) BlockByID(ctx context.Context, blockID flowgo.Identifier) (block *flowgo.Block, err error) {
-	blockHeightEnc, err := s.DataGetter.GetBytes(
+	blockHeightEnc, err := s.GetBytes(
 		ctx,
-		s.KeyGenerator.Storage(BlockIndexStoreName),
-		s.KeyGenerator.Identifier(blockID),
+		s.Storage(BlockIndexStoreName),
+		s.Identifier(blockID),
 	)
 	if err != nil {
 		return
@@ -316,10 +316,10 @@ func (s *DefaultStore) CollectionByID(
 	col flowgo.LightCollection,
 	err error,
 ) {
-	encCol, err := s.DataGetter.GetBytes(
+	encCol, err := s.GetBytes(
 		ctx,
-		s.KeyGenerator.Storage(CollectionStoreName),
-		s.KeyGenerator.Identifier(colID),
+		s.Storage(CollectionStoreName),
+		s.Identifier(colID),
 	)
 	if err != nil {
 		return
@@ -338,10 +338,10 @@ func (s *DefaultStore) FullCollectionByID(
 	err error,
 ) {
 	light := flowgo.LightCollection{}
-	encCol, err := s.DataGetter.GetBytes(
+	encCol, err := s.GetBytes(
 		ctx,
-		s.KeyGenerator.Storage(CollectionStoreName),
-		s.KeyGenerator.Identifier(colID),
+		s.Storage(CollectionStoreName),
+		s.Identifier(colID),
 	)
 	if err != nil {
 		return
@@ -374,10 +374,10 @@ func (s *DefaultStore) InsertCollection(ctx context.Context, col flowgo.LightCol
 		return err
 	}
 
-	return s.DataSetter.SetBytes(
+	return s.SetBytes(
 		ctx,
-		s.KeyGenerator.Storage(CollectionStoreName),
-		s.KeyGenerator.Identifier(col.ID()),
+		s.Storage(CollectionStoreName),
+		s.Identifier(col.ID()),
 		encCol,
 	)
 }
@@ -389,10 +389,10 @@ func (s *DefaultStore) TransactionByID(
 	tx flowgo.TransactionBody,
 	err error,
 ) {
-	encTx, err := s.DataGetter.GetBytes(
+	encTx, err := s.GetBytes(
 		ctx,
-		s.KeyGenerator.Storage(TransactionStoreName),
-		s.KeyGenerator.Identifier(txID),
+		s.Storage(TransactionStoreName),
+		s.Identifier(txID),
 	)
 	if err != nil {
 		return
@@ -409,10 +409,10 @@ func (s *DefaultStore) InsertTransaction(ctx context.Context, tx flowgo.Transact
 		return err
 	}
 
-	return s.DataSetter.SetBytes(
+	return s.SetBytes(
 		ctx,
-		s.KeyGenerator.Storage(TransactionStoreName),
-		s.KeyGenerator.Identifier(tx.ID()),
+		s.Storage(TransactionStoreName),
+		s.Identifier(tx.ID()),
 		encTx,
 	)
 }
@@ -424,10 +424,10 @@ func (s *DefaultStore) TransactionResultByID(
 	result types.StorableTransactionResult,
 	err error,
 ) {
-	encResult, err := s.DataGetter.GetBytes(
+	encResult, err := s.GetBytes(
 		ctx,
-		s.KeyGenerator.Storage(TransactionResultStoreName),
-		s.KeyGenerator.Identifier(txID),
+		s.Storage(TransactionResultStoreName),
+		s.Identifier(txID),
 	)
 	if err != nil {
 		return
@@ -447,19 +447,19 @@ func (s *DefaultStore) InsertTransactionResult(
 	if err != nil {
 		return err
 	}
-	return s.DataSetter.SetBytes(
+	return s.SetBytes(
 		ctx,
-		s.KeyGenerator.Storage(TransactionResultStoreName),
-		s.KeyGenerator.Identifier(txID),
+		s.Storage(TransactionResultStoreName),
+		s.Identifier(txID),
 		encResult,
 	)
 }
 
 func (s *DefaultStore) EventsByHeight(ctx context.Context, blockHeight uint64, eventType string) (events []flowgo.Event, err error) {
-	eventsEnc, err := s.DataGetter.GetBytes(
+	eventsEnc, err := s.GetBytes(
 		ctx,
-		s.KeyGenerator.Storage(EventStoreName),
-		s.KeyGenerator.BlockHeight(blockHeight),
+		s.Storage(EventStoreName),
+		s.BlockHeight(blockHeight),
 	)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
@@ -488,9 +488,9 @@ func (s *DefaultStore) InsertEvents(ctx context.Context, blockHeight uint64, eve
 		return err
 	}
 
-	err = s.DataSetter.SetBytes(ctx,
-		s.KeyGenerator.Storage(EventStoreName),
-		s.KeyGenerator.BlockHeight(blockHeight),
+	err = s.SetBytes(ctx,
+		s.Storage(EventStoreName),
+		s.BlockHeight(blockHeight),
 		b)
 
 	if err != nil {
@@ -506,9 +506,9 @@ func (s *DefaultStore) InsertExecutionSnapshot(
 	executionSnapshot *snapshot.ExecutionSnapshot,
 ) error {
 	for registerID, value := range executionSnapshot.WriteSet {
-		err := s.DataSetter.SetBytesWithVersion(
+		err := s.SetBytesWithVersion(
 			ctx,
-			s.KeyGenerator.Storage(LedgerStoreName),
+			s.Storage(LedgerStoreName),
 			[]byte(registerID.String()),
 			value,
 			blockHeight)
@@ -565,13 +565,13 @@ func (s *DefaultStore) CommitBlock(
 
 	err = s.InsertExecutionSnapshot(
 		ctx,
-		block.Header.Height,
+		block.Height,
 		executionSnapshot)
 	if err != nil {
 		return err
 	}
 
-	err = s.InsertEvents(ctx, block.Header.Height, events)
+	err = s.InsertEvents(ctx, block.Height, events)
 	if err != nil {
 		return err
 	}

@@ -28,7 +28,7 @@ import (
 	"time"
 
 	"github.com/onflow/cadence"
-	sdk "github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/fvm"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -155,9 +155,9 @@ func Cmd(config StartConfig) *cobra.Command {
 				Exit(1, "❗  --rpc-host must be provided when forking Mainnet or Testnet")
 			}
 
-			serviceAddress := sdk.ServiceAddress(sdk.ChainID(flowChainID))
+			serviceAddress := flowsdk.ServiceAddress(flowsdk.ChainID(flowChainID))
 			if conf.SimpleAddresses {
-				serviceAddress = sdk.HexToAddress("0x1")
+				serviceAddress = flowsdk.HexToAddress("0x1")
 			}
 
 			serviceFields := map[string]any{

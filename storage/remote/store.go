@@ -133,7 +133,7 @@ func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*St
 // initializeStartBlock initializes and stores the fork height and local latest height.
 func (s *Store) initializeStartBlock(ctx context.Context) error {
 	// the fork height may already be set in the db if restarting from persistent store
-	forkHeight, err := s.Store.ForkedBlockHeight(ctx)
+	forkHeight, err := s.ForkedBlockHeight(ctx)
 	if err == nil && forkHeight > 0 {
 		s.forkHeight = forkHeight
 		return nil
@@ -158,13 +158,13 @@ func (s *Store) initializeStartBlock(ctx context.Context) error {
 
 	// store the initial fork height. any future queries for data on the rpc host will be fixed
 	// to this height.
-	err = s.Store.StoreForkedBlockHeight(ctx, s.forkHeight)
+	err = s.StoreForkedBlockHeight(ctx, s.forkHeight)
 	if err != nil {
 		return fmt.Errorf("could not set start block height: %w", err)
 	}
 
 	// initialize the local latest height.
-	err = s.Store.SetBlockHeight(s.forkHeight)
+	err = s.SetBlockHeight(s.forkHeight)
 	if err != nil {
 		return fmt.Errorf("could not set start block height: %w", err)
 	}
@@ -176,7 +176,7 @@ func (s *Store) BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flow
 	var height uint64
 	block, err := s.DefaultStore.BlockByID(ctx, blockID)
 	if err == nil {
-		height = block.Header.Height
+		height = block.Height
 	} else if errors.Is(err, storage.ErrNotFound) {
 		heightRes, err := s.accessClient.GetBlockHeaderByID(ctx, &access.GetBlockHeaderByIDRequest{Id: blockID[:]})
 		if err != nil {
@@ -228,10 +228,10 @@ func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block
 		return nil, err
 	}
 
-	payload := flowgo.EmptyPayload()
+	payload := flowgo.NewEmptyPayload()
 	return &flowgo.Block{
-		Payload: &payload,
-		Header:  header,
+		Payload:    *payload,
+		HeaderBody: header.HeaderBody,
 	}, nil
 }
 
@@ -246,7 +246,7 @@ func (s *Store) LedgerByHeight(
 		// first try to see if we have local stored ledger
 		value, err := s.DefaultStore.GetBytesAtVersion(
 			ctx,
-			s.KeyGenerator.Storage(storage.LedgerStoreName),
+			s.Storage(storage.LedgerStoreName),
 			[]byte(id.String()),
 			lookupHeight,
 		)
@@ -281,7 +281,7 @@ func (s *Store) LedgerByHeight(
 		// cache the value for future use
 		err = s.DataSetter.SetBytesWithVersion(
 			ctx,
-			s.KeyGenerator.Storage(storage.LedgerStoreName),
+			s.Storage(storage.LedgerStoreName),
 			[]byte(id.String()),
 			value,
 			lookupHeight)

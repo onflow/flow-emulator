@@ -22,9 +22,10 @@ import (
 	"fmt"
 
 	"github.com/logrusorgru/aurora"
-	"github.com/onflow/flow-emulator/types"
-	sdk "github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/rs/zerolog"
+
+	"github.com/onflow/flow-emulator/types"
 )
 
 func PrintScriptResult(logger *zerolog.Logger, result *types.ScriptResult) {
@@ -87,7 +88,7 @@ func PrintTransactionResult(logger *zerolog.Logger, result *types.TransactionRes
 	}
 }
 
-func logPrefix(prefix string, id sdk.Identifier, color aurora.Color) string {
+func logPrefix(prefix string, id flowsdk.Identifier, color aurora.Color) string {
 	prefix = aurora.Colorize(prefix, color|aurora.BoldFm).String()
 	shortID := fmt.Sprintf("[%s]", id.String()[:6])
 	shortID = aurora.Colorize(shortID, aurora.FaintFm).String()
