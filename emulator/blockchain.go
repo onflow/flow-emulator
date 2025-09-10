@@ -1927,7 +1927,9 @@ func (b *Blockchain) executeScheduledCallbacks(blockContext fvm.Context) ([]*typ
 	results = append(results, result)
 
 	// execute callbacks we receive from events of the schedule transaction
-	executeTxs, err := executeCallbackTransactions(result.Events, serviceAddress, parentID)
+	// filter to only process PendingExecution events
+	pendingExecutionEvents := filterPendingExecutionEvents(result.Events, serviceAddress)
+	executeTxs, err := executeCallbackTransactions(pendingExecutionEvents, serviceAddress, parentID)
 	if err != nil {
 		return results, err
 	}

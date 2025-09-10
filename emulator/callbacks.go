@@ -31,9 +31,28 @@ import (
 )
 
 const (
-	contractName               = "FlowCallbackScheduler"
-	callbackProcessedEventName = "Processed"
+	contractName              = "FlowCallbackScheduler"
+	pendingExecutionEventName = "PendingExecution"
 )
+
+// filterPendingExecutionEvents filters events to only include PendingExecution events
+func filterPendingExecutionEvents(events []flowsdk.Event, serviceAddress flow.Address) []flowsdk.Event {
+	var filteredEvents []flowsdk.Event
+
+	contractLocation := common.AddressLocation{
+		Address: common.Address(serviceAddress),
+		Name:    contractName,
+	}
+	expectedEventType := string(contractLocation.TypeID(nil, fmt.Sprintf("%s.%s", contractName, pendingExecutionEventName)))
+
+	for _, event := range events {
+		if event.Type == expectedEventType {
+			filteredEvents = append(filteredEvents, event)
+		}
+	}
+
+	return filteredEvents
+}
 
 // todo: replace all the functions bellow with flow-go implementation once it's done
 // issue: https://github.com/onflow/flow-emulator/issues/829
@@ -52,6 +71,7 @@ func processCallbackTransaction(
 		SetScript(script).
 		SetComputeLimit(defaultTransactionMaxGasLimit).
 		SetPayer(serviceAddress).
+		AddAuthorizer(serviceAddress).
 		SetReferenceBlockID(parentID)
 
 	tx, err := txBuilder.Build()
@@ -63,7 +83,7 @@ func processCallbackTransaction(
 }
 
 func executeCallbackTransactions(
-	processedEvents []flowsdk.Event,
+	pendingExecutionEvents []flowsdk.Event,
 	serviceAddress flow.Address,
 	parentID flow.Identifier,
 ) ([]flow.TransactionBody, error) {
@@ -74,8 +94,8 @@ func executeCallbackTransactions(
 
 	script := templates.GenerateExecuteCallbackScript(env)
 
-	for _, e := range processedEvents {
-		id, _, limit, _, err := parseSchedulerProcessedEvent(e, serviceAddress)
+	for _, e := range pendingExecutionEvents {
+		id, _, limit, _, err := parseSchedulerPendingExecutionEvent(e, serviceAddress)
 		if err != nil {
 			return nil, err
 		}
@@ -84,6 +104,7 @@ func executeCallbackTransactions(
 			SetScript(script).
 			AddArgument(id).
 			SetPayer(serviceAddress).
+			AddAuthorizer(serviceAddress).
 			SetReferenceBlockID(parentID).
 			SetComputeLimit(limit)
 
@@ -98,20 +119,20 @@ func executeCallbackTransactions(
 	return transactions, nil
 }
 
-// parseSchedulerProcessedEvent parses flow event that is emitted during scheduler
-// marking the callback as processed.
+// parseSchedulerPendingExecutionEvent parses flow event that is emitted during scheduler
+// marking the callback as pending execution.
 // Returns:
 // - ID of the callback encoded as bytes
 // - The priority of the callback
 // - execution effort
 // - The address of the account that owns the callback
 // - error in case the event type is not correct
-func parseSchedulerProcessedEvent(event flowsdk.Event, serviceAddress flow.Address) ([]byte, uint8, uint64, cadence.Address, error) {
+func parseSchedulerPendingExecutionEvent(event flowsdk.Event, serviceAddress flow.Address) ([]byte, uint8, uint64, cadence.Address, error) {
 	contractLocation := common.AddressLocation{
 		Address: common.Address(serviceAddress),
 		Name:    contractName,
 	}
-	callbackProcessedEvent := contractLocation.TypeID(nil, fmt.Sprintf("%s.%s", contractName, callbackProcessedEventName))
+	callbackPendingExecutionEvent := contractLocation.TypeID(nil, fmt.Sprintf("%s.%s", contractName, pendingExecutionEventName))
 
 	const (
 		IDField        = "id"
@@ -120,8 +141,8 @@ func parseSchedulerProcessedEvent(event flowsdk.Event, serviceAddress flow.Addre
 		ownerField     = "callbackOwner"
 	)
 
-	if event.Type != string(callbackProcessedEvent) {
-		return nil, 0, 0, cadence.BytesToAddress([]byte{}), fmt.Errorf("invalid event type, got: %s, expected: %s", event.Type, callbackProcessedEvent)
+	if event.Type != string(callbackPendingExecutionEvent) {
+		return nil, 0, 0, cadence.BytesToAddress([]byte{}), fmt.Errorf("invalid event type, got: %s, expected: %s", event.Type, callbackPendingExecutionEvent)
 	}
 
 	id, ok := event.Value.SearchFieldByName(IDField).(cadence.UInt64)
