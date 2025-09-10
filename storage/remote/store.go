@@ -134,7 +134,7 @@ func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*St
 // initializeStartBlock initializes and stores the fork height and local latest height.
 func (s *Store) initializeStartBlock(ctx context.Context) error {
 	// the fork height may already be set in the db if restarting from persistent store
-	forkHeight, err := s.Store.ForkedBlockHeight(ctx)
+	forkHeight, err := s.ForkedBlockHeight(ctx)
 	if err == nil && forkHeight > 0 {
 		s.forkHeight = forkHeight
 		return nil
@@ -159,13 +159,13 @@ func (s *Store) initializeStartBlock(ctx context.Context) error {
 
 	// store the initial fork height. any future queries for data on the rpc host will be fixed
 	// to this height.
-	err = s.Store.StoreForkedBlockHeight(ctx, s.forkHeight)
+	err = s.StoreForkedBlockHeight(ctx, s.forkHeight)
 	if err != nil {
 		return fmt.Errorf("could not set start block height: %w", err)
 	}
 
 	// initialize the local latest height.
-	err = s.Store.SetBlockHeight(s.forkHeight)
+	err = s.SetBlockHeight(s.forkHeight)
 	if err != nil {
 		return fmt.Errorf("could not set start block height: %w", err)
 	}
@@ -247,7 +247,7 @@ func (s *Store) LedgerByHeight(
 		// first try to see if we have local stored ledger
 		value, err := s.DefaultStore.GetBytesAtVersion(
 			ctx,
-			s.KeyGenerator.Storage(storage.LedgerStoreName),
+			s.Storage(storage.LedgerStoreName),
 			[]byte(id.String()),
 			lookupHeight,
 		)
@@ -282,7 +282,7 @@ func (s *Store) LedgerByHeight(
 		// cache the value for future use
 		err = s.DataSetter.SetBytesWithVersion(
 			ctx,
-			s.KeyGenerator.Storage(storage.LedgerStoreName),
+			s.Storage(storage.LedgerStoreName),
 			[]byte(id.String()),
 			value,
 			lookupHeight)

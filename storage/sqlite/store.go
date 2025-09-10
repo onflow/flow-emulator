@@ -137,7 +137,7 @@ func (s *Store) RollbackToBlockHeight(height uint64) error {
 		return err
 	}
 
-	return s.DefaultStore.SetBlockHeight(height)
+	return s.SetBlockHeight(height)
 }
 
 const snapshotPrefix = "snapshot_"
