@@ -61,7 +61,7 @@ func (c *CheckCollector) NewCheck() Check {
 	c.lock.Lock()
 	check := &internalCheck{
 		defaultTolerance: c.defaultTolerance,
-		lastCheckIn:      time.Now(),
+		lastCheckIn:      time.Now().UTC(),
 	}
 	c.checks = append(c.checks, check)
 	c.lock.Unlock()

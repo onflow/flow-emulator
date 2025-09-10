@@ -81,7 +81,7 @@ func TestAccess(t *testing.T) {
 
 	t.Run("GetLatestBlockHeader", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
-		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UnixMilli())}}
+		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UTC().UnixMilli())}}
 
 		//success
 		emu.EXPECT().
@@ -109,7 +109,7 @@ func TestAccess(t *testing.T) {
 
 	t.Run("GetBlockHeaderByHeight", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
-		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UnixMilli())}}
+		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UTC().UnixMilli())}}
 
 		//success
 		emu.EXPECT().
@@ -138,7 +138,7 @@ func TestAccess(t *testing.T) {
 	t.Run("GetBlockHeaderByID", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
 		id := flowgo.Identifier{}
-		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UnixMilli())}}
+		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UTC().UnixMilli())}}
 
 		//success
 		emu.EXPECT().
@@ -166,7 +166,7 @@ func TestAccess(t *testing.T) {
 
 	t.Run("GetLatestBlock", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
-		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UnixMilli())}}
+		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UTC().UnixMilli())}}
 
 		//success
 		emu.EXPECT().
@@ -194,7 +194,7 @@ func TestAccess(t *testing.T) {
 
 	t.Run("GetBlockByHeight", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
-		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UnixMilli())}}
+		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UTC().UnixMilli())}}
 
 		//success
 		emu.EXPECT().
@@ -223,7 +223,7 @@ func TestAccess(t *testing.T) {
 	t.Run("GetBlockByID", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
 		id := flowgo.Identifier{}
-		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UnixMilli())}}
+		expected := flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 42, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UTC().UnixMilli())}}
 
 		//success
 		emu.EXPECT().

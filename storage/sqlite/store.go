@@ -85,7 +85,7 @@ func New(url string) (store *Store, err error) {
 	store = &Store{
 		db:  db,
 		url: url,
-		id:  time.Now().UnixMilli(),
+		id:  time.Now().UTC().UnixMilli(),
 	}
 
 	store.DataSetter = store

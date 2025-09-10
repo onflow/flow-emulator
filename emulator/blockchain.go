@@ -901,7 +901,7 @@ func (b *Blockchain) PendingBlockView() uint64 {
 
 // PendingBlockTimestamp returns the Timestamp of the pending block.
 func (b *Blockchain) PendingBlockTimestamp() time.Time {
-	return time.UnixMilli(int64(b.pendingBlock.Block().Timestamp))
+	return time.UnixMilli(int64(b.pendingBlock.Block().Timestamp)).UTC()
 }
 
 // GetLatestBlock gets the latest sealed block.
@@ -1147,7 +1147,7 @@ func (b *Blockchain) GetEventsForBlockIDs(eventType string, blockIDs []flowgo.Id
 		result = append(result, flowgo.BlockEvents{
 			BlockID:        block.ID(),
 			BlockHeight:    block.Height,
-			BlockTimestamp: time.UnixMilli(int64(block.Timestamp)),
+			BlockTimestamp: time.UnixMilli(int64(block.Timestamp)).UTC(),
 			Events:         events,
 		})
 	}
@@ -1173,7 +1173,7 @@ func (b *Blockchain) GetEventsForHeightRange(eventType string, startHeight, endH
 		result = append(result, flowgo.BlockEvents{
 			BlockID:        block.ID(),
 			BlockHeight:    block.Height,
-			BlockTimestamp: time.UnixMilli(int64(block.Timestamp)),
+			BlockTimestamp: time.UnixMilli(int64(block.Timestamp)).UTC(),
 			Events:         events,
 		})
 	}
