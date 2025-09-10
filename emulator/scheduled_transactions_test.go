@@ -47,7 +47,7 @@ func TestParseSchedulerPendingExecutionEvent(t *testing.T) {
 			{Identifier: "id", Type: cadence.UInt64Type},
 			{Identifier: "priority", Type: cadence.UInt8Type},
 			{Identifier: "executionEffort", Type: cadence.UInt64Type},
-			{Identifier: "callbackOwner", Type: cadence.AddressType},
+			{Identifier: "transactionHandlerOwner", Type: cadence.AddressType},
 		},
 		nil,
 	)
@@ -71,7 +71,7 @@ func TestParseSchedulerPendingExecutionEvent(t *testing.T) {
 					cadence.NewUInt64(1),               // ID
 					cadence.NewUInt8(1),                // priority
 					cadence.NewUInt64(1000),            // executionEffort
-					cadence.NewAddress(serviceAddress), // callbackOwner
+					cadence.NewAddress(serviceAddress), // transactionHandlerOwner
 				}).WithType(eventType),
 			},
 			serviceAddress:   serviceAddress,
@@ -89,7 +89,7 @@ func TestParseSchedulerPendingExecutionEvent(t *testing.T) {
 					cadence.NewUInt64(42),              // ID
 					cadence.NewUInt8(1),                // priority
 					cadence.NewUInt64(5000),            // executionEffort
-					cadence.NewAddress(serviceAddress), // callbackOwner
+					cadence.NewAddress(serviceAddress), // transactionHandlerOwner
 				}).WithType(eventType),
 			},
 			serviceAddress:   serviceAddress,
@@ -107,7 +107,7 @@ func TestParseSchedulerPendingExecutionEvent(t *testing.T) {
 					cadence.NewUInt64(100),             // ID
 					cadence.NewUInt8(1),                // priority
 					cadence.NewUInt64(0),               // executionEffort
-					cadence.NewAddress(serviceAddress), // callbackOwner
+					cadence.NewAddress(serviceAddress), // transactionHandlerOwner
 				}).WithType(eventType),
 			},
 			serviceAddress:   serviceAddress,
@@ -137,14 +137,14 @@ func TestParseSchedulerPendingExecutionEvent(t *testing.T) {
 				Value: cadence.NewEvent([]cadence.Value{
 					cadence.NewUInt8(1),                // priority
 					cadence.NewUInt64(1000),            // executionEffort
-					cadence.NewAddress(serviceAddress), // callbackOwner
+					cadence.NewAddress(serviceAddress), // transactionHandlerOwner
 				}).WithType(cadence.NewEventType(
 					nil,
 					expectedEventType,
 					[]cadence.Field{
 						{Identifier: "priority", Type: cadence.UInt8Type},
 						{Identifier: "executionEffort", Type: cadence.UInt64Type},
-						{Identifier: "callbackOwner", Type: cadence.AddressType},
+						{Identifier: "transactionHandlerOwner", Type: cadence.AddressType},
 					},
 					nil,
 				)),
@@ -160,14 +160,14 @@ func TestParseSchedulerPendingExecutionEvent(t *testing.T) {
 				Value: cadence.NewEvent([]cadence.Value{
 					cadence.NewUInt64(1),               // ID
 					cadence.NewUInt8(1),                // priority
-					cadence.NewAddress(serviceAddress), // callbackOwner
+					cadence.NewAddress(serviceAddress), // transactionHandlerOwner
 				}).WithType(cadence.NewEventType(
 					nil,
 					expectedEventType,
 					[]cadence.Field{
 						{Identifier: "id", Type: cadence.UInt64Type},
 						{Identifier: "priority", Type: cadence.UInt8Type},
-						{Identifier: "callbackOwner", Type: cadence.AddressType},
+						{Identifier: "transactionHandlerOwner", Type: cadence.AddressType},
 					},
 					nil,
 				)),
@@ -184,7 +184,7 @@ func TestParseSchedulerPendingExecutionEvent(t *testing.T) {
 					cadence.String("not-a-number"),     // ID (wrong type)
 					cadence.NewUInt8(1),                // priority
 					cadence.NewUInt64(1000),            // executionEffort
-					cadence.NewAddress(serviceAddress), // callbackOwner
+					cadence.NewAddress(serviceAddress), // transactionHandlerOwner
 				}).WithType(cadence.NewEventType(
 					nil,
 					expectedEventType,
@@ -192,7 +192,7 @@ func TestParseSchedulerPendingExecutionEvent(t *testing.T) {
 						{Identifier: "id", Type: cadence.StringType},
 						{Identifier: "priority", Type: cadence.UInt8Type},
 						{Identifier: "executionEffort", Type: cadence.UInt64Type},
-						{Identifier: "callbackOwner", Type: cadence.AddressType},
+						{Identifier: "transactionHandlerOwner", Type: cadence.AddressType},
 					},
 					nil,
 				)),
@@ -209,7 +209,7 @@ func TestParseSchedulerPendingExecutionEvent(t *testing.T) {
 					cadence.NewUInt64(1),               // ID
 					cadence.NewUInt8(1),                // priority
 					cadence.String("not-a-number"),     // executionEffort (wrong type)
-					cadence.NewAddress(serviceAddress), // callbackOwner
+					cadence.NewAddress(serviceAddress), // transactionHandlerOwner
 				}).WithType(cadence.NewEventType(
 					nil,
 					expectedEventType,
@@ -217,7 +217,7 @@ func TestParseSchedulerPendingExecutionEvent(t *testing.T) {
 						{Identifier: "id", Type: cadence.UInt64Type},
 						{Identifier: "priority", Type: cadence.UInt8Type},
 						{Identifier: "executionEffort", Type: cadence.StringType},
-						{Identifier: "callbackOwner", Type: cadence.AddressType},
+						{Identifier: "transactionHandlerOwner", Type: cadence.AddressType},
 					},
 					nil,
 				)),

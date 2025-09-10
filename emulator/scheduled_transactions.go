@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	contractName              = "FlowCallbackScheduler"
+	contractName              = "FlowTransactionScheduler"
 	pendingExecutionEventName = "PendingExecution"
 )
 
@@ -57,15 +57,15 @@ func filterPendingExecutionEvents(events []flowsdk.Event, serviceAddress flowgo.
 // todo: replace all the functions bellow with flow-go implementation once it's done
 // issue: https://github.com/onflow/flow-emulator/issues/829
 
-func processCallbackTransaction(
+func processScheduledTransaction(
 	serviceAddress flowgo.Address,
 	parentID flowgo.Identifier,
 ) flowgo.TransactionBody {
 	env := templates.Environment{
-		FlowCallbackSchedulerAddress: serviceAddress.HexWithPrefix(),
+		FlowTransactionSchedulerAddress: serviceAddress.HexWithPrefix(),
 	}
 
-	script := templates.GenerateProcessCallbackScript(env)
+	script := templates.GenerateProcessTransactionScript(env)
 
 	txBuilder := flowgo.NewTransactionBodyBuilder().
 		SetScript(script).
@@ -82,17 +82,17 @@ func processCallbackTransaction(
 	return *tx
 }
 
-func executeCallbackTransactions(
+func executeScheduledTransactions(
 	pendingExecutionEvents []flowsdk.Event,
 	serviceAddress flowgo.Address,
 	parentID flowgo.Identifier,
 ) ([]flowgo.TransactionBody, error) {
 	var transactions []flowgo.TransactionBody
 	env := templates.Environment{
-		FlowCallbackSchedulerAddress: serviceAddress.HexWithPrefix(),
+		FlowTransactionSchedulerAddress: serviceAddress.HexWithPrefix(),
 	}
 
-	script := templates.GenerateExecuteCallbackScript(env)
+	script := templates.GenerateExecuteTransactionScript(env)
 
 	for _, e := range pendingExecutionEvents {
 		id, _, limit, _, err := parseSchedulerPendingExecutionEvent(e, serviceAddress)
@@ -120,29 +120,29 @@ func executeCallbackTransactions(
 }
 
 // parseSchedulerPendingExecutionEvent parses flow event that is emitted during scheduler
-// marking the callback as pending execution.
+// marking the transaction as pending execution.
 // Returns:
-// - ID of the callback encoded as bytes
-// - The priority of the callback
+// - ID of the transaction encoded as bytes
+// - The priority of the transaction
 // - execution effort
-// - The address of the account that owns the callback
+// - The address of the account that owns the transaction
 // - error in case the event type is not correct
 func parseSchedulerPendingExecutionEvent(event flowsdk.Event, serviceAddress flowgo.Address) ([]byte, uint8, uint64, cadence.Address, error) {
 	contractLocation := common.AddressLocation{
 		Address: common.Address(serviceAddress),
 		Name:    contractName,
 	}
-	callbackPendingExecutionEvent := contractLocation.TypeID(nil, fmt.Sprintf("%s.%s", contractName, pendingExecutionEventName))
+	transactionPendingExecutionEvent := contractLocation.TypeID(nil, fmt.Sprintf("%s.%s", contractName, pendingExecutionEventName))
 
 	const (
 		IDField        = "id"
 		priorityField  = "priority"
 		executionField = "executionEffort"
-		ownerField     = "callbackOwner"
+		ownerField     = "transactionHandlerOwner"
 	)
 
-	if event.Type != string(callbackPendingExecutionEvent) {
-		return nil, 0, 0, cadence.BytesToAddress([]byte{}), fmt.Errorf("invalid event type, got: %s, expected: %s", event.Type, callbackPendingExecutionEvent)
+	if event.Type != string(transactionPendingExecutionEvent) {
+		return nil, 0, 0, cadence.BytesToAddress([]byte{}), fmt.Errorf("invalid event type, got: %s, expected: %s", event.Type, transactionPendingExecutionEvent)
 	}
 
 	id, ok := event.Value.SearchFieldByName(IDField).(cadence.UInt64)

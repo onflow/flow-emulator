@@ -152,8 +152,8 @@ type Config struct {
 	StateHash string
 	// ComputationReportingEnabled enables/disables Cadence computation reporting.
 	ComputationReportingEnabled bool
-	// ScheduledCallbacksEnabled enables an experimental feature for scheduling callbacks.
-	ScheduledCallbacksEnabled bool
+	// ScheduledTransactionsEnabled enables an experimental feature for scheduling transactions.
+	ScheduledTransactionsEnabled bool
 	// SetupEVMEnabled enables the EVM setup for the emulator, defaults to true.
 	SetupEVMEnabled bool
 	// SetupVMBridgeEnabled enables the VM bridge setup for the emulator, defaults to true.
@@ -199,7 +199,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	commonContracts := emulator.NewCommonContracts(chain)
 	// todo: remove this feature flag after its implemented in flow-go
 	// issue: https://github.com/onflow/flow-emulator/issues/829
-	if conf.ScheduledCallbacksEnabled {
+	if conf.ScheduledTransactionsEnabled {
 		env := templates.Environment{
 			FungibleTokenAddress: sc.FungibleToken.Address.String(),
 			FlowTokenAddress:     sc.FlowToken.Address.String(),
@@ -208,11 +208,11 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 			ViewResolverAddress:  sc.ViewResolver.Address.String(),
 		}
 		commonContracts = append(commonContracts, emulator.ContractDescription{
-			Name:   "FlowCallbackScheduler",
-			Source: core_contracts.FlowCallbackScheduler(env),
+			Name:   "FlowTransactionScheduler",
+			Source: core_contracts.FlowTransactionScheduler(env),
 		})
 
-		// automatically enable contracts since they are needed for scheduled callbacks
+		// automatically enable contracts since they are needed for scheduled transactions
 		conf.WithContracts = true
 	}
 
@@ -498,10 +498,10 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		)
 	}
 
-	if conf.ScheduledCallbacksEnabled {
+	if conf.ScheduledTransactionsEnabled {
 		options = append(
 			options,
-			emulator.WithScheduledCallbacks(true),
+			emulator.WithScheduledTransactions(true),
 		)
 	}
 
