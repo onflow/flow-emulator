@@ -1,6 +1,6 @@
 module github.com/onflow/flow-emulator
 
-go 1.23.7
+go 1.25.0
 
 require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
@@ -12,12 +12,12 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.7.0-preview.3
+	github.com/onflow/cadence v1.7.0
 	github.com/onflow/crypto v0.25.3
 	github.com/onflow/flow-core-contracts/lib/go/contracts v1.7.4-0.20250825173510-91e6f28b0224
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.7.2-0.20250825173510-91e6f28b0224
-	github.com/onflow/flow-go v0.42.2-cadence-v1.7.0-preview.3
-	github.com/onflow/flow-go-sdk v1.7.0
+	github.com/onflow/flow-go v0.43.0-dev-pebble.1.0.20250910132853-12699a150fd9
+	github.com/onflow/flow-go-sdk v1.8.1
 	github.com/onflow/flow-nft/lib/go/contracts v1.2.4
 	github.com/onflow/flow/protobuf/go/flow v0.4.12
 	github.com/prometheus/client_golang v1.20.5
@@ -25,11 +25,11 @@ require (
 	github.com/psiemens/sconfig v0.1.0
 	github.com/rs/zerolog v1.29.0
 	github.com/spf13/cobra v1.8.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	go.uber.org/atomic v1.11.0
 	go.uber.org/mock v0.5.0
 	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67
-	google.golang.org/grpc v1.74.2
+	google.golang.org/grpc v1.75.0
 )
 
 require github.com/SaveTheRbtz/mph v0.1.1-0.20240117162131-4166ec7869bc // indirect
@@ -71,7 +71,7 @@ require (
 	github.com/ef-ds/deque v1.0.4 // indirect
 	github.com/emicklei/dot v1.6.2 // indirect
 	github.com/ethereum/c-kzg-4844/v2 v2.1.0 // indirect
-	github.com/ethereum/go-ethereum v1.16.2 // indirect
+	github.com/ethereum/go-ethereum v1.16.3 // indirect
 	github.com/ethereum/go-verkle v0.2.2 // indirect
 	github.com/ferranbt/fastssz v0.1.4 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -200,7 +200,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.31.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.31.0 // indirect
 	go.opentelemetry.io/otel/metric v1.37.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.36.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.37.0 // indirect
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
@@ -215,9 +215,9 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gonum.org/v1/gonum v0.16.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250528174236-200df99c418a // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
-	google.golang.org/protobuf v1.36.6 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250804133106-a7a43d27e69b // indirect
+	google.golang.org/protobuf v1.36.7 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
