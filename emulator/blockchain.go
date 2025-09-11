@@ -313,9 +313,9 @@ func WithComputationReporting(enabled bool) Option {
 	}
 }
 
-func WithScheduledCallbacks(enabled bool) Option {
+func WithScheduledTransactions(enabled bool) Option {
 	return func(c *config) {
-		c.ScheduledCallbacksEnabled = enabled
+		c.ScheduledTransactionsEnabled = enabled
 	}
 }
 
@@ -403,7 +403,7 @@ type config struct {
 	AutoMine                     bool
 	Contracts                    []ContractDescription
 	ComputationReportingEnabled  bool
-	ScheduledCallbacksEnabled    bool
+	ScheduledTransactionsEnabled bool
 	SetupEVMEnabled              bool
 	SetupVMBridgeEnabled         bool
 }
@@ -1278,21 +1278,21 @@ func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 		results = append(results, result)
 	}
 
-	// lastly execute any scheduled callbacks if the feature is enabled
-	if b.conf.ScheduledCallbacksEnabled {
-		// todo refactor after bootstrap deploys CallbackScheduler
-		// this is a temporary workaround since deployment of CallbackScheduler is not
+	// lastly execute any scheduled transactions if the feature is enabled
+	if b.conf.ScheduledTransactionsEnabled {
+		// todo refactor after bootstrap deploys TransactionScheduler
+		// this is a temporary workaround since deployment of TransactionScheduler is not
 		// yet part of bootstrap procedure, so it must be deployed in the first block
 		// during emulator startup, so we shouldn't support scheduling in these first blocks
 		if b.pendingBlock.height < 2 {
 			return results, nil
 		}
 
-		callbacks, err := b.executeScheduledCallbacks(blockContext)
+		transactions, err := b.executeScheduledTransactions(blockContext)
 		if err != nil {
 			return results, err
 		}
-		results = append(results, callbacks...)
+		results = append(results, transactions...)
 	}
 
 	return results, nil
@@ -1903,7 +1903,7 @@ func (b *Blockchain) executeSystemChunkTransaction() error {
 	return nil
 }
 
-func (b *Blockchain) executeScheduledCallbacks(blockContext fvm.Context) ([]*types.TransactionResult, error) {
+func (b *Blockchain) executeScheduledTransactions(blockContext fvm.Context) ([]*types.TransactionResult, error) {
 	var results []*types.TransactionResult
 
 	serviceAddress := b.GetChain().ServiceAddress()
@@ -1915,18 +1915,18 @@ func (b *Blockchain) executeScheduledCallbacks(blockContext fvm.Context) ([]*typ
 		fvm.WithSequenceNumberCheckAndIncrementEnabled(false),
 	)
 
-	// add transaction to process callbacks
-	b.pendingBlock.AddTransaction(processCallbackTransaction(serviceAddress, parentID))
+	// add transaction to process scheduled transactions
+	b.pendingBlock.AddTransaction(processScheduledTransaction(serviceAddress, parentID))
 	result, err := b.executeNextTransaction(ctx)
 	if err != nil {
 		return results, err
 	}
 	results = append(results, result)
 
-	// execute callbacks we receive from events of the schedule transaction
+	// execute scheduled transactions we receive from events of the schedule transaction
 	// filter to only process PendingExecution events
 	pendingExecutionEvents := filterPendingExecutionEvents(result.Events, serviceAddress)
-	executeTxs, err := executeCallbackTransactions(pendingExecutionEvents, serviceAddress, parentID)
+	executeTxs, err := executeScheduledTransactions(pendingExecutionEvents, serviceAddress, parentID)
 	if err != nil {
 		return results, err
 	}
