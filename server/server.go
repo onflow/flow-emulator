@@ -201,15 +201,21 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	// issue: https://github.com/onflow/flow-emulator/issues/829
 	if conf.ScheduledTransactionsEnabled {
 		env := templates.Environment{
-			FungibleTokenAddress: sc.FungibleToken.Address.String(),
-			FlowTokenAddress:     sc.FlowToken.Address.String(),
-			FlowFeesAddress:      sc.FlowFees.Address.String(),
-			StorageFeesAddress:   sc.FlowStorageFees.Address.String(),
-			ViewResolverAddress:  sc.ViewResolver.Address.String(),
+			FungibleTokenAddress:            sc.FungibleToken.Address.String(),
+			FlowTokenAddress:                sc.FlowToken.Address.String(),
+			FlowFeesAddress:                 sc.FlowFees.Address.String(),
+			StorageFeesAddress:              sc.FlowStorageFees.Address.String(),
+			ViewResolverAddress:             sc.ViewResolver.Address.String(),
+			FlowTransactionSchedulerAddress: sc.FlowServiceAccount.Address.String(),
 		}
 		commonContracts = append(commonContracts, emulator.ContractDescription{
 			Name:   "FlowTransactionScheduler",
 			Source: core_contracts.FlowTransactionScheduler(env),
+		})
+
+		commonContracts = append(commonContracts, emulator.ContractDescription{
+			Name:   "FlowTransactionSchedulerUtils",
+			Source: core_contracts.FlowTransactionSchedulerUtils(env),
 		})
 
 		// automatically enable contracts since they are needed for scheduled transactions
