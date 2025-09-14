@@ -37,6 +37,7 @@ import (
 
 	"github.com/onflow/flow-emulator/convert"
 	"github.com/onflow/flow-emulator/emulator"
+	"github.com/onflow/flow-emulator/types"
 )
 
 // SDKAdapter wraps an emulated emulator and implements the RPC handlers
@@ -537,20 +538,29 @@ func (b *SDKAdapter) CreateAccount(ctx context.Context, publicKeys []*flowsdk.Ac
 	if err != nil {
 		return flowsdk.Address{}, err
 	}
-	lastResult := results[len(results)-1]
 
 	_, err = b.emulator.CommitBlock()
 	if err != nil {
 		return flowsdk.Address{}, err
 	}
 
-	if !lastResult.Succeeded() {
-		return flowsdk.Address{}, lastResult.Error
-	}
-
 	var address flowsdk.Address
 
-	for _, event := range lastResult.Events {
+	var txResult *types.TransactionResult
+	for _, r := range results {
+		if r.TransactionID == tx.ID() {
+			txResult = r
+			break
+		}
+	}
+	if txResult == nil {
+		return flowsdk.Address{}, fmt.Errorf("failed to find result for tx %s", tx.ID().String())
+	}
+	if !txResult.Succeeded() {
+		return flowsdk.Address{}, txResult.Error
+	}
+
+	for _, event := range txResult.Events {
 		if event.Type == flowsdk.EventAccountCreated {
 			addressFieldValue := cadence.SearchFieldByName(
 				event.Value,
