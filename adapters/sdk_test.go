@@ -74,12 +74,12 @@ func TestSDK(t *testing.T) {
 		serviceKey.Address = svcAddr
 		emu.EXPECT().ServiceKey().Return(serviceKey).Times(1)
 
-		latestBlock := &flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 10}}
+		latestBlock := &flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 10, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UnixMilli())}}
 		emu.EXPECT().GetLatestBlock().Return(latestBlock, nil).Times(1)
 
 		// Capture txID to set on the matching TransactionResult
 		var txID flowsdk.Identifier
-		emu.EXPECT().SendTransaction(gomock.Any()).DoAndReturn(func(tx flowgo.TransactionBody) error {
+		emu.EXPECT().SendTransaction(gomock.Any()).DoAndReturn(func(tx *flowgo.TransactionBody) error {
 			txID = flowsdk.Identifier(tx.ID())
 			return nil
 		}).Times(1)
@@ -96,25 +96,25 @@ func TestSDK(t *testing.T) {
 			}, nil)),
 		}
 
-		prevResult := &types.TransactionResult{
-			TransactionID:   txID,
-			ComputationUsed: 0,
-			MemoryEstimate:  0,
-			Error:           nil,
-			Logs:            nil,
-			Events:          []flowsdk.Event{createdEvent},
-		}
-
-		lastResult := &types.TransactionResult{
-			ComputationUsed: 0,
-			MemoryEstimate:  0,
-			Error:           nil,
-			Logs:            nil,
-			Events:          []flowsdk.Event{},
-		}
-
 		// ExecuteAndCommitBlock returns results where len==2, with last having no AccountCreated
-		emu.EXPECT().ExecuteAndCommitBlock().Return(latestBlock, []*types.TransactionResult{prevResult, lastResult}, nil).Times(1)
+		emu.EXPECT().ExecuteAndCommitBlock().DoAndReturn(func() (*flowgo.Block, []*types.TransactionResult, error) {
+			prevResult := &types.TransactionResult{
+				TransactionID:   txID,
+				ComputationUsed: 0,
+				MemoryEstimate:  0,
+				Error:           nil,
+				Logs:            nil,
+				Events:          []flowsdk.Event{createdEvent},
+			}
+			lastResult := &types.TransactionResult{
+				ComputationUsed: 0,
+				MemoryEstimate:  0,
+				Error:           nil,
+				Logs:            nil,
+				Events:          []flowsdk.Event{},
+			}
+			return latestBlock, []*types.TransactionResult{prevResult, lastResult}, nil
+		}).Times(1)
 		emu.EXPECT().CommitBlock().Return(latestBlock, nil).Times(1)
 
 		addr, err := adapter.CreateAccount(ctx, nil, nil)
@@ -131,11 +131,11 @@ func TestSDK(t *testing.T) {
 		serviceKey.Address = svcAddr
 		emu.EXPECT().ServiceKey().Return(serviceKey).Times(1)
 
-		latestBlock := &flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 11}}
+		latestBlock := &flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 11, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UnixMilli())}}
 		emu.EXPECT().GetLatestBlock().Return(latestBlock, nil).Times(1)
 
 		var txID flowsdk.Identifier
-		emu.EXPECT().SendTransaction(gomock.Any()).DoAndReturn(func(tx flowgo.TransactionBody) error {
+		emu.EXPECT().SendTransaction(gomock.Any()).DoAndReturn(func(tx *flowgo.TransactionBody) error {
 			txID = flowsdk.Identifier(tx.ID())
 			return nil
 		}).Times(1)
@@ -151,11 +151,12 @@ func TestSDK(t *testing.T) {
 			}, nil)),
 		}
 
-		resultWithAccount := &types.TransactionResult{TransactionID: txID, Events: []flowsdk.Event{createdEvent}}
-		trailing1 := &types.TransactionResult{Events: []flowsdk.Event{}}
-		trailing2 := &types.TransactionResult{Events: []flowsdk.Event{}}
-
-		emu.EXPECT().ExecuteAndCommitBlock().Return(latestBlock, []*types.TransactionResult{resultWithAccount, trailing2, trailing1}, nil).Times(1)
+		emu.EXPECT().ExecuteAndCommitBlock().DoAndReturn(func() (*flowgo.Block, []*types.TransactionResult, error) {
+			resultWithAccount := &types.TransactionResult{TransactionID: txID, Events: []flowsdk.Event{createdEvent}}
+			trailing1 := &types.TransactionResult{Events: []flowsdk.Event{}}
+			trailing2 := &types.TransactionResult{Events: []flowsdk.Event{}}
+			return latestBlock, []*types.TransactionResult{resultWithAccount, trailing2, trailing1}, nil
+		}).Times(1)
 		emu.EXPECT().CommitBlock().Return(latestBlock, nil).Times(1)
 
 		addr, err := adapter.CreateAccount(ctx, nil, nil)
