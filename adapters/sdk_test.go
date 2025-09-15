@@ -29,11 +29,13 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/onflow/cadence"
+	"github.com/onflow/cadence/stdlib"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	accessmodel "github.com/onflow/flow-go/model/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
 	"github.com/onflow/flow-emulator/convert"
+	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-emulator/emulator/mocks"
 	"github.com/onflow/flow-emulator/types"
 )
@@ -60,6 +62,106 @@ func TestSDK(t *testing.T) {
 
 		err := adapter.Ping(context.Background())
 		assert.NoError(t, err)
+	}))
+
+	// Ensure CreateAccount returns address when AccountCreated event is in previous result
+	// (simulating scheduled callbacks adding a trailing transaction result).
+	t.Run("CreateAccount_fallback_to_previous_result_when_scheduled_callbacks", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
+		ctx := context.Background()
+
+		svcAddr := flowsdk.HexToAddress("0x01")
+		serviceKey := emulator.DefaultServiceKey()
+		serviceKey.Address = svcAddr
+		emu.EXPECT().ServiceKey().Return(serviceKey).Times(1)
+
+		latestBlock := &flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 10, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UnixMilli())}}
+		emu.EXPECT().GetLatestBlock().Return(latestBlock, nil).Times(1)
+
+		// Capture txID to set on the matching TransactionResult
+		var txID flowsdk.Identifier
+		emu.EXPECT().SendTransaction(gomock.Any()).DoAndReturn(func(tx *flowgo.TransactionBody) error {
+			txID = flowsdk.Identifier(tx.ID())
+			return nil
+		}).Times(1)
+
+		// Build two results: prev (n-2) contains AccountCreated, last (n-1) is a scheduler tx without it
+		newAccount := flowsdk.HexToAddress("0x02")
+		createdEventType := flowsdk.EventAccountCreated
+		createdEvent := flowsdk.Event{
+			Type: createdEventType,
+			Value: cadence.NewEvent([]cadence.Value{
+				cadence.NewAddress(newAccount),
+			}).WithType(cadence.NewEventType(nil, createdEventType, []cadence.Field{
+				{Identifier: stdlib.AccountEventAddressParameter.Identifier, Type: cadence.AddressType},
+			}, nil)),
+		}
+
+		// ExecuteAndCommitBlock returns results where len==2, with last having no AccountCreated
+		emu.EXPECT().ExecuteAndCommitBlock().DoAndReturn(func() (*flowgo.Block, []*types.TransactionResult, error) {
+			prevResult := &types.TransactionResult{
+				TransactionID:   txID,
+				ComputationUsed: 0,
+				MemoryEstimate:  0,
+				Error:           nil,
+				Logs:            nil,
+				Events:          []flowsdk.Event{createdEvent},
+			}
+			lastResult := &types.TransactionResult{
+				ComputationUsed: 0,
+				MemoryEstimate:  0,
+				Error:           nil,
+				Logs:            nil,
+				Events:          []flowsdk.Event{},
+			}
+			return latestBlock, []*types.TransactionResult{prevResult, lastResult}, nil
+		}).Times(1)
+		emu.EXPECT().CommitBlock().Return(latestBlock, nil).Times(1)
+
+		addr, err := adapter.CreateAccount(ctx, nil, nil)
+		assert.NoError(t, err)
+		assert.Equal(t, newAccount, addr)
+	}))
+
+	// Ensure CreateAccount can scan multiple previous results (more than one trailing scheduler tx)
+	t.Run("CreateAccount_fallback_scans_multiple_previous_results", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
+		ctx := context.Background()
+
+		svcAddr := flowsdk.HexToAddress("0x01")
+		serviceKey := emulator.DefaultServiceKey()
+		serviceKey.Address = svcAddr
+		emu.EXPECT().ServiceKey().Return(serviceKey).Times(1)
+
+		latestBlock := &flowgo.Block{HeaderBody: flowgo.HeaderBody{Height: 11, ChainID: flowgo.Emulator, Timestamp: uint64(time.Now().UnixMilli())}}
+		emu.EXPECT().GetLatestBlock().Return(latestBlock, nil).Times(1)
+
+		var txID flowsdk.Identifier
+		emu.EXPECT().SendTransaction(gomock.Any()).DoAndReturn(func(tx *flowgo.TransactionBody) error {
+			txID = flowsdk.Identifier(tx.ID())
+			return nil
+		}).Times(1)
+
+		newAccount := flowsdk.HexToAddress("0x03")
+		createdEventType := flowsdk.EventAccountCreated
+		createdEvent := flowsdk.Event{
+			Type: createdEventType,
+			Value: cadence.NewEvent([]cadence.Value{
+				cadence.NewAddress(newAccount),
+			}).WithType(cadence.NewEventType(nil, createdEventType, []cadence.Field{
+				{Identifier: stdlib.AccountEventAddressParameter.Identifier, Type: cadence.AddressType},
+			}, nil)),
+		}
+
+		emu.EXPECT().ExecuteAndCommitBlock().DoAndReturn(func() (*flowgo.Block, []*types.TransactionResult, error) {
+			resultWithAccount := &types.TransactionResult{TransactionID: txID, Events: []flowsdk.Event{createdEvent}}
+			trailing1 := &types.TransactionResult{Events: []flowsdk.Event{}}
+			trailing2 := &types.TransactionResult{Events: []flowsdk.Event{}}
+			return latestBlock, []*types.TransactionResult{resultWithAccount, trailing2, trailing1}, nil
+		}).Times(1)
+		emu.EXPECT().CommitBlock().Return(latestBlock, nil).Times(1)
+
+		addr, err := adapter.CreateAccount(ctx, nil, nil)
+		assert.NoError(t, err)
+		assert.Equal(t, newAccount, addr)
 	}))
 
 	t.Run("GetLatestBlockHeader", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
