@@ -18,7 +18,7 @@ require (
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.7.2-0.20250905214304-819c6e946442
 	github.com/onflow/flow-go v0.43.0-dev-pebble.1.0.20250910132853-12699a150fd9
 	github.com/onflow/flow-go-sdk v1.8.1
-	github.com/onflow/flow-nft/lib/go/contracts v1.2.4
+	github.com/onflow/flow-nft/lib/go/contracts v1.3.0
 	github.com/onflow/flow/protobuf/go/flow v0.4.12
 	github.com/prometheus/client_golang v1.23.2
 	github.com/psiemens/graceland v1.0.0
