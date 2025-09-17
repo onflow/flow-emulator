@@ -27,12 +27,12 @@ import (
 	"os"
 
 	"github.com/onflow/flow-go/engine/access/rest"
-	"github.com/onflow/flow-go/engine/access/rest/common"
 	"github.com/onflow/flow-go/engine/access/rest/router"
 	"github.com/onflow/flow-go/engine/access/rest/websockets"
 	"github.com/onflow/flow-go/engine/access/state_stream"
 	"github.com/onflow/flow-go/engine/access/state_stream/backend"
 	"github.com/onflow/flow-go/engine/access/subscription"
+	"github.com/onflow/flow-go/engine/common/rpc"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module"
 	"github.com/onflow/flow-go/module/irrecoverable"
@@ -133,7 +133,7 @@ func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 			WriteTimeout:   rest.DefaultWriteTimeout,
 			ReadTimeout:    rest.DefaultReadTimeout,
 			IdleTimeout:    rest.DefaultIdleTimeout,
-			MaxRequestSize: common.DefaultMaxRequestSize,
+			MaxRequestSize: rpc.DefaultAccessMaxRequestSize,
 		},
 		debugLogger,
 		chain,

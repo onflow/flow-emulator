@@ -207,8 +207,8 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 			StorageFeesAddress:   sc.FlowStorageFees.Address.String(),
 		}
 		commonContracts = append(commonContracts, emulator.ContractDescription{
-			Name:   "FlowCallbackScheduler",
-			Source: core_contracts.FlowCallbackScheduler(env),
+			Name:   "FlowTransactionScheduler",
+			Source: core_contracts.FlowTransactionScheduler(env),
 		})
 
 		// automatically enable contracts since they are needed for scheduled callbacks
