@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	contractName              = "FlowCallbackScheduler"
+	contractName              = "FlowTransactionScheduler"
 	pendingExecutionEventName = "PendingExecution"
 )
 
@@ -62,10 +62,10 @@ func processCallbackTransaction(
 	parentID flowgo.Identifier,
 ) flowgo.TransactionBody {
 	env := templates.Environment{
-		FlowCallbackSchedulerAddress: serviceAddress.HexWithPrefix(),
+		FlowTransactionSchedulerAddress: serviceAddress.HexWithPrefix(),
 	}
 
-	script := templates.GenerateProcessCallbackScript(env)
+	script := templates.GenerateProcessTransactionScript(env)
 
 	txBuilder := flowgo.NewTransactionBodyBuilder().
 		SetScript(script).
@@ -89,10 +89,10 @@ func executeCallbackTransactions(
 ) ([]flowgo.TransactionBody, error) {
 	var transactions []flowgo.TransactionBody
 	env := templates.Environment{
-		FlowCallbackSchedulerAddress: serviceAddress.HexWithPrefix(),
+		FlowTransactionSchedulerAddress: serviceAddress.HexWithPrefix(),
 	}
 
-	script := templates.GenerateExecuteCallbackScript(env)
+	script := templates.GenerateScheduleTransactionScript(env)
 
 	for _, e := range pendingExecutionEvents {
 		id, _, limit, _, err := parseSchedulerPendingExecutionEvent(e, serviceAddress)

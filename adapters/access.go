@@ -431,11 +431,11 @@ func (a *AccessAdapter) GetExecutionResultByID(_ context.Context, _ flowgo.Ident
 	return nil, nil
 }
 
-func (a *AccessAdapter) GetSystemTransaction(_ context.Context, _ flowgo.Identifier) (*flowgo.TransactionBody, error) {
+func (a *AccessAdapter) GetSystemTransaction(_ context.Context, _ flowgo.Identifier, _ flowgo.Identifier) (*flowgo.TransactionBody, error) {
 	return nil, nil
 }
 
-func (a *AccessAdapter) GetSystemTransactionResult(_ context.Context, _ flowgo.Identifier, _ entities.EventEncodingVersion) (*accessmodel.TransactionResult, error) {
+func (a *AccessAdapter) GetSystemTransactionResult(_ context.Context, _ flowgo.Identifier, _ flowgo.Identifier, _ entities.EventEncodingVersion) (*accessmodel.TransactionResult, error) {
 	return nil, nil
 }
 
