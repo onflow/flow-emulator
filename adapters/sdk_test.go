@@ -65,8 +65,8 @@ func TestSDK(t *testing.T) {
 	}))
 
 	// Ensure CreateAccount returns address when AccountCreated event is in previous result
-	// (simulating scheduled callbacks adding a trailing transaction result).
-	t.Run("CreateAccount_fallback_to_previous_result_when_scheduled_callbacks", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
+	// (simulating scheduled transactions adding a trailing transaction result).
+	t.Run("CreateAccount_fallback_to_previous_result_when_scheduled_transactions", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 		ctx := context.Background()
 
 		svcAddr := flowsdk.HexToAddress("0x01")
