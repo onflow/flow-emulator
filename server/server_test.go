@@ -157,7 +157,9 @@ func TestCustomChainID(t *testing.T) {
 }
 
 func TestScheduledCallback_IncrementsCounter(t *testing.T) {
-	logger := zerolog.Nop()
+	// use a real logger to surface debug traces from emulator/server
+	zl := zerolog.New(zerolog.ConsoleWriter{Out: os.Stdout}).Level(zerolog.DebugLevel)
+	logger := zl
 	conf := &Config{
 		ScheduledTransactionsEnabled: true,
 	}
@@ -174,144 +176,192 @@ func TestScheduledCallback_IncrementsCounter(t *testing.T) {
 	// The handler increments a contract-level counter from its returned Transaction.
 	contractCode := fmt.Sprintf(
 		`
-	      import FlowTransactionScheduler from 0x%s
+		import FlowTransactionScheduler from 0x%s
 
-	      access(all) contract ScheduledHandler {
-	          access(contract) var count: Int
+		access(all) contract ScheduledHandler {
+			access(contract) var count: Int
 
-	          access(all) view fun getCount(): Int { return self.count }
+			access(all) view fun getCount(): Int { return self.count }
 
-	          access(all) resource Handler: FlowTransactionScheduler.TransactionHandler {
-	              access(FlowTransactionScheduler.Execute) fun executeTransaction(id: UInt64, data: AnyStruct?) {
-	                  ScheduledHandler.count = ScheduledHandler.count + 1
-	              }
+			access(all) resource Handler: FlowTransactionScheduler.TransactionHandler {
+				access(FlowTransactionScheduler.Execute) fun executeTransaction(id: UInt64, data: AnyStruct?) {
+					ScheduledHandler.count = ScheduledHandler.count + 1
+				}
 
-	              access(all) view fun getViews(): [Type] {
-	                  return [Type<StoragePath>(), Type<PublicPath>()]
-	              }
+				access(all) view fun getViews(): [Type] {
+					return [Type<StoragePath>(), Type<PublicPath>()]
+				}
 
-	              access(all) fun resolveView(_ view: Type): AnyStruct? {
-	                  switch view {
-	                      case Type<StoragePath>():
-	                          return /storage/counterHandler
-	                      case Type<PublicPath>():
-	                          return /public/counterHandler
-	                      default:
-	                          return nil
-	                  }
-	              }
-	          }
+				access(all) fun resolveView(_ view: Type): AnyStruct? {
+					switch view {
+						case Type<StoragePath>():
+							return /storage/counterHandler
+						case Type<PublicPath>():
+							return /public/counterHandler
+						default:
+							return nil
+					}
+				}
+			}
 
-	          access(all) fun createHandler(): @Handler { return <- create Handler() }
+			access(all) fun createHandler(): @Handler { return <- create Handler() }
 
-	          init() {
-	              self.count = 0
-	          }
-	      }
-	    `,
+			init() {
+				self.count = 0
+			}
+		}
+	`,
 		serviceHex,
 	)
 
 	// Deploy the handler contract to the service account
-	{
-		latestBlock := mustGetLatestBlock(t, server)
-		tx := templates.AddAccountContract(serviceAddress, templates.Contract{
-			Name:   "ScheduledHandler",
-			Source: contractCode,
-		})
-		tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
-			SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID())).
-			SetProposalKey(serviceAddress, server.Emulator().ServiceKey().Index, server.Emulator().ServiceKey().SequenceNumber).
-			SetPayer(serviceAddress)
+	latestBlock := mustGetLatestBlock(t, server)
+	tx := templates.AddAccountContract(serviceAddress, templates.Contract{
+		Name:   "ScheduledHandler",
+		Source: contractCode,
+	})
+	tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID())).
+		SetProposalKey(serviceAddress, server.Emulator().ServiceKey().Index, server.Emulator().ServiceKey().SequenceNumber).
+		SetPayer(serviceAddress)
 
-		signer, err := server.Emulator().ServiceKey().Signer()
-		require.NoError(t, err)
-		require.NoError(t, tx.SignEnvelope(serviceAddress, server.Emulator().ServiceKey().Index, signer))
+	signer, err := server.Emulator().ServiceKey().Signer()
+	require.NoError(t, err)
+	require.NoError(t, tx.SignEnvelope(serviceAddress, server.Emulator().ServiceKey().Index, signer))
 
-		require.NoError(t, server.Emulator().SendTransaction(convert.SDKTransactionToFlow(*tx)))
-		_, results, err := server.Emulator().ExecuteAndCommitBlock()
-		require.NoError(t, err)
-		require.GreaterOrEqual(t, len(results), 1)
+	require.NoError(t, server.Emulator().SendTransaction(convert.SDKTransactionToFlow(*tx)))
+	block, results, err := server.Emulator().ExecuteAndCommitBlock()
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, len(results), 1)
+
+	// Log events from contract deployment block
+	t.Logf("deploy block height=%d txResults=%d", block.Height, len(results))
+	for i, r := range results {
+		if r.Error != nil {
+			t.Logf("deploy result[%d] error=%v", i, r.Error)
+		}
+		for _, ev := range r.Events {
+			var payload string
+			if enc, err := jsoncdc.Encode(ev.Value); err == nil {
+				payload = string(enc)
+			}
+			t.Logf("deploy event: %s payload=%s", ev.Type, payload)
+		}
 	}
 
 	// 2) Create handler and schedule a callback to increment count
 	createAndSchedule := fmt.Sprintf(
 		`
-	      import FlowTransactionScheduler from 0x%s
-	      import ScheduledHandler from 0x%s
+		import FlowTransactionScheduler from 0x%s
+		import ScheduledHandler from 0x%s
+		import FungibleToken from 0xee82856bf20e2aa6
+		import FlowToken from 0x0ae53cb6e3f42a79
 
-	      transaction {
-	          prepare(acct: auth(SaveValue, LinkValue) &Account) {
-	              // create the handler resource and publish capability
-	              let handler <- ScheduledHandler.createHandler()
-	              acct.save(<-handler, to: /storage/counterHandler)
-	              acct.link<&{FlowTransactionScheduler.TransactionHandler}>(
-	                  /public/counterHandler,
-	                  target: /storage/counterHandler
-	              )
-	              let cap = acct.getCapability<&{FlowTransactionScheduler.TransactionHandler}>(/public/counterHandler)
+		transaction {
+			prepare(acct: auth(Storage, Capabilities, FungibleToken.Withdraw) &Account) {
+				// create the handler resource and publish capability (Cadence 1.0 APIs)
+				let handler <- ScheduledHandler.createHandler()
+				acct.storage.save(<-handler, to: /storage/counterHandler)
+				let issued = acct.capabilities.storage.issue<auth(FlowTransactionScheduler.Execute) &{FlowTransactionScheduler.TransactionHandler}>(/storage/counterHandler)
+				acct.capabilities.publish(issued, at: /public/counterHandler)
 
-	              // schedule with sufficient effort and explicit types
-	              FlowTransactionScheduler.schedule(cap: cap, priority: UInt8(1), executionEffort: UInt64(100000))
-	          }
-	      }
-	    `,
+				// compute fees via estimate
+				let estimate = FlowTransactionScheduler.estimate(
+					data: nil,
+					timestamp: getCurrentBlock().timestamp + 1.0,
+					priority: FlowTransactionScheduler.Priority.High,
+					executionEffort: UInt64(5000)
+				)
+				let feeAmount: UFix64 = estimate.flowFee ?? 1.0
+				// withdraw fees to pay for scheduling
+				let vaultRef = acct.storage.borrow<auth(FungibleToken.Withdraw) &FlowToken.Vault>(from: /storage/flowTokenVault)
+					?? panic("missing FlowToken vault")
+				let fees <- vaultRef.withdraw(amount: feeAmount) as! auth(FungibleTOken.Withdraw) &FlowToken.Vault
+
+				// schedule with sufficient effort and priority; timestamp must be in the future
+				FlowTransactionScheduler.schedule(
+					handlerCap: issued,
+					data: nil,
+					timestamp: getCurrentBlock().timestamp + 1.0,
+					priority: FlowTransactionScheduler.Priority.High,
+					executionEffort: UInt64(5000),
+					fees: <-fees
+				)
+			}
+		}
+	`,
 		serviceHex,
 		serviceHex,
 	)
 
-	{
-		latestBlock := mustGetLatestBlock(t, server)
-		tx := flowsdk.NewTransaction().
-			SetScript([]byte(createAndSchedule)).
-			SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
-			SetProposalKey(serviceAddress, server.Emulator().ServiceKey().Index, server.Emulator().ServiceKey().SequenceNumber).
-			SetPayer(serviceAddress)
-		tx.SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID()))
+	latestBlock = mustGetLatestBlock(t, server)
+	tx = flowsdk.NewTransaction().
+		SetScript([]byte(createAndSchedule)).
+		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetProposalKey(serviceAddress, server.Emulator().ServiceKey().Index, server.Emulator().ServiceKey().SequenceNumber).
+		SetPayer(serviceAddress).
+		AddAuthorizer(serviceAddress)
+	tx.SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID()))
 
-		signer, err := server.Emulator().ServiceKey().Signer()
-		require.NoError(t, err)
-		require.NoError(t, tx.SignEnvelope(serviceAddress, server.Emulator().ServiceKey().Index, signer))
+	signer, err = server.Emulator().ServiceKey().Signer()
+	require.NoError(t, err)
+	require.NoError(t, tx.SignEnvelope(serviceAddress, server.Emulator().ServiceKey().Index, signer))
 
-		require.NoError(t, server.Emulator().SendTransaction(convert.SDKTransactionToFlow(*tx)))
-		_, results, err := server.Emulator().ExecuteAndCommitBlock()
+	require.NoError(t, server.Emulator().SendTransaction(convert.SDKTransactionToFlow(*tx)))
+	block, results, err = server.Emulator().ExecuteAndCommitBlock()
+	require.NoError(t, err)
+	for i, r := range results {
+		if r.Error != nil {
+			t.Fatalf("schedule block tx %d failed: %v", i, r.Error)
+		}
+	}
+
+	// Log events and script for schedule block
+	t.Logf("schedule block height=%d txResults=%d", block.Height, len(results))
+	t.Logf("schedule tx script=\n%s", createAndSchedule)
+	for _, r := range results {
+		for _, ev := range r.Events {
+			var payload string
+			if enc, err := jsoncdc.Encode(ev.Value); err == nil {
+				payload = string(enc)
+			}
+			t.Logf("schedule event: %s payload=%s", ev.Type, payload)
+		}
+	}
+
+	// Give wall clock a moment to advance past the scheduled second
+	time.Sleep(1500 * time.Millisecond)
+
+	// Commit a few follow-up blocks and log events to see scheduler activity
+	for j := 0; j < 5; j++ {
+		block, results, err = server.Emulator().ExecuteAndCommitBlock()
 		require.NoError(t, err)
-		for i, r := range results {
-			if r.Error != nil {
-				t.Fatalf("schedule block tx %d failed: %v", i, r.Error)
+		t.Logf("post-schedule block[%d] height=%d txResults=%d", j, block.Height, len(results))
+		for _, r := range results {
+			for _, ev := range r.Events {
+				var payload string
+				if enc, err := jsoncdc.Encode(ev.Value); err == nil {
+					payload = string(enc)
+				}
+				t.Logf("post-schedule event: %s payload=%s", ev.Type, payload)
 			}
 		}
-		// do not force extra blocks here; verification loop below will drive blocks if needed
-		// And one more to be safe (some environments require 2 blocks)
-		_, _, err = server.Emulator().ExecuteAndCommitBlock()
-		require.NoError(t, err)
-		// Third block to align with expected commit timing
-		_, _, err = server.Emulator().ExecuteAndCommitBlock()
-		require.NoError(t, err)
 	}
 
 	// 3) Verify count incremented by scheduled execution
 	verifyScript := fmt.Sprintf(
 		`
-	      import ScheduledHandler from %s
-	      access(all) fun main(): Int { return ScheduledHandler.getCount() }
-	    `,
+		import ScheduledHandler from %s
+		access(all) fun main(): Int { return ScheduledHandler.getCount() }
+	`,
 		serviceHexWithPrefix,
 	)
-// Allow scheduler to process by committing up to a few blocks
-var got cadence.Value
-for i := 0; i < 8; i++ {
-    res, err := server.Emulator().ExecuteScript([]byte(verifyScript), nil)
-    require.NoError(t, err)
-    require.NoError(t, res.Error)
-    got = res.Value
-    if got == cadence.NewInt(1) {
-        break
-    }
-    _, _, err = server.Emulator().ExecuteAndCommitBlock()
-    require.NoError(t, err)
-}
-require.Equal(t, cadence.NewInt(1), got)
+
+	// Verify the counter incremented after scheduler processing block
+	res, err := server.Emulator().ExecuteScript([]byte(verifyScript), nil)
+	require.NoError(t, err)
+	require.NoError(t, res.Error)
+	require.Equal(t, cadence.NewInt(1), res.Value)
 }
 
 // mustGetLatestBlock is a tiny helper for brevity
