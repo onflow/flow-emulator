@@ -187,11 +187,18 @@ func TestScheduledCallback_IncrementsCounter(t *testing.T) {
 	              }
 
 	              access(all) view fun getViews(): [Type] {
-	                  return []
+	                  return [Type<StoragePath>(), Type<PublicPath>()]
 	              }
 
 	              access(all) fun resolveView(_ view: Type): AnyStruct? {
-	                  return nil
+	                  switch view {
+	                      case Type<StoragePath>():
+	                          return /storage/counterHandler
+	                      case Type<PublicPath>():
+	                          return /public/counterHandler
+	                      default:
+	                          return nil
+	                  }
 	              }
 	          }
 
@@ -267,9 +274,18 @@ func TestScheduledCallback_IncrementsCounter(t *testing.T) {
 		require.NoError(t, tx.SignEnvelope(serviceAddress, server.Emulator().ServiceKey().Index, signer))
 
 		require.NoError(t, server.Emulator().SendTransaction(convert.SDKTransactionToFlow(*tx)))
+		_, results, err := server.Emulator().ExecuteAndCommitBlock()
+		require.NoError(t, err)
+		for i, r := range results {
+			if r.Error != nil {
+				t.Fatalf("schedule block tx %d failed: %v", i, r.Error)
+			}
+		}
+		// do not force extra blocks here; verification loop below will drive blocks if needed
+		// And one more to be safe (some environments require 2 blocks)
 		_, _, err = server.Emulator().ExecuteAndCommitBlock()
 		require.NoError(t, err)
-		// Trigger next block so scheduler can process in a subsequent block
+		// Third block to align with expected commit timing
 		_, _, err = server.Emulator().ExecuteAndCommitBlock()
 		require.NoError(t, err)
 	}
@@ -282,10 +298,20 @@ func TestScheduledCallback_IncrementsCounter(t *testing.T) {
 	    `,
 		serviceHexWithPrefix,
 	)
-	res, err := server.Emulator().ExecuteScript([]byte(verifyScript), nil)
-	require.NoError(t, err)
-	require.NoError(t, res.Error)
-	require.Equal(t, cadence.NewInt(1), res.Value)
+// Allow scheduler to process by committing up to a few blocks
+var got cadence.Value
+for i := 0; i < 8; i++ {
+    res, err := server.Emulator().ExecuteScript([]byte(verifyScript), nil)
+    require.NoError(t, err)
+    require.NoError(t, res.Error)
+    got = res.Value
+    if got == cadence.NewInt(1) {
+        break
+    }
+    _, _, err = server.Emulator().ExecuteAndCommitBlock()
+    require.NoError(t, err)
+}
+require.Equal(t, cadence.NewInt(1), got)
 }
 
 // mustGetLatestBlock is a tiny helper for brevity
