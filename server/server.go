@@ -34,9 +34,6 @@ import (
 	"github.com/psiemens/graceland"
 	"github.com/rs/zerolog"
 
-	core_contracts "github.com/onflow/flow-core-contracts/lib/go/contracts"
-	"github.com/onflow/flow-core-contracts/lib/go/templates"
-
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-emulator/server/access"
@@ -197,25 +194,6 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	}
 
 	commonContracts := emulator.NewCommonContracts(chain)
-	// todo: remove this feature flag after its implemented in flow-go
-	// issue: https://github.com/onflow/flow-emulator/issues/829
-	if conf.ScheduledTransactionsEnabled {
-		env := templates.Environment{
-			FungibleTokenAddress:            sc.FungibleToken.Address.String(),
-			FlowTokenAddress:                sc.FlowToken.Address.String(),
-			FlowFeesAddress:                 sc.FlowFees.Address.String(),
-			StorageFeesAddress:              sc.FlowStorageFees.Address.String(),
-			ViewResolverAddress:             sc.ViewResolver.Address.String(),
-			FlowTransactionSchedulerAddress: sc.FlowServiceAccount.Address.String(),
-		}
-		commonContracts = append(commonContracts, emulator.ContractDescription{
-			Name:   "FlowTransactionScheduler",
-			Source: core_contracts.FlowTransactionScheduler(env),
-		})
-
-		// automatically enable contracts since they are needed for scheduled transactions
-		conf.WithContracts = true
-	}
 
 	if conf.WithContracts {
 		err := emulator.DeployContracts(emulatedBlockchain, commonContracts)

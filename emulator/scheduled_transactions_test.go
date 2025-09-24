@@ -54,9 +54,9 @@ func TestParseSchedulerPendingExecutionEvent(t *testing.T) {
 
 	tests := []struct {
 		name             string
-		event          flowsdk.Event
-		serviceAddress flowgo.Address
-		expectedLimit  uint64
+		event            flowsdk.Event
+		serviceAddress   flowgo.Address
+		expectedLimit    uint64
 		expectedID       []byte
 		expectedPriority uint8
 		expectedOwner    cadence.Address

@@ -1280,6 +1280,7 @@ func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 
 	// lastly execute any scheduled transactions if the feature is enabled
 	if b.conf.ScheduledTransactionsEnabled {
+
 		// todo refactor after bootstrap deploys TransactionScheduler
 		// this is a temporary workaround since deployment of TransactionScheduler is not
 		// yet part of bootstrap procedure, so it must be deployed in the first block
@@ -1933,6 +1934,7 @@ func (b *Blockchain) executeScheduledTransactions(blockContext fvm.Context) ([]*
 
 	for _, tx := range executeTxs {
 		b.pendingBlock.AddTransaction(tx)
+
 		result, err := b.executeNextTransaction(ctx)
 		if err != nil {
 			return results, err
