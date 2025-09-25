@@ -1914,7 +1914,6 @@ func (b *Blockchain) executeScheduledTransactions(blockContext fvm.Context) ([]*
 	)
 
 	// process scheduled transactions out-of-band (do not alter collections)
-	b.conf.ServerLogger.Info().Msg("Processing scheduled transactions")
 	processTx := processScheduledTransaction(serviceAddress, parentID)
 	executionSnapshot, output, err := b.vm.Run(
 		ctx,
