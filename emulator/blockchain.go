@@ -1394,12 +1394,14 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 		return nil, err
 	}
 
-	// execute scheduled transactions out-of-band before the system chunk (does not change collections or payload)
+	// execute scheduled transactions out-of-band before the system chunk
+	// (does not change collections or payload)
 	blockContext := fvm.NewContextFromParent(
 		b.vmCtx,
 		fvm.WithBlockHeader(block.ToHeader()),
 	)
 	if b.conf.ScheduledTransactionsEnabled {
+		// TODO: use result
 		if _, err := b.executeScheduledTransactions(blockContext); err != nil {
 			return nil, err
 		}

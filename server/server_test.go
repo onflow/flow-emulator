@@ -164,7 +164,6 @@ func TestScheduledCallback_IncrementsCounter(t *testing.T) {
 		WithContracts:                true,
 		ScheduledTransactionsEnabled: true,
 		ChainID:                      "flow-emulator",
-		BlockTime:                    1 * time.Second,
 	}
 
 	server := NewEmulatorServer(&logger, conf)
@@ -292,6 +291,10 @@ func TestScheduledCallback_IncrementsCounter(t *testing.T) {
 	require.NoError(t, server.Emulator().SendTransaction(convert.SDKTransactionToFlow(*tx)))
 	_, results, err = server.Emulator().ExecuteAndCommitBlock()
 	require.NoError(t, err)
+
+	// ensure scheduled timestamp is in the past relative to next commit
+	time.Sleep(1500 * time.Millisecond)
+
 	for i, r := range results {
 		r.Succeeded()
 		txBody, _ := server.emulator.GetTransaction(flowgo.Identifier(flowgo.MakeIDFromFingerPrint(r.TransactionID.Bytes())))
@@ -301,11 +304,9 @@ func TestScheduledCallback_IncrementsCounter(t *testing.T) {
 		}
 	}
 
-	// Commit a couple of follow-up blocks to allow scheduled processing
-	for k := 0; k < 2; k++ {
-		_, _, err = server.Emulator().ExecuteAndCommitBlock()
-		require.NoError(t, err)
-	}
+	// Commit one follow-up block to allow scheduled processing
+	_, _, err = server.Emulator().ExecuteAndCommitBlock()
+	require.NoError(t, err)
 
 	// 3) Verify count incremented by scheduled execution
 	verifyScript := fmt.Sprintf(
