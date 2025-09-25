@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-emulator/convert"
@@ -160,7 +161,10 @@ func TestCustomChainID(t *testing.T) {
 func TestScheduledCallback_IncrementsCounter(t *testing.T) {
 	logger := zerolog.Nop()
 	conf := &Config{
+		WithContracts:                true,
 		ScheduledTransactionsEnabled: true,
+		ChainID:                      "flow-emulator",
+		BlockTime:                    1 * time.Second,
 	}
 
 	server := NewEmulatorServer(&logger, conf)
@@ -299,10 +303,7 @@ func TestScheduledCallback_IncrementsCounter(t *testing.T) {
 
 	// Commit a couple of follow-up blocks to allow scheduled processing
 	for k := 0; k < 2; k++ {
-		_, txResults, err := server.Emulator().ExecuteAndCommitBlock()
-		for _, txResult := range txResults {
-			require.NoError(t, txResult.Error)
-		}
+		_, _, err = server.Emulator().ExecuteAndCommitBlock()
 		require.NoError(t, err)
 	}
 
