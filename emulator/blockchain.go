@@ -657,6 +657,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithReusableCadenceRuntimePool(customRuntimePool),
 		fvm.WithEntropyProvider(blockchain.entropyProvider),
 		fvm.WithEVMEnabled(true),
+		fvm.WithScheduleCallbacksEnabled(conf.ScheduledTransactionsEnabled),
 	}
 
 	if !conf.TransactionValidationEnabled {
@@ -1393,8 +1394,7 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 		return nil, err
 	}
 
-	// execute scheduled transactions out-of-band before the system chunk
-	// (does not change collections or payload)
+	// execute scheduled transactions out-of-band before the system chunk (does not change collections or payload)
 	blockContext := fvm.NewContextFromParent(
 		b.vmCtx,
 		fvm.WithBlockHeader(block.ToHeader()),
@@ -1912,6 +1912,7 @@ func (b *Blockchain) executeScheduledTransactions(blockContext fvm.Context) ([]*
 	)
 
 	// process scheduled transactions out-of-band (do not alter collections)
+	b.conf.ServerLogger.Info().Msg("Processing scheduled transactions")
 	processTx := processScheduledTransaction(serviceAddress, parentID)
 	executionSnapshot, output, err := b.vm.Run(
 		ctx,
