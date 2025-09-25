@@ -217,7 +217,7 @@ func TestScheduledCallback_IncrementsCounter(t *testing.T) {
 	require.NoError(t, tx.SignEnvelope(serviceAddress, server.Emulator().ServiceKey().Index, signer))
 
 	require.NoError(t, server.Emulator().SendTransaction(convert.SDKTransactionToFlow(*tx)))
-	_, results, err := server.Emulator().ExecuteAndCommitBlock()
+	_, _, err = server.Emulator().ExecuteAndCommitBlock()
 	require.NoError(t, err)
 
 	// 2) Create handler and schedule a callback to increment count
@@ -289,16 +289,11 @@ func TestScheduledCallback_IncrementsCounter(t *testing.T) {
 	require.NoError(t, tx.SignEnvelope(serviceAddress, server.Emulator().ServiceKey().Index, signer))
 
 	require.NoError(t, server.Emulator().SendTransaction(convert.SDKTransactionToFlow(*tx)))
-	_, results, err = server.Emulator().ExecuteAndCommitBlock()
+	_, results, err := server.Emulator().ExecuteAndCommitBlock()
 	require.NoError(t, err)
-
-	// ensure scheduled timestamp is in the past relative to next commit
-	time.Sleep(4000 * time.Millisecond)
 
 	for i, r := range results {
 		r.Succeeded()
-		txBody, _ := server.emulator.GetTransaction(flowgo.Identifier(flowgo.MakeIDFromFingerPrint(r.TransactionID.Bytes())))
-		t.Logf("schedule block tx %d txBody: %v", i, txBody)
 		if r.Error != nil {
 			t.Fatalf("schedule block tx %d failed: %v", i, r.Error)
 		}
