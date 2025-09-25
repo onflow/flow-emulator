@@ -394,6 +394,7 @@ func TestPendingBlockCommit(t *testing.T) {
 
 		// Execute and commit pending block
 		block, results, err := b.ExecuteAndCommitBlock()
+
 		assert.NoError(t, err)
 		assert.Equal(t, blockID, block.ID())
 		assert.Len(t, results, 1)

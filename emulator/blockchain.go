@@ -466,6 +466,7 @@ var defaultConfig = func() config {
 		CoverageReport:               nil,
 		AutoMine:                     false,
 		ComputationReportingEnabled:  false,
+		ScheduledTransactionsEnabled: true,
 		SetupEVMEnabled:              true,
 		SetupVMBridgeEnabled:         true,
 	}
@@ -656,6 +657,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithReusableCadenceRuntimePool(customRuntimePool),
 		fvm.WithEntropyProvider(blockchain.entropyProvider),
 		fvm.WithEVMEnabled(true),
+		fvm.WithScheduleCallbacksEnabled(conf.ScheduledTransactionsEnabled),
 	}
 
 	if !conf.TransactionValidationEnabled {
@@ -1278,24 +1280,6 @@ func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 		results = append(results, result)
 	}
 
-	// lastly execute any scheduled transactions if the feature is enabled
-	if b.conf.ScheduledTransactionsEnabled {
-
-		// todo refactor after bootstrap deploys TransactionScheduler
-		// this is a temporary workaround since deployment of TransactionScheduler is not
-		// yet part of bootstrap procedure, so it must be deployed in the first block
-		// during emulator startup, so we shouldn't support scheduling in these first blocks
-		if b.pendingBlock.height < 2 {
-			return results, nil
-		}
-
-		transactions, err := b.executeScheduledTransactions(blockContext)
-		if err != nil {
-			return results, err
-		}
-		results = append(results, transactions...)
-	}
-
 	return results, nil
 }
 
@@ -1408,6 +1392,19 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	transactionResults, err := convertToSealedResults(b.pendingBlock.TransactionResults(), b.pendingBlock.ID(), b.pendingBlock.height)
 	if err != nil {
 		return nil, err
+	}
+
+	// execute scheduled transactions out-of-band before the system chunk
+	// (does not change collections or payload)
+	blockContext := fvm.NewContextFromParent(
+		b.vmCtx,
+		fvm.WithBlockHeader(block.ToHeader()),
+	)
+	if b.conf.ScheduledTransactionsEnabled {
+		// TODO: use result
+		if _, err := b.executeScheduledTransactions(blockContext); err != nil {
+			return nil, err
+		}
 	}
 
 	// lastly we execute the system chunk transaction
@@ -1916,30 +1913,48 @@ func (b *Blockchain) executeScheduledTransactions(blockContext fvm.Context) ([]*
 		fvm.WithSequenceNumberCheckAndIncrementEnabled(false),
 	)
 
-	// add transaction to process scheduled transactions
-	b.pendingBlock.AddTransaction(processScheduledTransaction(serviceAddress, parentID))
-	result, err := b.executeNextTransaction(ctx)
+	// process scheduled transactions out-of-band (do not alter collections)
+	b.conf.ServerLogger.Info().Msg("Processing scheduled transactions")
+	processTx := processScheduledTransaction(serviceAddress, parentID)
+	executionSnapshot, output, err := b.vm.Run(
+		ctx,
+		fvm.Transaction(&processTx, uint32(len(b.pendingBlock.Transactions()))),
+		b.pendingBlock.ledgerState,
+	)
 	if err != nil {
 		return results, err
 	}
-	results = append(results, result)
+	// record events and state changes
+	b.pendingBlock.events = append(b.pendingBlock.events, output.Events...)
+	if err := b.pendingBlock.ledgerState.Merge(executionSnapshot); err != nil {
+		return results, err
+	}
 
-	// execute scheduled transactions we receive from events of the schedule transaction
 	// filter to only process PendingExecution events
-	pendingExecutionEvents := filterPendingExecutionEvents(result.Events, serviceAddress)
+	sdkEvents, err := convert.FlowEventsToSDK(output.Events)
+	if err != nil {
+		return results, err
+	}
+	pendingExecutionEvents := filterPendingExecutionEvents(sdkEvents, serviceAddress)
 	executeTxs, err := executeScheduledTransactions(pendingExecutionEvents, serviceAddress, parentID)
 	if err != nil {
 		return results, err
 	}
 
+	// execute scheduled transactions out-of-band
 	for _, tx := range executeTxs {
-		b.pendingBlock.AddTransaction(tx)
-
-		result, err := b.executeNextTransaction(ctx)
+		execSnapshot, execOutput, err := b.vm.Run(
+			ctx,
+			fvm.Transaction(&tx, uint32(len(b.pendingBlock.Transactions()))),
+			b.pendingBlock.ledgerState,
+		)
 		if err != nil {
 			return results, err
 		}
-		results = append(results, result)
+		b.pendingBlock.events = append(b.pendingBlock.events, execOutput.Events...)
+		if err := b.pendingBlock.ledgerState.Merge(execSnapshot); err != nil {
+			return results, err
+		}
 	}
 
 	return results, nil
