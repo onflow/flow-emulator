@@ -466,6 +466,7 @@ var defaultConfig = func() config {
 		CoverageReport:               nil,
 		AutoMine:                     false,
 		ComputationReportingEnabled:  false,
+		ScheduledTransactionsEnabled: true,
 		SetupEVMEnabled:              true,
 		SetupVMBridgeEnabled:         true,
 	}
@@ -1280,7 +1281,6 @@ func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 
 	// lastly execute any scheduled transactions if the feature is enabled
 	if b.conf.ScheduledTransactionsEnabled {
-
 		// todo refactor after bootstrap deploys TransactionScheduler
 		// this is a temporary workaround since deployment of TransactionScheduler is not
 		// yet part of bootstrap procedure, so it must be deployed in the first block

@@ -80,7 +80,7 @@ type Config struct {
 	CheckpointPath               string        `default:"" flag:"checkpoint-dir" info:"checkpoint directory to load the emulator state from"`
 	StateHash                    string        `default:"" flag:"state-hash" info:"state hash of the checkpoint to load the emulator state from"`
 	ComputationReportingEnabled  bool          `default:"false" flag:"computation-reporting" info:"enable Cadence computation reporting"`
-	ScheduledTransactionsEnabled bool          `default:"false" flag:"scheduled-transactions" info:"enable Cadence scheduled transactions"`
+	ScheduledTransactionsEnabled bool          `default:"true" flag:"scheduled-transactions" info:"enable Cadence scheduled transactions"`
 	SetupEVMEnabled              bool          `default:"true" flag:"setup-evm" info:"enable EVM setup for the emulator, this will deploy the EVM contracts"`
 	SetupVMBridgeEnabled         bool          `default:"true" flag:"setup-vm-bridge" info:"enable VM Bridge setup for the emulator, this will deploy the VM Bridge contracts"`
 }
