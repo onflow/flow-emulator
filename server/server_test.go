@@ -293,7 +293,7 @@ func TestScheduledCallback_IncrementsCounter(t *testing.T) {
 	require.NoError(t, err)
 
 	// ensure scheduled timestamp is in the past relative to next commit
-	time.Sleep(1500 * time.Millisecond)
+	time.Sleep(4000 * time.Millisecond)
 
 	for i, r := range results {
 		r.Succeeded()
@@ -304,7 +304,11 @@ func TestScheduledCallback_IncrementsCounter(t *testing.T) {
 		}
 	}
 
-	// Commit one follow-up block to allow scheduled processing
+	// Sleep-commit-sleep-commit to ensure pending block timestamp advances past the scheduled time
+	time.Sleep(1500 * time.Millisecond)
+	_, _, err = server.Emulator().ExecuteAndCommitBlock()
+	require.NoError(t, err)
+	time.Sleep(1500 * time.Millisecond)
 	_, _, err = server.Emulator().ExecuteAndCommitBlock()
 	require.NoError(t, err)
 
