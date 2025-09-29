@@ -88,6 +88,44 @@ func PrintTransactionResult(logger *zerolog.Logger, result *types.TransactionRes
 	}
 }
 
+// PrintScheduledTransactionResult prints a clearly labeled log entry for scheduled transactions
+// execute transactions so they can be easily distinguished from user transactions.
+func PrintScheduledTransactionResult(logger *zerolog.Logger, result *types.TransactionResult, scheduledTxID string) {
+	if result.Succeeded() {
+		logger.Debug().
+			Str("systemTxId", result.TransactionID.String()).
+			Str("scheduledTxId", scheduledTxID).
+			Uint64("computationUsed", result.ComputationUsed).
+			Uint64("memoryEstimate", result.MemoryEstimate).
+			Str("kind", "scheduled").
+			Msg("⏱️  Scheduled transaction executed")
+	} else {
+		logger.Warn().
+			Str("systemTxId", result.TransactionID.String()).
+			Str("scheduledTxId", scheduledTxID).
+			Uint64("computationUsed", result.ComputationUsed).
+			Uint64("memoryEstimate", result.MemoryEstimate).
+			Str("kind", "scheduled").
+			Msg("❗  Scheduled transaction reverted")
+	}
+
+	for _, event := range result.Events {
+		logger.Debug().Msgf(
+			"%s %s",
+			logPrefix("EVT-SYS", result.TransactionID, aurora.GreenFg),
+			event,
+		)
+	}
+
+	if !result.Succeeded() {
+		logger.Warn().Msgf(
+			"%s %s",
+			logPrefix("ERR-SYS", result.TransactionID, aurora.RedFg),
+			result.Error.Error(),
+		)
+	}
+}
+
 func logPrefix(prefix string, id flowsdk.Identifier, color aurora.Color) string {
 	prefix = aurora.Colorize(prefix, color|aurora.BoldFm).String()
 	shortID := fmt.Sprintf("[%s]", id.String()[:6])
