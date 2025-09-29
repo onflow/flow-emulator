@@ -1935,13 +1935,13 @@ func (b *Blockchain) executeScheduledTransactions(blockContext fvm.Context) ([]*
 		return results, err
 	}
 	pendingExecutionEvents := filterPendingExecutionEvents(sdkEvents, serviceAddress)
-	executeTxs, err := executeScheduledTransactions(pendingExecutionEvents, serviceAddress, parentID)
+	executeTxs, scheduledIDs, err := executeScheduledTransactions(pendingExecutionEvents, serviceAddress, parentID)
 	if err != nil {
 		return results, err
 	}
 
 	// execute scheduled transactions out-of-band
-	for _, tx := range executeTxs {
+	for idx, tx := range executeTxs {
 		execSnapshot, execOutput, err := b.vm.Run(
 			ctx,
 			fvm.Transaction(&tx, uint32(len(b.pendingBlock.Transactions()))),
@@ -1950,6 +1950,18 @@ func (b *Blockchain) executeScheduledTransactions(blockContext fvm.Context) ([]*
 		if err != nil {
 			return results, err
 		}
+
+		// Print scheduled transaction result (labeled), including app-level scheduled tx id
+		schedResult, err := convert.VMTransactionResultToEmulator(tx.ID(), execOutput)
+		if err != nil {
+			return results, err
+		}
+		appScheduledID := ""
+		if idx < len(scheduledIDs) {
+			appScheduledID = scheduledIDs[idx]
+		}
+		utils.PrintScheduledTransactionResult(&b.conf.ServerLogger, schedResult, appScheduledID)
+
 		b.pendingBlock.events = append(b.pendingBlock.events, execOutput.Events...)
 		if err := b.pendingBlock.ledgerState.Merge(execSnapshot); err != nil {
 			return results, err

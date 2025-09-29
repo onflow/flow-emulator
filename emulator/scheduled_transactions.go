@@ -86,8 +86,10 @@ func executeScheduledTransactions(
 	pendingExecutionEvents []flowsdk.Event,
 	serviceAddress flowgo.Address,
 	parentID flowgo.Identifier,
-) ([]flowgo.TransactionBody, error) {
-	var transactions []flowgo.TransactionBody
+) (transactions []flowgo.TransactionBody, scheduledIDs []string, err error) {
+	transactions = make([]flowgo.TransactionBody, 0)
+	scheduledIDs = make([]string, 0)
+
 	env := templates.Environment{
 		FlowTransactionSchedulerAddress: serviceAddress.HexWithPrefix(),
 	}
@@ -97,7 +99,7 @@ func executeScheduledTransactions(
 	for _, e := range pendingExecutionEvents {
 		id, _, limit, _, err := parseSchedulerPendingExecutionEvent(e, serviceAddress)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		txBuilder := flowgo.NewTransactionBodyBuilder().
@@ -110,13 +112,14 @@ func executeScheduledTransactions(
 
 		tx, err := txBuilder.Build()
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		transactions = append(transactions, *tx)
+		scheduledIDs = append(scheduledIDs, string(id))
 	}
 
-	return transactions, nil
+	return transactions, scheduledIDs, nil
 }
 
 // parseSchedulerPendingExecutionEvent parses flow event that is emitted during scheduler
