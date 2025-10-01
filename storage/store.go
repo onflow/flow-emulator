@@ -43,6 +43,8 @@ const (
 	LedgerStoreName            = "ledger"
 )
 
+var mockProtocolStateID = flowgo.HashToID([]byte{0x1})
+
 // Store defines the storage layer for persistent chain state.
 //
 // This includes finalized blocks and transactions, and the resultant register
@@ -626,7 +628,7 @@ func (s *DefaultStore) LedgerByHeight(
 func CreateGenesisBlock(chainID flowgo.ChainID) (*flowgo.Block, error) {
 	// create the raw content for the genesis block
 	payload := flowgo.Payload{
-		ProtocolStateID: flowgo.HashToID([]byte("123")),
+		ProtocolStateID: mockProtocolStateID,
 	}
 
 	// create the headerBody

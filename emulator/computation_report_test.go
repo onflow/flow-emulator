@@ -166,6 +166,6 @@ func TestComputationReportingForTransaction(t *testing.T) {
 		"TransferCompositeValue": 3,
 	}
 	for kind, intensity := range expectedIntensities {
-		assert.GreaterOrEqual(t, txProfile.Intensities[kind], intensity)
+		assert.GreaterOrEqualf(t, txProfile.Intensities[kind], intensity, "expected intensity for kind %s to be greater or equal to %d", kind, intensity)
 	}
 }
