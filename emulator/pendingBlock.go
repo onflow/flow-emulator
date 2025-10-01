@@ -33,6 +33,14 @@ type IndexedTransactionResult struct {
 	Index uint32
 }
 
+// mock consensus values since emulator doesn't include consensus layer
+var (
+	mockParentVoterIndices = []byte{0x01}
+	mockParentVoterSigData = []byte{0x01}
+	mockProposerID         = flowgo.HashToID([]byte{0x01})
+	mockProtocolStateID    = flowgo.HashToID([]byte{0x01})
+)
+
 // MaxViewIncrease represents the largest difference in view number between
 // two consecutive blocks. The minimum view increment is 1.
 const MaxViewIncrease = 3
@@ -105,15 +113,19 @@ func (b *pendingBlock) Block() *flowgo.Block {
 	// Create block using NewBlock constructor
 	block, err := flowgo.NewBlock(flowgo.UntrustedBlock{
 		HeaderBody: flowgo.HeaderBody{
-			Height:     b.height,
-			View:       b.view,
-			ParentID:   b.parentID,
-			Timestamp:  uint64(b.timestamp.UnixMilli()),
-			ParentView: b.view - 1,
-			ChainID:    b.chainID,
+			Height:             b.height,
+			View:               b.view,
+			ParentID:           b.parentID,
+			Timestamp:          uint64(b.timestamp.UnixMilli()),
+			ParentView:         b.view - 1,
+			ChainID:            b.chainID,
+			ParentVoterIndices: mockParentVoterIndices,
+			ParentVoterSigData: mockParentVoterSigData,
+			ProposerID:         mockProposerID,
 		},
 		Payload: flowgo.Payload{
-			Guarantees: guarantees,
+			Guarantees:      guarantees,
+			ProtocolStateID: mockProtocolStateID,
 		},
 	})
 	if err != nil {
