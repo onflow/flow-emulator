@@ -70,7 +70,7 @@ func TestBlocks(t *testing.T) {
 		})
 
 		t.Run("BlockByHeight", func(t *testing.T) {
-			_, err := store.BlockByHeight(context.Background(), block1.Header.Height)
+			_, err := store.BlockByHeight(context.Background(), block1.HeaderBody.Height)
 			if assert.Error(t, err) {
 				assert.Equal(t, storage.ErrNotFound, err)
 			}
@@ -95,7 +95,7 @@ func TestBlocks(t *testing.T) {
 
 	t.Run("should be able to get inserted block", func(t *testing.T) {
 		t.Run("BlockByHeight", func(t *testing.T) {
-			block, err := store.BlockByHeight(context.Background(), block1.Header.Height)
+			block, err := store.BlockByHeight(context.Background(), block1.HeaderBody.Height)
 			assert.NoError(t, err)
 			assert.Equal(t, block1, block)
 		})

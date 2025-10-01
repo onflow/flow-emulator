@@ -29,6 +29,7 @@ import (
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/convert"
 	"github.com/onflow/flow-emulator/emulator"
+	"github.com/onflow/flow-emulator/storage"
 
 	"github.com/onflow/cadence"
 	flowsdk "github.com/onflow/flow-go-sdk"
@@ -148,7 +149,7 @@ func TestInitialization(t *testing.T) {
 		minedTx, err := adapter.GetTransaction(context.Background(), tx.ID())
 		require.NoError(t, err)
 
-		minedEvents, err := adapter.GetEventsForHeightRange(context.Background(), "", block.Header.Height, block.Header.Height)
+		minedEvents, err := adapter.GetEventsForHeightRange(context.Background(), "", block.HeaderBody.Height, block.HeaderBody.Height)
 		require.NoError(t, err)
 
 		// Create a new emulator with the same store
@@ -161,7 +162,7 @@ func TestInitialization(t *testing.T) {
 
 			assert.Equal(t, flowsdk.Identifier(block.ID()), latestBlock.ID)
 
-			blockByHeight, _, err := adapter.GetBlockByHeight(context.Background(), block.Header.Height)
+			blockByHeight, _, err := adapter.GetBlockByHeight(context.Background(), block.HeaderBody.Height)
 			require.NoError(t, err)
 
 			assert.Equal(t, flowsdk.Identifier(block.ID()), blockByHeight.ID)
@@ -180,7 +181,7 @@ func TestInitialization(t *testing.T) {
 		})
 
 		t.Run("should be able to read events", func(t *testing.T) {
-			gotEvents, err := adapter.GetEventsForHeightRange(context.Background(), "", block.Header.Height, block.Header.Height)
+			gotEvents, err := adapter.GetEventsForHeightRange(context.Background(), "", block.HeaderBody.Height, block.HeaderBody.Height)
 			require.NoError(t, err)
 
 			assert.Equal(t, minedEvents[0].Events, gotEvents[0].Events)

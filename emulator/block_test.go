@@ -131,8 +131,8 @@ func TestBlockView(t *testing.T) {
 	t.Run("genesis should have 0 view", func(t *testing.T) {
 		block, err := b.GetBlockByHeight(0)
 		require.NoError(t, err)
-		assert.Equal(t, uint64(0), block.Header.Height)
-		assert.Equal(t, uint64(0), block.Header.View)
+		assert.Equal(t, uint64(0), block.HeaderBody.Height)
+		assert.Equal(t, uint64(0), block.HeaderBody.View)
 	})
 
 	addTwoScript, _ := DeployAndGenerateAddTwoScript(t, adapter)
@@ -169,8 +169,8 @@ func TestBlockView(t *testing.T) {
 
 		maxView := height * MaxViewIncrease
 		t.Run(fmt.Sprintf("block %d should have view <%d", height, maxView), func(t *testing.T) {
-			assert.Equal(t, height, block.Header.Height)
-			assert.LessOrEqual(t, block.Header.View, maxView)
+			assert.Equal(t, height, block.HeaderBody.Height)
+			assert.LessOrEqual(t, block.HeaderBody.View, maxView)
 		})
 	}
 }
