@@ -79,36 +79,20 @@ func TestEncodeBlock(t *testing.T) {
 
 	ids := test.IdentifierGenerator()
 
-	block := flowgo.Block{
-		Header: &flowgo.Header{
+	block, err := flowgo.NewBlock(flowgo.UntrustedBlock{
+		HeaderBody: flowgo.HeaderBody{
 			Height:   1234,
 			ParentID: flowgo.Identifier(ids.New()),
 		},
-		Payload: &flowgo.Payload{
+		Payload: flowgo.Payload{
 			Guarantees: []*flowgo.CollectionGuarantee{
 				{
 					CollectionID: flowgo.Identifier(ids.New()),
 				},
 			},
 		},
-	}
-
-	data, err := encodeBlock(block)
+	})
 	require.Nil(t, err)
-
-	var decodedBlock flowgo.Block
-	err = decodeBlock(&decodedBlock, data)
-	require.Nil(t, err)
-
-	assert.Equal(t, block.ID(), decodedBlock.ID())
-	assert.Equal(t, *block.Header, *decodedBlock.Header)
-	assert.Equal(t, *block.Payload, *decodedBlock.Payload)
-}
-func TestEncodeGenesisBlock(t *testing.T) {
-
-	t.Parallel()
-
-	block := flowgo.Genesis(flowgo.Emulator)
 
 	data, err := encodeBlock(*block)
 	require.Nil(t, err)
@@ -118,8 +102,26 @@ func TestEncodeGenesisBlock(t *testing.T) {
 	require.Nil(t, err)
 
 	assert.Equal(t, block.ID(), decodedBlock.ID())
-	assert.Equal(t, *block.Header, *decodedBlock.Header)
-	assert.Equal(t, *block.Payload, *decodedBlock.Payload)
+	assert.Equal(t, block.HeaderBody, decodedBlock.HeaderBody)
+	assert.Equal(t, block.Payload, decodedBlock.Payload)
+}
+func TestEncodeGenesisBlock(t *testing.T) {
+
+	t.Parallel()
+
+	block, err := CreateGenesisBlock(flowgo.Emulator)
+	require.Nil(t, err)
+
+	data, err := encodeBlock(*block)
+	require.Nil(t, err)
+
+	var decodedBlock flowgo.Block
+	err = decodeBlock(&decodedBlock, data)
+	require.Nil(t, err)
+
+	assert.Equal(t, block.ID(), decodedBlock.ID())
+	assert.Equal(t, block.HeaderBody, decodedBlock.HeaderBody)
+	assert.Equal(t, block.Payload, decodedBlock.Payload)
 }
 
 func TestEncodeEvents(t *testing.T) {

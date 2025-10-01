@@ -18,6 +18,7 @@
 package emulator
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -64,10 +65,10 @@ func newPendingBlock(
 	clock Clock,
 ) *pendingBlock {
 	return &pendingBlock{
-		height: prevBlock.Header.Height + 1,
+		height: prevBlock.HeaderBody.Height + 1,
 		// the view increments by between 1 and MaxViewIncrease to match
 		// behaviour on a real network, where views are not consecutive
-		view:               prevBlock.Header.View + uint64(rand.Intn(MaxViewIncrease)+1),
+		view:               prevBlock.HeaderBody.View + uint64(rand.Intn(MaxViewIncrease)+1),
 		parentID:           prevBlock.ID(),
 		clock:              clock,
 		timestamp:          clock.Now(),
@@ -98,17 +99,24 @@ func (b *pendingBlock) Block() *flowgo.Block {
 		}
 	}
 
-	return &flowgo.Block{
-		Header: &flowgo.Header{
-			Height:    b.height,
-			View:      b.view,
-			ParentID:  b.parentID,
-			Timestamp: b.timestamp,
+	// Create block using NewBlock constructor
+	block, err := flowgo.NewBlock(flowgo.UntrustedBlock{
+		HeaderBody: flowgo.HeaderBody{
+			Height:     b.height,
+			View:       b.view,
+			ParentID:   b.parentID,
+			Timestamp:  uint64(b.timestamp.UnixMilli()),
+			ParentView: b.view - 1,
 		},
-		Payload: &flowgo.Payload{
+		Payload: flowgo.Payload{
 			Guarantees: guarantees,
 		},
+	})
+	if err != nil {
+		// This should not happen for valid blocks
+		panic(fmt.Sprintf("failed to create block: %v", err))
 	}
+	return block
 }
 
 func (b *pendingBlock) Collections() []*flowgo.LightCollection {

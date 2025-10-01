@@ -79,19 +79,21 @@ func TestAccess(t *testing.T) {
 
 	t.Run("GetLatestBlockHeader", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
-		header := flowgo.Header{
-			Height: 42,
-		}
-		expected := flowgo.Block{Header: &header}
+		expected, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
+			HeaderBody: flowgo.HeaderBody{
+				Height: 42,
+			},
+			Payload: flowgo.Payload{},
+		})
 
 		//success
 		emu.EXPECT().
 			GetLatestBlock().
-			Return(&expected, nil).
+			Return(expected, nil).
 			Times(1)
 
 		result, blockStatus, err := adapter.GetLatestBlockHeader(context.Background(), true)
-		assert.Equal(t, expected.Header, result)
+		assert.Equal(t, expected.ToHeader(), result)
 		assert.Equal(t, flowgo.BlockStatusSealed, blockStatus)
 		assert.NoError(t, err)
 
@@ -110,19 +112,21 @@ func TestAccess(t *testing.T) {
 
 	t.Run("GetBlockHeaderByHeight", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
-		header := flowgo.Header{
-			Height: 42,
-		}
-		expected := flowgo.Block{Header: &header}
+		expected, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
+			HeaderBody: flowgo.HeaderBody{
+				Height: 42,
+			},
+			Payload: flowgo.Payload{},
+		})
 
 		//success
 		emu.EXPECT().
 			GetBlockByHeight(uint64(42)).
-			Return(&expected, nil).
+			Return(expected, nil).
 			Times(1)
 
 		result, blockStatus, err := adapter.GetBlockHeaderByHeight(context.Background(), 42)
-		assert.Equal(t, expected.Header, result)
+		assert.Equal(t, expected.ToHeader(), result)
 		assert.Equal(t, flowgo.BlockStatusSealed, blockStatus)
 		assert.NoError(t, err)
 
@@ -142,19 +146,21 @@ func TestAccess(t *testing.T) {
 	t.Run("GetBlockHeaderByID", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
 		id := flowgo.Identifier{}
-		header := flowgo.Header{
-			Height: 42,
-		}
-		expected := flowgo.Block{Header: &header}
+		expected, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
+			HeaderBody: flowgo.HeaderBody{
+				Height: 42,
+			},
+			Payload: flowgo.Payload{},
+		})
 
 		//success
 		emu.EXPECT().
 			GetBlockByID(id).
-			Return(&expected, nil).
+			Return(expected, nil).
 			Times(1)
 
 		result, blockStatus, err := adapter.GetBlockHeaderByID(context.Background(), id)
-		assert.Equal(t, expected.Header, result)
+		assert.Equal(t, expected.ToHeader(), result)
 		assert.Equal(t, flowgo.BlockStatusSealed, blockStatus)
 		assert.NoError(t, err)
 
@@ -173,15 +179,17 @@ func TestAccess(t *testing.T) {
 
 	t.Run("GetLatestBlock", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
-		header := flowgo.Header{
-			Height: 42,
-		}
-		expected := flowgo.Block{Header: &header}
+		expected, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
+			HeaderBody: flowgo.HeaderBody{
+				Height: 42,
+			},
+			Payload: flowgo.Payload{},
+		})
 
 		//success
 		emu.EXPECT().
 			GetLatestBlock().
-			Return(&expected, nil).
+			Return(expected, nil).
 			Times(1)
 
 		result, blockStatus, err := adapter.GetLatestBlock(context.Background(), true)
@@ -204,15 +212,17 @@ func TestAccess(t *testing.T) {
 
 	t.Run("GetBlockByHeight", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
-		header := flowgo.Header{
-			Height: 42,
-		}
-		expected := flowgo.Block{Header: &header}
+		expected, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
+			HeaderBody: flowgo.HeaderBody{
+				Height: 42,
+			},
+			Payload: flowgo.Payload{},
+		})
 
 		//success
 		emu.EXPECT().
 			GetBlockByHeight(uint64(42)).
-			Return(&expected, nil).
+			Return(expected, nil).
 			Times(1)
 
 		result, blockStatus, err := adapter.GetBlockByHeight(context.Background(), 42)
@@ -236,15 +246,17 @@ func TestAccess(t *testing.T) {
 	t.Run("GetBlockByID", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 
 		id := flowgo.Identifier{}
-		header := flowgo.Header{
-			Height: 42,
-		}
-		expected := flowgo.Block{Header: &header}
+		expected, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
+			HeaderBody: flowgo.HeaderBody{
+				Height: 42,
+			},
+			Payload: flowgo.Payload{},
+		})
 
 		//success
 		emu.EXPECT().
 			GetBlockByID(id).
-			Return(&expected, nil).
+			Return(expected, nil).
 			Times(1)
 
 		result, blockStatus, err := adapter.GetBlockByID(context.Background(), id)
@@ -453,7 +465,7 @@ func TestAccess(t *testing.T) {
 		// called once for each script execution
 		emu.EXPECT().
 			GetLatestBlock().
-			Return(&flowgo.Block{Header: &flowgo.Header{}}, nil).
+			Return(func() *flowgo.Block { b, _ := flowgo.NewBlock(flowgo.UntrustedBlock{HeaderBody: flowgo.HeaderBody{}, Payload: flowgo.Payload{}}); return b }(), nil).
 			Times(2)
 
 		//success

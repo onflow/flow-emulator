@@ -27,7 +27,6 @@ import (
 	"os"
 
 	"github.com/onflow/flow-go/engine/access/rest"
-	"github.com/onflow/flow-go/engine/access/rest/common"
 	"github.com/onflow/flow-go/engine/access/rest/router"
 	"github.com/onflow/flow-go/engine/access/rest/websockets"
 	"github.com/onflow/flow-go/engine/access/state_stream"
@@ -133,7 +132,7 @@ func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 			WriteTimeout:   rest.DefaultWriteTimeout,
 			ReadTimeout:    rest.DefaultReadTimeout,
 			IdleTimeout:    rest.DefaultIdleTimeout,
-			MaxRequestSize: common.DefaultMaxRequestSize,
+			MaxRequestSize: 1024 * 1024 * 10, // 10 MB default max request size
 		},
 		debugLogger,
 		chain,

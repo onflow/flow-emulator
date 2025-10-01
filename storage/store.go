@@ -216,7 +216,7 @@ func (s *DefaultStore) LatestBlock(ctx context.Context) (block flowgo.Block, err
 }
 
 func (s *DefaultStore) StoreBlock(ctx context.Context, block *flowgo.Block) error {
-	s.CurrentHeight = block.Header.Height
+	s.CurrentHeight = block.HeaderBody.Height
 
 	encBlock, err := encodeBlock(*block)
 	if err != nil {
@@ -232,7 +232,7 @@ func (s *DefaultStore) StoreBlock(ctx context.Context, block *flowgo.Block) erro
 	if err := s.DataSetter.SetBytes(
 		ctx,
 		s.KeyGenerator.Storage(BlockStoreName),
-		s.KeyGenerator.BlockHeight(block.Header.Height),
+		s.KeyGenerator.BlockHeight(block.HeaderBody.Height),
 		encBlock,
 	); err != nil {
 		return err
@@ -243,18 +243,18 @@ func (s *DefaultStore) StoreBlock(ctx context.Context, block *flowgo.Block) erro
 		ctx,
 		s.KeyGenerator.Storage(BlockIndexStoreName),
 		s.KeyGenerator.Identifier(block.ID()),
-		mustEncodeUint64(block.Header.Height),
+		mustEncodeUint64(block.HeaderBody.Height),
 	); err != nil {
 		return err
 	}
 
 	// if this is latest block, set latest block
-	if block.Header.Height >= latestBlockHeight {
+	if block.HeaderBody.Height >= latestBlockHeight {
 		return s.DataSetter.SetBytes(
 			ctx,
 			s.KeyGenerator.Storage(globalStoreName),
 			s.KeyGenerator.LatestBlock(),
-			mustEncodeUint64(block.Header.Height),
+			mustEncodeUint64(block.HeaderBody.Height),
 		)
 	}
 	return nil
@@ -565,13 +565,13 @@ func (s *DefaultStore) CommitBlock(
 
 	err = s.InsertExecutionSnapshot(
 		ctx,
-		block.Header.Height,
+		block.HeaderBody.Height,
 		executionSnapshot)
 	if err != nil {
 		return err
 	}
 
-	err = s.InsertEvents(ctx, block.Header.Height, events)
+	err = s.InsertEvents(ctx, block.HeaderBody.Height, events)
 	if err != nil {
 		return err
 	}
@@ -619,4 +619,26 @@ func (s *DefaultStore) LedgerByHeight(
 		ctx:          ctx,
 		blockHeight:  blockHeight,
 	}, nil
+}
+
+// CreateGenesisBlock creates a genesis block for the given chain ID.
+// This replaces the deprecated flowgo.Genesis() function.
+func CreateGenesisBlock(chainID flowgo.ChainID) (*flowgo.Block, error) {
+	// Create a genesis block with height 0, view 0, and zero parent ID
+	// Using the same timestamp as the original Genesis function
+	genesis, err := flowgo.NewRootBlock(flowgo.UntrustedBlock{
+		HeaderBody: flowgo.HeaderBody{
+			ChainID:    chainID,
+			ParentID:   flowgo.ZeroID,
+			Height:     0,
+			View:       0,
+			Timestamp:  uint64(flowgo.GenesisTime.UnixMilli()),
+			ParentView: 0,
+		},
+		Payload: flowgo.Payload{},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return genesis, nil
 }

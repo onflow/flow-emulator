@@ -21,6 +21,7 @@ package adapters
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/onflow/cadence"
 	jsoncdc "github.com/onflow/cadence/encoding/json"
@@ -85,11 +86,12 @@ func (b *SDKAdapter) GetLatestBlockHeader(
 	if err != nil {
 		return nil, sdk.BlockStatusUnknown, status.Error(codes.Internal, err.Error())
 	}
+	header := block.ToHeader()
 	blockHeader := sdk.BlockHeader{
 		ID:        sdk.Identifier(block.ID()),
-		ParentID:  sdk.Identifier(block.Header.ParentID),
-		Height:    block.Header.Height,
-		Timestamp: block.Header.Timestamp,
+		ParentID:  sdk.Identifier(header.ParentID),
+		Height:    header.Height,
+		Timestamp: time.UnixMilli(int64(block.HeaderBody.Timestamp)),
 	}
 	return &blockHeader, sdk.BlockStatusSealed, nil
 }
@@ -107,11 +109,12 @@ func (b *SDKAdapter) GetBlockHeaderByHeight(
 	if err != nil {
 		return nil, sdk.BlockStatusUnknown, status.Error(codes.Internal, err.Error())
 	}
+	header := block.ToHeader()
 	blockHeader := sdk.BlockHeader{
 		ID:        sdk.Identifier(block.ID()),
-		ParentID:  sdk.Identifier(block.Header.ParentID),
-		Height:    block.Header.Height,
-		Timestamp: block.Header.Timestamp,
+		ParentID:  sdk.Identifier(header.ParentID),
+		Height:    header.Height,
+		Timestamp: time.UnixMilli(int64(block.HeaderBody.Timestamp)),
 	}
 	return &blockHeader, sdk.BlockStatusSealed, nil
 }
@@ -129,11 +132,12 @@ func (b *SDKAdapter) GetBlockHeaderByID(
 	if err != nil {
 		return nil, sdk.BlockStatusUnknown, err
 	}
+	header := block.ToHeader()
 	blockHeader := sdk.BlockHeader{
 		ID:        sdk.Identifier(block.ID()),
-		ParentID:  sdk.Identifier(block.Header.ParentID),
-		Height:    block.Header.Height,
-		Timestamp: block.Header.Timestamp,
+		ParentID:  sdk.Identifier(header.ParentID),
+		Height:    header.Height,
+		Timestamp: time.UnixMilli(int64(block.HeaderBody.Timestamp)),
 	}
 	return &blockHeader, sdk.BlockStatusSealed, nil
 }
@@ -151,14 +155,15 @@ func (b *SDKAdapter) GetLatestBlock(
 	if err != nil {
 		return nil, sdk.BlockStatusUnknown, status.Error(codes.Internal, err.Error())
 	}
+	header := flowBlock.ToHeader()
 	block := sdk.Block{
 		BlockHeader: sdk.BlockHeader{
 			ID:        sdk.Identifier(flowBlock.ID()),
-			ParentID:  sdk.Identifier(flowBlock.Header.ParentID),
-			Height:    flowBlock.Header.Height,
-			Timestamp: flowBlock.Header.Timestamp,
+			ParentID:  sdk.Identifier(header.ParentID),
+			Height:    header.Height,
+			Timestamp: time.UnixMilli(int64(flowBlock.HeaderBody.Timestamp)),
 		},
-		BlockPayload: convertBlockPayload(flowBlock.Payload),
+		BlockPayload: convertBlockPayload(&flowBlock.Payload),
 	}
 	return &block, sdk.BlockStatusSealed, nil
 }
@@ -176,14 +181,15 @@ func (b *SDKAdapter) GetBlockByHeight(
 	if err != nil {
 		return nil, sdk.BlockStatusUnknown, status.Error(codes.Internal, err.Error())
 	}
+	header := flowBlock.ToHeader()
 	block := sdk.Block{
 		BlockHeader: sdk.BlockHeader{
 			ID:        sdk.Identifier(flowBlock.ID()),
-			ParentID:  sdk.Identifier(flowBlock.Header.ParentID),
-			Height:    flowBlock.Header.Height,
-			Timestamp: flowBlock.Header.Timestamp,
+			ParentID:  sdk.Identifier(header.ParentID),
+			Height:    header.Height,
+			Timestamp: time.UnixMilli(int64(flowBlock.HeaderBody.Timestamp)),
 		},
-		BlockPayload: convertBlockPayload(flowBlock.Payload),
+		BlockPayload: convertBlockPayload(&flowBlock.Payload),
 	}
 	return &block, sdk.BlockStatusSealed, nil
 }
@@ -201,14 +207,15 @@ func (b *SDKAdapter) GetBlockByID(
 	if err != nil {
 		return nil, sdk.BlockStatusUnknown, status.Error(codes.Internal, err.Error())
 	}
+	header := flowBlock.ToHeader()
 	block := sdk.Block{
 		BlockHeader: sdk.BlockHeader{
 			ID:        sdk.Identifier(flowBlock.ID()),
-			ParentID:  sdk.Identifier(flowBlock.Header.ParentID),
-			Height:    flowBlock.Header.Height,
-			Timestamp: flowBlock.Header.Timestamp,
+			ParentID:  sdk.Identifier(header.ParentID),
+			Height:    header.Height,
+			Timestamp: time.UnixMilli(int64(flowBlock.HeaderBody.Timestamp)),
 		},
-		BlockPayload: convertBlockPayload(flowBlock.Payload),
+		BlockPayload: convertBlockPayload(&flowBlock.Payload),
 	}
 	return &block, sdk.BlockStatusSealed, nil
 }
@@ -340,7 +347,7 @@ func (b *SDKAdapter) ExecuteScriptAtLatestBlock(
 	if err != nil {
 		return nil, err
 	}
-	return b.executeScriptAtBlock(script, arguments, block.Header.Height)
+	return b.executeScriptAtBlock(script, arguments, block.HeaderBody.Height)
 }
 
 // ExecuteScriptAtBlockHeight executes a script at a specific block height
@@ -364,7 +371,7 @@ func (b *SDKAdapter) ExecuteScriptAtBlockID(
 	if err != nil {
 		return nil, err
 	}
-	return b.executeScriptAtBlock(script, arguments, block.Header.Height)
+	return b.executeScriptAtBlock(script, arguments, block.HeaderBody.Height)
 }
 
 // executeScriptAtBlock is a helper for executing a script at a specific block
@@ -399,11 +406,11 @@ func (b *SDKAdapter) GetExecutionResultForBlockID(_ context.Context, _ sdk.Ident
 	return nil, nil
 }
 
-func (b *SDKAdapter) GetSystemTransaction(_ context.Context, _ flowgo.Identifier) (*flowgo.TransactionBody, error) {
+func (b *SDKAdapter) GetSystemTransaction(_ context.Context, _ flowgo.Identifier, _ flowgo.Identifier) (*flowgo.TransactionBody, error) {
 	return nil, nil
 }
 
-func (b *SDKAdapter) GetSystemTransactionResult(_ context.Context, _ flowgo.Identifier, _ entities.EventEncodingVersion) (*accessmodel.TransactionResult, error) {
+func (b *SDKAdapter) GetSystemTransactionResult(_ context.Context, _ flowgo.Identifier, _ flowgo.Identifier, _ entities.EventEncodingVersion) (*accessmodel.TransactionResult, error) {
 	return nil, nil
 }
 

@@ -66,9 +66,11 @@ func TestInitialization(t *testing.T) {
 		latestBlock, err := b.GetLatestBlock()
 		require.NoError(t, err)
 
-		assert.EqualValues(t, 0, latestBlock.Header.Height)
+		assert.EqualValues(t, 0, latestBlock.HeaderBody.Height)
+		genesis, err := storage.CreateGenesisBlock(flowgo.Emulator)
+		require.NoError(t, err)
 		assert.Equal(t,
-			flowgo.Genesis(flowgo.Emulator).ID(),
+			genesis.ID(),
 			latestBlock.ID(),
 		)
 	})

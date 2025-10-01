@@ -77,7 +77,7 @@ func (b *StateStreamBackend) newSubscriptionByBlockId(
 	if err != nil {
 		return subscription.NewFailedSubscription(err, "could not get block by ID")
 	}
-	sub := subscription.NewHeightBasedSubscription(b.sendBufferSize, block.Header.Height, f)
+	sub := subscription.NewHeightBasedSubscription(b.sendBufferSize, block.ToHeader().Height, f)
 	go subscription.NewStreamer(b.log, b.blockchain.Broadcaster(), b.sendTimeout, b.responseLimit, sub).Stream(ctx)
 	return sub
 }
@@ -100,7 +100,7 @@ func (b *StateStreamBackend) newSubscriptionByLatestHeight(
 	if err != nil {
 		return subscription.NewFailedSubscription(err, "could not get latest block")
 	}
-	sub := subscription.NewHeightBasedSubscription(b.sendBufferSize, block.Header.Height, f)
+	sub := subscription.NewHeightBasedSubscription(b.sendBufferSize, block.ToHeader().Height, f)
 	go subscription.NewStreamer(b.log, b.blockchain.Broadcaster(), b.sendTimeout, b.responseLimit, sub).Stream(ctx)
 	return sub
 }
@@ -163,7 +163,7 @@ func getStartHeightFunc(blockchain *emulator.Blockchain) GetStartHeightFunc {
 				return 0, storage.ErrNotFound
 			}
 		} else {
-			return block.Header.Height, nil
+			return block.ToHeader().Height, nil
 		}
 
 		// try with start at blockHeight
@@ -175,7 +175,7 @@ func getStartHeightFunc(blockchain *emulator.Blockchain) GetStartHeightFunc {
 				return 0, storage.ErrNotFound
 			}
 		} else {
-			return block.Header.Height, nil
+			return block.ToHeader().Height, nil
 		}
 
 		// both arguments are wrong
@@ -278,7 +278,7 @@ func (b *StateStreamBackend) GetExecutionDataByBlockID(ctx context.Context, bloc
 		return nil, fmt.Errorf("could not get block header for %s: %w", blockID, err)
 	}
 
-	executionData, err := b.getExecutionData(ctx, block.Header.Height)
+	executionData, err := b.getExecutionData(ctx, block.ToHeader().Height)
 
 	if err != nil {
 		// need custom not found handler due to blob not found error

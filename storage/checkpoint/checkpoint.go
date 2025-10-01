@@ -71,7 +71,10 @@ func New(
 	}
 
 	// pretend this state was the genesis state
-	genesis := flow.Genesis(chainID)
+	genesis, err := storage.CreateGenesisBlock(chainID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create genesis block: %w", err)
+	}
 	err = store.CommitBlock(
 		context.Background(),
 		*genesis,

@@ -176,7 +176,7 @@ func (s *Store) BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flow
 	var height uint64
 	block, err := s.DefaultStore.BlockByID(ctx, blockID)
 	if err == nil {
-		height = block.Header.Height
+		height = block.HeaderBody.Height
 	} else if errors.Is(err, storage.ErrNotFound) {
 		heightRes, err := s.accessClient.GetBlockHeaderByID(ctx, &access.GetBlockHeaderByIDRequest{Id: blockID[:]})
 		if err != nil {
@@ -228,11 +228,18 @@ func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block
 		return nil, err
 	}
 
-	payload := flowgo.EmptyPayload()
-	return &flowgo.Block{
-		Payload: &payload,
-		Header:  header,
-	}, nil
+	// Create block from header
+	return flowgo.NewBlock(flowgo.UntrustedBlock{
+		HeaderBody: flowgo.HeaderBody{
+			ChainID:    header.ChainID,
+			ParentID:   header.ParentID,
+			Height:     header.Height,
+			Timestamp:  header.Timestamp,
+			View:       header.View,
+			ParentView: header.ParentView,
+		},
+		Payload: flowgo.Payload{},
+	})
 }
 
 func (s *Store) LedgerByHeight(
