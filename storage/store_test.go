@@ -49,16 +49,18 @@ func TestBlocks(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	block1 := &flowgo.Block{
-		Header: &flowgo.Header{
+	block1, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
+		HeaderBody: flowgo.HeaderBody{
 			Height: 1,
 		},
-	}
-	block2 := &flowgo.Block{
-		Header: &flowgo.Header{
+		Payload: flowgo.Payload{},
+	})
+	block2, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
+		HeaderBody: flowgo.HeaderBody{
 			Height: 2,
 		},
-	}
+		Payload: flowgo.Payload{},
+	})
 
 	t.Run("should return error for not found", func(t *testing.T) {
 		t.Run("BlockByID", func(t *testing.T) {
@@ -145,13 +147,13 @@ func TestCollections(t *testing.T) {
 	})
 
 	t.Run("should be able to insert collection", func(t *testing.T) {
-		err := store.InsertCollection(context.Background(), col.Light())
+		err := store.InsertCollection(context.Background(), *col.Light())
 		assert.NoError(t, err)
 
 		t.Run("should be able to get inserted collection", func(t *testing.T) {
 			storedCol, err := store.CollectionByID(context.Background(), col.ID())
 			require.NoError(t, err)
-			assert.Equal(t, col.Light(), storedCol)
+			assert.Equal(t, *col.Light(), storedCol)
 		})
 	})
 }
@@ -204,7 +206,7 @@ func TestFullCollection(t *testing.T) {
 		_, err = store.FullCollectionByID(context.Background(), col.ID())
 		require.Error(t, storage.ErrNotFound, err)
 
-		err = store.InsertCollection(context.Background(), col.Light())
+		err = store.InsertCollection(context.Background(), *col.Light())
 		require.NoError(t, err)
 
 		for _, tx := range col.Transactions {

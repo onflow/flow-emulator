@@ -63,11 +63,12 @@ func TestSDK(t *testing.T) {
 
 	t.Run("GetLatestBlockHeader", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
-		flowBlock := &flowgo.Block{
-			Header: &flowgo.Header{
-				Height: 42,
-			},
-		}
+		flowBlock, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
+		HeaderBody: flowgo.HeaderBody{
+			Height: 42,
+		},
+		Payload: flowgo.Payload{},
+	})
 
 		block := flowgosdk.Block{
 			BlockHeader: flowgosdk.BlockHeader{
@@ -102,11 +103,12 @@ func TestSDK(t *testing.T) {
 
 	t.Run("GetBlockHeaderByHeight", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
-		flowBlock := &flowgo.Block{
-			Header: &flowgo.Header{
-				Height: 42,
-			},
-		}
+		flowBlock, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
+		HeaderBody: flowgo.HeaderBody{
+			Height: 42,
+		},
+		Payload: flowgo.Payload{},
+	})
 
 		block := flowgosdk.Block{
 			BlockHeader: flowgosdk.BlockHeader{
@@ -142,11 +144,12 @@ func TestSDK(t *testing.T) {
 	t.Run("GetBlockHeaderByID", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
 		id := flowgosdk.Identifier{}
-		flowBlock := &flowgo.Block{
-			Header: &flowgo.Header{
-				Height: 42,
-			},
-		}
+		flowBlock, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
+		HeaderBody: flowgo.HeaderBody{
+			Height: 42,
+		},
+		Payload: flowgo.Payload{},
+	})
 
 		block := flowgosdk.Block{
 			BlockHeader: flowgosdk.BlockHeader{
@@ -181,11 +184,11 @@ func TestSDK(t *testing.T) {
 
 	t.Run("GetLatestBlock", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
-		flowBlock := &flowgo.Block{
-			Header: &flowgo.Header{
+		flowBlock, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
+			HeaderBody: flowgo.HeaderBody{
 				Height: 42,
 			},
-			Payload: &flowgo.Payload{
+			Payload: flowgo.Payload{
 				Guarantees: []*flowgo.CollectionGuarantee{
 					{
 						CollectionID: flowgo.MustHexStringToIdentifier("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
@@ -198,7 +201,7 @@ func TestSDK(t *testing.T) {
 					},
 				},
 			},
-		}
+		})
 
 		block := flowgosdk.Block{
 			BlockHeader: flowgosdk.BlockHeader{
@@ -246,11 +249,11 @@ func TestSDK(t *testing.T) {
 
 	t.Run("GetBlockByHeight", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
-		flowBlock := &flowgo.Block{
-			Header: &flowgo.Header{
+		flowBlock, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
+			HeaderBody: flowgo.HeaderBody{
 				Height: 42,
 			},
-			Payload: &flowgo.Payload{
+			Payload: flowgo.Payload{
 				Guarantees: []*flowgo.CollectionGuarantee{
 					{
 						CollectionID: flowgo.MustHexStringToIdentifier("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
@@ -263,7 +266,7 @@ func TestSDK(t *testing.T) {
 					},
 				},
 			},
-		}
+		})
 
 		block := flowgosdk.Block{
 			BlockHeader: flowgosdk.BlockHeader{
@@ -312,11 +315,11 @@ func TestSDK(t *testing.T) {
 	t.Run("GetBlockByID", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 
 		id := flowgosdk.Identifier{}
-		flowBlock := &flowgo.Block{
-			Header: &flowgo.Header{
+		flowBlock, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
+			HeaderBody: flowgo.HeaderBody{
 				Height: 42,
 			},
-			Payload: &flowgo.Payload{
+			Payload: flowgo.Payload{
 				Guarantees: []*flowgo.CollectionGuarantee{
 					{
 						CollectionID: flowgo.MustHexStringToIdentifier("db94e7ef4c9e758f27f96777c61b5cca10528e9db5e7dfd3b44ffceb26b284c0"),
@@ -329,7 +332,7 @@ func TestSDK(t *testing.T) {
 					},
 				},
 			},
-		}
+		})
 
 		block := flowgosdk.Block{
 			BlockHeader: flowgosdk.BlockHeader{
@@ -563,11 +566,12 @@ func TestSDK(t *testing.T) {
 		emulatorResult := types.ScriptResult{Value: stringValue}
 		expected, _ := convertScriptResult(&emulatorResult, nil)
 
-		flowBlock := &flowgo.Block{
-			Header: &flowgo.Header{
-				Height: 42,
-			},
-		}
+		flowBlock, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
+		HeaderBody: flowgo.HeaderBody{
+			Height: 42,
+		},
+		Payload: flowgo.Payload{},
+	})
 
 		//success
 		emu.EXPECT().
@@ -643,11 +647,12 @@ func TestSDK(t *testing.T) {
 		emulatorResult := types.ScriptResult{Value: stringValue}
 		expected, _ := convertScriptResult(&emulatorResult, nil)
 
-		flowBlock := &flowgo.Block{
-			Header: &flowgo.Header{
-				Height: 42,
-			},
-		}
+		flowBlock, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
+		HeaderBody: flowgo.HeaderBody{
+			Height: 42,
+		},
+		Payload: flowgo.Payload{},
+	})
 
 		//success
 		emu.EXPECT().

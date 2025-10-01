@@ -166,7 +166,7 @@ func TestEventEmitted(t *testing.T) {
 			context.Background(),
 			string(expectedType),
 			[]flowsdk.Identifier{
-				flowsdk.Identifier(block.HeaderBody.ID()),
+				flowsdk.Identifier(block.ID()),
 			},
 		)
 		require.NoError(t, err)
