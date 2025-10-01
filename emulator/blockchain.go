@@ -1425,7 +1425,7 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	b.broadcaster.Publish()
 
 	// reset pending block using current block and ledger state
-	b.pendingBlock = newPendingBlock(block, ledger, b.clock)
+	b.pendingBlock = newPendingBlock(block, ledger, b.clock, b.conf.GetChainID())
 	b.entropyProvider.LatestBlock = block.ID()
 
 	return block, nil
@@ -1484,7 +1484,7 @@ func (b *Blockchain) ResetPendingBlock() error {
 	}
 
 	// reset pending block using latest committed block and ledger state
-	b.pendingBlock = newPendingBlock(&latestBlock, latestLedger, b.clock)
+	b.pendingBlock = newPendingBlock(&latestBlock, latestLedger, b.clock, b.conf.GetChainID())
 
 	return nil
 }
