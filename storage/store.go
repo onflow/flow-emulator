@@ -624,21 +624,35 @@ func (s *DefaultStore) LedgerByHeight(
 // CreateGenesisBlock creates a genesis block for the given chain ID.
 // This replaces the deprecated flowgo.Genesis() function.
 func CreateGenesisBlock(chainID flowgo.ChainID) (*flowgo.Block, error) {
-	// Create a genesis block with height 0, view 0, and zero parent ID
-	// Using the same timestamp as the original Genesis function
-	genesis, err := flowgo.NewRootBlock(flowgo.UntrustedBlock{
-		HeaderBody: flowgo.HeaderBody{
-			ChainID:    chainID,
-			ParentID:   flowgo.ZeroID,
-			Height:     0,
-			View:       0,
-			Timestamp:  uint64(flowgo.GenesisTime.UnixMilli()),
-			ParentView: 0,
-		},
-		Payload: flowgo.Payload{},
-	})
-	if err != nil {
-		return nil, err
+	// create the raw content for the genesis block
+	payload := flowgo.Payload{
+		ProtocolStateID: flowgo.HashToID([]byte("123")),
 	}
-	return genesis, nil
+
+	// create the headerBody
+	headerBody, err := flowgo.NewRootHeaderBody(
+		flowgo.UntrustedHeaderBody{
+			ChainID:   chainID,
+			ParentID:  flowgo.ZeroID,
+			Height:    0,
+			Timestamp: uint64(flowgo.GenesisTime.UnixMilli()),
+			View:      0,
+		},
+	)
+	if err != nil {
+		panic(fmt.Errorf("failed to create root header body: %w", err))
+	}
+
+	// combine to block
+	block, err := flowgo.NewRootBlock(
+		flowgo.UntrustedBlock{
+			HeaderBody: *headerBody,
+			Payload:    payload,
+		},
+	)
+	if err != nil {
+		panic(fmt.Errorf("failed to create root block: %w", err))
+	}
+
+	return block, nil
 }

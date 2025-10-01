@@ -41,6 +41,7 @@ const MaxViewIncrease = 3
 type pendingBlock struct {
 	height    uint64
 	view      uint64
+	chainID   flowgo.ChainID
 	parentID  flowgo.Identifier
 	clock     Clock
 	timestamp time.Time
@@ -63,12 +64,14 @@ func newPendingBlock(
 	prevBlock *flowgo.Block,
 	ledgerSnapshot snapshot.StorageSnapshot,
 	clock Clock,
+	chainID flowgo.ChainID,
 ) *pendingBlock {
 	return &pendingBlock{
 		height: prevBlock.HeaderBody.Height + 1,
 		// the view increments by between 1 and MaxViewIncrease to match
 		// behaviour on a real network, where views are not consecutive
 		view:               prevBlock.HeaderBody.View + uint64(rand.Intn(MaxViewIncrease)+1),
+		chainID:            chainID,
 		parentID:           prevBlock.ID(),
 		clock:              clock,
 		timestamp:          clock.Now(),
@@ -107,6 +110,7 @@ func (b *pendingBlock) Block() *flowgo.Block {
 			ParentID:   b.parentID,
 			Timestamp:  uint64(b.timestamp.UnixMilli()),
 			ParentView: b.view - 1,
+			ChainID:    b.chainID,
 		},
 		Payload: flowgo.Payload{
 			Guarantees: guarantees,

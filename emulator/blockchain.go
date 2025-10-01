@@ -487,7 +487,7 @@ func (b *Blockchain) ReloadBlockchain() error {
 		return err
 	}
 
-	b.pendingBlock = newPendingBlock(latestBlock, latestLedger, b.clock)
+	b.pendingBlock = newPendingBlock(latestBlock, latestLedger, b.clock, b.conf.GetChainID())
 	b.transactionValidator, err = configureTransactionValidator(b.conf, blocks)
 	if err != nil {
 		return err

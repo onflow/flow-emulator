@@ -83,6 +83,7 @@ func TestEncodeBlock(t *testing.T) {
 		HeaderBody: flowgo.HeaderBody{
 			Height:   1234,
 			ParentID: flowgo.Identifier(ids.New()),
+			ChainID:  flowgo.Emulator,
 		},
 		Payload: flowgo.Payload{
 			Guarantees: []*flowgo.CollectionGuarantee{
