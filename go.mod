@@ -12,13 +12,13 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.7.0
+	github.com/onflow/cadence v1.7.1
 	github.com/onflow/crypto v0.25.3
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.9.0
-	github.com/onflow/flow-go v0.43.1-rc.1.0.20250924183344-715803471569
-	github.com/onflow/flow-go-sdk v1.8.2
+	github.com/onflow/flow-go v0.43.1-rc.5-pr8007.0.20251007165614-c6967df18fa9
+	github.com/onflow/flow-go-sdk v1.8.4
 	github.com/onflow/flow-nft/lib/go/contracts v1.3.0
-	github.com/onflow/flow/protobuf/go/flow v0.4.15
+	github.com/onflow/flow/protobuf/go/flow v0.4.16
 	github.com/prometheus/client_golang v1.23.2
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
@@ -74,6 +74,7 @@ require (
 	github.com/ferranbt/fastssz v0.1.4 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fxamacker/circlehash v0.3.0 // indirect
+	github.com/fxamacker/golang-lru/v2 v2.0.0-20250716153046-22c8d17dc4ee // indirect
 	github.com/getsentry/sentry-go v0.27.0 // indirect
 	github.com/go-kit/kit v0.12.0 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
@@ -155,7 +156,7 @@ require (
 	github.com/onflow/wal v1.0.2 // indirect
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.1 // indirect
-	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
+	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/pion/dtls/v2 v2.2.12 // indirect
 	github.com/pion/logging v0.2.2 // indirect
 	github.com/pion/stun/v2 v2.0.0 // indirect
