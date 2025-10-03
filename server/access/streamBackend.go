@@ -242,8 +242,19 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 			Address: common.Address(blockchain.GetChain().ServiceAddress()),
 			Name:    string(evmEvents.EventTypeBlockExecuted),
 		}
+		evmTxExecutedEventType := common.AddressLocation{
+			Address: common.Address(blockchain.GetChain().ServiceAddress()),
+			Name:    string(evmEvents.EventTypeTransactionExecuted),
+		}
 
-		events, err := blockchain.GetEventsByHeight(
+		evmTxEvents, err := blockchain.GetEventsByHeight(
+			height,
+			evmTxExecutedEventType.ID(),
+		)
+		if err != nil {
+			return nil, err
+		}
+		evmBlockEvents, err := blockchain.GetEventsByHeight(
 			height,
 			evmBlockExecutedEventType.ID(),
 		)
@@ -254,9 +265,18 @@ func getExecutionDataFunc(blockchain *emulator.Blockchain) GetExecutionDataFunc 
 		// chunk.
 		if len(chunks) > 0 {
 			lastChunk := chunks[len(chunks)-1]
-			for _, event := range events {
+			for _, event := range evmBlockEvents {
 				lastChunk.Events = append(lastChunk.Events, event)
 			}
+		} else {
+			// For the genesis block, where there are no chunks,
+			// we still want to capture & index the EVM-related
+			// events, which can occur during bootstrapping.
+			evmTxEvents = append(evmTxEvents, evmBlockEvents...)
+			chunk := &execution_data.ChunkExecutionData{
+				Events: evmTxEvents,
+			}
+			chunks = append(chunks, chunk)
 		}
 
 		executionData := &execution_data.BlockExecutionData{
