@@ -19,6 +19,7 @@
 package server
 
 import (
+	_ "embed"
 	"fmt"
 	"net/http"
 	"os"
@@ -148,6 +149,8 @@ type Config struct {
 	StateHash string
 	// ComputationReportingEnabled enables/disables Cadence computation reporting.
 	ComputationReportingEnabled bool
+	// ScheduledTransactionsEnabled enables an experimental feature for scheduling transactions.
+	ScheduledTransactionsEnabled bool
 	// SetupEVMEnabled enables the EVM setup for the emulator, defaults to true.
 	SetupEVMEnabled bool
 	// SetupVMBridgeEnabled enables the VM bridge setup for the emulator, defaults to true.
@@ -178,6 +181,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 
 	sc := systemcontracts.SystemContractsForChain(chain.ChainID())
 	contracts := sc.All()
+
 	// sort contracts to always have the same order
 	sort.Slice(contracts, func(i, j int) bool {
 		return contracts[i].Name < contracts[j].Name
@@ -189,8 +193,9 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 			Msg("📜 Flow contract")
 	}
 
+	commonContracts := emulator.NewCommonContracts(chain)
+
 	if conf.WithContracts {
-		commonContracts := emulator.NewCommonContracts(chain)
 		err := emulator.DeployContracts(emulatedBlockchain, commonContracts)
 		if err != nil {
 			logger.Error().Err(err).Msg("❗  Failed to deploy contracts")
@@ -422,6 +427,7 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		emulator.WithChainID(conf.ChainID),
 		emulator.WithContractRemovalEnabled(conf.ContractRemovalEnabled),
+		emulator.WithSetupVMBridgeEnabled(conf.SetupVMBridgeEnabled),
 	}
 
 	if conf.SkipTransactionValidation {
@@ -471,10 +477,10 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		)
 	}
 
-	if conf.SetupVMBridgeEnabled {
+	if conf.ScheduledTransactionsEnabled {
 		options = append(
 			options,
-			emulator.WithSetupVMBridgeEnabled(true),
+			emulator.WithScheduledTransactions(true),
 		)
 	}
 

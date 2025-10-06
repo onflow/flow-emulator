@@ -24,7 +24,7 @@ import (
 	"github.com/onflow/cadence/common"
 	"github.com/onflow/cadence/interpreter"
 	"github.com/onflow/cadence/runtime"
-	flowgosdk "github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	sdkcrypto "github.com/onflow/flow-go-sdk/crypto"
 	accessmodel "github.com/onflow/flow-go/model/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -34,7 +34,7 @@ import (
 
 type ServiceKey struct {
 	Index          uint32
-	Address        flowgosdk.Address
+	Address        flowsdk.Address
 	SequenceNumber uint64
 	PrivateKey     sdkcrypto.PrivateKey
 	PublicKey      sdkcrypto.PublicKey
@@ -74,7 +74,7 @@ func (s ServiceKey) Signer() (sdkcrypto.Signer, error) {
 	return sdkcrypto.NewInMemorySigner(s.PrivateKey, s.HashAlgo)
 }
 
-func (s ServiceKey) AccountKey() *flowgosdk.AccountKey {
+func (s ServiceKey) AccountKey() *flowsdk.AccountKey {
 
 	var publicKey sdkcrypto.PublicKey
 	if s.PublicKey != nil {
@@ -85,7 +85,7 @@ func (s ServiceKey) AccountKey() *flowgosdk.AccountKey {
 		publicKey = s.PrivateKey.PublicKey()
 	}
 
-	return &flowgosdk.AccountKey{
+	return &flowsdk.AccountKey{
 		Index:          s.Index,
 		PublicKey:      publicKey,
 		SigAlgo:        s.SigAlgo,

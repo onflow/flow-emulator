@@ -27,7 +27,6 @@ import (
 
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
-	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow/protobuf/go/flow/entities"
 	"github.com/stretchr/testify/assert"
@@ -50,13 +49,17 @@ func TestBlocks(t *testing.T) {
 	}()
 
 	block1 := &flowgo.Block{
-		Header: &flowgo.Header{
-			Height: 1,
+		HeaderBody: flowgo.HeaderBody{
+			Height:    1,
+			ChainID:   flowgo.Emulator,
+			Timestamp: uint64(flowgo.GenesisTime.UnixMilli()),
 		},
 	}
 	block2 := &flowgo.Block{
-		Header: &flowgo.Header{
-			Height: 2,
+		HeaderBody: flowgo.HeaderBody{
+			Height:    2,
+			ChainID:   flowgo.Emulator,
+			Timestamp: uint64(flowgo.GenesisTime.UnixMilli()),
 		},
 	}
 
@@ -70,7 +73,7 @@ func TestBlocks(t *testing.T) {
 		})
 
 		t.Run("BlockByHeight", func(t *testing.T) {
-			_, err := store.BlockByHeight(context.Background(), block1.Header.Height)
+			_, err := store.BlockByHeight(context.Background(), block1.Height)
 			if assert.Error(t, err) {
 				assert.Equal(t, storage.ErrNotFound, err)
 			}
@@ -95,7 +98,7 @@ func TestBlocks(t *testing.T) {
 
 	t.Run("should be able to get inserted block", func(t *testing.T) {
 		t.Run("BlockByHeight", func(t *testing.T) {
-			block, err := store.BlockByHeight(context.Background(), block1.Header.Height)
+			block, err := store.BlockByHeight(context.Background(), block1.Height)
 			assert.NoError(t, err)
 			assert.Equal(t, block1, block)
 		})
@@ -145,13 +148,13 @@ func TestCollections(t *testing.T) {
 	})
 
 	t.Run("should be able to insert collection", func(t *testing.T) {
-		err := store.InsertCollection(context.Background(), col.Light())
+		err := store.InsertCollection(context.Background(), *col.Light())
 		assert.NoError(t, err)
 
 		t.Run("should be able to get inserted collection", func(t *testing.T) {
 			storedCol, err := store.CollectionByID(context.Background(), col.ID())
 			require.NoError(t, err)
-			assert.Equal(t, col.Light(), storedCol)
+			assert.Equal(t, *col.Light(), storedCol)
 		})
 	})
 }
@@ -204,7 +207,7 @@ func TestFullCollection(t *testing.T) {
 		_, err = store.FullCollectionByID(context.Background(), col.ID())
 		require.Error(t, storage.ErrNotFound, err)
 
-		err = store.InsertCollection(context.Background(), col.Light())
+		err = store.InsertCollection(context.Background(), *col.Light())
 		require.NoError(t, err)
 
 		for _, tx := range col.Transactions {
@@ -282,13 +285,13 @@ func TestLedger(t *testing.T) {
 
 		var blockHeight uint64 = 1
 
-		owner := flow.HexToAddress("0x01")
+		owner := flowgo.HexToAddress("0x01")
 		const key = "foo"
 		expected := []byte("bar")
 
 		executionSnapshot := &snapshot.ExecutionSnapshot{
-			WriteSet: map[flow.RegisterID]flow.RegisterValue{
-				flow.NewRegisterID(owner, key): expected,
+			WriteSet: map[flowgo.RegisterID]flowgo.RegisterValue{
+				flowgo.NewRegisterID(owner, key): expected,
 			},
 		}
 
@@ -303,7 +306,7 @@ func TestLedger(t *testing.T) {
 		t.Run("should be to get set ledger", func(t *testing.T) {
 			gotLedger, err := store.LedgerByHeight(context.Background(), blockHeight)
 			assert.NoError(t, err)
-			actual, err := gotLedger.Get(flow.NewRegisterID(owner, key))
+			actual, err := gotLedger.Get(flowgo.NewRegisterID(owner, key))
 			assert.NoError(t, err)
 			assert.Equal(t, expected, actual)
 		})
@@ -319,17 +322,17 @@ func TestLedger(t *testing.T) {
 			require.NoError(t, os.RemoveAll(dir))
 		}()
 
-		owner := flow.HexToAddress("0x01")
+		owner := flowgo.HexToAddress("0x01")
 
 		// Create a list of ledgers, where the ledger at index i has
 		// keys (i+2)-1->(i+2)+1 set to value i-1.
 		totalBlocks := 10
 		var snapshots []*snapshot.ExecutionSnapshot
 		for i := 2; i < totalBlocks+2; i++ {
-			writeSet := map[flow.RegisterID]flow.RegisterValue{}
+			writeSet := map[flowgo.RegisterID]flowgo.RegisterValue{}
 			for j := i - 1; j <= i+1; j++ {
 				key := fmt.Sprintf("%d", j)
-				writeSet[flow.NewRegisterID(owner, key)] = []byte{byte(i - 1)}
+				writeSet[flowgo.NewRegisterID(owner, key)] = []byte{byte(i - 1)}
 			}
 			snapshots = append(
 				snapshots,
@@ -357,7 +360,7 @@ func TestLedger(t *testing.T) {
 			gotLedger, err := store.LedgerByHeight(context.Background(), 1)
 			assert.NoError(t, err)
 			for i := 1; i <= 3; i++ {
-				val, err := gotLedger.Get(flow.NewRegisterID(owner, fmt.Sprintf("%d", i)))
+				val, err := gotLedger.Get(flowgo.NewRegisterID(owner, fmt.Sprintf("%d", i)))
 				assert.NoError(t, err)
 				assert.Equal(t, []byte{byte(1)}, val)
 			}
@@ -370,13 +373,13 @@ func TestLedger(t *testing.T) {
 				assert.NoError(t, err)
 				// The keys 1->N-1 are defined in previous blocks
 				for i := 1; i < block; i++ {
-					val, err := gotLedger.Get(flow.NewRegisterID(owner, fmt.Sprintf("%d", i)))
+					val, err := gotLedger.Get(flowgo.NewRegisterID(owner, fmt.Sprintf("%d", i)))
 					assert.NoError(t, err)
 					assert.Equal(t, []byte{byte(i)}, val)
 				}
 				// The keys N->N+2 are defined in the queried block
 				for i := block; i <= block+2; i++ {
-					val, err := gotLedger.Get(flow.NewRegisterID(owner, fmt.Sprintf("%d", i)))
+					val, err := gotLedger.Get(flowgo.NewRegisterID(owner, fmt.Sprintf("%d", i)))
 					assert.NoError(t, err)
 					assert.Equal(t, []byte{byte(block)}, val)
 				}

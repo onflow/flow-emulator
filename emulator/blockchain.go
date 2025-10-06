@@ -313,6 +313,12 @@ func WithComputationReporting(enabled bool) Option {
 	}
 }
 
+func WithScheduledTransactions(enabled bool) Option {
+	return func(c *config) {
+		c.ScheduledTransactionsEnabled = enabled
+	}
+}
+
 // WithSetupEVMEnabled enables/disables the EVM setup.
 func WithSetupEVMEnabled(enabled bool) Option {
 	return func(c *config) {
@@ -397,6 +403,7 @@ type config struct {
 	AutoMine                     bool
 	Contracts                    []ContractDescription
 	ComputationReportingEnabled  bool
+	ScheduledTransactionsEnabled bool
 	SetupEVMEnabled              bool
 	SetupVMBridgeEnabled         bool
 }
@@ -459,6 +466,7 @@ var defaultConfig = func() config {
 		CoverageReport:               nil,
 		AutoMine:                     false,
 		ComputationReportingEnabled:  false,
+		ScheduledTransactionsEnabled: true,
 		SetupEVMEnabled:              true,
 		SetupVMBridgeEnabled:         true,
 	}
@@ -649,6 +657,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithReusableCadenceRuntimePool(customRuntimePool),
 		fvm.WithEntropyProvider(blockchain.entropyProvider),
 		fvm.WithEVMEnabled(true),
+		fvm.WithScheduleCallbacksEnabled(conf.ScheduledTransactionsEnabled),
 	}
 
 	if !conf.TransactionValidationEnabled {
@@ -713,7 +722,7 @@ func configureNewLedger(
 	}
 
 	// commit the genesis block to storage
-	genesis := flowgo.Genesis(conf.GetChainID())
+	genesis := Genesis(conf.GetChainID())
 
 	err = store.CommitBlock(
 		context.Background(),
@@ -747,7 +756,7 @@ func configureExistingLedger(
 ) {
 	latestLedger, err := store.LedgerByHeight(
 		context.Background(),
-		latestBlock.Header.Height,
+		latestBlock.Height,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -893,7 +902,7 @@ func (b *Blockchain) PendingBlockView() uint64 {
 
 // PendingBlockTimestamp returns the Timestamp of the pending block.
 func (b *Blockchain) PendingBlockTimestamp() time.Time {
-	return b.pendingBlock.Block().Header.Timestamp
+	return time.UnixMilli(int64(b.pendingBlock.Block().Timestamp)).UTC()
 }
 
 // GetLatestBlock gets the latest sealed block.
@@ -1082,7 +1091,7 @@ func (b *Blockchain) GetAccountUnsafe(address flowgo.Address) (*flowgo.Account, 
 	if err != nil {
 		return nil, err
 	}
-	return b.getAccountAtBlock(address, latestBlock.Header.Height)
+	return b.getAccountAtBlock(address, latestBlock.Height)
 }
 
 // GetAccount returns the account for the given address.
@@ -1098,7 +1107,7 @@ func (b *Blockchain) getAccount(address flowgo.Address) (*flowgo.Account, error)
 	if err != nil {
 		return nil, err
 	}
-	return b.getAccountAtBlock(address, latestBlock.Header.Height)
+	return b.getAccountAtBlock(address, latestBlock.Height)
 }
 
 // GetAccountAtBlockHeight  returns the account for the given address at specified block height.
@@ -1132,14 +1141,14 @@ func (b *Blockchain) GetEventsForBlockIDs(eventType string, blockIDs []flowgo.Id
 		if err != nil {
 			break
 		}
-		events, err := b.storage.EventsByHeight(context.Background(), block.Header.Height, eventType)
+		events, err := b.storage.EventsByHeight(context.Background(), block.Height, eventType)
 		if err != nil {
 			break
 		}
 		result = append(result, flowgo.BlockEvents{
 			BlockID:        block.ID(),
-			BlockHeight:    block.Header.Height,
-			BlockTimestamp: block.Header.Timestamp,
+			BlockHeight:    block.Height,
+			BlockTimestamp: time.UnixMilli(int64(block.Timestamp)).UTC(),
 			Events:         events,
 		})
 	}
@@ -1164,8 +1173,8 @@ func (b *Blockchain) GetEventsForHeightRange(eventType string, startHeight, endH
 
 		result = append(result, flowgo.BlockEvents{
 			BlockID:        block.ID(),
-			BlockHeight:    block.Header.Height,
-			BlockTimestamp: block.Header.Timestamp,
+			BlockHeight:    block.Height,
+			BlockTimestamp: time.UnixMilli(int64(block.Timestamp)).UTC(),
 			Events:         events,
 		})
 	}
@@ -1251,23 +1260,18 @@ func (b *Blockchain) ExecuteBlock() ([]*types.TransactionResult, error) {
 func (b *Blockchain) executeBlock() ([]*types.TransactionResult, error) {
 	results := make([]*types.TransactionResult, 0)
 
-	// empty blocks do not require execution, treat as a no-op
-	if b.pendingBlock.Empty() {
-		return results, nil
-	}
-
-	header := b.pendingBlock.Block().Header
+	header := b.pendingBlock.Block().ToHeader()
 	blockContext := b.setFVMContextFromHeader(header)
 
-	// cannot execute a block that has already executed
-	if b.pendingBlock.ExecutionComplete() {
+	// cannot execute a block that has already executed (only relevant for non-empty blocks)
+	if b.pendingBlock.ExecutionComplete() && !b.pendingBlock.Empty() {
 		return results, &types.PendingBlockTransactionsExhaustedError{
 			BlockID: b.pendingBlock.ID(),
 		}
 	}
 
-	// continue executing transactions until execution is complete
-	for !b.pendingBlock.ExecutionComplete() {
+	// continue executing transactions until execution is complete (skip for empty blocks)
+	for !b.pendingBlock.ExecutionComplete() && !b.pendingBlock.Empty() {
 		result, err := b.executeNextTransaction(blockContext)
 		if err != nil {
 			return results, err
@@ -1284,8 +1288,10 @@ func (b *Blockchain) ExecuteNextTransaction() (*types.TransactionResult, error) 
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	header := b.pendingBlock.Block().Header
-	blockContext := b.setFVMContextFromHeader(header)
+	block := b.pendingBlock.Block()
+
+	// Use a trusted header derived from the block to avoid nil header cases
+	blockContext := b.setFVMContextFromHeader(block.ToHeader())
 	return b.executeNextTransaction(blockContext)
 }
 
@@ -1388,6 +1394,19 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 		return nil, err
 	}
 
+	// execute scheduled transactions out-of-band before the system chunk
+	// (does not change collections or payload)
+	blockContext := fvm.NewContextFromParent(
+		b.vmCtx,
+		fvm.WithBlockHeader(block.ToHeader()),
+	)
+	if b.conf.ScheduledTransactionsEnabled {
+		// TODO: use result
+		if _, err := b.executeScheduledTransactions(blockContext); err != nil {
+			return nil, err
+		}
+	}
+
 	// lastly we execute the system chunk transaction
 	err = b.executeSystemChunkTransaction()
 	if err != nil {
@@ -1412,7 +1431,7 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 
 	ledger, err := b.storage.LedgerByHeight(
 		context.Background(),
-		block.Header.Height,
+		block.Height,
 	)
 	if err != nil {
 		return nil, err
@@ -1455,9 +1474,9 @@ func (b *Blockchain) executeAndCommitBlock() (*flowgo.Block, []*types.Transactio
 
 	blockID := block.ID()
 	b.conf.ServerLogger.Debug().Fields(map[string]any{
-		"blockHeight": block.Header.Height,
+		"blockHeight": block.Height,
 		"blockID":     hex.EncodeToString(blockID[:]),
-	}).Msgf("📦 Block #%d committed", block.Header.Height)
+	}).Msgf("📦 Block #%d committed", block.Height)
 
 	return block, results, nil
 }
@@ -1474,7 +1493,7 @@ func (b *Blockchain) ResetPendingBlock() error {
 
 	latestLedger, err := b.storage.LedgerByHeight(
 		context.Background(),
-		latestBlock.Header.Height,
+		latestBlock.Height,
 	)
 	if err != nil {
 		return err
@@ -1499,7 +1518,7 @@ func (b *Blockchain) ExecuteScript(
 		return nil, err
 	}
 
-	return b.executeScriptAtBlockID(script, arguments, latestBlock.Header.ID())
+	return b.executeScriptAtBlockID(script, arguments, latestBlock.ID())
 }
 
 func (b *Blockchain) ExecuteScriptAtBlockID(script []byte, arguments [][]byte, id flowgo.Identifier) (*types.ScriptResult, error) {
@@ -1517,7 +1536,7 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 
 	requestedLedgerSnapshot, err := b.storage.LedgerByHeight(
 		context.Background(),
-		requestedBlock.Header.Height,
+		requestedBlock.Height,
 	)
 	if err != nil {
 		return nil, err
@@ -1525,7 +1544,7 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 
 	blockContext := fvm.NewContextFromParent(
 		b.vmCtx,
-		fvm.WithBlockHeader(requestedBlock.Header),
+		fvm.WithBlockHeader(requestedBlock.ToHeader()),
 	)
 
 	scriptProc := fvm.Script(script).WithArguments(arguments...)
@@ -1609,7 +1628,7 @@ func (b *Blockchain) ExecuteScriptAtBlockHeight(
 		return nil, err
 	}
 
-	return b.executeScriptAtBlockID(script, arguments, requestedBlock.Header.ID())
+	return b.executeScriptAtBlockID(script, arguments, requestedBlock.ID())
 }
 
 func convertToSealedResults(
@@ -1830,12 +1849,17 @@ func (b *Blockchain) systemChunkTransaction() (*flowgo.TransactionBody, error) {
 		),
 	)
 
-	tx := flowgo.NewTransactionBody().
+	txBuilder := flowgo.NewTransactionBodyBuilder().
 		SetScript([]byte(script)).
 		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		AddAuthorizer(serviceAddress).
 		SetPayer(serviceAddress).
 		SetReferenceBlockID(b.pendingBlock.parentID)
+
+	tx, err := txBuilder.Build()
+	if err != nil {
+		return nil, err
+	}
 
 	return tx, nil
 }
@@ -1851,7 +1875,7 @@ func (b *Blockchain) executeSystemChunkTransaction() error {
 		fvm.WithAuthorizationChecksEnabled(false),
 		fvm.WithSequenceNumberCheckAndIncrementEnabled(false),
 		fvm.WithRandomSourceHistoryCallAllowed(true),
-		fvm.WithBlockHeader(b.pendingBlock.Block().Header),
+		fvm.WithBlockHeader(b.pendingBlock.Block().ToHeader()),
 	)
 
 	executionSnapshot, output, err := b.vm.Run(
@@ -1877,6 +1901,76 @@ func (b *Blockchain) executeSystemChunkTransaction() error {
 	return nil
 }
 
+func (b *Blockchain) executeScheduledTransactions(blockContext fvm.Context) ([]*types.TransactionResult, error) {
+	var results []*types.TransactionResult
+
+	serviceAddress := b.GetChain().ServiceAddress()
+	parentID := b.pendingBlock.parentID
+	// disable checks for signatures and keys since we are executing a system transaction
+	ctx := fvm.NewContextFromParent(
+		blockContext,
+		fvm.WithAuthorizationChecksEnabled(false),
+		fvm.WithSequenceNumberCheckAndIncrementEnabled(false),
+	)
+
+	// process scheduled transactions out-of-band (do not alter collections)
+	processTx := processScheduledTransaction(serviceAddress, parentID)
+	executionSnapshot, output, err := b.vm.Run(
+		ctx,
+		fvm.Transaction(&processTx, uint32(len(b.pendingBlock.Transactions()))),
+		b.pendingBlock.ledgerState,
+	)
+	if err != nil {
+		return results, err
+	}
+	// record events and state changes
+	b.pendingBlock.events = append(b.pendingBlock.events, output.Events...)
+	if err := b.pendingBlock.ledgerState.Merge(executionSnapshot); err != nil {
+		return results, err
+	}
+
+	// filter to only process PendingExecution events
+	sdkEvents, err := convert.FlowEventsToSDK(output.Events)
+	if err != nil {
+		return results, err
+	}
+	pendingExecutionEvents := filterPendingExecutionEvents(sdkEvents, serviceAddress)
+	executeTxs, scheduledIDs, err := executeScheduledTransactions(pendingExecutionEvents, serviceAddress, parentID)
+	if err != nil {
+		return results, err
+	}
+
+	// execute scheduled transactions out-of-band
+	for idx, tx := range executeTxs {
+		execSnapshot, execOutput, err := b.vm.Run(
+			ctx,
+			fvm.Transaction(&tx, uint32(len(b.pendingBlock.Transactions()))),
+			b.pendingBlock.ledgerState,
+		)
+		if err != nil {
+			return results, err
+		}
+
+		// Print scheduled transaction result (labeled), including app-level scheduled tx id
+		schedResult, err := convert.VMTransactionResultToEmulator(tx.ID(), execOutput)
+		if err != nil {
+			return results, err
+		}
+		appScheduledID := ""
+		if idx < len(scheduledIDs) {
+			appScheduledID = scheduledIDs[idx]
+		}
+		utils.PrintScheduledTransactionResult(&b.conf.ServerLogger, schedResult, appScheduledID)
+
+		b.pendingBlock.events = append(b.pendingBlock.events, execOutput.Events...)
+		if err := b.pendingBlock.ledgerState.Merge(execSnapshot); err != nil {
+			return results, err
+		}
+	}
+
+	return results, nil
+}
+
 func (b *Blockchain) GetRegisterValues(registerIDs flowgo.RegisterIDs, height uint64) (values []flowgo.RegisterValue, err error) {
 	ledger, err := b.storage.LedgerByHeight(context.Background(), height)
 	if err != nil {
@@ -1890,4 +1984,24 @@ func (b *Blockchain) GetRegisterValues(registerIDs flowgo.RegisterIDs, height ui
 		values = append(values, value)
 	}
 	return values, nil
+}
+
+// Helper (TODO: @jribbink delete later)
+func Genesis(chainID flowgo.ChainID) *flowgo.Block {
+	// create the headerBody
+	headerBody := flowgo.HeaderBody{
+		ChainID:   chainID,
+		ParentID:  flowgo.ZeroID,
+		Height:    0,
+		Timestamp: uint64(flowgo.GenesisTime.UnixMilli()),
+		View:      0,
+	}
+
+	// combine to block
+	block := &flowgo.Block{
+		HeaderBody: headerBody,
+		Payload:    *flowgo.NewEmptyPayload(),
+	}
+
+	return block
 }

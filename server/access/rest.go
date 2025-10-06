@@ -27,13 +27,13 @@ import (
 	"os"
 
 	"github.com/onflow/flow-go/engine/access/rest"
-	"github.com/onflow/flow-go/engine/access/rest/common"
 	"github.com/onflow/flow-go/engine/access/rest/router"
 	"github.com/onflow/flow-go/engine/access/rest/websockets"
 	"github.com/onflow/flow-go/engine/access/state_stream"
 	"github.com/onflow/flow-go/engine/access/state_stream/backend"
 	"github.com/onflow/flow-go/engine/access/subscription"
-	"github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow-go/engine/common/rpc"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module"
 	"github.com/onflow/flow-go/module/irrecoverable"
 	"github.com/onflow/flow-go/module/metrics"
@@ -90,7 +90,7 @@ func (r *RestServer) UseMiddleware(middleware func(http.Handler) http.Handler) {
 	}
 }
 
-func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adapter *adapters.AccessAdapter, chain flow.Chain, host string, port int, debug bool) (*RestServer, error) {
+func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adapter *adapters.AccessAdapter, chain flowgo.Chain, host string, port int, debug bool) (*RestServer, error) {
 
 	debugLogger := zerolog.Logger{}
 	if debug {
@@ -129,11 +129,12 @@ func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 		irrCtx,
 		adapter,
 		rest.Config{
-			ListenAddress:  fmt.Sprintf("%s:3333", host),
-			WriteTimeout:   rest.DefaultWriteTimeout,
-			ReadTimeout:    rest.DefaultReadTimeout,
-			IdleTimeout:    rest.DefaultIdleTimeout,
-			MaxRequestSize: common.DefaultMaxRequestSize,
+			ListenAddress:   fmt.Sprintf("%s:3333", host),
+			WriteTimeout:    rest.DefaultWriteTimeout,
+			ReadTimeout:     rest.DefaultReadTimeout,
+			IdleTimeout:     rest.DefaultIdleTimeout,
+			MaxRequestSize:  rpc.DefaultAccessMaxRequestSize,
+			MaxResponseSize: rpc.DefaultAccessMaxResponseSize,
 		},
 		debugLogger,
 		chain,

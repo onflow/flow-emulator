@@ -85,7 +85,7 @@ func New(url string) (store *Store, err error) {
 	store = &Store{
 		db:  db,
 		url: url,
-		id:  time.Now().UnixMilli(),
+		id:  time.Now().UTC().UnixMilli(),
 	}
 
 	store.DataSetter = store
@@ -137,7 +137,7 @@ func (s *Store) RollbackToBlockHeight(height uint64) error {
 		return err
 	}
 
-	return s.DefaultStore.SetBlockHeight(height)
+	return s.SetBlockHeight(height)
 }
 
 const snapshotPrefix = "snapshot_"
@@ -314,7 +314,9 @@ func (s *Store) GetBytesAtVersion(_ context.Context, store string, key []byte, v
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	for rows.Next() {
 		var value string

@@ -32,7 +32,6 @@ import (
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/common"
 	"github.com/onflow/cadence/interpreter"
-	"github.com/onflow/flow-go-sdk"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
@@ -1516,7 +1515,7 @@ func TestGetTxByBlockIDMethods(t *testing.T) {
 		assert.NoError(t, err)
 
 		// added to fix tx matching (nil vs empty slice)
-		tx.PayloadSignatures = []flow.TransactionSignature{}
+		tx.PayloadSignatures = []flowsdk.TransactionSignature{}
 
 		submittedTx = append(submittedTx, tx)
 
@@ -2146,13 +2145,13 @@ func TestRollbackTransaction(t *testing.T) {
 	IncrementHelper(t, b, adapter, counterAddress, addTwoScript, 4, false)
 
 	//try rollback to when counter is two
-	err = b.RollbackToBlockHeight(blockWhenCounterIsTwo.Header.Height)
+	err = b.RollbackToBlockHeight(blockWhenCounterIsTwo.Height)
 	require.NoError(t, err)
 
 	IncrementHelper(t, b, adapter, counterAddress, addTwoScript, 4, false)
 
 	//try rollback to no counter state
-	err = b.RollbackToBlockHeight(blockWhenNoCounter.Header.Height)
+	err = b.RollbackToBlockHeight(blockWhenNoCounter.Height)
 	require.NoError(t, err)
 
 	IncrementHelper(t, b, adapter, counterAddress, addTwoScript, 2, true)
@@ -2195,6 +2194,8 @@ func TestTransactionWithCadenceRandom(t *testing.T) {
 }
 
 func TestEVMTransaction(t *testing.T) {
+	t.Parallel()
+
 	serviceAddr := flowgo.Emulator.Chain().ServiceAddress()
 	code := []byte(fmt.Sprintf(
 		`

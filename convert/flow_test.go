@@ -21,7 +21,7 @@ package convert
 import (
 	"testing"
 
-	sdk "github.com/onflow/flow-go-sdk"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/stretchr/testify/assert"
@@ -32,9 +32,9 @@ func TestSDKAccountToFlowAndBack(t *testing.T) {
 	t.Parallel()
 
 	contract := []byte("access(all) contract Test {}")
-	var keys []*sdk.AccountKey
+	var keys []*flowsdk.AccountKey
 
-	keys = append(keys, &sdk.AccountKey{
+	keys = append(keys, &flowsdk.AccountKey{
 		Index:          0,
 		PublicKey:      test.AccountKeyGenerator().New().PublicKey,
 		SigAlgo:        crypto.ECDSA_P256,
@@ -42,7 +42,7 @@ func TestSDKAccountToFlowAndBack(t *testing.T) {
 		Weight:         1000,
 		SequenceNumber: 2,
 		Revoked:        true,
-	}, &sdk.AccountKey{
+	}, &flowsdk.AccountKey{
 		Index:          1,
 		PublicKey:      test.AccountKeyGenerator().New().PublicKey,
 		SigAlgo:        crypto.ECDSA_P256,
@@ -52,8 +52,8 @@ func TestSDKAccountToFlowAndBack(t *testing.T) {
 		Revoked:        false,
 	})
 
-	acc := &sdk.Account{
-		Address: sdk.HexToAddress("0x1"),
+	acc := &flowsdk.Account{
+		Address: flowsdk.HexToAddress("0x1"),
 		Balance: 10,
 		Code:    contract,
 		Keys:    keys,

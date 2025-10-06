@@ -64,10 +64,10 @@ func newPendingBlock(
 	clock Clock,
 ) *pendingBlock {
 	return &pendingBlock{
-		height: prevBlock.Header.Height + 1,
+		height: prevBlock.Height + 1,
 		// the view increments by between 1 and MaxViewIncrease to match
 		// behaviour on a real network, where views are not consecutive
-		view:               prevBlock.Header.View + uint64(rand.Intn(MaxViewIncrease)+1),
+		view:               prevBlock.View + uint64(rand.Intn(MaxViewIncrease)+1),
 		parentID:           prevBlock.ID(),
 		clock:              clock,
 		timestamp:          clock.Now(),
@@ -99,13 +99,14 @@ func (b *pendingBlock) Block() *flowgo.Block {
 	}
 
 	return &flowgo.Block{
-		Header: &flowgo.Header{
+		HeaderBody: flowgo.HeaderBody{
 			Height:    b.height,
 			View:      b.view,
 			ParentID:  b.parentID,
-			Timestamp: b.timestamp,
+			Timestamp: uint64(b.timestamp.UnixMilli()),
+			ChainID:   flowgo.Emulator,
 		},
-		Payload: &flowgo.Payload{
+		Payload: flowgo.Payload{
 			Guarantees: guarantees,
 		},
 	}
@@ -158,7 +159,7 @@ func (b *pendingBlock) GetTransaction(txID flowgo.Identifier) *flowgo.Transactio
 
 // NextTransaction returns the next indexed transaction.
 func (b *pendingBlock) NextTransaction() *flowgo.TransactionBody {
-	if int(b.index) > len(b.transactionIDs) {
+	if int(b.index) >= len(b.transactionIDs) {
 		return nil
 	}
 
@@ -230,7 +231,7 @@ func (b *pendingBlock) Size() int {
 
 // Empty returns true if the pending block is empty.
 func (b *pendingBlock) Empty() bool {
-	return b.Size() == 0
+	return len(b.transactionIDs) == 0
 }
 
 // SetClock sets the given clock on the pending block.

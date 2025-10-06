@@ -32,7 +32,7 @@ import (
 	"github.com/onflow/flow-go/ledger/common/pathfinder"
 	"github.com/onflow/flow-go/ledger/complete"
 	"github.com/onflow/flow-go/ledger/complete/wal"
-	"github.com/onflow/flow-go/model/flow"
+	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module/metrics"
 
 	"github.com/onflow/flow-emulator/storage"
@@ -52,14 +52,14 @@ func New(
 	log zerolog.Logger,
 	path string,
 	stateCommitment string,
-	chainID flow.ChainID,
+	chainID flowgo.ChainID,
 ) (*Store, error) {
 	var err error
 	stateCommitmentBytes, err := hex.DecodeString(stateCommitment)
 	if err != nil {
 		return nil, fmt.Errorf("invalid state commitment hex: %w", err)
 	}
-	state, err := flow.ToStateCommitment(stateCommitmentBytes)
+	state, err := flowgo.ToStateCommitment(stateCommitmentBytes)
 	if err != nil {
 		return nil, fmt.Errorf("invalid state commitment: %w", err)
 	}
@@ -71,7 +71,7 @@ func New(
 	}
 
 	// pretend this state was the genesis state
-	genesis := flow.Genesis(chainID)
+	genesis := Genesis(chainID)
 	err = store.CommitBlock(
 		context.Background(),
 		*genesis,
@@ -93,7 +93,7 @@ func New(
 func loadSnapshotFromCheckpoint(
 	log zerolog.Logger,
 	dir string,
-	targetHash flow.StateCommitment,
+	targetHash flowgo.StateCommitment,
 ) (*snapshot.ExecutionSnapshot, error) {
 	log.Info().Msg("init WAL")
 
@@ -149,7 +149,7 @@ func loadSnapshotFromCheckpoint(
 	}
 	payloads := trie.AllPayloads()
 
-	writeSet := make(map[flow.RegisterID]flow.RegisterValue, len(payloads))
+	writeSet := make(map[flowgo.RegisterID]flowgo.RegisterValue, len(payloads))
 	for _, p := range payloads {
 		id, value, err := convert.PayloadToRegister(p)
 		if err != nil {
@@ -170,3 +170,23 @@ func loadSnapshotFromCheckpoint(
 }
 
 var _ storage.Store = &Store{}
+
+// Helper (TODO: @jribbink delete later)
+func Genesis(chainID flowgo.ChainID) *flowgo.Block {
+	// create the headerBody
+	headerBody := flowgo.HeaderBody{
+		ChainID:   chainID,
+		ParentID:  flowgo.ZeroID,
+		Height:    0,
+		Timestamp: uint64(flowgo.GenesisTime.UnixMilli()),
+		View:      0,
+	}
+
+	// combine to block
+	block := &flowgo.Block{
+		HeaderBody: headerBody,
+		Payload:    *flowgo.NewEmptyPayload(),
+	}
+
+	return block
+}

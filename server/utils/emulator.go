@@ -101,8 +101,8 @@ func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
 	}
 
 	blockResponse := &BlockResponse{
-		Height:  int(block.Header.Height),
-		BlockId: block.Header.ID().String(),
+		Height:  int(block.Height),
+		BlockId: block.ID().String(),
 	}
 
 	err = json.NewEncoder(w).Encode(blockResponse)
@@ -162,8 +162,8 @@ func (m EmulatorAPIServer) latestBlockResponse(name string, w http.ResponseWrite
 	}
 
 	blockResponse := &BlockResponse{
-		Height:  int(block.Header.Height),
-		BlockId: block.Header.ID().String(),
+		Height:  int(block.Height),
+		BlockId: block.ID().String(),
 		Context: name,
 	}
 

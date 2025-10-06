@@ -49,11 +49,11 @@ func TestCreateAndLoadSnapshots(t *testing.T) {
 
 	block1, err := blockchain1.GetLatestBlock()
 	require.NoError(t, err)
-	assert.Equal(t, uint64(2), block1.Header.Height)
+	assert.Equal(t, uint64(2), block1.Height)
 
 	block2, err := blockchain2.GetLatestBlock()
 	require.NoError(t, err)
-	assert.Equal(t, uint64(2), block2.Header.Height)
+	assert.Equal(t, uint64(2), block2.Height)
 
 	err = blockchain1.LoadSnapshot("BlockchainCreated")
 	require.NoError(t, err)
@@ -63,9 +63,9 @@ func TestCreateAndLoadSnapshots(t *testing.T) {
 
 	block1, err = blockchain1.GetLatestBlock()
 	require.NoError(t, err)
-	assert.Equal(t, uint64(0), block1.Header.Height)
+	assert.Equal(t, uint64(0), block1.Height)
 
 	block2, err = blockchain2.GetLatestBlock()
 	require.NoError(t, err)
-	assert.Equal(t, uint64(0), block2.Header.Height)
+	assert.Equal(t, uint64(0), block2.Height)
 }
