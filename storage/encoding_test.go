@@ -81,9 +81,15 @@ func TestEncodeBlock(t *testing.T) {
 
 	block, err := flowgo.NewBlock(flowgo.UntrustedBlock{
 		HeaderBody: flowgo.HeaderBody{
-			Height:   1234,
-			ParentID: flowgo.Identifier(ids.New()),
-			ChainID:  flowgo.Emulator,
+			Height:             1234,
+			ParentID:           flowgo.Identifier(ids.New()),
+			ChainID:            flowgo.Emulator,
+			ParentVoterIndices: []byte{1},
+			ParentVoterSigData: []byte{1},
+			ProposerID:         flowgo.Identifier(ids.New()),
+			View:               2,
+			ParentView:         1,
+			Timestamp:          1,
 		},
 		Payload: flowgo.Payload{
 			Guarantees: []*flowgo.CollectionGuarantee{
@@ -91,6 +97,7 @@ func TestEncodeBlock(t *testing.T) {
 					CollectionID: flowgo.Identifier(ids.New()),
 				},
 			},
+			ProtocolStateID: flowgo.Identifier(ids.New()),
 		},
 	})
 	require.Nil(t, err)
