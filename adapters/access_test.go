@@ -315,14 +315,19 @@ func TestAccess(t *testing.T) {
 		blockID := flowgo.Identifier{}
 		collectionID := flowgo.Identifier{}
 
+		// Create base event once and reuse it
+		baseEvent := ccfEventFixture(t)
+		jsonEvent, err := convert.CcfEventToJsonEvent(baseEvent)
+		require.NoError(t, err)
+
 		emuResult := accessmodel.TransactionResult{
 			Events: []flowgo.Event{
-				ccfEventFixture(t),
+				baseEvent,
 			},
 		}
 		expected := accessmodel.TransactionResult{
 			Events: []flowgo.Event{
-				jsonCDCEventFixture(t),
+				*jsonEvent,
 			},
 		}
 
@@ -538,17 +543,22 @@ func TestAccess(t *testing.T) {
 		startHeight := uint64(0)
 		endHeight := uint64(42)
 
+		// Create base event once and reuse it
+		baseEvent := ccfEventFixture(t)
+		jsonEvent, err := convert.CcfEventToJsonEvent(baseEvent)
+		require.NoError(t, err)
+
 		blockEvents := []flowgo.BlockEvents{
 			{
 				Events: []flowgo.Event{
-					ccfEventFixture(t),
+					baseEvent,
 				},
 			},
 		}
 		expected := []flowgo.BlockEvents{
 			{
 				Events: []flowgo.Event{
-					jsonCDCEventFixture(t),
+					*jsonEvent,
 				},
 			},
 		}
@@ -580,17 +590,22 @@ func TestAccess(t *testing.T) {
 		eventType := "testEvent"
 		blockIDs := []flowgo.Identifier{flowgo.Identifier{}}
 
+		// Create base event once and reuse it
+		baseEvent := ccfEventFixture(t)
+		jsonEvent, err := convert.CcfEventToJsonEvent(baseEvent)
+		require.NoError(t, err)
+
 		blockEvents := []flowgo.BlockEvents{
 			{
 				Events: []flowgo.Event{
-					ccfEventFixture(t),
+					baseEvent,
 				},
 			},
 		}
 		expected := []flowgo.BlockEvents{
 			{
 				Events: []flowgo.Event{
-					jsonCDCEventFixture(t),
+					*jsonEvent,
 				},
 			},
 		}
@@ -622,15 +637,20 @@ func TestAccess(t *testing.T) {
 		blockID := flowgo.Identifier{}
 		index := uint32(0)
 
+		// Create base event once and reuse it
+		baseEvent := ccfEventFixture(t)
+		jsonEvent, err := convert.CcfEventToJsonEvent(baseEvent)
+		require.NoError(t, err)
+
 		txResult := &accessmodel.TransactionResult{
 			Events: []flowgo.Event{
-				ccfEventFixture(t),
+				baseEvent,
 			},
 		}
 		results := []*accessmodel.TransactionResult{txResult}
 		convertedTXResult := &accessmodel.TransactionResult{
 			Events: []flowgo.Event{
-				jsonCDCEventFixture(t),
+				*jsonEvent,
 			},
 		}
 
@@ -688,17 +708,22 @@ func TestAccess(t *testing.T) {
 
 		blockID := flowgo.Identifier{}
 
+		// Create base event once and reuse it
+		baseEvent := ccfEventFixture(t)
+		jsonEvent, err := convert.CcfEventToJsonEvent(baseEvent)
+		require.NoError(t, err)
+
 		results := []*accessmodel.TransactionResult{
 			{
 				Events: []flowgo.Event{
-					ccfEventFixture(t),
+					baseEvent,
 				},
 			},
 		}
 		expected := []*accessmodel.TransactionResult{
 			{
 				Events: []flowgo.Event{
-					jsonCDCEventFixture(t),
+					*jsonEvent,
 				},
 			},
 		}
@@ -763,13 +788,5 @@ func ccfEventFixture(t *testing.T) flowgo.Event {
 	ccfEvent, err := ccf.EventsEncMode.Encode(cadenceValue)
 	require.NoError(t, err)
 
-	return flowgo.Event{
-		Payload: ccfEvent,
-	}
-}
-
-func jsonCDCEventFixture(t *testing.T) flowgo.Event {
-	converted, err := convert.CcfEventToJsonEvent(ccfEventFixture(t))
-	require.NoError(t, err)
-	return *converted
+	return unittest.EventFixture(unittest.Event.WithPayload(ccfEvent))
 }
