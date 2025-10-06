@@ -29,6 +29,7 @@ import (
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	"github.com/onflow/flow-go/model/flow"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	flowunittest "github.com/onflow/flow-go/utils/unittest"
 	"github.com/onflow/flow/protobuf/go/flow/entities"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -49,18 +50,11 @@ func TestBlocks(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	block1, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
-		HeaderBody: flowgo.HeaderBody{
-			Height: 1,
-		},
-		Payload: flowgo.Payload{},
-	})
-	block2, _ := flowgo.NewBlock(flowgo.UntrustedBlock{
-		HeaderBody: flowgo.HeaderBody{
-			Height: 2,
-		},
-		Payload: flowgo.Payload{},
-	})
+	block1 := flowunittest.BlockFixture()
+	block1.HeaderBody.Height = 1
+
+	block2 := flowunittest.BlockFixture()
+	block2.HeaderBody.Height = 2
 
 	t.Run("should return error for not found", func(t *testing.T) {
 		t.Run("BlockByID", func(t *testing.T) {

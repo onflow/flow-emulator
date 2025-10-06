@@ -152,7 +152,7 @@ func TestComputationReportingForTransaction(t *testing.T) {
 	assert.GreaterOrEqual(t, txProfile.ComputationUsed, uint64(1))
 
 	expectedIntensities := map[string]uint64{
-		"CreateCompositeValue":   2,
+		"CreateCompositeValue":   1,
 		"CreateDictionaryValue":  1,
 		"EmitEvent":              73,
 		"EncodeEvent":            1,
