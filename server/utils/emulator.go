@@ -21,12 +21,11 @@ package utils
 import (
 	"encoding/json"
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/gorilla/mux"
 	flowgo "github.com/onflow/flow-go/model/flow"
-	"golang.org/x/exp/slices"
-
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
 )
