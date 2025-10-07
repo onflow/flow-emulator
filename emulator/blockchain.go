@@ -52,12 +52,14 @@ import (
 	"github.com/onflow/flow-go/access/validator"
 	"github.com/onflow/flow-go/engine"
 	"github.com/onflow/flow-go/fvm"
+	"github.com/onflow/flow-go/fvm/blueprints"
 	fvmcrypto "github.com/onflow/flow-go/fvm/crypto"
 	"github.com/onflow/flow-go/fvm/environment"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/meter"
 	reusableRuntime "github.com/onflow/flow-go/fvm/runtime"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
+	"github.com/onflow/flow-go/fvm/systemcontracts"
 	accessmodel "github.com/onflow/flow-go/model/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module/metrics"
@@ -1904,57 +1906,60 @@ func (b *Blockchain) executeSystemChunkTransaction() error {
 func (b *Blockchain) executeScheduledTransactions(blockContext fvm.Context) ([]*types.TransactionResult, error) {
 	var results []*types.TransactionResult
 
-	serviceAddress := b.GetChain().ServiceAddress()
-	parentID := b.pendingBlock.parentID
 	// disable checks for signatures and keys since we are executing a system transaction
 	ctx := fvm.NewContextFromParent(
 		blockContext,
 		fvm.WithAuthorizationChecksEnabled(false),
 		fvm.WithSequenceNumberCheckAndIncrementEnabled(false),
+		fvm.WithTransactionFeesEnabled(false),
 	)
 
 	// process scheduled transactions out-of-band (do not alter collections)
-	processTx := processScheduledTransaction(serviceAddress, parentID)
+	processTx, err := blueprints.ProcessCallbacksTransaction(b.GetChain())
+	if err != nil {
+		return nil, err
+	}
+
 	executionSnapshot, output, err := b.vm.Run(
 		ctx,
-		fvm.Transaction(&processTx, uint32(len(b.pendingBlock.Transactions()))),
+		fvm.Transaction(processTx, uint32(len(b.pendingBlock.Transactions()))),
 		b.pendingBlock.ledgerState,
 	)
 	if err != nil {
-		return results, err
+		return nil, err
 	}
 	// record events and state changes
 	b.pendingBlock.events = append(b.pendingBlock.events, output.Events...)
 	if err := b.pendingBlock.ledgerState.Merge(executionSnapshot); err != nil {
-		return results, err
+		return nil, err
 	}
 
-	// filter to only process PendingExecution events
-	sdkEvents, err := convert.FlowEventsToSDK(output.Events)
+	executeTxs, err := blueprints.ExecuteCallbacksTransactions(b.GetChain(), output.Events)
 	if err != nil {
-		return results, err
+		return nil, err
 	}
-	pendingExecutionEvents := filterPendingExecutionEvents(sdkEvents, serviceAddress)
-	executeTxs, scheduledIDs, err := executeScheduledTransactions(pendingExecutionEvents, serviceAddress, parentID)
+
+	env := systemcontracts.SystemContractsForChain(b.GetChain().ChainID()).AsTemplateEnv()
+	scheduledIDs, err := parseScheduledIDs(env, output.Events)
 	if err != nil {
-		return results, err
+		return nil, err
 	}
 
 	// execute scheduled transactions out-of-band
 	for idx, tx := range executeTxs {
 		execSnapshot, execOutput, err := b.vm.Run(
 			ctx,
-			fvm.Transaction(&tx, uint32(len(b.pendingBlock.Transactions()))),
+			fvm.Transaction(tx, uint32(len(b.pendingBlock.Transactions()))),
 			b.pendingBlock.ledgerState,
 		)
 		if err != nil {
-			return results, err
+			return nil, err
 		}
 
 		// Print scheduled transaction result (labeled), including app-level scheduled tx id
 		schedResult, err := convert.VMTransactionResultToEmulator(tx.ID(), execOutput)
 		if err != nil {
-			return results, err
+			return nil, err
 		}
 		appScheduledID := ""
 		if idx < len(scheduledIDs) {
@@ -1964,7 +1969,7 @@ func (b *Blockchain) executeScheduledTransactions(blockContext fvm.Context) ([]*
 
 		b.pendingBlock.events = append(b.pendingBlock.events, execOutput.Events...)
 		if err := b.pendingBlock.ledgerState.Merge(execSnapshot); err != nil {
-			return results, err
+			return nil, err
 		}
 	}
 
