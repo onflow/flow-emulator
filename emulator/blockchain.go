@@ -716,14 +716,17 @@ func configureNewLedger(
 		return nil, nil, err
 	}
 
-	genesisExecutionSnapshot, err := bootstrapLedger(vm, ctx, ledger, conf)
+	genesisExecutionSnapshot, output, err := bootstrapLedger(vm, ctx, ledger, conf)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to bootstrap execution state: %w", err)
 	}
 
 	// commit the genesis block to storage
 	genesis := Genesis(conf.GetChainID())
-
+	// The `output.Events` slice contains only EVM-related events emitted
+	// during the VM bridge bootstrap. This is needed for the proper
+	// setup of the EVM Gateway, since missing events will cause state
+	// mismatch, preventing the service to run.
 	err = store.CommitBlock(
 		context.Background(),
 		*genesis,
@@ -731,7 +734,7 @@ func configureNewLedger(
 		nil,
 		nil,
 		genesisExecutionSnapshot,
-		nil,
+		output.Events,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -772,6 +775,7 @@ func bootstrapLedger(
 	conf config,
 ) (
 	*snapshot.ExecutionSnapshot,
+	fvm.ProcedureOutput,
 	error,
 ) {
 	accountKey := conf.GetServiceKey().AccountKey()
@@ -796,14 +800,14 @@ func bootstrapLedger(
 
 	executionSnapshot, output, err := vm.Run(ctx, bootstrap, ledger)
 	if err != nil {
-		return nil, err
+		return nil, fvm.ProcedureOutput{}, err
 	}
 
 	if output.Err != nil {
-		return nil, output.Err
+		return nil, fvm.ProcedureOutput{}, output.Err
 	}
 
-	return executionSnapshot, nil
+	return executionSnapshot, output, nil
 }
 
 func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPublicKey, supply cadence.UFix64) *fvm.BootstrapProcedure {
