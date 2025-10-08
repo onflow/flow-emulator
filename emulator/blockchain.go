@@ -723,6 +723,10 @@ func configureNewLedger(
 
 	// commit the genesis block to storage
 	genesis := Genesis(conf.GetChainID())
+	// The `output.Events` slice contains only EVM-related events emitted
+	// during the VM bridge bootstrap. This is needed for the proper
+	// setup of the EVM Gateway, since missing events will cause state
+	// mismatch, preventing the service to run.
 	err = store.CommitBlock(
 		context.Background(),
 		*genesis,
