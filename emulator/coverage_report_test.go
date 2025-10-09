@@ -45,7 +45,6 @@ func TestCoverageReport(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	coverageReport.Reset()
 	logger := zerolog.Nop()
 	adapter := adapters.NewSDKAdapter(&logger, b)
 
