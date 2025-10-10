@@ -51,6 +51,8 @@ import (
 
 func Test_Checkpoint_Storage(t *testing.T) {
 
+	t.Parallel()
+
 	dir := t.TempDir()
 
 	chainID := flowsdk.Emulator

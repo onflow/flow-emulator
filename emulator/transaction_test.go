@@ -2161,6 +2161,9 @@ func TestRollbackTransaction(t *testing.T) {
 // TestTransactionWithCadenceRandom checks Cadence's random function works
 // within a transaction
 func TestTransactionWithCadenceRandom(t *testing.T) {
+
+	t.Parallel()
+
 	b, adapter := setupTransactionTests(t)
 
 	code := `
