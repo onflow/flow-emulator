@@ -137,6 +137,8 @@ type Config struct {
 	SqliteURL string
 	// CoverageReportingEnabled enables/disables Cadence code coverage reporting.
 	CoverageReportingEnabled bool
+	// ComputationProfilingEnabled enables/disables Cadence computation profiling.
+	ComputationProfilingEnabled bool
 	// RPCHost is the address of the access node to use when using a forked network.
 	RPCHost string
 	// StartBlockHeight is the height at which to start the emulator.
@@ -460,6 +462,13 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		options = append(
 			options,
 			emulator.WithCoverageReport(runtime.NewCoverageReport()),
+		)
+	}
+
+	if conf.ComputationProfilingEnabled {
+		options = append(
+			options,
+			emulator.WithComputationProfile(runtime.NewComputationProfile()),
 		)
 	}
 
