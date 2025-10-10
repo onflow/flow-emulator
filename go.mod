@@ -12,10 +12,10 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.7.1
+	github.com/onflow/cadence v1.8.1
 	github.com/onflow/crypto v0.25.3
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.9.0
-	github.com/onflow/flow-go v0.43.1-rc.5-pr8007.0.20251007165614-c6967df18fa9
+	github.com/onflow/flow-go v0.43.1-rc.5-pr8007.0.20251010214803-8b2fac1a623a
 	github.com/onflow/flow-go-sdk v1.8.4
 	github.com/onflow/flow-nft/lib/go/contracts v1.3.0
 	github.com/onflow/flow/protobuf/go/flow v0.4.16
@@ -74,7 +74,6 @@ require (
 	github.com/ferranbt/fastssz v0.1.4 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fxamacker/circlehash v0.3.0 // indirect
-	github.com/fxamacker/golang-lru/v2 v2.0.0-20250716153046-22c8d17dc4ee // indirect
 	github.com/getsentry/sentry-go v0.27.0 // indirect
 	github.com/go-kit/kit v0.12.0 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
@@ -87,6 +86,7 @@ require (
 	github.com/golang/glog v1.2.5 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.5-0.20231225225746-43d5d4cd4e0e // indirect
+	github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0 // indirect
@@ -143,7 +143,7 @@ require (
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/onflow/atree v0.10.1 // indirect
+	github.com/onflow/atree v0.11.0 // indirect
 	github.com/onflow/fixed-point v0.1.1 // indirect
 	github.com/onflow/flow-core-contracts/lib/go/contracts v1.9.0 // indirect
 	github.com/onflow/flow-evm-bridge v0.1.0 // indirect

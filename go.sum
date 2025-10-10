@@ -446,8 +446,8 @@ github.com/google/pprof v0.0.0-20200708004538-1a94d8640e99/go.mod h1:ZgVRPoUq/hf
 github.com/google/pprof v0.0.0-20201023163331-3e6fc7fc9c4c/go.mod h1:kpwsk12EmLew5upagYY7GY0pfYCcupk39gWOCRROcvE=
 github.com/google/pprof v0.0.0-20201203190320-1bf35d6f28c2/go.mod h1:kpwsk12EmLew5upagYY7GY0pfYCcupk39gWOCRROcvE=
 github.com/google/pprof v0.0.0-20201218002935-b9804c9f04c2/go.mod h1:kpwsk12EmLew5upagYY7GY0pfYCcupk39gWOCRROcvE=
-github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad h1:a6HEuzUHeKH6hwfN/ZoQgRgVIWFJljSWa/zetS2WTvg=
-github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad/go.mod h1:vavhavw2zAxS5dIdcRluK6cSGGPlZynqzFM8NdvU144=
+github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5 h1:xhMrHhTJ6zxu3gA4enFM9MLn9AY7613teCdFnlUVbSQ=
+github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5/go.mod h1:5hDyRhoBCxViHszMt12TnOpEI4VVi+U8Gm9iphldiMA=
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
 github.com/google/s2a-go v0.1.9 h1:LGD7gtMgezd8a/Xak7mEWL0PjoTQFvpRudN895yqKW0=
 github.com/google/s2a-go v0.1.9/go.mod h1:YA0Ei2ZQL3acow2O62kdp9UlnvMmU7kA6Eutn0dXayM=
@@ -747,10 +747,10 @@ github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn
 github.com/olekukonko/tablewriter v0.0.0-20170122224234-a0225b3f23b5/go.mod h1:vsDQFd/mU46D+Z4whnwzcISnGGzXWMclvtLoiIKAKIo=
 github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=
 github.com/olekukonko/tablewriter v0.0.5/go.mod h1:hPp6KlRPjbx+hW8ykQs1w3UBbZlj6HuIJcUGPhkA7kY=
-github.com/onflow/atree v0.10.1 h1:8sixWP3l3LitcyuKkVepbIsLbfr7JN3cCB/iA1j2JD8=
-github.com/onflow/atree v0.10.1/go.mod h1:+BuiL0XuIigHJqwkdIuDNzxXvyDx1jYUog/w+iZhcE8=
-github.com/onflow/cadence v1.7.1 h1:VpPiC13e4qrdpyqaagd+dpHtQwfJ/djr97FgT3SovWA=
-github.com/onflow/cadence v1.7.1/go.mod h1:1lKdLNVHIoO0jEjkRPMtOmBWYCG1An9TXSoiCuGIIpo=
+github.com/onflow/atree v0.11.0 h1:NrGHb7l3pKvFPFAdYfEyezg6D7xBNcMSwQHliOHtZug=
+github.com/onflow/atree v0.11.0/go.mod h1:uZE/bzDfMLXJH9BYL8HxNisw9pHZGyc+mDLuSMeUAVY=
+github.com/onflow/cadence v1.8.1 h1:nWx+USGs/+NIVHd5RYlzEulzsqYQp0uSKDqVYBub3w4=
+github.com/onflow/cadence v1.8.1/go.mod h1:08FmLMsBjhRTgE9tmiSJjFNJrjcuTUawQFFUQq8J1Y4=
 github.com/onflow/crypto v0.25.3 h1:XQ3HtLsw8h1+pBN+NQ1JYM9mS2mVXTyg55OldaAIF7U=
 github.com/onflow/crypto v0.25.3/go.mod h1:+1igaXiK6Tjm9wQOBD1EGwW7bYWMUGKtwKJ/2QL/OWs=
 github.com/onflow/fixed-point v0.1.1 h1:j0jYZVO8VGyk1476alGudEg7XqCkeTVxb5ElRJRKS90=
@@ -765,8 +765,8 @@ github.com/onflow/flow-ft/lib/go/contracts v1.0.1 h1:Ts5ob+CoCY2EjEd0W6vdLJ7hLL3
 github.com/onflow/flow-ft/lib/go/contracts v1.0.1/go.mod h1:PwsL8fC81cjnUnTfmyL/HOIyHnyaw/JA474Wfj2tl6A=
 github.com/onflow/flow-ft/lib/go/templates v1.0.1 h1:FDYKAiGowABtoMNusLuRCILIZDtVqJ/5tYI4VkF5zfM=
 github.com/onflow/flow-ft/lib/go/templates v1.0.1/go.mod h1:uQ8XFqmMK2jxyBSVrmyuwdWjTEb+6zGjRYotfDJ5pAE=
-github.com/onflow/flow-go v0.43.1-rc.5-pr8007.0.20251007165614-c6967df18fa9 h1:PPIDrvyHEzkegSn8sYvQxmnegsiwdwmIrYJBNLSqaGw=
-github.com/onflow/flow-go v0.43.1-rc.5-pr8007.0.20251007165614-c6967df18fa9/go.mod h1:pRsxdt8GYriAfP4RjUsCJ505MQcAZgyZq7K4DuWxrXI=
+github.com/onflow/flow-go v0.43.1-rc.5-pr8007.0.20251010214803-8b2fac1a623a h1:guLnSKxO2nYee6aAXdvg30TAq8QXe50kRsWamgqp0js=
+github.com/onflow/flow-go v0.43.1-rc.5-pr8007.0.20251010214803-8b2fac1a623a/go.mod h1:9ByuXT1d9KfKEI8RCwlIxaIzKYw7i+OCfA5j6ALlyW4=
 github.com/onflow/flow-go-sdk v1.8.4 h1:WHtVjryOU6ZJx0jUSjBPOrWoGqGDr+eEejyIkfbiBCE=
 github.com/onflow/flow-go-sdk v1.8.4/go.mod h1:Jli9sI78LAnoC3OVGeAs0ngOezoLTfE/GrKOAB9TbTw=
 github.com/onflow/flow-nft/lib/go/contracts v1.3.0 h1:DmNop+O0EMyicZvhgdWboFG57xz5t9Qp81FKlfKyqJc=

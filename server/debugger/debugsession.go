@@ -205,7 +205,7 @@ func (s *session) handleVariablesRequest(request *dap.VariablesRequest) {
 
 			value := variable.GetValue(inter)
 
-			cadenceValue, err := runtime.ExportValue(value, inter, interpreter.EmptyLocationRange)
+			cadenceValue, err := runtime.ExportValue(value, inter)
 			if err != nil {
 				//	panic(err)
 				continue
@@ -638,7 +638,7 @@ func (s *session) convertInterpreterValueToDAPVariables(
 	inter *interpreter.Interpreter,
 	value interpreter.Value,
 ) []dap.Variable {
-	cadenceValue, err := runtime.ExportValue(value, inter, interpreter.EmptyLocationRange)
+	cadenceValue, err := runtime.ExportValue(value, inter)
 	if err != nil {
 		panic(err)
 	}
@@ -659,7 +659,7 @@ func (s *session) convertStorageMapToDAPVariables(
 			break
 		}
 
-		cadenceValue, err := runtime.ExportValue(value, inter, interpreter.EmptyLocationRange)
+		cadenceValue, err := runtime.ExportValue(value, inter)
 		if err != nil {
 			panic(err)
 		}
