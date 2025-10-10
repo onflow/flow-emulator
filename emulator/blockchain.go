@@ -315,6 +315,15 @@ func WithComputationReporting(enabled bool) Option {
 	}
 }
 
+// WithComputationProfile injects a ComputationProfile to collect coverage information.
+//
+// The default is nil.
+func WithComputationProfile(computationProfile *runtime.ComputationProfile) Option {
+	return func(c *config) {
+		c.ComputationProfile = computationProfile
+	}
+}
+
 func WithScheduledTransactions(enabled bool) Option {
 	return func(c *config) {
 		c.ScheduledTransactionsEnabled = enabled
@@ -402,6 +411,7 @@ type config struct {
 	TransactionValidationEnabled bool
 	ChainID                      flowgo.ChainID
 	CoverageReport               *runtime.CoverageReport
+	ComputationProfile           *runtime.ComputationProfile
 	AutoMine                     bool
 	Contracts                    []ContractDescription
 	ComputationReportingEnabled  bool
@@ -627,17 +637,29 @@ var _ environment.EntropyProvider = &blockHashEntropyProvider{}
 func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.VirtualMachine, fvm.Context, error) {
 	vm := fvm.NewVirtualMachine()
 
-	cadenceLogger := conf.Logger.Hook(CadenceHook{MainLogger: &conf.ServerLogger}).Level(zerolog.DebugLevel)
+	cadenceLogger := conf.Logger.
+		Hook(CadenceHook{
+			MainLogger: &conf.ServerLogger,
+		}).
+		Level(zerolog.DebugLevel)
+
+	if conf.ExecutionEffortWeights != nil &&
+		conf.ComputationProfile != nil {
+
+		conf.ComputationProfile.
+			WithComputationWeights(conf.ExecutionEffortWeights)
+	}
 
 	runtimeConfig := runtime.Config{
-		Debugger:       blockchain.debugger,
-		CoverageReport: conf.CoverageReport,
+		Debugger:           blockchain.debugger,
+		CoverageReport:     conf.CoverageReport,
+		ComputationProfile: conf.ComputationProfile,
 	}
 	rt := runtime.NewRuntime(runtimeConfig)
 	customRuntimePool := reusableRuntime.NewCustomReusableCadenceRuntimePool(
 		1,
 		runtimeConfig,
-		func(config runtime.Config) runtime.Runtime {
+		func(_ runtime.Config) runtime.Runtime {
 			return rt
 		},
 	)
@@ -776,6 +798,10 @@ func bootstrapLedger(
 	fvm.ProcedureOutput,
 	error,
 ) {
+	if conf.ComputationProfile != nil {
+		conf.ComputationProfile.Reset()
+	}
+
 	accountKey := conf.GetServiceKey().AccountKey()
 	publicKey, _ := crypto.DecodePublicKey(
 		accountKey.SigAlgo,
@@ -808,7 +834,12 @@ func bootstrapLedger(
 	return executionSnapshot, output, nil
 }
 
-func configureBootstrapProcedure(conf config, flowAccountKey flowgo.AccountPublicKey, supply cadence.UFix64) *fvm.BootstrapProcedure {
+func configureBootstrapProcedure(
+	conf config,
+	flowAccountKey flowgo.AccountPublicKey,
+	supply cadence.UFix64,
+) *fvm.BootstrapProcedure {
+
 	options := make([]fvm.BootstrapProcedureOption, 0)
 	options = append(options,
 		fvm.WithInitialTokenSupply(supply),
@@ -1712,12 +1743,20 @@ func (b *Blockchain) CoverageReport() *runtime.CoverageReport {
 	return b.conf.CoverageReport
 }
 
+func (b *Blockchain) ResetCoverageReport() {
+	b.conf.CoverageReport.Reset()
+}
+
 func (b *Blockchain) ComputationReport() *ComputationReport {
 	return b.computationReport
 }
 
-func (b *Blockchain) ResetCoverageReport() {
-	b.conf.CoverageReport.Reset()
+func (b *Blockchain) ComputationProfile() *runtime.ComputationProfile {
+	return b.conf.ComputationProfile
+}
+
+func (b *Blockchain) ResetComputationProfile() {
+	b.conf.ComputationProfile.Reset()
 }
 
 func (b *Blockchain) GetTransactionsByBlockID(blockID flowgo.Identifier) ([]*flowgo.TransactionBody, error) {

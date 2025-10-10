@@ -80,10 +80,8 @@ func TestCoverageReport(t *testing.T) {
 	require.NoError(t, err)
 	AssertTransactionSucceeded(t, txResult)
 
-	address, err := common.HexToAddress(counterAddress.Hex())
-	require.NoError(t, err)
 	location := common.AddressLocation{
-		Address: address,
+		Address: common.MustBytesToAddress(counterAddress.Bytes()),
 		Name:    "Counting",
 	}
 	coverage := coverageReport.Coverage[location]
