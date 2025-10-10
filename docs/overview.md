@@ -75,6 +75,7 @@ values.
 | `--redis-url`                   | `FLOW_REDIS_URL`                 | ''             | Redis-server URL for persisting redis storage backend ( `redis://[[username:]password@]host[:port][/database]` )                                                                                            |
 | `--start-block-height`          | `FLOW_STARTBLOCKHEIGHT`          | `0`            | Start block height to use when starting the network using 'testnet' or 'mainnet' as the chain-id                                                                                                            |
 | `--rpc-host`                  | `FLOW_RPCHOST`             | ''             | RPC host (access node) to query for previous state when starting the network using 'testnet' or 'mainnet' as the chain-id    |
+| `--num-accounts`              | `FLOW_NUMACCOUNTS`         | `0`            | Precreate and fund this many accounts at startup (mints 1000.0 FLOW to each)              |
 
 ## Running the emulator with the Flow CLI
 

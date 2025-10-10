@@ -28,13 +28,17 @@ import (
 
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/runtime"
+	"github.com/onflow/cadence/stdlib"
+	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/crypto"
+	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go/fvm/systemcontracts"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/psiemens/graceland"
 	"github.com/rs/zerolog"
 
 	"github.com/onflow/flow-emulator/adapters"
+	"github.com/onflow/flow-emulator/convert"
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-emulator/server/access"
 	"github.com/onflow/flow-emulator/server/debugger"
@@ -155,6 +159,8 @@ type Config struct {
 	SetupEVMEnabled bool
 	// SetupVMBridgeEnabled enables the VM bridge setup for the emulator, defaults to true.
 	SetupVMBridgeEnabled bool
+	// NumAccounts specifies how many accounts to precreate and fund at startup.
+	NumAccounts int
 }
 
 type listener interface {
@@ -207,6 +213,161 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 					contract.Name: fmt.Sprintf("0x%s", contract.Address.Hex()),
 				},
 			).Msg(contract.Description)
+		}
+	}
+
+	// Precreate accounts if requested
+	if conf.NumAccounts > 0 {
+		// Funding amount (fixed, not configurable)
+		fundAmount := "1000.0"
+
+		// Fetch system contract addresses
+		env := systemcontracts.SystemContractsForChain(chain.ChainID()).AsTemplateEnv()
+
+		logger.Info().Msg("\nAvailable Accounts\n==================")
+
+		serviceKey := emulatedBlockchain.ServiceKey()
+		servicePrivHex := fmt.Sprintf("0x%X", serviceKey.PrivateKey.Encode())
+
+		for i := 0; i < conf.NumAccounts; i++ {
+			// Create account using the same key as the service account
+			latestBlock, err := emulatedBlockchain.GetLatestBlock()
+			if err != nil {
+				logger.Error().Err(err).Msg("❗  Failed to get latest block for account creation")
+				continue
+			}
+			createTx, err := templates.CreateAccount(
+				[]*flowsdk.AccountKey{serviceKey.AccountKey()},
+				nil,
+				serviceKey.Address,
+			)
+			if err != nil {
+				logger.Error().Err(err).Msg("❗  Failed to build account creation transaction")
+				continue
+			}
+			createTx.
+				SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
+				SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID())).
+				SetProposalKey(serviceKey.Address, serviceKey.Index, serviceKey.SequenceNumber).
+				SetPayer(serviceKey.Address)
+
+			signer, err := serviceKey.Signer()
+			if err != nil {
+				logger.Error().Err(err).Msg("❗  Failed to get service key signer for account creation")
+				continue
+			}
+			if err := createTx.SignEnvelope(serviceKey.Address, serviceKey.Index, signer); err != nil {
+				logger.Error().Err(err).Msg("❗  Failed to sign account creation transaction")
+				continue
+			}
+
+			if err := emulatedBlockchain.AddTransaction(*convert.SDKTransactionToFlow(*createTx)); err != nil {
+				logger.Error().Err(err).Msg("❗  Failed to submit account creation transaction")
+				continue
+			}
+			_, results, err := emulatedBlockchain.ExecuteAndCommitBlock()
+			if err != nil || len(results) == 0 || !results[len(results)-1].Succeeded() {
+				logger.Error().Err(err).Msg("❗  Failed to execute account creation transaction")
+				continue
+			}
+			if _, err := emulatedBlockchain.CommitBlock(); err != nil {
+				logger.Error().Err(err).Msg("❗  Failed to commit block after account creation")
+				continue
+			}
+
+			// Extract new account address from events
+			var newAddr flowsdk.Address
+			last := results[len(results)-1]
+			for _, ev := range last.Events {
+				if ev.Type == flowsdk.EventAccountCreated {
+					addrFieldValue := cadence.SearchFieldByName(ev.Value, stdlib.AccountEventAddressParameter.Identifier)
+					if cadenceAddr, ok := addrFieldValue.(cadence.Address); ok {
+						newAddr = flowsdk.Address(cadenceAddr)
+						break
+					}
+				}
+			}
+			if newAddr == (flowsdk.Address{}) {
+				logger.Error().Msg("❗  Could not determine new account address from events")
+				continue
+			}
+
+			// Fund account by minting and depositing FLOW from service account
+			txCode := fmt.Sprintf(`
+                import FungibleToken from %[1]s
+                import FlowToken from %[2]s
+
+                transaction(recipient: Address, amount: UFix64) {
+                    prepare(acct: auth(Storage, Capabilities, FungibleToken.Withdraw) &Account) {
+                        let adminRef = acct.storage.borrow<&FlowToken.Administrator>(from: /storage/flowTokenAdmin)
+                            ?? panic("missing FlowToken admin")
+                        let minter <- adminRef.createNewMinter(allowedAmount: amount)
+                        let minted <- minter.mintTokens(amount: amount)
+                        let receiver = getAccount(recipient).capabilities.get<&{FungibleToken.Receiver}>(/public/flowTokenReceiver)!
+                            .borrow()
+                            ?? panic("missing FlowToken receiver")
+                        receiver.deposit(from: <-minted)
+                        destroy minter
+                    }
+                }
+            `, env.FungibleTokenAddress, env.FlowTokenAddress)
+
+			latestBlock, err = emulatedBlockchain.GetLatestBlock()
+			if err != nil {
+				logger.Error().Err(err).Msg("❗  Failed to get latest block for funding")
+				continue
+			}
+			fundVal, err := cadence.NewUFix64(fundAmount)
+			if err != nil {
+				logger.Error().Err(err).Msg("❗  Failed to parse funding amount")
+				continue
+			}
+			fundTx := flowsdk.NewTransaction().
+				SetScript([]byte(txCode)).
+				SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID())).
+				SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
+				SetProposalKey(serviceKey.Address, serviceKey.Index, serviceKey.SequenceNumber).
+				SetPayer(serviceKey.Address)
+
+			if err := fundTx.AddArgument(cadence.NewAddress(newAddr)); err != nil {
+				logger.Error().Err(err).Msg("❗  Failed to add recipient argument")
+				continue
+			}
+			if err := fundTx.AddArgument(fundVal); err != nil {
+				logger.Error().Err(err).Msg("❗  Failed to add amount argument")
+				continue
+			}
+
+			signer, err = serviceKey.Signer()
+			if err != nil {
+				logger.Error().Err(err).Msg("❗  Failed to get service key signer for funding")
+				continue
+			}
+			if err := fundTx.SignEnvelope(serviceKey.Address, serviceKey.Index, signer); err != nil {
+				logger.Error().Err(err).Msg("❗  Failed to sign funding transaction")
+				continue
+			}
+
+			if err := emulatedBlockchain.AddTransaction(*convert.SDKTransactionToFlow(*fundTx)); err != nil {
+				logger.Error().Err(err).Msg("❗  Failed to submit funding transaction")
+				continue
+			}
+			_, results, err = emulatedBlockchain.ExecuteAndCommitBlock()
+			if err != nil || len(results) == 0 || !results[len(results)-1].Succeeded() {
+				logger.Error().Err(err).Msg("❗  Failed to execute funding transaction")
+				continue
+			}
+			if _, err := emulatedBlockchain.CommitBlock(); err != nil {
+				logger.Error().Err(err).Msg("❗  Failed to commit block after funding")
+				continue
+			}
+
+			logger.Info().Msgf("(%d) 0x%s (%.18s FLOW)", i, newAddr.Hex(), fundAmount)
+		}
+
+		logger.Info().Msg("\nPrivate Keys\n==================")
+		for i := 0; i < conf.NumAccounts; i++ {
+			logger.Info().Msgf("(%d) %s", i, servicePrivHex)
 		}
 	}
 
