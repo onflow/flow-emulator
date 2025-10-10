@@ -192,6 +192,7 @@ func TestTransactions(t *testing.T) {
 
 func TestFullCollection(t *testing.T) {
 	t.Parallel()
+
 	store, dir := setupStore(t)
 	defer func() {
 		require.NoError(t, store.Close())
