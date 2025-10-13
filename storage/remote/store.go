@@ -21,6 +21,7 @@ package remote
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/onflow/flow-go/engine/common/rpc/convert"
 	"github.com/onflow/flow-go/fvm/errors"
@@ -53,20 +54,37 @@ type Store struct {
 
 type Option func(*Store)
 
-// WithRPCHost sets access/observer node host.
+// WithForkURL configures the remote access/observer node gRPC endpoint.
+// Expects raw host:port with no scheme.
+func WithForkURL(url string) Option {
+	return func(store *Store) {
+		// enforce raw host:port only
+		if strings.Contains(url, "://") {
+			// keep as-is; the New() will error when dialing
+		}
+		store.host = url
+	}
+}
+
+// WithRPCHost sets access/observer node host. Deprecated: use WithForkURL.
 func WithRPCHost(host string, chainID flowgo.ChainID) Option {
 	return func(store *Store) {
+		// Keep legacy behavior: set host and (optionally) chainID for validation.
 		store.host = host
 		store.chainID = chainID
 	}
 }
 
 // WithStartBlockHeight sets the start height for the store.
-func WithStartBlockHeight(height uint64) Option {
+// WithForkBlockNumber sets the pinned fork block/height.
+func WithForkBlockNumber(height uint64) Option {
 	return func(store *Store) {
 		store.forkHeight = height
 	}
 }
+
+// WithStartBlockHeight is deprecated: use WithForkBlockNumber.
+func WithStartBlockHeight(height uint64) Option { return WithForkBlockNumber(height) }
 
 // WithClient can set an rpc host client
 //
@@ -115,8 +133,11 @@ func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*St
 		return nil, fmt.Errorf("could not get network parameters: %w", err)
 	}
 
-	if params.ChainId != store.chainID.String() {
-		return nil, fmt.Errorf("chain ID of rpc host does not match chain ID provided in config: %s != %s", params.ChainId, store.chainID)
+	// If a chainID was provided (legacy path), validate it matches the remote. If not provided, skip.
+	if store.chainID != "" {
+		if params.ChainId != store.chainID.String() {
+			return nil, fmt.Errorf("chain ID of rpc host does not match chain ID provided in config: %s != %s", params.ChainId, store.chainID)
+		}
 	}
 
 	if err := store.initializeStartBlock(context.Background()); err != nil {

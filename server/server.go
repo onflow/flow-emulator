@@ -19,6 +19,7 @@
 package server
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"net/http"
@@ -44,6 +45,9 @@ import (
 	"github.com/onflow/flow-emulator/storage/remote"
 	"github.com/onflow/flow-emulator/storage/sqlite"
 	"github.com/onflow/flow-emulator/storage/util"
+	flowaccess "github.com/onflow/flow/protobuf/go/flow/access"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // EmulatorServer is a local server that runs a Flow Emulator instance.
@@ -137,10 +141,10 @@ type Config struct {
 	SqliteURL string
 	// CoverageReportingEnabled enables/disables Cadence code coverage reporting.
 	CoverageReportingEnabled bool
-	// RPCHost is the address of the access node to use when using a forked network.
-	RPCHost string
-	// StartBlockHeight is the height at which to start the emulator.
-	StartBlockHeight uint64
+	// ForkURL is the gRPC access node address to fork from (host:port).
+	ForkURL string
+	// ForkBlockNumber is the height at which to start the emulator when forking.
+	ForkBlockNumber uint64
 	// CheckpointPath is the path to the checkpoint folder to use when starting the network on top of existing state.
 	// StateHash should be provided as well.
 	CheckpointPath string
@@ -243,6 +247,35 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	}
 
 	return server
+}
+
+func parseFlowChainID(id string) (flowgo.ChainID, error) {
+	switch id {
+	case flowgo.Mainnet.String():
+		return flowgo.Mainnet, nil
+	case flowgo.Testnet.String():
+		return flowgo.Testnet, nil
+	case flowgo.Emulator.String():
+		return flowgo.Emulator, nil
+	default:
+		return "", fmt.Errorf("unknown chain id: %s", id)
+	}
+}
+
+// detectRemoteChainID connects to the remote access node and fetches network parameters to obtain the chain ID.
+func detectRemoteChainID(url string) (flowgo.ChainID, error) {
+	// Expect raw host:port
+	conn, err := grpc.NewClient(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
+	client := flowaccess.NewAccessAPIClient(conn)
+	resp, err := client.GetNetworkParameters(context.Background(), &flowaccess.GetNetworkParametersRequest{})
+	if err != nil {
+		return "", err
+	}
+	return parseFlowChainID(resp.ChainId)
 }
 
 // Listen starts listening for incoming connections.
@@ -383,7 +416,7 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 		}
 	}
 
-	if conf.ChainID == flowgo.Testnet || conf.ChainID == flowgo.Mainnet {
+	if conf.ForkURL != "" {
 		// TODO: any reason redis shouldn't work?
 		baseProvider, ok := storageProvider.(*sqlite.Store)
 		if !ok {
@@ -391,13 +424,19 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 		}
 
 		provider, err := remote.New(baseProvider, logger,
-			remote.WithRPCHost(conf.RPCHost, conf.ChainID),
-			remote.WithStartBlockHeight(conf.StartBlockHeight),
+			remote.WithForkURL(conf.ForkURL),
+			remote.WithForkBlockNumber(conf.ForkBlockNumber),
 		)
 		if err != nil {
 			return nil, err
 		}
 		storageProvider = provider
+
+		// detect and override chain ID from remote parameters (no dependency on store internals)
+		// TODO: do not mutate conf here; derive chain ID immutably during setup
+		if parsed, err := detectRemoteChainID(conf.ForkURL); err == nil {
+			conf.ChainID = parsed
+		}
 	}
 
 	if conf.Snapshot {

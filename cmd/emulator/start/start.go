@@ -75,14 +75,17 @@ type Config struct {
 	SqliteURL                    string        `default:"" flag:"sqlite-url" info:"sqlite db URL for persisting sqlite storage backend "`
 	CoverageReportingEnabled     bool          `default:"false" flag:"coverage-reporting" info:"enable Cadence code coverage reporting"`
 	LegacyContractUpgradeEnabled bool          `default:"false" flag:"legacy-upgrade" info:"enable Cadence legacy contract upgrade"`
-	StartBlockHeight             uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
-	RPCHost                      string        `default:"" flag:"rpc-host" info:"rpc host to query when forking Mainnet or Testnet"`
-	CheckpointPath               string        `default:"" flag:"checkpoint-dir" info:"checkpoint directory to load the emulator state from"`
-	StateHash                    string        `default:"" flag:"state-hash" info:"state hash of the checkpoint to load the emulator state from"`
-	ComputationReportingEnabled  bool          `default:"false" flag:"computation-reporting" info:"enable Cadence computation reporting"`
-	ScheduledTransactionsEnabled bool          `default:"true" flag:"scheduled-transactions" info:"enable Cadence scheduled transactions"`
-	SetupEVMEnabled              bool          `default:"true" flag:"setup-evm" info:"enable EVM setup for the emulator, this will deploy the EVM contracts"`
-	SetupVMBridgeEnabled         bool          `default:"true" flag:"setup-vm-bridge" info:"enable VM Bridge setup for the emulator, this will deploy the VM Bridge contracts"`
+	ForkURL                      string        `default:"" flag:"fork-url" info:"gRPC access node address (host:port) to fork from"`
+	ForkBlockNumber              uint64        `default:"0" flag:"fork-block-number" info:"block number/height to pin fork; defaults to latest sealed"`
+	// Deprecated hidden aliases
+	StartBlockHeight             uint64 `default:"0" flag:"start-block-height" info:"(deprecated) use --fork-block-number"`
+	RPCHost                      string `default:"" flag:"rpc-host" info:"(deprecated) use --fork-url"`
+	CheckpointPath               string `default:"" flag:"checkpoint-dir" info:"checkpoint directory to load the emulator state from"`
+	StateHash                    string `default:"" flag:"state-hash" info:"state hash of the checkpoint to load the emulator state from"`
+	ComputationReportingEnabled  bool   `default:"false" flag:"computation-reporting" info:"enable Cadence computation reporting"`
+	ScheduledTransactionsEnabled bool   `default:"true" flag:"scheduled-transactions" info:"enable Cadence scheduled transactions"`
+	SetupEVMEnabled              bool   `default:"true" flag:"setup-evm" info:"enable EVM setup for the emulator, this will deploy the EVM contracts"`
+	SetupVMBridgeEnabled         bool   `default:"true" flag:"setup-vm-bridge" info:"enable VM Bridge setup for the emulator, this will deploy the VM Bridge contracts"`
 }
 
 const EnvPrefix = "FLOW"
@@ -147,12 +150,26 @@ func Cmd(config StartConfig) *cobra.Command {
 				Exit(1, err.Error())
 			}
 
-			if conf.StartBlockHeight > 0 && flowChainID != flowgo.Mainnet && flowChainID != flowgo.Testnet {
-				Exit(1, "❗  --start-block-height is only valid when forking Mainnet or Testnet")
+			// Deprecation shims: map old flags to new and warn
+			if conf.RPCHost != "" && conf.ForkURL == "" {
+				logger.Warn().Msg("❗  --rpc-host is deprecated; use --fork-url")
+				conf.ForkURL = conf.RPCHost
+			}
+			if conf.StartBlockHeight > 0 && conf.ForkBlockNumber == 0 {
+				logger.Warn().Msg("❗  --start-block-height is deprecated; use --fork-block-number")
+				conf.ForkBlockNumber = conf.StartBlockHeight
 			}
 
-			if (flowChainID == flowgo.Mainnet || flowChainID == flowgo.Testnet) && conf.RPCHost == "" {
-				Exit(1, "❗  --rpc-host must be provided when forking Mainnet or Testnet")
+			// If forking, ignore provided chain-id and detect from remote later in server
+			if conf.ForkURL != "" {
+				if conf.ForkBlockNumber == 0 {
+					// default to latest sealed handled in remote store
+				}
+			} else {
+				// Non-fork mode cannot accept deprecated fork-only flags
+				if conf.StartBlockHeight > 0 || conf.ForkBlockNumber > 0 {
+					Exit(1, "❗  --fork-block-number requires --fork-url")
+				}
 			}
 
 			serviceAddress := flowsdk.ServiceAddress(flowsdk.ChainID(flowChainID))
@@ -217,8 +234,8 @@ func Cmd(config StartConfig) *cobra.Command {
 				ContractRemovalEnabled:       conf.ContractRemovalEnabled,
 				SqliteURL:                    conf.SqliteURL,
 				CoverageReportingEnabled:     conf.CoverageReportingEnabled,
-				StartBlockHeight:             conf.StartBlockHeight,
-				RPCHost:                      conf.RPCHost,
+				ForkURL:                      conf.ForkURL,
+				ForkBlockNumber:              conf.ForkBlockNumber,
 				CheckpointPath:               conf.CheckpointPath,
 				StateHash:                    conf.StateHash,
 				ComputationReportingEnabled:  conf.ComputationReportingEnabled,
@@ -240,6 +257,12 @@ func Cmd(config StartConfig) *cobra.Command {
 	}
 
 	initConfig(cmd)
+
+	// Hide and deprecate legacy flags while keeping them functional
+	_ = cmd.PersistentFlags().MarkHidden("rpc-host")
+	_ = cmd.PersistentFlags().MarkDeprecated("rpc-host", "use --fork-url")
+	_ = cmd.PersistentFlags().MarkHidden("start-block-height")
+	_ = cmd.PersistentFlags().MarkDeprecated("start-block-height", "use --fork-block-number")
 
 	return cmd
 }

@@ -73,8 +73,8 @@ values.
 | `--host`                      | `FLOW_HOST`                      | ` `            | Host to listen on for emulator GRPC/REST/Admin servers (default: All Interfaces)                                                                                                                              |
 | `--chain-id`                  | `FLOW_CHAINID`                   | `emulator`     | Chain to simulate, if 'mainnet' or 'testnet' values are used, you will be able to run transactions against that network and a local fork will be created.  Valid values are: 'emulator', 'testnet', 'mainnet' |
 | `--redis-url`                 | `FLOW_REDIS_URL`                 | ''             | Redis-server URL for persisting redis storage backend ( `redis://[[username:]password@]host[:port][/database]` )                                                                                              |
-| `--start-block-height`        | `FLOW_STARTBLOCKHEIGHT`          | `0`            | Start block height to use when starting the network using 'testnet' or 'mainnet' as the chain-id                                                                                                              |
-| `--rpc-host`                  | `FLOW_RPCHOST`                   | ''             | RPC host (access node) to query for previous state when starting the network using 'testnet' or 'mainnet' as the chain-id                                                                                     |
+| `--fork-url`                  | `FLOW_FORKURL`                   | ''             | gRPC access node address (`host:port`) to fork from                                                                                                                     |
+| `--fork-block-number`         | `FLOW_FORKBLOCKNUMBER`           | `0`            | Block number/height to pin the fork (defaults to latest sealed)                                                                                                         |
 | `--legacy-upgrade`            | `FLOW_LEGACYUPGRADE`             | `false`        | Enable upgrading of legacy contracts                                                                                                                                                                          |
 | `--computation-reporting`     | `FLOW_COMPUTATIONREPORTING`      | `false`        | Enable computation reporting for Cadence scripts & transactions                                                                                                                                               |
 | `--checkpoint-dir`            | `FLOW_CHECKPOINTDIR`             | ''             | Checkpoint directory to load the emulator state from, if starting the emulator from a checkpoint                                                                                                              |
@@ -155,8 +155,7 @@ Post Data: height={block height}
 ```
 
 Note: it is only possible to roll back state to a height that was previously executed by the emulator.
-To roll back to a past block height when using a forked Mainnet or Testnet network, use the
-`--start-block-height` flag.
+To pin the starting block height when using a fork, use the `--fork-block-number` flag.
 
 ## Managing emulator state
 It's possible to manage emulator state by using the admin API. You can at any point 
@@ -269,15 +268,14 @@ you must specify the network name for the chain ID flag and the RPC host
 to connect to.
 
 ```
-flow emulator --chain-id mainnet --rpc-host access.mainnet.nodes.onflow.org:9000
-flow emulator --chain-id mainnet --rpc-host access.devnet.nodes.onflow.org:9000
+flow emulator --fork-url access.mainnet.nodes.onflow.org:9000
+flow emulator --fork-url access.mainnet.nodes.onflow.org:9000 --fork-block-number 12345
 ```
 
 Please note, that the actual execution on the real network may differ depending on the exact state when the transaction is
 executed.
 
-By default, the forked network will start from the latest sealed block when the emulator
-is started. You can specify a different starting block height by using the `--start-block-height` flag.
+By default, the forked network will start from the latest sealed block when the emulator is started. You can specify a different starting block height by using the `--fork-block-number` flag.
 
 You can also store all of your changes and cached registers to a persistent db by using the `--persist` flag,
 along with the other SQLite settings.
