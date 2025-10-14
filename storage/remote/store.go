@@ -20,6 +20,7 @@ package remote
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -50,6 +51,8 @@ type Store struct {
 	chainID         flowgo.ChainID
 	forkHeight      uint64
 	logger          *zerolog.Logger
+	// applyKeyDeduplication enables a compatibility shim for pre-migration networks (e.g. mainnet)
+	applyKeyDeduplication bool
 }
 
 type Option func(*Store)
@@ -138,6 +141,16 @@ func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*St
 		if params.ChainId != store.chainID.String() {
 			return nil, fmt.Errorf("chain ID of rpc host does not match chain ID provided in config: %s != %s", params.ChainId, store.chainID)
 		}
+	}
+
+	// Record remote chain ID if not already set via options
+	if store.chainID == "" {
+		store.chainID = flowgo.ChainID(params.ChainId)
+	}
+
+	// Enable account key deduplication shim for mainnet (pre-migration)
+	if store.chainID == flowgo.Mainnet {
+		store.applyKeyDeduplication = true
 	}
 
 	if err := store.initializeStartBlock(context.Background()); err != nil {
@@ -260,6 +273,9 @@ func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
 ) (snapshot.StorageSnapshot, error) {
+	// Track seen account public key encodings per owner to suppress duplicates (apk_* registers)
+	seenAPKByOwner := make(map[string]map[string]bool)
+
 	return snapshot.NewReadFuncStorageSnapshot(func(id flowgo.RegisterID) (flowgo.RegisterValue, error) {
 		// create a copy so updating it doesn't affect future calls
 		lookupHeight := blockHeight
@@ -297,6 +313,21 @@ func (s *Store) LedgerByHeight(
 
 		if response != nil && len(response.Values) > 0 {
 			value = response.Values[0]
+
+			// Apply account key deduplication shim for pre-migration networks
+			if s.applyKeyDeduplication && isAPKRegister(id.Key) && len(value) > 0 {
+				owner := id.Owner
+				if _, ok := seenAPKByOwner[owner]; !ok {
+					seenAPKByOwner[owner] = make(map[string]bool)
+				}
+				valHex := hex.EncodeToString(value)
+				if seenAPKByOwner[owner][valHex] {
+					// suppress duplicate key value for this owner
+					value = []byte{}
+				} else {
+					seenAPKByOwner[owner][valHex] = true
+				}
+			}
 		}
 
 		// cache the value for future use
@@ -312,6 +343,24 @@ func (s *Store) LedgerByHeight(
 
 		return value, nil
 	}), nil
+}
+
+// isAPKRegister returns true if the register key appears to be an account public key slot (apk_<index>).
+// The key may be stored as raw text ("apk_0") or hex-encoded with a leading '#' ("#61706b5f30").
+func isAPKRegister(key string) bool {
+	// Plain text
+	if strings.HasPrefix(key, "apk_") {
+		return true
+	}
+	// Hex-encoded with leading '#'
+	if strings.HasPrefix(key, "#") {
+		hexPart := key[1:]
+		if b, err := hex.DecodeString(hexPart); err == nil {
+			s := string(b)
+			return strings.HasPrefix(s, "apk_")
+		}
+	}
+	return false
 }
 
 func (s *Store) Stop() {
