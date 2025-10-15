@@ -263,7 +263,7 @@ func parseFlowChainID(id string) (flowgo.ChainID, error) {
 }
 
 // detectRemoteChainID connects to the remote access node and fetches network parameters to obtain the chain ID.
-func detectRemoteChainID(url string) (flowgo.ChainID, error) {
+func DetectRemoteChainID(url string) (flowgo.ChainID, error) {
 	// Expect raw host:port
 	conn, err := grpc.NewClient(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -434,7 +434,7 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 
 		// detect and override chain ID from remote parameters (no dependency on store internals)
 		// TODO: do not mutate conf here; derive chain ID immutably during setup
-		if parsed, err := detectRemoteChainID(conf.ForkHost); err == nil {
+		if parsed, err := DetectRemoteChainID(conf.ForkHost); err == nil {
 			conf.ChainID = parsed
 		}
 	}

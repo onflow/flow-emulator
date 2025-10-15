@@ -19,7 +19,6 @@
 package start
 
 import (
-	"context"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -36,10 +35,6 @@ import (
 	"github.com/psiemens/sconfig"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
-
-	flowaccess "github.com/onflow/flow/protobuf/go/flow/access"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/onflow/flow-emulator/server"
 )
@@ -82,15 +77,16 @@ type Config struct {
 	LegacyContractUpgradeEnabled bool          `default:"false" flag:"legacy-upgrade" info:"enable Cadence legacy contract upgrade"`
 	ForkHost                     string        `default:"" flag:"fork-host" info:"gRPC access node address (host:port) to fork from"`
 	ForkHeight                   uint64        `default:"0" flag:"fork-height" info:"height to pin fork; defaults to latest sealed"`
+	CheckpointPath               string        `default:"" flag:"checkpoint-dir" info:"checkpoint directory to load the emulator state from"`
+	StateHash                    string        `default:"" flag:"state-hash" info:"state hash of the checkpoint to load the emulator state from"`
+	ComputationReportingEnabled  bool          `default:"false" flag:"computation-reporting" info:"enable Cadence computation reporting"`
+	ScheduledTransactionsEnabled bool          `default:"true" flag:"scheduled-transactions" info:"enable Cadence scheduled transactions"`
+	SetupEVMEnabled              bool          `default:"true" flag:"setup-evm" info:"enable EVM setup for the emulator, this will deploy the EVM contracts"`
+	SetupVMBridgeEnabled         bool          `default:"true" flag:"setup-vm-bridge" info:"enable VM Bridge setup for the emulator, this will deploy the VM Bridge contracts"`
+
 	// Deprecated hidden aliases
-	StartBlockHeight             uint64 `default:"0" flag:"start-block-height" info:"(deprecated) use --fork-height"`
-	RPCHost                      string `default:"" flag:"rpc-host" info:"(deprecated) use --fork-host"`
-	CheckpointPath               string `default:"" flag:"checkpoint-dir" info:"checkpoint directory to load the emulator state from"`
-	StateHash                    string `default:"" flag:"state-hash" info:"state hash of the checkpoint to load the emulator state from"`
-	ComputationReportingEnabled  bool   `default:"false" flag:"computation-reporting" info:"enable Cadence computation reporting"`
-	ScheduledTransactionsEnabled bool   `default:"true" flag:"scheduled-transactions" info:"enable Cadence scheduled transactions"`
-	SetupEVMEnabled              bool   `default:"true" flag:"setup-evm" info:"enable EVM setup for the emulator, this will deploy the EVM contracts"`
-	SetupVMBridgeEnabled         bool   `default:"true" flag:"setup-vm-bridge" info:"enable VM Bridge setup for the emulator, this will deploy the VM Bridge contracts"`
+	StartBlockHeight uint64 `default:"0" flag:"start-block-height" info:"(deprecated) use --fork-height"`
+	RPCHost          string `default:"" flag:"rpc-host" info:"(deprecated) use --fork-host"`
 }
 
 const EnvPrefix = "FLOW"
@@ -166,30 +162,9 @@ func Cmd(config StartConfig) *cobra.Command {
 				conf.ForkHeight = conf.StartBlockHeight
 			}
 
-			// Pre-hook: allow higher-level wrapper to provide defaults before emulator consumes config
-			if config.ConfigureServer != nil {
-				preConf := &server.Config{ForkHost: conf.ForkHost, ForkHeight: conf.ForkHeight}
-				if err := config.ConfigureServer(preConf); err != nil {
-					Exit(1, err.Error())
-				}
-				// Apply only if not set by flags/env (flags/env take precedence)
-				if conf.ForkHost == "" && preConf.ForkHost != "" {
-					conf.ForkHost = preConf.ForkHost
-				}
-				if conf.ForkHeight == 0 && preConf.ForkHeight != 0 {
-					conf.ForkHeight = preConf.ForkHeight
-				}
-			}
-
-			// If forking, ignore provided chain-id and detect from remote later in server
-			if conf.ForkHost != "" {
-				// If ForkHeight is 0, default to latest sealed handled in remote store
-				_ = conf.ForkHeight
-			} else {
-				// Non-fork mode cannot accept deprecated fork-only flags
-				if conf.StartBlockHeight > 0 || conf.ForkHeight > 0 {
-					Exit(1, "❗  --fork-height requires --fork-host")
-				}
+			// In non-fork mode, fork-only flags are invalid
+			if conf.ForkHost == "" && (conf.StartBlockHeight > 0 || conf.ForkHeight > 0) {
+				Exit(1, "❗  --fork-height requires --fork-host")
 			}
 
 			// Service account logging is deferred until after server configuration to allow
@@ -262,7 +237,7 @@ func Cmd(config StartConfig) *cobra.Command {
 			// Recompute chain ID and service address accurately for fork mode by querying the node.
 			serviceAddress := flowsdk.ServiceAddress(flowsdk.ChainID(flowChainID))
 			if forkMode {
-				if parsed, err := detectRemoteChainIDStart(serverConf.ForkHost); err == nil {
+				if parsed, err := server.DetectRemoteChainID(serverConf.ForkHost); err == nil {
 					// Use remote chain ID semantics, but service account remains local overlay.
 					serviceAddress = flowsdk.ServiceAddress(flowsdk.ChainID(parsed))
 				}
@@ -394,21 +369,6 @@ func parseFlowChainIDStart(id string) (flowgo.ChainID, error) {
 	default:
 		return "", fmt.Errorf("unknown chain id: %s", id)
 	}
-}
-
-// detectRemoteChainIDStart connects to the remote access node and fetches network parameters to obtain the chain ID.
-func detectRemoteChainIDStart(url string) (flowgo.ChainID, error) {
-	conn, err := grpc.NewClient(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return "", err
-	}
-	defer func() { _ = conn.Close() }()
-	client := flowaccess.NewAccessAPIClient(conn)
-	resp, err := client.GetNetworkParameters(context.Background(), &flowaccess.GetNetworkParametersRequest{})
-	if err != nil {
-		return "", err
-	}
-	return parseFlowChainIDStart(resp.ChainId)
 }
 
 func checkKeyAlgorithms(sigAlgo crypto.SignatureAlgorithm, hashAlgo crypto.HashAlgorithm) {
