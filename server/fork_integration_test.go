@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/onflow/flow-emulator/convert"
@@ -14,8 +15,6 @@ import (
 )
 
 // TestForkingAgainstTestnet exercises the forking path by wiring a remote store
-// We do not test Mainnet as at the time of writing Mainnet is not compatibible
-// with the latest upstream Forte upgrade available in the latest emulator releases.
 func TestForkingAgainstTestnet(t *testing.T) {
 	logger := zerolog.Nop()
 
@@ -148,5 +147,144 @@ func TestForkingAgainstTestnet(t *testing.T) {
 		if !found {
 			t.Fatalf("expected log containing true, got: %v", logs)
 		}
+	}
+}
+
+// TestForkingAgainstMainnet exercises the forking path with mainnet and tests the account key deduplication shim
+func TestForkingAgainstMainnet(t *testing.T) {
+	logger := zerolog.Nop()
+
+	// Get remote latest sealed height to pin fork
+	conn, err := grpc.NewClient("access.mainnet.nodes.onflow.org:9000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		t.Fatalf("dial remote: %v", err)
+	}
+	defer conn.Close()
+	remote := flowaccess.NewAccessAPIClient(conn)
+	rh, err := remote.GetLatestBlockHeader(context.Background(), &flowaccess.GetLatestBlockHeaderRequest{IsSealed: true})
+	if err != nil {
+		t.Fatalf("get remote header: %v", err)
+	}
+	remoteHeight := rh.Block.Height
+
+	cfg := &Config{
+		// Do not start listeners; NewEmulatorServer only configures components.
+		DBPath:                    "",
+		Persist:                   false,
+		Snapshot:                  false,
+		SkipTransactionValidation: true,
+		ChainID:                   flowgo.Mainnet, // will be overridden by detectRemoteChainID
+		ForkURL:                   "access.mainnet.nodes.onflow.org:9000",
+		ForkBlockNumber:           remoteHeight,
+	}
+
+	srv := NewEmulatorServer(&logger, cfg)
+	if srv == nil {
+		t.Fatal("NewEmulatorServer returned nil")
+	}
+
+	if cfg.ChainID != flowgo.Mainnet {
+		t.Fatalf("expected ChainID to be Mainnet after fork detection, got %q", cfg.ChainID)
+	}
+
+	// Create an initial local block so we have a valid reference block ID in the forked store
+	if _, _, err := srv.Emulator().ExecuteAndCommitBlock(); err != nil {
+		t.Fatalf("prime local block: %v", err)
+	}
+
+	// Test account key retrieval for a known mainnet account with multiple keys
+	// This tests the account key deduplication shim
+	testAccountScript := []byte(`
+		transaction {
+			prepare(acct: auth(Storage) &Account) {
+				// Test getting account keys for a known mainnet account
+				let account = getAccount(0xe467b9dd11fa00df)
+				
+				// Test accessing specific key indices
+				let key0 = account.keys.get(keyIndex: 0)
+				if key0 != nil {
+					log("Key 0 weight: ".concat(key0!.weight.toString()))
+					if key0!.isRevoked {
+						log("Key 0 is revoked")
+					} else {
+						log("Key 0 is not revoked")
+					}
+				}
+				
+				let key1 = account.keys.get(keyIndex: 1)
+				if key1 != nil {
+					log("Key 1 weight: ".concat(key1!.weight.toString()))
+					if key1!.isRevoked {
+						log("Key 1 is revoked")
+					} else {
+						log("Key 1 is not revoked")
+					}
+				}
+				
+				// Test that we can access keys without errors
+				log("Account key access test completed")
+			}
+		}
+	`)
+
+	latest, err := srv.Emulator().GetLatestBlock()
+	if err != nil {
+		t.Fatalf("get latest block: %v", err)
+	}
+	// Allow emulator height to be equal to or one greater than remote (if remote advanced by one between queries)
+	if latest.Height != remoteHeight+1 {
+		t.Fatalf("fork height mismatch: emulator %d not in {remote, remote+1} where remote=%d", latest.Height, remoteHeight)
+	}
+	sk := srv.Emulator().ServiceKey()
+
+	tx := flowsdk.NewTransaction().
+		SetScript(testAccountScript).
+		SetReferenceBlockID(flowsdk.Identifier(latest.ID())).
+		SetProposalKey(flowsdk.Address(sk.Address), sk.Index, sk.SequenceNumber).
+		SetPayer(flowsdk.Address(sk.Address)).
+		AddAuthorizer(flowsdk.Address(sk.Address))
+
+	signer, err := sk.Signer()
+	if err != nil {
+		t.Fatalf("signer: %v", err)
+	}
+	if err := tx.SignEnvelope(flowsdk.Address(sk.Address), sk.Index, signer); err != nil {
+		t.Fatalf("sign envelope: %v", err)
+	}
+	if err := srv.Emulator().AddTransaction(*convert.SDKTransactionToFlow(*tx)); err != nil {
+		t.Fatalf("add tx: %v", err)
+	}
+	if _, results, err := srv.Emulator().ExecuteAndCommitBlock(); err != nil {
+		t.Fatalf("execute block: %v", err)
+	} else {
+		if len(results) != 1 {
+			t.Fatalf("expected 1 tx result, got %d", len(results))
+		}
+		r := results[0]
+		if !r.Succeeded() {
+			t.Fatalf("tx failed: %v", r.Error)
+		}
+
+		// Check that we got meaningful logs about the account keys
+		logs := r.Logs
+		hasKeyWeight := false
+		hasCompletion := false
+		for _, log := range logs {
+			if strings.Contains(log, "weight:") {
+				hasKeyWeight = true
+			}
+			if strings.Contains(log, "Account key access test completed") {
+				hasCompletion = true
+			}
+		}
+
+		if !hasKeyWeight {
+			t.Fatalf("expected log with key weight, got: %v", logs)
+		}
+		if !hasCompletion {
+			t.Fatalf("expected completion log, got: %v", logs)
+		}
+
+		t.Logf("Account key test successful. Logs: %v", logs)
 	}
 }
