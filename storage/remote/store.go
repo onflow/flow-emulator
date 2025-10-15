@@ -22,9 +22,11 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/onflow/flow-go/engine/common/rpc/convert"
+	"github.com/onflow/flow-go/fvm/environment"
 	"github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -51,7 +53,9 @@ type Store struct {
 	chainID         flowgo.ChainID
 	forkHeight      uint64
 	logger          *zerolog.Logger
-	// applyKeyDeduplication enables a compatibility shim for pre-migration networks (e.g. mainnet)
+	// COMPATIBILITY SHIM: Account Key Deduplication Migration
+	// TODO: Remove after Flow release - this shim provides backward compatibility
+	// for pre-migration networks by synthesizing migrated registers from legacy data
 	applyKeyDeduplication bool
 }
 
@@ -148,10 +152,9 @@ func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*St
 		store.chainID = flowgo.ChainID(params.ChainId)
 	}
 
-	// Enable account key deduplication shim for mainnet (pre-migration)
-	if store.chainID == flowgo.Mainnet {
-		store.applyKeyDeduplication = true
-	}
+	// COMPATIBILITY SHIM: Enable for all networks
+	// TODO: Remove after Forte release - provides backward compatibility
+	store.applyKeyDeduplication = true
 
 	if err := store.initializeStartBlock(context.Background()); err != nil {
 		return nil, err
@@ -273,9 +276,6 @@ func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
 ) (snapshot.StorageSnapshot, error) {
-	// Track seen account public key encodings per owner to suppress duplicates (apk_* registers)
-	seenAPKByOwner := make(map[string]map[string]bool)
-
 	return snapshot.NewReadFuncStorageSnapshot(func(id flowgo.RegisterID) (flowgo.RegisterValue, error) {
 		// create a copy so updating it doesn't affect future calls
 		lookupHeight := blockHeight
@@ -313,19 +313,56 @@ func (s *Store) LedgerByHeight(
 
 		if response != nil && len(response.Values) > 0 {
 			value = response.Values[0]
+		}
 
-			// Apply account key deduplication shim for pre-migration networks
-			if s.applyKeyDeduplication && isAPKRegister(id.Key) && len(value) > 0 {
-				owner := id.Owner
-				if _, ok := seenAPKByOwner[owner]; !ok {
-					seenAPKByOwner[owner] = make(map[string]bool)
+		// COMPATIBILITY SHIM: Account Key Deduplication Migration
+		// TODO: Remove after Flow release - synthesizes migrated registers from legacy data
+		if s.applyKeyDeduplication {
+			normalizedKey := normalizeKey(id.Key)
+
+			// COMPATIBILITY SHIM: Synthesize migrated registers from legacy data
+			// TODO: Remove after Flow release - these functions provide backward compatibility
+			if isAPK0Key(normalizedKey) && len(value) == 0 {
+				// Fallback apk_0 -> public_key_0
+				legacy, err := s.fetchRemoteRegister(ctx, id.Owner, "public_key_0", lookupHeight)
+				if err != nil {
+					return nil, err
 				}
-				valHex := hex.EncodeToString(value)
-				if seenAPKByOwner[owner][valHex] {
-					// suppress duplicate key value for this owner
-					value = []byte{}
-				} else {
-					seenAPKByOwner[owner][valHex] = true
+				if len(legacy) > 0 {
+					value = legacy
+				}
+			} else if isPKBKey(normalizedKey) && len(value) == 0 {
+				// Synthesize pk_b<batchIndex> from individual public_key_* registers
+				batchIdx, ok := parsePKBBatchIndex(normalizedKey)
+				if ok {
+					synthesized, err := s.synthesizeBatchPublicKeys(ctx, id.Owner, batchIdx, lookupHeight)
+					if err != nil {
+						return nil, err
+					}
+					if len(synthesized) > 0 {
+						value = synthesized
+					}
+				}
+			} else if isSNKey(normalizedKey) && len(value) == 0 {
+				// Synthesize sn_<keyIndex> from public_key_<keyIndex> sequence numbers
+				keyIdx, ok := parseSNKeyIndex(normalizedKey)
+				if ok {
+					synthesized, err := s.synthesizeSequenceNumber(ctx, id.Owner, keyIdx, lookupHeight)
+					if err != nil {
+						return nil, err
+					}
+					if len(synthesized) > 0 {
+						value = synthesized
+					}
+				}
+			} else if isAccountStatusKey(normalizedKey) {
+				// Synthesize account status v4 with key metadata from legacy registers
+				synthesized, err := s.synthesizeAccountStatusV4(ctx, id.Owner, lookupHeight)
+				if err != nil {
+					return nil, err
+				}
+				if len(synthesized) > 0 {
+					value = synthesized
 				}
 			}
 		}
@@ -344,25 +381,306 @@ func (s *Store) LedgerByHeight(
 		return value, nil
 	}), nil
 }
+func (s *Store) Stop() {
+	_ = s.grpcConn.Close()
+}
 
-// isAPKRegister returns true if the register key appears to be an account public key slot (apk_<index>).
-// The key may be stored as raw text ("apk_0") or hex-encoded with a leading '#' ("#61706b5f30").
-func isAPKRegister(key string) bool {
-	// Plain text
-	if strings.HasPrefix(key, "apk_") {
-		return true
-	}
-	// Hex-encoded with leading '#'
+// COMPATIBILITY SHIM: Helper functions for account key deduplication migration
+// TODO: Remove after Flow release - these functions provide backward compatibility
+
+// normalizeKey decodes a hex-prefixed ("#<hex>") key into its string form; otherwise returns the key unchanged.
+func normalizeKey(key string) string {
 	if strings.HasPrefix(key, "#") {
 		hexPart := key[1:]
 		if b, err := hex.DecodeString(hexPart); err == nil {
-			s := string(b)
-			return strings.HasPrefix(s, "apk_")
+			return string(b)
 		}
 	}
-	return false
+	return key
 }
 
-func (s *Store) Stop() {
-	_ = s.grpcConn.Close()
+func isAPK0Key(key string) bool {
+	return key == flowgo.AccountPublicKey0RegisterKey
+}
+
+func isPKBKey(key string) bool {
+	return strings.HasPrefix(key, flowgo.BatchPublicKeyRegisterKeyPrefix)
+}
+
+func isSNKey(key string) bool {
+	return strings.HasPrefix(key, flowgo.SequenceNumberRegisterKeyPrefix)
+}
+
+func isAccountStatusKey(key string) bool {
+	return key == flowgo.AccountStatusKey
+}
+
+func parsePKBBatchIndex(key string) (uint32, bool) {
+	if !isPKBKey(key) {
+		return 0, false
+	}
+	suffix := strings.TrimPrefix(key, flowgo.BatchPublicKeyRegisterKeyPrefix)
+	n, err := strconv.ParseUint(suffix, 10, 32)
+	if err != nil {
+		return 0, false
+	}
+	return uint32(n), true
+}
+
+func parseSNKeyIndex(key string) (uint32, bool) {
+	if !isSNKey(key) {
+		return 0, false
+	}
+	suffix := strings.TrimPrefix(key, flowgo.SequenceNumberRegisterKeyPrefix)
+	n, err := strconv.ParseUint(suffix, 10, 32)
+	if err != nil {
+		return 0, false
+	}
+	return uint32(n), true
+}
+
+// fetchRemoteRegister fetches a single register value from the remote at a fixed height.
+func (s *Store) fetchRemoteRegister(ctx context.Context, owner string, key string, height uint64) ([]byte, error) {
+	registerID := convert.RegisterIDToMessage(flowgo.RegisterID{Key: key, Owner: owner})
+	response, err := s.executionClient.GetRegisterValues(ctx, &executiondata.GetRegisterValuesRequest{
+		BlockHeight: height,
+		RegisterIds: []*entities.RegisterID{registerID},
+	})
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	if response != nil && len(response.Values) > 0 {
+		return response.Values[0], nil
+	}
+	return nil, nil
+}
+
+// COMPATIBILITY SHIM: Batch public key synthesis
+// TODO: Remove after Flow release - builds batch public key payloads from individual public_key_* registers
+func (s *Store) synthesizeBatchPublicKeys(ctx context.Context, owner string, batchIndex uint32, height uint64) ([]byte, error) {
+	// Load account status to get key count
+	statusBytes, err := s.fetchRemoteRegister(ctx, owner, flowgo.AccountStatusKey, height)
+	if err != nil {
+		return nil, err
+	}
+	if len(statusBytes) == 0 {
+		return nil, nil
+	}
+	status, err := environment.AccountStatusFromBytes(statusBytes)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse account status: %w", err)
+	}
+	count := status.AccountPublicKeyCount()
+	if count == 0 {
+		return nil, nil
+	}
+
+	const max = environment.MaxPublicKeyCountInBatch
+	start := batchIndex * max
+	// storedKeyIndex range is [start, min(start+max-1, count-1)]
+	if start >= count {
+		return nil, nil
+	}
+	end := start + max - 1
+	if end > count-1 {
+		end = count - 1
+	}
+
+	batch := make([]byte, 0, 1+(end-start+1)*8) // rough capacity
+
+	// Batch 0 reserves index 0 as nil placeholder to align indices
+	if batchIndex == 0 {
+		batch = append(batch, 0x00)
+	}
+
+	for i := start; i <= end; i++ {
+		if i == 0 {
+			// stored key 0 is apk_0 and not included in batch payload (nil placeholder already added)
+			continue
+		}
+		legacyKey := fmt.Sprintf("public_key_%d", i)
+		legacyVal, err := s.fetchRemoteRegister(ctx, owner, legacyKey, height)
+		if err != nil {
+			return nil, err
+		}
+		if len(legacyVal) == 0 {
+			// keep index alignment with zero-length entry
+			batch = append(batch, 0x00)
+			continue
+		}
+
+		// Decode legacy account public key to extract public material
+		decoded, err := flowgo.DecodeAccountPublicKey(legacyVal, uint32(i))
+		if err != nil {
+			// cannot decode -> keep alignment with zero-length entry
+			batch = append(batch, 0x00)
+			continue
+		}
+		stored := flowgo.StoredPublicKey{
+			PublicKey: decoded.PublicKey,
+			SignAlgo:  decoded.SignAlgo,
+			HashAlgo:  decoded.HashAlgo,
+		}
+		enc, err := flowgo.EncodeStoredPublicKey(stored)
+		if err != nil {
+			batch = append(batch, 0x00)
+			continue
+		}
+		if len(enc) > 255 {
+			// out of spec for batch encoding; skip with placeholder
+			batch = append(batch, 0x00)
+			continue
+		}
+		batch = append(batch, byte(len(enc)))
+		batch = append(batch, enc...)
+	}
+
+	return batch, nil
+}
+
+// COMPATIBILITY SHIM: Sequence number synthesis
+// TODO: Remove after Flow release - builds sequence number registers from legacy public_key_* registers
+func (s *Store) synthesizeSequenceNumber(ctx context.Context, owner string, keyIndex uint32, height uint64) ([]byte, error) {
+	if keyIndex == 0 {
+		// key 0 sequence number lives in apk_0
+		return nil, nil
+	}
+	legacyKey := fmt.Sprintf("public_key_%d", keyIndex)
+	legacyVal, err := s.fetchRemoteRegister(ctx, owner, legacyKey, height)
+	if err != nil {
+		return nil, err
+	}
+	if len(legacyVal) == 0 {
+		return nil, nil
+	}
+	decoded, err := flowgo.DecodeAccountPublicKey(legacyVal, keyIndex)
+	if err != nil {
+		return nil, nil
+	}
+	if decoded.SeqNumber == 0 {
+		return nil, nil
+	}
+	enc, err := flowgo.EncodeSequenceNumber(decoded.SeqNumber)
+	if err != nil {
+		return nil, nil
+	}
+	return enc, nil
+}
+
+// COMPATIBILITY SHIM: Account status v4 synthesis
+// TODO: Remove after Flow release - synthesizes v4 account status with key metadata from legacy registers
+func (s *Store) synthesizeAccountStatusV4(ctx context.Context, owner string, height uint64) ([]byte, error) {
+	// Load existing account status (v3)
+	statusBytes, err := s.fetchRemoteRegister(ctx, owner, flowgo.AccountStatusKey, height)
+	if err != nil {
+		return nil, err
+	}
+	if len(statusBytes) == 0 {
+		return nil, nil
+	}
+
+	status, err := environment.AccountStatusFromBytes(statusBytes)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse account status: %w", err)
+	}
+
+	count := status.AccountPublicKeyCount()
+	if count <= 1 {
+		// No key metadata needed for accounts with 0-1 keys
+		return statusBytes, nil
+	}
+
+	// Build key metadata from legacy registers
+	keyMetadata, err := s.buildKeyMetadataFromLegacy(ctx, owner, count, height)
+	if err != nil {
+		return nil, fmt.Errorf("could not build key metadata: %w", err)
+	}
+
+	// Create new status with key metadata by parsing the original bytes and appending metadata
+	// The AccountStatus struct has unexported fields, so we work with the byte representation
+	originalBytes := status.ToBytes()
+
+	// Set account status v4 flag (0x40 = accountStatusV4WithNoDeduplicationFlag)
+	if len(originalBytes) > 0 {
+		originalBytes[0] = 0x40
+	}
+
+	// Append key metadata to the original account status bytes
+	newBytes := make([]byte, len(originalBytes)+len(keyMetadata))
+	copy(newBytes, originalBytes)
+	copy(newBytes[len(originalBytes):], keyMetadata)
+
+	return newBytes, nil
+}
+
+// COMPATIBILITY SHIM: Key metadata construction
+// TODO: Remove after Flow release - builds key metadata from legacy public_key_* registers
+func (s *Store) buildKeyMetadataFromLegacy(ctx context.Context, owner string, count uint32, height uint64) ([]byte, error) {
+	// For pre-migration networks, we build minimal key metadata:
+	// - Weight and revoked status for keys 1..count-1 (RLE encoded)
+	// - No deduplication mappings (storedKeyIndex == keyIndex)
+	// - No digests (not needed for basic functionality)
+
+	if count <= 1 {
+		return nil, nil
+	}
+
+	// Build weight and revoked status for keys 1..count-1
+	var weightAndRevoked []byte
+
+	for i := uint32(1); i < count; i++ {
+		legacyKey := fmt.Sprintf("public_key_%d", i)
+		legacyVal, err := s.fetchRemoteRegister(ctx, owner, legacyKey, height)
+		if err != nil {
+			return nil, err
+		}
+		if len(legacyVal) == 0 {
+			// Default values for missing keys
+			weightAndRevoked = append(weightAndRevoked, 0, 0) // weight=0, revoked=false
+			continue
+		}
+
+		decoded, err := flowgo.DecodeAccountPublicKey(legacyVal, i)
+		if err != nil {
+			// Default values for unparseable keys
+			weightAndRevoked = append(weightAndRevoked, 0, 0)
+			continue
+		}
+
+		// Encode weight and revoked status (RLE format)
+		weight := uint16(decoded.Weight)
+		if weight > 1000 {
+			weight = 1000 // clamp to max
+		}
+
+		revokedFlag := uint16(0)
+		if decoded.Revoked {
+			revokedFlag = 0x8000 // high bit set
+		}
+
+		weightAndRevoked = append(weightAndRevoked, byte(weight>>8), byte(weight&0xFF))
+		weightAndRevoked = append(weightAndRevoked, byte(revokedFlag>>8), byte(revokedFlag&0xFF))
+	}
+
+	// Build minimal key metadata:
+	// - Length-prefixed weight and revoked status
+	// - Start index for digests (0, no digests)
+	// - Length-prefixed empty digests
+
+	metadata := make([]byte, 0, 4+len(weightAndRevoked)+4+4)
+
+	// Length-prefixed weight and revoked status
+	metadata = append(metadata, byte(len(weightAndRevoked)>>24), byte(len(weightAndRevoked)>>16), byte(len(weightAndRevoked)>>8), byte(len(weightAndRevoked)))
+	metadata = append(metadata, weightAndRevoked...)
+
+	// Start index for digests (0)
+	metadata = append(metadata, 0, 0, 0, 0)
+
+	// Length-prefixed empty digests
+	metadata = append(metadata, 0, 0, 0, 0)
+
+	return metadata, nil
 }
