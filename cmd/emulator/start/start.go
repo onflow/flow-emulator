@@ -103,6 +103,7 @@ type HttpMiddleware func(http.Handler) http.Handler
 type StartConfig struct {
 	GetServiceKey   serviceKeyFunc
 	RestMiddlewares []HttpMiddleware
+	ConfigureServer func(server *server.Config) error
 }
 
 func Cmd(config StartConfig) *cobra.Command {
@@ -241,6 +242,14 @@ func Cmd(config StartConfig) *cobra.Command {
 				ScheduledTransactionsEnabled: conf.ScheduledTransactionsEnabled,
 				SetupEVMEnabled:              conf.SetupEVMEnabled,
 				SetupVMBridgeEnabled:         conf.SetupVMBridgeEnabled,
+			}
+
+			// Allow caller to customize the server configuration before startup
+			if config.ConfigureServer != nil {
+				err := config.ConfigureServer(serverConf)
+				if err != nil {
+					Exit(1, err.Error())
+				}
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
