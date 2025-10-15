@@ -305,7 +305,7 @@ func Cmd(config StartConfig) *cobra.Command {
 
 	// Hide and deprecate legacy flags while keeping them functional
 	_ = cmd.PersistentFlags().MarkHidden("rpc-host")
-	_ = cmd.PersistentFlags().MarkDeprecated("rpc-host", "use --fork-url")
+	_ = cmd.PersistentFlags().MarkDeprecated("rpc-host", "use --fork-host")
 	_ = cmd.PersistentFlags().MarkHidden("start-block-height")
 	_ = cmd.PersistentFlags().MarkDeprecated("start-block-height", "use --fork-height")
 

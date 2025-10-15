@@ -73,8 +73,8 @@ values.
 | `--host`                        | `FLOW_HOST`                      | ` `            | Host to listen on for emulator GRPC/REST/Admin servers  (default: all interfaces)                                                                                                                           |
 | `--chain-id`                    | `FLOW_CHAINID`                   | `emulator`     | Chain to emulate for address generation.  Valid values are: 'emulator', 'testnet', 'mainnet'                                                                                                                |
 | `--redis-url`                   | `FLOW_REDIS_URL`                 | ''             | Redis-server URL for persisting redis storage backend ( `redis://[[username:]password@]host[:port][/database]` )                                                                                            |
-| `--fork-url`                    | `FLOW_FORKURL`                   | ''             | gRPC access node address (`host:port`) to fork from                                                                                                                    |
-| `--fork-block-number`           | `FLOW_FORKBLOCKNUMBER`           | `0`            | Block number/height to pin the fork (defaults to latest sealed)                                                                                                        |
+| `--fork-host`                   | `FLOW_FORK_HOST`                 | ''             | gRPC access node address (`host:port`) to fork from                                                                                                                    |
+| `--fork-height`                 | `FLOW_FORK_HEIGHT`               | `0`            | Block height to pin the fork (defaults to latest sealed)                                                                                                               |
 
 ## Running the emulator with the Flow CLI
 
@@ -149,7 +149,7 @@ Post Data: height={block height}
 ```
 
 Note: it is only possible to roll back state to a height that was previously executed by the emulator.
-To pin the starting block height when using a fork, use the `--fork-block-number` flag.
+To pin the starting block height when using a fork, use the `--fork-height` flag.
 
 ## Managing emulator state
 
@@ -245,13 +245,13 @@ you must specify the network name for the chain ID flag as well as the RPC host
 to connect to.
 
 ```
-flow emulator --fork-url access.mainnet.nodes.onflow.org:9000
-flow emulator --fork-url access.mainnet.nodes.onflow.org:9000 --fork-block-number 12345
+flow emulator --fork-host access.mainnet.nodes.onflow.org:9000
+flow emulator --fork-host access.mainnet.nodes.onflow.org:9000 --fork-height 12345
 ```
 
 Please note, the actual execution on the real network may differ depending on the exact state when the transaction is executed.
 
-By default, the forked network will start from the latest sealed block when the emulator is started. You can specify a different starting block height by using the `--fork-block-number` flag.
+By default, the forked network will start from the latest sealed block when the emulator is started. You can specify a different starting block height by using the `--fork-height` flag.
 
 You can also store all of your changes and cached registers to a persistent db by using the `--persist` flag,
 along with the other sqlite settings.
