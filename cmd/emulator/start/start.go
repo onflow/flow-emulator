@@ -19,6 +19,7 @@
 package start
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -35,6 +36,10 @@ import (
 	"github.com/psiemens/sconfig"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
+
+	flowaccess "github.com/onflow/flow/protobuf/go/flow/access"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/onflow/flow-emulator/server"
 )
@@ -161,6 +166,21 @@ func Cmd(config StartConfig) *cobra.Command {
 				conf.ForkHeight = conf.StartBlockHeight
 			}
 
+			// Pre-hook: allow higher-level wrapper to provide defaults before emulator consumes config
+			if config.ConfigureServer != nil {
+				preConf := &server.Config{ForkHost: conf.ForkHost, ForkHeight: conf.ForkHeight}
+				if err := config.ConfigureServer(preConf); err != nil {
+					Exit(1, err.Error())
+				}
+				// Apply only if not set by flags/env (flags/env take precedence)
+				if conf.ForkHost == "" && preConf.ForkHost != "" {
+					conf.ForkHost = preConf.ForkHost
+				}
+				if conf.ForkHeight == 0 && preConf.ForkHeight != 0 {
+					conf.ForkHeight = preConf.ForkHeight
+				}
+			}
+
 			// If forking, ignore provided chain-id and detect from remote later in server
 			if conf.ForkHost != "" {
 				// If ForkHeight is 0, default to latest sealed handled in remote store
@@ -172,23 +192,8 @@ func Cmd(config StartConfig) *cobra.Command {
 				}
 			}
 
-			serviceAddress := flowsdk.ServiceAddress(flowsdk.ChainID(flowChainID))
-			if conf.SimpleAddresses {
-				serviceAddress = flowsdk.HexToAddress("0x1")
-			}
-
-			serviceFields := map[string]any{
-				"serviceAddress":  serviceAddress.Hex(),
-				"servicePubKey":   hex.EncodeToString(servicePublicKey.Encode()),
-				"serviceSigAlgo":  serviceKeySigAlgo.String(),
-				"serviceHashAlgo": serviceKeyHashAlgo.String(),
-			}
-
-			if servicePrivateKey != nil {
-				serviceFields["servicePrivKey"] = hex.EncodeToString(servicePrivateKey.Encode())
-			}
-
-			logger.Info().Fields(serviceFields).Msgf("⚙️ Using service account 0x%s", serviceAddress.Hex())
+			// Service account logging is deferred until after server configuration to allow
+			// higher-level wrappers to customize fork settings via ConfigureServer.
 
 			minimumStorageReservation := fvm.DefaultMinimumStorageReservation
 			if conf.MinimumAccountBalance != "" {
@@ -244,12 +249,44 @@ func Cmd(config StartConfig) *cobra.Command {
 				SetupVMBridgeEnabled:         conf.SetupVMBridgeEnabled,
 			}
 
-			// Allow caller to customize the server configuration before startup
+			// Post-hook support remains for advanced scenarios; typically pre-hook above is preferred.
 			if config.ConfigureServer != nil {
-				err := config.ConfigureServer(serverConf)
-				if err != nil {
+				if err := config.ConfigureServer(serverConf); err != nil {
 					Exit(1, err.Error())
 				}
+			}
+
+			// Decide fork mode after possible customization by ConfigureServer
+			forkMode := serverConf.ForkHost != ""
+
+			// Recompute chain ID and service address accurately for fork mode by querying the node.
+			serviceAddress := flowsdk.ServiceAddress(flowsdk.ChainID(flowChainID))
+			if forkMode {
+				if parsed, err := detectRemoteChainIDStart(serverConf.ForkHost); err == nil {
+					// Use remote chain ID semantics, but service account remains local overlay.
+					serviceAddress = flowsdk.ServiceAddress(flowsdk.ChainID(parsed))
+				}
+			}
+			if conf.SimpleAddresses {
+				serviceAddress = flowsdk.HexToAddress("0x1")
+			}
+
+			serviceFields := map[string]any{
+				"serviceAddress":  serviceAddress.Hex(),
+				"servicePubKey":   hex.EncodeToString(servicePublicKey.Encode()),
+				"serviceSigAlgo":  serviceKeySigAlgo.String(),
+				"serviceHashAlgo": serviceKeyHashAlgo.String(),
+			}
+
+			if servicePrivateKey != nil {
+				serviceFields["servicePrivKey"] = hex.EncodeToString(servicePrivateKey.Encode())
+			}
+
+			if forkMode {
+				logger.Info().Fields(serviceFields).Msgf("⚙️ Using local overlay service account 0x%s", serviceAddress.Hex())
+				logger.Info().Msgf("Using fork host %s", serverConf.ForkHost)
+			} else {
+				logger.Info().Fields(serviceFields).Msgf("⚙️ Using service account 0x%s", serviceAddress.Hex())
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
@@ -343,6 +380,35 @@ func getSDKChainID(chainID string) (flowgo.ChainID, error) {
 	default:
 		return "", fmt.Errorf("invalid ChainID %s, valid values are: emulator, testnet, mainnet", chainID)
 	}
+}
+
+// parseFlowChainIDStart maps string chain IDs to flowgo.ChainID for start package use
+func parseFlowChainIDStart(id string) (flowgo.ChainID, error) {
+	switch id {
+	case flowgo.Mainnet.String():
+		return flowgo.Mainnet, nil
+	case flowgo.Testnet.String():
+		return flowgo.Testnet, nil
+	case flowgo.Emulator.String():
+		return flowgo.Emulator, nil
+	default:
+		return "", fmt.Errorf("unknown chain id: %s", id)
+	}
+}
+
+// detectRemoteChainIDStart connects to the remote access node and fetches network parameters to obtain the chain ID.
+func detectRemoteChainIDStart(url string) (flowgo.ChainID, error) {
+	conn, err := grpc.NewClient(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = conn.Close() }()
+	client := flowaccess.NewAccessAPIClient(conn)
+	resp, err := client.GetNetworkParameters(context.Background(), &flowaccess.GetNetworkParametersRequest{})
+	if err != nil {
+		return "", err
+	}
+	return parseFlowChainIDStart(resp.ChainId)
 }
 
 func checkKeyAlgorithms(sigAlgo crypto.SignatureAlgorithm, hashAlgo crypto.HashAlgorithm) {
