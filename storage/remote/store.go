@@ -22,8 +22,12 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"math"
+	"math/rand"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/onflow/flow-go/engine/common/rpc/convert"
@@ -45,6 +49,171 @@ import (
 	"github.com/onflow/flow-emulator/types"
 )
 
+// Retry and circuit breaker configuration
+const (
+	maxRetries     = 5
+	baseDelay      = 100 * time.Millisecond
+	maxDelay       = 30 * time.Second
+	jitterFactor   = 0.1
+	circuitTimeout = 30 * time.Second // Circuit breaker timeout
+)
+
+// isRateLimitError checks if the error is a rate limiting error
+func isRateLimitError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	st, ok := status.FromError(err)
+	if !ok {
+		return false
+	}
+
+	// Check for common rate limiting gRPC codes
+	switch st.Code() {
+	case codes.ResourceExhausted:
+		return true
+	case codes.Unavailable:
+		// Sometimes rate limits are returned as unavailable
+		return strings.Contains(st.Message(), "rate") ||
+			strings.Contains(st.Message(), "limit") ||
+			strings.Contains(st.Message(), "throttle")
+	case codes.Aborted:
+		// Some services return rate limits as aborted
+		return strings.Contains(st.Message(), "rate") ||
+			strings.Contains(st.Message(), "limit")
+	}
+
+	return false
+}
+
+// exponentialBackoffWithJitter calculates delay with exponential backoff and jitter
+func exponentialBackoffWithJitter(attempt int) time.Duration {
+	if attempt <= 0 {
+		return baseDelay
+	}
+
+	// Calculate exponential delay: baseDelay * 2^(attempt-1)
+	delay := float64(baseDelay) * math.Pow(2, float64(attempt-1))
+
+	// Cap at maxDelay
+	if delay > float64(maxDelay) {
+		delay = float64(maxDelay)
+	}
+
+	// Add jitter: ±10% random variation
+	jitter := delay * jitterFactor * (2*rand.Float64() - 1)
+	delay += jitter
+
+	// Ensure minimum delay
+	if delay < float64(baseDelay) {
+		delay = float64(baseDelay)
+	}
+
+	return time.Duration(delay)
+}
+
+// retryWithBackoff executes a function with exponential backoff retry on rate limit errors
+func (s *Store) retryWithBackoff(ctx context.Context, operation string, fn func() error) error {
+	var lastErr error
+
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		// Check circuit breaker first
+		if !s.circuitBreaker.canMakeRequest() {
+			s.logger.Debug().
+				Str("operation", operation).
+				Msg("Circuit breaker is open, skipping request")
+			return fmt.Errorf("circuit breaker is open")
+		}
+
+		err := fn()
+		if err == nil {
+			s.circuitBreaker.recordSuccess()
+			return nil
+		}
+
+		lastErr = err
+
+		// Only record failures for rate limit errors
+		if isRateLimitError(err) {
+			s.circuitBreaker.recordFailure()
+		}
+
+		// Check if this is a rate limit error
+		if isRateLimitError(err) {
+			s.logger.Info().
+				Str("operation", operation).
+				Msg("Rate limit detected, will retry with backoff")
+		}
+
+		// For all errors (including rate limits), continue with retry logic
+		if attempt == maxRetries {
+			s.logger.Warn().
+				Str("operation", operation).
+				Int("attempt", attempt+1).
+				Err(err).
+				Msg("Request failed after max attempts")
+			return err
+		}
+
+		// Calculate delay and wait
+		delay := exponentialBackoffWithJitter(attempt)
+		s.logger.Debug().
+			Str("operation", operation).
+			Int("attempt", attempt+1).
+			Dur("delay", delay).
+			Err(err).
+			Msg("Request failed, retrying with backoff")
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(delay):
+			// Continue to next attempt
+		}
+	}
+
+	return lastErr
+}
+
+// circuitBreaker implements a simple circuit breaker pattern
+type circuitBreaker struct {
+	mu       sync.RWMutex
+	failures int
+	lastFail time.Time
+	timeout  time.Duration
+}
+
+// canMakeRequest checks if requests can be made (circuit breaker is closed)
+func (cb *circuitBreaker) canMakeRequest() bool {
+	cb.mu.RLock()
+	defer cb.mu.RUnlock()
+
+	// If we've had recent failures, check timeout
+	if cb.failures > 0 && time.Since(cb.lastFail) < cb.timeout {
+		return false
+	}
+
+	return true
+}
+
+// recordFailure records a failure and opens the circuit breaker
+func (cb *circuitBreaker) recordFailure() {
+	cb.mu.Lock()
+	defer cb.mu.Unlock()
+
+	cb.failures++
+	cb.lastFail = time.Now()
+}
+
+// recordSuccess records a success and closes the circuit breaker
+func (cb *circuitBreaker) recordSuccess() {
+	cb.mu.Lock()
+	defer cb.mu.Unlock()
+
+	cb.failures = 0 // Reset on success
+}
+
 type Store struct {
 	*sqlite.Store
 	executionClient executiondata.ExecutionDataAPIClient
@@ -54,6 +223,7 @@ type Store struct {
 	chainID         flowgo.ChainID
 	forkHeight      uint64
 	logger          *zerolog.Logger
+	circuitBreaker  *circuitBreaker
 	// COMPATIBILITY SHIM: Account Key Deduplication Migration
 	// TODO: Remove after Flow release - this shim provides backward compatibility
 	// for pre-migration networks by synthesizing migrated registers from legacy data
@@ -111,6 +281,9 @@ func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*St
 	store := &Store{
 		Store:  provider,
 		logger: logger,
+		circuitBreaker: &circuitBreaker{
+			timeout: circuitTimeout,
+		},
 	}
 
 	for _, opt := range options {
@@ -136,7 +309,12 @@ func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*St
 		store.accessClient = access.NewAccessAPIClient(conn)
 	}
 
-	params, err := store.accessClient.GetNetworkParameters(context.Background(), &access.GetNetworkParametersRequest{})
+	var params *access.GetNetworkParametersResponse
+	err := store.retryWithBackoff(context.Background(), "GetNetworkParameters", func() error {
+		var err error
+		params, err = store.accessClient.GetNetworkParameters(context.Background(), &access.GetNetworkParametersRequest{})
+		return err
+	})
 	if err != nil {
 		return nil, fmt.Errorf("could not get network parameters: %w", err)
 	}
@@ -182,7 +360,12 @@ func (s *Store) initializeStartBlock(ctx context.Context) error {
 
 	// use the current latest block from the rpc host if no height was provided
 	if s.forkHeight == 0 {
-		resp, err := s.accessClient.GetLatestBlockHeader(ctx, &access.GetLatestBlockHeaderRequest{IsSealed: true})
+		var resp *access.BlockHeaderResponse
+		err := s.retryWithBackoff(ctx, "GetLatestBlockHeader", func() error {
+			var err error
+			resp, err = s.accessClient.GetLatestBlockHeader(ctx, &access.GetLatestBlockHeaderRequest{IsSealed: true})
+			return err
+		})
 		if err != nil {
 			return fmt.Errorf("could not get last block height: %w", err)
 		}
@@ -216,7 +399,12 @@ func (s *Store) BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flow
 	if err == nil {
 		height = block.Height
 	} else if errors.Is(err, storage.ErrNotFound) {
-		heightRes, err := s.accessClient.GetBlockHeaderByID(ctx, &access.GetBlockHeaderByIDRequest{Id: blockID[:]})
+		var heightRes *access.BlockHeaderResponse
+		err := s.retryWithBackoff(ctx, "GetBlockHeaderByID", func() error {
+			var err error
+			heightRes, err = s.accessClient.GetBlockHeaderByID(ctx, &access.GetBlockHeaderByIDRequest{Id: blockID[:]})
+			return err
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -256,7 +444,12 @@ func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block
 		return nil, &types.BlockNotFoundByHeightError{Height: height}
 	}
 
-	blockRes, err := s.accessClient.GetBlockHeaderByHeight(ctx, &access.GetBlockHeaderByHeightRequest{Height: height})
+	var blockRes *access.BlockHeaderResponse
+	err = s.retryWithBackoff(ctx, "GetBlockHeaderByHeight", func() error {
+		var err error
+		blockRes, err = s.accessClient.GetBlockHeaderByHeight(ctx, &access.GetBlockHeaderByHeightRequest{Height: height})
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -313,10 +506,16 @@ func (s *Store) LedgerByHeight(
 		}
 
 		registerID := convert.RegisterIDToMessage(flowgo.RegisterID{Key: id.Key, Owner: id.Owner})
-		response, err := s.executionClient.GetRegisterValues(ctx, &executiondata.GetRegisterValuesRequest{
-			BlockHeight: lookupHeight,
-			RegisterIds: []*entities.RegisterID{registerID},
+		var response *executiondata.GetRegisterValuesResponse
+
+		err = s.retryWithBackoff(ctx, "GetRegisterValues", func() error {
+			response, err = s.executionClient.GetRegisterValues(ctx, &executiondata.GetRegisterValuesRequest{
+				BlockHeight: lookupHeight,
+				RegisterIds: []*entities.RegisterID{registerID},
+			})
+			return err
 		})
+
 		if err != nil {
 			if status.Code(err) != codes.NotFound {
 				return nil, err
@@ -484,10 +683,16 @@ func (s *Store) fetchRemoteRegisters(ctx context.Context, owner string, keys []s
 		registerIDs[i] = convert.RegisterIDToMessage(flowgo.RegisterID{Key: key, Owner: owner})
 	}
 
-	response, err := s.executionClient.GetRegisterValues(ctx, &executiondata.GetRegisterValuesRequest{
-		BlockHeight: height,
-		RegisterIds: registerIDs,
+	var response *executiondata.GetRegisterValuesResponse
+	err := s.retryWithBackoff(ctx, "GetRegisterValuesBatch", func() error {
+		var err error
+		response, err = s.executionClient.GetRegisterValues(ctx, &executiondata.GetRegisterValuesRequest{
+			BlockHeight: height,
+			RegisterIds: registerIDs,
+		})
+		return err
 	})
+
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return make(map[string][]byte), nil
