@@ -25,6 +25,7 @@ import (
 	"strconv"
 	"strings"
 
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/onflow/flow-go/engine/common/rpc/convert"
 	"github.com/onflow/flow-go/fvm/environment"
 	"github.com/onflow/flow-go/fvm/errors"
@@ -276,7 +277,18 @@ func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
 ) (snapshot.StorageSnapshot, error) {
+	// Create a snapshot with LRU cache to avoid duplicate RPC calls within the same snapshot
+	// LRU cache with max 1000 entries to prevent memory bloat
+	cache, err := lru.New[string, flowgo.RegisterValue](1000)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LRU cache: %w", err)
+	}
+
 	return snapshot.NewReadFuncStorageSnapshot(func(id flowgo.RegisterID) (flowgo.RegisterValue, error) {
+		// Check LRU cache first to avoid duplicate RPC calls within this snapshot
+		if cachedValue, exists := cache.Get(id.String()); exists {
+			return cachedValue, nil
+		}
 		// create a copy so updating it doesn't affect future calls
 		lookupHeight := blockHeight
 
@@ -378,6 +390,8 @@ func (s *Store) LedgerByHeight(
 			return nil, fmt.Errorf("could not cache ledger value: %w", err)
 		}
 
+		// Cache in LRU cache for this snapshot to avoid duplicate RPC calls
+		cache.Add(id.String(), value)
 		return value, nil
 	}), nil
 }
@@ -458,6 +472,40 @@ func (s *Store) fetchRemoteRegister(ctx context.Context, owner string, key strin
 	return nil, nil
 }
 
+// COMPATIBILITY SHIM: Batch register fetching to reduce RPC calls
+// TODO: Remove after Flow release - batches multiple register lookups into single RPC call
+func (s *Store) fetchRemoteRegisters(ctx context.Context, owner string, keys []string, height uint64) (map[string][]byte, error) {
+	if len(keys) == 0 {
+		return make(map[string][]byte), nil
+	}
+
+	registerIDs := make([]*entities.RegisterID, len(keys))
+	for i, key := range keys {
+		registerIDs[i] = convert.RegisterIDToMessage(flowgo.RegisterID{Key: key, Owner: owner})
+	}
+
+	response, err := s.executionClient.GetRegisterValues(ctx, &executiondata.GetRegisterValuesRequest{
+		BlockHeight: height,
+		RegisterIds: registerIDs,
+	})
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return make(map[string][]byte), nil
+		}
+		return nil, err
+	}
+
+	result := make(map[string][]byte)
+	if response != nil && len(response.Values) > 0 {
+		for i, key := range keys {
+			if i < len(response.Values) && len(response.Values[i]) > 0 {
+				result[key] = response.Values[i]
+			}
+		}
+	}
+	return result, nil
+}
+
 // COMPATIBILITY SHIM: Batch public key synthesis
 // TODO: Remove after Flow release - builds batch public key payloads from individual public_key_* registers
 func (s *Store) synthesizeBatchPublicKeys(ctx context.Context, owner string, batchIndex uint32, height uint64) ([]byte, error) {
@@ -496,16 +544,28 @@ func (s *Store) synthesizeBatchPublicKeys(ctx context.Context, owner string, bat
 		batch = append(batch, 0x00)
 	}
 
+	// Batch fetch all legacy public key registers for this batch to reduce RPC calls
+	legacyKeys := make([]string, 0, end-start+1)
+	for i := start; i <= end; i++ {
+		if i == 0 {
+			continue // skip key 0
+		}
+		legacyKeys = append(legacyKeys, fmt.Sprintf("public_key_%d", i))
+	}
+
+	legacyValues, err := s.fetchRemoteRegisters(ctx, owner, legacyKeys, height)
+	if err != nil {
+		return nil, err
+	}
+
 	for i := start; i <= end; i++ {
 		if i == 0 {
 			// stored key 0 is apk_0 and not included in batch payload (nil placeholder already added)
 			continue
 		}
 		legacyKey := fmt.Sprintf("public_key_%d", i)
-		legacyVal, err := s.fetchRemoteRegister(ctx, owner, legacyKey, height)
-		if err != nil {
-			return nil, err
-		}
+		legacyVal := legacyValues[legacyKey]
+
 		if len(legacyVal) == 0 {
 			// keep index alignment with zero-length entry
 			batch = append(batch, 0x00)
@@ -628,15 +688,24 @@ func (s *Store) buildKeyMetadataFromLegacy(ctx context.Context, owner string, co
 		return nil, nil
 	}
 
+	// Batch fetch all legacy public key registers to reduce RPC calls
+	legacyKeys := make([]string, count-1)
+	for i := uint32(1); i < count; i++ {
+		legacyKeys[i-1] = fmt.Sprintf("public_key_%d", i)
+	}
+
+	legacyValues, err := s.fetchRemoteRegisters(ctx, owner, legacyKeys, height)
+	if err != nil {
+		return nil, err
+	}
+
 	// Build weight and revoked status for keys 1..count-1
 	var weightAndRevoked []byte
 
 	for i := uint32(1); i < count; i++ {
 		legacyKey := fmt.Sprintf("public_key_%d", i)
-		legacyVal, err := s.fetchRemoteRegister(ctx, owner, legacyKey, height)
-		if err != nil {
-			return nil, err
-		}
+		legacyVal := legacyValues[legacyKey]
+
 		if len(legacyVal) == 0 {
 			// Default values for missing keys
 			weightAndRevoked = append(weightAndRevoked, 0, 0) // weight=0, revoked=false
