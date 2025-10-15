@@ -56,8 +56,8 @@ func TestForkingAgainstTestnet(t *testing.T) {
 		Snapshot:                  false,
 		SkipTransactionValidation: true,
 		ChainID:                   flowgo.Testnet, // will be overridden by detectRemoteChainID
-		ForkURL:                   "access.testnet.nodes.onflow.org:9000",
-		ForkBlockNumber:           remoteHeight,
+		ForkHost:                  "access.testnet.nodes.onflow.org:9000",
+		ForkHeight:                remoteHeight,
 	}
 
 	srv := NewEmulatorServer(&logger, cfg)
@@ -192,8 +192,8 @@ func TestForkingAgainstMainnet(t *testing.T) {
 		Snapshot:                  false,
 		SkipTransactionValidation: true,
 		ChainID:                   flowgo.Mainnet, // will be overridden by detectRemoteChainID
-		ForkURL:                   "access.mainnet.nodes.onflow.org:9000",
-		ForkBlockNumber:           remoteHeight,
+		ForkHost:                  "access.mainnet.nodes.onflow.org:9000",
+		ForkHeight:                remoteHeight,
 	}
 
 	srv := NewEmulatorServer(&logger, cfg)

@@ -141,10 +141,10 @@ type Config struct {
 	SqliteURL string
 	// CoverageReportingEnabled enables/disables Cadence code coverage reporting.
 	CoverageReportingEnabled bool
-	// ForkURL is the gRPC access node address to fork from (host:port).
-	ForkURL string
-	// ForkBlockNumber is the height at which to start the emulator when forking.
-	ForkBlockNumber uint64
+	// ForkHost is the gRPC access node address to fork from (host:port).
+	ForkHost string
+	// ForkHeight is the height at which to start the emulator when forking.
+	ForkHeight uint64
 	// CheckpointPath is the path to the checkpoint folder to use when starting the network on top of existing state.
 	// StateHash should be provided as well.
 	CheckpointPath string
@@ -416,7 +416,7 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 		}
 	}
 
-	if conf.ForkURL != "" {
+	if conf.ForkHost != "" {
 		// TODO: any reason redis shouldn't work?
 		baseProvider, ok := storageProvider.(*sqlite.Store)
 		if !ok {
@@ -424,8 +424,8 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 		}
 
 		provider, err := remote.New(baseProvider, logger,
-			remote.WithForkURL(conf.ForkURL),
-			remote.WithForkBlockNumber(conf.ForkBlockNumber),
+			remote.WithForkHost(conf.ForkHost),
+			remote.WithForkHeight(conf.ForkHeight),
 		)
 		if err != nil {
 			return nil, err
@@ -434,7 +434,7 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 
 		// detect and override chain ID from remote parameters (no dependency on store internals)
 		// TODO: do not mutate conf here; derive chain ID immutably during setup
-		if parsed, err := detectRemoteChainID(conf.ForkURL); err == nil {
+		if parsed, err := detectRemoteChainID(conf.ForkHost); err == nil {
 			conf.ChainID = parsed
 		}
 	}

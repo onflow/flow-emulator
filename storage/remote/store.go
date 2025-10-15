@@ -232,15 +232,15 @@ type Store struct {
 
 type Option func(*Store)
 
-// WithForkURL configures the remote access/observer node gRPC endpoint.
+// WithForkHost configures the remote access/observer node gRPC endpoint.
 // Expects raw host:port with no scheme.
-func WithForkURL(url string) Option {
+func WithForkHost(host string) Option {
 	return func(store *Store) {
-		store.host = url
+		store.host = host
 	}
 }
 
-// WithRPCHost sets access/observer node host. Deprecated: use WithForkURL.
+// WithRPCHost sets access/observer node host. Deprecated: use WithForkHost.
 func WithRPCHost(host string, chainID flowgo.ChainID) Option {
 	return func(store *Store) {
 		// Keep legacy behavior: set host and (optionally) chainID for validation.
@@ -250,15 +250,15 @@ func WithRPCHost(host string, chainID flowgo.ChainID) Option {
 }
 
 // WithStartBlockHeight sets the start height for the store.
-// WithForkBlockNumber sets the pinned fork block/height.
-func WithForkBlockNumber(height uint64) Option {
+// WithForkHeight sets the pinned fork height.
+func WithForkHeight(height uint64) Option {
 	return func(store *Store) {
 		store.forkHeight = height
 	}
 }
 
-// WithStartBlockHeight is deprecated: use WithForkBlockNumber.
-func WithStartBlockHeight(height uint64) Option { return WithForkBlockNumber(height) }
+// WithStartBlockHeight is deprecated: use WithForkHeight.
+func WithStartBlockHeight(height uint64) Option { return WithForkHeight(height) }
 
 // WithClient can set an rpc host client
 //

@@ -75,11 +75,11 @@ type Config struct {
 	SqliteURL                    string        `default:"" flag:"sqlite-url" info:"sqlite db URL for persisting sqlite storage backend "`
 	CoverageReportingEnabled     bool          `default:"false" flag:"coverage-reporting" info:"enable Cadence code coverage reporting"`
 	LegacyContractUpgradeEnabled bool          `default:"false" flag:"legacy-upgrade" info:"enable Cadence legacy contract upgrade"`
-	ForkURL                      string        `default:"" flag:"fork-url" info:"gRPC access node address (host:port) to fork from"`
-	ForkBlockNumber              uint64        `default:"0" flag:"fork-block-number" info:"block number/height to pin fork; defaults to latest sealed"`
+	ForkHost                     string        `default:"" flag:"fork-host" info:"gRPC access node address (host:port) to fork from"`
+	ForkHeight                   uint64        `default:"0" flag:"fork-height" info:"height to pin fork; defaults to latest sealed"`
 	// Deprecated hidden aliases
-	StartBlockHeight             uint64 `default:"0" flag:"start-block-height" info:"(deprecated) use --fork-block-number"`
-	RPCHost                      string `default:"" flag:"rpc-host" info:"(deprecated) use --fork-url"`
+	StartBlockHeight             uint64 `default:"0" flag:"start-block-height" info:"(deprecated) use --fork-height"`
+	RPCHost                      string `default:"" flag:"rpc-host" info:"(deprecated) use --fork-host"`
 	CheckpointPath               string `default:"" flag:"checkpoint-dir" info:"checkpoint directory to load the emulator state from"`
 	StateHash                    string `default:"" flag:"state-hash" info:"state hash of the checkpoint to load the emulator state from"`
 	ComputationReportingEnabled  bool   `default:"false" flag:"computation-reporting" info:"enable Cadence computation reporting"`
@@ -151,23 +151,23 @@ func Cmd(config StartConfig) *cobra.Command {
 			}
 
 			// Deprecation shims: map old flags to new and warn
-			if conf.RPCHost != "" && conf.ForkURL == "" {
-				logger.Warn().Msg("❗  --rpc-host is deprecated; use --fork-url")
-				conf.ForkURL = conf.RPCHost
+			if conf.RPCHost != "" && conf.ForkHost == "" {
+				logger.Warn().Msg("❗  --rpc-host is deprecated; use --fork-host")
+				conf.ForkHost = conf.RPCHost
 			}
-			if conf.StartBlockHeight > 0 && conf.ForkBlockNumber == 0 {
-				logger.Warn().Msg("❗  --start-block-height is deprecated; use --fork-block-number")
-				conf.ForkBlockNumber = conf.StartBlockHeight
+			if conf.StartBlockHeight > 0 && conf.ForkHeight == 0 {
+				logger.Warn().Msg("❗  --start-block-height is deprecated; use --fork-height")
+				conf.ForkHeight = conf.StartBlockHeight
 			}
 
 			// If forking, ignore provided chain-id and detect from remote later in server
-			if conf.ForkURL != "" {
-				// If ForkBlockNumber is 0, default to latest sealed handled in remote store
-				_ = conf.ForkBlockNumber
+			if conf.ForkHost != "" {
+				// If ForkHeight is 0, default to latest sealed handled in remote store
+				_ = conf.ForkHeight
 			} else {
 				// Non-fork mode cannot accept deprecated fork-only flags
-				if conf.StartBlockHeight > 0 || conf.ForkBlockNumber > 0 {
-					Exit(1, "❗  --fork-block-number requires --fork-url")
+				if conf.StartBlockHeight > 0 || conf.ForkHeight > 0 {
+					Exit(1, "❗  --fork-height requires --fork-host")
 				}
 			}
 
@@ -233,8 +233,8 @@ func Cmd(config StartConfig) *cobra.Command {
 				ContractRemovalEnabled:       conf.ContractRemovalEnabled,
 				SqliteURL:                    conf.SqliteURL,
 				CoverageReportingEnabled:     conf.CoverageReportingEnabled,
-				ForkURL:                      conf.ForkURL,
-				ForkBlockNumber:              conf.ForkBlockNumber,
+				ForkHost:                     conf.ForkHost,
+				ForkHeight:                   conf.ForkHeight,
 				CheckpointPath:               conf.CheckpointPath,
 				StateHash:                    conf.StateHash,
 				ComputationReportingEnabled:  conf.ComputationReportingEnabled,
@@ -261,7 +261,7 @@ func Cmd(config StartConfig) *cobra.Command {
 	_ = cmd.PersistentFlags().MarkHidden("rpc-host")
 	_ = cmd.PersistentFlags().MarkDeprecated("rpc-host", "use --fork-url")
 	_ = cmd.PersistentFlags().MarkHidden("start-block-height")
-	_ = cmd.PersistentFlags().MarkDeprecated("start-block-height", "use --fork-block-number")
+	_ = cmd.PersistentFlags().MarkDeprecated("start-block-height", "use --fork-height")
 
 	return cmd
 }
