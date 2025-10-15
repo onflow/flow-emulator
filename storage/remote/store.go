@@ -236,10 +236,6 @@ type Option func(*Store)
 // Expects raw host:port with no scheme.
 func WithForkURL(url string) Option {
 	return func(store *Store) {
-		// enforce raw host:port only
-		if strings.Contains(url, "://") {
-			// keep as-is; the New() will error when dialing
-		}
 		store.host = url
 	}
 }

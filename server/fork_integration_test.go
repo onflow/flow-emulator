@@ -20,9 +20,9 @@ package server
 
 import (
 	"context"
-	"strings"
 	"testing"
 
+	"github.com/onflow/cadence"
 	"github.com/onflow/flow-emulator/convert"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -41,7 +41,7 @@ func TestForkingAgainstTestnet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial remote: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	remote := flowaccess.NewAccessAPIClient(conn)
 	rh, err := remote.GetLatestBlockHeader(context.Background(), &flowaccess.GetLatestBlockHeaderRequest{IsSealed: true})
 	if err != nil {
@@ -177,7 +177,7 @@ func TestForkingAgainstMainnet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dial remote: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	remote := flowaccess.NewAccessAPIClient(conn)
 	rh, err := remote.GetLatestBlockHeader(context.Background(), &flowaccess.GetLatestBlockHeaderRequest{IsSealed: true})
 	if err != nil {
@@ -211,37 +211,34 @@ func TestForkingAgainstMainnet(t *testing.T) {
 	}
 
 	// Test account key retrieval for a known mainnet account with multiple keys
-	// This tests the account key deduplication shim
+	// This tests the account key deduplication shim by executing a script that accesses
+	// keys and ensures no errors occur (successful execution proves the shim works)
 	testAccountScript := []byte(`
-		transaction {
-			prepare(acct: auth(Storage) &Account) {
-				// Test getting account keys for a known mainnet account
-				let account = getAccount(0xe467b9dd11fa00df)
-				
-				// Test accessing specific key indices
-				let key0 = account.keys.get(keyIndex: 0)
-				if key0 != nil {
-					log("Key 0 weight: ".concat(key0!.weight.toString()))
-					if key0!.isRevoked {
-						log("Key 0 is revoked")
-					} else {
-						log("Key 0 is not revoked")
-					}
-				}
-				
-				let key1 = account.keys.get(keyIndex: 1)
-				if key1 != nil {
-					log("Key 1 weight: ".concat(key1!.weight.toString()))
-					if key1!.isRevoked {
-						log("Key 1 is revoked")
-					} else {
-						log("Key 1 is not revoked")
-					}
-				}
-				
-				// Test that we can access keys without errors
-				log("Account key access test completed")
+		access(all) fun main(): Bool {
+			// Test getting account keys for a known mainnet account
+			let account = getAccount(0xe467b9dd11fa00df)
+			
+			// Test accessing specific key indices
+			let key0 = account.keys.get(keyIndex: 0)
+			if key0 == nil {
+				return false
 			}
+			// Access weight and revoked status to test parsing
+			// (successful access without errors proves the shim works)
+			if key0!.weight < 0.0 || key0!.isRevoked == key0!.isRevoked {
+				// Just access the properties, don't actually test values
+			}
+			
+			let key1 = account.keys.get(keyIndex: 1)
+			if key1 == nil {
+				return false
+			}
+			// Access weight and revoked status to test parsing
+			if key1!.weight < 0.0 || key1!.isRevoked == key1!.isRevoked {
+				// Just access the properties, don't actually test values
+			}
+			
+			return true
 		}
 	`)
 
@@ -253,56 +250,20 @@ func TestForkingAgainstMainnet(t *testing.T) {
 	if latest.Height != remoteHeight+1 {
 		t.Fatalf("fork height mismatch: emulator %d not in {remote, remote+1} where remote=%d", latest.Height, remoteHeight)
 	}
-	sk := srv.Emulator().ServiceKey()
-
-	tx := flowsdk.NewTransaction().
-		SetScript(testAccountScript).
-		SetReferenceBlockID(flowsdk.Identifier(latest.ID())).
-		SetProposalKey(flowsdk.Address(sk.Address), sk.Index, sk.SequenceNumber).
-		SetPayer(flowsdk.Address(sk.Address)).
-		AddAuthorizer(flowsdk.Address(sk.Address))
-
-	signer, err := sk.Signer()
+	// Execute the script to test account key retrieval
+	scriptResult, err := srv.Emulator().ExecuteScript(testAccountScript, nil)
 	if err != nil {
-		t.Fatalf("signer: %v", err)
+		t.Fatalf("test script failed: %v", err)
 	}
-	if err := tx.SignEnvelope(flowsdk.Address(sk.Address), sk.Index, signer); err != nil {
-		t.Fatalf("sign envelope: %v", err)
-	}
-	if err := srv.Emulator().AddTransaction(*convert.SDKTransactionToFlow(*tx)); err != nil {
-		t.Fatalf("add tx: %v", err)
-	}
-	if _, results, err := srv.Emulator().ExecuteAndCommitBlock(); err != nil {
-		t.Fatalf("execute block: %v", err)
-	} else {
-		if len(results) != 1 {
-			t.Fatalf("expected 1 tx result, got %d", len(results))
-		}
-		r := results[0]
-		if !r.Succeeded() {
-			t.Fatalf("tx failed: %v", r.Error)
-		}
 
-		// Check that we got meaningful logs about the account keys
-		logs := r.Logs
-		hasKeyWeight := false
-		hasCompletion := false
-		for _, log := range logs {
-			if strings.Contains(log, "weight:") {
-				hasKeyWeight = true
-			}
-			if strings.Contains(log, "Account key access test completed") {
-				hasCompletion = true
-			}
-		}
-
-		if !hasKeyWeight {
-			t.Fatalf("expected log with key weight, got: %v", logs)
-		}
-		if !hasCompletion {
-			t.Fatalf("expected completion log, got: %v", logs)
-		}
-
-		t.Logf("Account key test successful. Logs: %v", logs)
+	if !scriptResult.Succeeded() {
+		t.Fatalf("test script error: %v", scriptResult.Error)
 	}
+
+	// Check that the script returned true (all verifications passed)
+	if scriptResult.Value != cadence.Bool(true) {
+		t.Fatalf("test script returned %v, expected true", scriptResult.Value)
+	}
+
+	t.Logf("Account key test successful. Script result: %v", scriptResult.Value)
 }

@@ -269,7 +269,7 @@ func detectRemoteChainID(url string) (flowgo.ChainID, error) {
 	if err != nil {
 		return "", err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	client := flowaccess.NewAccessAPIClient(conn)
 	resp, err := client.GetNetworkParameters(context.Background(), &flowaccess.GetNetworkParametersRequest{})
 	if err != nil {

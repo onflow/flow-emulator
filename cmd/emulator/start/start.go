@@ -162,9 +162,8 @@ func Cmd(config StartConfig) *cobra.Command {
 
 			// If forking, ignore provided chain-id and detect from remote later in server
 			if conf.ForkURL != "" {
-				if conf.ForkBlockNumber == 0 {
-					// default to latest sealed handled in remote store
-				}
+				// If ForkBlockNumber is 0, default to latest sealed handled in remote store
+				_ = conf.ForkBlockNumber
 			} else {
 				// Non-fork mode cannot accept deprecated fork-only flags
 				if conf.StartBlockHeight > 0 || conf.ForkBlockNumber > 0 {
