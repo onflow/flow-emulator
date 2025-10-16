@@ -134,19 +134,15 @@ func (s *Store) retryWithBackoff(ctx context.Context, operation string, fn func(
 
 		lastErr = err
 
-		// Only record failures for rate limit errors
-		if isRateLimitError(err) {
-			s.circuitBreaker.recordFailure()
+		// Only retry on recognized, transient rate limit errors
+		if !isRateLimitError(err) {
+			return err
 		}
 
-		// Check if this is a rate limit error
-		if isRateLimitError(err) {
-			s.logger.Info().
-				Str("operation", operation).
-				Msg("Rate limit detected, will retry with backoff")
-		}
+		// Record circuit breaker failure for rate limit errors
+		s.circuitBreaker.recordFailure()
 
-		// For all errors (including rate limits), continue with retry logic
+		// Continue with retry logic for rate limits only
 		if attempt == maxRetries {
 			s.logger.Warn().
 				Str("operation", operation).
