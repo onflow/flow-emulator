@@ -249,12 +249,7 @@ func Cmd(config StartConfig) *cobra.Command {
 				serviceFields["servicePrivKey"] = hex.EncodeToString(servicePrivateKey.Encode())
 			}
 
-			if forkMode {
-				logger.Info().Fields(serviceFields).Msgf("⚙️ Using local overlay service account 0x%s", serviceAddress.Hex())
-				logger.Info().Msgf("Using fork host %s", serverConf.ForkHost)
-			} else {
-				logger.Info().Fields(serviceFields).Msgf("⚙️ Using service account 0x%s", serviceAddress.Hex())
-			}
+			logger.Info().Fields(serviceFields).Msgf("⚙️ Using service account 0x%s", serviceAddress.Hex())
 
 			emu := server.NewEmulatorServer(logger, serverConf)
 			if emu != nil {
