@@ -25,9 +25,9 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
+	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
 type BlockResponse struct {
