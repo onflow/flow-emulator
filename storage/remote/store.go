@@ -367,6 +367,7 @@ func (s *Store) initializeStartBlock(ctx context.Context) error {
 	s.logger.Info().
 		Uint64("forkHeight", s.forkHeight).
 		Str("host", s.host).
+		Str("chainId", s.chainID.String()).
 		Msg("Using fork height")
 
 	// store the initial fork height. any future queries for data on the rpc host will be fixed
