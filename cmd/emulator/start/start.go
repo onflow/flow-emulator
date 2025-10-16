@@ -104,7 +104,6 @@ type HttpMiddleware func(http.Handler) http.Handler
 type StartConfig struct {
 	GetServiceKey   serviceKeyFunc
 	RestMiddlewares []HttpMiddleware
-	ConfigureServer func(server *server.Config) error
 }
 
 func Cmd(config StartConfig) *cobra.Command {
@@ -224,24 +223,17 @@ func Cmd(config StartConfig) *cobra.Command {
 				SetupVMBridgeEnabled:         conf.SetupVMBridgeEnabled,
 			}
 
-			// Post-hook support remains for advanced scenarios; typically pre-hook above is preferred.
-			if config.ConfigureServer != nil {
-				if err := config.ConfigureServer(serverConf); err != nil {
-					Exit(1, err.Error())
-				}
-			}
-
-			// Decide fork mode after possible customization by ConfigureServer
-			forkMode := serverConf.ForkHost != ""
-
 			// Recompute chain ID and service address accurately for fork mode by querying the node.
-			serviceAddress := flowsdk.ServiceAddress(flowsdk.ChainID(flowChainID))
+			resolvedChainID := flowChainID
+			forkMode := serverConf.ForkHost != ""
 			if forkMode {
-				if parsed, err := server.DetectRemoteChainID(serverConf.ForkHost); err == nil {
-					// Use remote chain ID semantics, but service account remains local overlay.
-					serviceAddress = flowsdk.ServiceAddress(flowsdk.ChainID(parsed))
+				parsed, err := server.DetectRemoteChainID(serverConf.ForkHost)
+				if err != nil {
+					Exit(1, fmt.Sprintf("failed to detect remote chain id from %s: %v", serverConf.ForkHost, err))
 				}
+				resolvedChainID = parsed
 			}
+			serviceAddress := flowsdk.ServiceAddress(flowsdk.ChainID(resolvedChainID))
 			if conf.SimpleAddresses {
 				serviceAddress = flowsdk.HexToAddress("0x1")
 			}
