@@ -344,20 +344,6 @@ func getSDKChainID(chainID string) (flowgo.ChainID, error) {
 	}
 }
 
-// parseFlowChainIDStart maps string chain IDs to flowgo.ChainID for start package use
-func parseFlowChainIDStart(id string) (flowgo.ChainID, error) {
-	switch id {
-	case flowgo.Mainnet.String():
-		return flowgo.Mainnet, nil
-	case flowgo.Testnet.String():
-		return flowgo.Testnet, nil
-	case flowgo.Emulator.String():
-		return flowgo.Emulator, nil
-	default:
-		return "", fmt.Errorf("unknown chain id: %s", id)
-	}
-}
-
 func checkKeyAlgorithms(sigAlgo crypto.SignatureAlgorithm, hashAlgo crypto.HashAlgorithm) {
 	if sigAlgo == crypto.UnknownSignatureAlgorithm {
 		Exit(1, "Must specify service key signature algorithm (e.g. --service-sig-algo=ECDSA_P256)")
