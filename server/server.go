@@ -175,7 +175,15 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 		return nil
 	}
 
-	emulatedBlockchain, err := configureBlockchain(logger, conf, store)
+	// Derive chain ID for the emulator setup. In fork mode, prefer remote chain ID.
+	resolvedChainID := conf.ChainID
+	if conf.ForkHost != "" {
+		if parsed, err := DetectRemoteChainID(conf.ForkHost); err == nil {
+			resolvedChainID = parsed
+		}
+	}
+
+	emulatedBlockchain, err := configureBlockchain(logger, resolvedChainID, conf, store)
 	if err != nil {
 		logger.Err(err).Msg("❗  Failed to configure emulated emulator")
 		return nil
@@ -418,12 +426,6 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 			return nil, err
 		}
 		storageProvider = provider
-
-		// detect and override chain ID from remote parameters (no dependency on store internals)
-		// TODO: do not mutate conf here; derive chain ID immutably during setup
-		if parsed, err := DetectRemoteChainID(conf.ForkHost); err == nil {
-			conf.ChainID = parsed
-		}
 	}
 
 	if conf.Snapshot {
@@ -439,7 +441,7 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 	return storageProvider, err
 }
 
-func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Store) (*emulator.Blockchain, error) {
+func configureBlockchain(logger *zerolog.Logger, chainID flowgo.ChainID, conf *Config, store storage.Store) (*emulator.Blockchain, error) {
 	options := []emulator.Option{
 		emulator.WithServerLogger(*logger),
 		emulator.WithStore(store),
@@ -451,7 +453,7 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		emulator.WithMinimumStorageReservation(conf.MinimumStorageReservation),
 		emulator.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
-		emulator.WithChainID(conf.ChainID),
+		emulator.WithChainID(chainID),
 		emulator.WithContractRemovalEnabled(conf.ContractRemovalEnabled),
 		emulator.WithSetupVMBridgeEnabled(conf.SetupVMBridgeEnabled),
 	}
