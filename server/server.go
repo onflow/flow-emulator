@@ -249,19 +249,6 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	return server
 }
 
-func parseFlowChainID(id string) (flowgo.ChainID, error) {
-	switch id {
-	case flowgo.Mainnet.String():
-		return flowgo.Mainnet, nil
-	case flowgo.Testnet.String():
-		return flowgo.Testnet, nil
-	case flowgo.Emulator.String():
-		return flowgo.Emulator, nil
-	default:
-		return "", fmt.Errorf("unknown chain id: %s", id)
-	}
-}
-
 // detectRemoteChainID connects to the remote access node and fetches network parameters to obtain the chain ID.
 func DetectRemoteChainID(url string) (flowgo.ChainID, error) {
 	// Expect raw host:port
@@ -275,7 +262,7 @@ func DetectRemoteChainID(url string) (flowgo.ChainID, error) {
 	if err != nil {
 		return "", err
 	}
-	return parseFlowChainID(resp.ChainId)
+	return flowgo.ChainID(resp.ChainId), nil
 }
 
 // Listen starts listening for incoming connections.
