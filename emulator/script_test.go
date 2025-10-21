@@ -252,6 +252,8 @@ func TestScriptExecutionLimit(t *testing.T) {
 // within a script
 func TestScriptWithCadenceRandom(t *testing.T) {
 
+	t.Parallel()
+
 	//language=cadence
 	code := `
       access(all)
@@ -273,6 +275,9 @@ func TestScriptWithCadenceRandom(t *testing.T) {
 
 // TestEVM checks evm functionality
 func TestEVM(t *testing.T) {
+
+	t.Parallel()
+
 	serviceAddr := flowgo.Emulator.Chain().ServiceAddress()
 	code := []byte(fmt.Sprintf(
 		`

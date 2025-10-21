@@ -54,6 +54,8 @@ func accessTest(f func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmul
 
 func TestAccess(t *testing.T) {
 
+	t.Parallel()
+
 	t.Run("Ping", accessTest(func(t *testing.T, adapter *AccessAdapter, emu *mocks.MockEmulator) {
 		emu.EXPECT().
 			Ping().
