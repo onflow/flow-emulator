@@ -74,6 +74,7 @@ type Config struct {
 	RedisURL                     string        `default:"" flag:"redis-url" info:"redis-server URL for persisting redis storage backend ( redis://[[username:]password@]host[:port][/database] ) "`
 	SqliteURL                    string        `default:"" flag:"sqlite-url" info:"sqlite db URL for persisting sqlite storage backend "`
 	CoverageReportingEnabled     bool          `default:"false" flag:"coverage-reporting" info:"enable Cadence code coverage reporting"`
+	ComputationProfilingEnabled  bool          `default:"false" flag:"computation-profiling" info:"enable Cadence computation profiling"`
 	LegacyContractUpgradeEnabled bool          `default:"false" flag:"legacy-upgrade" info:"enable Cadence legacy contract upgrade"`
 	StartBlockHeight             uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
 	RPCHost                      string        `default:"" flag:"rpc-host" info:"rpc host to query when forking Mainnet or Testnet"`
@@ -217,6 +218,7 @@ func Cmd(config StartConfig) *cobra.Command {
 				ContractRemovalEnabled:       conf.ContractRemovalEnabled,
 				SqliteURL:                    conf.SqliteURL,
 				CoverageReportingEnabled:     conf.CoverageReportingEnabled,
+				ComputationProfilingEnabled:  conf.ComputationProfilingEnabled,
 				StartBlockHeight:             conf.StartBlockHeight,
 				RPCHost:                      conf.RPCHost,
 				CheckpointPath:               conf.CheckpointPath,
