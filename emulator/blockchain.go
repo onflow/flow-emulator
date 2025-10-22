@@ -374,7 +374,7 @@ type Blockchain struct {
 
 	conf config
 
-	coverageReportedRuntime *CoverageReportedRuntime
+	runtime runtime.Runtime
 
 	sourceFileMap map[common.Location]string
 
@@ -519,7 +519,7 @@ func (b *Blockchain) Ping() error {
 }
 
 func (b *Blockchain) Runtime() runtime.Runtime {
-	return b.coverageReportedRuntime
+	return b.runtime
 }
 
 func (b *Blockchain) GetChain() flowgo.Chain {
@@ -633,16 +633,12 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		Debugger:       blockchain.debugger,
 		CoverageReport: conf.CoverageReport,
 	}
-	coverageReportedRuntime := &CoverageReportedRuntime{
-		Runtime:        runtime.NewRuntime(runtimeConfig),
-		CoverageReport: conf.CoverageReport,
-		Environment:    runtime.NewBaseInterpreterEnvironment(runtimeConfig),
-	}
+	rt := runtime.NewRuntime(runtimeConfig)
 	customRuntimePool := reusableRuntime.NewCustomReusableCadenceRuntimePool(
 		1,
 		runtimeConfig,
 		func(config runtime.Config) runtime.Runtime {
-			return coverageReportedRuntime
+			return rt
 		},
 	)
 
@@ -673,7 +669,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvmOptions...,
 	)
 
-	blockchain.coverageReportedRuntime = coverageReportedRuntime
+	blockchain.runtime = rt
 
 	return vm, ctx, nil
 }
@@ -1713,7 +1709,7 @@ func (b *Blockchain) EndDebugging() {
 }
 
 func (b *Blockchain) CoverageReport() *runtime.CoverageReport {
-	return b.coverageReportedRuntime.CoverageReport
+	return b.conf.CoverageReport
 }
 
 func (b *Blockchain) ComputationReport() *ComputationReport {
@@ -1721,7 +1717,7 @@ func (b *Blockchain) ComputationReport() *ComputationReport {
 }
 
 func (b *Blockchain) ResetCoverageReport() {
-	b.coverageReportedRuntime.Reset()
+	b.conf.CoverageReport.Reset()
 }
 
 func (b *Blockchain) GetTransactionsByBlockID(blockID flowgo.Identifier) ([]*flowgo.TransactionBody, error) {
