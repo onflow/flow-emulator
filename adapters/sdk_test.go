@@ -55,6 +55,8 @@ func sdkTest(f func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator))
 
 func TestSDK(t *testing.T) {
 
+	t.Parallel()
+
 	t.Run("Ping", sdkTest(func(t *testing.T, adapter *SDKAdapter, emu *mocks.MockEmulator) {
 		emu.EXPECT().
 			Ping().
