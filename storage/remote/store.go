@@ -21,7 +21,11 @@ package remote
 import (
 	"context"
 	"fmt"
+	"math"
+	"math/rand"
+	"time"
 
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/onflow/flow-go/engine/common/rpc/convert"
 	"github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
@@ -40,6 +44,111 @@ import (
 	"github.com/onflow/flow-emulator/types"
 )
 
+// Retry and concurrency configuration
+const (
+	maxRetries            = 5
+	baseDelay             = 100 * time.Millisecond
+	maxDelay              = 30 * time.Second
+	jitterFactor          = 0.1
+	maxConcurrentRequests = 10 // Maximum concurrent requests to remote node
+)
+
+// isRateLimitError checks if the error is a rate limiting error
+func isRateLimitError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	st, ok := status.FromError(err)
+	if !ok {
+		return false
+	}
+
+	// ResourceExhausted is the standard gRPC code for rate limiting
+	return st.Code() == codes.ResourceExhausted
+}
+
+// exponentialBackoffWithJitter calculates delay with exponential backoff and jitter
+func exponentialBackoffWithJitter(attempt int) time.Duration {
+	if attempt <= 0 {
+		return baseDelay
+	}
+
+	// Calculate exponential delay: baseDelay * 2^(attempt-1)
+	delay := float64(baseDelay) * math.Pow(2, float64(attempt-1))
+
+	// Cap at maxDelay
+	if delay > float64(maxDelay) {
+		delay = float64(maxDelay)
+	}
+
+	// Add jitter: ±10% random variation
+	jitter := delay * jitterFactor * (2*rand.Float64() - 1)
+	delay += jitter
+
+	// Ensure minimum delay
+	if delay < float64(baseDelay) {
+		delay = float64(baseDelay)
+	}
+
+	return time.Duration(delay)
+}
+
+// retryWithBackoff executes a function with exponential backoff retry on rate limit errors
+func (s *Store) retryWithBackoff(ctx context.Context, operation string, fn func() error) error {
+	// Acquire semaphore to limit concurrent requests
+	select {
+	case s.concurrencySem <- struct{}{}:
+		defer func() { <-s.concurrencySem }()
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	var lastErr error
+
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		err := fn()
+		if err == nil {
+			return nil
+		}
+
+		lastErr = err
+
+		// Only retry on recognized, transient rate limit errors
+		if !isRateLimitError(err) {
+			return err
+		}
+
+		// Continue with retry logic for rate limits only
+		if attempt == maxRetries {
+			s.logger.Warn().
+				Str("operation", operation).
+				Int("attempt", attempt+1).
+				Err(err).
+				Msg("Request failed after max attempts")
+			return err
+		}
+
+		// Calculate delay and wait
+		delay := exponentialBackoffWithJitter(attempt)
+		s.logger.Debug().
+			Str("operation", operation).
+			Int("attempt", attempt+1).
+			Dur("delay", delay).
+			Err(err).
+			Msg("Rate limited, retrying with backoff")
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(delay):
+			// Continue to next attempt
+		}
+	}
+
+	return lastErr
+}
+
 type Store struct {
 	*sqlite.Store
 	executionClient executiondata.ExecutionDataAPIClient
@@ -49,24 +158,38 @@ type Store struct {
 	chainID         flowgo.ChainID
 	forkHeight      uint64
 	logger          *zerolog.Logger
+	concurrencySem  chan struct{} // Semaphore to limit concurrent requests
 }
 
 type Option func(*Store)
 
-// WithRPCHost sets access/observer node host.
+// WithForkHost configures the remote access/observer node gRPC endpoint.
+// Expects raw host:port with no scheme.
+func WithForkHost(host string) Option {
+	return func(store *Store) {
+		store.host = host
+	}
+}
+
+// WithRPCHost sets access/observer node host. Deprecated: use WithForkHost.
 func WithRPCHost(host string, chainID flowgo.ChainID) Option {
 	return func(store *Store) {
+		// Keep legacy behavior: set host and (optionally) chainID for validation.
 		store.host = host
 		store.chainID = chainID
 	}
 }
 
 // WithStartBlockHeight sets the start height for the store.
-func WithStartBlockHeight(height uint64) Option {
+// WithForkHeight sets the pinned fork height.
+func WithForkHeight(height uint64) Option {
 	return func(store *Store) {
 		store.forkHeight = height
 	}
 }
+
+// WithStartBlockHeight is deprecated: use WithForkHeight.
+func WithStartBlockHeight(height uint64) Option { return WithForkHeight(height) }
 
 // WithClient can set an rpc host client
 //
@@ -83,8 +206,9 @@ func WithClient(
 
 func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*Store, error) {
 	store := &Store{
-		Store:  provider,
-		logger: logger,
+		Store:          provider,
+		logger:         logger,
+		concurrencySem: make(chan struct{}, maxConcurrentRequests),
 	}
 
 	for _, opt := range options {
@@ -110,13 +234,26 @@ func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*St
 		store.accessClient = access.NewAccessAPIClient(conn)
 	}
 
-	params, err := store.accessClient.GetNetworkParameters(context.Background(), &access.GetNetworkParametersRequest{})
+	var params *access.GetNetworkParametersResponse
+	err := store.retryWithBackoff(context.Background(), "GetNetworkParameters", func() error {
+		var err error
+		params, err = store.accessClient.GetNetworkParameters(context.Background(), &access.GetNetworkParametersRequest{})
+		return err
+	})
 	if err != nil {
 		return nil, fmt.Errorf("could not get network parameters: %w", err)
 	}
 
-	if params.ChainId != store.chainID.String() {
-		return nil, fmt.Errorf("chain ID of rpc host does not match chain ID provided in config: %s != %s", params.ChainId, store.chainID)
+	// If a chainID was provided (legacy path), validate it matches the remote. If not provided, skip.
+	if store.chainID != "" {
+		if params.ChainId != store.chainID.String() {
+			return nil, fmt.Errorf("chain ID of rpc host does not match chain ID provided in config: %s != %s", params.ChainId, store.chainID)
+		}
+	}
+
+	// Record remote chain ID if not already set via options
+	if store.chainID == "" {
+		store.chainID = flowgo.ChainID(params.ChainId)
 	}
 
 	if err := store.initializeStartBlock(context.Background()); err != nil {
@@ -144,7 +281,12 @@ func (s *Store) initializeStartBlock(ctx context.Context) error {
 
 	// use the current latest block from the rpc host if no height was provided
 	if s.forkHeight == 0 {
-		resp, err := s.accessClient.GetLatestBlockHeader(ctx, &access.GetLatestBlockHeaderRequest{IsSealed: true})
+		var resp *access.BlockHeaderResponse
+		err := s.retryWithBackoff(ctx, "GetLatestBlockHeader", func() error {
+			var err error
+			resp, err = s.accessClient.GetLatestBlockHeader(ctx, &access.GetLatestBlockHeaderRequest{IsSealed: true})
+			return err
+		})
 		if err != nil {
 			return fmt.Errorf("could not get last block height: %w", err)
 		}
@@ -154,6 +296,7 @@ func (s *Store) initializeStartBlock(ctx context.Context) error {
 	s.logger.Info().
 		Uint64("forkHeight", s.forkHeight).
 		Str("host", s.host).
+		Str("chainId", s.chainID.String()).
 		Msg("Using fork height")
 
 	// store the initial fork height. any future queries for data on the rpc host will be fixed
@@ -178,7 +321,12 @@ func (s *Store) BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flow
 	if err == nil {
 		height = block.Height
 	} else if errors.Is(err, storage.ErrNotFound) {
-		heightRes, err := s.accessClient.GetBlockHeaderByID(ctx, &access.GetBlockHeaderByIDRequest{Id: blockID[:]})
+		var heightRes *access.BlockHeaderResponse
+		err := s.retryWithBackoff(ctx, "GetBlockHeaderByID", func() error {
+			var err error
+			heightRes, err = s.accessClient.GetBlockHeaderByID(ctx, &access.GetBlockHeaderByIDRequest{Id: blockID[:]})
+			return err
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -218,7 +366,12 @@ func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block
 		return nil, &types.BlockNotFoundByHeightError{Height: height}
 	}
 
-	blockRes, err := s.accessClient.GetBlockHeaderByHeight(ctx, &access.GetBlockHeaderByHeightRequest{Height: height})
+	var blockRes *access.BlockHeaderResponse
+	err = s.retryWithBackoff(ctx, "GetBlockHeaderByHeight", func() error {
+		var err error
+		blockRes, err = s.accessClient.GetBlockHeaderByHeight(ctx, &access.GetBlockHeaderByHeightRequest{Height: height})
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +392,18 @@ func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
 ) (snapshot.StorageSnapshot, error) {
+	// Create a snapshot with LRU cache to avoid duplicate RPC calls within the same snapshot
+	// LRU cache with max 1000 entries to prevent memory bloat
+	cache, err := lru.New[string, flowgo.RegisterValue](1000)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LRU cache: %w", err)
+	}
+
 	return snapshot.NewReadFuncStorageSnapshot(func(id flowgo.RegisterID) (flowgo.RegisterValue, error) {
+		// Check LRU cache first to avoid duplicate RPC calls within this snapshot
+		if cachedValue, exists := cache.Get(id.String()); exists {
+			return cachedValue, nil
+		}
 		// create a copy so updating it doesn't affect future calls
 		lookupHeight := blockHeight
 
@@ -264,10 +428,16 @@ func (s *Store) LedgerByHeight(
 		}
 
 		registerID := convert.RegisterIDToMessage(flowgo.RegisterID{Key: id.Key, Owner: id.Owner})
-		response, err := s.executionClient.GetRegisterValues(ctx, &executiondata.GetRegisterValuesRequest{
-			BlockHeight: lookupHeight,
-			RegisterIds: []*entities.RegisterID{registerID},
+		var response *executiondata.GetRegisterValuesResponse
+
+		err = s.retryWithBackoff(ctx, "GetRegisterValues", func() error {
+			response, err = s.executionClient.GetRegisterValues(ctx, &executiondata.GetRegisterValuesRequest{
+				BlockHeight: lookupHeight,
+				RegisterIds: []*entities.RegisterID{registerID},
+			})
+			return err
 		})
+
 		if err != nil {
 			if status.Code(err) != codes.NotFound {
 				return nil, err
@@ -289,10 +459,11 @@ func (s *Store) LedgerByHeight(
 			return nil, fmt.Errorf("could not cache ledger value: %w", err)
 		}
 
+		// Cache in LRU cache for this snapshot to avoid duplicate RPC calls
+		cache.Add(id.String(), value)
 		return value, nil
 	}), nil
 }
-
 func (s *Store) Stop() {
 	_ = s.grpcConn.Close()
 }
