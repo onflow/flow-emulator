@@ -83,6 +83,7 @@ type Config struct {
 	ScheduledTransactionsEnabled bool          `default:"true" flag:"scheduled-transactions" info:"enable Cadence scheduled transactions"`
 	SetupEVMEnabled              bool          `default:"true" flag:"setup-evm" info:"enable EVM setup for the emulator, this will deploy the EVM contracts"`
 	SetupVMBridgeEnabled         bool          `default:"true" flag:"setup-vm-bridge" info:"enable VM Bridge setup for the emulator, this will deploy the VM Bridge contracts"`
+	NumAccounts                  int           `default:"0" flag:"num-accounts" info:"number of precreated accounts at startup"`
 }
 
 const EnvPrefix = "FLOW"
@@ -225,6 +226,7 @@ func Cmd(config StartConfig) *cobra.Command {
 				ScheduledTransactionsEnabled: conf.ScheduledTransactionsEnabled,
 				SetupEVMEnabled:              conf.SetupEVMEnabled,
 				SetupVMBridgeEnabled:         conf.SetupVMBridgeEnabled,
+				NumAccounts:                   conf.NumAccounts,
 			}
 
 			emu := server.NewEmulatorServer(logger, serverConf)
