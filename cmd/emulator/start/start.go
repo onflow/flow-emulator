@@ -179,6 +179,18 @@ func Cmd(config StartConfig) *cobra.Command {
 				storageMBPerFLOW = parseCadenceUFix64(conf.StorageMBPerFLOW, "storage-per-flow")
 			}
 
+			// Recompute chain ID and service address accurately for fork mode by querying the node.
+			forkHost := conf.ForkHost
+			resolvedChainID := flowChainID
+			forkMode := forkHost != ""
+			if forkMode {
+				parsed, err := server.DetectRemoteChainID(forkHost)
+				if err != nil {
+					Exit(1, fmt.Sprintf("failed to detect remote chain id from %s: %v", forkHost, err))
+				}
+				resolvedChainID = parsed
+			}
+
 			serverConf := &server.Config{
 				GRPCPort:     conf.Port,
 				GRPCDebug:    conf.GRPCDebug,
@@ -208,7 +220,7 @@ func Cmd(config StartConfig) *cobra.Command {
 				SkipTransactionValidation:    conf.SkipTxValidation,
 				SimpleAddressesEnabled:       conf.SimpleAddresses,
 				Host:                         conf.Host,
-				ChainID:                      flowChainID,
+				ChainID:                      resolvedChainID,
 				RedisURL:                     conf.RedisURL,
 				ContractRemovalEnabled:       conf.ContractRemovalEnabled,
 				SqliteURL:                    conf.SqliteURL,
@@ -223,16 +235,6 @@ func Cmd(config StartConfig) *cobra.Command {
 				SetupVMBridgeEnabled:         conf.SetupVMBridgeEnabled,
 			}
 
-			// Recompute chain ID and service address accurately for fork mode by querying the node.
-			resolvedChainID := flowChainID
-			forkMode := serverConf.ForkHost != ""
-			if forkMode {
-				parsed, err := server.DetectRemoteChainID(serverConf.ForkHost)
-				if err != nil {
-					Exit(1, fmt.Sprintf("failed to detect remote chain id from %s: %v", serverConf.ForkHost, err))
-				}
-				resolvedChainID = parsed
-			}
 			serviceAddress := flowsdk.ServiceAddress(flowsdk.ChainID(resolvedChainID))
 			if conf.SimpleAddresses {
 				serviceAddress = flowsdk.HexToAddress("0x1")

@@ -175,12 +175,15 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 		return nil
 	}
 
-	// Derive chain ID for the emulator setup. In fork mode, prefer remote chain ID.
+	// Derive chain ID for the emulator setup.
 	resolvedChainID := conf.ChainID
-	if conf.ForkHost != "" {
-		if parsed, err := DetectRemoteChainID(conf.ForkHost); err == nil {
-			resolvedChainID = parsed
+	if conf.ForkHost != "" && conf.ChainID == "" {
+		parsed, err := DetectRemoteChainID(conf.ForkHost)
+		if err != nil {
+			logger.Error().Err(err).Msg("❗  Failed to detect remote chain ID")
+			return nil
 		}
+		resolvedChainID = parsed
 	}
 
 	emulatedBlockchain, err := configureBlockchain(logger, resolvedChainID, conf, store)
