@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"sync"
 	"time"
 
 	lru "github.com/hashicorp/golang-lru/v2"
@@ -45,14 +44,13 @@ import (
 	"github.com/onflow/flow-emulator/types"
 )
 
-// Retry and circuit breaker configuration
+// Retry and concurrency configuration
 const (
-	maxRetries              = 5
-	baseDelay               = 100 * time.Millisecond
-	maxDelay                = 30 * time.Second
-	jitterFactor            = 0.1
-	circuitTimeout          = 30 * time.Second // Circuit breaker timeout
-	circuitFailureThreshold = 3                // Number of consecutive failures before opening circuit
+	maxRetries            = 5
+	baseDelay             = 100 * time.Millisecond
+	maxDelay              = 30 * time.Second
+	jitterFactor          = 0.1
+	maxConcurrentRequests = 10 // Maximum concurrent requests to remote node
 )
 
 // isRateLimitError checks if the error is a rate limiting error
@@ -98,27 +96,19 @@ func exponentialBackoffWithJitter(attempt int) time.Duration {
 
 // retryWithBackoff executes a function with exponential backoff retry on rate limit errors
 func (s *Store) retryWithBackoff(ctx context.Context, operation string, fn func() error) error {
+	// Acquire semaphore to limit concurrent requests
+	select {
+	case s.concurrencySem <- struct{}{}:
+		defer func() { <-s.concurrencySem }()
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
 	var lastErr error
 
 	for attempt := 0; attempt <= maxRetries; attempt++ {
-		// Wait if circuit breaker is open (defer request instead of failing)
-		if waitTime := s.circuitBreaker.getWaitTime(); waitTime > 0 {
-			s.logger.Debug().
-				Str("operation", operation).
-				Dur("wait", waitTime).
-				Msg("Circuit breaker open, deferring request")
-
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			case <-time.After(waitTime):
-				// Continue after wait
-			}
-		}
-
 		err := fn()
 		if err == nil {
-			s.circuitBreaker.recordSuccess()
 			return nil
 		}
 
@@ -128,9 +118,6 @@ func (s *Store) retryWithBackoff(ctx context.Context, operation string, fn func(
 		if !isRateLimitError(err) {
 			return err
 		}
-
-		// Record circuit breaker failure for rate limit errors
-		s.circuitBreaker.recordFailure()
 
 		// Continue with retry logic for rate limits only
 		if attempt == maxRetries {
@@ -149,7 +136,7 @@ func (s *Store) retryWithBackoff(ctx context.Context, operation string, fn func(
 			Int("attempt", attempt+1).
 			Dur("delay", delay).
 			Err(err).
-			Msg("Request failed, retrying with backoff")
+			Msg("Rate limited, retrying with backoff")
 
 		select {
 		case <-ctx.Done():
@@ -162,47 +149,6 @@ func (s *Store) retryWithBackoff(ctx context.Context, operation string, fn func(
 	return lastErr
 }
 
-// circuitBreaker implements a simple circuit breaker pattern
-type circuitBreaker struct {
-	mu       sync.RWMutex
-	failures int
-	lastFail time.Time
-	timeout  time.Duration
-}
-
-// getWaitTime returns how long to wait before making a request (0 if circuit is closed)
-func (cb *circuitBreaker) getWaitTime() time.Duration {
-	cb.mu.RLock()
-	defer cb.mu.RUnlock()
-
-	// Only apply backpressure if we've exceeded the failure threshold
-	if cb.failures >= circuitFailureThreshold {
-		elapsed := time.Since(cb.lastFail)
-		if elapsed < cb.timeout {
-			return cb.timeout - elapsed
-		}
-	}
-
-	return 0
-}
-
-// recordFailure records a failure and opens the circuit breaker
-func (cb *circuitBreaker) recordFailure() {
-	cb.mu.Lock()
-	defer cb.mu.Unlock()
-
-	cb.failures++
-	cb.lastFail = time.Now()
-}
-
-// recordSuccess records a success and closes the circuit breaker
-func (cb *circuitBreaker) recordSuccess() {
-	cb.mu.Lock()
-	defer cb.mu.Unlock()
-
-	cb.failures = 0 // Reset on success
-}
-
 type Store struct {
 	*sqlite.Store
 	executionClient executiondata.ExecutionDataAPIClient
@@ -212,7 +158,7 @@ type Store struct {
 	chainID         flowgo.ChainID
 	forkHeight      uint64
 	logger          *zerolog.Logger
-	circuitBreaker  *circuitBreaker
+	concurrencySem  chan struct{} // Semaphore to limit concurrent requests
 }
 
 type Option func(*Store)
@@ -260,11 +206,9 @@ func WithClient(
 
 func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*Store, error) {
 	store := &Store{
-		Store:  provider,
-		logger: logger,
-		circuitBreaker: &circuitBreaker{
-			timeout: circuitTimeout,
-		},
+		Store:          provider,
+		logger:         logger,
+		concurrencySem: make(chan struct{}, maxConcurrentRequests),
 	}
 
 	for _, opt := range options {
