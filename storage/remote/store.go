@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"strings"
 	"sync"
 	"time"
 
@@ -48,11 +47,12 @@ import (
 
 // Retry and circuit breaker configuration
 const (
-	maxRetries     = 5
-	baseDelay      = 100 * time.Millisecond
-	maxDelay       = 30 * time.Second
-	jitterFactor   = 0.1
-	circuitTimeout = 30 * time.Second // Circuit breaker timeout
+	maxRetries              = 5
+	baseDelay               = 100 * time.Millisecond
+	maxDelay                = 30 * time.Second
+	jitterFactor            = 0.1
+	circuitTimeout          = 30 * time.Second // Circuit breaker timeout
+	circuitFailureThreshold = 3                // Number of consecutive failures before opening circuit
 )
 
 // isRateLimitError checks if the error is a rate limiting error
@@ -66,22 +66,8 @@ func isRateLimitError(err error) bool {
 		return false
 	}
 
-	// Check for common rate limiting gRPC codes
-	switch st.Code() {
-	case codes.ResourceExhausted:
-		return true
-	case codes.Unavailable:
-		// Sometimes rate limits are returned as unavailable
-		return strings.Contains(st.Message(), "rate") ||
-			strings.Contains(st.Message(), "limit") ||
-			strings.Contains(st.Message(), "throttle")
-	case codes.Aborted:
-		// Some services return rate limits as aborted
-		return strings.Contains(st.Message(), "rate") ||
-			strings.Contains(st.Message(), "limit")
-	}
-
-	return false
+	// ResourceExhausted is the standard gRPC code for rate limiting
+	return st.Code() == codes.ResourceExhausted
 }
 
 // exponentialBackoffWithJitter calculates delay with exponential backoff and jitter
@@ -115,12 +101,19 @@ func (s *Store) retryWithBackoff(ctx context.Context, operation string, fn func(
 	var lastErr error
 
 	for attempt := 0; attempt <= maxRetries; attempt++ {
-		// Check circuit breaker first
-		if !s.circuitBreaker.canMakeRequest() {
+		// Wait if circuit breaker is open (defer request instead of failing)
+		if waitTime := s.circuitBreaker.getWaitTime(); waitTime > 0 {
 			s.logger.Debug().
 				Str("operation", operation).
-				Msg("Circuit breaker is open, skipping request")
-			return fmt.Errorf("circuit breaker is open")
+				Dur("wait", waitTime).
+				Msg("Circuit breaker open, deferring request")
+
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(waitTime):
+				// Continue after wait
+			}
 		}
 
 		err := fn()
@@ -177,17 +170,20 @@ type circuitBreaker struct {
 	timeout  time.Duration
 }
 
-// canMakeRequest checks if requests can be made (circuit breaker is closed)
-func (cb *circuitBreaker) canMakeRequest() bool {
+// getWaitTime returns how long to wait before making a request (0 if circuit is closed)
+func (cb *circuitBreaker) getWaitTime() time.Duration {
 	cb.mu.RLock()
 	defer cb.mu.RUnlock()
 
-	// If we've had recent failures, check timeout
-	if cb.failures > 0 && time.Since(cb.lastFail) < cb.timeout {
-		return false
+	// Only apply backpressure if we've exceeded the failure threshold
+	if cb.failures >= circuitFailureThreshold {
+		elapsed := time.Since(cb.lastFail)
+		if elapsed < cb.timeout {
+			return cb.timeout - elapsed
+		}
 	}
 
-	return true
+	return 0
 }
 
 // recordFailure records a failure and opens the circuit breaker

@@ -168,7 +168,7 @@ func TestForkingAgainstTestnet(t *testing.T) {
 	}
 }
 
-// TestForkingAgainstMainnet exercises the forking path with mainnet and tests the account key deduplication shim
+// TestForkingAgainstMainnet exercises the forking path with mainnet
 func TestForkingAgainstMainnet(t *testing.T) {
 	t.Skip("remove after Forte release")
 	logger := zerolog.Nop()
