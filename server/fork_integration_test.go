@@ -170,6 +170,7 @@ func TestForkingAgainstTestnet(t *testing.T) {
 
 // TestForkingAgainstMainnet exercises the forking path with mainnet and tests the account key deduplication shim
 func TestForkingAgainstMainnet(t *testing.T) {
+	t.Skip("remove after Forte release")
 	logger := zerolog.Nop()
 
 	// Get remote latest sealed height to pin fork
