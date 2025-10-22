@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/onflow/cadence"
@@ -415,6 +416,11 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 	}
 
 	if conf.ForkHost != "" {
+		// Validate fork host has port
+		if !strings.Contains(conf.ForkHost, ":") {
+			return nil, fmt.Errorf("fork-host must include port (e.g., access.mainnet.nodes.onflow.org:9000)")
+		}
+
 		// TODO: any reason redis shouldn't work?
 		baseProvider, ok := storageProvider.(*sqlite.Store)
 		if !ok {
