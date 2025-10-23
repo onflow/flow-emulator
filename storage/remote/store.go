@@ -51,6 +51,7 @@ const (
 	maxDelay              = 30 * time.Second
 	jitterFactor          = 0.1
 	maxConcurrentRequests = 10 // Maximum concurrent requests to remote node
+	blockBuffer           = 10 // Buffer to allow for block propagation
 )
 
 // isRateLimitError checks if the error is a rate limiting error
@@ -290,7 +291,7 @@ func (s *Store) initializeStartBlock(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("could not get last block height: %w", err)
 		}
-		s.forkHeight = resp.Block.Height
+		s.forkHeight = resp.Block.Height - blockBuffer
 	}
 
 	s.logger.Info().
