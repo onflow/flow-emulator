@@ -39,7 +39,6 @@ import (
 )
 
 func TestBlocks(t *testing.T) {
-
 	t.Parallel()
 
 	store, dir := setupStore(t)
@@ -128,7 +127,6 @@ func TestBlocks(t *testing.T) {
 }
 
 func TestCollections(t *testing.T) {
-
 	t.Parallel()
 
 	store, dir := setupStore(t)
@@ -160,7 +158,6 @@ func TestCollections(t *testing.T) {
 }
 
 func TestTransactions(t *testing.T) {
-
 	t.Parallel()
 
 	store, dir := setupStore(t)
@@ -179,7 +176,7 @@ func TestTransactions(t *testing.T) {
 	})
 
 	t.Run("should be able to insert tx", func(t *testing.T) {
-		err := store.InsertTransaction(context.Background(), tx)
+		err := store.InsertTransaction(context.Background(), tx, tx.ID())
 		assert.NoError(t, err)
 
 		t.Run("should be able to get inserted tx", func(t *testing.T) {
@@ -212,7 +209,7 @@ func TestFullCollection(t *testing.T) {
 		require.NoError(t, err)
 
 		for _, tx := range col.Transactions {
-			err = store.InsertTransaction(context.Background(), *tx)
+			err = store.InsertTransaction(context.Background(), *tx, tx.ID())
 			require.NoError(t, err)
 		}
 
@@ -220,15 +217,12 @@ func TestFullCollection(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, col, c)
 	})
-
 }
 
 func TestTransactionResults(t *testing.T) {
-
 	t.Parallel()
 
 	test := func(eventEncodingVersion entities.EventEncodingVersion) {
-
 		t.Run(eventEncodingVersion.String(), func(t *testing.T) {
 			t.Parallel()
 
@@ -271,11 +265,9 @@ func TestTransactionResults(t *testing.T) {
 }
 
 func TestLedger(t *testing.T) {
-
 	t.Parallel()
 
 	t.Run("get/set", func(t *testing.T) {
-
 		t.Parallel()
 
 		store, dir := setupStore(t)
@@ -314,7 +306,6 @@ func TestLedger(t *testing.T) {
 	})
 
 	t.Run("versioning", func(t *testing.T) {
-
 		t.Parallel()
 
 		store, dir := setupStore(t)
@@ -390,11 +381,9 @@ func TestLedger(t *testing.T) {
 }
 
 func TestInsertEvents(t *testing.T) {
-
 	t.Parallel()
 
 	test := func(eventEncodingVersion entities.EventEncodingVersion) {
-
 		t.Run(eventEncodingVersion.String(), func(t *testing.T) {
 			t.Parallel()
 
@@ -429,10 +418,8 @@ func TestInsertEvents(t *testing.T) {
 }
 
 func TestEventsByHeight(t *testing.T) {
-
 	t.Parallel()
 	test := func(eventEncodingVersion entities.EventEncodingVersion) {
-
 		t.Run(eventEncodingVersion.String(), func(t *testing.T) {
 			t.Parallel()
 
