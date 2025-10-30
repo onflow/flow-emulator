@@ -36,6 +36,7 @@ const (
 	globalStoreName            = "global"
 	BlockIndexStoreName        = "blockIndex"
 	BlockStoreName             = "blocks"
+	SystemTransactionName      = "systemTransactions"
 	CollectionStoreName        = "collections"
 	TransactionStoreName       = "transactions"
 	TransactionResultStoreName = "transactionResults"
@@ -50,7 +51,7 @@ const (
 // transactions and register states.
 //
 // Implementations must distinguish between not found errors and errors with
-// the underlying storage by returning an instance of store.ErrNotFound if a
+// the underlyingn storage by returning an instance of store.ErrNotFound if a
 // resource cannot be found.
 //
 // Implementations must be safe for use by multiple goroutines.
@@ -58,12 +59,18 @@ type Store interface {
 	graceland.Routine
 	LatestBlockHeight(ctx context.Context) (uint64, error)
 
-	// LatestBlock returns the block with the highest block height.
+	// LatestBlockr returns the block with the highest block height.
 	LatestBlock(ctx context.Context) (flowgo.Block, error)
 
 	// StoreBlock stores the block in storage. If the exactly same block is already in a storage, return successfully
 	StoreBlock(ctx context.Context, block *flowgo.Block) error
 
+	// store systemtransaction in a block
+	StoreSystemTransactions(ctx context.Context, systemTransactions *SystemTransactions) error
+
+	// get system transactions for a block height
+	//
+	SystemTransactionsForBlockID(ctx context.Context, blockID flowgo.Identifier) (*SystemTransactions, error)
 	// BlockByID returns the block with the given hash. It is available for
 	// finalized and ambiguous blocks.
 	BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flowgo.Block, error)
@@ -81,6 +88,7 @@ type Store interface {
 		transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
 		executionSnapshot *snapshot.ExecutionSnapshot,
 		events []flowgo.Event,
+		systemSystemTransactions *SystemTransactions,
 	) error
 
 	// CollectionByID gets the collection (transaction IDs only) with the given ID.
@@ -135,8 +143,7 @@ type DataSetter interface {
 	SetBytesWithVersion(ctx context.Context, store string, key []byte, value []byte, version uint64) error
 }
 
-type DefaultKeyGenerator struct {
-}
+type DefaultKeyGenerator struct{}
 
 func (s *DefaultKeyGenerator) Storage(key string) string {
 	return key
@@ -215,6 +222,25 @@ func (s *DefaultStore) LatestBlock(ctx context.Context) (block flowgo.Block, err
 	return
 }
 
+func (s *DefaultStore) StoreSystemTransactions(ctx context.Context, systemTransactions *SystemTransactions) error {
+	encSystemTransaction, err := encodeSystemTransaction(*systemTransactions)
+	if err != nil {
+		return err
+	}
+
+	// insert the block by block height
+	if err := s.SetBytes(
+		ctx,
+		s.Storage(SystemTransactionName),
+		s.Identifier(systemTransactions.BlockID),
+		encSystemTransaction,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *DefaultStore) StoreBlock(ctx context.Context, block *flowgo.Block) error {
 	s.CurrentHeight = block.Height
 
@@ -288,6 +314,26 @@ func (s *DefaultStore) BlockByHeight(ctx context.Context, blockHeight uint64) (b
 	block = &flowgo.Block{}
 	err = decodeBlock(block, encBlock)
 	return
+}
+
+func (s *DefaultStore) SystemTransactionsForBlockID(ctx context.Context, blockID flowgo.Identifier) (*SystemTransactions, error) {
+	systemTransactionEnc, err := s.GetBytes(
+		ctx,
+		s.Storage(SystemTransactionName),
+		s.Identifier(blockID),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	systemTransaction := &SystemTransactions{}
+
+	err = decodeSystemTransaction(systemTransaction, systemTransactionEnc)
+	if err != nil {
+		return nil, err
+	}
+
+	return systemTransaction, nil
 }
 
 func (s *DefaultStore) BlockByID(ctx context.Context, blockID flowgo.Identifier) (block *flowgo.Block, err error) {
@@ -403,7 +449,7 @@ func (s *DefaultStore) TransactionByID(
 	return
 }
 
-func (s *DefaultStore) InsertTransaction(ctx context.Context, tx flowgo.TransactionBody) error {
+func (s *DefaultStore) InsertTransaction(ctx context.Context, tx flowgo.TransactionBody, id flowgo.Identifier) error {
 	encTx, err := encodeTransaction(tx)
 	if err != nil {
 		return err
@@ -412,7 +458,7 @@ func (s *DefaultStore) InsertTransaction(ctx context.Context, tx flowgo.Transact
 	return s.SetBytes(
 		ctx,
 		s.Storage(TransactionStoreName),
-		s.Identifier(tx.ID()),
+		s.Identifier(id),
 		encTx,
 	)
 }
@@ -482,7 +528,7 @@ func (s *DefaultStore) EventsByHeight(ctx context.Context, blockHeight uint64, e
 }
 
 func (s *DefaultStore) InsertEvents(ctx context.Context, blockHeight uint64, events []flowgo.Event) error {
-	//bluesign: encodes all events instead of inserting one by one
+	// bluesign: encodes all events instead of inserting one by one
 	b, err := encodeEvents(events)
 	if err != nil {
 		return err
@@ -492,7 +538,6 @@ func (s *DefaultStore) InsertEvents(ctx context.Context, blockHeight uint64, eve
 		s.Storage(EventStoreName),
 		s.BlockHeight(blockHeight),
 		b)
-
 	if err != nil {
 		return err
 	}
@@ -527,8 +572,8 @@ func (s *DefaultStore) CommitBlock(
 	transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
 	executionSnapshot *snapshot.ExecutionSnapshot,
 	events []flowgo.Event,
+	systemTransactions *SystemTransactions,
 ) error {
-
 	if len(transactions) != len(transactionResults) {
 		return fmt.Errorf(
 			"transactions count (%d) does not match result count (%d)",
@@ -542,6 +587,13 @@ func (s *DefaultStore) CommitBlock(
 		return err
 	}
 
+	if systemTransactions != nil {
+		err = s.StoreSystemTransactions(ctx, systemTransactions)
+		if err != nil {
+			return err
+		}
+	}
+
 	for _, col := range collections {
 		err := s.InsertCollection(ctx, *col)
 		if err != nil {
@@ -549,8 +601,8 @@ func (s *DefaultStore) CommitBlock(
 		}
 	}
 
-	for _, tx := range transactions {
-		err := s.InsertTransaction(ctx, *tx)
+	for id, tx := range transactions {
+		err := s.InsertTransaction(ctx, *tx, id)
 		if err != nil {
 			return err
 		}
@@ -577,7 +629,6 @@ func (s *DefaultStore) CommitBlock(
 	}
 
 	return nil
-
 }
 
 type defaultStoreSnapshot struct {
@@ -597,7 +648,6 @@ func (snapshot defaultStoreSnapshot) Get(
 		snapshot.defaultStore.Storage(LedgerStoreName),
 		[]byte(id.String()),
 		snapshot.blockHeight)
-
 	if err != nil {
 		// silence not found errors
 		if errors.Is(err, ErrNotFound) {
@@ -619,4 +669,9 @@ func (s *DefaultStore) LedgerByHeight(
 		ctx:          ctx,
 		blockHeight:  blockHeight,
 	}, nil
+}
+
+type SystemTransactions struct {
+	BlockID      flowgo.Identifier
+	Transactions []flowgo.Identifier
 }

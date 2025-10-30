@@ -80,6 +80,7 @@ func New(
 		nil,
 		snap,
 		nil,
+		nil,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to commit genesis block: %s", err)

@@ -39,6 +39,14 @@ func init() {
 	}
 }
 
+func encodeSystemTransaction(st SystemTransactions) ([]byte, error) {
+	return em.Marshal(st)
+}
+
+func decodeSystemTransaction(st *SystemTransactions, from []byte) error {
+	return cbor.Unmarshal(from, st)
+}
+
 func encodeBlock(block flowgo.Block) ([]byte, error) {
 	return em.Marshal(block)
 }

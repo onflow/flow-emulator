@@ -29,6 +29,7 @@ func ToStorableResult(
 	output fvm.ProcedureOutput,
 	blockID flowgo.Identifier,
 	blockHeight uint64,
+	collectionID flowgo.Identifier,
 ) (
 	types.StorableTransactionResult,
 	error,
@@ -48,5 +49,6 @@ func ToStorableResult(
 		ErrorMessage: errorMessage,
 		Logs:         output.Logs,
 		Events:       output.Events,
+		CollectionID: collectionID,
 	}, nil
 }

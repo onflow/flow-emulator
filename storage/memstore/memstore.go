@@ -41,6 +41,8 @@ type Store struct {
 	collections map[flowgo.Identifier]flowgo.LightCollection
 	// transactions by ID
 	transactions map[flowgo.Identifier]flowgo.TransactionBody
+	// system transactions
+	systemTransactions map[flowgo.Identifier]storage.SystemTransactions
 	// Transaction results by ID
 	transactionResults map[flowgo.Identifier]types.StorableTransactionResult
 	// Ledger states by block height
@@ -59,6 +61,7 @@ func New() *Store {
 		blocks:              make(map[uint64]flowgo.Block),
 		collections:         make(map[flowgo.Identifier]flowgo.LightCollection),
 		transactions:        make(map[flowgo.Identifier]flowgo.TransactionBody),
+		systemTransactions:  make(map[flowgo.Identifier]storage.SystemTransactions),
 		transactionResults:  make(map[flowgo.Identifier]types.StorableTransactionResult),
 		ledger:              make(map[uint64]snapshot.SnapshotTree),
 		eventsByBlockHeight: make(map[uint64][]flowgo.Event),
@@ -127,7 +130,6 @@ func (s *Store) BlockByID(_ context.Context, blockID flowgo.Identifier) (*flowgo
 	}
 
 	return &block, nil
-
 }
 
 func (s *Store) BlockByHeight(_ context.Context, height uint64) (*flowgo.Block, error) {
@@ -142,6 +144,23 @@ func (s *Store) BlockByHeight(_ context.Context, height uint64) (*flowgo.Block, 
 	return &block, nil
 }
 
+func (s *Store) SystemTransactionsForBlockID(ctx context.Context, blockID flowgo.Identifier) (*storage.SystemTransactions, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	st, ok := s.systemTransactions[blockID]
+	if !ok {
+		return nil, storage.ErrNotFound
+	}
+
+	return &st, nil
+}
+
+func (s *Store) StoreSystemTransactions(ctx context.Context, systemTransactions *storage.SystemTransactions) error {
+	s.systemTransactions[systemTransactions.BlockID] = *systemTransactions
+	return nil
+}
+
 func (s *Store) CommitBlock(
 	_ context.Context,
 	block flowgo.Block,
@@ -150,6 +169,7 @@ func (s *Store) CommitBlock(
 	transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
 	executionSnapshot *snapshot.ExecutionSnapshot,
 	events []flowgo.Event,
+	systemTransaction *storage.SystemTransactions,
 ) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -174,8 +194,15 @@ func (s *Store) CommitBlock(
 		}
 	}
 
-	for _, tx := range transactions {
-		err := s.insertTransaction(tx.ID(), *tx)
+	if systemTransaction != nil {
+		err = s.insertSystemTransactions(systemTransaction.BlockID, *systemTransaction)
+		if err != nil {
+			return err
+		}
+
+	}
+	for id, tx := range transactions {
+		err := s.insertTransaction(id, *tx)
 		if err != nil {
 			return err
 		}
@@ -255,7 +282,6 @@ func (s *Store) TransactionByID(
 		return flowgo.TransactionBody{}, storage.ErrNotFound
 	}
 	return tx, nil
-
 }
 
 func (s *Store) TransactionResultByID(
@@ -270,7 +296,6 @@ func (s *Store) TransactionResultByID(
 		return types.StorableTransactionResult{}, storage.ErrNotFound
 	}
 	return result, nil
-
 }
 
 func (s *Store) LedgerByHeight(
@@ -307,6 +332,11 @@ func (s *Store) EventsByHeight(
 
 func (s *Store) insertCollection(col flowgo.LightCollection) error {
 	s.collections[col.ID()] = col
+	return nil
+}
+
+func (s *Store) insertSystemTransactions(blockID flowgo.Identifier, stx storage.SystemTransactions) error {
+	s.systemTransactions[blockID] = stx
 	return nil
 }
 
