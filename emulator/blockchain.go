@@ -1392,8 +1392,14 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 
 	block := b.pendingBlock.Block()
 	collections := b.pendingBlock.Collections()
+
+	collectionID := flowgo.ZeroID
+
+	if len(collections) > 0 {
+		collectionID = collections[0].ID()
+	}
 	transactions := b.pendingBlock.Transactions()
-	transactionResults, err := convertToSealedResults(b.pendingBlock.TransactionResults(), b.pendingBlock.ID(), b.pendingBlock.height, collections[0].ID())
+	transactionResults, err := convertToSealedResults(b.pendingBlock.TransactionResults(), b.pendingBlock.ID(), b.pendingBlock.height, collectionID)
 	if err != nil {
 		return nil, err
 	}
