@@ -34,7 +34,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"maps"
 	"math"
 	"strings"
 	"sync"
@@ -1405,36 +1404,41 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	)
 	if b.conf.ScheduledTransactionsEnabled {
 		// TODO: use result
-		tx, results, err := b.executeScheduledTransactions(blockContext)
+		_, _, err = b.executeScheduledTransactions(blockContext)
 		if err != nil {
 			return nil, err
 		}
 
-		convertedResults, err := convertToSealedResults(results, b.pendingBlock.ID(), b.pendingBlock.height, flowgo.ZeroID)
+		//		convertedResults, err := convertToSealedResults(results, b.pendingBlock.ID(), b.pendingBlock.height, flowgo.ZeroID)
 		if err != nil {
 			return nil, err
 		}
-		maps.Copy(transactionResults, convertedResults)
-		maps.Copy(transactions, tx)
+		// TODO: we cant do this as the id is the same for every block so we cannot just store it here
+		//		maps.Copy(transactionResults, convertedResults)
+		//		maps.Copy(transactions, tx)
 
 	}
 
 	// lastly we execute the system chunk transaction
-	chunkBody, itr, err := b.executeSystemChunkTransaction()
+	//	chunkBody, itr, err := b.executeSystemChunkTransaction()
+	_, _, err = b.executeSystemChunkTransaction()
 	if err != nil {
 		return nil, err
 	}
 
-	systemTxStorableResult, err := convert.ToStorableResult(itr.ProcedureOutput, b.pendingBlock.ID(), b.pendingBlock.height, flowgo.ZeroID)
-	if err != nil {
-		return nil, err
-	}
-	transactions[chunkBody.ID()] = chunkBody
-	transactionResults[chunkBody.ID()] = &systemTxStorableResult
+	//	systemTxStorableResult, err := convert.ToStorableResult(itr.ProcedureOutput, b.pendingBlock.ID(), b.pendingBlock.height, flowgo.ZeroID)
+	/*
+		if err != nil {
+			return nil, err
+		}
+	*/
+	//	transactions[chunkBody.ID()] = chunkBody
+	//	transactionResults[chunkBody.ID()] = &systemTxStorableResult
 
 	executionSnapshot := b.pendingBlock.Finalize()
 	events := b.pendingBlock.Events()
 
+	// todo: can we make a systemTransactionCollection maybe and index that by block and that collection has a
 	// commit the pending block to storage
 	err = b.storage.CommitBlock(
 		context.Background(),
