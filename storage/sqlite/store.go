@@ -33,7 +33,7 @@ import (
 	"sync"
 	"time"
 
-	_ "github.com/glebarez/go-sqlite"
+	_ "modernc.org/sqlite"
 
 	"github.com/onflow/flow-emulator/storage"
 )

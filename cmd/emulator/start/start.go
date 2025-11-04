@@ -76,14 +76,18 @@ type Config struct {
 	CoverageReportingEnabled     bool          `default:"false" flag:"coverage-reporting" info:"enable Cadence code coverage reporting"`
 	ComputationProfilingEnabled  bool          `default:"false" flag:"computation-profiling" info:"enable Cadence computation profiling"`
 	LegacyContractUpgradeEnabled bool          `default:"false" flag:"legacy-upgrade" info:"enable Cadence legacy contract upgrade"`
-	StartBlockHeight             uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
-	RPCHost                      string        `default:"" flag:"rpc-host" info:"rpc host to query when forking Mainnet or Testnet"`
+	ForkHost                     string        `default:"" flag:"fork-host" info:"gRPC access node address (host:port) to fork from"`
+	ForkHeight                   uint64        `default:"0" flag:"fork-height" info:"height to pin fork; defaults to latest sealed"`
 	CheckpointPath               string        `default:"" flag:"checkpoint-dir" info:"checkpoint directory to load the emulator state from"`
 	StateHash                    string        `default:"" flag:"state-hash" info:"state hash of the checkpoint to load the emulator state from"`
 	ComputationReportingEnabled  bool          `default:"false" flag:"computation-reporting" info:"enable Cadence computation reporting"`
 	ScheduledTransactionsEnabled bool          `default:"true" flag:"scheduled-transactions" info:"enable Cadence scheduled transactions"`
 	SetupEVMEnabled              bool          `default:"true" flag:"setup-evm" info:"enable EVM setup for the emulator, this will deploy the EVM contracts"`
 	SetupVMBridgeEnabled         bool          `default:"true" flag:"setup-vm-bridge" info:"enable VM Bridge setup for the emulator, this will deploy the VM Bridge contracts"`
+
+	// Deprecated hidden aliases
+	StartBlockHeight uint64 `default:"0" flag:"start-block-height" info:"(deprecated) use --fork-height"`
+	RPCHost          string `default:"" flag:"rpc-host" info:"(deprecated) use --fork-host"`
 }
 
 const EnvPrefix = "FLOW"
@@ -148,31 +152,23 @@ func Cmd(config StartConfig) *cobra.Command {
 				Exit(1, err.Error())
 			}
 
-			if conf.StartBlockHeight > 0 && flowChainID != flowgo.Mainnet && flowChainID != flowgo.Testnet {
-				Exit(1, "❗  --start-block-height is only valid when forking Mainnet or Testnet")
+			// Deprecation shims: map old flags to new and warn
+			if conf.RPCHost != "" && conf.ForkHost == "" {
+				logger.Warn().Msg("❗  --rpc-host is deprecated; use --fork-host")
+				conf.ForkHost = conf.RPCHost
+			}
+			if conf.StartBlockHeight > 0 && conf.ForkHeight == 0 {
+				logger.Warn().Msg("❗  --start-block-height is deprecated; use --fork-height")
+				conf.ForkHeight = conf.StartBlockHeight
 			}
 
-			if (flowChainID == flowgo.Mainnet || flowChainID == flowgo.Testnet) && conf.RPCHost == "" {
-				Exit(1, "❗  --rpc-host must be provided when forking Mainnet or Testnet")
+			// In non-fork mode, fork-only flags are invalid
+			if conf.ForkHost == "" && (conf.StartBlockHeight > 0 || conf.ForkHeight > 0) {
+				Exit(1, "❗  --fork-height requires --fork-host")
 			}
 
-			serviceAddress := flowsdk.ServiceAddress(flowsdk.ChainID(flowChainID))
-			if conf.SimpleAddresses {
-				serviceAddress = flowsdk.HexToAddress("0x1")
-			}
-
-			serviceFields := map[string]any{
-				"serviceAddress":  serviceAddress.Hex(),
-				"servicePubKey":   hex.EncodeToString(servicePublicKey.Encode()),
-				"serviceSigAlgo":  serviceKeySigAlgo.String(),
-				"serviceHashAlgo": serviceKeyHashAlgo.String(),
-			}
-
-			if servicePrivateKey != nil {
-				serviceFields["servicePrivKey"] = hex.EncodeToString(servicePrivateKey.Encode())
-			}
-
-			logger.Info().Fields(serviceFields).Msgf("⚙️ Using service account 0x%s", serviceAddress.Hex())
+			// Service account logging is deferred until after server configuration to allow
+			// higher-level wrappers to customize fork settings via ConfigureServer.
 
 			minimumStorageReservation := fvm.DefaultMinimumStorageReservation
 			if conf.MinimumAccountBalance != "" {
@@ -182,6 +178,18 @@ func Cmd(config StartConfig) *cobra.Command {
 			storageMBPerFLOW := fvm.DefaultStorageMBPerFLOW
 			if conf.StorageMBPerFLOW != "" {
 				storageMBPerFLOW = parseCadenceUFix64(conf.StorageMBPerFLOW, "storage-per-flow")
+			}
+
+			// Recompute chain ID and service address accurately for fork mode by querying the node.
+			forkHost := conf.ForkHost
+			resolvedChainID := flowChainID
+			forkMode := forkHost != ""
+			if forkMode {
+				parsed, err := server.DetectRemoteChainID(forkHost)
+				if err != nil {
+					Exit(1, fmt.Sprintf("failed to detect remote chain id from %s: %v", forkHost, err))
+				}
+				resolvedChainID = parsed
 			}
 
 			serverConf := &server.Config{
@@ -213,14 +221,14 @@ func Cmd(config StartConfig) *cobra.Command {
 				SkipTransactionValidation:    conf.SkipTxValidation,
 				SimpleAddressesEnabled:       conf.SimpleAddresses,
 				Host:                         conf.Host,
-				ChainID:                      flowChainID,
+				ChainID:                      resolvedChainID,
 				RedisURL:                     conf.RedisURL,
 				ContractRemovalEnabled:       conf.ContractRemovalEnabled,
 				SqliteURL:                    conf.SqliteURL,
 				CoverageReportingEnabled:     conf.CoverageReportingEnabled,
 				ComputationProfilingEnabled:  conf.ComputationProfilingEnabled,
-				StartBlockHeight:             conf.StartBlockHeight,
-				RPCHost:                      conf.RPCHost,
+				ForkHost:                     conf.ForkHost,
+				ForkHeight:                   conf.ForkHeight,
 				CheckpointPath:               conf.CheckpointPath,
 				StateHash:                    conf.StateHash,
 				ComputationReportingEnabled:  conf.ComputationReportingEnabled,
@@ -228,6 +236,24 @@ func Cmd(config StartConfig) *cobra.Command {
 				SetupEVMEnabled:              conf.SetupEVMEnabled,
 				SetupVMBridgeEnabled:         conf.SetupVMBridgeEnabled,
 			}
+
+			serviceAddress := flowsdk.ServiceAddress(flowsdk.ChainID(resolvedChainID))
+			if conf.SimpleAddresses {
+				serviceAddress = flowsdk.HexToAddress("0x1")
+			}
+
+			serviceFields := map[string]any{
+				"serviceAddress":  serviceAddress.Hex(),
+				"servicePubKey":   hex.EncodeToString(servicePublicKey.Encode()),
+				"serviceSigAlgo":  serviceKeySigAlgo.String(),
+				"serviceHashAlgo": serviceKeyHashAlgo.String(),
+			}
+
+			if servicePrivateKey != nil {
+				serviceFields["servicePrivKey"] = hex.EncodeToString(servicePrivateKey.Encode())
+			}
+
+			logger.Info().Fields(serviceFields).Msgf("⚙️ Using service account 0x%s", serviceAddress.Hex())
 
 			emu := server.NewEmulatorServer(logger, serverConf)
 			if emu != nil {
@@ -242,6 +268,12 @@ func Cmd(config StartConfig) *cobra.Command {
 	}
 
 	initConfig(cmd)
+
+	// Hide and deprecate legacy flags while keeping them functional
+	_ = cmd.PersistentFlags().MarkHidden("rpc-host")
+	_ = cmd.PersistentFlags().MarkDeprecated("rpc-host", "use --fork-host")
+	_ = cmd.PersistentFlags().MarkHidden("start-block-height")
+	_ = cmd.PersistentFlags().MarkDeprecated("start-block-height", "use --fork-height")
 
 	return cmd
 }
