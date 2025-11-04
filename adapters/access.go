@@ -453,7 +453,7 @@ func (a *AccessAdapter) GetAccountBalanceAtLatestBlock(_ context.Context, addres
 	return account.Balance, nil
 }
 
-func (a *AccessAdapter) GetAccountBalanceAtBlockHeight(ctx context.Context, address flowgo.Address, height uint64) (uint64, error) {
+func (a *AccessAdapter) GetAccountBalanceAtBlockHeight(_ context.Context, address flowgo.Address, height uint64) (uint64, error) {
 	account, err := a.emulator.GetAccountAtBlockHeight(address, height)
 	if err != nil {
 		return 0, convertError(err, codes.Internal)
@@ -610,43 +610,43 @@ func (a *AccessAdapter) GetNodeVersionInfo(
 	return &accessmodel.NodeVersionInfo{}, nil
 }
 
-func (a *AccessAdapter) SubscribeBlocksFromStartBlockID(ctx context.Context, startBlockID flowgo.Identifier, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlocksFromStartBlockID(_ context.Context, _ flowgo.Identifier, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeBlocksFromStartHeight(ctx context.Context, startHeight uint64, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlocksFromStartHeight(_ context.Context, _ uint64, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeBlocksFromLatest(ctx context.Context, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlocksFromLatest(_ context.Context, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeBlockHeadersFromStartBlockID(ctx context.Context, startBlockID flowgo.Identifier, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlockHeadersFromStartBlockID(_ context.Context, _ flowgo.Identifier, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeBlockHeadersFromStartHeight(ctx context.Context, startHeight uint64, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlockHeadersFromStartHeight(_ context.Context, _ uint64, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeBlockHeadersFromLatest(ctx context.Context, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlockHeadersFromLatest(_ context.Context, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeBlockDigestsFromStartBlockID(ctx context.Context, startBlockID flowgo.Identifier, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlockDigestsFromStartBlockID(_ context.Context, _ flowgo.Identifier, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeBlockDigestsFromStartHeight(ctx context.Context, startHeight uint64, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlockDigestsFromStartHeight(_ context.Context, _ uint64, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeBlockDigestsFromLatest(ctx context.Context, blockStatus flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlockDigestsFromLatest(_ context.Context, _ flowgo.BlockStatus) subscription.Subscription {
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeTransactionStatuses(ctx context.Context, _ flowgo.Identifier, _ entities.EventEncodingVersion) subscription.Subscription {
+func (a *AccessAdapter) SubscribeTransactionStatuses(_ context.Context, _ flowgo.Identifier, _ entities.EventEncodingVersion) subscription.Subscription {
 	return nil
 }
 
@@ -676,6 +676,13 @@ func (a *AccessAdapter) SubscribeTransactionStatusesFromLatest(ctx context.Conte
 	return nil
 }
 
-func (a *AccessAdapter) SendAndSubscribeTransactionStatuses(ctx context.Context, tx *flowgo.TransactionBody, requiredEventEncodingVersion entities.EventEncodingVersion) subscription.Subscription {
+func (a *AccessAdapter) SendAndSubscribeTransactionStatuses(_ context.Context, _ *flowgo.TransactionBody, _ entities.EventEncodingVersion) subscription.Subscription {
 	return nil
+}
+
+func (a *AccessAdapter) GetScheduledTransaction(_ context.Context, _ uint64) (*flowgo.TransactionBody, error) {
+	return nil, nil
+}
+func (a *AccessAdapter) GetScheduledTransactionResult(_ context.Context, _ uint64, _ entities.EventEncodingVersion) (*accessmodel.TransactionResult, error) {
+	return nil, nil
 }
