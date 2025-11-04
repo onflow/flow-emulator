@@ -193,6 +193,19 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 		return nil
 	}
 
+	// In fork mode, commit an initial reference block so transactions can be submitted immediately
+	if conf.ForkHost != "" {
+		block, _, err := emulatedBlockchain.ExecuteAndCommitBlock()
+		if err != nil {
+			logger.Error().Err(err).Msg("❗  Failed to commit initial reference block for fork mode")
+			return nil
+		}
+		logger.Info().
+			Uint64("blockHeight", block.Height).
+			Str("blockID", block.ID().String()).
+			Msg("📦 Committed initial reference block for fork mode")
+	}
+
 	chain := emulatedBlockchain.GetChain()
 
 	sc := systemcontracts.SystemContractsForChain(chain.ChainID())
