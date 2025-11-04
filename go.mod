@@ -12,7 +12,7 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.8.1
+	github.com/onflow/cadence v1.8.3-0.20251104182324-d1e559944703
 	github.com/onflow/crypto v0.25.3
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.9.1
 	github.com/onflow/flow-go v0.43.3-0.20251021182938-b0fef2c5ca47

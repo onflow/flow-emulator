@@ -652,9 +652,14 @@ func (s *session) convertStorageMapToDAPVariables(
 
 	members := make([]dap.Variable, 0, value.Count())
 
-	it := value.Iterator(inter)
+	// Create a combined gauge for the iterator
+	// We use no-op gauges since this is just for debugger inspection
+	// and we don't need to meter allocations in this context
+	gauge := noopGauge{}
+
+	it := value.Iterator()
 	for {
-		key, value := it.Next()
+		key, value := it.Next(gauge)
 		if key == nil {
 			break
 		}
@@ -676,6 +681,18 @@ func (s *session) convertStorageMapToDAPVariables(
 	}
 
 	return members
+}
+
+// noopGauge is a no-op implementation of common.Gauge
+// used for debugger inspection where metering is not needed
+type noopGauge struct{}
+
+func (noopGauge) MeterMemory(_ common.MemoryUsage) error {
+	return nil
+}
+
+func (noopGauge) MeterComputation(_ common.ComputationUsage) error {
+	return nil
 }
 
 func (s *session) stackFrames() []dap.StackFrame {

@@ -753,8 +753,8 @@ github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N
 github.com/olekukonko/tablewriter v0.0.5/go.mod h1:hPp6KlRPjbx+hW8ykQs1w3UBbZlj6HuIJcUGPhkA7kY=
 github.com/onflow/atree v0.11.0 h1:NrGHb7l3pKvFPFAdYfEyezg6D7xBNcMSwQHliOHtZug=
 github.com/onflow/atree v0.11.0/go.mod h1:uZE/bzDfMLXJH9BYL8HxNisw9pHZGyc+mDLuSMeUAVY=
-github.com/onflow/cadence v1.8.1 h1:nWx+USGs/+NIVHd5RYlzEulzsqYQp0uSKDqVYBub3w4=
-github.com/onflow/cadence v1.8.1/go.mod h1:08FmLMsBjhRTgE9tmiSJjFNJrjcuTUawQFFUQq8J1Y4=
+github.com/onflow/cadence v1.8.3-0.20251104182324-d1e559944703 h1:xAL8q6dRUAg+7HDZf6/Tt2lHm4al7etFj5QsQioP+rw=
+github.com/onflow/cadence v1.8.3-0.20251104182324-d1e559944703/go.mod h1:08FmLMsBjhRTgE9tmiSJjFNJrjcuTUawQFFUQq8J1Y4=
 github.com/onflow/crypto v0.25.3 h1:XQ3HtLsw8h1+pBN+NQ1JYM9mS2mVXTyg55OldaAIF7U=
 github.com/onflow/crypto v0.25.3/go.mod h1:+1igaXiK6Tjm9wQOBD1EGwW7bYWMUGKtwKJ/2QL/OWs=
 github.com/onflow/fixed-point v0.1.1 h1:j0jYZVO8VGyk1476alGudEg7XqCkeTVxb5ElRJRKS90=
