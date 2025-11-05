@@ -186,7 +186,7 @@ func TestStreamingTransactionStatuses_Integration(t *testing.T) {
 		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
 		SetPayer(serviceAddress).
 		AddAuthorizer(serviceAddress)
-	
+
 	tx, err := txBuilder.Build()
 	require.NoError(t, err)
 
@@ -240,7 +240,7 @@ func TestStreamingTransactionStatuses_Integration(t *testing.T) {
 	}
 
 done:
-	assert.True(t, statusesReceived[flowgo.TransactionStatusSealed], 
+	assert.True(t, statusesReceived[flowgo.TransactionStatusSealed],
 		"should receive sealed status. Got: %v", statusesReceived)
 }
 
@@ -287,4 +287,3 @@ func TestStreamingMultipleBlocks_Integration(t *testing.T) {
 
 	assert.Equal(t, expectedBlocks, blocksReceived)
 }
-
