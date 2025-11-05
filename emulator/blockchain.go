@@ -690,7 +690,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithReusableCadenceRuntimePool(customRuntimePool),
 		fvm.WithEntropyProvider(blockchain.entropyProvider),
 		fvm.WithEVMEnabled(true),
-		fvm.WithScheduledTransactionsEnabled(conf.ScheduledTransactionsEnabled),
+		fvm.WithScheduleCallbacksEnabled(conf.ScheduledTransactionsEnabled),
 	}
 
 	if !conf.TransactionValidationEnabled {
