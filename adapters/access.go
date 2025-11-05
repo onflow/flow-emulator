@@ -460,6 +460,32 @@ func (a *AccessAdapter) GetSystemTransactionResult(_ context.Context, txID flowg
 	return result, nil
 }
 
+func (a *AccessAdapter) GetScheduledTransaction(_ context.Context, scheduledTxID uint64) (*flowgo.TransactionBody, error) {
+	tx, err := a.emulator.GetScheduledTransaction(scheduledTxID)
+	if err != nil {
+		return nil, convertError(err, codes.NotFound)
+	}
+
+	return tx, nil
+}
+
+func (a *AccessAdapter) GetScheduledTransactionResult(_ context.Context, scheduledTxID uint64, encodingVersion entities.EventEncodingVersion) (*accessmodel.TransactionResult, error) {
+	result, err := a.emulator.GetScheduledTransactionResult(scheduledTxID)
+	if err != nil {
+		return nil, convertError(err, codes.NotFound)
+	}
+
+	// Convert CCF events to JSON events, else return CCF encoded version
+	if encodingVersion == entities.EventEncodingVersion_JSON_CDC_V0 {
+		result.Events, err = ConvertCCFEventsToJsonEvents(result.Events)
+		if err != nil {
+			return nil, status.Error(codes.Internal, fmt.Sprintf("failed to convert events: %v", err))
+		}
+	}
+
+	return result, nil
+}
+
 func (a *AccessAdapter) GetAccountBalanceAtLatestBlock(_ context.Context, address flowgo.Address) (uint64, error) {
 
 	account, err := a.emulator.GetAccount(address)
@@ -978,46 +1004,4 @@ func ConvertCCFEventsToJsonEvents(events []flowgo.Event) ([]flowgo.Event, error)
 	}
 
 	return converted, nil
-}
-
-func (a *AccessAdapter) SubscribeTransactionStatusesFromStartBlockID(ctx context.Context, txID flowgo.Identifier, startBlockID flowgo.Identifier, requiredEventEncodingVersion entities.EventEncodingVersion) subscription.Subscription {
-	return nil
-}
-
-func (a *AccessAdapter) SubscribeTransactionStatusesFromStartHeight(ctx context.Context, txID flowgo.Identifier, startHeight uint64, requiredEventEncodingVersion entities.EventEncodingVersion) subscription.Subscription {
-	return nil
-}
-
-func (a *AccessAdapter) SubscribeTransactionStatusesFromLatest(ctx context.Context, txID flowgo.Identifier, requiredEventEncodingVersion entities.EventEncodingVersion) subscription.Subscription {
-	return nil
-}
-
-func (a *AccessAdapter) SendAndSubscribeTransactionStatuses(_ context.Context, _ *flowgo.TransactionBody, _ entities.EventEncodingVersion) subscription.Subscription {
-	return nil
-}
-
-func (a *AccessAdapter) GetScheduledTransaction(_ context.Context, scheduledTxID uint64) (*flowgo.TransactionBody, error) {
-	tx, err := a.emulator.GetScheduledTransaction(scheduledTxID)
-	if err != nil {
-		return nil, convertError(err, codes.NotFound)
-	}
-
-	return tx, nil
-}
-
-func (a *AccessAdapter) GetScheduledTransactionResult(_ context.Context, scheduledTxID uint64, encodingVersion entities.EventEncodingVersion) (*accessmodel.TransactionResult, error) {
-	result, err := a.emulator.GetScheduledTransactionResult(scheduledTxID)
-	if err != nil {
-		return nil, convertError(err, codes.NotFound)
-	}
-
-	// Convert CCF events to JSON events, else return CCF encoded version
-	if encodingVersion == entities.EventEncodingVersion_JSON_CDC_V0 {
-		result.Events, err = ConvertCCFEventsToJsonEvents(result.Events)
-		if err != nil {
-			return nil, status.Error(codes.Internal, fmt.Sprintf("failed to convert events: %v", err))
-		}
-	}
-
-	return result, nil
 }
