@@ -37,7 +37,7 @@ type StorableTransactionResult struct {
 	CollectionID flowgo.Identifier
 }
 
-// A TransactionResult is th fe result of executing a transaction.
+// A TransactionResult is the result of executing a transaction.
 type TransactionResult struct {
 	TransactionID   flowsdk.Identifier
 	ComputationUsed uint64
