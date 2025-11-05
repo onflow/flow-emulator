@@ -71,6 +71,15 @@ type Store interface {
 	// get system transactions for a block height
 	//
 	SystemTransactionsForBlockID(ctx context.Context, blockID flowgo.Identifier) (*SystemTransactions, error)
+
+	// IndexScheduledTransactionID indexes a scheduled transaction ID to its block ID (global index).
+	// This allows looking up which block contains a given scheduled transaction.
+	IndexScheduledTransactionID(ctx context.Context, scheduledTxID uint64, blockID flowgo.Identifier) error
+
+	// BlockIDByScheduledTransactionID returns the block ID for a given scheduled transaction ID.
+	// Returns ErrNotFound if the scheduled transaction ID is not indexed.
+	BlockIDByScheduledTransactionID(ctx context.Context, scheduledTxID uint64) (flowgo.Identifier, error)
+
 	// BlockByID returns the block with the given hash. It is available for
 	// finalized and ambiguous blocks.
 	BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flowgo.Block, error)
@@ -239,6 +248,44 @@ func (s *DefaultStore) StoreSystemTransactions(ctx context.Context, systemTransa
 	}
 
 	return nil
+}
+
+// IndexScheduledTransactionID stores the global mapping from scheduled transaction ID to block ID.
+func (s *DefaultStore) IndexScheduledTransactionID(ctx context.Context, scheduledTxID uint64, blockID flowgo.Identifier) error {
+	// Store blockID indexed by scheduledTxID
+	key := scheduledTransactionKey(scheduledTxID)
+	return s.SetBytes(
+		ctx,
+		s.Storage("scheduledTransactionIndex"),
+		[]byte(key),
+		blockID[:],
+	)
+}
+
+// BlockIDByScheduledTransactionID retrieves the block ID for a given scheduled transaction ID.
+func (s *DefaultStore) BlockIDByScheduledTransactionID(ctx context.Context, scheduledTxID uint64) (flowgo.Identifier, error) {
+	key := scheduledTransactionKey(scheduledTxID)
+	blockIDBytes, err := s.GetBytes(
+		ctx,
+		s.Storage("scheduledTransactionIndex"),
+		[]byte(key),
+	)
+	if err != nil {
+		return flowgo.ZeroID, err
+	}
+
+	if len(blockIDBytes) != len(flowgo.ZeroID) {
+		return flowgo.ZeroID, fmt.Errorf("invalid block ID length: expected %d, got %d", len(flowgo.ZeroID), len(blockIDBytes))
+	}
+
+	var blockID flowgo.Identifier
+	copy(blockID[:], blockIDBytes)
+	return blockID, nil
+}
+
+// scheduledTransactionKey creates a storage key for a scheduled transaction ID.
+func scheduledTransactionKey(scheduledTxID uint64) string {
+	return fmt.Sprintf("scheduled_tx_%d", scheduledTxID)
 }
 
 func (s *DefaultStore) StoreBlock(ctx context.Context, block *flowgo.Block) error {
@@ -672,6 +719,7 @@ func (s *DefaultStore) LedgerByHeight(
 }
 
 type SystemTransactions struct {
-	BlockID      flowgo.Identifier
-	Transactions []flowgo.Identifier
+	BlockID                 flowgo.Identifier
+	Transactions            []flowgo.Identifier
+	ScheduledTransactionIDs map[uint64]flowgo.Identifier // maps scheduled tx ID (uint64) to transaction ID
 }

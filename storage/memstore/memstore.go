@@ -43,6 +43,8 @@ type Store struct {
 	transactions map[flowgo.Identifier]flowgo.TransactionBody
 	// system transactions
 	systemTransactions map[flowgo.Identifier]storage.SystemTransactions
+	// scheduled transaction ID to block ID (global index)
+	scheduledTransactionIndex map[uint64]flowgo.Identifier
 	// Transaction results by ID
 	transactionResults map[flowgo.Identifier]types.StorableTransactionResult
 	// Ledger states by block height
@@ -56,15 +58,16 @@ type Store struct {
 // New returns a new in-memory Store implementation.
 func New() *Store {
 	return &Store{
-		mu:                  sync.RWMutex{},
-		blockIDToHeight:     make(map[flowgo.Identifier]uint64),
-		blocks:              make(map[uint64]flowgo.Block),
-		collections:         make(map[flowgo.Identifier]flowgo.LightCollection),
-		transactions:        make(map[flowgo.Identifier]flowgo.TransactionBody),
-		systemTransactions:  make(map[flowgo.Identifier]storage.SystemTransactions),
-		transactionResults:  make(map[flowgo.Identifier]types.StorableTransactionResult),
-		ledger:              make(map[uint64]snapshot.SnapshotTree),
-		eventsByBlockHeight: make(map[uint64][]flowgo.Event),
+		mu:                        sync.RWMutex{},
+		blockIDToHeight:           make(map[flowgo.Identifier]uint64),
+		blocks:                    make(map[uint64]flowgo.Block),
+		collections:               make(map[flowgo.Identifier]flowgo.LightCollection),
+		transactions:              make(map[flowgo.Identifier]flowgo.TransactionBody),
+		systemTransactions:        make(map[flowgo.Identifier]storage.SystemTransactions),
+		scheduledTransactionIndex: make(map[uint64]flowgo.Identifier),
+		transactionResults:        make(map[flowgo.Identifier]types.StorableTransactionResult),
+		ledger:                    make(map[uint64]snapshot.SnapshotTree),
+		eventsByBlockHeight:       make(map[uint64][]flowgo.Event),
 	}
 }
 
@@ -159,6 +162,26 @@ func (s *Store) SystemTransactionsForBlockID(ctx context.Context, blockID flowgo
 func (s *Store) StoreSystemTransactions(ctx context.Context, systemTransactions *storage.SystemTransactions) error {
 	s.systemTransactions[systemTransactions.BlockID] = *systemTransactions
 	return nil
+}
+
+func (s *Store) IndexScheduledTransactionID(ctx context.Context, scheduledTxID uint64, blockID flowgo.Identifier) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.scheduledTransactionIndex[scheduledTxID] = blockID
+	return nil
+}
+
+func (s *Store) BlockIDByScheduledTransactionID(ctx context.Context, scheduledTxID uint64) (flowgo.Identifier, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	blockID, ok := s.scheduledTransactionIndex[scheduledTxID]
+	if !ok {
+		return flowgo.ZeroID, storage.ErrNotFound
+	}
+
+	return blockID, nil
 }
 
 func (s *Store) CommitBlock(

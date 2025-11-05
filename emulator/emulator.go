@@ -138,6 +138,14 @@ type AccessProvider interface {
 	GetTransactionsByBlockID(blockID flowgo.Identifier) ([]*flowgo.TransactionBody, error)
 	GetTransactionResultsByBlockID(blockID flowgo.Identifier) ([]*accessmodel.TransactionResult, error)
 
+	// System transaction methods (matches flow-go access.TransactionsAPI)
+	GetSystemTransaction(txID flowgo.Identifier, blockID flowgo.Identifier) (*flowgo.TransactionBody, error)
+	GetSystemTransactionResult(txID flowgo.Identifier, blockID flowgo.Identifier) (*accessmodel.TransactionResult, error)
+
+	// Scheduled transaction methods (matches flow-go access.TransactionsAPI)
+	GetScheduledTransaction(scheduledTxID uint64) (*flowgo.TransactionBody, error)
+	GetScheduledTransactionResult(scheduledTxID uint64) (*accessmodel.TransactionResult, error)
+
 	GetAccount(address flowgo.Address) (*flowgo.Account, error)
 	GetAccountAtBlockHeight(address flowgo.Address, blockHeight uint64) (*flowgo.Account, error)
 	GetAccountByIndex(uint) (*flowgo.Account, error)
