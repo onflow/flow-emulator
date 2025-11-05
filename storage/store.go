@@ -140,6 +140,7 @@ type KeyGenerator interface {
 	ForkedBlock() []byte
 	BlockHeight(height uint64) []byte
 	Identifier(id flowgo.Identifier) []byte
+	ScheduledTransactionID(scheduledTxID uint64) []byte
 }
 
 type DataGetter interface {
@@ -172,6 +173,10 @@ func (s *DefaultKeyGenerator) BlockHeight(blockHeight uint64) []byte {
 
 func (s *DefaultKeyGenerator) Identifier(id flowgo.Identifier) []byte {
 	return []byte(fmt.Sprintf("%x", id))
+}
+
+func (s *DefaultKeyGenerator) ScheduledTransactionID(scheduledTxID uint64) []byte {
+	return []byte(fmt.Sprintf("scheduled_tx_%d", scheduledTxID))
 }
 
 type DefaultStore struct {
@@ -253,22 +258,20 @@ func (s *DefaultStore) StoreSystemTransactions(ctx context.Context, systemTransa
 // IndexScheduledTransactionID stores the global mapping from scheduled transaction ID to block ID.
 func (s *DefaultStore) IndexScheduledTransactionID(ctx context.Context, scheduledTxID uint64, blockID flowgo.Identifier) error {
 	// Store blockID indexed by scheduledTxID
-	key := scheduledTransactionKey(scheduledTxID)
 	return s.SetBytes(
 		ctx,
 		s.Storage("scheduledTransactionIndex"),
-		[]byte(key),
+		s.ScheduledTransactionID(scheduledTxID),
 		blockID[:],
 	)
 }
 
 // BlockIDByScheduledTransactionID retrieves the block ID for a given scheduled transaction ID.
 func (s *DefaultStore) BlockIDByScheduledTransactionID(ctx context.Context, scheduledTxID uint64) (flowgo.Identifier, error) {
-	key := scheduledTransactionKey(scheduledTxID)
 	blockIDBytes, err := s.GetBytes(
 		ctx,
 		s.Storage("scheduledTransactionIndex"),
-		[]byte(key),
+		s.ScheduledTransactionID(scheduledTxID),
 	)
 	if err != nil {
 		return flowgo.ZeroID, err
@@ -281,11 +284,6 @@ func (s *DefaultStore) BlockIDByScheduledTransactionID(ctx context.Context, sche
 	var blockID flowgo.Identifier
 	copy(blockID[:], blockIDBytes)
 	return blockID, nil
-}
-
-// scheduledTransactionKey creates a storage key for a scheduled transaction ID.
-func scheduledTransactionKey(scheduledTxID uint64) string {
-	return fmt.Sprintf("scheduled_tx_%d", scheduledTxID)
 }
 
 func (s *DefaultStore) StoreBlock(ctx context.Context, block *flowgo.Block) error {
@@ -374,7 +372,6 @@ func (s *DefaultStore) SystemTransactionsForBlockID(ctx context.Context, blockID
 	}
 
 	systemTransaction := &SystemTransactions{}
-
 	err = decodeSystemTransaction(systemTransaction, systemTransactionEnc)
 	if err != nil {
 		return nil, err
