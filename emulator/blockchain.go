@@ -1436,7 +1436,6 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 		return nil, err
 	}
 
-	// Use the real transaction ID from the chunk body, not a fake MakeID
 	systemTxID := chunkBody.ID()
 	systemTxStorableResult, err := convert.ToStorableResult(itr.ProcedureOutput, b.pendingBlock.ID(), b.pendingBlock.height, flowgo.ZeroID)
 	if err != nil {
