@@ -21,6 +21,7 @@ package adapters
 import (
 	"context"
 	"fmt"
+	"time"
 
 	jsoncdc "github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/flow-go/access"
@@ -28,6 +29,7 @@ import (
 	"github.com/onflow/flow-go/engine/common/rpc/convert"
 	accessmodel "github.com/onflow/flow-go/model/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow-go/utils/logging"
 	"github.com/onflow/flow/protobuf/go/flow/entities"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
@@ -629,44 +631,339 @@ func (a *AccessAdapter) GetNodeVersionInfo(
 	return &accessmodel.NodeVersionInfo{}, nil
 }
 
-func (a *AccessAdapter) SubscribeBlocksFromStartBlockID(_ context.Context, _ flowgo.Identifier, _ flowgo.BlockStatus) subscription.Subscription {
+func (a *AccessAdapter) SubscribeBlocksFromStartBlockID(ctx context.Context, startBlockID flowgo.Identifier, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	return a.subscribeBlocksFromStartBlockID(ctx, startBlockID, a.getBlockResponse(blockStatus))
+}
+
+func (a *AccessAdapter) SubscribeBlocksFromStartHeight(ctx context.Context, startHeight uint64, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	return a.subscribeBlocksFromStartHeight(ctx, startHeight, a.getBlockResponse(blockStatus))
+}
+
+func (a *AccessAdapter) SubscribeBlocksFromLatest(ctx context.Context, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	return a.subscribeBlocksFromLatest(ctx, a.getBlockResponse(blockStatus))
+}
+
+func (a *AccessAdapter) SubscribeBlockHeadersFromStartBlockID(ctx context.Context, startBlockID flowgo.Identifier, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	return a.subscribeBlocksFromStartBlockID(ctx, startBlockID, a.getBlockHeaderResponse(blockStatus))
+}
+
+func (a *AccessAdapter) SubscribeBlockHeadersFromStartHeight(ctx context.Context, startHeight uint64, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	return a.subscribeBlocksFromStartHeight(ctx, startHeight, a.getBlockHeaderResponse(blockStatus))
+}
+
+func (a *AccessAdapter) SubscribeBlockHeadersFromLatest(ctx context.Context, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	return a.subscribeBlocksFromLatest(ctx, a.getBlockHeaderResponse(blockStatus))
+}
+
+func (a *AccessAdapter) SubscribeBlockDigestsFromStartBlockID(ctx context.Context, startBlockID flowgo.Identifier, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	return a.subscribeBlocksFromStartBlockID(ctx, startBlockID, a.getBlockDigestResponse(blockStatus))
+}
+
+func (a *AccessAdapter) SubscribeBlockDigestsFromStartHeight(ctx context.Context, startHeight uint64, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	return a.subscribeBlocksFromStartHeight(ctx, startHeight, a.getBlockDigestResponse(blockStatus))
+}
+
+func (a *AccessAdapter) SubscribeBlockDigestsFromLatest(ctx context.Context, blockStatus flowgo.BlockStatus) subscription.Subscription {
+	return a.subscribeBlocksFromLatest(ctx, a.getBlockDigestResponse(blockStatus))
+}
+
+func (a *AccessAdapter) subscribeBlocksFromStartBlockID(ctx context.Context, startBlockID flowgo.Identifier, getData subscription.GetDataByHeightFunc) subscription.Subscription {
+	block, err := a.emulator.GetBlockByID(startBlockID)
+	if err != nil {
+		return subscription.NewFailedSubscription(err, "could not get block by ID")
+	}
+
+	emulatorBlockchain, ok := a.emulator.(*emulator.Blockchain)
+	if !ok {
+		return subscription.NewFailedSubscription(fmt.Errorf("emulator is not a Blockchain"), "invalid emulator type")
+	}
+
+	sub := subscription.NewHeightBasedSubscription(subscription.DefaultSendBufferSize, block.Height, getData)
+	go subscription.NewStreamer(*a.logger, emulatorBlockchain.Broadcaster(), subscription.DefaultSendTimeout, subscription.DefaultResponseLimit, sub).Stream(ctx)
+	return sub
+}
+
+func (a *AccessAdapter) subscribeBlocksFromStartHeight(ctx context.Context, startHeight uint64, getData subscription.GetDataByHeightFunc) subscription.Subscription {
+	emulatorBlockchain, ok := a.emulator.(*emulator.Blockchain)
+	if !ok {
+		return subscription.NewFailedSubscription(fmt.Errorf("emulator is not a Blockchain"), "invalid emulator type")
+	}
+
+	sub := subscription.NewHeightBasedSubscription(subscription.DefaultSendBufferSize, startHeight, getData)
+	go subscription.NewStreamer(*a.logger, emulatorBlockchain.Broadcaster(), subscription.DefaultSendTimeout, subscription.DefaultResponseLimit, sub).Stream(ctx)
+	return sub
+}
+
+func (a *AccessAdapter) subscribeBlocksFromLatest(ctx context.Context, getData subscription.GetDataByHeightFunc) subscription.Subscription {
+	block, err := a.emulator.GetLatestBlock()
+	if err != nil {
+		return subscription.NewFailedSubscription(err, "could not get latest block")
+	}
+
+	emulatorBlockchain, ok := a.emulator.(*emulator.Blockchain)
+	if !ok {
+		return subscription.NewFailedSubscription(fmt.Errorf("emulator is not a Blockchain"), "invalid emulator type")
+	}
+
+	sub := subscription.NewHeightBasedSubscription(subscription.DefaultSendBufferSize, block.Height, getData)
+	go subscription.NewStreamer(*a.logger, emulatorBlockchain.Broadcaster(), subscription.DefaultSendTimeout, subscription.DefaultResponseLimit, sub).Stream(ctx)
+	return sub
+}
+
+func (a *AccessAdapter) getBlockResponse(blockStatus flowgo.BlockStatus) subscription.GetDataByHeightFunc {
+	return func(_ context.Context, height uint64) (interface{}, error) {
+		block, err := a.getBlock(height, blockStatus)
+		if err != nil {
+			return nil, err
+		}
+
+		a.logger.Trace().
+			Hex("block_id", logging.ID(block.ID())).
+			Uint64("height", height).
+			Msgf("sending block info")
+
+		return block, nil
+	}
+}
+
+func (a *AccessAdapter) getBlockHeaderResponse(blockStatus flowgo.BlockStatus) subscription.GetDataByHeightFunc {
+	return func(_ context.Context, height uint64) (interface{}, error) {
+		header, err := a.getBlockHeader(height, blockStatus)
+		if err != nil {
+			return nil, err
+		}
+
+		a.logger.Trace().
+			Hex("block_id", logging.ID(header.ID())).
+			Uint64("height", height).
+			Msgf("sending block header info")
+
+		return header, nil
+	}
+}
+
+func (a *AccessAdapter) getBlockDigestResponse(blockStatus flowgo.BlockStatus) subscription.GetDataByHeightFunc {
+	return func(_ context.Context, height uint64) (interface{}, error) {
+		header, err := a.getBlockHeader(height, blockStatus)
+		if err != nil {
+			return nil, err
+		}
+
+		a.logger.Trace().
+			Hex("block_id", logging.ID(header.ID())).
+			Uint64("height", height).
+			Msgf("sending lightweight block info")
+
+		return flowgo.NewBlockDigest(header.ID(), header.Height, time.Unix(int64(header.Timestamp), 0).UTC()), nil
+	}
+}
+
+func (a *AccessAdapter) getBlock(height uint64, expectedBlockStatus flowgo.BlockStatus) (*flowgo.Block, error) {
+	if err := a.validateHeight(height, expectedBlockStatus); err != nil {
+		return nil, err
+	}
+
+	block, err := a.emulator.GetBlockByHeight(height)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve block for height %d: %w", height, subscription.ErrBlockNotReady)
+	}
+
+	return block, nil
+}
+
+func (a *AccessAdapter) getBlockHeader(height uint64, expectedBlockStatus flowgo.BlockStatus) (*flowgo.Header, error) {
+	if err := a.validateHeight(height, expectedBlockStatus); err != nil {
+		return nil, err
+	}
+
+	block, err := a.emulator.GetBlockByHeight(height)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve block header for height %d: %w", height, subscription.ErrBlockNotReady)
+	}
+
+	return block.ToHeader(), nil
+}
+
+func (a *AccessAdapter) validateHeight(height uint64, expectedBlockStatus flowgo.BlockStatus) error {
+	// In the emulator, all blocks are immediately sealed, so we only need to check
+	// if the block at the requested height exists
+	latestBlock, err := a.emulator.GetLatestBlock()
+	if err != nil {
+		return fmt.Errorf("could not get latest block: %w", err)
+	}
+
+	if height > latestBlock.Height {
+		return fmt.Errorf("block %d is not available yet: %w", height, subscription.ErrBlockNotReady)
+	}
+
 	return nil
 }
 
-func (a *AccessAdapter) SubscribeBlocksFromStartHeight(_ context.Context, _ uint64, _ flowgo.BlockStatus) subscription.Subscription {
-	return nil
+func (a *AccessAdapter) SubscribeTransactionStatuses(ctx context.Context, txID flowgo.Identifier, requiredEventEncodingVersion entities.EventEncodingVersion) subscription.Subscription {
+	// Subscribe from the latest sealed (in emulator's case, latest) block
+	latestBlock, err := a.emulator.GetLatestBlock()
+	if err != nil {
+		return subscription.NewFailedSubscription(err, "failed to lookup latest block")
+	}
+
+	return a.createTransactionSubscription(ctx, txID, latestBlock.ID(), flowgo.ZeroID, requiredEventEncodingVersion)
 }
 
-func (a *AccessAdapter) SubscribeBlocksFromLatest(_ context.Context, _ flowgo.BlockStatus) subscription.Subscription {
-	return nil
+func (a *AccessAdapter) SubscribeTransactionStatusesFromStartBlockID(ctx context.Context, txID flowgo.Identifier, startBlockID flowgo.Identifier, requiredEventEncodingVersion entities.EventEncodingVersion) subscription.Subscription {
+	return a.createTransactionSubscription(ctx, txID, startBlockID, flowgo.ZeroID, requiredEventEncodingVersion)
 }
 
-func (a *AccessAdapter) SubscribeBlockHeadersFromStartBlockID(_ context.Context, _ flowgo.Identifier, _ flowgo.BlockStatus) subscription.Subscription {
-	return nil
+func (a *AccessAdapter) SubscribeTransactionStatusesFromStartHeight(ctx context.Context, txID flowgo.Identifier, startHeight uint64, requiredEventEncodingVersion entities.EventEncodingVersion) subscription.Subscription {
+	block, err := a.emulator.GetBlockByHeight(startHeight)
+	if err != nil {
+		return subscription.NewFailedSubscription(err, "failed to get start block")
+	}
+
+	return a.createTransactionSubscription(ctx, txID, block.ID(), flowgo.ZeroID, requiredEventEncodingVersion)
 }
 
-func (a *AccessAdapter) SubscribeBlockHeadersFromStartHeight(_ context.Context, _ uint64, _ flowgo.BlockStatus) subscription.Subscription {
-	return nil
+func (a *AccessAdapter) SubscribeTransactionStatusesFromLatest(ctx context.Context, txID flowgo.Identifier, requiredEventEncodingVersion entities.EventEncodingVersion) subscription.Subscription {
+	latestBlock, err := a.emulator.GetLatestBlock()
+	if err != nil {
+		return subscription.NewFailedSubscription(err, "failed to lookup latest block")
+	}
+
+	return a.createTransactionSubscription(ctx, txID, latestBlock.ID(), flowgo.ZeroID, requiredEventEncodingVersion)
 }
 
-func (a *AccessAdapter) SubscribeBlockHeadersFromLatest(_ context.Context, _ flowgo.BlockStatus) subscription.Subscription {
-	return nil
+func (a *AccessAdapter) SendAndSubscribeTransactionStatuses(ctx context.Context, tx *flowgo.TransactionBody, requiredEventEncodingVersion entities.EventEncodingVersion) subscription.Subscription {
+	if err := a.emulator.SendTransaction(tx); err != nil {
+		a.logger.Debug().Err(err).Str("tx_id", tx.ID().String()).Msg("failed to send transaction")
+		return subscription.NewFailedSubscription(err, "failed to send transaction")
+	}
+
+	return a.createTransactionSubscription(ctx, tx.ID(), tx.ReferenceBlockID, tx.ReferenceBlockID, requiredEventEncodingVersion)
 }
 
-func (a *AccessAdapter) SubscribeBlockDigestsFromStartBlockID(_ context.Context, _ flowgo.Identifier, _ flowgo.BlockStatus) subscription.Subscription {
-	return nil
+func (a *AccessAdapter) createTransactionSubscription(
+	ctx context.Context,
+	txID flowgo.Identifier,
+	startBlockID flowgo.Identifier,
+	referenceBlockID flowgo.Identifier,
+	requiredEventEncodingVersion entities.EventEncodingVersion,
+) subscription.Subscription {
+	startBlock, err := a.emulator.GetBlockByID(startBlockID)
+	if err != nil {
+		a.logger.Debug().Err(err).Str("block_id", startBlockID.String()).Msg("failed to get start block")
+		return subscription.NewFailedSubscription(err, "failed to get start block")
+	}
+
+	emulatorBlockchain, ok := a.emulator.(*emulator.Blockchain)
+	if !ok {
+		return subscription.NewFailedSubscription(fmt.Errorf("emulator is not a Blockchain"), "invalid emulator type")
+	}
+
+	sub := subscription.NewHeightBasedSubscription(
+		subscription.DefaultSendBufferSize,
+		startBlock.Height,
+		a.getTransactionStatusResponse(txID, startBlock.Height, requiredEventEncodingVersion),
+	)
+
+	go subscription.NewStreamer(*a.logger, emulatorBlockchain.Broadcaster(), subscription.DefaultSendTimeout, subscription.DefaultResponseLimit, sub).Stream(ctx)
+
+	return sub
 }
 
-func (a *AccessAdapter) SubscribeBlockDigestsFromStartHeight(_ context.Context, _ uint64, _ flowgo.BlockStatus) subscription.Subscription {
-	return nil
+func (a *AccessAdapter) getTransactionStatusResponse(
+	txID flowgo.Identifier,
+	startHeight uint64,
+	requiredEventEncodingVersion entities.EventEncodingVersion,
+) subscription.GetDataByHeightFunc {
+	lastStatus := flowgo.TransactionStatusUnknown
+
+	return func(ctx context.Context, height uint64) (interface{}, error) {
+		// Check if block is ready
+		if err := a.validateHeight(height, flowgo.BlockStatusSealed); err != nil {
+			return nil, err
+		}
+
+		// If we've already reached a final status, stop sending updates
+		if lastStatus == flowgo.TransactionStatusSealed || lastStatus == flowgo.TransactionStatusExpired {
+			return nil, fmt.Errorf("transaction final status %s already reported: %w", lastStatus.String(), subscription.ErrEndOfData)
+		}
+
+		// Try to get the transaction result
+		txResult, err := a.emulator.GetTransactionResult(txID)
+		if err != nil {
+			// If transaction is not found and we've exceeded expiry, mark as expired
+			if height-startHeight >= 600 { // Default transaction expiry
+				lastStatus = flowgo.TransactionStatusExpired
+				return []*accessmodel.TransactionResult{{
+					Status:        flowgo.TransactionStatusExpired,
+					TransactionID: txID,
+				}}, nil
+			}
+
+			// Otherwise, transaction is still pending/unknown
+			if lastStatus == flowgo.TransactionStatusUnknown {
+				return nil, nil // Don't send duplicate unknown status
+			}
+			return nil, nil
+		}
+
+		// Convert events based on encoding version
+		if requiredEventEncodingVersion == entities.EventEncodingVersion_JSON_CDC_V0 {
+			txResult.Events, err = ConvertCCFEventsToJsonEvents(txResult.Events)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert events: %w", err)
+			}
+		}
+
+		// Determine the current status
+		currentStatus := flowgo.TransactionStatusSealed // In emulator, all executed transactions are sealed
+
+		// Generate status updates if status changed
+		if currentStatus != lastStatus {
+			results := a.generateTransactionStatusUpdates(txResult, lastStatus, currentStatus)
+			lastStatus = currentStatus
+			return results, nil
+		}
+
+		return nil, nil
+	}
 }
 
-func (a *AccessAdapter) SubscribeBlockDigestsFromLatest(_ context.Context, _ flowgo.BlockStatus) subscription.Subscription {
-	return nil
-}
+func (a *AccessAdapter) generateTransactionStatusUpdates(
+	txResult *accessmodel.TransactionResult,
+	prevStatus flowgo.TransactionStatus,
+	currentStatus flowgo.TransactionStatus,
+) []*accessmodel.TransactionResult {
+	if prevStatus == currentStatus {
+		return nil
+	}
 
-func (a *AccessAdapter) SubscribeTransactionStatuses(_ context.Context, _ flowgo.Identifier, _ entities.EventEncodingVersion) subscription.Subscription {
-	return nil
+	var results []*accessmodel.TransactionResult
+
+	// Generate intermediate status updates if we skipped any
+	// Possible progression: Unknown(0) -> Pending(1) -> Finalized(2) -> Executed(3) -> Sealed(4)
+	for status := prevStatus + 1; status <= currentStatus; status++ {
+		result := &accessmodel.TransactionResult{
+			Status:        status,
+			TransactionID: txResult.TransactionID,
+		}
+
+		// Add block info for finalized and later statuses
+		if status >= flowgo.TransactionStatusFinalized {
+			result.BlockID = txResult.BlockID
+			result.BlockHeight = txResult.BlockHeight
+			result.CollectionID = txResult.CollectionID
+		}
+
+		// Add execution details for executed and sealed statuses
+		if status >= flowgo.TransactionStatusExecuted {
+			result.Events = txResult.Events
+			result.ErrorMessage = txResult.ErrorMessage
+		}
+
+		results = append(results, result)
+	}
+
+	return results
 }
 
 func ConvertCCFEventsToJsonEvents(events []flowgo.Event) ([]flowgo.Event, error) {
