@@ -69,11 +69,6 @@ func TestForkingAgainstTestnet(t *testing.T) {
 		t.Fatalf("expected ChainID to be Testnet after fork detection, got %q", cfg.ChainID)
 	}
 
-	// Create an initial local block so we have a valid reference block ID in the forked store
-	if _, _, err := srv.Emulator().ExecuteAndCommitBlock(); err != nil {
-		t.Fatalf("prime local block: %v", err)
-	}
-
 	// Submit a minimal transaction against the forked emulator to ensure tx processing works
 	latest, err := srv.Emulator().GetLatestBlock()
 	if err != nil {
@@ -203,11 +198,6 @@ func TestForkingAgainstMainnet(t *testing.T) {
 
 	if cfg.ChainID != flowgo.Mainnet {
 		t.Fatalf("expected ChainID to be Mainnet after fork detection, got %q", cfg.ChainID)
-	}
-
-	// Create an initial local block so we have a valid reference block ID in the forked store
-	if _, _, err := srv.Emulator().ExecuteAndCommitBlock(); err != nil {
-		t.Fatalf("prime local block: %v", err)
 	}
 
 	// Test account key retrieval for a known mainnet account with multiple keys
