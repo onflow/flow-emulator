@@ -61,7 +61,6 @@ func setupTransactionTests(t *testing.T, opts ...emulator.Option) (
 }
 
 func TestSubmitTransaction(t *testing.T) {
-
 	t.Parallel()
 
 	b, adapter := setupTransactionTests(t)
@@ -102,11 +101,9 @@ func TestSubmitTransaction(t *testing.T) {
 // TODO: Add test case for missing ReferenceBlockID
 // TODO: Add test case for missing ProposalKey
 func TestSubmitTransaction_Invalid(t *testing.T) {
-
 	t.Parallel()
 
 	t.Run("Empty transaction", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(t)
@@ -126,7 +123,6 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Missing script", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(t)
@@ -148,7 +144,6 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Invalid script", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(t)
@@ -172,7 +167,6 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Missing gas limit", func(t *testing.T) {
-
 		t.Parallel()
 
 		t.Skip("TODO: transaction validation")
@@ -202,7 +196,6 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Missing payer account", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(
@@ -230,7 +223,6 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Missing proposal key", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(
@@ -259,7 +251,6 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Invalid sequence number", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(
@@ -302,7 +293,6 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	const expiry = 10
 
 	t.Run("Missing reference block ID", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(
@@ -330,7 +320,6 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Expired transaction", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(
@@ -368,7 +357,6 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Invalid hash algorithm proposer", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(
@@ -404,7 +392,6 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Invalid hash algorithm authorizer", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(
@@ -466,7 +453,6 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 	})
 
 	t.Run("Invalid signature for provided data", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(
@@ -519,7 +505,6 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 }
 
 func TestSubmitTransaction_Duplicate(t *testing.T) {
-
 	t.Parallel()
 
 	b, adapter := setupTransactionTests(
@@ -559,7 +544,6 @@ func TestSubmitTransaction_Duplicate(t *testing.T) {
 }
 
 func TestSubmitTransaction_Reverted(t *testing.T) {
-
 	t.Parallel()
 
 	b, adapter := setupTransactionTests(t)
@@ -596,7 +580,6 @@ func TestSubmitTransaction_Reverted(t *testing.T) {
 }
 
 func TestSubmitTransaction_Authorizers(t *testing.T) {
-
 	t.Parallel()
 
 	b, adapter := setupTransactionTests(
@@ -684,11 +667,9 @@ func TestSubmitTransaction_Authorizers(t *testing.T) {
 }
 
 func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
-
 	t.Parallel()
 
 	t.Run("Missing envelope signature", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(
@@ -721,7 +702,6 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 	})
 
 	t.Run("Invalid account", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(t)
@@ -769,7 +749,6 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 	})
 
 	t.Run("Mismatched authorizer count", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(
@@ -819,7 +798,6 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 	})
 
 	t.Run("Invalid key", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(
@@ -855,7 +833,6 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 	})
 
 	t.Run("Key weights", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(
@@ -918,11 +895,9 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 }
 
 func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
-
 	t.Parallel()
 
 	t.Run("Missing payload signature", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(
@@ -966,7 +941,6 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 	})
 
 	t.Run("Multiple payload signers", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(
@@ -1028,7 +1002,6 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 }
 
 func TestSubmitTransaction_Arguments(t *testing.T) {
-
 	t.Parallel()
 
 	addresses := test.AddressGenerator()
@@ -1036,7 +1009,7 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 	fix64Value, _ := cadence.NewFix64("123456.00000")
 	uFix64Value, _ := cadence.NewUFix64("123456.00000")
 
-	var tests = []struct {
+	tests := []struct {
 		argType cadence.Type
 		arg     cadence.Value
 	}{
@@ -1165,7 +1138,7 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 		},
 	}
 
-	var script = func(argType cadence.Type) []byte {
+	script := func(argType cadence.Type) []byte {
 		return []byte(fmt.Sprintf(`
             transaction(x: %s) {
               execute {
@@ -1177,7 +1150,6 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.argType.ID(), func(t *testing.T) {
-
 			b, adapter := setupTransactionTests(t)
 
 			tx := flowsdk.NewTransaction().
@@ -1247,11 +1219,9 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 }
 
 func TestSubmitTransaction_ProposerSequence(t *testing.T) {
-
 	t.Parallel()
 
 	t.Run("Valid transaction increases sequence number", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(
@@ -1297,7 +1267,6 @@ func TestSubmitTransaction_ProposerSequence(t *testing.T) {
 	})
 
 	t.Run("Reverted transaction increases sequence number", func(t *testing.T) {
-
 		t.Parallel()
 
 		b, adapter := setupTransactionTests(
@@ -1345,7 +1314,6 @@ func TestSubmitTransaction_ProposerSequence(t *testing.T) {
 }
 
 func TestGetTransaction(t *testing.T) {
-
 	t.Parallel()
 
 	b, adapter := setupTransactionTests(
@@ -1391,7 +1359,6 @@ func TestGetTransaction(t *testing.T) {
 }
 
 func TestGetTransactionResult(t *testing.T) {
-
 	t.Parallel()
 
 	b, adapter := setupTransactionTests(
@@ -1477,7 +1444,6 @@ func TestGetTransactionResult(t *testing.T) {
 // TestGetTxByBlockIDMethods tests the GetTransactionByBlockID and GetTransactionResultByBlockID
 // methods return the correct transaction and transaction result for a given block ID.
 func TestGetTxByBlockIDMethods(t *testing.T) {
-
 	t.Parallel()
 
 	b, adapter := setupTransactionTests(
@@ -1523,6 +1489,7 @@ func TestGetTxByBlockIDMethods(t *testing.T) {
 		serviceKey.SequenceNumber++
 	}
 
+	expectedTxLength := len(submittedTx) + 2 // system chunk and evm
 	// execute the batch of transactions
 	block, expectedResults, err := b.ExecuteAndCommitBlock()
 	assert.NoError(t, err)
@@ -1530,11 +1497,11 @@ func TestGetTxByBlockIDMethods(t *testing.T) {
 
 	results, err := adapter.GetTransactionResultsByBlockID(context.Background(), flowsdk.Identifier(block.ID()))
 	require.NoError(t, err)
-	assert.Len(t, results, len(submittedTx))
+	assert.Len(t, results, expectedTxLength)
 
 	transactions, err := adapter.GetTransactionsByBlockID(context.Background(), flowsdk.Identifier(block.ID()))
 	require.NoError(t, err)
-	assert.Len(t, transactions, len(submittedTx))
+	assert.Len(t, transactions, expectedTxLength)
 
 	// make sure the results and transactions returned match the transactions submitted, and are in
 	// the same order
@@ -1569,7 +1536,6 @@ const callHelloTxTemplate = `
 `
 
 func TestHelloWorld_NewAccount(t *testing.T) {
-
 	t.Parallel()
 
 	accountKeys := test.AccountKeyGenerator()
@@ -1667,7 +1633,6 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 }
 
 func TestHelloWorld_UpdateAccount(t *testing.T) {
-
 	t.Parallel()
 
 	accountKeys := test.AccountKeyGenerator()
@@ -1792,7 +1757,6 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 }
 
 func TestInfiniteTransaction(t *testing.T) {
-
 	t.Parallel()
 
 	const limit = 18
@@ -1847,7 +1811,6 @@ func TestInfiniteTransaction(t *testing.T) {
 }
 
 func TestTransactionExecutionLimit(t *testing.T) {
-
 	t.Parallel()
 
 	const code = `
@@ -1870,7 +1833,6 @@ func TestTransactionExecutionLimit(t *testing.T) {
 	`
 
 	t.Run("ExceedingLimit", func(t *testing.T) {
-
 		t.Parallel()
 
 		const limit = 2000
@@ -1913,7 +1875,6 @@ func TestTransactionExecutionLimit(t *testing.T) {
 	})
 
 	t.Run("SufficientLimit", func(t *testing.T) {
-
 		t.Parallel()
 
 		const limit = 19000
@@ -1956,7 +1917,6 @@ func TestTransactionExecutionLimit(t *testing.T) {
 }
 
 func TestSubmitTransactionWithCustomLogger(t *testing.T) {
-
 	t.Parallel()
 
 	var memlog bytes.Buffer
@@ -2017,7 +1977,6 @@ func TestSubmitTransactionWithCustomLogger(t *testing.T) {
 	assert.Greater(t, meter.MemoryEstimate, 0)
 	assert.Greater(t, len(meter.ComputationIntensities), 0)
 	assert.Greater(t, len(meter.MemoryAmounts), 0)
-
 }
 
 type Meter struct {
@@ -2144,24 +2103,22 @@ func TestRollbackTransaction(t *testing.T) {
 
 	IncrementHelper(t, b, adapter, counterAddress, addTwoScript, 4, false)
 
-	//try rollback to when counter is two
+	// try rollback to when counter is two
 	err = b.RollbackToBlockHeight(blockWhenCounterIsTwo.Height)
 	require.NoError(t, err)
 
 	IncrementHelper(t, b, adapter, counterAddress, addTwoScript, 4, false)
 
-	//try rollback to no counter state
+	// try rollback to no counter state
 	err = b.RollbackToBlockHeight(blockWhenNoCounter.Height)
 	require.NoError(t, err)
 
 	IncrementHelper(t, b, adapter, counterAddress, addTwoScript, 2, true)
-
 }
 
 // TestTransactionWithCadenceRandom checks Cadence's random function works
 // within a transaction
 func TestTransactionWithCadenceRandom(t *testing.T) {
-
 	t.Parallel()
 
 	b, adapter := setupTransactionTests(t)

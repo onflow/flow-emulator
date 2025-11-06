@@ -434,12 +434,56 @@ func (a *AccessAdapter) GetExecutionResultByID(_ context.Context, _ flowgo.Ident
 	return nil, nil
 }
 
-func (a *AccessAdapter) GetSystemTransaction(_ context.Context, _ flowgo.Identifier, _ flowgo.Identifier) (*flowgo.TransactionBody, error) {
-	return nil, nil
+func (a *AccessAdapter) GetSystemTransaction(_ context.Context, txID flowgo.Identifier, blockID flowgo.Identifier) (*flowgo.TransactionBody, error) {
+	tx, err := a.emulator.GetSystemTransaction(txID, blockID)
+	if err != nil {
+		return nil, convertError(err, codes.NotFound)
+	}
+
+	return tx, nil
 }
 
-func (a *AccessAdapter) GetSystemTransactionResult(_ context.Context, _ flowgo.Identifier, _ flowgo.Identifier, _ entities.EventEncodingVersion) (*accessmodel.TransactionResult, error) {
-	return nil, nil
+func (a *AccessAdapter) GetSystemTransactionResult(_ context.Context, txID flowgo.Identifier, blockID flowgo.Identifier, encodingVersion entities.EventEncodingVersion) (*accessmodel.TransactionResult, error) {
+	result, err := a.emulator.GetSystemTransactionResult(txID, blockID)
+	if err != nil {
+		return nil, convertError(err, codes.NotFound)
+	}
+
+	// Convert CCF events to JSON events, else return CCF encoded version
+	if encodingVersion == entities.EventEncodingVersion_JSON_CDC_V0 {
+		result.Events, err = ConvertCCFEventsToJsonEvents(result.Events)
+		if err != nil {
+			return nil, status.Error(codes.Internal, fmt.Sprintf("failed to convert events: %v", err))
+		}
+	}
+
+	return result, nil
+}
+
+func (a *AccessAdapter) GetScheduledTransaction(_ context.Context, scheduledTxID uint64) (*flowgo.TransactionBody, error) {
+	tx, err := a.emulator.GetScheduledTransaction(scheduledTxID)
+	if err != nil {
+		return nil, convertError(err, codes.NotFound)
+	}
+
+	return tx, nil
+}
+
+func (a *AccessAdapter) GetScheduledTransactionResult(_ context.Context, scheduledTxID uint64, encodingVersion entities.EventEncodingVersion) (*accessmodel.TransactionResult, error) {
+	result, err := a.emulator.GetScheduledTransactionResult(scheduledTxID)
+	if err != nil {
+		return nil, convertError(err, codes.NotFound)
+	}
+
+	// Convert CCF events to JSON events, else return CCF encoded version
+	if encodingVersion == entities.EventEncodingVersion_JSON_CDC_V0 {
+		result.Events, err = ConvertCCFEventsToJsonEvents(result.Events)
+		if err != nil {
+			return nil, status.Error(codes.Internal, fmt.Sprintf("failed to convert events: %v", err))
+		}
+	}
+
+	return result, nil
 }
 
 func (a *AccessAdapter) GetAccountBalanceAtLatestBlock(_ context.Context, address flowgo.Address) (uint64, error) {
@@ -654,7 +698,7 @@ func (a *AccessAdapter) subscribeBlocksFromStartBlockID(ctx context.Context, sta
 	if err != nil {
 		return subscription.NewFailedSubscription(err, "could not get block by ID")
 	}
-	
+
 	emulatorBlockchain, ok := a.emulator.(*emulator.Blockchain)
 	if !ok {
 		return subscription.NewFailedSubscription(fmt.Errorf("emulator is not a Blockchain"), "invalid emulator type")
@@ -681,7 +725,7 @@ func (a *AccessAdapter) subscribeBlocksFromLatest(ctx context.Context, getData s
 	if err != nil {
 		return subscription.NewFailedSubscription(err, "could not get latest block")
 	}
-	
+
 	emulatorBlockchain, ok := a.emulator.(*emulator.Blockchain)
 	if !ok {
 		return subscription.NewFailedSubscription(fmt.Errorf("emulator is not a Blockchain"), "invalid emulator type")
@@ -787,7 +831,7 @@ func (a *AccessAdapter) SubscribeTransactionStatuses(ctx context.Context, txID f
 	if err != nil {
 		return subscription.NewFailedSubscription(err, "failed to lookup latest block")
 	}
-	
+
 	return a.createTransactionSubscription(ctx, txID, latestBlock.ID(), flowgo.ZeroID, requiredEventEncodingVersion)
 }
 
@@ -800,7 +844,7 @@ func (a *AccessAdapter) SubscribeTransactionStatusesFromStartHeight(ctx context.
 	if err != nil {
 		return subscription.NewFailedSubscription(err, "failed to get start block")
 	}
-	
+
 	return a.createTransactionSubscription(ctx, txID, block.ID(), flowgo.ZeroID, requiredEventEncodingVersion)
 }
 
@@ -809,7 +853,7 @@ func (a *AccessAdapter) SubscribeTransactionStatusesFromLatest(ctx context.Conte
 	if err != nil {
 		return subscription.NewFailedSubscription(err, "failed to lookup latest block")
 	}
-	
+
 	return a.createTransactionSubscription(ctx, txID, latestBlock.ID(), flowgo.ZeroID, requiredEventEncodingVersion)
 }
 
@@ -857,7 +901,7 @@ func (a *AccessAdapter) getTransactionStatusResponse(
 	requiredEventEncodingVersion entities.EventEncodingVersion,
 ) subscription.GetDataByHeightFunc {
 	lastStatus := flowgo.TransactionStatusUnknown
-	
+
 	return func(ctx context.Context, height uint64) (interface{}, error) {
 		// Check if block is ready
 		if err := a.validateHeight(height, flowgo.BlockStatusSealed); err != nil {
@@ -880,7 +924,7 @@ func (a *AccessAdapter) getTransactionStatusResponse(
 					TransactionID: txID,
 				}}, nil
 			}
-			
+
 			// Otherwise, transaction is still pending/unknown
 			if lastStatus == flowgo.TransactionStatusUnknown {
 				return nil, nil // Don't send duplicate unknown status
@@ -928,14 +972,14 @@ func (a *AccessAdapter) generateTransactionStatusUpdates(
 			Status:        status,
 			TransactionID: txResult.TransactionID,
 		}
-		
+
 		// Add block info for finalized and later statuses
 		if status >= flowgo.TransactionStatusFinalized {
 			result.BlockID = txResult.BlockID
 			result.BlockHeight = txResult.BlockHeight
 			result.CollectionID = txResult.CollectionID
 		}
-		
+
 		// Add execution details for executed and sealed statuses
 		if status >= flowgo.TransactionStatusExecuted {
 			result.Events = txResult.Events
@@ -960,11 +1004,4 @@ func ConvertCCFEventsToJsonEvents(events []flowgo.Event) ([]flowgo.Event, error)
 	}
 
 	return converted, nil
-}
-
-func (a *AccessAdapter) GetScheduledTransaction(_ context.Context, _ uint64) (*flowgo.TransactionBody, error) {
-	return nil, nil
-}
-func (a *AccessAdapter) GetScheduledTransactionResult(_ context.Context, _ uint64, _ entities.EventEncodingVersion) (*accessmodel.TransactionResult, error) {
-	return nil, nil
 }
