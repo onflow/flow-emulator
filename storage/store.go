@@ -51,7 +51,7 @@ const (
 // transactions and register states.
 //
 // Implementations must distinguish between not found errors and errors with
-// the underlyingn storage by returning an instance of store.ErrNotFound if a
+// the underlying storage by returning an instance of store.ErrNotFound if a
 // resource cannot be found.
 //
 // Implementations must be safe for use by multiple goroutines.
