@@ -36,6 +36,7 @@ const (
 	globalStoreName            = "global"
 	BlockIndexStoreName        = "blockIndex"
 	BlockStoreName             = "blocks"
+	SystemTransactionName      = "systemTransactions"
 	CollectionStoreName        = "collections"
 	TransactionStoreName       = "transactions"
 	TransactionResultStoreName = "transactionResults"
@@ -64,6 +65,21 @@ type Store interface {
 	// StoreBlock stores the block in storage. If the exactly same block is already in a storage, return successfully
 	StoreBlock(ctx context.Context, block *flowgo.Block) error
 
+	// store systemtransaction in a block
+	StoreSystemTransactions(ctx context.Context, systemTransactions *SystemTransactions) error
+
+	// get system transactions for a block height
+	//
+	SystemTransactionsForBlockID(ctx context.Context, blockID flowgo.Identifier) (*SystemTransactions, error)
+
+	// IndexScheduledTransactionID indexes a scheduled transaction ID to its block ID (global index).
+	// This allows looking up which block contains a given scheduled transaction.
+	IndexScheduledTransactionID(ctx context.Context, scheduledTxID uint64, blockID flowgo.Identifier) error
+
+	// BlockIDByScheduledTransactionID returns the block ID for a given scheduled transaction ID.
+	// Returns ErrNotFound if the scheduled transaction ID is not indexed.
+	BlockIDByScheduledTransactionID(ctx context.Context, scheduledTxID uint64) (flowgo.Identifier, error)
+
 	// BlockByID returns the block with the given hash. It is available for
 	// finalized and ambiguous blocks.
 	BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flowgo.Block, error)
@@ -81,6 +97,7 @@ type Store interface {
 		transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
 		executionSnapshot *snapshot.ExecutionSnapshot,
 		events []flowgo.Event,
+		systemSystemTransactions *SystemTransactions,
 	) error
 
 	// CollectionByID gets the collection (transaction IDs only) with the given ID.
@@ -123,6 +140,7 @@ type KeyGenerator interface {
 	ForkedBlock() []byte
 	BlockHeight(height uint64) []byte
 	Identifier(id flowgo.Identifier) []byte
+	ScheduledTransactionID(scheduledTxID uint64) []byte
 }
 
 type DataGetter interface {
@@ -135,8 +153,7 @@ type DataSetter interface {
 	SetBytesWithVersion(ctx context.Context, store string, key []byte, value []byte, version uint64) error
 }
 
-type DefaultKeyGenerator struct {
-}
+type DefaultKeyGenerator struct{}
 
 func (s *DefaultKeyGenerator) Storage(key string) string {
 	return key
@@ -156,6 +173,10 @@ func (s *DefaultKeyGenerator) BlockHeight(blockHeight uint64) []byte {
 
 func (s *DefaultKeyGenerator) Identifier(id flowgo.Identifier) []byte {
 	return []byte(fmt.Sprintf("%x", id))
+}
+
+func (s *DefaultKeyGenerator) ScheduledTransactionID(scheduledTxID uint64) []byte {
+	return []byte(fmt.Sprintf("scheduled_tx_%d", scheduledTxID))
 }
 
 type DefaultStore struct {
@@ -213,6 +234,56 @@ func (s *DefaultStore) LatestBlock(ctx context.Context) (block flowgo.Block, err
 
 	err = decodeBlock(&block, encBlock)
 	return
+}
+
+func (s *DefaultStore) StoreSystemTransactions(ctx context.Context, systemTransactions *SystemTransactions) error {
+	encSystemTransaction, err := encodeSystemTransaction(*systemTransactions)
+	if err != nil {
+		return err
+	}
+
+	// insert the block by block height
+	if err := s.SetBytes(
+		ctx,
+		s.Storage(SystemTransactionName),
+		s.Identifier(systemTransactions.BlockID),
+		encSystemTransaction,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// IndexScheduledTransactionID stores the global mapping from scheduled transaction ID to block ID.
+func (s *DefaultStore) IndexScheduledTransactionID(ctx context.Context, scheduledTxID uint64, blockID flowgo.Identifier) error {
+	// Store blockID indexed by scheduledTxID
+	return s.SetBytes(
+		ctx,
+		s.Storage("scheduledTransactionIndex"),
+		s.ScheduledTransactionID(scheduledTxID),
+		blockID[:],
+	)
+}
+
+// BlockIDByScheduledTransactionID retrieves the block ID for a given scheduled transaction ID.
+func (s *DefaultStore) BlockIDByScheduledTransactionID(ctx context.Context, scheduledTxID uint64) (flowgo.Identifier, error) {
+	blockIDBytes, err := s.GetBytes(
+		ctx,
+		s.Storage("scheduledTransactionIndex"),
+		s.ScheduledTransactionID(scheduledTxID),
+	)
+	if err != nil {
+		return flowgo.ZeroID, err
+	}
+
+	if len(blockIDBytes) != len(flowgo.ZeroID) {
+		return flowgo.ZeroID, fmt.Errorf("invalid block ID length: expected %d, got %d", len(flowgo.ZeroID), len(blockIDBytes))
+	}
+
+	var blockID flowgo.Identifier
+	copy(blockID[:], blockIDBytes)
+	return blockID, nil
 }
 
 func (s *DefaultStore) StoreBlock(ctx context.Context, block *flowgo.Block) error {
@@ -288,6 +359,25 @@ func (s *DefaultStore) BlockByHeight(ctx context.Context, blockHeight uint64) (b
 	block = &flowgo.Block{}
 	err = decodeBlock(block, encBlock)
 	return
+}
+
+func (s *DefaultStore) SystemTransactionsForBlockID(ctx context.Context, blockID flowgo.Identifier) (*SystemTransactions, error) {
+	systemTransactionEnc, err := s.GetBytes(
+		ctx,
+		s.Storage(SystemTransactionName),
+		s.Identifier(blockID),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	systemTransaction := &SystemTransactions{}
+	err = decodeSystemTransaction(systemTransaction, systemTransactionEnc)
+	if err != nil {
+		return nil, err
+	}
+
+	return systemTransaction, nil
 }
 
 func (s *DefaultStore) BlockByID(ctx context.Context, blockID flowgo.Identifier) (block *flowgo.Block, err error) {
@@ -403,7 +493,7 @@ func (s *DefaultStore) TransactionByID(
 	return
 }
 
-func (s *DefaultStore) InsertTransaction(ctx context.Context, tx flowgo.TransactionBody) error {
+func (s *DefaultStore) InsertTransaction(ctx context.Context, tx flowgo.TransactionBody, id flowgo.Identifier) error {
 	encTx, err := encodeTransaction(tx)
 	if err != nil {
 		return err
@@ -412,7 +502,7 @@ func (s *DefaultStore) InsertTransaction(ctx context.Context, tx flowgo.Transact
 	return s.SetBytes(
 		ctx,
 		s.Storage(TransactionStoreName),
-		s.Identifier(tx.ID()),
+		s.Identifier(id),
 		encTx,
 	)
 }
@@ -482,7 +572,7 @@ func (s *DefaultStore) EventsByHeight(ctx context.Context, blockHeight uint64, e
 }
 
 func (s *DefaultStore) InsertEvents(ctx context.Context, blockHeight uint64, events []flowgo.Event) error {
-	//bluesign: encodes all events instead of inserting one by one
+	// bluesign: encodes all events instead of inserting one by one
 	b, err := encodeEvents(events)
 	if err != nil {
 		return err
@@ -492,7 +582,6 @@ func (s *DefaultStore) InsertEvents(ctx context.Context, blockHeight uint64, eve
 		s.Storage(EventStoreName),
 		s.BlockHeight(blockHeight),
 		b)
-
 	if err != nil {
 		return err
 	}
@@ -527,8 +616,8 @@ func (s *DefaultStore) CommitBlock(
 	transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
 	executionSnapshot *snapshot.ExecutionSnapshot,
 	events []flowgo.Event,
+	systemTransactions *SystemTransactions,
 ) error {
-
 	if len(transactions) != len(transactionResults) {
 		return fmt.Errorf(
 			"transactions count (%d) does not match result count (%d)",
@@ -542,6 +631,13 @@ func (s *DefaultStore) CommitBlock(
 		return err
 	}
 
+	if systemTransactions != nil {
+		err = s.StoreSystemTransactions(ctx, systemTransactions)
+		if err != nil {
+			return err
+		}
+	}
+
 	for _, col := range collections {
 		err := s.InsertCollection(ctx, *col)
 		if err != nil {
@@ -549,8 +645,8 @@ func (s *DefaultStore) CommitBlock(
 		}
 	}
 
-	for _, tx := range transactions {
-		err := s.InsertTransaction(ctx, *tx)
+	for id, tx := range transactions {
+		err := s.InsertTransaction(ctx, *tx, id)
 		if err != nil {
 			return err
 		}
@@ -577,7 +673,6 @@ func (s *DefaultStore) CommitBlock(
 	}
 
 	return nil
-
 }
 
 type defaultStoreSnapshot struct {
@@ -597,7 +692,6 @@ func (snapshot defaultStoreSnapshot) Get(
 		snapshot.defaultStore.Storage(LedgerStoreName),
 		[]byte(id.String()),
 		snapshot.blockHeight)
-
 	if err != nil {
 		// silence not found errors
 		if errors.Is(err, ErrNotFound) {
@@ -619,4 +713,10 @@ func (s *DefaultStore) LedgerByHeight(
 		ctx:          ctx,
 		blockHeight:  blockHeight,
 	}, nil
+}
+
+type SystemTransactions struct {
+	BlockID                 flowgo.Identifier
+	Transactions            []flowgo.Identifier
+	ScheduledTransactionIDs map[uint64]flowgo.Identifier // maps scheduled tx ID (uint64) to transaction ID
 }

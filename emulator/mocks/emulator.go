@@ -467,6 +467,36 @@ func (mr *MockEmulatorMockRecorder) GetNetworkParameters() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetworkParameters", reflect.TypeOf((*MockEmulator)(nil).GetNetworkParameters))
 }
 
+// GetScheduledTransaction mocks base method.
+func (m *MockEmulator) GetScheduledTransaction(scheduledTxID uint64) (*flow.TransactionBody, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetScheduledTransaction", scheduledTxID)
+	ret0, _ := ret[0].(*flow.TransactionBody)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetScheduledTransaction indicates an expected call of GetScheduledTransaction.
+func (mr *MockEmulatorMockRecorder) GetScheduledTransaction(scheduledTxID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetScheduledTransaction", reflect.TypeOf((*MockEmulator)(nil).GetScheduledTransaction), scheduledTxID)
+}
+
+// GetScheduledTransactionResult mocks base method.
+func (m *MockEmulator) GetScheduledTransactionResult(scheduledTxID uint64) (*access.TransactionResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetScheduledTransactionResult", scheduledTxID)
+	ret0, _ := ret[0].(*access.TransactionResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetScheduledTransactionResult indicates an expected call of GetScheduledTransactionResult.
+func (mr *MockEmulatorMockRecorder) GetScheduledTransactionResult(scheduledTxID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetScheduledTransactionResult", reflect.TypeOf((*MockEmulator)(nil).GetScheduledTransactionResult), scheduledTxID)
+}
+
 // GetSourceFile mocks base method.
 func (m *MockEmulator) GetSourceFile(location common.Location) string {
 	m.ctrl.T.Helper()
@@ -479,6 +509,36 @@ func (m *MockEmulator) GetSourceFile(location common.Location) string {
 func (mr *MockEmulatorMockRecorder) GetSourceFile(location any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSourceFile", reflect.TypeOf((*MockEmulator)(nil).GetSourceFile), location)
+}
+
+// GetSystemTransaction mocks base method.
+func (m *MockEmulator) GetSystemTransaction(txID, blockID flow.Identifier) (*flow.TransactionBody, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSystemTransaction", txID, blockID)
+	ret0, _ := ret[0].(*flow.TransactionBody)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSystemTransaction indicates an expected call of GetSystemTransaction.
+func (mr *MockEmulatorMockRecorder) GetSystemTransaction(txID, blockID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSystemTransaction", reflect.TypeOf((*MockEmulator)(nil).GetSystemTransaction), txID, blockID)
+}
+
+// GetSystemTransactionResult mocks base method.
+func (m *MockEmulator) GetSystemTransactionResult(txID, blockID flow.Identifier) (*access.TransactionResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSystemTransactionResult", txID, blockID)
+	ret0, _ := ret[0].(*access.TransactionResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSystemTransactionResult indicates an expected call of GetSystemTransactionResult.
+func (mr *MockEmulatorMockRecorder) GetSystemTransactionResult(txID, blockID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSystemTransactionResult", reflect.TypeOf((*MockEmulator)(nil).GetSystemTransactionResult), txID, blockID)
 }
 
 // GetTransaction mocks base method.
