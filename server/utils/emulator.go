@@ -25,9 +25,11 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/onflow/cadence/runtime"
+	flowgo "github.com/onflow/flow-go/model/flow"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
-	flowgo "github.com/onflow/flow-go/model/flow"
 )
 
 type BlockResponse struct {
@@ -64,6 +66,9 @@ func NewEmulatorAPIServer(emulator emulator.Emulator, adapter *adapters.AccessAd
 	router.HandleFunc("/emulator/codeCoverage", r.CodeCoverage).Methods("GET")
 	router.HandleFunc("/emulator/codeCoverage/reset", r.ResetCodeCoverage).Methods("PUT")
 
+	router.HandleFunc("/emulator/computationProfile", r.ComputationProfile).Methods("GET")
+	router.HandleFunc("/emulator/computationProfile/reset", r.ResetComputationProfile).Methods("PUT")
+
 	router.HandleFunc("/emulator/computationReport", r.ComputationReport).Methods("GET")
 
 	return r
@@ -86,7 +91,7 @@ func (m EmulatorAPIServer) Config(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write(s)
 }
 
-func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, err := m.emulator.CommitBlock()
 	if err != nil {
@@ -230,7 +235,7 @@ func (m EmulatorAPIServer) SnapshotCreate(w http.ResponseWriter, r *http.Request
 	m.latestBlockResponse(name, w)
 }
 
-func (m EmulatorAPIServer) CodeCoverage(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) CodeCoverage(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	err := json.NewEncoder(w).Encode(m.emulator.CoverageReport())
@@ -240,7 +245,13 @@ func (m EmulatorAPIServer) CodeCoverage(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (m EmulatorAPIServer) ComputationReport(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) ResetCodeCoverage(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	m.emulator.ResetCoverageReport()
+	w.WriteHeader(http.StatusOK)
+}
+
+func (m EmulatorAPIServer) ComputationReport(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	err := json.NewEncoder(w).Encode(m.emulator.ComputationReport())
@@ -250,9 +261,27 @@ func (m EmulatorAPIServer) ComputationReport(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-func (m EmulatorAPIServer) ResetCodeCoverage(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) ComputationProfile(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/gzip")
+
+	computationProfile := m.emulator.ComputationProfile()
+
+	pprofProfile, err := runtime.NewPProfExporter(computationProfile).Export()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = pprofProfile.Write(w)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (m EmulatorAPIServer) ResetComputationProfile(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	m.emulator.ResetCoverageReport()
+	m.emulator.ResetComputationProfile()
 	w.WriteHeader(http.StatusOK)
 }
 

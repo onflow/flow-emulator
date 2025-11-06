@@ -75,6 +75,20 @@ func (mr *MockEmulatorMockRecorder) CommitBlock() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitBlock", reflect.TypeOf((*MockEmulator)(nil).CommitBlock))
 }
 
+// ComputationProfile mocks base method.
+func (m *MockEmulator) ComputationProfile() *runtime.ComputationProfile {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ComputationProfile")
+	ret0, _ := ret[0].(*runtime.ComputationProfile)
+	return ret0
+}
+
+// ComputationProfile indicates an expected call of ComputationProfile.
+func (mr *MockEmulatorMockRecorder) ComputationProfile() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ComputationProfile", reflect.TypeOf((*MockEmulator)(nil).ComputationProfile))
+}
+
 // ComputationReport mocks base method.
 func (m *MockEmulator) ComputationReport() *emulator.ComputationReport {
 	m.ctrl.T.Helper()
@@ -613,6 +627,18 @@ func (m *MockEmulator) Ping() error {
 func (mr *MockEmulatorMockRecorder) Ping() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockEmulator)(nil).Ping))
+}
+
+// ResetComputationProfile mocks base method.
+func (m *MockEmulator) ResetComputationProfile() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "ResetComputationProfile")
+}
+
+// ResetComputationProfile indicates an expected call of ResetComputationProfile.
+func (mr *MockEmulatorMockRecorder) ResetComputationProfile() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetComputationProfile", reflect.TypeOf((*MockEmulator)(nil).ResetComputationProfile))
 }
 
 // ResetCoverageReport mocks base method.

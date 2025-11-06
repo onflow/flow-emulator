@@ -36,6 +36,10 @@ import (
 	"github.com/psiemens/graceland"
 	"github.com/rs/zerolog"
 
+	flowaccess "github.com/onflow/flow/protobuf/go/flow/access"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-emulator/server/access"
@@ -46,9 +50,6 @@ import (
 	"github.com/onflow/flow-emulator/storage/remote"
 	"github.com/onflow/flow-emulator/storage/sqlite"
 	"github.com/onflow/flow-emulator/storage/util"
-	flowaccess "github.com/onflow/flow/protobuf/go/flow/access"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 // EmulatorServer is a local server that runs a Flow Emulator instance.
@@ -142,6 +143,8 @@ type Config struct {
 	SqliteURL string
 	// CoverageReportingEnabled enables/disables Cadence code coverage reporting.
 	CoverageReportingEnabled bool
+	// ComputationProfilingEnabled enables/disables Cadence computation profiling.
+	ComputationProfilingEnabled bool
 	// ForkHost is the gRPC access node address to fork from (host:port).
 	ForkHost string
 	// ForkHeight is the height at which to start the emulator when forking.
@@ -510,6 +513,13 @@ func configureBlockchain(logger *zerolog.Logger, chainID flowgo.ChainID, conf *C
 		options = append(
 			options,
 			emulator.WithCoverageReport(runtime.NewCoverageReport()),
+		)
+	}
+
+	if conf.ComputationProfilingEnabled {
+		options = append(
+			options,
+			emulator.WithComputationProfile(runtime.NewComputationProfile()),
 		)
 	}
 

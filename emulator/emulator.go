@@ -104,6 +104,11 @@ type ComputationReportCapable interface {
 	ComputationReport() *ComputationReport
 }
 
+type ComputationProfileCapable interface {
+	ComputationProfile() *runtime.ComputationProfile
+	ResetComputationProfile()
+}
+
 type DebuggingCapable interface {
 	StartDebugger() *interpreter.Debugger
 	EndDebugging()
@@ -190,6 +195,7 @@ type Emulator interface {
 
 	CoverageReportCapable
 	ComputationReportCapable
+	ComputationProfileCapable
 	DebuggingCapable
 	SnapshotCapable
 	RollbackCapable
