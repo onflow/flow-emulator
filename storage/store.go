@@ -59,7 +59,7 @@ type Store interface {
 	graceland.Routine
 	LatestBlockHeight(ctx context.Context) (uint64, error)
 
-	// LatestBlockr returns the block with the highest block height.
+	// LatestBlock returns the block with the highest block height.
 	LatestBlock(ctx context.Context) (flowgo.Block, error)
 
 	// StoreBlock stores the block in storage. If the exactly same block is already in a storage, return successfully
