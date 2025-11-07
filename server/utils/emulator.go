@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/onflow/cadence/runtime"
@@ -261,15 +262,28 @@ func (m EmulatorAPIServer) ComputationReport(w http.ResponseWriter, _ *http.Requ
 	}
 }
 
+const cadenceFileSuffix = ".cdc"
+
 func (m EmulatorAPIServer) ComputationProfile(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Disposition", "attachment; filename=profile.pprof")
 	w.Header().Set("Content-Type", "application/gzip")
 
 	computationProfile := m.emulator.ComputationProfile()
+	if computationProfile == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
 	pprofProfile, err := runtime.NewPProfExporter(computationProfile).Export()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
+	}
+
+	for _, function := range pprofProfile.Function {
+		if !strings.HasSuffix(function.Filename, cadenceFileSuffix) {
+			function.Filename += cadenceFileSuffix
+		}
 	}
 
 	err = pprofProfile.Write(w)

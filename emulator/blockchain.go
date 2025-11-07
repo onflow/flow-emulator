@@ -446,6 +446,13 @@ func (conf config) GetServiceKey() ServiceKey {
 	return serviceKey
 }
 
+func (conf config) EffectiveExecutionEffortWeights() meter.ExecutionEffortWeights {
+	if conf.ExecutionEffortWeights != nil {
+		return conf.ExecutionEffortWeights
+	}
+	return environment.MainnetExecutionEffortWeights
+}
+
 const defaultGenesisTokenSupply = "1000000000.0"
 
 const defaultScriptGasLimit = 100000
@@ -641,11 +648,9 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		}).
 		Level(zerolog.DebugLevel)
 
-	if conf.ExecutionEffortWeights != nil &&
-		conf.ComputationProfile != nil {
-
-		conf.ComputationProfile.
-			WithComputationWeights(conf.ExecutionEffortWeights)
+	if conf.ComputationProfile != nil {
+		executionEffortWeights := conf.EffectiveExecutionEffortWeights()
+		conf.ComputationProfile.WithComputationWeights(executionEffortWeights)
 	}
 
 	runtimeConfig := runtime.Config{
@@ -849,16 +854,11 @@ func configureBootstrapProcedure(
 		fvm.WithTransactionFee(fvm.DefaultTransactionFees),
 		fvm.WithExecutionMemoryLimit(math.MaxUint32),
 		fvm.WithExecutionMemoryWeights(meter.DefaultMemoryWeights),
-		fvm.WithExecutionEffortWeights(environment.MainnetExecutionEffortWeights),
+		fvm.WithExecutionEffortWeights(conf.EffectiveExecutionEffortWeights()),
 		fvm.WithSetupVMBridgeEnabled(cadence.NewBool(conf.SetupVMBridgeEnabled)),
 		fvm.WithSetupEVMEnabled(cadence.NewBool(conf.SetupEVMEnabled)),
 	)
 
-	if conf.ExecutionEffortWeights != nil {
-		options = append(options,
-			fvm.WithExecutionEffortWeights(conf.ExecutionEffortWeights),
-		)
-	}
 	if conf.StorageLimitEnabled {
 		options = append(options,
 			fvm.WithAccountCreationFee(conf.MinimumStorageReservation),
