@@ -326,7 +326,12 @@ func (m EmulatorAPIServer) AllContractsZip(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusOK)
 
 	zipW := zip.NewWriter(w)
-	defer zipW.Close()
+	defer func() {
+		err := zipW.Close()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	}()
 
 	for accountIndex := 1; ; accountIndex++ {
 		account, err := m.emulator.GetAccountByIndex(uint(accountIndex))
@@ -353,5 +358,4 @@ func (m EmulatorAPIServer) AllContractsZip(w http.ResponseWriter, r *http.Reques
 			}
 		}
 	}
-
 }
