@@ -19,12 +19,14 @@
 package utils
 
 import (
+	"archive/zip"
 	"encoding/json"
 	"net/http"
 	"slices"
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/onflow/cadence/common"
 	"github.com/onflow/cadence/runtime"
 	flowgo "github.com/onflow/flow-go/model/flow"
 
@@ -70,6 +72,8 @@ func NewEmulatorAPIServer(emulator emulator.Emulator, adapter *adapters.AccessAd
 	router.HandleFunc("/emulator/computationProfile/reset", r.ResetComputationProfile).Methods("PUT")
 
 	router.HandleFunc("/emulator/computationReport", r.ComputationReport).Methods("GET")
+
+	router.HandleFunc("/emulator/all-contracts", r.AllContractsZip).Methods("GET")
 
 	return r
 }
@@ -312,4 +316,42 @@ func (m EmulatorAPIServer) Logs(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+}
+
+const cadenceFileSuffix = ".cdc"
+
+func (m EmulatorAPIServer) AllContractsZip(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Disposition", "attachment; filename=contracts.zip")
+	w.Header().Set("Content-Type", "application/zip")
+	w.WriteHeader(http.StatusOK)
+
+	zipW := zip.NewWriter(w)
+	defer zipW.Close()
+
+	for accountIndex := 1; ; accountIndex++ {
+		account, err := m.emulator.GetAccountByIndex(uint(accountIndex))
+		if err != nil {
+			break
+		}
+
+		for name, code := range account.Contracts {
+			location := common.AddressLocation{
+				Address: common.Address(account.Address),
+				Name:    name,
+			}
+
+			f, err := zipW.Create(location.ID() + cadenceFileSuffix)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			_, err = f.Write(code)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
 }
