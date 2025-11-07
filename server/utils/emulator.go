@@ -332,8 +332,6 @@ func (m EmulatorAPIServer) Logs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-const cadenceFileSuffix = ".cdc"
-
 func (m EmulatorAPIServer) AllContractsZip(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", "attachment; filename=contracts.zip")
 	w.Header().Set("Content-Type", "application/zip")
