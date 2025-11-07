@@ -73,7 +73,7 @@ func NewEmulatorAPIServer(emulator emulator.Emulator, adapter *adapters.AccessAd
 
 	router.HandleFunc("/emulator/computationReport", r.ComputationReport).Methods("GET")
 
-	router.HandleFunc("/emulator/all-contracts", r.AllContractsZip).Methods("GET")
+	router.HandleFunc("/emulator/allContracts", r.AllContractsZip).Methods("GET")
 
 	return r
 }
