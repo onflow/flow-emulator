@@ -20,14 +20,22 @@ package emulator_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
+	"github.com/onflow/cadence/common"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/onflow/flow-emulator/adapters"
+	"github.com/onflow/flow-emulator/convert"
 	"github.com/onflow/flow-emulator/emulator"
+	flowsdk "github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go-sdk/templates"
+	"github.com/onflow/flow-go/fvm/blueprints"
+	"github.com/onflow/flow-go/fvm/systemcontracts"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow/protobuf/go/flow/entities"
 )
@@ -137,4 +145,273 @@ func TestGetSystemTransaction_BlockNotFound(t *testing.T) {
 	)
 	assert.Error(t, err, "should return error for non-existent block")
 	assert.Nil(t, result)
+}
+
+// Verifies that:
+// - The scheduler "process" system transaction result contains the PendingExecution event
+// - One system transaction result contains the EVM.BlockExecuted event
+//
+// This test ensures system transaction results are correctly stored and retrieved using
+// composite keys (blockID, txID). System transactions can have identical IDs across blocks
+// (e.g., the process transaction uses the same script/payer/reference block), so storing
+// by txID alone causes collisions where later blocks overwrite earlier blocks' results.
+func TestSystemTransactions_ContainExpectedEvents(t *testing.T) {
+	t.Parallel()
+
+	b, err := emulator.New(emulator.WithStorageLimitEnabled(false))
+	require.NoError(t, err)
+
+	logger := zerolog.Nop()
+	adapter := adapters.NewAccessAdapter(&logger, b)
+
+	// Deploy handler contract and schedule a callback so scheduler emits events.
+	serviceAddress := b.ServiceKey().Address
+	serviceHex := serviceAddress.Hex()
+	serviceHexWithPrefix := serviceAddress.HexWithPrefix()
+
+	handlerContract := fmt.Sprintf(`
+		import FlowTransactionScheduler from 0x%s
+		access(all) contract ScheduledHandler {
+			access(contract) var count: Int
+			access(all) view fun getCount(): Int { return self.count }
+			access(all) resource Handler: FlowTransactionScheduler.TransactionHandler {
+				access(FlowTransactionScheduler.Execute) fun executeTransaction(id: UInt64, data: AnyStruct?) {
+					ScheduledHandler.count = ScheduledHandler.count + 1
+				}
+			}
+			access(all) fun createHandler(): @Handler { return <- create Handler() }
+			init() { self.count = 0 }
+		}
+	`, serviceHex)
+
+	latestBlock, err := b.GetLatestBlock()
+	require.NoError(t, err)
+	tx := templates.AddAccountContract(serviceAddress, templates.Contract{
+		Name:   "ScheduledHandler",
+		Source: handlerContract,
+	})
+	tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID())).
+		SetProposalKey(serviceAddress, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+		SetPayer(serviceAddress)
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+	require.NoError(t, tx.SignEnvelope(serviceAddress, b.ServiceKey().Index, signer))
+	require.NoError(t, b.SendTransaction(convert.SDKTransactionToFlow(*tx)))
+	_, _, err = b.ExecuteAndCommitBlock()
+	require.NoError(t, err)
+
+	createAndSchedule := fmt.Sprintf(`
+		import FlowTransactionScheduler from 0x%s
+		import ScheduledHandler from 0x%s
+		import FungibleToken from 0xee82856bf20e2aa6
+		import FlowToken from 0x0ae53cb6e3f42a79
+		transaction {
+			prepare(acct: auth(Storage, Capabilities, FungibleToken.Withdraw) &Account) {
+				let handler <- ScheduledHandler.createHandler()
+				acct.storage.save(<-handler, to: /storage/counterHandler)
+				let issued: Capability<auth(FlowTransactionScheduler.Execute) &{FlowTransactionScheduler.TransactionHandler}> =
+					acct.capabilities.storage.issue<auth(FlowTransactionScheduler.Execute) &{FlowTransactionScheduler.TransactionHandler}>(/storage/counterHandler)
+				let adminRef = acct.storage.borrow<&FlowToken.Administrator>(from: /storage/flowTokenAdmin)
+					?? panic("missing FlowToken admin")
+				let minter <- adminRef.createNewMinter(allowedAmount: 10.0)
+				let minted <- minter.mintTokens(amount: 1.0)
+				let receiver = acct.capabilities.borrow<&{FungibleToken.Receiver}>(/public/flowTokenReceiver)
+					?? panic("missing FlowToken receiver")
+				receiver.deposit(from: <-minted)
+				destroy minter
+				let estimate = FlowTransactionScheduler.estimate(
+					data: nil,
+					timestamp: getCurrentBlock().timestamp + 3.0,
+					priority: FlowTransactionScheduler.Priority.High,
+					executionEffort: UInt64(5000)
+				)
+				let feeAmount: UFix64 = estimate.flowFee ?? 0.001
+				let vaultRef = acct.storage.borrow<auth(FungibleToken.Withdraw) &FlowToken.Vault>(from: /storage/flowTokenVault)
+					?? panic("missing FlowToken vault")
+				let fees <- (vaultRef.withdraw(amount: feeAmount) as! @FlowToken.Vault)
+				destroy <- FlowTransactionScheduler.schedule(
+					handlerCap: issued,
+					data: nil,
+					timestamp: getCurrentBlock().timestamp + 3.0,
+					priority: FlowTransactionScheduler.Priority.High,
+					executionEffort: UInt64(5000),
+					fees: <-fees
+				)
+			}
+		}
+	`, serviceHex, serviceHex)
+	latestBlock, err = b.GetLatestBlock()
+	require.NoError(t, err)
+	tx = flowsdk.NewTransaction().
+		SetScript([]byte(createAndSchedule)).
+		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetProposalKey(serviceAddress, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+		SetPayer(serviceAddress).
+		AddAuthorizer(serviceAddress)
+	tx.SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID()))
+	signer, err = b.ServiceKey().Signer()
+	require.NoError(t, err)
+	require.NoError(t, tx.SignEnvelope(serviceAddress, b.ServiceKey().Index, signer))
+	require.NoError(t, b.SendTransaction(convert.SDKTransactionToFlow(*tx)))
+	_, results, err := b.ExecuteAndCommitBlock()
+	require.NoError(t, err)
+	for _, r := range results {
+		if r.Error != nil {
+			t.Fatalf("schedule tx failed: %v", r.Error)
+		}
+	}
+
+	// Advance time and commit a couple of blocks to trigger scheduling.
+	time.Sleep(3500 * time.Millisecond)
+	_, _, err = b.ExecuteAndCommitBlock()
+	require.NoError(t, err)
+	time.Sleep(3500 * time.Millisecond)
+	block, _, err := b.ExecuteAndCommitBlock()
+	require.NoError(t, err)
+	require.NotNil(t, block)
+	blockID := flowgo.Identifier(block.ID())
+
+	// Gather system transaction IDs for the block
+	systemTxIDs, err := b.GetSystemTransactionsForBlock(blockID)
+	require.NoError(t, err)
+	require.NotEmpty(t, systemTxIDs, "expected system transactions for block")
+
+	// Env used to compute expected event types
+	env := systemcontracts.SystemContractsForChain(b.GetChain().ChainID()).AsTemplateEnv()
+	expectedPendingExec := blueprints.PendingExecutionEventType(env)
+	evmBlockExecutedEventType := common.AddressLocation{
+		Address: common.Address(b.GetChain().ServiceAddress()),
+		Name:    "EVM.BlockExecuted",
+	}.ID()
+
+	foundPendingExec := false
+	foundEvmBlockExecuted := false
+
+	t.Logf("Checking %d system transactions for block %s", len(systemTxIDs), blockID.String())
+	t.Logf("Expected PendingExecution event type: %s", expectedPendingExec)
+	t.Logf("Expected EVM.BlockExecuted event type: %s", evmBlockExecutedEventType)
+
+	for i, txID := range systemTxIDs {
+		// Fetch result for events
+		result, err := adapter.GetSystemTransactionResult(
+			context.Background(),
+			txID,
+			blockID,
+			entities.EventEncodingVersion_CCF_V0,
+		)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		t.Logf("\nSystem tx %d (ID: %s):", i, txID.String())
+		t.Logf("  Event count: %d", len(result.Events))
+
+		for j, evt := range result.Events {
+			t.Logf("  Event[%d]: Type=%s, TxIndex=%d, EventIndex=%d",
+				j, evt.Type, evt.TransactionIndex, evt.EventIndex)
+
+			if evt.Type == expectedPendingExec {
+				foundPendingExec = true
+				t.Logf("    ✓ FOUND PendingExecution")
+			}
+			if string(evt.Type) == evmBlockExecutedEventType {
+				foundEvmBlockExecuted = true
+				t.Logf("    ✓ FOUND EVM.BlockExecuted")
+			}
+		}
+	}
+
+	assert.True(t, foundPendingExec, "expected PendingExecution event on process system transaction result")
+	assert.True(t, foundEvmBlockExecuted, "expected EVM.BlockExecuted event on a system transaction result")
+
+	// Verify each system transaction has unique transaction indices in their events
+	seenTxIndices := make(map[uint32]bool)
+	for i, txID := range systemTxIDs {
+		result, err := adapter.GetSystemTransactionResult(
+			context.Background(),
+			txID,
+			blockID,
+			entities.EventEncodingVersion_CCF_V0,
+		)
+		require.NoError(t, err)
+
+		for _, evt := range result.Events {
+			if seenTxIndices[evt.TransactionIndex] {
+				t.Errorf("System tx %d has duplicate TransactionIndex %d", i, evt.TransactionIndex)
+			}
+			seenTxIndices[evt.TransactionIndex] = true
+		}
+	}
+
+	t.Logf("Found %d unique transaction indices across system transactions", len(seenTxIndices))
+	assert.Equal(t, len(systemTxIDs), len(seenTxIndices), "each system transaction should have a unique index")
+
+	// Sanity check: scheduled handler executed and incremented counter
+	verifyScript := fmt.Sprintf(`
+		import ScheduledHandler from %s
+		access(all) fun main(): Int { return ScheduledHandler.getCount() }
+	`, serviceHexWithPrefix)
+	scriptRes, err := b.ExecuteScript([]byte(verifyScript), nil)
+	require.NoError(t, err)
+	require.NoError(t, scriptRes.Error)
+}
+
+// Verifies that when there are NO scheduled callbacks pending,
+// the process system transaction result contains NO PendingExecution event
+// (because there's nothing to process)
+func TestSystemTransactions_EmptyBlock_NoPendingExecution(t *testing.T) {
+	t.Parallel()
+
+	b, err := emulator.New(
+		emulator.WithStorageLimitEnabled(false),
+	)
+	require.NoError(t, err)
+
+	logger := zerolog.Nop()
+	adapter := adapters.NewAccessAdapter(&logger, b)
+
+	// Commit an empty block (no user txs, no scheduled callbacks)
+	block, _, err := b.ExecuteAndCommitBlock()
+	require.NoError(t, err)
+	require.NotNil(t, block)
+	blockID := flowgo.Identifier(block.ID())
+
+	// Gather system transaction IDs for the block
+	systemTxIDs, err := b.GetSystemTransactionsForBlock(blockID)
+	require.NoError(t, err)
+	require.NotEmpty(t, systemTxIDs, "expected system transactions for block")
+
+	// Env used to compute expected event types
+	env := systemcontracts.SystemContractsForChain(b.GetChain().ChainID()).AsTemplateEnv()
+	expectedPendingExec := blueprints.PendingExecutionEventType(env)
+
+	t.Logf("Checking %d system transactions for empty block %s", len(systemTxIDs), blockID.String())
+	t.Logf("Expected PendingExecution event type: %s", expectedPendingExec)
+
+	foundAnyPendingExec := false
+
+	for i, txID := range systemTxIDs {
+		result, err := adapter.GetSystemTransactionResult(
+			context.Background(),
+			txID,
+			blockID,
+			entities.EventEncodingVersion_CCF_V0,
+		)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		t.Logf("\nSystem tx %d (ID: %s):", i, txID.String())
+		t.Logf("  Event count: %d", len(result.Events))
+
+		for j, evt := range result.Events {
+			t.Logf("  Event[%d]: Type=%s", j, evt.Type)
+
+			if evt.Type == expectedPendingExec {
+				foundAnyPendingExec = true
+				t.Logf("    UNEXPECTED: Found PendingExecution in empty block!")
+			}
+		}
+	}
+
+	assert.False(t, foundAnyPendingExec, "should NOT have PendingExecution event when nothing is scheduled")
 }

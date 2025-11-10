@@ -47,6 +47,8 @@ type Store struct {
 	scheduledTransactionIndex map[uint64]flowgo.Identifier
 	// Transaction results by ID
 	transactionResults map[flowgo.Identifier]types.StorableTransactionResult
+	// System transaction results by composite key (blockID_txID)
+	systemTransactionResults map[string]types.StorableTransactionResult
 	// Ledger states by block height
 	ledger map[uint64]snapshot.SnapshotTree
 	// events by block height
@@ -66,6 +68,7 @@ func New() *Store {
 		systemTransactions:        make(map[flowgo.Identifier]storage.SystemTransactions),
 		scheduledTransactionIndex: make(map[uint64]flowgo.Identifier),
 		transactionResults:        make(map[flowgo.Identifier]types.StorableTransactionResult),
+		systemTransactionResults:  make(map[string]types.StorableTransactionResult),
 		ledger:                    make(map[uint64]snapshot.SnapshotTree),
 		eventsByBlockHeight:       make(map[uint64][]flowgo.Event),
 	}
@@ -190,9 +193,12 @@ func (s *Store) CommitBlock(
 	collections []*flowgo.LightCollection,
 	transactions map[flowgo.Identifier]*flowgo.TransactionBody,
 	transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
+	systemTransactions []flowgo.Identifier,
+	systemTransactionBodies map[flowgo.Identifier]*flowgo.TransactionBody,
+	systemTransactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
 	executionSnapshot *snapshot.ExecutionSnapshot,
 	events []flowgo.Event,
-	systemTransaction *storage.SystemTransactions,
+	scheduledTransactionIDs map[uint64]flowgo.Identifier,
 ) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -202,6 +208,13 @@ func (s *Store) CommitBlock(
 			"transactions count (%d) does not match result count (%d)",
 			len(transactions),
 			len(transactionResults),
+		)
+	}
+	if len(systemTransactions) != len(systemTransactionResults) {
+		return fmt.Errorf(
+			"system transactions count (%d) does not match system result count (%d)",
+			len(systemTransactions),
+			len(systemTransactionResults),
 		)
 	}
 
@@ -217,13 +230,20 @@ func (s *Store) CommitBlock(
 		}
 	}
 
-	if systemTransaction != nil {
-		err = s.insertSystemTransactions(systemTransaction.BlockID, *systemTransaction)
+	// Store SystemTransactions metadata (order already preserved in systemTransactions slice)
+	if len(systemTransactions) > 0 || len(scheduledTransactionIDs) > 0 {
+		systemTransactionMetadata := storage.SystemTransactions{
+			BlockID:                 block.ID(),
+			Transactions:            systemTransactions, // Already ordered
+			ScheduledTransactionIDs: scheduledTransactionIDs,
+		}
+		err = s.insertSystemTransactions(block.ID(), systemTransactionMetadata)
 		if err != nil {
 			return err
 		}
-
 	}
+
+	// Store regular transactions and results
 	for id, tx := range transactions {
 		err := s.insertTransaction(id, *tx)
 		if err != nil {
@@ -233,6 +253,21 @@ func (s *Store) CommitBlock(
 
 	for txID, result := range transactionResults {
 		err := s.insertTransactionResult(txID, *result)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Store system transactions and results (always use composite key)
+	for id, tx := range systemTransactionBodies {
+		err := s.insertTransaction(id, *tx)
+		if err != nil {
+			return err
+		}
+	}
+
+	for txID, result := range systemTransactionResults {
+		err := s.insertSystemTransactionResult(block.ID(), txID, *result)
 		if err != nil {
 			return err
 		}
@@ -321,6 +356,23 @@ func (s *Store) TransactionResultByID(
 	return result, nil
 }
 
+func (s *Store) SystemTransactionResultByID(
+	_ context.Context,
+	blockID flowgo.Identifier,
+	transactionID flowgo.Identifier,
+) (types.StorableTransactionResult, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	// Use composite key for system transaction results
+	key := fmt.Sprintf("%x_%x", blockID, transactionID)
+	result, ok := s.systemTransactionResults[key]
+	if !ok {
+		return types.StorableTransactionResult{}, storage.ErrNotFound
+	}
+	return result, nil
+}
+
 func (s *Store) LedgerByHeight(
 	_ context.Context,
 	blockHeight uint64,
@@ -370,6 +422,12 @@ func (s *Store) insertTransaction(txID flowgo.Identifier, tx flowgo.TransactionB
 
 func (s *Store) insertTransactionResult(txID flowgo.Identifier, result types.StorableTransactionResult) error {
 	s.transactionResults[txID] = result
+	return nil
+}
+
+func (s *Store) insertSystemTransactionResult(blockID flowgo.Identifier, txID flowgo.Identifier, result types.StorableTransactionResult) error {
+	key := fmt.Sprintf("%x_%x", blockID, txID)
+	s.systemTransactionResults[key] = result
 	return nil
 }
 

@@ -95,9 +95,12 @@ type Store interface {
 		collections []*flowgo.LightCollection,
 		transactions map[flowgo.Identifier]*flowgo.TransactionBody,
 		transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
+		systemTransactions []flowgo.Identifier,
+		systemTransactionBodies map[flowgo.Identifier]*flowgo.TransactionBody,
+		systemTransactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
 		executionSnapshot *snapshot.ExecutionSnapshot,
 		events []flowgo.Event,
-		systemSystemTransactions *SystemTransactions,
+		scheduledTransactionIDs map[uint64]flowgo.Identifier,
 	) error
 
 	// CollectionByID gets the collection (transaction IDs only) with the given ID.
@@ -111,6 +114,10 @@ type Store interface {
 
 	// TransactionResultByID gets the transaction result with the given ID.
 	TransactionResultByID(ctx context.Context, transactionID flowgo.Identifier) (types.StorableTransactionResult, error)
+
+	// SystemTransactionResultByID gets the system transaction result with the given ID and block ID.
+	// System transactions can have duplicate IDs across blocks, so both blockID and txID are required.
+	SystemTransactionResultByID(ctx context.Context, blockID flowgo.Identifier, transactionID flowgo.Identifier) (types.StorableTransactionResult, error)
 
 	// LedgerByHeight returns a storage snapshot into the ledger state
 	// at a given block.
@@ -141,6 +148,7 @@ type KeyGenerator interface {
 	BlockHeight(height uint64) []byte
 	Identifier(id flowgo.Identifier) []byte
 	ScheduledTransactionID(scheduledTxID uint64) []byte
+	SystemTransactionResult(blockID flowgo.Identifier, txID flowgo.Identifier) []byte
 }
 
 type DataGetter interface {
@@ -177,6 +185,10 @@ func (s *DefaultKeyGenerator) Identifier(id flowgo.Identifier) []byte {
 
 func (s *DefaultKeyGenerator) ScheduledTransactionID(scheduledTxID uint64) []byte {
 	return []byte(fmt.Sprintf("scheduled_tx_%d", scheduledTxID))
+}
+
+func (s *DefaultKeyGenerator) SystemTransactionResult(blockID flowgo.Identifier, txID flowgo.Identifier) []byte {
+	return []byte(fmt.Sprintf("system_tx_result_%x_%x", blockID, txID))
 }
 
 type DefaultStore struct {
@@ -528,6 +540,28 @@ func (s *DefaultStore) TransactionResultByID(
 	return
 }
 
+func (s *DefaultStore) SystemTransactionResultByID(
+	ctx context.Context,
+	blockID flowgo.Identifier,
+	txID flowgo.Identifier,
+) (
+	result types.StorableTransactionResult,
+	err error,
+) {
+	encResult, err := s.GetBytes(
+		ctx,
+		s.Storage(TransactionResultStoreName),
+		s.SystemTransactionResult(blockID, txID),
+	)
+	if err != nil {
+		return
+	}
+
+	err = decodeTransactionResult(&result, encResult)
+
+	return
+}
+
 func (s *DefaultStore) InsertTransactionResult(
 	ctx context.Context,
 	txID flowgo.Identifier,
@@ -541,6 +575,24 @@ func (s *DefaultStore) InsertTransactionResult(
 		ctx,
 		s.Storage(TransactionResultStoreName),
 		s.Identifier(txID),
+		encResult,
+	)
+}
+
+func (s *DefaultStore) InsertSystemTransactionResult(
+	ctx context.Context,
+	blockID flowgo.Identifier,
+	txID flowgo.Identifier,
+	result types.StorableTransactionResult,
+) error {
+	encResult, err := encodeTransactionResult(result)
+	if err != nil {
+		return err
+	}
+	return s.SetBytes(
+		ctx,
+		s.Storage(TransactionResultStoreName),
+		s.SystemTransactionResult(blockID, txID),
 		encResult,
 	)
 }
@@ -614,9 +666,12 @@ func (s *DefaultStore) CommitBlock(
 	collections []*flowgo.LightCollection,
 	transactions map[flowgo.Identifier]*flowgo.TransactionBody,
 	transactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
+	systemTransactions []flowgo.Identifier,
+	systemTransactionBodies map[flowgo.Identifier]*flowgo.TransactionBody,
+	systemTransactionResults map[flowgo.Identifier]*types.StorableTransactionResult,
 	executionSnapshot *snapshot.ExecutionSnapshot,
 	events []flowgo.Event,
-	systemTransactions *SystemTransactions,
+	scheduledTransactionIDs map[uint64]flowgo.Identifier,
 ) error {
 	if len(transactions) != len(transactionResults) {
 		return fmt.Errorf(
@@ -625,14 +680,27 @@ func (s *DefaultStore) CommitBlock(
 			len(transactionResults),
 		)
 	}
+	if len(systemTransactions) != len(systemTransactionResults) {
+		return fmt.Errorf(
+			"system transactions count (%d) does not match system result count (%d)",
+			len(systemTransactions),
+			len(systemTransactionResults),
+		)
+	}
 
 	err := s.StoreBlock(ctx, &block)
 	if err != nil {
 		return err
 	}
 
-	if systemTransactions != nil {
-		err = s.StoreSystemTransactions(ctx, systemTransactions)
+	// Store SystemTransactions metadata (order already preserved in systemTransactions slice)
+	if len(systemTransactions) > 0 || len(scheduledTransactionIDs) > 0 {
+		systemTransactionMetadata := &SystemTransactions{
+			BlockID:                 block.ID(),
+			Transactions:            systemTransactions, // Already ordered
+			ScheduledTransactionIDs: scheduledTransactionIDs,
+		}
+		err = s.StoreSystemTransactions(ctx, systemTransactionMetadata)
 		if err != nil {
 			return err
 		}
@@ -645,6 +713,7 @@ func (s *DefaultStore) CommitBlock(
 		}
 	}
 
+	// Store regular transactions and results
 	for id, tx := range transactions {
 		err := s.InsertTransaction(ctx, *tx, id)
 		if err != nil {
@@ -654,6 +723,21 @@ func (s *DefaultStore) CommitBlock(
 
 	for txID, result := range transactionResults {
 		err := s.InsertTransactionResult(ctx, txID, *result)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Store system transactions and results (always use composite key)
+	for id, tx := range systemTransactionBodies {
+		err := s.InsertTransaction(ctx, *tx, id)
+		if err != nil {
+			return err
+		}
+	}
+
+	for txID, result := range systemTransactionResults {
+		err := s.InsertSystemTransactionResult(ctx, block.ID(), txID, *result)
 		if err != nil {
 			return err
 		}

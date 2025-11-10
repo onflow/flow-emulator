@@ -34,7 +34,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"maps"
 	"math"
 	"strings"
 	"sync"
@@ -756,9 +755,12 @@ func configureNewLedger(
 		nil,
 		nil,
 		nil,
+		nil, // systemTransactions (ordered slice)
+		nil, // systemTransactionBodies
+		nil, // systemTransactionResults
 		genesisExecutionSnapshot,
 		output.Events,
-		nil,
+		nil, // scheduledTransactionIDs
 	)
 	if err != nil {
 		return nil, nil, err
@@ -1075,6 +1077,35 @@ func (b *Blockchain) getTransactionResult(txID flowgo.Identifier) (*accessmodel.
 	}
 
 	storedResult, err := b.storage.TransactionResultByID(context.Background(), txID)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return &accessmodel.TransactionResult{
+				Status: flowgo.TransactionStatusUnknown,
+			}, nil
+		}
+		return nil, err
+	}
+
+	statusCode := 0
+	if storedResult.ErrorCode > 0 {
+		statusCode = 1
+	}
+	result := accessmodel.TransactionResult{
+		Status:        flowgo.TransactionStatusSealed,
+		StatusCode:    uint(statusCode),
+		ErrorMessage:  storedResult.ErrorMessage,
+		Events:        storedResult.Events,
+		TransactionID: txID,
+		BlockHeight:   storedResult.BlockHeight,
+		BlockID:       storedResult.BlockID,
+		CollectionID:  storedResult.CollectionID,
+	}
+
+	return &result, nil
+}
+
+func (b *Blockchain) getSystemTransactionResult(blockID flowgo.Identifier, txID flowgo.Identifier) (*accessmodel.TransactionResult, error) {
+	storedResult, err := b.storage.SystemTransactionResultByID(context.Background(), blockID, txID)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return &accessmodel.TransactionResult{
@@ -1425,11 +1456,19 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	if len(collections) > 0 {
 		collectionID = collections[0].ID()
 	}
+
+	// Regular user transactions and results
 	transactions := b.pendingBlock.Transactions()
 	transactionResults, err := convertToSealedResults(b.pendingBlock.TransactionResults(), b.pendingBlock.ID(), b.pendingBlock.height, collectionID)
 	if err != nil {
 		return nil, err
 	}
+
+	// System transactions and results (stored separately, order preserved)
+	systemTransactionIDs := []flowgo.Identifier{} // Ordered list of system tx IDs
+	systemTransactionBodies := make(map[flowgo.Identifier]*flowgo.TransactionBody)
+	systemTransactionResults := make(map[flowgo.Identifier]*types.StorableTransactionResult)
+	scheduledTransactionIDs := make(map[uint64]flowgo.Identifier)
 
 	// execute scheduled transactions out-of-band before the system chunk
 	// (does not change collections or payload)
@@ -1437,12 +1476,8 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 		b.vmCtx,
 		fvm.WithBlockHeader(block.ToHeader()),
 	)
-	systemTransactions := storage.SystemTransactions{
-		BlockID:      b.pendingBlock.ID(),
-		Transactions: []flowgo.Identifier{},
-	}
 	if b.conf.ScheduledTransactionsEnabled {
-		tx, results, scheduledTxIDs, err := b.executeScheduledTransactions(blockContext)
+		tx, results, scheduledTxIDs, orderedIDs, err := b.executeScheduledTransactions(blockContext)
 		if err != nil {
 			return nil, err
 		}
@@ -1451,18 +1486,24 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 		if err != nil {
 			return nil, err
 		}
-		maps.Copy(transactionResults, convertedResults)
+		for id, result := range convertedResults {
+			systemTransactionResults[id] = result
+		}
 		for id, t := range tx {
-			transactions[id] = t
-			systemTransactions.Transactions = append(systemTransactions.Transactions, id)
+			systemTransactionBodies[id] = t
 		}
 
+		// Append scheduled tx IDs in execution order
+		systemTransactionIDs = append(systemTransactionIDs, orderedIDs...)
+
 		// Store scheduled transaction ID mappings
-		systemTransactions.ScheduledTransactionIDs = scheduledTxIDs
+		scheduledTransactionIDs = scheduledTxIDs
 	}
 
 	// lastly we execute the system chunk transaction
-	chunkBody, itr, err := b.executeSystemChunkTransaction()
+	// System chunk comes after all user txs and scheduled txs
+	systemChunkIndex := uint32(len(transactions)) + uint32(len(systemTransactionIDs))
+	chunkBody, itr, err := b.executeSystemChunkTransaction(systemChunkIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -1472,9 +1513,9 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 	if err != nil {
 		return nil, err
 	}
-	transactions[systemTxID] = chunkBody
-	transactionResults[systemTxID] = &systemTxStorableResult
-	systemTransactions.Transactions = append(systemTransactions.Transactions, systemTxID)
+	systemTransactionBodies[systemTxID] = chunkBody
+	systemTransactionResults[systemTxID] = &systemTxStorableResult
+	systemTransactionIDs = append(systemTransactionIDs, systemTxID)
 
 	executionSnapshot := b.pendingBlock.Finalize()
 	events := b.pendingBlock.Events()
@@ -1486,15 +1527,18 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 		collections,
 		transactions,
 		transactionResults,
+		systemTransactionIDs,
+		systemTransactionBodies,
+		systemTransactionResults,
 		executionSnapshot,
 		events,
-		&systemTransactions)
+		scheduledTransactionIDs)
 	if err != nil {
 		return nil, err
 	}
 
 	// Index scheduled transactions globally (scheduledTxID → blockID)
-	for scheduledTxID := range systemTransactions.ScheduledTransactionIDs {
+	for scheduledTxID := range scheduledTransactionIDs {
 		err = b.storage.IndexScheduledTransactionID(context.Background(), scheduledTxID, block.ID())
 		if err != nil {
 			return nil, fmt.Errorf("failed to index scheduled transaction %d: %w", scheduledTxID, err)
@@ -1952,8 +1996,8 @@ func (b *Blockchain) GetSystemTransactionResult(txID flowgo.Identifier, blockID 
 		return nil, &types.TransactionNotFoundError{ID: txID}
 	}
 
-	// Retrieve the transaction result
-	return b.getTransactionResult(txID)
+	// Retrieve the system transaction result using composite key (blockID, txID)
+	return b.getSystemTransactionResult(blockID, txID)
 }
 
 // GetScheduledTransactionByBlockID returns a scheduled transaction by its scheduled transaction ID and block ID.
@@ -2036,8 +2080,8 @@ func (b *Blockchain) GetScheduledTransactionResultByBlockID(scheduledTxID uint64
 		return nil, &types.TransactionNotFoundError{ID: flowgo.ZeroID}
 	}
 
-	// Retrieve the transaction result
-	return b.getTransactionResult(txID)
+	// Retrieve the system transaction result using composite key
+	return b.getSystemTransactionResult(blockID, txID)
 }
 
 // GetScheduledTransactionResult returns the result of a scheduled transaction by its scheduled transaction ID.
@@ -2070,8 +2114,8 @@ func (b *Blockchain) GetScheduledTransactionResult(scheduledTxID uint64) (*acces
 		return nil, &types.TransactionNotFoundError{ID: flowgo.ZeroID}
 	}
 
-	// Retrieve the transaction result
-	return b.getTransactionResult(txID)
+	// Retrieve the system transaction result using composite key
+	return b.getSystemTransactionResult(blockID, txID)
 }
 
 func (b *Blockchain) GetLogs(identifier flowgo.Identifier) ([]string, error) {
@@ -2162,7 +2206,7 @@ func (b *Blockchain) systemChunkTransaction() (*flowgo.TransactionBody, error) {
 	return tx, nil
 }
 
-func (b *Blockchain) executeSystemChunkTransaction() (*flowgo.TransactionBody, *IndexedTransactionResult, error) {
+func (b *Blockchain) executeSystemChunkTransaction(txIndex uint32) (*flowgo.TransactionBody, *IndexedTransactionResult, error) {
 	txn, err := b.systemChunkTransaction()
 	if err != nil {
 		return nil, nil, err
@@ -2178,7 +2222,7 @@ func (b *Blockchain) executeSystemChunkTransaction() (*flowgo.TransactionBody, *
 
 	executionSnapshot, output, err := b.vm.Run(
 		ctx,
-		fvm.Transaction(txn, uint32(len(b.pendingBlock.Transactions()))),
+		fvm.Transaction(txn, txIndex),
 		b.pendingBlock.ledgerState,
 	)
 	if err != nil {
@@ -2198,15 +2242,16 @@ func (b *Blockchain) executeSystemChunkTransaction() (*flowgo.TransactionBody, *
 
 	itr := &IndexedTransactionResult{
 		ProcedureOutput: output,
-		Index:           0,
+		Index:           txIndex,
 	}
 	return txn, itr, nil
 }
 
-func (b *Blockchain) executeScheduledTransactions(blockContext fvm.Context) (map[flowgo.Identifier]*flowgo.TransactionBody, map[flowgo.Identifier]IndexedTransactionResult, map[uint64]flowgo.Identifier, error) {
+func (b *Blockchain) executeScheduledTransactions(blockContext fvm.Context) (map[flowgo.Identifier]*flowgo.TransactionBody, map[flowgo.Identifier]IndexedTransactionResult, map[uint64]flowgo.Identifier, []flowgo.Identifier, error) {
 	systemTransactions := map[flowgo.Identifier]*flowgo.TransactionBody{}
 	systemTransactionResults := map[flowgo.Identifier]IndexedTransactionResult{}
 	scheduledTxIDMap := map[uint64]flowgo.Identifier{} // maps scheduled tx ID to transaction ID
+	orderedTxIDs := []flowgo.Identifier{}              // execution order of system transactions
 
 	// disable checks for signatures and keys since we are executing a system transaction
 	ctx := fvm.NewContextFromParent(
@@ -2216,62 +2261,71 @@ func (b *Blockchain) executeScheduledTransactions(blockContext fvm.Context) (map
 		fvm.WithTransactionFeesEnabled(false),
 	)
 
+	// System transactions start after all user transactions
+	systemTxBaseIndex := uint32(len(b.pendingBlock.Transactions()))
+
 	// process scheduled transactions out-of-band (do not alter collections)
 	processTx, err := blueprints.ProcessCallbacksTransaction(b.GetChain())
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	// Use the real transaction ID from the process transaction
 	processID := processTx.ID()
 	systemTransactions[processID] = processTx
+	orderedTxIDs = append(orderedTxIDs, processID) // First in order
 
+	processTxIndex := systemTxBaseIndex
 	executionSnapshot, output, err := b.vm.Run(
 		ctx,
-		fvm.Transaction(processTx, uint32(len(b.pendingBlock.Transactions()))),
+		fvm.Transaction(processTx, processTxIndex),
 		b.pendingBlock.ledgerState,
 	)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	systemTransactionResults[processID] = IndexedTransactionResult{
 		ProcedureOutput: output,
-		Index:           0,
+		Index:           processTxIndex,
 	}
 
 	// record events and state changes
 	b.pendingBlock.events = append(b.pendingBlock.events, output.Events...)
 	if err := b.pendingBlock.ledgerState.Merge(executionSnapshot); err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	executeTxs, err := blueprints.ExecuteCallbacksTransactions(b.GetChain(), output.Events)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	env := systemcontracts.SystemContractsForChain(b.GetChain().ChainID()).AsTemplateEnv()
 	scheduledIDs, err := parseScheduledIDs(env, output.Events)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	// execute scheduled transactions out-of-band
 	for idx, tx := range executeTxs {
 		id := tx.ID()
+		orderedTxIDs = append(orderedTxIDs, id) // Add in execution order
+
+		// Each execute callback gets its own index after the process transaction
+		executeTxIndex := systemTxBaseIndex + 1 + uint32(idx)
 		execSnapshot, execOutput, err := b.vm.Run(
 			ctx,
-			fvm.Transaction(tx, uint32(len(b.pendingBlock.Transactions()))),
+			fvm.Transaction(tx, executeTxIndex),
 			b.pendingBlock.ledgerState,
 		)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, nil, nil, err
 		}
 
 		systemTransactionResults[id] = IndexedTransactionResult{
 			ProcedureOutput: execOutput,
-			Index:           0,
+			Index:           executeTxIndex,
 		}
 		systemTransactions[id] = tx
 
@@ -2288,7 +2342,7 @@ func (b *Blockchain) executeScheduledTransactions(blockContext fvm.Context) (map
 		// Print scheduled transaction result (labeled), including app-level scheduled tx id
 		schedResult, err := convert.VMTransactionResultToEmulator(tx.ID(), execOutput)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, nil, nil, err
 		}
 		appScheduledID := ""
 		if idx < len(scheduledIDs) {
@@ -2298,11 +2352,11 @@ func (b *Blockchain) executeScheduledTransactions(blockContext fvm.Context) (map
 
 		b.pendingBlock.events = append(b.pendingBlock.events, execOutput.Events...)
 		if err := b.pendingBlock.ledgerState.Merge(execSnapshot); err != nil {
-			return nil, nil, nil, err
+			return nil, nil, nil, nil, err
 		}
 	}
 
-	return systemTransactions, systemTransactionResults, scheduledTxIDMap, nil
+	return systemTransactions, systemTransactionResults, scheduledTxIDMap, orderedTxIDs, nil
 }
 
 func (b *Blockchain) GetRegisterValues(registerIDs flowgo.RegisterIDs, height uint64) (values []flowgo.RegisterValue, err error) {
