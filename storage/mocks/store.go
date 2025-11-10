@@ -105,17 +105,17 @@ func (mr *MockStoreMockRecorder) CollectionByID(ctx, collectionID any) *gomock.C
 }
 
 // CommitBlock mocks base method.
-func (m *MockStore) CommitBlock(ctx context.Context, block flow.Block, collections []*flow.LightCollection, transactions map[flow.Identifier]*flow.TransactionBody, transactionResults map[flow.Identifier]*types.StorableTransactionResult, executionSnapshot *snapshot.ExecutionSnapshot, events []flow.Event, systemSystemTransactions *storage.SystemTransactions) error {
+func (m *MockStore) CommitBlock(ctx context.Context, block flow.Block, collections []*flow.LightCollection, transactions map[flow.Identifier]*flow.TransactionBody, transactionResults map[flow.Identifier]*types.StorableTransactionResult, systemTransactions []flow.Identifier, systemTransactionBodies map[flow.Identifier]*flow.TransactionBody, systemTransactionResults map[flow.Identifier]*types.StorableTransactionResult, executionSnapshot *snapshot.ExecutionSnapshot, events []flow.Event, scheduledTransactionIDs map[uint64]flow.Identifier) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CommitBlock", ctx, block, collections, transactions, transactionResults, executionSnapshot, events, systemSystemTransactions)
+	ret := m.ctrl.Call(m, "CommitBlock", ctx, block, collections, transactions, transactionResults, systemTransactions, systemTransactionBodies, systemTransactionResults, executionSnapshot, events, scheduledTransactionIDs)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CommitBlock indicates an expected call of CommitBlock.
-func (mr *MockStoreMockRecorder) CommitBlock(ctx, block, collections, transactions, transactionResults, executionSnapshot, events, systemSystemTransactions any) *gomock.Call {
+func (mr *MockStoreMockRecorder) CommitBlock(ctx, block, collections, transactions, transactionResults, systemTransactions, systemTransactionBodies, systemTransactionResults, executionSnapshot, events, scheduledTransactionIDs any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitBlock", reflect.TypeOf((*MockStore)(nil).CommitBlock), ctx, block, collections, transactions, transactionResults, executionSnapshot, events, systemSystemTransactions)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitBlock", reflect.TypeOf((*MockStore)(nil).CommitBlock), ctx, block, collections, transactions, transactionResults, systemTransactions, systemTransactionBodies, systemTransactionResults, executionSnapshot, events, scheduledTransactionIDs)
 }
 
 // EventsByHeight mocks base method.
@@ -259,6 +259,21 @@ func (m *MockStore) StoreSystemTransactions(ctx context.Context, systemTransacti
 func (mr *MockStoreMockRecorder) StoreSystemTransactions(ctx, systemTransactions any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreSystemTransactions", reflect.TypeOf((*MockStore)(nil).StoreSystemTransactions), ctx, systemTransactions)
+}
+
+// SystemTransactionResultByID mocks base method.
+func (m *MockStore) SystemTransactionResultByID(ctx context.Context, blockID, transactionID flow.Identifier) (types.StorableTransactionResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SystemTransactionResultByID", ctx, blockID, transactionID)
+	ret0, _ := ret[0].(types.StorableTransactionResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SystemTransactionResultByID indicates an expected call of SystemTransactionResultByID.
+func (mr *MockStoreMockRecorder) SystemTransactionResultByID(ctx, blockID, transactionID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SystemTransactionResultByID", reflect.TypeOf((*MockStore)(nil).SystemTransactionResultByID), ctx, blockID, transactionID)
 }
 
 // SystemTransactionsForBlockID mocks base method.
