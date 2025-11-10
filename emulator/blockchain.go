@@ -1500,8 +1500,7 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 		scheduledTransactionIDs = scheduledTxIDs
 	}
 
-	// lastly we execute the system chunk transaction
-	// System chunk comes after all user txs and scheduled txs
+	// Calculate index for system chunk transaction which executes after all user and scheduled transactions
 	systemChunkIndex := uint32(len(transactions)) + uint32(len(systemTransactionIDs))
 	chunkBody, itr, err := b.executeSystemChunkTransaction(systemChunkIndex)
 	if err != nil {
