@@ -2261,7 +2261,7 @@ func (b *Blockchain) executeScheduledTransactions(blockContext fvm.Context) (map
 		fvm.WithTransactionFeesEnabled(false),
 	)
 
-	// System transactions start after all user transactions
+	// Base index for system transactions (equal to count of user transactions)
 	systemTxBaseIndex := uint32(len(b.pendingBlock.Transactions()))
 
 	// process scheduled transactions out-of-band (do not alter collections)
