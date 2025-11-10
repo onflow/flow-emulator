@@ -364,8 +364,8 @@ func (s *Store) SystemTransactionResultByID(
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	// Use composite key for system transaction results
-	key := fmt.Sprintf("%x_%x", blockID, transactionID)
+	// Use composite key for system transaction results (matches DefaultStore format)
+	key := fmt.Sprintf("system_tx_result_%x_%x", blockID, transactionID)
 	result, ok := s.systemTransactionResults[key]
 	if !ok {
 		return types.StorableTransactionResult{}, storage.ErrNotFound
@@ -426,7 +426,8 @@ func (s *Store) insertTransactionResult(txID flowgo.Identifier, result types.Sto
 }
 
 func (s *Store) insertSystemTransactionResult(blockID flowgo.Identifier, txID flowgo.Identifier, result types.StorableTransactionResult) error {
-	key := fmt.Sprintf("%x_%x", blockID, txID)
+	// Use same key format as DefaultStore for consistency
+	key := fmt.Sprintf("system_tx_result_%x_%x", blockID, txID)
 	s.systemTransactionResults[key] = result
 	return nil
 }
