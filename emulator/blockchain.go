@@ -1909,9 +1909,9 @@ func (b *Blockchain) GetTransactionResultsByBlockID(blockID flowgo.Identifier) (
 		return nil, fmt.Errorf("failed to get system transactions %w", err)
 	}
 	for j, txID := range st.Transactions {
-		result, err := b.getTransactionResult(txID)
+		result, err := b.getSystemTransactionResult(blockID, txID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get transaction result [%d] %s: %w", j, txID, err)
+			return nil, fmt.Errorf("failed to get system transaction result [%d] %s: %w", j, txID, err)
 		}
 		results = append(results, result)
 	}
