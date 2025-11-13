@@ -1938,6 +1938,7 @@ func (b *Blockchain) GetSystemTransactionsForBlock(blockID flowgo.Identifier) ([
 
 // GetSystemTransaction returns a system transaction by its ID and block ID.
 // System transactions include scheduled transactions and the system chunk transaction.
+// If txID is the zero identifier, returns the first system transaction for the block.
 func (b *Blockchain) GetSystemTransaction(txID flowgo.Identifier, blockID flowgo.Identifier) (*flowgo.TransactionBody, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
@@ -1949,6 +1950,16 @@ func (b *Blockchain) GetSystemTransaction(txID flowgo.Identifier, blockID flowgo
 			return nil, &types.TransactionNotFoundError{ID: txID}
 		}
 		return nil, fmt.Errorf("failed to get system transactions for block %s: %w", blockID, err)
+	}
+
+	// If zero ID, return the system chunk transaction (last system tx)
+	if txID == flowgo.ZeroID {
+		if len(systemTxs.Transactions) == 0 {
+			return nil, &types.TransactionNotFoundError{ID: txID}
+		}
+		// Return the system chunk transaction (matches flow-go behavior)
+		txID = systemTxs.Transactions[len(systemTxs.Transactions)-1]
+		return b.getTransaction(txID)
 	}
 
 	// Check if the transaction is in the system transactions list
@@ -1969,6 +1980,7 @@ func (b *Blockchain) GetSystemTransaction(txID flowgo.Identifier, blockID flowgo
 }
 
 // GetSystemTransactionResult returns the result of a system transaction by its ID and block ID.
+// If txID is the zero identifier, returns the result of the first system transaction for the block.
 func (b *Blockchain) GetSystemTransactionResult(txID flowgo.Identifier, blockID flowgo.Identifier) (*accessmodel.TransactionResult, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
@@ -1980,6 +1992,16 @@ func (b *Blockchain) GetSystemTransactionResult(txID flowgo.Identifier, blockID 
 			return nil, &types.TransactionNotFoundError{ID: txID}
 		}
 		return nil, fmt.Errorf("failed to get system transactions for block %s: %w", blockID, err)
+	}
+
+	// If zero ID, return the system chunk transaction result (last system tx)
+	if txID == flowgo.ZeroID {
+		if len(systemTxs.Transactions) == 0 {
+			return nil, &types.TransactionNotFoundError{ID: txID}
+		}
+		// Return the system chunk transaction result (matches flow-go behavior)
+		txID = systemTxs.Transactions[len(systemTxs.Transactions)-1]
+		return b.getSystemTransactionResult(blockID, txID)
 	}
 
 	// Check if the transaction is in the system transactions list
