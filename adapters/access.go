@@ -205,13 +205,31 @@ func (a *AccessAdapter) GetTransaction(_ context.Context, id flowgo.Identifier) 
 func (a *AccessAdapter) GetTransactionResult(
 	_ context.Context,
 	id flowgo.Identifier,
-	_ flowgo.Identifier,
+	blockID flowgo.Identifier,
 	_ flowgo.Identifier,
 	requiredEventEncodingVersion entities.EventEncodingVersion,
 ) (
 	*accessmodel.TransactionResult,
 	error,
 ) {
+	// If a blockID is provided, try system transaction result first
+	if blockID != flowgo.ZeroID {
+		if sysResult, err := a.emulator.GetSystemTransactionResult(id, blockID); err == nil {
+			// Convert CCF events to JSON events, else return CCF encoded version
+			if requiredEventEncodingVersion == entities.EventEncodingVersion_JSON_CDC_V0 {
+				sysResult.Events, err = ConvertCCFEventsToJsonEvents(sysResult.Events)
+				if err != nil {
+					return nil, convertError(err, codes.Internal)
+				}
+			}
+			a.logger.Debug().
+				Str("txID", id.String()).
+				Str("blockID", blockID.String()).
+				Msg("📝  GetTransactionResult (system) called")
+			return sysResult, nil
+		}
+	}
+
 	result, err := a.emulator.GetTransactionResult(id)
 	if err != nil {
 		return nil, convertError(err, codes.Internal)
