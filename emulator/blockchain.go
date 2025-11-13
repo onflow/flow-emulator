@@ -72,12 +72,6 @@ import (
 	"github.com/onflow/flow-emulator/utils"
 )
 
-// systemChunkTransactionTemplate looks for the RandomBeaconHistory
-// heartbeat resource on the service account and calls it.
-//
-//go:embed templates/systemChunkTransactionTemplate.cdc
-var systemChunkTransactionTemplate string
-
 var _ Emulator = &Blockchain{}
 
 // New instantiates a new emulated emulator with the provided options.
@@ -98,14 +92,27 @@ func New(opts ...Option) (*Blockchain, error) {
 		clock:                  NewSystemClock(),
 		sourceFileMap:          make(map[common.Location]string),
 		entropyProvider:        &blockHashEntropyProvider{},
+		systemTransactions:     make(map[flowgo.Identifier]*flowgo.TransactionBody),
 		computationReport: &ComputationReport{
 			Scripts:      make(map[string]ProcedureReport),
 			Transactions: make(map[string]ProcedureReport),
 		},
 	}
+
 	err := b.ReloadBlockchain()
 	if err != nil {
 		return nil, err
+	}
+
+	// Cache static system transactions (deterministic IDs across all blocks)
+	chain := conf.ChainID.Chain()
+	processTx, err := blueprints.ProcessCallbacksTransaction(chain)
+	if err == nil {
+		b.systemTransactions[processTx.ID()] = processTx
+	}
+	systemChunkTx, err := b.systemChunkTransaction()
+	if err == nil {
+		b.systemTransactions[systemChunkTx.ID()] = systemChunkTx
 	}
 	if len(conf.Contracts) > 0 {
 		err := DeployContracts(b, conf.Contracts)
@@ -371,6 +378,10 @@ type Blockchain struct {
 	vmCtx fvm.Context
 
 	transactionValidator *validator.TransactionValidator
+
+	// Static system transactions cache
+	// These are deterministic transactions with the same ID across all blocks
+	systemTransactions map[flowgo.Identifier]*flowgo.TransactionBody
 
 	serviceKey ServiceKey
 
@@ -1052,14 +1063,20 @@ func (b *Blockchain) getTransaction(txID flowgo.Identifier) (*flowgo.Transaction
 	}
 
 	tx, err := b.storage.TransactionByID(context.Background(), txID)
-	if err != nil {
-		if errors.Is(err, storage.ErrNotFound) {
-			return nil, &types.TransactionNotFoundError{ID: txID}
-		}
+	if err == nil {
+		return &tx, nil
+	}
+
+	if !errors.Is(err, storage.ErrNotFound) {
 		return nil, err
 	}
 
-	return &tx, nil
+	// Check if it's one of the static system txs (matches flow-go systemCollections.SearchAll)
+	if tx, ok := b.systemTransactions[txID]; ok {
+		return tx, nil
+	}
+
+	return nil, &types.TransactionNotFoundError{ID: txID}
 }
 
 func (b *Blockchain) GetTransactionResult(txID flowgo.Identifier) (*accessmodel.TransactionResult, error) {
@@ -2192,6 +2209,18 @@ func (b *Blockchain) GetSourceFile(location common.Location) string {
 	return location.ID()
 }
 
+// systemChunkTransactionTemplate looks for the RandomBeaconHistory
+// heartbeat resource on the service account and calls it.
+//
+//go:embed templates/systemChunkTransactionTemplate.cdc
+var systemChunkTransactionTemplate string
+
+// systemChunkTransaction creates the system chunk transaction for this block.
+// This uses a custom template (not blueprints.SystemChunkTransaction) because the current
+// flow-go version's blueprint includes epochHeartbeat.advanceBlock() which requires
+// epoch infrastructure the emulator doesn't have. When flow-go is upgraded to a version
+// where this works, we can switch to blueprints.SystemChunkTransaction.
+// The key requirement is: NO reference block ID to keep it deterministic.
 func (b *Blockchain) systemChunkTransaction() (*flowgo.TransactionBody, error) {
 	serviceAddress := b.GetChain().ServiceAddress()
 
@@ -2212,12 +2241,13 @@ func (b *Blockchain) systemChunkTransaction() (*flowgo.TransactionBody, error) {
 		),
 	)
 
+	// CRITICAL: Do NOT set a reference block ID to keep the transaction deterministic.
+	// This matches flow-go's approach where system transactions don't have reference blocks.
 	txBuilder := flowgo.NewTransactionBodyBuilder().
 		SetScript([]byte(script)).
 		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		AddAuthorizer(serviceAddress).
-		SetPayer(serviceAddress).
-		SetReferenceBlockID(b.pendingBlock.parentID)
+		SetPayer(serviceAddress)
 
 	tx, err := txBuilder.Build()
 	if err != nil {
