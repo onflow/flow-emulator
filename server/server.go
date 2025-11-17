@@ -44,12 +44,13 @@ import (
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-emulator/server/access"
 	"github.com/onflow/flow-emulator/server/debugger"
-	"github.com/onflow/flow-emulator/server/utils"
+	serverutils "github.com/onflow/flow-emulator/server/utils"
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/checkpoint"
 	"github.com/onflow/flow-emulator/storage/remote"
 	"github.com/onflow/flow-emulator/storage/sqlite"
 	"github.com/onflow/flow-emulator/storage/util"
+	"github.com/onflow/flow-emulator/utils"
 )
 
 // EmulatorServer is a local server that runs a Flow Emulator instance.
@@ -65,7 +66,7 @@ type EmulatorServer struct {
 	storage       graceland.Routine
 	grpc          *access.GRPCServer
 	rest          *access.RestServer
-	admin         *utils.HTTPServer
+	admin         *serverutils.HTTPServer
 	blocks        graceland.Routine
 	debugger      graceland.Routine
 }
@@ -79,7 +80,7 @@ const (
 	defaultDBGCRatio              = 0.5
 )
 
-var defaultHTTPHeaders = []utils.HTTPHeader{
+var defaultHTTPHeaders = []serverutils.HTTPHeader{
 	{
 		Key:   "Access-Control-Allow-Origin",
 		Value: "*",
@@ -102,7 +103,7 @@ type Config struct {
 	DebuggerPort              int
 	RESTPort                  int
 	RESTDebug                 bool
-	HTTPHeaders               []utils.HTTPHeader
+	HTTPHeaders               []serverutils.HTTPHeader
 	BlockTime                 time.Duration
 	ServicePublicKey          crypto.PublicKey
 	ServicePrivateKey         crypto.PrivateKey
@@ -243,7 +244,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	}
 
 	accessAdapter := adapters.NewAccessAdapter(logger, emulatedBlockchain)
-	livenessTicker := utils.NewLivenessTicker(conf.LivenessCheckTolerance)
+	livenessTicker := serverutils.NewLivenessTicker(conf.LivenessCheckTolerance)
 	grpcServer := access.NewGRPCServer(logger, emulatedBlockchain, accessAdapter, chain, conf.Host, conf.GRPCPort, conf.GRPCDebug)
 	restServer, err := access.NewRestServer(logger, emulatedBlockchain, accessAdapter, chain, conf.Host, conf.RESTPort, conf.RESTDebug)
 	if err != nil {
@@ -264,7 +265,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 		debugger:      debugger.New(logger, emulatedBlockchain, conf.DebuggerPort),
 	}
 
-	server.admin = utils.NewAdminServer(logger, emulatedBlockchain, accessAdapter, grpcServer, livenessTicker, conf.Host, conf.AdminPort, conf.HTTPHeaders)
+	server.admin = serverutils.NewAdminServer(logger, emulatedBlockchain, accessAdapter, grpcServer, livenessTicker, conf.Host, conf.AdminPort, conf.HTTPHeaders)
 
 	// only create blocks ticker if block time > 0
 	if conf.BlockTime > 0 {
@@ -280,12 +281,17 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 // detectRemoteChainID connects to the remote access node and fetches network parameters to obtain the chain ID.
 func DetectRemoteChainID(url string) (flowgo.ChainID, error) {
 	// Expect raw host:port
-	conn, err := grpc.NewClient(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(
+		url,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultServiceConfig(utils.DefaultGRPCServiceConfig),
+	)
 	if err != nil {
 		return "", err
 	}
 	defer func() { _ = conn.Close() }()
 	client := flowaccess.NewAccessAPIClient(conn)
+
 	resp, err := client.GetNetworkParameters(context.Background(), &flowaccess.GetNetworkParametersRequest{})
 	if err != nil {
 		return "", err
