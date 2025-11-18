@@ -181,7 +181,7 @@ type InvalidTransactionGasLimitError struct {
 func (e *InvalidTransactionGasLimitError) isTransactionValidationError() {}
 
 func (e *InvalidTransactionGasLimitError) Error() string {
-	return fmt.Sprintf("transaction gas limit (%d) exceeds the maximum gas limit (%d)", e.Actual, e.Maximum)
+	return fmt.Sprintf("transaction compute limit (%d) exceeds the maximum compute limit (%d)", e.Actual, e.Maximum)
 }
 
 // An InvalidStateVersionError indicates that a state version hash provided is invalid.
