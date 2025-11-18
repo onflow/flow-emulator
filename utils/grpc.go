@@ -22,7 +22,7 @@ package utils
 // The empty object wildcard [{}] matches all services and methods.
 const DefaultGRPCServiceConfig = `{
 	"methodConfig": [{
-		"name": [{}],
+		"name": [],
 		"retryPolicy": {
 			"maxAttempts": 8,
 			"initialBackoff": "1s",
