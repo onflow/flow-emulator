@@ -17,12 +17,14 @@ on:
       - "release/**"
 
 env:
-    GO_VERSION: 1.25
+  GO_VERSION: 1.25
 
 jobs:
   test:
     name: "Test"
     runs-on: ubuntu-latest
+    env:
+      GRPC_GO_RETRY: "on"
     steps:
       - uses: actions/checkout@v5
         with:
