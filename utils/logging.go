@@ -32,13 +32,13 @@ func PrintScriptResult(logger *zerolog.Logger, result *types.ScriptResult) {
 	if result.Succeeded() {
 		logger.Debug().
 			Str("scriptID", result.ScriptID.String()).
-			Uint64("computationUsed", result.ComputationUsed).
+			Uint64("computeUnitsUsed", result.ComputationUsed).
 			Uint64("memoryEstimate", result.MemoryEstimate).
 			Msg("⭐  Script executed")
 	} else {
 		logger.Warn().
 			Str("scriptID", result.ScriptID.String()).
-			Uint64("computationUsed", result.ComputationUsed).
+			Uint64("computeUnitsUsed", result.ComputationUsed).
 			Uint64("memoryEstimate", result.MemoryEstimate).
 			Msg("❗  Script reverted")
 	}
@@ -56,13 +56,13 @@ func PrintTransactionResult(logger *zerolog.Logger, result *types.TransactionRes
 	if result.Succeeded() {
 		logger.Debug().
 			Str("txID", result.TransactionID.String()).
-			Uint64("computationUsed", result.ComputationUsed).
+			Uint64("computeUnitsUsed", result.ComputationUsed).
 			Uint64("memoryEstimate", result.MemoryEstimate).
 			Msg("⭐  Transaction executed")
 	} else {
 		logger.Warn().
 			Str("txID", result.TransactionID.String()).
-			Uint64("computationUsed", result.ComputationUsed).
+			Uint64("computeUnitsUsed", result.ComputationUsed).
 			Uint64("memoryEstimate", result.MemoryEstimate).
 			Msg("❗  Transaction reverted")
 	}
@@ -95,7 +95,7 @@ func PrintScheduledTransactionResult(logger *zerolog.Logger, result *types.Trans
 		logger.Debug().
 			Str("systemTxId", result.TransactionID.String()).
 			Str("scheduledTxId", scheduledTxID).
-			Uint64("computationUsed", result.ComputationUsed).
+			Uint64("computeUnitsUsed", result.ComputationUsed).
 			Uint64("memoryEstimate", result.MemoryEstimate).
 			Str("kind", "scheduled").
 			Msg("⏱️  Scheduled transaction executed")
@@ -103,7 +103,7 @@ func PrintScheduledTransactionResult(logger *zerolog.Logger, result *types.Trans
 		logger.Warn().
 			Str("systemTxId", result.TransactionID.String()).
 			Str("scheduledTxId", scheduledTxID).
-			Uint64("computationUsed", result.ComputationUsed).
+			Uint64("computeUnitsUsed", result.ComputationUsed).
 			Uint64("memoryEstimate", result.MemoryEstimate).
 			Str("kind", "scheduled").
 			Msg("❗  Scheduled transaction reverted")
