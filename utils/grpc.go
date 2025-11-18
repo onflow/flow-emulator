@@ -18,15 +18,11 @@
 
 package utils
 
-// DefaultGRPCServiceConfig provides automatic retry configuration for transient gRPC errors.
-// Retries are applied to AccessAPI and ExecutionDataAPI to handle network issues and
-// rate limiting from remote access nodes.
+// DefaultGRPCServiceConfig configures native gRPC retries for transient failures.
+// The empty object wildcard [{}] matches all services and methods.
 const DefaultGRPCServiceConfig = `{
 	"methodConfig": [{
-		"name": [
-			{"service": "flow.access.AccessAPI"},
-			{"service": "flow.executiondata.ExecutionDataAPI"}
-		],
+		"name": [{}],
 		"retryPolicy": {
 			"maxAttempts": 10,
 			"initialBackoff": "1s",
@@ -36,3 +32,4 @@ const DefaultGRPCServiceConfig = `{
 		}
 	}]
 }`
+
