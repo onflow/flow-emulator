@@ -24,7 +24,7 @@ const DefaultGRPCServiceConfig = `{
 	"methodConfig": [{
 		"name": [{}],
 		"retryPolicy": {
-			"maxAttempts": 10,
+			"maxAttempts": 8,
 			"initialBackoff": "1s",
 			"maxBackoff": "30s",
 			"backoffMultiplier": 2,
