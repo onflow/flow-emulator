@@ -19,12 +19,8 @@
 package utils
 
 // DefaultGRPCServiceConfig provides automatic retry configuration for transient gRPC errors.
-// This config is applied to all remote gRPC connections to handle network flakiness and
+// Retries are applied to AccessAPI and ExecutionDataAPI to handle network issues and
 // rate limiting from remote access nodes.
-//
-// Note: We explicitly list service names instead of using the [{}] wildcard matcher because
-// empirical testing showed inconsistent matching behavior across environments. Explicit service
-// names ensure the retry policy is reliably applied in all environments including CI.
 const DefaultGRPCServiceConfig = `{
 	"methodConfig": [{
 		"name": [
