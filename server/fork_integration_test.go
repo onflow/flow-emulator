@@ -41,7 +41,7 @@ func TestForkingAgainstTestnet(t *testing.T) {
 	conn, err := grpc.NewClient(
 		"access.testnet.nodes.onflow.org:9000",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithDefaultServiceConfig(utils.DefaultGRPCServiceConfig),
+		utils.DefaultGRPCRetryInterceptor(),
 	)
 	if err != nil {
 		t.Fatalf("dial remote: %v", err)
@@ -53,7 +53,7 @@ func TestForkingAgainstTestnet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get remote header: %v", err)
 	}
-	remoteHeight := rh.Block.Height
+	remoteHeight := rh.Block.Height - 10 // Use a buffer to avoid edge cases
 
 	cfg := &Config{
 		// Do not start listeners; NewEmulatorServer only configures components.
@@ -177,7 +177,7 @@ func TestForkingAgainstMainnet(t *testing.T) {
 	conn, err := grpc.NewClient(
 		"access.mainnet.nodes.onflow.org:9000",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithDefaultServiceConfig(utils.DefaultGRPCServiceConfig),
+		utils.DefaultGRPCRetryInterceptor(),
 	)
 	if err != nil {
 		t.Fatalf("dial remote: %v", err)
@@ -189,7 +189,7 @@ func TestForkingAgainstMainnet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get remote header: %v", err)
 	}
-	remoteHeight := rh.Block.Height
+	remoteHeight := rh.Block.Height - 10 // Use a buffer to avoid edge cases
 
 	cfg := &Config{
 		// Do not start listeners; NewEmulatorServer only configures components.

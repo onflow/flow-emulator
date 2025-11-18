@@ -284,10 +284,10 @@ func DetectRemoteChainID(url string) (flowgo.ChainID, error) {
 	conn, err := grpc.NewClient(
 		url,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithDefaultServiceConfig(utils.DefaultGRPCServiceConfig),
+		utils.DefaultGRPCRetryInterceptor(),
 	)
 	if err != nil {
-		return "",fmt.Errorf("could not connect to remote access node: %w", err)
+		return "", err
 	}
 	defer func() { _ = conn.Close() }()
 	client := flowaccess.NewAccessAPIClient(conn)
