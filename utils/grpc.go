@@ -28,9 +28,9 @@ const DefaultGRPCServiceConfig = `{
 			{"service": "flow.executiondata.ExecutionDataAPI"}
 		],
 		"retryPolicy": {
-			"maxAttempts": 10,
-			"initialBackoff": "1s",
-			"maxBackoff": "30s",
+			"maxAttempts": 12,
+			"initialBackoff": "2s",
+			"maxBackoff": "60s",
 			"backoffMultiplier": 2,
 			"retryableStatusCodes": ["UNAVAILABLE", "RESOURCE_EXHAUSTED", "UNKNOWN"]
 		}
