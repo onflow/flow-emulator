@@ -19,23 +19,21 @@
 package utils
 
 // DefaultGRPCServiceConfig provides automatic retry configuration for transient gRPC errors.
-// This config is applied to all remote gRPC connections to handle network flakiness in CI
-// and other environments.
+// This config is applied to all remote gRPC connections to handle network flakiness and
+// rate limiting from remote access nodes.
 //
-// Retries on:
-// - UNAVAILABLE: Service temporarily unavailable (e.g., node restarting)
-// - RESOURCE_EXHAUSTED: Rate limiting from remote node
-// - UNKNOWN: Connection failures, DNS issues, and other network errors
-//
-// Note: We only retry on clearly transient network/availability errors.
-// We do NOT retry on INTERNAL (programming errors), ABORTED (conflicts),
-// or DEADLINE_EXCEEDED (to avoid cascading failures on slow services).
+// Note: We explicitly list service names instead of using the [{}] wildcard matcher because
+// empirical testing showed inconsistent matching behavior across environments. Explicit service
+// names ensure the retry policy is reliably applied in all environments including CI.
 const DefaultGRPCServiceConfig = `{
 	"methodConfig": [{
-		"name": [{"service": ""}],
+		"name": [
+			{"service": "flow.access.AccessAPI"},
+			{"service": "flow.executiondata.ExecutionDataAPI"}
+		],
 		"retryPolicy": {
-			"maxAttempts": 5,
-			"initialBackoff": "0.1s",
+			"maxAttempts": 10,
+			"initialBackoff": "1s",
 			"maxBackoff": "30s",
 			"backoffMultiplier": 2,
 			"retryableStatusCodes": ["UNAVAILABLE", "RESOURCE_EXHAUSTED", "UNKNOWN"]
