@@ -41,7 +41,7 @@ func TestForkingAgainstTestnet(t *testing.T) {
 	conn, err := grpc.NewClient(
 		"access.testnet.nodes.onflow.org:9000",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithDefaultServiceConfig(utils.DefaultGRPCServiceConfig),
+		utils.DefaultGRPCRetryInterceptor(),
 	)
 	if err != nil {
 		t.Fatalf("dial remote: %v", err)
@@ -177,7 +177,7 @@ func TestForkingAgainstMainnet(t *testing.T) {
 	conn, err := grpc.NewClient(
 		"access.mainnet.nodes.onflow.org:9000",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithDefaultServiceConfig(utils.DefaultGRPCServiceConfig),
+		utils.DefaultGRPCRetryInterceptor(),
 	)
 	if err != nil {
 		t.Fatalf("dial remote: %v", err)
