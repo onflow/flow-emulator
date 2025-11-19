@@ -66,7 +66,7 @@ type Config struct {
 	TransactionFeesEnabled       bool          `default:"false" flag:"transaction-fees" info:"enable transaction fees"`
 	TransactionMaxGasLimit       int           `default:"9999" flag:"transaction-max-gas-limit" info:"(deprecated) use --transaction-max-compute-limit"`
 	ScriptGasLimit               int           `default:"100000" flag:"script-gas-limit" info:"(deprecated) use --script-compute-limit"`
-	TransactionMaxComputeLimit   int           `default:"9999" flag:"transaction-max-compute-limit" info:"maximum compute limit for transactions"`
+	TransactionMaxComputeLimit   int           `default:"9999" flag:"transaction-max-compute-limit" info:"maximum computation limit for transactions"`
 	ScriptComputeLimit           int           `default:"100000" flag:"script-compute-limit" info:"compute limit for scripts"`
 	Contracts                    bool          `default:"false" flag:"contracts" info:"deploy common contracts when emulator starts"`
 	ContractRemovalEnabled       bool          `default:"true" flag:"contract-removal" info:"allow removal of already deployed contracts, used for updating during development"`
