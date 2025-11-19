@@ -18,27 +18,77 @@
 
 package utils
 
-// DefaultGRPCServiceConfig provides automatic retry configuration for transient gRPC errors.
-// This config is applied to all remote gRPC connections to handle network flakiness in CI
-// and other environments.
-//
-// Retries on:
-// - UNAVAILABLE: Service temporarily unavailable (e.g., node restarting)
-// - RESOURCE_EXHAUSTED: Rate limiting from remote node
-// - UNKNOWN: Connection failures, DNS issues, and other network errors
-//
-// Note: We only retry on clearly transient network/availability errors.
-// We do NOT retry on INTERNAL (programming errors), ABORTED (conflicts),
-// or DEADLINE_EXCEEDED (to avoid cascading failures on slow services).
-const DefaultGRPCServiceConfig = `{
-	"methodConfig": [{
-		"name": [{"service": ""}],
-		"retryPolicy": {
-			"maxAttempts": 5,
-			"initialBackoff": "0.1s",
-			"maxBackoff": "30s",
-			"backoffMultiplier": 2,
-			"retryableStatusCodes": ["UNAVAILABLE", "RESOURCE_EXHAUSTED", "UNKNOWN"]
+import (
+	"context"
+	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+const (
+	defaultMaxAttempts    = 10
+	defaultInitialBackoff = 1 * time.Second
+	defaultMaxBackoff     = 30 * time.Second
+	defaultBackoffFactor  = 2.0
+)
+
+// DefaultGRPCRetryInterceptor returns a unary client interceptor that retries
+// transient failures with exponential backoff. Unlike native gRPC retries, this
+// ignores server pushback headers (grpc-retry-pushback-ms) so rate-limited calls
+// will retry client-side rather than fail immediately.
+func DefaultGRPCRetryInterceptor() grpc.DialOption {
+	return grpc.WithChainUnaryInterceptor(retryInterceptor)
+}
+
+func retryInterceptor(
+	ctx context.Context,
+	method string,
+	req, reply any,
+	cc *grpc.ClientConn,
+	invoker grpc.UnaryInvoker,
+	opts ...grpc.CallOption,
+) error {
+	var lastErr error
+	backoff := defaultInitialBackoff
+
+	for attempt := 0; attempt < defaultMaxAttempts; attempt++ {
+		if attempt > 0 {
+			// Wait before retry
+			select {
+			case <-time.After(backoff):
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+			// Exponential backoff with cap
+			backoff = time.Duration(float64(backoff) * defaultBackoffFactor)
+			if backoff > defaultMaxBackoff {
+				backoff = defaultMaxBackoff
+			}
 		}
-	}]
-}`
+
+		lastErr = invoker(ctx, method, req, reply, cc, opts...)
+		if lastErr == nil {
+			return nil
+		}
+
+		// Check if error is retryable
+		code := status.Code(lastErr)
+		if !isRetryableCode(code) {
+			return lastErr
+		}
+	}
+
+	return lastErr
+}
+
+func isRetryableCode(code codes.Code) bool {
+	switch code {
+	case codes.Unavailable, codes.ResourceExhausted, codes.Unknown:
+		return true
+	default:
+		return false
+	}
+}
+

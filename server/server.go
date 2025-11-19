@@ -284,7 +284,7 @@ func DetectRemoteChainID(url string) (flowgo.ChainID, error) {
 	conn, err := grpc.NewClient(
 		url,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithDefaultServiceConfig(utils.DefaultGRPCServiceConfig),
+		utils.DefaultGRPCRetryInterceptor(),
 	)
 	if err != nil {
 		return "", err

@@ -120,7 +120,7 @@ func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*St
 			store.host,
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 			grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1024*1024*1024)),
-			grpc.WithDefaultServiceConfig(utils.DefaultGRPCServiceConfig),
+			utils.DefaultGRPCRetryInterceptor(),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("could not connect to rpc host: %w", err)
