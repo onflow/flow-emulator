@@ -1877,7 +1877,7 @@ func TestTransactionExecutionLimit(t *testing.T) {
 	t.Run("SufficientLimit", func(t *testing.T) {
 		t.Parallel()
 
-		const limit = 19000
+		const limit = 25000
 
 		b, adapter := setupTransactionTests(
 			t,

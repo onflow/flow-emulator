@@ -24,6 +24,7 @@ import (
 
 	"github.com/onflow/cadence"
 	"github.com/onflow/flow-emulator/convert"
+	"github.com/onflow/flow-emulator/utils"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	flowaccess "github.com/onflow/flow/protobuf/go/flow/access"
@@ -36,18 +37,23 @@ import (
 func TestForkingAgainstTestnet(t *testing.T) {
 	logger := zerolog.Nop()
 
-	// Get remote latest sealed height to pin fork
-	conn, err := grpc.NewClient("access.testnet.nodes.onflow.org:9000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// Get remote latest sealed height to pin fork with automatic retry
+	conn, err := grpc.NewClient(
+		"access.testnet.nodes.onflow.org:9000",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		utils.DefaultGRPCRetryInterceptor(),
+	)
 	if err != nil {
 		t.Fatalf("dial remote: %v", err)
 	}
 	defer func() { _ = conn.Close() }()
 	remote := flowaccess.NewAccessAPIClient(conn)
+
 	rh, err := remote.GetLatestBlockHeader(context.Background(), &flowaccess.GetLatestBlockHeaderRequest{IsSealed: true})
 	if err != nil {
 		t.Fatalf("get remote header: %v", err)
 	}
-	remoteHeight := rh.Block.Height
+	remoteHeight := rh.Block.Height - 10 // Use a buffer to avoid edge cases
 
 	cfg := &Config{
 		// Do not start listeners; NewEmulatorServer only configures components.
@@ -167,18 +173,23 @@ func TestForkingAgainstTestnet(t *testing.T) {
 func TestForkingAgainstMainnet(t *testing.T) {
 	logger := zerolog.Nop()
 
-	// Get remote latest sealed height to pin fork
-	conn, err := grpc.NewClient("access.mainnet.nodes.onflow.org:9000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// Get remote latest sealed height to pin fork with automatic retry
+	conn, err := grpc.NewClient(
+		"access.mainnet.nodes.onflow.org:9000",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		utils.DefaultGRPCRetryInterceptor(),
+	)
 	if err != nil {
 		t.Fatalf("dial remote: %v", err)
 	}
 	defer func() { _ = conn.Close() }()
 	remote := flowaccess.NewAccessAPIClient(conn)
+
 	rh, err := remote.GetLatestBlockHeader(context.Background(), &flowaccess.GetLatestBlockHeaderRequest{IsSealed: true})
 	if err != nil {
 		t.Fatalf("get remote header: %v", err)
 	}
-	remoteHeight := rh.Block.Height
+	remoteHeight := rh.Block.Height - 10 // Use a buffer to avoid edge cases
 
 	cfg := &Config{
 		// Do not start listeners; NewEmulatorServer only configures components.

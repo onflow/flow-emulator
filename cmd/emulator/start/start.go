@@ -64,8 +64,10 @@ type Config struct {
 	StorageMBPerFLOW             string        `flag:"storage-per-flow" info:"the MB amount of storage capacity an account has per 1 FLOW token it has. e.g. '100.0'. The default is taken from the current version of flow-go"`
 	MinimumAccountBalance        string        `flag:"min-account-balance" info:"The minimum account balance of an account. This is also the cost of creating one account. e.g. '0.001'. The default is taken from the current version of flow-go"`
 	TransactionFeesEnabled       bool          `default:"false" flag:"transaction-fees" info:"enable transaction fees"`
-	TransactionMaxGasLimit       int           `default:"9999" flag:"transaction-max-gas-limit" info:"maximum gas limit for transactions"`
-	ScriptGasLimit               int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
+	TransactionMaxGasLimit       int           `default:"9999" flag:"transaction-max-gas-limit" info:"(deprecated) use --transaction-max-compute-limit"`
+	ScriptGasLimit               int           `default:"100000" flag:"script-gas-limit" info:"(deprecated) use --script-compute-limit"`
+	TransactionMaxComputeLimit   int           `default:"9999" flag:"transaction-max-compute-limit" info:"maximum computation limit for transactions"`
+	ScriptComputeLimit           int           `default:"100000" flag:"script-compute-limit" info:"compute limit for scripts"`
 	Contracts                    bool          `default:"false" flag:"contracts" info:"deploy common contracts when emulator starts"`
 	ContractRemovalEnabled       bool          `default:"true" flag:"contract-removal" info:"allow removal of already deployed contracts, used for updating during development"`
 	SkipTxValidation             bool          `default:"false" flag:"skip-tx-validation" info:"skip verification of transaction signatures and sequence numbers"`
@@ -162,6 +164,20 @@ func Cmd(config StartConfig) *cobra.Command {
 				conf.ForkHeight = conf.StartBlockHeight
 			}
 
+			// Gas/Compute terminology deprecation
+			if cmd.PersistentFlags().Changed("transaction-max-gas-limit") {
+				logger.Warn().Msg("❗  --transaction-max-gas-limit is deprecated; use --transaction-max-compute-limit")
+				if !cmd.PersistentFlags().Changed("transaction-max-compute-limit") {
+					conf.TransactionMaxComputeLimit = conf.TransactionMaxGasLimit
+				}
+			}
+			if cmd.PersistentFlags().Changed("script-gas-limit") {
+				logger.Warn().Msg("❗  --script-gas-limit is deprecated; use --script-compute-limit")
+				if !cmd.PersistentFlags().Changed("script-compute-limit") {
+					conf.ScriptComputeLimit = conf.ScriptGasLimit
+				}
+			}
+
 			// In non-fork mode, fork-only flags are invalid
 			if conf.ForkHost == "" && (conf.StartBlockHeight > 0 || conf.ForkHeight > 0) {
 				Exit(1, "❗  --fork-height requires --fork-host")
@@ -210,8 +226,8 @@ func Cmd(config StartConfig) *cobra.Command {
 				Snapshot:                     conf.Snapshot,
 				DBPath:                       conf.DBPath,
 				GenesisTokenSupply:           parseCadenceUFix64(conf.TokenSupply, "token-supply"),
-				TransactionMaxGasLimit:       uint64(conf.TransactionMaxGasLimit),
-				ScriptGasLimit:               uint64(conf.ScriptGasLimit),
+				TransactionMaxGasLimit:       uint64(conf.TransactionMaxComputeLimit),
+				ScriptGasLimit:               uint64(conf.ScriptComputeLimit),
 				TransactionExpiry:            uint(conf.TransactionExpiry),
 				StorageLimitEnabled:          conf.StorageLimitEnabled,
 				StorageMBPerFLOW:             storageMBPerFLOW,
@@ -274,6 +290,10 @@ func Cmd(config StartConfig) *cobra.Command {
 	_ = cmd.PersistentFlags().MarkDeprecated("rpc-host", "use --fork-host")
 	_ = cmd.PersistentFlags().MarkHidden("start-block-height")
 	_ = cmd.PersistentFlags().MarkDeprecated("start-block-height", "use --fork-height")
+	_ = cmd.PersistentFlags().MarkHidden("transaction-max-gas-limit")
+	_ = cmd.PersistentFlags().MarkDeprecated("transaction-max-gas-limit", "use --transaction-max-compute-limit")
+	_ = cmd.PersistentFlags().MarkHidden("script-gas-limit")
+	_ = cmd.PersistentFlags().MarkDeprecated("script-gas-limit", "use --script-compute-limit")
 
 	return cmd
 }
