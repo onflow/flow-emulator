@@ -18,7 +18,7 @@ require (
 	github.com/onflow/flow-go v0.44.0-experimental-cadence-v1.8.3.0.20251126001102-cdce9911c2ab
 	github.com/onflow/flow-go-sdk v1.9.5
 	github.com/onflow/flow-nft/lib/go/contracts v1.3.0
-	github.com/onflow/flow/protobuf/go/flow v0.4.18
+	github.com/onflow/flow/protobuf/go/flow v0.4.19
 	github.com/prometheus/client_golang v1.23.2
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
