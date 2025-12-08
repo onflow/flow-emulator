@@ -64,8 +64,10 @@ type Config struct {
 	StorageMBPerFLOW             string        `flag:"storage-per-flow" info:"the MB amount of storage capacity an account has per 1 FLOW token it has. e.g. '100.0'. The default is taken from the current version of flow-go"`
 	MinimumAccountBalance        string        `flag:"min-account-balance" info:"The minimum account balance of an account. This is also the cost of creating one account. e.g. '0.001'. The default is taken from the current version of flow-go"`
 	TransactionFeesEnabled       bool          `default:"false" flag:"transaction-fees" info:"enable transaction fees"`
-	TransactionMaxGasLimit       int           `default:"9999" flag:"transaction-max-gas-limit" info:"maximum gas limit for transactions"`
-	ScriptGasLimit               int           `default:"100000" flag:"script-gas-limit" info:"gas limit for scripts"`
+	TransactionMaxGasLimit       int           `default:"9999" flag:"transaction-max-gas-limit" info:"(deprecated) use --transaction-max-compute-limit"`
+	ScriptGasLimit               int           `default:"100000" flag:"script-gas-limit" info:"(deprecated) use --script-compute-limit"`
+	TransactionMaxComputeLimit   int           `default:"9999" flag:"transaction-max-compute-limit" info:"maximum computation limit for transactions"`
+	ScriptComputeLimit           int           `default:"100000" flag:"script-compute-limit" info:"compute limit for scripts"`
 	Contracts                    bool          `default:"false" flag:"contracts" info:"deploy common contracts when emulator starts"`
 	ContractRemovalEnabled       bool          `default:"true" flag:"contract-removal" info:"allow removal of already deployed contracts, used for updating during development"`
 	SkipTxValidation             bool          `default:"false" flag:"skip-tx-validation" info:"skip verification of transaction signatures and sequence numbers"`
@@ -74,9 +76,10 @@ type Config struct {
 	RedisURL                     string        `default:"" flag:"redis-url" info:"redis-server URL for persisting redis storage backend ( redis://[[username:]password@]host[:port][/database] ) "`
 	SqliteURL                    string        `default:"" flag:"sqlite-url" info:"sqlite db URL for persisting sqlite storage backend "`
 	CoverageReportingEnabled     bool          `default:"false" flag:"coverage-reporting" info:"enable Cadence code coverage reporting"`
+	ComputationProfilingEnabled  bool          `default:"false" flag:"computation-profiling" info:"enable Cadence computation profiling"`
 	LegacyContractUpgradeEnabled bool          `default:"false" flag:"legacy-upgrade" info:"enable Cadence legacy contract upgrade"`
-	StartBlockHeight             uint64        `default:"0" flag:"start-block-height" info:"block height to start the emulator at. only valid when forking Mainnet or Testnet"`
-	RPCHost                      string        `default:"" flag:"rpc-host" info:"rpc host to query when forking Mainnet or Testnet"`
+	ForkHost                     string        `default:"" flag:"fork-host" info:"gRPC access node address (host:port) to fork from"`
+	ForkHeight                   uint64        `default:"0" flag:"fork-height" info:"height to pin fork; defaults to latest sealed"`
 	CheckpointPath               string        `default:"" flag:"checkpoint-dir" info:"checkpoint directory to load the emulator state from"`
 	StateHash                    string        `default:"" flag:"state-hash" info:"state hash of the checkpoint to load the emulator state from"`
 	ComputationReportingEnabled  bool          `default:"false" flag:"computation-reporting" info:"enable Cadence computation reporting"`
@@ -84,6 +87,10 @@ type Config struct {
 	SetupEVMEnabled              bool          `default:"true" flag:"setup-evm" info:"enable EVM setup for the emulator, this will deploy the EVM contracts"`
 	SetupVMBridgeEnabled         bool          `default:"true" flag:"setup-vm-bridge" info:"enable VM Bridge setup for the emulator, this will deploy the VM Bridge contracts"`
 	NumAccounts                  int           `default:"0" flag:"num-accounts" info:"number of precreated accounts at startup"`
+
+	// Deprecated hidden aliases
+	StartBlockHeight uint64 `default:"0" flag:"start-block-height" info:"(deprecated) use --fork-height"`
+	RPCHost          string `default:"" flag:"rpc-host" info:"(deprecated) use --fork-host"`
 }
 
 const EnvPrefix = "FLOW"
@@ -148,31 +155,37 @@ func Cmd(config StartConfig) *cobra.Command {
 				Exit(1, err.Error())
 			}
 
-			if conf.StartBlockHeight > 0 && flowChainID != flowgo.Mainnet && flowChainID != flowgo.Testnet {
-				Exit(1, "❗  --start-block-height is only valid when forking Mainnet or Testnet")
+			// Deprecation shims: map old flags to new and warn
+			if conf.RPCHost != "" && conf.ForkHost == "" {
+				logger.Warn().Msg("❗  --rpc-host is deprecated; use --fork-host")
+				conf.ForkHost = conf.RPCHost
+			}
+			if conf.StartBlockHeight > 0 && conf.ForkHeight == 0 {
+				logger.Warn().Msg("❗  --start-block-height is deprecated; use --fork-height")
+				conf.ForkHeight = conf.StartBlockHeight
 			}
 
-			if (flowChainID == flowgo.Mainnet || flowChainID == flowgo.Testnet) && conf.RPCHost == "" {
-				Exit(1, "❗  --rpc-host must be provided when forking Mainnet or Testnet")
+			// Gas/Compute terminology deprecation
+			if cmd.PersistentFlags().Changed("transaction-max-gas-limit") {
+				logger.Warn().Msg("❗  --transaction-max-gas-limit is deprecated; use --transaction-max-compute-limit")
+				if !cmd.PersistentFlags().Changed("transaction-max-compute-limit") {
+					conf.TransactionMaxComputeLimit = conf.TransactionMaxGasLimit
+				}
+			}
+			if cmd.PersistentFlags().Changed("script-gas-limit") {
+				logger.Warn().Msg("❗  --script-gas-limit is deprecated; use --script-compute-limit")
+				if !cmd.PersistentFlags().Changed("script-compute-limit") {
+					conf.ScriptComputeLimit = conf.ScriptGasLimit
+				}
 			}
 
-			serviceAddress := flowsdk.ServiceAddress(flowsdk.ChainID(flowChainID))
-			if conf.SimpleAddresses {
-				serviceAddress = flowsdk.HexToAddress("0x1")
+			// In non-fork mode, fork-only flags are invalid
+			if conf.ForkHost == "" && (conf.StartBlockHeight > 0 || conf.ForkHeight > 0) {
+				Exit(1, "❗  --fork-height requires --fork-host")
 			}
 
-			serviceFields := map[string]any{
-				"serviceAddress":  serviceAddress.Hex(),
-				"servicePubKey":   hex.EncodeToString(servicePublicKey.Encode()),
-				"serviceSigAlgo":  serviceKeySigAlgo.String(),
-				"serviceHashAlgo": serviceKeyHashAlgo.String(),
-			}
-
-			if servicePrivateKey != nil {
-				serviceFields["servicePrivKey"] = hex.EncodeToString(servicePrivateKey.Encode())
-			}
-
-			logger.Info().Fields(serviceFields).Msgf("⚙️ Using service account 0x%s", serviceAddress.Hex())
+			// Service account logging is deferred until after server configuration to allow
+			// higher-level wrappers to customize fork settings via ConfigureServer.
 
 			minimumStorageReservation := fvm.DefaultMinimumStorageReservation
 			if conf.MinimumAccountBalance != "" {
@@ -182,6 +195,18 @@ func Cmd(config StartConfig) *cobra.Command {
 			storageMBPerFLOW := fvm.DefaultStorageMBPerFLOW
 			if conf.StorageMBPerFLOW != "" {
 				storageMBPerFLOW = parseCadenceUFix64(conf.StorageMBPerFLOW, "storage-per-flow")
+			}
+
+			// Recompute chain ID and service address accurately for fork mode by querying the node.
+			forkHost := conf.ForkHost
+			resolvedChainID := flowChainID
+			forkMode := forkHost != ""
+			if forkMode {
+				parsed, err := server.DetectRemoteChainID(forkHost)
+				if err != nil {
+					Exit(1, fmt.Sprintf("failed to detect remote chain id from %s: %v", forkHost, err))
+				}
+				resolvedChainID = parsed
 			}
 
 			serverConf := &server.Config{
@@ -202,8 +227,8 @@ func Cmd(config StartConfig) *cobra.Command {
 				Snapshot:                     conf.Snapshot,
 				DBPath:                       conf.DBPath,
 				GenesisTokenSupply:           parseCadenceUFix64(conf.TokenSupply, "token-supply"),
-				TransactionMaxGasLimit:       uint64(conf.TransactionMaxGasLimit),
-				ScriptGasLimit:               uint64(conf.ScriptGasLimit),
+				TransactionMaxGasLimit:       uint64(conf.TransactionMaxComputeLimit),
+				ScriptGasLimit:               uint64(conf.ScriptComputeLimit),
 				TransactionExpiry:            uint(conf.TransactionExpiry),
 				StorageLimitEnabled:          conf.StorageLimitEnabled,
 				StorageMBPerFLOW:             storageMBPerFLOW,
@@ -213,21 +238,40 @@ func Cmd(config StartConfig) *cobra.Command {
 				SkipTransactionValidation:    conf.SkipTxValidation,
 				SimpleAddressesEnabled:       conf.SimpleAddresses,
 				Host:                         conf.Host,
-				ChainID:                      flowChainID,
+				ChainID:                      resolvedChainID,
 				RedisURL:                     conf.RedisURL,
 				ContractRemovalEnabled:       conf.ContractRemovalEnabled,
 				SqliteURL:                    conf.SqliteURL,
 				CoverageReportingEnabled:     conf.CoverageReportingEnabled,
-				StartBlockHeight:             conf.StartBlockHeight,
-				RPCHost:                      conf.RPCHost,
+				ComputationProfilingEnabled:  conf.ComputationProfilingEnabled,
+				ForkHost:                     conf.ForkHost,
+				ForkHeight:                   conf.ForkHeight,
 				CheckpointPath:               conf.CheckpointPath,
 				StateHash:                    conf.StateHash,
 				ComputationReportingEnabled:  conf.ComputationReportingEnabled,
 				ScheduledTransactionsEnabled: conf.ScheduledTransactionsEnabled,
 				SetupEVMEnabled:              conf.SetupEVMEnabled,
 				SetupVMBridgeEnabled:         conf.SetupVMBridgeEnabled,
-				NumAccounts:                   conf.NumAccounts,
+				NumAccounts:                  conf.NumAccounts,
 			}
+
+			serviceAddress := flowsdk.ServiceAddress(flowsdk.ChainID(resolvedChainID))
+			if conf.SimpleAddresses {
+				serviceAddress = flowsdk.HexToAddress("0x1")
+			}
+
+			serviceFields := map[string]any{
+				"serviceAddress":  serviceAddress.Hex(),
+				"servicePubKey":   hex.EncodeToString(servicePublicKey.Encode()),
+				"serviceSigAlgo":  serviceKeySigAlgo.String(),
+				"serviceHashAlgo": serviceKeyHashAlgo.String(),
+			}
+
+			if servicePrivateKey != nil {
+				serviceFields["servicePrivKey"] = hex.EncodeToString(servicePrivateKey.Encode())
+			}
+
+			logger.Info().Fields(serviceFields).Msgf("⚙️ Using service account 0x%s", serviceAddress.Hex())
 
 			emu := server.NewEmulatorServer(logger, serverConf)
 			if emu != nil {
@@ -242,6 +286,16 @@ func Cmd(config StartConfig) *cobra.Command {
 	}
 
 	initConfig(cmd)
+
+	// Hide and deprecate legacy flags while keeping them functional
+	_ = cmd.PersistentFlags().MarkHidden("rpc-host")
+	_ = cmd.PersistentFlags().MarkDeprecated("rpc-host", "use --fork-host")
+	_ = cmd.PersistentFlags().MarkHidden("start-block-height")
+	_ = cmd.PersistentFlags().MarkDeprecated("start-block-height", "use --fork-height")
+	_ = cmd.PersistentFlags().MarkHidden("transaction-max-gas-limit")
+	_ = cmd.PersistentFlags().MarkDeprecated("transaction-max-gas-limit", "use --transaction-max-compute-limit")
+	_ = cmd.PersistentFlags().MarkHidden("script-gas-limit")
+	_ = cmd.PersistentFlags().MarkDeprecated("script-gas-limit", "use --script-compute-limit")
 
 	return cmd
 }

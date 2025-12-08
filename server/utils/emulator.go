@@ -19,13 +19,18 @@
 package utils
 
 import (
+	"archive/zip"
 	"encoding/json"
 	"net/http"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/onflow/cadence/common"
+	"github.com/onflow/cadence/runtime"
 	flowgo "github.com/onflow/flow-go/model/flow"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
 )
@@ -64,7 +69,12 @@ func NewEmulatorAPIServer(emulator emulator.Emulator, adapter *adapters.AccessAd
 	router.HandleFunc("/emulator/codeCoverage", r.CodeCoverage).Methods("GET")
 	router.HandleFunc("/emulator/codeCoverage/reset", r.ResetCodeCoverage).Methods("PUT")
 
+	router.HandleFunc("/emulator/computationProfile", r.ComputationProfile).Methods("GET")
+	router.HandleFunc("/emulator/computationProfile/reset", r.ResetComputationProfile).Methods("PUT")
+
 	router.HandleFunc("/emulator/computationReport", r.ComputationReport).Methods("GET")
+
+	router.HandleFunc("/emulator/allContracts", r.AllContractsZip).Methods("GET")
 
 	return r
 }
@@ -86,7 +96,7 @@ func (m EmulatorAPIServer) Config(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write(s)
 }
 
-func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) CommitBlock(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, err := m.emulator.CommitBlock()
 	if err != nil {
@@ -230,7 +240,7 @@ func (m EmulatorAPIServer) SnapshotCreate(w http.ResponseWriter, r *http.Request
 	m.latestBlockResponse(name, w)
 }
 
-func (m EmulatorAPIServer) CodeCoverage(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) CodeCoverage(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	err := json.NewEncoder(w).Encode(m.emulator.CoverageReport())
@@ -240,7 +250,13 @@ func (m EmulatorAPIServer) CodeCoverage(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (m EmulatorAPIServer) ComputationReport(w http.ResponseWriter, r *http.Request) {
+func (m EmulatorAPIServer) ResetCodeCoverage(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	m.emulator.ResetCoverageReport()
+	w.WriteHeader(http.StatusOK)
+}
+
+func (m EmulatorAPIServer) ComputationReport(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	err := json.NewEncoder(w).Encode(m.emulator.ComputationReport())
@@ -250,9 +266,40 @@ func (m EmulatorAPIServer) ComputationReport(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-func (m EmulatorAPIServer) ResetCodeCoverage(w http.ResponseWriter, r *http.Request) {
+const cadenceFileSuffix = ".cdc"
+
+func (m EmulatorAPIServer) ComputationProfile(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Disposition", "attachment; filename=profile.pprof")
+	w.Header().Set("Content-Type", "application/gzip")
+
+	computationProfile := m.emulator.ComputationProfile()
+	if computationProfile == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	pprofProfile, err := runtime.NewPProfExporter(computationProfile).Export()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	for _, function := range pprofProfile.Function {
+		if !strings.HasSuffix(function.Filename, cadenceFileSuffix) {
+			function.Filename += cadenceFileSuffix
+		}
+	}
+
+	err = pprofProfile.Write(w)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (m EmulatorAPIServer) ResetComputationProfile(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	m.emulator.ResetCoverageReport()
+	m.emulator.ResetComputationProfile()
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -282,5 +329,45 @@ func (m EmulatorAPIServer) Logs(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
+	}
+}
+
+func (m EmulatorAPIServer) AllContractsZip(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Disposition", "attachment; filename=contracts.zip")
+	w.Header().Set("Content-Type", "application/zip")
+	w.WriteHeader(http.StatusOK)
+
+	zipW := zip.NewWriter(w)
+	defer func() {
+		err := zipW.Close()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	}()
+
+	for accountIndex := 1; ; accountIndex++ {
+		account, err := m.emulator.GetAccountByIndex(uint(accountIndex))
+		if err != nil {
+			break
+		}
+
+		for name, code := range account.Contracts {
+			location := common.AddressLocation{
+				Address: common.Address(account.Address),
+				Name:    name,
+			}
+
+			f, err := zipW.Create(location.ID() + cadenceFileSuffix)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			_, err = f.Write(code)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
 	}
 }

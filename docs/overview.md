@@ -65,17 +65,19 @@ values.
 | `--storage-per-flow`            | `FLOW_STORAGEMBPERFLOW`          |                | Specify size of the storage in MB for each FLOW in account balance. Default value from the flow-go                                                                                                          |
 | `--min-account-balance`         | `FLOW_MINIMUMACCOUNTBALANCE`     |                | Specify minimum balance the account must have. Default value from the flow-go                                                                                                                               |
 | `--transaction-fees`            | `FLOW_TRANSACTIONFEESENABLED`    | `false`        | Enable variable transaction fees and execution effort metering <br> as described in [Variable Transaction Fees: Execution Effort](https://github.com/onflow/flow/pull/753) FLIP                              |
-| `--transaction-max-gas-limit`   | `FLOW_TRANSACTIONMAXGASLIMIT`    | `9999`         | Maximum [gas limit for transactions](https://docs.onflow.org/flow-go-sdk/building-transactions/#gas-limit)                                                                                                  |
-| `--script-gas-limit`            | `FLOW_SCRIPTGASLIMIT`            | `100000`       | Specify gas limit for script execution                                                                                                                                                                      |
+| `--transaction-max-compute-limit`   | `FLOW_TRANSACTIONMAXCOMPUTELIMIT`    | `9999`         | Maximum [compute limit for transactions](https://docs.onflow.org/flow-go-sdk/building-transactions/#gas-limit)                                                                                                  |
+| `--script-compute-limit`            | `FLOW_SCRIPTCOMPUTELIMIT`            | `100000`       | Specify compute limit for script execution                                                                                                                                                                      |
+| ~~`--transaction-max-gas-limit`~~   | ~~`FLOW_TRANSACTIONMAXGASLIMIT`~~    | `9999`         | **Deprecated:** Use `--transaction-max-compute-limit` instead                                                                                                  |
+| ~~`--script-gas-limit`~~            | ~~`FLOW_SCRIPTGASLIMIT`~~            | `100000`       | **Deprecated:** Use `--script-compute-limit` instead                                                                                                                                                                      |
 | `--with-contracts`              | `FLOW_WITHCONTRACTS`             | `false`        | Deploy common contracts when emulator starts                                                                                                                                                                |
 | `--coverage-reporting`          | `FLOW_COVERAGEREPORTING`         | `false`        | Enable Cadence code coverage reporting                                                                                                                                                                      |
 | `--skip-transaction-validation` | `FLOW_SKIPTRANSACTIONVALIDATION` | `false`        | Skip verification of transaction signatures and sequence numbers                                                                                                                                            |
 | `--host`                        | `FLOW_HOST`                      | ` `            | Host to listen on for emulator GRPC/REST/Admin servers  (default: all interfaces)                                                                                                                           |
 | `--chain-id`                    | `FLOW_CHAINID`                   | `emulator`     | Chain to emulate for address generation.  Valid values are: 'emulator', 'testnet', 'mainnet'                                                                                                                |
 | `--redis-url`                   | `FLOW_REDIS_URL`                 | ''             | Redis-server URL for persisting redis storage backend ( `redis://[[username:]password@]host[:port][/database]` )                                                                                            |
-| `--start-block-height`          | `FLOW_STARTBLOCKHEIGHT`          | `0`            | Start block height to use when starting the network using 'testnet' or 'mainnet' as the chain-id                                                                                                            |
-| `--rpc-host`                  | `FLOW_RPCHOST`             | ''             | RPC host (access node) to query for previous state when starting the network using 'testnet' or 'mainnet' as the chain-id    |
-| `--num-accounts`              | `FLOW_NUMACCOUNTS`         | `0`            | Precreate and fund this many accounts at startup (mints 1000.0 FLOW to each)              |
+| `--fork-host`                   | `FLOW_FORK_HOST`                 | ''             | gRPC access node address (`host:port`) to fork from                                                                                                                    |
+| `--fork-height`                 | `FLOW_FORK_HEIGHT`               | `0`            | Block height to pin the fork (defaults to latest sealed)                                                                                                               |
+| `--num-accounts`                | `FLOW_NUMACCOUNTS`               | `0`            | Precreate and fund this many accounts at startup (mints 1000.0 FLOW to each)                                                                                           |
 
 ## Running the emulator with the Flow CLI
 
@@ -150,8 +152,7 @@ Post Data: height={block height}
 ```
 
 Note: it is only possible to roll back state to a height that was previously executed by the emulator.
-To roll back to a past block height when using a forked Mainnet or Testnet network, use the
-`--start-block-height` flag.
+To pin the starting block height when using a fork, use the `--fork-height` flag.
 
 ## Managing emulator state
 
@@ -247,14 +248,13 @@ you must specify the network name for the chain ID flag as well as the RPC host
 to connect to.
 
 ```
-flow emulator --chain-id mainnet --rpc-host access-008.mainnet24.nodes.onflow.org:9000
-flow emulator --chain-id mainnet --rpc-host access-002.devnet49.nodes.onflow.org:9000
+flow emulator --fork-host access.mainnet.nodes.onflow.org:9000
+flow emulator --fork-host access.mainnet.nodes.onflow.org:9000 --fork-height 12345
 ```
 
 Please note, the actual execution on the real network may differ depending on the exact state when the transaction is executed.
 
-By default, the forked network will start from the latest sealed block when the emulator
-is started. You can specify a different starting block height by using the `--start-block-height` flag.
+By default, the forked network will start from the latest sealed block when the emulator is started. You can specify a different starting block height by using the `--fork-height` flag.
 
 You can also store all of your changes and cached registers to a persistent db by using the `--persist` flag,
 along with the other sqlite settings.

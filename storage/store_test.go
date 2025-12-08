@@ -34,12 +34,12 @@ import (
 
 	"github.com/onflow/flow-emulator/convert"
 	"github.com/onflow/flow-emulator/storage"
+	"github.com/onflow/flow-emulator/storage/memstore"
 	"github.com/onflow/flow-emulator/storage/sqlite"
 	"github.com/onflow/flow-emulator/utils/unittest"
 )
 
 func TestBlocks(t *testing.T) {
-
 	t.Parallel()
 
 	store, dir := setupStore(t)
@@ -128,7 +128,6 @@ func TestBlocks(t *testing.T) {
 }
 
 func TestCollections(t *testing.T) {
-
 	t.Parallel()
 
 	store, dir := setupStore(t)
@@ -160,7 +159,6 @@ func TestCollections(t *testing.T) {
 }
 
 func TestTransactions(t *testing.T) {
-
 	t.Parallel()
 
 	store, dir := setupStore(t)
@@ -179,7 +177,7 @@ func TestTransactions(t *testing.T) {
 	})
 
 	t.Run("should be able to insert tx", func(t *testing.T) {
-		err := store.InsertTransaction(context.Background(), tx)
+		err := store.InsertTransaction(context.Background(), tx, tx.ID())
 		assert.NoError(t, err)
 
 		t.Run("should be able to get inserted tx", func(t *testing.T) {
@@ -192,6 +190,7 @@ func TestTransactions(t *testing.T) {
 
 func TestFullCollection(t *testing.T) {
 	t.Parallel()
+
 	store, dir := setupStore(t)
 	defer func() {
 		require.NoError(t, store.Close())
@@ -211,7 +210,7 @@ func TestFullCollection(t *testing.T) {
 		require.NoError(t, err)
 
 		for _, tx := range col.Transactions {
-			err = store.InsertTransaction(context.Background(), *tx)
+			err = store.InsertTransaction(context.Background(), *tx, tx.ID())
 			require.NoError(t, err)
 		}
 
@@ -219,15 +218,12 @@ func TestFullCollection(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, col, c)
 	})
-
 }
 
 func TestTransactionResults(t *testing.T) {
-
 	t.Parallel()
 
 	test := func(eventEncodingVersion entities.EventEncodingVersion) {
-
 		t.Run(eventEncodingVersion.String(), func(t *testing.T) {
 			t.Parallel()
 
@@ -270,11 +266,9 @@ func TestTransactionResults(t *testing.T) {
 }
 
 func TestLedger(t *testing.T) {
-
 	t.Parallel()
 
 	t.Run("get/set", func(t *testing.T) {
-
 		t.Parallel()
 
 		store, dir := setupStore(t)
@@ -313,7 +307,6 @@ func TestLedger(t *testing.T) {
 	})
 
 	t.Run("versioning", func(t *testing.T) {
-
 		t.Parallel()
 
 		store, dir := setupStore(t)
@@ -389,11 +382,9 @@ func TestLedger(t *testing.T) {
 }
 
 func TestInsertEvents(t *testing.T) {
-
 	t.Parallel()
 
 	test := func(eventEncodingVersion entities.EventEncodingVersion) {
-
 		t.Run(eventEncodingVersion.String(), func(t *testing.T) {
 			t.Parallel()
 
@@ -428,10 +419,8 @@ func TestInsertEvents(t *testing.T) {
 }
 
 func TestEventsByHeight(t *testing.T) {
-
 	t.Parallel()
 	test := func(eventEncodingVersion entities.EventEncodingVersion) {
-
 		t.Run(eventEncodingVersion.String(), func(t *testing.T) {
 			t.Parallel()
 
@@ -517,6 +506,82 @@ func TestEventsByHeight(t *testing.T) {
 
 	test(entities.EventEncodingVersion_CCF_V0)
 	test(entities.EventEncodingVersion_JSON_CDC_V0)
+}
+
+func TestScheduledTransactionIndexing(t *testing.T) {
+	t.Parallel()
+
+	t.Run("SQLite", func(t *testing.T) {
+		t.Parallel()
+
+		store, dir := setupStore(t)
+		defer func() {
+			require.NoError(t, store.Close())
+			require.NoError(t, os.RemoveAll(dir))
+		}()
+
+		testScheduledTransactionIndex(t, store)
+	})
+
+	t.Run("Memstore", func(t *testing.T) {
+		t.Parallel()
+
+		store := memstore.New()
+		testScheduledTransactionIndex(t, store)
+	})
+}
+
+func testScheduledTransactionIndex(t *testing.T, store storage.Store) {
+	ctx := context.Background()
+
+	// Create test block IDs
+	idGen := test.IdentifierGenerator()
+	blockID1 := flowgo.Identifier(idGen.New())
+	blockID2 := flowgo.Identifier(idGen.New())
+	blockID3 := flowgo.Identifier(idGen.New())
+
+	// Test indexing scheduled transaction IDs
+	scheduledTxID1 := uint64(1)
+	scheduledTxID2 := uint64(2)
+	scheduledTxID3 := uint64(100)
+
+	// Index scheduled transactions
+	err := store.IndexScheduledTransactionID(ctx, scheduledTxID1, blockID1)
+	require.NoError(t, err)
+
+	err = store.IndexScheduledTransactionID(ctx, scheduledTxID2, blockID2)
+	require.NoError(t, err)
+
+	err = store.IndexScheduledTransactionID(ctx, scheduledTxID3, blockID3)
+	require.NoError(t, err)
+
+	// Retrieve and verify
+	retrievedBlockID1, err := store.BlockIDByScheduledTransactionID(ctx, scheduledTxID1)
+	require.NoError(t, err)
+	assert.Equal(t, blockID1, retrievedBlockID1)
+
+	retrievedBlockID2, err := store.BlockIDByScheduledTransactionID(ctx, scheduledTxID2)
+	require.NoError(t, err)
+	assert.Equal(t, blockID2, retrievedBlockID2)
+
+	retrievedBlockID3, err := store.BlockIDByScheduledTransactionID(ctx, scheduledTxID3)
+	require.NoError(t, err)
+	assert.Equal(t, blockID3, retrievedBlockID3)
+
+	// Test non-existent scheduled transaction ID
+	nonExistentID := uint64(999)
+	_, err = store.BlockIDByScheduledTransactionID(ctx, nonExistentID)
+	assert.Error(t, err, "should return error for non-existent scheduled transaction ID")
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+
+	// Test overwriting existing scheduled transaction ID
+	newBlockID := flowgo.Identifier(idGen.New())
+	err = store.IndexScheduledTransactionID(ctx, scheduledTxID1, newBlockID)
+	require.NoError(t, err)
+
+	retrievedBlockID, err := store.BlockIDByScheduledTransactionID(ctx, scheduledTxID1)
+	require.NoError(t, err)
+	assert.Equal(t, newBlockID, retrievedBlockID, "should return updated block ID")
 }
 
 // setupStore creates a temporary file for the Sqlite and creates a

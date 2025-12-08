@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/onflow/flow-go/engine/common/rpc/convert"
 	"github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
@@ -38,6 +39,12 @@ import (
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/sqlite"
 	"github.com/onflow/flow-emulator/types"
+	"github.com/onflow/flow-emulator/utils"
+)
+
+// Configuration
+const (
+	blockBuffer = 10 // Buffer to allow for block propagation
 )
 
 type Store struct {
@@ -53,20 +60,33 @@ type Store struct {
 
 type Option func(*Store)
 
-// WithRPCHost sets access/observer node host.
+// WithForkHost configures the remote access/observer node gRPC endpoint.
+// Expects raw host:port with no scheme.
+func WithForkHost(host string) Option {
+	return func(store *Store) {
+		store.host = host
+	}
+}
+
+// WithRPCHost sets access/observer node host. Deprecated: use WithForkHost.
 func WithRPCHost(host string, chainID flowgo.ChainID) Option {
 	return func(store *Store) {
+		// Keep legacy behavior: set host and (optionally) chainID for validation.
 		store.host = host
 		store.chainID = chainID
 	}
 }
 
 // WithStartBlockHeight sets the start height for the store.
-func WithStartBlockHeight(height uint64) Option {
+// WithForkHeight sets the pinned fork height.
+func WithForkHeight(height uint64) Option {
 	return func(store *Store) {
 		store.forkHeight = height
 	}
 }
+
+// WithStartBlockHeight is deprecated: use WithForkHeight.
+func WithStartBlockHeight(height uint64) Option { return WithForkHeight(height) }
 
 // WithClient can set an rpc host client
 //
@@ -100,6 +120,7 @@ func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*St
 			store.host,
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 			grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1024*1024*1024)),
+			utils.DefaultGRPCRetryInterceptor(),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("could not connect to rpc host: %w", err)
@@ -115,8 +136,16 @@ func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*St
 		return nil, fmt.Errorf("could not get network parameters: %w", err)
 	}
 
-	if params.ChainId != store.chainID.String() {
-		return nil, fmt.Errorf("chain ID of rpc host does not match chain ID provided in config: %s != %s", params.ChainId, store.chainID)
+	// If a chainID was provided (legacy path), validate it matches the remote. If not provided, skip.
+	if store.chainID != "" {
+		if params.ChainId != store.chainID.String() {
+			return nil, fmt.Errorf("chain ID of rpc host does not match chain ID provided in config: %s != %s", params.ChainId, store.chainID)
+		}
+	}
+
+	// Record remote chain ID if not already set via options
+	if store.chainID == "" {
+		store.chainID = flowgo.ChainID(params.ChainId)
 	}
 
 	if err := store.initializeStartBlock(context.Background()); err != nil {
@@ -148,12 +177,13 @@ func (s *Store) initializeStartBlock(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("could not get last block height: %w", err)
 		}
-		s.forkHeight = resp.Block.Height
+		s.forkHeight = resp.Block.Height - blockBuffer
 	}
 
 	s.logger.Info().
 		Uint64("forkHeight", s.forkHeight).
 		Str("host", s.host).
+		Str("chainId", s.chainID.String()).
 		Msg("Using fork height")
 
 	// store the initial fork height. any future queries for data on the rpc host will be fixed
@@ -239,7 +269,18 @@ func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
 ) (snapshot.StorageSnapshot, error) {
+	// Create a snapshot with LRU cache to avoid duplicate RPC calls within the same snapshot
+	// LRU cache with max 1000 entries to prevent memory bloat
+	cache, err := lru.New[string, flowgo.RegisterValue](1000)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LRU cache: %w", err)
+	}
+
 	return snapshot.NewReadFuncStorageSnapshot(func(id flowgo.RegisterID) (flowgo.RegisterValue, error) {
+		// Check LRU cache first to avoid duplicate RPC calls within this snapshot
+		if cachedValue, exists := cache.Get(id.String()); exists {
+			return cachedValue, nil
+		}
 		// create a copy so updating it doesn't affect future calls
 		lookupHeight := blockHeight
 
@@ -268,6 +309,7 @@ func (s *Store) LedgerByHeight(
 			BlockHeight: lookupHeight,
 			RegisterIds: []*entities.RegisterID{registerID},
 		})
+
 		if err != nil {
 			if status.Code(err) != codes.NotFound {
 				return nil, err
@@ -289,10 +331,11 @@ func (s *Store) LedgerByHeight(
 			return nil, fmt.Errorf("could not cache ledger value: %w", err)
 		}
 
+		// Cache in LRU cache for this snapshot to avoid duplicate RPC calls
+		cache.Add(id.String(), value)
 		return value, nil
 	}), nil
 }
-
 func (s *Store) Stop() {
 	_ = s.grpcConn.Close()
 }

@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	storage "github.com/onflow/flow-emulator/storage"
 	types "github.com/onflow/flow-emulator/types"
 	snapshot "github.com/onflow/flow-go/fvm/storage/snapshot"
 	flow "github.com/onflow/flow-go/model/flow"
@@ -73,6 +74,21 @@ func (mr *MockStoreMockRecorder) BlockByID(ctx, blockID any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BlockByID", reflect.TypeOf((*MockStore)(nil).BlockByID), ctx, blockID)
 }
 
+// BlockIDByScheduledTransactionID mocks base method.
+func (m *MockStore) BlockIDByScheduledTransactionID(ctx context.Context, scheduledTxID uint64) (flow.Identifier, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BlockIDByScheduledTransactionID", ctx, scheduledTxID)
+	ret0, _ := ret[0].(flow.Identifier)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BlockIDByScheduledTransactionID indicates an expected call of BlockIDByScheduledTransactionID.
+func (mr *MockStoreMockRecorder) BlockIDByScheduledTransactionID(ctx, scheduledTxID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BlockIDByScheduledTransactionID", reflect.TypeOf((*MockStore)(nil).BlockIDByScheduledTransactionID), ctx, scheduledTxID)
+}
+
 // CollectionByID mocks base method.
 func (m *MockStore) CollectionByID(ctx context.Context, collectionID flow.Identifier) (flow.LightCollection, error) {
 	m.ctrl.T.Helper()
@@ -89,17 +105,17 @@ func (mr *MockStoreMockRecorder) CollectionByID(ctx, collectionID any) *gomock.C
 }
 
 // CommitBlock mocks base method.
-func (m *MockStore) CommitBlock(ctx context.Context, block flow.Block, collections []*flow.LightCollection, transactions map[flow.Identifier]*flow.TransactionBody, transactionResults map[flow.Identifier]*types.StorableTransactionResult, executionSnapshot *snapshot.ExecutionSnapshot, events []flow.Event) error {
+func (m *MockStore) CommitBlock(ctx context.Context, block flow.Block, collections []*flow.LightCollection, transactions map[flow.Identifier]*flow.TransactionBody, transactionResults map[flow.Identifier]*types.StorableTransactionResult, systemTransactions []flow.Identifier, systemTransactionBodies map[flow.Identifier]*flow.TransactionBody, systemTransactionResults map[flow.Identifier]*types.StorableTransactionResult, executionSnapshot *snapshot.ExecutionSnapshot, events []flow.Event, scheduledTransactionIDs map[uint64]flow.Identifier) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CommitBlock", ctx, block, collections, transactions, transactionResults, executionSnapshot, events)
+	ret := m.ctrl.Call(m, "CommitBlock", ctx, block, collections, transactions, transactionResults, systemTransactions, systemTransactionBodies, systemTransactionResults, executionSnapshot, events, scheduledTransactionIDs)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CommitBlock indicates an expected call of CommitBlock.
-func (mr *MockStoreMockRecorder) CommitBlock(ctx, block, collections, transactions, transactionResults, executionSnapshot, events any) *gomock.Call {
+func (mr *MockStoreMockRecorder) CommitBlock(ctx, block, collections, transactions, transactionResults, systemTransactions, systemTransactionBodies, systemTransactionResults, executionSnapshot, events, scheduledTransactionIDs any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitBlock", reflect.TypeOf((*MockStore)(nil).CommitBlock), ctx, block, collections, transactions, transactionResults, executionSnapshot, events)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitBlock", reflect.TypeOf((*MockStore)(nil).CommitBlock), ctx, block, collections, transactions, transactionResults, systemTransactions, systemTransactionBodies, systemTransactionResults, executionSnapshot, events, scheduledTransactionIDs)
 }
 
 // EventsByHeight mocks base method.
@@ -130,6 +146,20 @@ func (m *MockStore) FullCollectionByID(ctx context.Context, collectionID flow.Id
 func (mr *MockStoreMockRecorder) FullCollectionByID(ctx, collectionID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FullCollectionByID", reflect.TypeOf((*MockStore)(nil).FullCollectionByID), ctx, collectionID)
+}
+
+// IndexScheduledTransactionID mocks base method.
+func (m *MockStore) IndexScheduledTransactionID(ctx context.Context, scheduledTxID uint64, blockID flow.Identifier) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IndexScheduledTransactionID", ctx, scheduledTxID, blockID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// IndexScheduledTransactionID indicates an expected call of IndexScheduledTransactionID.
+func (mr *MockStoreMockRecorder) IndexScheduledTransactionID(ctx, scheduledTxID, blockID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexScheduledTransactionID", reflect.TypeOf((*MockStore)(nil).IndexScheduledTransactionID), ctx, scheduledTxID, blockID)
 }
 
 // LatestBlock mocks base method.
@@ -215,6 +245,50 @@ func (m *MockStore) StoreBlock(ctx context.Context, block *flow.Block) error {
 func (mr *MockStoreMockRecorder) StoreBlock(ctx, block any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreBlock", reflect.TypeOf((*MockStore)(nil).StoreBlock), ctx, block)
+}
+
+// StoreSystemTransactions mocks base method.
+func (m *MockStore) StoreSystemTransactions(ctx context.Context, systemTransactions *storage.SystemTransactions) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StoreSystemTransactions", ctx, systemTransactions)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// StoreSystemTransactions indicates an expected call of StoreSystemTransactions.
+func (mr *MockStoreMockRecorder) StoreSystemTransactions(ctx, systemTransactions any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreSystemTransactions", reflect.TypeOf((*MockStore)(nil).StoreSystemTransactions), ctx, systemTransactions)
+}
+
+// SystemTransactionResultByID mocks base method.
+func (m *MockStore) SystemTransactionResultByID(ctx context.Context, blockID, transactionID flow.Identifier) (types.StorableTransactionResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SystemTransactionResultByID", ctx, blockID, transactionID)
+	ret0, _ := ret[0].(types.StorableTransactionResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SystemTransactionResultByID indicates an expected call of SystemTransactionResultByID.
+func (mr *MockStoreMockRecorder) SystemTransactionResultByID(ctx, blockID, transactionID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SystemTransactionResultByID", reflect.TypeOf((*MockStore)(nil).SystemTransactionResultByID), ctx, blockID, transactionID)
+}
+
+// SystemTransactionsForBlockID mocks base method.
+func (m *MockStore) SystemTransactionsForBlockID(ctx context.Context, blockID flow.Identifier) (*storage.SystemTransactions, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SystemTransactionsForBlockID", ctx, blockID)
+	ret0, _ := ret[0].(*storage.SystemTransactions)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SystemTransactionsForBlockID indicates an expected call of SystemTransactionsForBlockID.
+func (mr *MockStoreMockRecorder) SystemTransactionsForBlockID(ctx, blockID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SystemTransactionsForBlockID", reflect.TypeOf((*MockStore)(nil).SystemTransactionsForBlockID), ctx, blockID)
 }
 
 // TransactionByID mocks base method.

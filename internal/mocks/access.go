@@ -622,6 +622,46 @@ func (mr *MockAccessAPIClientMockRecorder) GetProtocolStateSnapshotByHeight(ctx,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProtocolStateSnapshotByHeight", reflect.TypeOf((*MockAccessAPIClient)(nil).GetProtocolStateSnapshotByHeight), varargs...)
 }
 
+// GetScheduledTransaction mocks base method.
+func (m *MockAccessAPIClient) GetScheduledTransaction(ctx context.Context, in *access.GetScheduledTransactionRequest, opts ...grpc.CallOption) (*access.TransactionResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetScheduledTransaction", varargs...)
+	ret0, _ := ret[0].(*access.TransactionResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetScheduledTransaction indicates an expected call of GetScheduledTransaction.
+func (mr *MockAccessAPIClientMockRecorder) GetScheduledTransaction(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetScheduledTransaction", reflect.TypeOf((*MockAccessAPIClient)(nil).GetScheduledTransaction), varargs...)
+}
+
+// GetScheduledTransactionResult mocks base method.
+func (m *MockAccessAPIClient) GetScheduledTransactionResult(ctx context.Context, in *access.GetScheduledTransactionResultRequest, opts ...grpc.CallOption) (*access.TransactionResultResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetScheduledTransactionResult", varargs...)
+	ret0, _ := ret[0].(*access.TransactionResultResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetScheduledTransactionResult indicates an expected call of GetScheduledTransactionResult.
+func (mr *MockAccessAPIClientMockRecorder) GetScheduledTransactionResult(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetScheduledTransactionResult", reflect.TypeOf((*MockAccessAPIClient)(nil).GetScheduledTransactionResult), varargs...)
+}
+
 // GetSystemTransaction mocks base method.
 func (m *MockAccessAPIClient) GetSystemTransaction(ctx context.Context, in *access.GetSystemTransactionRequest, opts ...grpc.CallOption) (*access.TransactionResponse, error) {
 	m.ctrl.T.Helper()

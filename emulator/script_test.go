@@ -236,7 +236,7 @@ func TestScriptExecutionLimit(t *testing.T) {
 
 		t.Parallel()
 
-		const limit = 19000
+		const limit = 25000
 		b, err := emulator.New(
 			emulator.WithScriptGasLimit(limit),
 		)
@@ -251,6 +251,8 @@ func TestScriptExecutionLimit(t *testing.T) {
 // TestScriptWithCadenceRandom checks Cadence's random function works
 // within a script
 func TestScriptWithCadenceRandom(t *testing.T) {
+
+	t.Parallel()
 
 	//language=cadence
 	code := `
@@ -273,6 +275,9 @@ func TestScriptWithCadenceRandom(t *testing.T) {
 
 // TestEVM checks evm functionality
 func TestEVM(t *testing.T) {
+
+	t.Parallel()
+
 	serviceAddr := flowgo.Emulator.Chain().ServiceAddress()
 	code := []byte(fmt.Sprintf(
 		`

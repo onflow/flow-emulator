@@ -26,6 +26,7 @@ import (
 	"github.com/onflow/cadence/common"
 	"github.com/onflow/cadence/runtime"
 	flowsdk "github.com/onflow/flow-go-sdk"
+	"github.com/onflow/flow-go/fvm/meter"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
@@ -35,17 +36,24 @@ import (
 	"github.com/onflow/flow-emulator/emulator"
 )
 
-func TestCoverageReport(t *testing.T) {
+func TestComputationProfile(t *testing.T) {
 
 	t.Parallel()
 
-	coverageReport := runtime.NewCoverageReport()
+	computationProfile := runtime.NewComputationProfile()
 	b, err := emulator.New(
-		emulator.WithCoverageReport(coverageReport),
+		emulator.WithComputationProfile(computationProfile),
+		emulator.WithExecutionEffortWeights(
+			meter.ExecutionEffortWeights{
+				common.ComputationKindFunctionInvocation: 1,
+				common.ComputationKindStatement:          1,
+				common.ComputationKindLoop:               1,
+			},
+		),
 	)
 	require.NoError(t, err)
 
-	coverageReport.Reset()
+	computationProfile.Reset()
 
 	logger := zerolog.Nop()
 	adapter := adapters.NewSDKAdapter(&logger, b)
@@ -80,20 +88,10 @@ func TestCoverageReport(t *testing.T) {
 	require.NoError(t, err)
 	AssertTransactionSucceeded(t, txResult)
 
-	location := common.AddressLocation{
-		Address: common.MustBytesToAddress(counterAddress.Bytes()),
-		Name:    "Counting",
-	}
-	coverage := coverageReport.Coverage[location]
+	pprofProfile, err := runtime.NewPProfExporter(computationProfile).Export()
+	require.NoError(t, err)
+	require.NotNil(t, pprofProfile)
 
-	assert.Equal(t, []int{}, coverage.MissedLines())
-	assert.Equal(t, 4, coverage.Statements)
-	assert.Equal(t, "100.0%", coverage.Percentage())
-	assert.EqualValues(
-		t,
-		map[int]int{
-			11: 1, 15: 1, 16: 1, 21: 1,
-		},
-		coverage.LineHits,
-	)
+	require.NotEmpty(t, pprofProfile.Function)
+	require.NotEmpty(t, pprofProfile.Sample)
 }

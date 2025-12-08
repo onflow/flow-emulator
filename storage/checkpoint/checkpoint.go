@@ -78,8 +78,12 @@ func New(
 		nil,
 		nil,
 		nil,
+		nil, // systemTransactions (ordered slice)
+		nil, // systemTransactionBodies
+		nil, // systemTransactionResults
 		snap,
 		nil,
+		nil, // scheduledTransactionIDs
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to commit genesis block: %s", err)

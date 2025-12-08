@@ -34,6 +34,7 @@ type StorableTransactionResult struct {
 	Events       []flowgo.Event
 	BlockID      flowgo.Identifier
 	BlockHeight  uint64
+	CollectionID flowgo.Identifier
 }
 
 // A TransactionResult is the result of executing a transaction.

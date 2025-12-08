@@ -19,11 +19,13 @@
 package server
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"net/http"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/onflow/cadence"
@@ -37,17 +39,22 @@ import (
 	"github.com/psiemens/graceland"
 	"github.com/rs/zerolog"
 
+	flowaccess "github.com/onflow/flow/protobuf/go/flow/access"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/convert"
 	"github.com/onflow/flow-emulator/emulator"
 	"github.com/onflow/flow-emulator/server/access"
 	"github.com/onflow/flow-emulator/server/debugger"
-	"github.com/onflow/flow-emulator/server/utils"
+	serverutils "github.com/onflow/flow-emulator/server/utils"
 	"github.com/onflow/flow-emulator/storage"
 	"github.com/onflow/flow-emulator/storage/checkpoint"
 	"github.com/onflow/flow-emulator/storage/remote"
 	"github.com/onflow/flow-emulator/storage/sqlite"
 	"github.com/onflow/flow-emulator/storage/util"
+	"github.com/onflow/flow-emulator/utils"
 )
 
 // EmulatorServer is a local server that runs a Flow Emulator instance.
@@ -63,7 +70,7 @@ type EmulatorServer struct {
 	storage       graceland.Routine
 	grpc          *access.GRPCServer
 	rest          *access.RestServer
-	admin         *utils.HTTPServer
+	admin         *serverutils.HTTPServer
 	blocks        graceland.Routine
 	debugger      graceland.Routine
 }
@@ -77,7 +84,7 @@ const (
 	defaultDBGCRatio              = 0.5
 )
 
-var defaultHTTPHeaders = []utils.HTTPHeader{
+var defaultHTTPHeaders = []serverutils.HTTPHeader{
 	{
 		Key:   "Access-Control-Allow-Origin",
 		Value: "*",
@@ -100,7 +107,7 @@ type Config struct {
 	DebuggerPort              int
 	RESTPort                  int
 	RESTDebug                 bool
-	HTTPHeaders               []utils.HTTPHeader
+	HTTPHeaders               []serverutils.HTTPHeader
 	BlockTime                 time.Duration
 	ServicePublicKey          crypto.PublicKey
 	ServicePrivateKey         crypto.PrivateKey
@@ -141,10 +148,12 @@ type Config struct {
 	SqliteURL string
 	// CoverageReportingEnabled enables/disables Cadence code coverage reporting.
 	CoverageReportingEnabled bool
-	// RPCHost is the address of the access node to use when using a forked network.
-	RPCHost string
-	// StartBlockHeight is the height at which to start the emulator.
-	StartBlockHeight uint64
+	// ComputationProfilingEnabled enables/disables Cadence computation profiling.
+	ComputationProfilingEnabled bool
+	// ForkHost is the gRPC access node address to fork from (host:port).
+	ForkHost string
+	// ForkHeight is the height at which to start the emulator when forking.
+	ForkHeight uint64
 	// CheckpointPath is the path to the checkpoint folder to use when starting the network on top of existing state.
 	// StateHash should be provided as well.
 	CheckpointPath string
@@ -177,10 +186,34 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 		return nil
 	}
 
-	emulatedBlockchain, err := configureBlockchain(logger, conf, store)
+	// Derive chain ID for the emulator setup.
+	resolvedChainID := conf.ChainID
+	if conf.ForkHost != "" && conf.ChainID == "" {
+		parsed, err := DetectRemoteChainID(conf.ForkHost)
+		if err != nil {
+			logger.Error().Err(err).Msg("❗  Failed to detect remote chain ID")
+			return nil
+		}
+		resolvedChainID = parsed
+	}
+
+	emulatedBlockchain, err := configureBlockchain(logger, resolvedChainID, conf, store)
 	if err != nil {
 		logger.Err(err).Msg("❗  Failed to configure emulated emulator")
 		return nil
+	}
+
+	// In fork mode, commit an initial reference block so transactions can be submitted immediately
+	if conf.ForkHost != "" {
+		block, _, err := emulatedBlockchain.ExecuteAndCommitBlock()
+		if err != nil {
+			logger.Error().Err(err).Msg("❗  Failed to commit initial reference block for fork mode")
+			return nil
+		}
+		logger.Info().
+			Uint64("blockHeight", block.Height).
+			Str("blockID", block.ID().String()).
+			Msg("📦 Committed initial reference block for fork mode")
 	}
 
 	chain := emulatedBlockchain.GetChain()
@@ -372,7 +405,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	}
 
 	accessAdapter := adapters.NewAccessAdapter(logger, emulatedBlockchain)
-	livenessTicker := utils.NewLivenessTicker(conf.LivenessCheckTolerance)
+	livenessTicker := serverutils.NewLivenessTicker(conf.LivenessCheckTolerance)
 	grpcServer := access.NewGRPCServer(logger, emulatedBlockchain, accessAdapter, chain, conf.Host, conf.GRPCPort, conf.GRPCDebug)
 	restServer, err := access.NewRestServer(logger, emulatedBlockchain, accessAdapter, chain, conf.Host, conf.RESTPort, conf.RESTDebug)
 	if err != nil {
@@ -393,7 +426,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 		debugger:      debugger.New(logger, emulatedBlockchain, conf.DebuggerPort),
 	}
 
-	server.admin = utils.NewAdminServer(logger, emulatedBlockchain, accessAdapter, grpcServer, livenessTicker, conf.Host, conf.AdminPort, conf.HTTPHeaders)
+	server.admin = serverutils.NewAdminServer(logger, emulatedBlockchain, accessAdapter, grpcServer, livenessTicker, conf.Host, conf.AdminPort, conf.HTTPHeaders)
 
 	// only create blocks ticker if block time > 0
 	if conf.BlockTime > 0 {
@@ -404,6 +437,27 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 	}
 
 	return server
+}
+
+// detectRemoteChainID connects to the remote access node and fetches network parameters to obtain the chain ID.
+func DetectRemoteChainID(url string) (flowgo.ChainID, error) {
+	// Expect raw host:port
+	conn, err := grpc.NewClient(
+		url,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		utils.DefaultGRPCRetryInterceptor(),
+	)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = conn.Close() }()
+	client := flowaccess.NewAccessAPIClient(conn)
+
+	resp, err := client.GetNetworkParameters(context.Background(), &flowaccess.GetNetworkParametersRequest{})
+	if err != nil {
+		return "", err
+	}
+	return flowgo.ChainID(resp.ChainId), nil
 }
 
 // Listen starts listening for incoming connections.
@@ -544,7 +598,12 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 		}
 	}
 
-	if conf.ChainID == flowgo.Testnet || conf.ChainID == flowgo.Mainnet {
+	if conf.ForkHost != "" {
+		// Validate fork host has port
+		if !strings.Contains(conf.ForkHost, ":") {
+			return nil, fmt.Errorf("fork-host must include port (e.g., access.mainnet.nodes.onflow.org:9000)")
+		}
+
 		// TODO: any reason redis shouldn't work?
 		baseProvider, ok := storageProvider.(*sqlite.Store)
 		if !ok {
@@ -552,8 +611,8 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 		}
 
 		provider, err := remote.New(baseProvider, logger,
-			remote.WithRPCHost(conf.RPCHost, conf.ChainID),
-			remote.WithStartBlockHeight(conf.StartBlockHeight),
+			remote.WithForkHost(conf.ForkHost),
+			remote.WithForkHeight(conf.ForkHeight),
 		)
 		if err != nil {
 			return nil, err
@@ -574,7 +633,7 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 	return storageProvider, err
 }
 
-func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Store) (*emulator.Blockchain, error) {
+func configureBlockchain(logger *zerolog.Logger, chainID flowgo.ChainID, conf *Config, store storage.Store) (*emulator.Blockchain, error) {
 	options := []emulator.Option{
 		emulator.WithServerLogger(*logger),
 		emulator.WithStore(store),
@@ -586,7 +645,7 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		emulator.WithMinimumStorageReservation(conf.MinimumStorageReservation),
 		emulator.WithStorageMBPerFLOW(conf.StorageMBPerFLOW),
 		emulator.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
-		emulator.WithChainID(conf.ChainID),
+		emulator.WithChainID(chainID),
 		emulator.WithContractRemovalEnabled(conf.ContractRemovalEnabled),
 		emulator.WithSetupVMBridgeEnabled(conf.SetupVMBridgeEnabled),
 	}
@@ -621,6 +680,13 @@ func configureBlockchain(logger *zerolog.Logger, conf *Config, store storage.Sto
 		options = append(
 			options,
 			emulator.WithCoverageReport(runtime.NewCoverageReport()),
+		)
+	}
+
+	if conf.ComputationProfilingEnabled {
+		options = append(
+			options,
+			emulator.WithComputationProfile(runtime.NewComputationProfile()),
 		)
 	}
 

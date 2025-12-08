@@ -36,6 +36,8 @@ import (
 )
 
 func TestNoPersistence(t *testing.T) {
+	t.Parallel()
+
 	logger := zerolog.Nop()
 
 	dbPath := "test_no_persistence"
@@ -55,6 +57,8 @@ func TestNoPersistence(t *testing.T) {
 }
 
 func TestPersistenceWithPersistFlag(t *testing.T) {
+	t.Parallel()
+
 	logger := zerolog.Nop()
 
 	dbPath := "test_persistence"
@@ -74,6 +78,8 @@ func TestPersistenceWithPersistFlag(t *testing.T) {
 }
 
 func TestPersistenceWithSnapshotFlag(t *testing.T) {
+	t.Parallel()
+
 	logger := zerolog.Nop()
 
 	dbPath := "test_persistence_with_snapshot"
@@ -93,6 +99,7 @@ func TestPersistenceWithSnapshotFlag(t *testing.T) {
 }
 
 func TestExecuteScript(t *testing.T) {
+	t.Parallel()
 
 	logger := zerolog.Nop()
 	server := NewEmulatorServer(&logger, &Config{})
@@ -115,6 +122,8 @@ func TestExecuteScript(t *testing.T) {
 }
 
 func TestExecuteScriptImportingContracts(t *testing.T) {
+	t.Parallel()
+
 	conf := &Config{
 		WithContracts: true,
 	}
@@ -145,6 +154,7 @@ func TestExecuteScriptImportingContracts(t *testing.T) {
 }
 
 func TestCustomChainID(t *testing.T) {
+	t.Parallel()
 
 	conf := &Config{
 		WithContracts: true,
@@ -160,6 +170,8 @@ func TestCustomChainID(t *testing.T) {
 }
 
 func TestScheduledCallback_IncrementsCounter(t *testing.T) {
+	t.Parallel()
+
 	logger := zerolog.Nop()
 	conf := &Config{
 		WithContracts:                true,
