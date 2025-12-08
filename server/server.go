@@ -262,6 +262,7 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 		serviceKey := emulatedBlockchain.ServiceKey()
 		servicePrivHex := fmt.Sprintf("0x%X", serviceKey.PrivateKey.Encode())
 
+		var createdAccounts []flowsdk.Address
 		for i := 0; i < conf.NumAccounts; i++ {
 			// Create account using the same key as the service account
 			latestBlock, err := emulatedBlockchain.GetLatestBlock()
@@ -269,6 +270,10 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 				logger.Error().Err(err).Msg("❗  Failed to get latest block for account creation")
 				continue
 			}
+			
+			// Refresh service key to get current sequence number
+			serviceKey = emulatedBlockchain.ServiceKey()
+			
 			createTx, err := templates.CreateAccount(
 				[]*flowsdk.AccountKey{serviceKey.AccountKey()},
 				nil,
@@ -327,8 +332,8 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 
 			// Fund account by minting and depositing FLOW from service account
 			txCode := fmt.Sprintf(`
-                import FungibleToken from %[1]s
-                import FlowToken from %[2]s
+                import FungibleToken from 0x%s
+                import FlowToken from 0x%s
 
                 transaction(recipient: Address, amount: UFix64) {
                     prepare(acct: auth(Storage, Capabilities, FungibleToken.Withdraw) &Account) {
@@ -355,12 +360,17 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 				logger.Error().Err(err).Msg("❗  Failed to parse funding amount")
 				continue
 			}
+			
+			// Refresh service key again for funding transaction
+			serviceKey = emulatedBlockchain.ServiceKey()
+			
 			fundTx := flowsdk.NewTransaction().
 				SetScript([]byte(txCode)).
 				SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID())).
 				SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 				SetProposalKey(serviceKey.Address, serviceKey.Index, serviceKey.SequenceNumber).
-				SetPayer(serviceKey.Address)
+				SetPayer(serviceKey.Address).
+				AddAuthorizer(serviceKey.Address)
 
 			if err := fundTx.AddArgument(cadence.NewAddress(newAddr)); err != nil {
 				logger.Error().Err(err).Msg("❗  Failed to add recipient argument")
@@ -395,11 +405,21 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 				continue
 			}
 
-			logger.Info().Msgf("(%d) 0x%s (%.18s FLOW)", i, newAddr.Hex(), fundAmount)
+			createdAccounts = append(createdAccounts, newAddr)
+			logger.Info().Msgf("(%d) 0x%s (%.18s FLOW)", len(createdAccounts)-1, newAddr.Hex(), fundAmount)
+		}
+
+		if len(createdAccounts) == 0 {
+			logger.Error().Msgf("❗  Failed to create any accounts (requested %d)", conf.NumAccounts)
+			return nil
+		}
+
+		if len(createdAccounts) < conf.NumAccounts {
+			logger.Warn().Msgf("⚠️  Only created %d of %d requested accounts", len(createdAccounts), conf.NumAccounts)
 		}
 
 		logger.Info().Msg("\nPrivate Keys\n==================")
-		for i := 0; i < conf.NumAccounts; i++ {
+		for i := range createdAccounts {
 			logger.Info().Msgf("(%d) %s", i, servicePrivHex)
 		}
 	}
