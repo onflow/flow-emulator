@@ -77,6 +77,7 @@ values.
 | `--redis-url`                   | `FLOW_REDIS_URL`                 | ''             | Redis-server URL for persisting redis storage backend ( `redis://[[username:]password@]host[:port][/database]` )                                                                                            |
 | `--fork-host`                   | `FLOW_FORK_HOST`                 | ''             | gRPC access node address (`host:port`) to fork from                                                                                                                    |
 | `--fork-height`                 | `FLOW_FORK_HEIGHT`               | `0`            | Block height to pin the fork (defaults to latest sealed)                                                                                                               |
+| `--num-accounts`                | `FLOW_NUMACCOUNTS`               | `0`            | Precreate and fund this many accounts at startup (mints 1000.0 FLOW to each)                                                                                           |
 
 ## Running the emulator with the Flow CLI
 

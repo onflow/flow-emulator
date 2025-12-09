@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/onflow/cadence"
+	"github.com/onflow/cadence/stdlib"
 	"github.com/onflow/flow-emulator/convert"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	"github.com/onflow/flow-go-sdk/templates"
@@ -333,4 +334,54 @@ func TestScheduledCallback_IncrementsCounter(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, res.Error)
 	require.Equal(t, cadence.NewInt(1), res.Value)
+}
+
+func TestPrecreateAccounts_KeysMatchServiceKey(t *testing.T) {
+	logger := zerolog.Nop()
+	conf := &Config{NumAccounts: 3}
+	server := NewEmulatorServer(&logger, conf)
+	require.NotNil(t, server)
+	defer server.Stop()
+
+	serviceKey := server.Emulator().ServiceKey()
+	servicePub := serviceKey.AccountKey().PublicKey.Encode()
+	serviceAddr := serviceKey.Address
+
+	latest, err := server.Emulator().GetLatestBlock()
+	require.NoError(t, err)
+
+	blockEvents, err := server.Emulator().GetEventsForHeightRange(flowsdk.EventAccountCreated, 0, latest.Height)
+	require.NoError(t, err)
+
+	var createdAddrs []flowsdk.Address
+	for _, be := range blockEvents {
+		// Convert flow-go events to SDK events to inspect the Cadence payload
+		sdkEvents, err := convert.FlowEventsToSDK(be.Events)
+		require.NoError(t, err)
+		for _, ev := range sdkEvents {
+			if ev.Type != flowsdk.EventAccountCreated {
+				continue
+			}
+			addrFieldValue := cadence.SearchFieldByName(ev.Value, stdlib.AccountEventAddressParameter.Identifier)
+			cadAddr, ok := addrFieldValue.(cadence.Address)
+			if !ok {
+				continue
+			}
+			addr := flowsdk.Address(cadAddr)
+			if addr == serviceAddr {
+				continue
+			}
+			createdAddrs = append(createdAddrs, addr)
+		}
+	}
+
+	// Validate created accounts have the expected key
+	for _, addr := range createdAddrs {
+		flowAddr := convert.SDKAddressToFlow(addr)
+		acct, err := server.Emulator().GetAccount(flowAddr)
+		require.NoError(t, err)
+		require.NotEmpty(t, acct.Keys)
+		gotPub := acct.Keys[0].PublicKey.Encode()
+		require.Equal(t, servicePub, gotPub)
+	}
 }

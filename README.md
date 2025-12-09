@@ -81,6 +81,7 @@ values.
 | `--computation-profiling`         | `FLOW_COMPUTATIONPROFILING`          | `false`        | Enable computation profiling for Cadence programs                                                                                                                                                             |
 | `--checkpoint-dir`                | `FLOW_CHECKPOINTDIR`                 | ''             | Checkpoint directory to load the emulator state from, if starting the emulator from a checkpoint                                                                                                              |
 | `--state-hash`                    | `FLOW_STATEHASH`                     | ''             | State hash of the checkpoint, if starting the emulator from a checkpoint                                                                                                                                      |
+| `--num-accounts`                  | `FLOW_NUMACCOUNTS`                   | `0`            | Precreate and fund this many accounts at startup (mints 1000.0 FLOW to each)                                                                                                                                 |
     
 ## Running the emulator with the Flow CLI
 
