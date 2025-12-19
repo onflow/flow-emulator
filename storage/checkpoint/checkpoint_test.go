@@ -213,7 +213,6 @@ func createCheckpoint(t *testing.T, log zerolog.Logger, dir string, chainID flow
 
 	bootstrapOpts := []fvm.BootstrapProcedureOption{
 		fvm.WithInitialTokenSupply(unittest.GenesisTokenSupply),
-		fvm.WithSetupEVMEnabled(true),
 		fvm.WithSetupVMBridgeEnabled(true),
 	}
 
