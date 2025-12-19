@@ -164,8 +164,6 @@ type Config struct {
 	ComputationReportingEnabled bool
 	// ScheduledTransactionsEnabled enables an experimental feature for scheduling transactions.
 	ScheduledTransactionsEnabled bool
-	// SetupEVMEnabled enables the EVM setup for the emulator, defaults to true.
-	SetupEVMEnabled bool
 	// SetupVMBridgeEnabled enables the VM bridge setup for the emulator, defaults to true.
 	SetupVMBridgeEnabled bool
 	// NumAccounts specifies how many accounts to precreate and fund at startup.
@@ -270,10 +268,10 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 				logger.Error().Err(err).Msg("❗  Failed to get latest block for account creation")
 				continue
 			}
-			
+
 			// Refresh service key to get current sequence number
 			serviceKey = emulatedBlockchain.ServiceKey()
-			
+
 			createTx, err := templates.CreateAccount(
 				[]*flowsdk.AccountKey{serviceKey.AccountKey()},
 				nil,
@@ -360,10 +358,10 @@ func NewEmulatorServer(logger *zerolog.Logger, conf *Config) *EmulatorServer {
 				logger.Error().Err(err).Msg("❗  Failed to parse funding amount")
 				continue
 			}
-			
+
 			// Refresh service key again for funding transaction
 			serviceKey = emulatedBlockchain.ServiceKey()
-			
+
 			fundTx := flowsdk.NewTransaction().
 				SetScript([]byte(txCode)).
 				SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID())).
@@ -714,13 +712,6 @@ func configureBlockchain(logger *zerolog.Logger, chainID flowgo.ChainID, conf *C
 		options = append(
 			options,
 			emulator.WithComputationReporting(true),
-		)
-	}
-
-	if conf.SetupEVMEnabled {
-		options = append(
-			options,
-			emulator.WithSetupEVMEnabled(true),
 		)
 	}
 
