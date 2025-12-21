@@ -23,36 +23,38 @@ import (
 	"testing"
 
 	"github.com/onflow/cadence"
-	"github.com/onflow/flow-emulator/convert"
-	"github.com/onflow/flow-emulator/utils"
 	flowsdk "github.com/onflow/flow-go-sdk"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	flowaccess "github.com/onflow/flow/protobuf/go/flow/access"
 	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/onflow/flow-emulator/convert"
+	"github.com/onflow/flow-emulator/utils"
 )
 
 // TestForkingAgainstTestnet exercises the forking path by wiring a remote store
 func TestForkingAgainstTestnet(t *testing.T) {
+	t.Parallel()
+
 	logger := zerolog.Nop()
+
+	const target = "access.testnet.nodes.onflow.org:9000"
 
 	// Get remote latest sealed height to pin fork with automatic retry
 	conn, err := grpc.NewClient(
-		"access.testnet.nodes.onflow.org:9000",
+		target,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		utils.DefaultGRPCRetryInterceptor(),
 	)
-	if err != nil {
-		t.Fatalf("dial remote: %v", err)
-	}
+	require.NoError(t, err)
 	defer func() { _ = conn.Close() }()
 	remote := flowaccess.NewAccessAPIClient(conn)
 
 	rh, err := remote.GetLatestBlockHeader(context.Background(), &flowaccess.GetLatestBlockHeaderRequest{IsSealed: true})
-	if err != nil {
-		t.Fatalf("get remote header: %v", err)
-	}
+	require.NoError(t, err)
 	remoteHeight := rh.Block.Height - 10 // Use a buffer to avoid edge cases
 
 	cfg := &Config{
@@ -62,29 +64,23 @@ func TestForkingAgainstTestnet(t *testing.T) {
 		Snapshot:                  false,
 		SkipTransactionValidation: true,
 		ChainID:                   flowgo.Testnet, // will be overridden by detectRemoteChainID
-		ForkHost:                  "access.testnet.nodes.onflow.org:9000",
+		ForkHost:                  target,
 		ForkHeight:                remoteHeight,
 	}
 
 	srv := NewEmulatorServer(&logger, cfg)
-	if srv == nil {
-		t.Fatal("NewEmulatorServer returned nil")
-	}
-
-	if cfg.ChainID != flowgo.Testnet {
-		t.Fatalf("expected ChainID to be Testnet after fork detection, got %q", cfg.ChainID)
-	}
+	require.NotNil(t, srv)
+	require.Equal(t, flowgo.Testnet, cfg.ChainID)
 
 	// Submit a minimal transaction against the forked emulator to ensure tx processing works
 	latest, err := srv.Emulator().GetLatestBlock()
-	if err != nil {
-		t.Fatalf("get latest block: %v", err)
-	}
+	require.NoError(t, err)
+
 	// Allow emulator height to be equal to or one greater than remote (if remote advanced by one between queries)
-	if latest.Height != remoteHeight+1 {
-		t.Fatalf("fork height mismatch: emulator %d not in {remote, remote+1} where remote=%d", latest.Height, remoteHeight)
-	}
+	require.Equal(t, remoteHeight+1, latest.Height)
+
 	sk := srv.Emulator().ServiceKey()
+
 	// Write an Int into account storage and publish a capability to read it later
 	writeScript := []byte(`
         transaction {
@@ -103,26 +99,20 @@ func TestForkingAgainstTestnet(t *testing.T) {
 		AddAuthorizer(flowsdk.Address(sk.Address))
 
 	signer, err := sk.Signer()
-	if err != nil {
-		t.Fatalf("signer: %v", err)
-	}
-	if err := tx.SignEnvelope(flowsdk.Address(sk.Address), sk.Index, signer); err != nil {
-		t.Fatalf("sign envelope: %v", err)
-	}
-	if err := srv.Emulator().AddTransaction(*convert.SDKTransactionToFlow(*tx)); err != nil {
-		t.Fatalf("add tx: %v", err)
-	}
-	if _, results, err := srv.Emulator().ExecuteAndCommitBlock(); err != nil {
-		t.Fatalf("execute block: %v", err)
-	} else {
-		if len(results) != 1 {
-			t.Fatalf("expected 1 tx result, got %d", len(results))
-		}
-		r := results[0]
-		if !r.Succeeded() {
-			t.Fatalf("tx failed: %v", r.Error)
-		}
-	}
+	require.NoError(t, err)
+
+	err = tx.SignEnvelope(flowsdk.Address(sk.Address), sk.Index, signer)
+	require.NoError(t, err)
+
+	err = srv.Emulator().AddTransaction(*convert.SDKTransactionToFlow(*tx))
+	require.NoError(t, err)
+
+	_, results, err := srv.Emulator().ExecuteAndCommitBlock()
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+	r := results[0]
+	require.True(t, r.Succeeded())
+	require.NoError(t, r.Error)
 
 	// Read back in a second transaction using the same authorizer and assert via logs
 	readTxCode := []byte(`
@@ -134,61 +124,58 @@ func TestForkingAgainstTestnet(t *testing.T) {
 		}
 	`)
 	latest2, err := srv.Emulator().GetLatestBlock()
-	if err != nil {
-		t.Fatalf("get latest block for read tx: %v", err)
-	}
+	require.NoError(t, err)
 	readTx := flowsdk.NewTransaction().
 		SetScript(readTxCode).
 		SetReferenceBlockID(flowsdk.Identifier(latest2.ID())).
 		SetProposalKey(flowsdk.Address(sk.Address), sk.Index, sk.SequenceNumber).
 		SetPayer(flowsdk.Address(sk.Address)).
 		AddAuthorizer(flowsdk.Address(sk.Address))
-	if err := readTx.SignEnvelope(flowsdk.Address(sk.Address), sk.Index, signer); err != nil {
-		t.Fatalf("sign read envelope: %v", err)
-	}
-	if err := srv.Emulator().AddTransaction(*convert.SDKTransactionToFlow(*readTx)); err != nil {
-		t.Fatalf("add read tx: %v", err)
-	}
-	if _, readResults, err := srv.Emulator().ExecuteAndCommitBlock(); err != nil {
-		t.Fatalf("execute read block: %v", err)
-	} else {
-		if len(readResults) != 1 || !readResults[0].Succeeded() {
-			t.Fatalf("read tx failed: %v", readResults[0].Error)
-		}
-		logs := readResults[0].Logs
-		found := false
-		for _, l := range logs {
-			if l == "true" {
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Fatalf("expected log containing true, got: %v", logs)
+
+	err = readTx.SignEnvelope(flowsdk.Address(sk.Address), sk.Index, signer)
+	require.NoError(t, err)
+
+	err = srv.Emulator().AddTransaction(*convert.SDKTransactionToFlow(*readTx))
+	require.NoError(t, err)
+
+	_, readResults, err := srv.Emulator().ExecuteAndCommitBlock()
+	require.NoError(t, err)
+
+	require.Len(t, readResults, 1)
+	require.True(t, readResults[0].Succeeded())
+	require.NoError(t, readResults[0].Error)
+
+	logs := readResults[0].Logs
+	found := false
+	for _, l := range logs {
+		if l == "true" {
+			found = true
+			break
 		}
 	}
+	require.True(t, found)
 }
 
 // TestForkingAgainstMainnet exercises the forking path with mainnet
 func TestForkingAgainstMainnet(t *testing.T) {
+	t.Parallel()
+
 	logger := zerolog.Nop()
+
+	const target = "access.mainnet.nodes.onflow.org:9000"
 
 	// Get remote latest sealed height to pin fork with automatic retry
 	conn, err := grpc.NewClient(
-		"access.mainnet.nodes.onflow.org:9000",
+		target,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		utils.DefaultGRPCRetryInterceptor(),
 	)
-	if err != nil {
-		t.Fatalf("dial remote: %v", err)
-	}
+	require.NoError(t, err)
 	defer func() { _ = conn.Close() }()
 	remote := flowaccess.NewAccessAPIClient(conn)
 
 	rh, err := remote.GetLatestBlockHeader(context.Background(), &flowaccess.GetLatestBlockHeaderRequest{IsSealed: true})
-	if err != nil {
-		t.Fatalf("get remote header: %v", err)
-	}
+	require.NoError(t, err)
 	remoteHeight := rh.Block.Height - 10 // Use a buffer to avoid edge cases
 
 	cfg := &Config{
@@ -198,18 +185,13 @@ func TestForkingAgainstMainnet(t *testing.T) {
 		Snapshot:                  false,
 		SkipTransactionValidation: true,
 		ChainID:                   flowgo.Mainnet, // will be overridden by detectRemoteChainID
-		ForkHost:                  "access.mainnet.nodes.onflow.org:9000",
+		ForkHost:                  target,
 		ForkHeight:                remoteHeight,
 	}
 
 	srv := NewEmulatorServer(&logger, cfg)
-	if srv == nil {
-		t.Fatal("NewEmulatorServer returned nil")
-	}
-
-	if cfg.ChainID != flowgo.Mainnet {
-		t.Fatalf("expected ChainID to be Mainnet after fork detection, got %q", cfg.ChainID)
-	}
+	require.NotNil(t, srv)
+	require.Equal(t, flowgo.Mainnet, cfg.ChainID)
 
 	// Test account key retrieval for a known mainnet account with multiple keys
 	// This tests the account key deduplication shim by executing a script that accesses
@@ -244,27 +226,17 @@ func TestForkingAgainstMainnet(t *testing.T) {
 	`)
 
 	latest, err := srv.Emulator().GetLatestBlock()
-	if err != nil {
-		t.Fatalf("get latest block: %v", err)
-	}
+	require.NoError(t, err)
 	// Allow emulator height to be equal to or one greater than remote (if remote advanced by one between queries)
-	if latest.Height != remoteHeight+1 {
-		t.Fatalf("fork height mismatch: emulator %d not in {remote, remote+1} where remote=%d", latest.Height, remoteHeight)
-	}
+	require.Equal(t, remoteHeight+1, latest.Height)
 	// Execute the script to test account key retrieval
 	scriptResult, err := srv.Emulator().ExecuteScript(testAccountScript, nil)
-	if err != nil {
-		t.Fatalf("test script failed: %v", err)
-	}
-
-	if !scriptResult.Succeeded() {
-		t.Fatalf("test script error: %v", scriptResult.Error)
-	}
+	require.NoError(t, err)
+	require.True(t, scriptResult.Succeeded())
+	require.NoError(t, scriptResult.Error)
 
 	// Check that the script returned true (all verifications passed)
-	if scriptResult.Value != cadence.Bool(true) {
-		t.Fatalf("test script returned %v, expected true", scriptResult.Value)
-	}
+	require.Equal(t, cadence.Bool(true), scriptResult.Value)
 
 	t.Logf("Account key test successful. Script result: %v", scriptResult.Value)
 }

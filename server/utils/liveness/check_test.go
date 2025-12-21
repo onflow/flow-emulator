@@ -23,6 +23,8 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_BasicCheck(t *testing.T) {
@@ -30,42 +32,28 @@ func Test_BasicCheck(t *testing.T) {
 	t.Parallel()
 
 	mc := NewCheckCollector(time.Millisecond * 20)
-	if !mc.IsLive(0) {
-		t.Errorf("Multicheck with no checks should always pass")
-	}
+	assert.True(t, mc.IsLive(0))
 
 	c1 := mc.NewCheck()
-	if !mc.IsLive(0) {
-		t.Errorf("Just made check should pass")
-	}
+	assert.True(t, mc.IsLive(0))
 
 	time.Sleep(time.Millisecond * 30)
-	if mc.IsLive(0) {
-		t.Errorf("Multi check should have failed")
-	}
+	assert.False(t, mc.IsLive(0))
 
 	c1.CheckIn()
-	if !mc.IsLive(0) {
-		t.Errorf("Checker should passed after checkin")
-	}
+	assert.True(t, mc.IsLive(0))
 
 	c2 := mc.NewCheck()
-	if !mc.IsLive(0) {
-		t.Errorf("Just made check 2 should pass")
-	}
+	assert.True(t, mc.IsLive(0))
 
 	time.Sleep(time.Millisecond * 30)
 	c1.CheckIn()
 	// don't checkIn c2
 
-	if mc.IsLive(0) {
-		t.Errorf("Multi check should have failed by c2")
-	}
+	assert.False(t, mc.IsLive(0))
 
 	c2.CheckIn()
-	if !mc.IsLive(0) {
-		t.Errorf("Check 2 should pass after checkin")
-	}
+	assert.True(t, mc.IsLive(0))
 }
 
 func Test_CheckHTTP(t *testing.T) {
@@ -80,18 +68,14 @@ func Test_CheckHTTP(t *testing.T) {
 	_ = c.NewCheck() // never check-in c2
 
 	c.ServeHTTP(wr, r)
-	if wr.Code != http.StatusOK {
-		t.Errorf("Check should have passed")
-	}
+	assert.Equal(t, http.StatusOK, wr.Code)
 
 	time.Sleep(time.Millisecond * 30)
 	c1.CheckIn()
 
 	wr = httptest.NewRecorder()
 	c.ServeHTTP(wr, r)
-	if wr.Code != http.StatusServiceUnavailable {
-		t.Errorf("Check should not have passed")
-	}
+	assert.Equal(t, http.StatusServiceUnavailable, wr.Code)
 }
 
 func Test_CheckHTTPOverride(t *testing.T) {
@@ -108,22 +92,16 @@ func Test_CheckHTTPOverride(t *testing.T) {
 	c1.CheckIn()
 
 	c.ServeHTTP(wr, r)
-	if wr.Code != http.StatusOK {
-		t.Errorf("Check should have passed")
-	}
+	assert.Equal(t, http.StatusOK, wr.Code)
 
 	time.Sleep(time.Millisecond * 60)
 
 	wr = httptest.NewRecorder()
 	c.ServeHTTP(wr, r)
-	if wr.Code != http.StatusOK {
-		t.Errorf("Check should still have passed")
-	}
+	assert.Equal(t, http.StatusOK, wr.Code)
 
 	r.Header.Del(ToleranceHeader)
 	wr = httptest.NewRecorder()
 	c.ServeHTTP(wr, r)
-	if wr.Code != http.StatusServiceUnavailable {
-		t.Errorf("Check should not have passed")
-	}
+	assert.Equal(t, http.StatusServiceUnavailable, wr.Code)
 }
