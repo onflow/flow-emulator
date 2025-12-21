@@ -335,13 +335,6 @@ func WithScheduledTransactions(enabled bool) Option {
 	}
 }
 
-// WithSetupEVMEnabled enables/disables the EVM setup.
-func WithSetupEVMEnabled(enabled bool) Option {
-	return func(c *config) {
-		c.SetupEVMEnabled = enabled
-	}
-}
-
 // WithSetupVMBridgeEnabled enables/disables the VM bridge setup.
 func WithSetupVMBridgeEnabled(enabled bool) Option {
 	return func(c *config) {
@@ -425,7 +418,6 @@ type config struct {
 	Contracts                    []ContractDescription
 	ComputationReportingEnabled  bool
 	ScheduledTransactionsEnabled bool
-	SetupEVMEnabled              bool
 	SetupVMBridgeEnabled         bool
 }
 
@@ -495,7 +487,6 @@ var defaultConfig = func() config {
 		AutoMine:                     false,
 		ComputationReportingEnabled:  false,
 		ScheduledTransactionsEnabled: true,
-		SetupEVMEnabled:              true,
 		SetupVMBridgeEnabled:         true,
 	}
 }()
@@ -689,7 +680,6 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		fvm.WithReusableCadenceRuntimePool(customRuntimePool),
 		fvm.WithEntropyProvider(blockchain.entropyProvider),
-		fvm.WithEVMEnabled(true),
 		fvm.WithScheduledTransactionsEnabled(conf.ScheduledTransactionsEnabled),
 	}
 
@@ -869,7 +859,6 @@ func configureBootstrapProcedure(
 		fvm.WithExecutionMemoryWeights(meter.DefaultMemoryWeights),
 		fvm.WithExecutionEffortWeights(conf.EffectiveExecutionEffortWeights()),
 		fvm.WithSetupVMBridgeEnabled(cadence.NewBool(conf.SetupVMBridgeEnabled)),
-		fvm.WithSetupEVMEnabled(cadence.NewBool(conf.SetupEVMEnabled)),
 	)
 
 	if conf.StorageLimitEnabled {

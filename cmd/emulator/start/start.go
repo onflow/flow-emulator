@@ -84,7 +84,6 @@ type Config struct {
 	StateHash                    string        `default:"" flag:"state-hash" info:"state hash of the checkpoint to load the emulator state from"`
 	ComputationReportingEnabled  bool          `default:"false" flag:"computation-reporting" info:"enable Cadence computation reporting"`
 	ScheduledTransactionsEnabled bool          `default:"true" flag:"scheduled-transactions" info:"enable Cadence scheduled transactions"`
-	SetupEVMEnabled              bool          `default:"true" flag:"setup-evm" info:"enable EVM setup for the emulator, this will deploy the EVM contracts"`
 	SetupVMBridgeEnabled         bool          `default:"true" flag:"setup-vm-bridge" info:"enable VM Bridge setup for the emulator, this will deploy the VM Bridge contracts"`
 	NumAccounts                  int           `default:"0" flag:"num-accounts" info:"number of precreated accounts at startup"`
 
@@ -250,7 +249,6 @@ func Cmd(config StartConfig) *cobra.Command {
 				StateHash:                    conf.StateHash,
 				ComputationReportingEnabled:  conf.ComputationReportingEnabled,
 				ScheduledTransactionsEnabled: conf.ScheduledTransactionsEnabled,
-				SetupEVMEnabled:              conf.SetupEVMEnabled,
 				SetupVMBridgeEnabled:         conf.SetupVMBridgeEnabled,
 				NumAccounts:                  conf.NumAccounts,
 			}
