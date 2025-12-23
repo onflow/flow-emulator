@@ -31,7 +31,7 @@ func TestCommonContractsDeployment(t *testing.T) {
 
 	t.Parallel()
 
-	//only test monotonic and emulator ( mainnet / testnet is used for remote debugging )
+	// only test monotonic and emulator ( mainnet / testnet is used for remote debugging )
 	chains := []flowgo.Chain{
 		flowgo.Emulator.Chain(),
 		flowgo.MonotonicEmulator.Chain(),
