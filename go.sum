@@ -768,8 +768,8 @@ github.com/onflow/flow-ft/lib/go/contracts v1.0.1 h1:Ts5ob+CoCY2EjEd0W6vdLJ7hLL3
 github.com/onflow/flow-ft/lib/go/contracts v1.0.1/go.mod h1:PwsL8fC81cjnUnTfmyL/HOIyHnyaw/JA474Wfj2tl6A=
 github.com/onflow/flow-ft/lib/go/templates v1.0.1 h1:FDYKAiGowABtoMNusLuRCILIZDtVqJ/5tYI4VkF5zfM=
 github.com/onflow/flow-ft/lib/go/templates v1.0.1/go.mod h1:uQ8XFqmMK2jxyBSVrmyuwdWjTEb+6zGjRYotfDJ5pAE=
-github.com/onflow/flow-go v0.45.0-experimental-cadence-v1.8.7.0.20251219170433-76749cca9738 h1:aX6bCalA+3wTU4QtV8bNOp8r65gn5vUgP/OGoM+WXx8=
-github.com/onflow/flow-go v0.45.0-experimental-cadence-v1.8.7.0.20251219170433-76749cca9738/go.mod h1:pf17wLzziK4QHBGc1s0WkxuXrO26Zzx5AQTVw+TP3BQ=
+github.com/onflow/flow-go v0.44.17 h1:4Ar+YmWfMbXIg5MJe88j0dRHcbE8+KLp3mRwIOQoP2U=
+github.com/onflow/flow-go v0.44.17/go.mod h1:bp3gC9VTf4Hcck1PuI9Jc9AsGddom2GmCcOdwOSOOS8=
 github.com/onflow/flow-go-sdk v1.9.8 h1:Bh3TQSXjsZqKqg26WB5PXBipqJjU/zLem3L7IIWktNQ=
 github.com/onflow/flow-go-sdk v1.9.8/go.mod h1:KWKBqUZDwLSgv8ID0AZ3SAvP4kNFZLnCvdkJRw7Xqro=
 github.com/onflow/flow-nft/lib/go/contracts v1.3.0 h1:DmNop+O0EMyicZvhgdWboFG57xz5t9Qp81FKlfKyqJc=
@@ -1531,8 +1531,8 @@ google.golang.org/genproto v0.0.0-20250603155806-513f23925822 h1:rHWScKit0gvAPuO
 google.golang.org/genproto v0.0.0-20250603155806-513f23925822/go.mod h1:HubltRL7rMh0LfnQPkMH4NPDFEWp0jw3vixw7jEM53s=
 google.golang.org/genproto/googleapis/api v0.0.0-20251022142026-3a174f9686a8 h1:mepRgnBZa07I4TRuomDE4sTIYieg/osKmzIf4USdWS4=
 google.golang.org/genproto/googleapis/api v0.0.0-20251022142026-3a174f9686a8/go.mod h1:fDMmzKV90WSg1NbozdqrE64fkuTv6mlq2zxo9ad+3yo=
-google.golang.org/genproto/googleapis/bytestream v0.0.0-20251124214823-79d6a2a48846 h1:7FlucM2tFADtEDnIlDrR12KdRqV48B1GSTU1U6uKSiY=
-google.golang.org/genproto/googleapis/bytestream v0.0.0-20251124214823-79d6a2a48846/go.mod h1:G3Q0qS3k/oFEmVMddPsSYcFnm2+Mq2XRmxujrtu5hr0=
+google.golang.org/genproto/googleapis/bytestream v0.0.0-20250804133106-a7a43d27e69b h1:YzmLjVBzUKrr0zPM1KkGPEicd3WHSccw1k9RivnvngU=
+google.golang.org/genproto/googleapis/bytestream v0.0.0-20250804133106-a7a43d27e69b/go.mod h1:h6yxum/C2qRb4txaZRLDHK8RyS0H/o2oEDeKY4onY/Y=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20251124214823-79d6a2a48846 h1:Wgl1rcDNThT+Zn47YyCXOXyX/COgMTIdhJ717F0l4xk=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20251124214823-79d6a2a48846/go.mod h1:7i2o+ce6H/6BluujYR+kqX3GKH+dChPTQU19wjRPiGk=
 google.golang.org/grpc v1.17.0/go.mod h1:6QZJwpn2B+Zp71q/5VxRsJ6NXXVCE5NRUHRo+f3cWCs=
