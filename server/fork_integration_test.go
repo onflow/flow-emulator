@@ -240,3 +240,85 @@ func TestForkingAgainstMainnet(t *testing.T) {
 
 	t.Logf("Account key test successful. Script result: %v", scriptResult.Value)
 }
+
+// TestForkingWithEVMInteraction exercises EVM functionality in a forked environment
+func TestForkingWithEVMInteraction(t *testing.T) {
+	t.Parallel()
+
+	logger := zerolog.Nop()
+
+	const target = "access.mainnet.nodes.onflow.org:9000"
+
+	// Get remote latest sealed height to pin fork with automatic retry
+	conn, err := grpc.NewClient(
+		target,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		utils.DefaultGRPCRetryInterceptor(),
+	)
+	require.NoError(t, err)
+	defer func() { _ = conn.Close() }()
+	remote := flowaccess.NewAccessAPIClient(conn)
+
+	rh, err := remote.GetLatestBlockHeader(context.Background(), &flowaccess.GetLatestBlockHeaderRequest{IsSealed: true})
+	require.NoError(t, err)
+	remoteHeight := rh.Block.Height - 10 // Use a buffer to avoid edge cases
+
+	cfg := &Config{
+		// Do not start listeners; NewEmulatorServer only configures components.
+		DBPath:                    "",
+		Persist:                   false,
+		Snapshot:                  false,
+		SkipTransactionValidation: true,
+		ChainID:                   flowgo.Mainnet,
+		ForkHost:                  target,
+		ForkHeight:                remoteHeight,
+	}
+
+	srv := NewEmulatorServer(&logger, cfg)
+	require.NotNil(t, srv)
+	require.Equal(t, flowgo.Mainnet, cfg.ChainID)
+
+	latest, err := srv.Emulator().GetLatestBlock()
+	require.NoError(t, err)
+	require.Equal(t, remoteHeight+1, latest.Height)
+
+	// Execute a transaction that calls EVM.encodeABI to verify EVM works in forked environment
+	sk := srv.Emulator().ServiceKey()
+
+	evmTxCode := []byte(`
+		import EVM from 0xe467b9dd11fa00df
+
+		transaction {
+			prepare(acct: auth(Storage) &Account) {
+				let encoded = EVM.encodeABI([])
+			}
+		}
+	`)
+
+	latestBlock, err := srv.Emulator().GetLatestBlock()
+	require.NoError(t, err)
+
+	tx := flowsdk.NewTransaction().
+		SetScript(evmTxCode).
+		SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID())).
+		SetProposalKey(flowsdk.Address(sk.Address), sk.Index, sk.SequenceNumber).
+		SetPayer(flowsdk.Address(sk.Address)).
+		AddAuthorizer(flowsdk.Address(sk.Address))
+
+	signer, err := sk.Signer()
+	require.NoError(t, err)
+
+	err = tx.SignEnvelope(flowsdk.Address(sk.Address), sk.Index, signer)
+	require.NoError(t, err)
+
+	err = srv.Emulator().AddTransaction(*convert.SDKTransactionToFlow(*tx))
+	require.NoError(t, err)
+
+	_, results, err := srv.Emulator().ExecuteAndCommitBlock()
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+
+	txResult := results[0]
+	require.True(t, txResult.Succeeded(), "EVM transaction should succeed in forked environment")
+	require.NoError(t, txResult.Error)
+}
