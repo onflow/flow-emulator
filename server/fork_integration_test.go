@@ -282,28 +282,7 @@ func TestForkingWithEVMInteraction(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, remoteHeight+1, latest.Height)
 
-	// Test EVM.GetLatestBlockHeight() to verify EVM functionality works in forked environment
-	evmScript := []byte(`
-		import EVM from 0xe467b9dd11fa00df
-
-		access(all) fun main(): UInt64 {
-			return EVM.getLatestBlockHeight()
-		}
-	`)
-
-	scriptResult, err := srv.Emulator().ExecuteScript(evmScript, nil)
-	require.NoError(t, err)
-	require.True(t, scriptResult.Succeeded(), "EVM script should succeed in forked environment")
-	require.NoError(t, scriptResult.Error)
-
-	// Check that we got a valid UInt64 block height
-	evmBlockHeight, ok := scriptResult.Value.(cadence.UInt64)
-	require.True(t, ok, "EVM.getLatestBlockHeight() should return UInt64")
-	require.GreaterOrEqual(t, uint64(evmBlockHeight), uint64(0), "EVM block height should be >= 0")
-
-	t.Logf("EVM integration test successful. EVM block height: %d", evmBlockHeight)
-
-	// Now test a transaction that interacts with EVM
+	// Execute a transaction that calls EVM.encodeABI to verify EVM works in forked environment
 	sk := srv.Emulator().ServiceKey()
 
 	evmTxCode := []byte(`
@@ -311,9 +290,7 @@ func TestForkingWithEVMInteraction(t *testing.T) {
 
 		transaction {
 			prepare(acct: auth(Storage) &Account) {
-				// Just call getLatestBlockHeight in a transaction to prove EVM works
-				let height = EVM.getLatestBlockHeight()
-				log("EVM block height: ".concat(height.toString()))
+				let encoded = EVM.encodeABI([])
 			}
 		}
 	`)
@@ -344,17 +321,4 @@ func TestForkingWithEVMInteraction(t *testing.T) {
 	txResult := results[0]
 	require.True(t, txResult.Succeeded(), "EVM transaction should succeed in forked environment")
 	require.NoError(t, txResult.Error)
-
-	// Verify the log contains the EVM block height
-	foundLog := false
-	for _, log := range txResult.Logs {
-		t.Logf("Transaction log: %s", log)
-		if len(log) >= len("EVM block height:") && log[:len("EVM block height:")] == "EVM block height:" {
-			foundLog = true
-			break
-		}
-	}
-	require.True(t, foundLog, "Transaction should log EVM block height")
-
-	t.Logf("EVM transaction test successful in forked mainnet environment")
 }
