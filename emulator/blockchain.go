@@ -859,7 +859,6 @@ func configureBootstrapProcedure(
 		fvm.WithExecutionMemoryWeights(meter.DefaultMemoryWeights),
 		fvm.WithExecutionEffortWeights(conf.EffectiveExecutionEffortWeights()),
 		fvm.WithSetupVMBridgeEnabled(cadence.NewBool(conf.SetupVMBridgeEnabled)),
-		fvm.WithSetupEVMEnabled(cadence.NewBool(true)),
 	)
 
 	if conf.StorageLimitEnabled {
