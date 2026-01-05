@@ -240,3 +240,121 @@ func TestForkingAgainstMainnet(t *testing.T) {
 
 	t.Logf("Account key test successful. Script result: %v", scriptResult.Value)
 }
+
+// TestForkingWithEVMInteraction exercises EVM functionality in a forked environment
+func TestForkingWithEVMInteraction(t *testing.T) {
+	t.Parallel()
+
+	logger := zerolog.Nop()
+
+	const target = "access.mainnet.nodes.onflow.org:9000"
+
+	// Get remote latest sealed height to pin fork with automatic retry
+	conn, err := grpc.NewClient(
+		target,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		utils.DefaultGRPCRetryInterceptor(),
+	)
+	require.NoError(t, err)
+	defer func() { _ = conn.Close() }()
+	remote := flowaccess.NewAccessAPIClient(conn)
+
+	rh, err := remote.GetLatestBlockHeader(context.Background(), &flowaccess.GetLatestBlockHeaderRequest{IsSealed: true})
+	require.NoError(t, err)
+	remoteHeight := rh.Block.Height - 10 // Use a buffer to avoid edge cases
+
+	cfg := &Config{
+		// Do not start listeners; NewEmulatorServer only configures components.
+		DBPath:                    "",
+		Persist:                   false,
+		Snapshot:                  false,
+		SkipTransactionValidation: true,
+		ChainID:                   flowgo.Mainnet,
+		ForkHost:                  target,
+		ForkHeight:                remoteHeight,
+	}
+
+	srv := NewEmulatorServer(&logger, cfg)
+	require.NotNil(t, srv)
+	require.Equal(t, flowgo.Mainnet, cfg.ChainID)
+
+	latest, err := srv.Emulator().GetLatestBlock()
+	require.NoError(t, err)
+	require.Equal(t, remoteHeight+1, latest.Height)
+
+	// Test EVM.GetLatestBlockHeight() to verify EVM functionality works in forked environment
+	evmScript := []byte(`
+		import EVM from 0xe467b9dd11fa00df
+
+		access(all) fun main(): UInt64 {
+			return EVM.getLatestBlockHeight()
+		}
+	`)
+
+	scriptResult, err := srv.Emulator().ExecuteScript(evmScript, nil)
+	require.NoError(t, err)
+	require.True(t, scriptResult.Succeeded(), "EVM script should succeed in forked environment")
+	require.NoError(t, scriptResult.Error)
+
+	// Check that we got a valid UInt64 block height
+	evmBlockHeight, ok := scriptResult.Value.(cadence.UInt64)
+	require.True(t, ok, "EVM.getLatestBlockHeight() should return UInt64")
+	require.GreaterOrEqual(t, uint64(evmBlockHeight), uint64(0), "EVM block height should be >= 0")
+
+	t.Logf("EVM integration test successful. EVM block height: %d", evmBlockHeight)
+
+	// Now test a transaction that interacts with EVM
+	sk := srv.Emulator().ServiceKey()
+
+	evmTxCode := []byte(`
+		import EVM from 0xe467b9dd11fa00df
+
+		transaction {
+			prepare(acct: auth(Storage) &Account) {
+				// Just call getLatestBlockHeight in a transaction to prove EVM works
+				let height = EVM.getLatestBlockHeight()
+				log("EVM block height: ".concat(height.toString()))
+			}
+		}
+	`)
+
+	latestBlock, err := srv.Emulator().GetLatestBlock()
+	require.NoError(t, err)
+
+	tx := flowsdk.NewTransaction().
+		SetScript(evmTxCode).
+		SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID())).
+		SetProposalKey(flowsdk.Address(sk.Address), sk.Index, sk.SequenceNumber).
+		SetPayer(flowsdk.Address(sk.Address)).
+		AddAuthorizer(flowsdk.Address(sk.Address))
+
+	signer, err := sk.Signer()
+	require.NoError(t, err)
+
+	err = tx.SignEnvelope(flowsdk.Address(sk.Address), sk.Index, signer)
+	require.NoError(t, err)
+
+	err = srv.Emulator().AddTransaction(*convert.SDKTransactionToFlow(*tx))
+	require.NoError(t, err)
+
+	_, results, err := srv.Emulator().ExecuteAndCommitBlock()
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+
+	txResult := results[0]
+	require.True(t, txResult.Succeeded(), "EVM transaction should succeed in forked environment")
+	require.NoError(t, txResult.Error)
+
+	// Verify the log contains the EVM block height
+	foundLog := false
+	for _, log := range txResult.Logs {
+		t.Logf("Transaction log: %s", log)
+		if len(log) >= len("EVM block height:") && log[:len("EVM block height:")] == "EVM block height:" {
+			foundLog = true
+			break
+		}
+	}
+	require.True(t, foundLog, "Transaction should log EVM block height")
+
+	t.Logf("EVM transaction test successful in forked mainnet environment")
+}

@@ -680,6 +680,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		fvm.WithReusableCadenceRuntimePool(customRuntimePool),
 		fvm.WithEntropyProvider(blockchain.entropyProvider),
+		fvm.WithEVMEnabled(true),
 	}
 
 	if !conf.TransactionValidationEnabled {
@@ -858,6 +859,7 @@ func configureBootstrapProcedure(
 		fvm.WithExecutionMemoryWeights(meter.DefaultMemoryWeights),
 		fvm.WithExecutionEffortWeights(conf.EffectiveExecutionEffortWeights()),
 		fvm.WithSetupVMBridgeEnabled(cadence.NewBool(conf.SetupVMBridgeEnabled)),
+		fvm.WithSetupEVMEnabled(cadence.NewBool(true)),
 	)
 
 	if conf.StorageLimitEnabled {
