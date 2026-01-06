@@ -101,7 +101,7 @@ func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 	// only collect metrics if not test
 	if flag.Lookup("test.v") == nil {
 		var err error
-		restCollector, err = metrics.NewRestCollector(router.URLToRoute, prometheus.DefaultRegisterer)
+		restCollector, err = metrics.NewRestCollector(router.MethodURLToRoute, prometheus.DefaultRegisterer)
 		if err != nil {
 			return nil, err
 		}
