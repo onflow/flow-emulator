@@ -200,12 +200,11 @@ func createCheckpoint(t *testing.T, log zerolog.Logger, dir string, chainID flow
 	// so we should get at least `size` segments
 
 	opts := []fvm.Option{
-		// default chain is Testnet
-		fvm.WithChain(flowgo.ChainID(chainID).Chain()),
 		fvm.WithEntropyProvider(testutil.EntropyProviderFixture(nil)),
 	}
 
-	ctx := fvm.NewContext(opts...)
+	// default chain is Testnet
+	ctx := fvm.NewContext(flowgo.ChainID(chainID).Chain(), opts...)
 
 	vm := fvm.NewVirtualMachine()
 
