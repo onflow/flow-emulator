@@ -80,6 +80,14 @@ type Store interface {
 	// Returns ErrNotFound if the scheduled transaction ID is not indexed.
 	BlockIDByScheduledTransactionID(ctx context.Context, scheduledTxID uint64) (flowgo.Identifier, error)
 
+	// IndexScheduledTransactionBlockID indexes a scheduled transaction's txID to its block ID.
+	// This allows looking up which block contains a given scheduled transaction by its flow transaction ID.
+	IndexScheduledTransactionBlockID(ctx context.Context, txID flowgo.Identifier, blockID flowgo.Identifier) error
+
+	// ScheduledTransactionBlockIDByTxID returns the block ID for a given scheduled transaction's flow txID.
+	// Returns ErrNotFound if the transaction ID is not indexed.
+	ScheduledTransactionBlockIDByTxID(ctx context.Context, txID flowgo.Identifier) (flowgo.Identifier, error)
+
 	// BlockByID returns the block with the given hash. It is available for
 	// finalized and ambiguous blocks.
 	BlockByID(ctx context.Context, blockID flowgo.Identifier) (*flowgo.Block, error)
@@ -284,6 +292,36 @@ func (s *DefaultStore) BlockIDByScheduledTransactionID(ctx context.Context, sche
 		ctx,
 		s.Storage("scheduledTransactionIndex"),
 		s.ScheduledTransactionID(scheduledTxID),
+	)
+	if err != nil {
+		return flowgo.ZeroID, err
+	}
+
+	if len(blockIDBytes) != len(flowgo.ZeroID) {
+		return flowgo.ZeroID, fmt.Errorf("invalid block ID length: expected %d, got %d", len(flowgo.ZeroID), len(blockIDBytes))
+	}
+
+	var blockID flowgo.Identifier
+	copy(blockID[:], blockIDBytes)
+	return blockID, nil
+}
+
+// IndexScheduledTransactionBlockID stores the mapping from scheduled transaction ID to block ID.
+func (s *DefaultStore) IndexScheduledTransactionBlockID(ctx context.Context, txID flowgo.Identifier, blockID flowgo.Identifier) error {
+	return s.SetBytes(
+		ctx,
+		s.Storage("scheduledTransactionBlockIndex"),
+		s.Identifier(txID),
+		blockID[:],
+	)
+}
+
+// ScheduledTransactionBlockIDByTxID retrieves the block ID for a given scheduled transaction ID.
+func (s *DefaultStore) ScheduledTransactionBlockIDByTxID(ctx context.Context, txID flowgo.Identifier) (flowgo.Identifier, error) {
+	blockIDBytes, err := s.GetBytes(
+		ctx,
+		s.Storage("scheduledTransactionBlockIndex"),
+		s.Identifier(txID),
 	)
 	if err != nil {
 		return flowgo.ZeroID, err
