@@ -662,6 +662,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 	rt := runtime.NewRuntime(runtimeConfig)
 	customRuntimePool := reusableRuntime.NewCustomReusableCadenceRuntimePool(
 		1,
+		conf.GetChainID().Chain(),
 		runtimeConfig,
 		func(_ runtime.Config) runtime.Runtime {
 			return rt
@@ -670,7 +671,6 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 
 	fvmOptions := []fvm.Option{
 		fvm.WithLogger(cadenceLogger),
-		fvm.WithChain(conf.GetChainID().Chain()),
 		fvm.WithBlocks(blocks),
 		fvm.WithContractDeploymentRestricted(false),
 		fvm.WithContractRemovalRestricted(!conf.ContractRemovalEnabled),
@@ -690,6 +690,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 	}
 
 	ctx := fvm.NewContext(
+		conf.GetChainID().Chain(),
 		fvmOptions...,
 	)
 
@@ -2185,7 +2186,7 @@ func (b *Blockchain) GetSourceFile(location common.Location) string {
 	r := b.vmCtx.Borrow(env)
 	defer b.vmCtx.Return(r)
 
-	code, err := r.TxRuntimeEnv.GetAccountContractCode(addressLocation)
+	code, err := r.CadenceTXEnv().GetAccountContractCode(addressLocation)
 	if err != nil {
 		return location.ID()
 	}
