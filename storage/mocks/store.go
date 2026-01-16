@@ -148,6 +148,20 @@ func (mr *MockStoreMockRecorder) FullCollectionByID(ctx, collectionID any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FullCollectionByID", reflect.TypeOf((*MockStore)(nil).FullCollectionByID), ctx, collectionID)
 }
 
+// IndexScheduledTransactionBlockID mocks base method.
+func (m *MockStore) IndexScheduledTransactionBlockID(ctx context.Context, txID, blockID flow.Identifier) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IndexScheduledTransactionBlockID", ctx, txID, blockID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// IndexScheduledTransactionBlockID indicates an expected call of IndexScheduledTransactionBlockID.
+func (mr *MockStoreMockRecorder) IndexScheduledTransactionBlockID(ctx, txID, blockID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexScheduledTransactionBlockID", reflect.TypeOf((*MockStore)(nil).IndexScheduledTransactionBlockID), ctx, txID, blockID)
+}
+
 // IndexScheduledTransactionID mocks base method.
 func (m *MockStore) IndexScheduledTransactionID(ctx context.Context, scheduledTxID uint64, blockID flow.Identifier) error {
 	m.ctrl.T.Helper()
@@ -205,6 +219,21 @@ func (m *MockStore) LedgerByHeight(ctx context.Context, blockHeight uint64) (sna
 func (mr *MockStoreMockRecorder) LedgerByHeight(ctx, blockHeight any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LedgerByHeight", reflect.TypeOf((*MockStore)(nil).LedgerByHeight), ctx, blockHeight)
+}
+
+// ScheduledTransactionBlockIDByTxID mocks base method.
+func (m *MockStore) ScheduledTransactionBlockIDByTxID(ctx context.Context, txID flow.Identifier) (flow.Identifier, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ScheduledTransactionBlockIDByTxID", ctx, txID)
+	ret0, _ := ret[0].(flow.Identifier)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ScheduledTransactionBlockIDByTxID indicates an expected call of ScheduledTransactionBlockIDByTxID.
+func (mr *MockStoreMockRecorder) ScheduledTransactionBlockIDByTxID(ctx, txID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ScheduledTransactionBlockIDByTxID", reflect.TypeOf((*MockStore)(nil).ScheduledTransactionBlockIDByTxID), ctx, txID)
 }
 
 // Start mocks base method.
