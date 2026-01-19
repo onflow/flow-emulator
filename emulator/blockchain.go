@@ -1085,6 +1085,11 @@ func (b *Blockchain) getTransactionResult(txID flowgo.Identifier) (*accessmodel.
 	storedResult, err := b.storage.TransactionResultByID(context.Background(), txID)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
+			// Try scheduled transaction index: txID → blockID, then lookup by (blockID, txID)
+			blockID, indexErr := b.storage.ScheduledTransactionBlockIDByTxID(context.Background(), txID)
+			if indexErr == nil {
+				return b.getSystemTransactionResult(blockID, txID)
+			}
 			return &accessmodel.TransactionResult{
 				Status: flowgo.TransactionStatusUnknown,
 			}, nil
@@ -1542,11 +1547,22 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 		return nil, err
 	}
 
-	// Index scheduled transactions globally (scheduledTxID → blockID)
+	// Index scheduled transactions globally
 	for scheduledTxID := range scheduledTransactionIDs {
+		// scheduledTxID → blockID (for GetScheduledTransaction queries)
 		err = b.storage.IndexScheduledTransactionID(context.Background(), scheduledTxID, block.ID())
 		if err != nil {
 			return nil, fmt.Errorf("failed to index scheduled transaction %d: %w", scheduledTxID, err)
+		}
+	}
+
+	// Index scheduled system txs by flow txID → blockID (for GetTransactionResult queries)
+	for txID := range systemTransactionResults {
+		if b.systemTransactions[txID] == nil {
+			err = b.storage.IndexScheduledTransactionBlockID(context.Background(), txID, block.ID())
+			if err != nil {
+				return nil, fmt.Errorf("failed to index scheduled transaction %s: %w", txID, err)
+			}
 		}
 	}
 

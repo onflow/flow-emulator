@@ -45,6 +45,8 @@ type Store struct {
 	systemTransactions map[flowgo.Identifier]storage.SystemTransactions
 	// scheduled transaction ID to block ID (global index)
 	scheduledTransactionIndex map[uint64]flowgo.Identifier
+	// scheduled transaction txID to block ID index
+	scheduledTransactionBlockIndex map[flowgo.Identifier]flowgo.Identifier
 	// Transaction results by ID
 	transactionResults map[flowgo.Identifier]types.StorableTransactionResult
 	// System transaction results by composite key (blockID_txID)
@@ -61,16 +63,17 @@ type Store struct {
 func New() *Store {
 	return &Store{
 		mu:                        sync.RWMutex{},
-		blockIDToHeight:           make(map[flowgo.Identifier]uint64),
-		blocks:                    make(map[uint64]flowgo.Block),
-		collections:               make(map[flowgo.Identifier]flowgo.LightCollection),
-		transactions:              make(map[flowgo.Identifier]flowgo.TransactionBody),
-		systemTransactions:        make(map[flowgo.Identifier]storage.SystemTransactions),
-		scheduledTransactionIndex: make(map[uint64]flowgo.Identifier),
-		transactionResults:        make(map[flowgo.Identifier]types.StorableTransactionResult),
-		systemTransactionResults:  make(map[string]types.StorableTransactionResult),
-		ledger:                    make(map[uint64]snapshot.SnapshotTree),
-		eventsByBlockHeight:       make(map[uint64][]flowgo.Event),
+		blockIDToHeight:                make(map[flowgo.Identifier]uint64),
+		blocks:                         make(map[uint64]flowgo.Block),
+		collections:                    make(map[flowgo.Identifier]flowgo.LightCollection),
+		transactions:                   make(map[flowgo.Identifier]flowgo.TransactionBody),
+		systemTransactions:             make(map[flowgo.Identifier]storage.SystemTransactions),
+		scheduledTransactionIndex:      make(map[uint64]flowgo.Identifier),
+		scheduledTransactionBlockIndex: make(map[flowgo.Identifier]flowgo.Identifier),
+		transactionResults:             make(map[flowgo.Identifier]types.StorableTransactionResult),
+		systemTransactionResults:       make(map[string]types.StorableTransactionResult),
+		ledger:                         make(map[uint64]snapshot.SnapshotTree),
+		eventsByBlockHeight:            make(map[uint64][]flowgo.Event),
 	}
 }
 
@@ -180,6 +183,26 @@ func (s *Store) BlockIDByScheduledTransactionID(ctx context.Context, scheduledTx
 	defer s.mu.RUnlock()
 
 	blockID, ok := s.scheduledTransactionIndex[scheduledTxID]
+	if !ok {
+		return flowgo.ZeroID, storage.ErrNotFound
+	}
+
+	return blockID, nil
+}
+
+func (s *Store) IndexScheduledTransactionBlockID(ctx context.Context, txID flowgo.Identifier, blockID flowgo.Identifier) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.scheduledTransactionBlockIndex[txID] = blockID
+	return nil
+}
+
+func (s *Store) ScheduledTransactionBlockIDByTxID(ctx context.Context, txID flowgo.Identifier) (flowgo.Identifier, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	blockID, ok := s.scheduledTransactionBlockIndex[txID]
 	if !ok {
 		return flowgo.ZeroID, storage.ErrNotFound
 	}

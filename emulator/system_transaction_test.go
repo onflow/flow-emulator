@@ -415,3 +415,105 @@ func TestSystemTransactions_EmptyBlock_NoPendingExecution(t *testing.T) {
 
 	assert.False(t, foundAnyPendingExec, "should NOT have PendingExecution event when nothing is scheduled")
 }
+
+func TestScheduledTransaction_QueryByID(t *testing.T) {
+	t.Parallel()
+
+	b, err := emulator.New(emulator.WithStorageLimitEnabled(false))
+	require.NoError(t, err)
+
+	logger := zerolog.Nop()
+	adapter := adapters.NewAccessAdapter(&logger, b)
+	serviceAddress := b.ServiceKey().Address
+	serviceHex := serviceAddress.Hex()
+
+	// Deploy handler
+	handlerContract := fmt.Sprintf(`
+		import FlowTransactionScheduler from 0x%s
+		access(all) contract Handler {
+			access(all) resource H: FlowTransactionScheduler.TransactionHandler {
+				access(FlowTransactionScheduler.Execute) fun executeTransaction(id: UInt64, data: AnyStruct?) {}
+			}
+			access(all) fun create(): @H { return <- create H() }
+		}
+	`, serviceHex)
+
+	latestBlock, err := b.GetLatestBlock()
+	require.NoError(t, err)
+	tx := templates.AddAccountContract(serviceAddress, templates.Contract{Name: "Handler", Source: handlerContract})
+	tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID())).
+		SetProposalKey(serviceAddress, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+		SetPayer(serviceAddress)
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+	require.NoError(t, tx.SignEnvelope(serviceAddress, b.ServiceKey().Index, signer))
+	require.NoError(t, b.SendTransaction(convert.SDKTransactionToFlow(*tx)))
+	_, _, err = b.ExecuteAndCommitBlock()
+	require.NoError(t, err)
+
+	// Schedule transaction
+	scheduleTx := fmt.Sprintf(`
+		import FlowTransactionScheduler from 0x%s
+		import Handler from 0x%s
+		import FungibleToken from 0xee82856bf20e2aa6
+		import FlowToken from 0x0ae53cb6e3f42a79
+		transaction {
+			prepare(acct: auth(Storage, Capabilities, FungibleToken.Withdraw) &Account) {
+				let h <- Handler.create()
+				acct.storage.save(<-h, to: /storage/h)
+				let cap = acct.capabilities.storage.issue<auth(FlowTransactionScheduler.Execute) &{FlowTransactionScheduler.TransactionHandler}>(/storage/h)
+				let admin = acct.storage.borrow<&FlowToken.Administrator>(from: /storage/flowTokenAdmin)!
+				let minter <- admin.createNewMinter(allowedAmount: 10.0)
+				let minted <- minter.mintTokens(amount: 1.0)
+				let receiver = acct.capabilities.borrow<&{FungibleToken.Receiver}>(/public/flowTokenReceiver)!
+				receiver.deposit(from: <-minted)
+				destroy minter
+				let vaultRef = acct.storage.borrow<auth(FungibleToken.Withdraw) &FlowToken.Vault>(from: /storage/flowTokenVault)!
+				let fees <- (vaultRef.withdraw(amount: 0.001) as! @FlowToken.Vault)
+				destroy <- FlowTransactionScheduler.schedule(
+					handlerCap: cap, data: nil,
+					timestamp: getCurrentBlock().timestamp + 2.0,
+					priority: FlowTransactionScheduler.Priority.High,
+					executionEffort: UInt64(5000), fees: <-fees
+				)
+			}
+		}
+	`, serviceHex, serviceHex)
+
+	latestBlock, err = b.GetLatestBlock()
+	require.NoError(t, err)
+	tx = flowsdk.NewTransaction().SetScript([]byte(scheduleTx)).
+		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
+		SetProposalKey(serviceAddress, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+		SetPayer(serviceAddress).AddAuthorizer(serviceAddress).
+		SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID()))
+	signer, err = b.ServiceKey().Signer()
+	require.NoError(t, err)
+	require.NoError(t, tx.SignEnvelope(serviceAddress, b.ServiceKey().Index, signer))
+	require.NoError(t, b.SendTransaction(convert.SDKTransactionToFlow(*tx)))
+	_, _, err = b.ExecuteAndCommitBlock()
+	require.NoError(t, err)
+
+	// Wait and execute to trigger scheduled tx
+	time.Sleep(2500 * time.Millisecond)
+	block, _, err := b.ExecuteAndCommitBlock()
+	require.NoError(t, err)
+
+	// Get system transactions from block
+	systemTxIDs, err := b.GetSystemTransactionsForBlock(flowgo.Identifier(block.ID()))
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, len(systemTxIDs), 2, "should have system chunk + scheduled tx")
+
+	// Scheduled tx is the second one (first is static system chunk)
+	scheduledTxID := systemTxIDs[1]
+
+	// Query by ID alone (no blockID) - this is what we're testing
+	tx2, err := adapter.GetTransaction(context.Background(), scheduledTxID)
+	require.NoError(t, err)
+	require.NotNil(t, tx2)
+
+	result, err := adapter.GetTransactionResult(context.Background(), scheduledTxID, flowgo.ZeroID, flowgo.ZeroID, entities.EventEncodingVersion_CCF_V0)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+}
