@@ -12,11 +12,11 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.9.4
+	github.com/onflow/cadence v1.9.5
 	github.com/onflow/crypto v0.25.3
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.9.2
-	github.com/onflow/flow-go v0.45.0-experimental-cadence-v1.8.7.0.20260113150225-6d5c1e97a834
-	github.com/onflow/flow-go-sdk v1.9.10
+	github.com/onflow/flow-go v0.45.0-experimental-cadence-v1.8.7.0.20260115230052-18a46246a4d6
+	github.com/onflow/flow-go-sdk v1.9.11
 	github.com/onflow/flow-nft/lib/go/contracts v1.3.0
 	github.com/onflow/flow/protobuf/go/flow v0.4.19
 	github.com/prometheus/client_golang v1.23.2

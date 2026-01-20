@@ -2199,10 +2199,10 @@ func (b *Blockchain) GetSourceFile(location common.Location) string {
 	}
 
 	env := b.NewScriptEnvironment()
-	r := b.vmCtx.Borrow(env)
+	r := b.vmCtx.Borrow(env, environment.CadenceScriptRuntime)
 	defer b.vmCtx.Return(r)
 
-	code, err := r.CadenceTXEnv().GetAccountContractCode(addressLocation)
+	code, err := r.CadenceScriptEnv().GetAccountContractCode(addressLocation)
 	if err != nil {
 		return location.ID()
 	}
