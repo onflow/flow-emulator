@@ -1,6 +1,6 @@
 module github.com/onflow/flow-emulator
 
-go 1.25.0
+go 1.25.1
 
 require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
@@ -13,7 +13,7 @@ require (
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v1.9.5
-	github.com/onflow/crypto v0.25.3
+	github.com/onflow/crypto v0.25.4
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.9.2
 	github.com/onflow/flow-go v0.45.0-experimental-cadence-v1.8.7.0.20260115230052-18a46246a4d6
 	github.com/onflow/flow-go-sdk v1.9.11
