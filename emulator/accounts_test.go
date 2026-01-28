@@ -27,6 +27,7 @@ import (
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go-sdk/test"
+	"github.com/onflow/flow-go/access/validator"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
@@ -999,18 +1000,9 @@ func TestUpdateAccountCode(t *testing.T) {
 		require.NoError(t, err)
 
 		err = adapter.SendTransaction(context.Background(), *tx)
-		assert.NoError(t, err)
+		require.Error(t, err)
 
-		result, err := b.ExecuteNextTransaction()
-		assert.NoError(t, err)
-
-		assert.True(t, fvmerrors.HasErrorCode(result.Error, fvmerrors.ErrCodeAccountAuthorizationError))
-
-		_, err = b.CommitBlock()
-		assert.NoError(t, err)
-
-		account, err = adapter.GetAccount(context.Background(), accountAddressB)
-		assert.NoError(t, err)
+		assert.IsType(t, validator.MissingSignatureError{}, err)
 
 		// code should not be updated
 		assert.Equal(t, codeA, string(account.Contracts["Test"]))

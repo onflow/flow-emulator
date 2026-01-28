@@ -61,6 +61,7 @@ func TestSourceFilePragmaForTransaction(t *testing.T) {
 	b, err := emulator.New(
 		emulator.WithTransactionValidationEnabled(false),
 	)
+	require.NoError(t, err)
 	b.EnableAutoMine()
 
 	require.NoError(t, err)
@@ -73,6 +74,7 @@ func TestSourceFilePragmaForTransaction(t *testing.T) {
 		transaction{
 		}
 	`
+
 	tx := flowsdk.NewTransaction().
 		SetScript([]byte(txCode)).
 		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
@@ -80,7 +82,14 @@ func TestSourceFilePragmaForTransaction(t *testing.T) {
 		SetPayer(b.ServiceKey().Address).
 		AddAuthorizer(b.ServiceKey().Address)
 
-	txID, _ := hex.DecodeString(tx.ID().String())
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
+
+	txID, err := hex.DecodeString(tx.ID().String())
+	require.NoError(t, err)
 
 	err = adapter.SendTransaction(context.Background(), *tx)
 	require.NoError(t, err)
@@ -95,6 +104,7 @@ func TestSourceFilePragmaForContract(t *testing.T) {
 	b, err := emulator.New(
 		emulator.WithTransactionValidationEnabled(false),
 	)
+	require.NoError(t, err)
 	b.EnableAutoMine()
 
 	require.NoError(t, err)
@@ -116,6 +126,12 @@ func TestSourceFilePragmaForContract(t *testing.T) {
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber+1).
 		SetPayer(b.ServiceKey().Address)
 
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
+
 	err = adapter.SendTransaction(context.Background(), *tx)
 	require.NoError(t, err)
 
@@ -133,6 +149,7 @@ func TestSourceFileCommentedOutPragmaForContract(t *testing.T) {
 	b, err := emulator.New(
 		emulator.WithTransactionValidationEnabled(false),
 	)
+	require.NoError(t, err)
 	b.EnableAutoMine()
 
 	require.NoError(t, err)
@@ -153,6 +170,12 @@ func TestSourceFileCommentedOutPragmaForContract(t *testing.T) {
 	tx.SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber+1).
 		SetPayer(b.ServiceKey().Address)
+
+	signer, err := b.ServiceKey().Signer()
+	require.NoError(t, err)
+
+	err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+	require.NoError(t, err)
 
 	err = adapter.SendTransaction(context.Background(), *tx)
 	require.NoError(t, err)
