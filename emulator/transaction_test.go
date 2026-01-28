@@ -36,6 +36,7 @@ import (
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go-sdk/test"
+	"github.com/onflow/flow-go/access/validator"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/evm/stdlib"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -693,12 +694,9 @@ func TestSubmitTransaction_EnvelopeSignature(t *testing.T) {
 		require.NoError(t, err)
 
 		err = adapter.SendTransaction(context.Background(), *tx)
-		assert.NoError(t, err)
+		require.Error(t, err)
 
-		result, err := b.ExecuteNextTransaction()
-		assert.NoError(t, err)
-
-		assert.True(t, fvmerrors.HasErrorCode(result.Error, fvmerrors.ErrCodeAccountAuthorizationError))
+		assert.IsType(t, validator.MissingSignatureError{}, err)
 	})
 
 	t.Run("Invalid account", func(t *testing.T) {
@@ -932,12 +930,9 @@ func TestSubmitTransaction_PayloadSignatures(t *testing.T) {
 		require.NoError(t, err)
 
 		err = adapter.SendTransaction(context.Background(), *tx)
-		assert.NoError(t, err)
+		require.Error(t, err)
 
-		result, err := b.ExecuteNextTransaction()
-		assert.NoError(t, err)
-
-		assert.True(t, fvmerrors.HasErrorCode(result.Error, fvmerrors.ErrCodeAccountAuthorizationError))
+		assert.IsType(t, validator.MissingSignatureError{}, err)
 	})
 
 	t.Run("Multiple payload signers", func(t *testing.T) {

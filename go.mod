@@ -1,6 +1,6 @@
 module github.com/onflow/flow-emulator
 
-go 1.25.0
+go 1.25.1
 
 require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
@@ -12,11 +12,11 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.9.5
-	github.com/onflow/crypto v0.25.3
+	github.com/onflow/cadence v1.9.6
+	github.com/onflow/crypto v0.25.4
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.9.2
-	github.com/onflow/flow-go v0.45.0-experimental-cadence-v1.8.7.0.20260115230052-18a46246a4d6
-	github.com/onflow/flow-go-sdk v1.9.11
+	github.com/onflow/flow-go v0.45.0-internal-rc.3.0.20260128181608-c85c51c544dd
+	github.com/onflow/flow-go-sdk v1.9.12
 	github.com/onflow/flow-nft/lib/go/contracts v1.3.0
 	github.com/onflow/flow/protobuf/go/flow v0.4.19
 	github.com/prometheus/client_golang v1.23.2
@@ -72,7 +72,7 @@ require (
 	github.com/emicklei/dot v1.6.2 // indirect
 	github.com/ethereum/c-kzg-4844/v2 v2.1.5 // indirect
 	github.com/ethereum/go-bigmodexpfix v0.0.0-20250911101455-f9e208c548ab // indirect
-	github.com/ethereum/go-ethereum v1.16.7 // indirect
+	github.com/ethereum/go-ethereum v1.16.8 // indirect
 	github.com/ethereum/go-verkle v0.2.2 // indirect
 	github.com/ferranbt/fastssz v0.1.4 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect

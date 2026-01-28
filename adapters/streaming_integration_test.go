@@ -23,6 +23,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go/engine/access/subscription"
 	accessmodel "github.com/onflow/flow-go/model/access"
 	flowgo "github.com/onflow/flow-go/model/flow"
@@ -186,6 +187,12 @@ func TestStreamingTransactionStatuses_Integration(t *testing.T) {
 		SetProposalKey(serviceAddress, serviceKey.Index, serviceKey.SequenceNumber).
 		SetPayer(serviceAddress).
 		AddAuthorizer(serviceAddress)
+
+	hasher, err := crypto.NewHasher(serviceKey.HashAlgo)
+	require.NoError(t, err)
+
+	err = txBuilder.SignEnvelope(serviceAddress, serviceKey.Index, serviceKey.PrivateKey, hasher)
+	require.NoError(t, err)
 
 	tx, err := txBuilder.Build()
 	require.NoError(t, err)
