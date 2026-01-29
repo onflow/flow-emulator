@@ -829,7 +829,29 @@ func bootstrapLedger(
 
 	bootstrap := configureBootstrapProcedure(conf, flowAccountKey, conf.GenesisTokenSupply)
 
-	executionSnapshot, output, err := vm.Run(ctx, bootstrap, ledger)
+	// additional custom bootstrapping
+	customBootstrap := NewCustomBootstrap(bootstrap, func(ctx fvm.Context, executor *CustomBootStrapExecutor) error {
+
+		/* Example usage:
+		deployTo, err := conf.GetChainID().Chain().AddressAtIndex(systemcontracts.FlowFeesAccountIndex)
+		if err != nil {
+			return err
+		}
+		_, err = executor.InvokeMetaTransaction(
+			ctx,
+			fvm.Transaction(
+				blueprints.DeployBurnerContractTransaction(deployTo),
+				0),
+		)
+		if err != nil {
+			return err
+		}
+		*/
+
+		return nil
+	})
+
+	executionSnapshot, output, err := vm.Run(ctx, customBootstrap, ledger)
 	if err != nil {
 		return nil, fvm.ProcedureOutput{}, err
 	}
