@@ -27,7 +27,6 @@ import (
 	"github.com/onflow/flow-go-sdk/crypto"
 	"github.com/onflow/flow-go-sdk/templates"
 	"github.com/onflow/flow-go-sdk/test"
-	"github.com/onflow/flow-go/access/validator"
 	fvmerrors "github.com/onflow/flow-go/fvm/errors"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/rs/zerolog"
@@ -36,6 +35,7 @@ import (
 
 	"github.com/onflow/flow-emulator/adapters"
 	"github.com/onflow/flow-emulator/emulator"
+	"github.com/onflow/flow-emulator/utils/unittest"
 )
 
 const testContract = "access(all) contract Test {}"
@@ -993,6 +993,9 @@ func TestUpdateAccountCode(t *testing.T) {
 			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
 			SetPayer(b.ServiceKey().Address)
 
+		// invalid authorizer signature
+		tx.AddPayloadSignature(accountAddressB, 0, unittest.SignatureFixtureForTransactions())
+
 		signer, err := b.ServiceKey().Signer()
 		require.NoError(t, err)
 
@@ -1000,9 +1003,18 @@ func TestUpdateAccountCode(t *testing.T) {
 		require.NoError(t, err)
 
 		err = adapter.SendTransaction(context.Background(), *tx)
-		require.Error(t, err)
+		assert.NoError(t, err)
 
-		assert.IsType(t, validator.MissingSignatureError{}, err)
+		result, err := b.ExecuteNextTransaction()
+		assert.NoError(t, err)
+
+		assert.True(t, fvmerrors.HasErrorCode(result.Error, fvmerrors.ErrCodeInvalidProposalSignatureError))
+
+		_, err = b.CommitBlock()
+		assert.NoError(t, err)
+
+		account, err = adapter.GetAccount(context.Background(), accountAddressB)
+		assert.NoError(t, err)
 
 		// code should not be updated
 		assert.Equal(t, codeA, string(account.Contracts["Test"]))

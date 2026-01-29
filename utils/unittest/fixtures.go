@@ -20,6 +20,7 @@ package unittest
 
 import (
 	"github.com/onflow/flow-go-sdk/test"
+	"github.com/onflow/crypto"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow/protobuf/go/flow/entities"
 
@@ -31,6 +32,18 @@ import (
 func TransactionFixture() flowgo.TransactionBody {
 	return *convert.SDKTransactionToFlow(*test.TransactionGenerator().New())
 }
+
+func SignatureFixtureForTransactions() crypto.Signature {
+	sigLen := crypto.SignatureLenECDSAP256
+	sig := make([]byte, sigLen)
+
+	// make sure the ECDSA signature passes the format check
+	sig[sigLen/2] = 0
+	sig[0] = 0
+	sig[sigLen/2-1] |= 1
+	sig[sigLen-1] |= 1
+	return sig
+} 
 
 func StorableTransactionResultFixture(eventEncodingVersion entities.EventEncodingVersion) types.StorableTransactionResult {
 	events := test.EventGenerator(eventEncodingVersion)
