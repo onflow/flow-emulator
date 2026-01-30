@@ -22,7 +22,6 @@ import (
 	"context"
 	"fmt"
 
-	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/onflow/flow-go/engine/common/rpc/convert"
 	"github.com/onflow/flow-go/fvm/errors"
 	"github.com/onflow/flow-go/fvm/storage/snapshot"
@@ -37,6 +36,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/onflow/flow-emulator/storage"
+	"github.com/onflow/flow-emulator/storage/badgercache"
 	"github.com/onflow/flow-emulator/storage/sqlite"
 	"github.com/onflow/flow-emulator/types"
 	"github.com/onflow/flow-emulator/utils"
@@ -55,7 +55,10 @@ type Store struct {
 	host            string
 	chainID         flowgo.ChainID
 	forkHeight      uint64
+	forkBlockID     flowgo.Identifier
+	forkCacheDir    string
 	logger          *zerolog.Logger
+	cache           *badgercache.Cache
 }
 
 type Option func(*Store)
@@ -87,6 +90,13 @@ func WithForkHeight(height uint64) Option {
 
 // WithStartBlockHeight is deprecated: use WithForkHeight.
 func WithStartBlockHeight(height uint64) Option { return WithForkHeight(height) }
+
+// WithForkCacheDir sets the directory for fork register cache.
+func WithForkCacheDir(dir string) Option {
+	return func(store *Store) {
+		store.forkCacheDir = dir
+	}
+}
 
 // WithClient can set an rpc host client
 //
@@ -152,6 +162,28 @@ func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*St
 		return nil, err
 	}
 
+	// Initialize fork register cache (only if not using --persist mode)
+	// When forkCacheDir is explicitly set to empty string, skip Badger cache (SQLite handles caching)
+	if store.forkCacheDir != "" {
+		cacheConfig := badgercache.GetDefaultConfig()
+		cacheConfig.BaseDir = store.forkCacheDir
+		cache, err := badgercache.New(store.chainID.String(), store.forkBlockID.String(), cacheConfig, logger)
+		if err != nil {
+			// Warn but continue - cache is a performance optimization, not a hard requirement
+			// This allows emulator to start even if cache dir has permission issues
+			logger.Warn().Err(err).
+				Str("cacheDir", store.forkCacheDir).
+				Msg("⚠️  Failed to initialize fork cache - performance will be degraded (all reads will hit RPC)")
+		} else {
+			store.cache = cache
+			logger.Info().
+				Str("cacheDir", store.forkCacheDir).
+				Str("network", store.chainID.String()).
+				Str("blockID", store.forkBlockID.String()[:12]).
+				Msg("✓ Fork cache enabled")
+		}
+	}
+
 	store.DataGetter = store
 	store.DataSetter = store
 	store.KeyGenerator = &storage.DefaultKeyGenerator{}
@@ -165,6 +197,11 @@ func (s *Store) initializeStartBlock(ctx context.Context) error {
 	forkHeight, err := s.ForkedBlockHeight(ctx)
 	if err == nil && forkHeight > 0 {
 		s.forkHeight = forkHeight
+		blockResp, err := s.accessClient.GetBlockHeaderByHeight(ctx, &access.GetBlockHeaderByHeightRequest{Height: s.forkHeight})
+		if err != nil {
+			return fmt.Errorf("could not get fork block header: %w", err)
+		}
+		s.forkBlockID = flowgo.HashToID(blockResp.Block.Id)
 		return nil
 	}
 	if err != nil && !errors.Is(err, storage.ErrNotFound) {
@@ -180,8 +217,16 @@ func (s *Store) initializeStartBlock(ctx context.Context) error {
 		s.forkHeight = resp.Block.Height - blockBuffer
 	}
 
+	// Fetch the fork block header to get the block ID for cache key
+	blockResp, err := s.accessClient.GetBlockHeaderByHeight(ctx, &access.GetBlockHeaderByHeightRequest{Height: s.forkHeight})
+	if err != nil {
+		return fmt.Errorf("could not get fork block header: %w", err)
+	}
+	s.forkBlockID = flowgo.HashToID(blockResp.Block.Id)
+
 	s.logger.Info().
 		Uint64("forkHeight", s.forkHeight).
+		Str("forkBlockID", s.forkBlockID.String()).
 		Str("host", s.host).
 		Str("chainId", s.chainID.String()).
 		Msg("Using fork height")
@@ -269,22 +314,11 @@ func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
 ) (snapshot.StorageSnapshot, error) {
-	// Create a snapshot with LRU cache to avoid duplicate RPC calls within the same snapshot
-	// LRU cache with max 1000 entries to prevent memory bloat
-	cache, err := lru.New[string, flowgo.RegisterValue](1000)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LRU cache: %w", err)
-	}
-
 	return snapshot.NewReadFuncStorageSnapshot(func(id flowgo.RegisterID) (flowgo.RegisterValue, error) {
-		// Check LRU cache first to avoid duplicate RPC calls within this snapshot
-		if cachedValue, exists := cache.Get(id.String()); exists {
-			return cachedValue, nil
-		}
-		// create a copy so updating it doesn't affect future calls
 		lookupHeight := blockHeight
 
-		// first try to see if we have local stored ledger
+		// CRITICAL: Check overlay (SQLite) FIRST - local mutations take precedence!
+		// This ensures that any state modified by transactions is returned before cached fork data
 		value, err := s.DefaultStore.GetBytesAtVersion(
 			ctx,
 			s.Storage(storage.LedgerStoreName),
@@ -295,10 +329,19 @@ func (s *Store) LedgerByHeight(
 			return value, nil
 		}
 
+		// Check Badger fork cache SECOND - only if not found in overlay
+		if s.cache != nil {
+			cacheKey := []byte(id.String())
+			value, err := s.cache.Get(ctx, cacheKey)
+			if err == nil && value != nil {
+				return value, nil
+			}
+		}
+
 		// FVM expects an empty byte array if the value is not found
 		value = []byte{}
 
-		// if we don't have it, get it from the rpc host
+		// Fetch from network
 		// for consistency, always use data at the forked height for future blocks
 		if lookupHeight > s.forkHeight {
 			lookupHeight = s.forkHeight
@@ -320,22 +363,35 @@ func (s *Store) LedgerByHeight(
 			value = response.Values[0]
 		}
 
-		// cache the value for future use
-		err = s.DataSetter.SetBytesWithVersion(
-			ctx,
-			s.Storage(storage.LedgerStoreName),
-			[]byte(id.String()),
-			value,
-			lookupHeight)
-		if err != nil {
-			return nil, fmt.Errorf("could not cache ledger value: %w", err)
+		// Store in fork cache (mutually exclusive: Badger OR base storage fallback)
+		if s.cache != nil {
+			// Primary: Badger cache for fork registers (always separate from overlay)
+			if err := s.cache.Set(ctx, []byte(id.String()), value); err != nil {
+				s.logger.Warn().Err(err).Msg("Failed to write to fork cache")
+			}
+		} else {
+			// Fallback: If Badger failed to initialize, write to base storage
+			// Currently this is always SQLite (enforced in server.go)
+			// This ensures fork cache still works even if Badger is unavailable
+			err = s.DataSetter.SetBytesWithVersion(
+				ctx,
+				s.Storage(storage.LedgerStoreName),
+				[]byte(id.String()),
+				value,
+				lookupHeight)
+			if err != nil {
+				s.logger.Warn().Err(err).Msg("Failed to write to storage cache")
+			}
 		}
 
-		// Cache in LRU cache for this snapshot to avoid duplicate RPC calls
-		cache.Add(id.String(), value)
 		return value, nil
 	}), nil
 }
 func (s *Store) Stop() {
+	if s.cache != nil {
+		if err := s.cache.Close(); err != nil {
+			s.logger.Warn().Err(err).Msg("Failed to close fork cache")
+		}
+	}
 	_ = s.grpcConn.Close()
 }
