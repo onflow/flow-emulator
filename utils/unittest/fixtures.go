@@ -19,8 +19,8 @@
 package unittest
 
 import (
-	"github.com/onflow/flow-go-sdk/test"
 	"github.com/onflow/crypto"
+	"github.com/onflow/flow-go-sdk/test"
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow/protobuf/go/flow/entities"
 
@@ -43,7 +43,7 @@ func SignatureFixtureForTransactions() crypto.Signature {
 	sig[sigLen/2-1] |= 1
 	sig[sigLen-1] |= 1
 	return sig
-} 
+}
 
 func StorableTransactionResultFixture(eventEncodingVersion entities.EventEncodingVersion) types.StorableTransactionResult {
 	events := test.EventGenerator(eventEncodingVersion)
