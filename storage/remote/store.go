@@ -461,8 +461,13 @@ func (s *Store) LedgerByHeight(
 			[]byte(id.String()),
 			lookupHeight,
 		)
-		if err == nil && value != nil {
+		// Returns ([]byte{}, nil) for known, but empty/deleted keys; missing keys return ErrNotFound
+		if err == nil {
 			return value, nil
+		}
+		// Only fall through to cache/remote on NotFound; propagate other errors
+		if !errors.Is(err, storage.ErrNotFound) {
+			return nil, err
 		}
 
 		// Check fork cache SECOND - only if not found in overlay
@@ -472,8 +477,12 @@ func (s *Store) LedgerByHeight(
 				s.cacheStore.Storage(storage.LedgerStoreName),
 				[]byte(id.String()),
 			)
-			if err == nil && value != nil {
+			if err == nil {
 				return value, nil
+			}
+			// Only fall through to remote on NotFound; propagate other errors
+			if !errors.Is(err, storage.ErrNotFound) {
+				return nil, err
 			}
 		}
 

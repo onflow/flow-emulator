@@ -641,3 +641,172 @@ func TestForkCacheCreation(t *testing.T) {
 
 	fork.Stop()
 }
+
+// TestForkDeletionBehavior proves that deleted registers in the fork overlay
+// do NOT fall through to the cache. This verifies the overlay correctly stores
+// deletion state ([]byte{}) rather than having missing rows.
+func TestForkDeletionBehavior(t *testing.T) {
+	t.Parallel()
+
+	logger := zerolog.Nop()
+
+	// Start upstream emulator
+	upstreamPort := getFreePort(t)
+	upstreamCfg := &Config{
+		GRPCPort:                  upstreamPort,
+		RESTPort:                  getFreePort(t),
+		AdminPort:                 getFreePort(t),
+		Host:                      "127.0.0.1",
+		SkipTransactionValidation: true,
+		ChainID:                   flowgo.Emulator,
+	}
+
+	upstream := NewEmulatorServer(&logger, upstreamCfg)
+	require.NotNil(t, upstream)
+
+	go func() {
+		upstream.Start()
+	}()
+	t.Cleanup(func() { upstream.Stop() })
+
+	time.Sleep(500 * time.Millisecond)
+
+	// Write value to upstream that we'll later delete in fork
+	upstreamEmulator := upstream.Emulator()
+	upstreamSk := upstreamEmulator.ServiceKey()
+
+	writeScript := []byte(`
+		transaction {
+			prepare(acct: auth(Storage) &Account) {
+				acct.storage.save<String>("test_value", to: /storage/deletionTest)
+			}
+		}
+	`)
+
+	latestBlock, err := upstreamEmulator.GetLatestBlock()
+	require.NoError(t, err)
+
+	tx := flowsdk.NewTransaction().
+		SetScript(writeScript).
+		SetReferenceBlockID(flowsdk.Identifier(latestBlock.ID())).
+		SetProposalKey(flowsdk.Address(upstreamSk.Address), upstreamSk.Index, upstreamSk.SequenceNumber).
+		SetPayer(flowsdk.Address(upstreamSk.Address)).
+		AddAuthorizer(flowsdk.Address(upstreamSk.Address))
+
+	signer, err := upstreamSk.Signer()
+	require.NoError(t, err)
+
+	err = tx.SignEnvelope(flowsdk.Address(upstreamSk.Address), upstreamSk.Index, signer)
+	require.NoError(t, err)
+
+	err = upstreamEmulator.AddTransaction(*convert.SDKTransactionToFlow(*tx))
+	require.NoError(t, err)
+
+	_, results, err := upstreamEmulator.ExecuteAndCommitBlock()
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+	require.True(t, results[0].Succeeded())
+
+	forkBlock, err := upstreamEmulator.GetLatestBlock()
+	require.NoError(t, err)
+	forkHeight := forkBlock.Height
+
+	// Fork with cache enabled
+	upstreamTarget := fmt.Sprintf("127.0.0.1:%d", upstreamPort)
+
+	conn, err := grpc.NewClient(
+		upstreamTarget,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		utils.DefaultGRPCRetryInterceptor(),
+	)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, conn.Close())
+	})
+	remote := flowaccess.NewAccessAPIClient(conn)
+
+	rh, err := remote.GetLatestBlockHeader(context.Background(), &flowaccess.GetLatestBlockHeaderRequest{IsSealed: true})
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, rh.Block.Height, forkHeight)
+
+	forkCfg := &Config{
+		DBPath:                    "",
+		Persist:                   false,
+		Snapshot:                  false,
+		SkipTransactionValidation: true,
+		ChainID:                   flowgo.Emulator,
+		ForkHost:                  upstreamTarget,
+		ForkHeight:                forkHeight,
+		ForkCacheDir:              t.TempDir(), // Enable cache
+	}
+
+	fork := NewEmulatorServer(&logger, forkCfg)
+	require.NotNil(t, fork)
+	defer fork.Stop()
+
+	// Read value (this populates the cache with the upstream value)
+	readScript := []byte(`
+		access(all) fun main(): String? {
+			let acct = getAuthAccount<auth(Storage) &Account>(0xf8d6e0586b0a20c7)
+			let ref = acct.storage.borrow<&String>(from: /storage/deletionTest)
+			if ref == nil {
+				return nil
+			}
+			return *ref!
+		}
+	`)
+
+	result1, err := fork.Emulator().ExecuteScript(readScript, nil)
+	require.NoError(t, err)
+	require.True(t, result1.Succeeded())
+	val1, ok := result1.Value.(cadence.Optional)
+	require.True(t, ok)
+	require.NotNil(t, val1.Value, "Should read value from upstream")
+
+	// Delete in fork overlay
+	sk := fork.Emulator().ServiceKey()
+	deleteScript := []byte(`
+		transaction {
+			prepare(acct: auth(Storage) &Account) {
+				acct.storage.load<String>(from: /storage/deletionTest)
+			}
+		}
+	`)
+
+	forkLatest, err := fork.Emulator().GetLatestBlock()
+	require.NoError(t, err)
+
+	deleteTx := flowsdk.NewTransaction().
+		SetScript(deleteScript).
+		SetReferenceBlockID(flowsdk.Identifier(forkLatest.ID())).
+		SetProposalKey(flowsdk.Address(sk.Address), sk.Index, sk.SequenceNumber).
+		SetPayer(flowsdk.Address(sk.Address)).
+		AddAuthorizer(flowsdk.Address(sk.Address))
+
+	err = deleteTx.SignEnvelope(flowsdk.Address(sk.Address), sk.Index, signer)
+	require.NoError(t, err)
+
+	err = fork.Emulator().AddTransaction(*convert.SDKTransactionToFlow(*deleteTx))
+	require.NoError(t, err)
+
+	_, deleteResults, err := fork.Emulator().ExecuteAndCommitBlock()
+	require.NoError(t, err)
+	require.Len(t, deleteResults, 1)
+	require.True(t, deleteResults[0].Succeeded())
+
+	// CRITICAL: Read after deletion should return nil, NOT fall through to cache
+	result2, err := fork.Emulator().ExecuteScript(readScript, nil)
+	require.NoError(t, err)
+	require.True(t, result2.Succeeded())
+	val2, ok := result2.Value.(cadence.Optional)
+	require.True(t, ok)
+	require.Nil(t, val2.Value, "Deleted value should be nil (overlay deletion), not fall through to cached upstream value")
+
+	// Sanity check: upstream still has the value
+	upstreamResult, err := upstream.Emulator().ExecuteScript(readScript, nil)
+	require.NoError(t, err)
+	require.True(t, upstreamResult.Succeeded())
+	upstreamVal, ok := upstreamResult.Value.(cadence.Optional)
+	require.True(t, ok)
+	require.NotNil(t, upstreamVal.Value, "Upstream should still have value")
+}
