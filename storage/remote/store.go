@@ -310,19 +310,23 @@ func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*St
 		return nil, err
 	}
 
+	// Initialize cache store - disk if configured, in-memory otherwise
+	var cacheStore *sqlite.Store
 	if store.forkCacheDir != "" {
-		cacheStore, err := store.initializeCacheStore(logger)
+		cacheStore, err = store.initializeCacheStore(logger)
 		if err != nil {
 			logger.Warn().Err(err).Str("cacheDir", store.forkCacheDir).Msg("Failed to initialize disk cache, falling back to in-memory")
-
-			// Fall back to in-memory SQLite cache
-			cacheStore, err = sqlite.New(sqlite.InMemory)
-			if err != nil {
-				return nil, fmt.Errorf("failed to initialize in-memory cache: %w", err)
-			}
 		}
-		store.cacheStore = cacheStore
 	}
+
+	if cacheStore == nil {
+		cacheStore, err = sqlite.New(sqlite.InMemory)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize in-memory cache: %w", err)
+		}
+	}
+
+	store.cacheStore = cacheStore
 
 	return store, nil
 }
