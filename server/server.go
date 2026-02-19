@@ -127,6 +127,8 @@ type Config struct {
 	ContractRemovalEnabled bool
 	// DBPath is the path to the Badger database on disk.
 	DBPath string
+	// ForkCacheDir is the directory for fork register cache.
+	ForkCacheDir string
 	// DBGCInterval is the time interval at which to garbage collect the Badger value log.
 	DBGCInterval time.Duration
 	// DBGCDiscardRatio is the ratio of space to reclaim during a Badger garbage collection run.
@@ -628,10 +630,19 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 			return nil, fmt.Errorf("only sqlite is supported with forked networks")
 		}
 
-		provider, err := remote.New(baseProvider, logger,
+		opts := []remote.Option{
 			remote.WithForkHost(conf.ForkHost),
 			remote.WithForkHeight(conf.ForkHeight),
-		)
+		}
+
+		// Only use disk cache when fork height is explicitly set
+		// When ForkHeight is 0, it uses latest block which changes every run,
+		// making disk cache useless and wasteful. Use in-memory cache only.
+		if conf.ForkCacheDir != "" && conf.ForkHeight > 0 {
+			opts = append(opts, remote.WithForkCacheDir(conf.ForkCacheDir))
+		}
+
+		provider, err := remote.New(baseProvider, logger, opts...)
 		if err != nil {
 			return nil, err
 		}

@@ -43,6 +43,8 @@ const InMemory = ":memory:"
 var _ storage.SnapshotProvider = &Store{}
 var _ storage.Store = &Store{}
 var _ storage.RollbackProvider = &Store{}
+var _ storage.DataGetter = &Store{}
+var _ storage.DataSetter = &Store{}
 
 //go:embed createTables.sql
 var createTablesSql string

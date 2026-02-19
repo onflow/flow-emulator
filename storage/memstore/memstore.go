@@ -62,7 +62,7 @@ type Store struct {
 // New returns a new in-memory Store implementation.
 func New() *Store {
 	return &Store{
-		mu:                        sync.RWMutex{},
+		mu:                             sync.RWMutex{},
 		blockIDToHeight:                make(map[flowgo.Identifier]uint64),
 		blocks:                         make(map[uint64]flowgo.Block),
 		collections:                    make(map[flowgo.Identifier]flowgo.LightCollection),
