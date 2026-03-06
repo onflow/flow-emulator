@@ -57,7 +57,7 @@ type Config struct {
 	Persist                      bool          `default:"false" flag:"persist" info:"enable persistent storage"`
 	Snapshot                     bool          `default:"false" flag:"snapshot" info:"enable snapshots for emulator"`
 	DBPath                       string        `default:"./flowdb" flag:"dbpath" info:"path to database directory"`
-	ForkCacheDir                 string        `default:".flow-fork-cache" flag:"fork-cache-dir" info:"directory for fork register cache"`
+	ForkCacheDir                 string        `default:"" flag:"fork-cache-dir" info:"directory for fork register cache (default: OS cache dir)"`
 	SimpleAddresses              bool          `default:"false" flag:"simple-addresses" info:"use sequential addresses starting with 0x01"`
 	TokenSupply                  string        `default:"1000000000.0" flag:"token-supply" info:"initial FLOW token supply"`
 	TransactionExpiry            int           `default:"10" flag:"transaction-expiry" info:"transaction expiry, measured in blocks"`

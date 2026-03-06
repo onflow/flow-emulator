@@ -47,12 +47,21 @@ import (
 
 // Configuration
 const (
-	blockBuffer          = 10 // Buffer to allow for block propagation
-	DefaultCacheDir      = ".flow-fork-cache"
-	DefaultTotalMaxSize  = 2 * 1024 * 1024 * 1024 // 2 GB total
-	DefaultTTL           = 30 * 24 * time.Hour    // 30 days
+	blockBuffer         = 10                      // Buffer to allow for block propagation
+	DefaultTotalMaxSize = 2 * 1024 * 1024 * 1024  // 2 GB total
 	DefaultMaxCacheCount = 10                     // 10 caches max
 )
+
+// DefaultCacheDir returns the default directory for fork register caches.
+// It uses the OS-standard user cache location (e.g. ~/Library/Caches on macOS,
+// ~/.cache on Linux) with a "flow/fork-cache" subdirectory.
+func DefaultCacheDir() string {
+	base, err := os.UserCacheDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(base, "flow", "fork-cache")
+}
 
 var _ storage.Store = &Store{}
 
@@ -191,19 +200,6 @@ func pruneCache(baseDir string, logger *zerolog.Logger) error {
 		return caches[i].accessTime.Before(caches[j].accessTime)
 	})
 
-	// Prune by age
-	cutoff := time.Now().Add(-DefaultTTL)
-	for i := 0; i < len(caches); {
-		if caches[i].accessTime.Before(cutoff) {
-			if err := os.RemoveAll(caches[i].path); err != nil {
-				logger.Warn().Err(err).Str("path", caches[i].path).Msg("Failed to remove cache")
-			}
-			caches = append(caches[:i], caches[i+1:]...)
-		} else {
-			i++
-		}
-	}
-
 	// Prune by count (keep newest)
 	if len(caches) > DefaultMaxCacheCount {
 		for i := 0; i < len(caches)-DefaultMaxCacheCount; i++ {
@@ -245,8 +241,9 @@ func (s *Store) initializeCacheStore(logger *zerolog.Logger) (*sqlite.Store, err
 		return nil, fmt.Errorf("failed to create cache subdirectory: %w", err)
 	}
 
-	// Create SQLite store for cache
-	cacheStore, err := sqlite.New(cachePath)
+	// Create SQLite store for cache with multi-process access enabled
+	// so multiple emulator instances can share the same cache file.
+	cacheStore, err := sqlite.New(cachePath, sqlite.WithMultiProcessAccess())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cache store: %w", err)
 	}

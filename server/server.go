@@ -635,11 +635,17 @@ func configureStorage(logger *zerolog.Logger, conf *Config) (storageProvider sto
 			remote.WithForkHeight(conf.ForkHeight),
 		}
 
-		// Only use disk cache when fork height is explicitly set
+		// Only use disk cache when fork height is explicitly set.
 		// When ForkHeight is 0, it uses latest block which changes every run,
 		// making disk cache useless and wasteful. Use in-memory cache only.
-		if conf.ForkCacheDir != "" && conf.ForkHeight > 0 {
-			opts = append(opts, remote.WithForkCacheDir(conf.ForkCacheDir))
+		if conf.ForkHeight > 0 {
+			cacheDir := conf.ForkCacheDir
+			if cacheDir == "" {
+				cacheDir = remote.DefaultCacheDir()
+			}
+			if cacheDir != "" {
+				opts = append(opts, remote.WithForkCacheDir(cacheDir))
+			}
 		}
 
 		provider, err := remote.New(baseProvider, logger, opts...)
