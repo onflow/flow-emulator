@@ -19,7 +19,10 @@
 package sqlite
 
 import (
+	"context"
+	"fmt"
 	"os"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -49,4 +52,60 @@ func TestNew(t *testing.T) {
 		"no such file or directory",
 		"should return an error indicating the location is invalid",
 	)
+}
+
+// TestConcurrentStoreAccess opens multiple Store instances against the same
+// on-disk SQLite file (simulating separate processes) and performs concurrent
+// reads and writes.  Without WAL mode + busy_timeout this would produce
+// "database is locked" errors.
+func TestConcurrentStoreAccess(t *testing.T) {
+	dir := t.TempDir()
+
+	const numStores = 4
+	const numOps = 50
+	const storeName = "ledger"
+
+	stores := make([]*Store, numStores)
+	for i := range stores {
+		s, err := New(dir, WithMultiProcessAccess())
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = s.Close() })
+		stores[i] = s
+	}
+
+	ctx := context.Background()
+
+	// Concurrent writes from all stores, then concurrent reads.
+	var wg sync.WaitGroup
+	for i, s := range stores {
+		wg.Add(1)
+		go func(idx int, store *Store) {
+			defer wg.Done()
+			for j := 0; j < numOps; j++ {
+				key := []byte(fmt.Sprintf("key-%d-%d", idx, j))
+				value := []byte(fmt.Sprintf("value-%d-%d", idx, j))
+				err := store.SetBytes(ctx, storeName, key, value)
+				assert.NoError(t, err, "store %d write %d failed", idx, j)
+			}
+		}(i, s)
+	}
+	wg.Wait()
+
+	// Concurrent reads: every store should see every key.
+	for i, s := range stores {
+		wg.Add(1)
+		go func(idx int, store *Store) {
+			defer wg.Done()
+			for si := 0; si < numStores; si++ {
+				for j := 0; j < numOps; j++ {
+					key := []byte(fmt.Sprintf("key-%d-%d", si, j))
+					expected := []byte(fmt.Sprintf("value-%d-%d", si, j))
+					val, err := store.GetBytes(ctx, storeName, key)
+					assert.NoError(t, err, "store %d read key-%d-%d failed", idx, si, j)
+					assert.Equal(t, expected, val)
+				}
+			}
+		}(i, s)
+	}
+	wg.Wait()
 }
