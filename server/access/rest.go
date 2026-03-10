@@ -143,6 +143,7 @@ func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 		streamConfig,
 		true,
 		websockets.NewDefaultWebsocketConfig(),
+		nil,
 	)
 
 	if err != nil {
