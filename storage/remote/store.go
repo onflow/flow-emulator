@@ -245,8 +245,9 @@ func (s *Store) initializeCacheStore(logger *zerolog.Logger) (*sqlite.Store, err
 		return nil, fmt.Errorf("failed to create cache subdirectory: %w", err)
 	}
 
-	// Create SQLite store for cache
-	cacheStore, err := sqlite.New(cachePath)
+	// Enable multi-process access so multiple emulator instances can
+	// share the same cache file safely.
+	cacheStore, err := sqlite.New(cachePath, sqlite.WithMultiProcessAccess())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cache store: %w", err)
 	}

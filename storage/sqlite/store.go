@@ -59,8 +59,26 @@ type Store struct {
 	id            int64
 }
 
+type Option func(*storeConfig)
+
+type storeConfig struct {
+	multiProcessAccess bool
+}
+
+// WithMultiProcessAccess enables WAL mode and busy timeout so multiple
+// OS processes can safely share the same SQLite database file.
+func WithMultiProcessAccess() Option {
+	return func(c *storeConfig) {
+		c.multiProcessAccess = true
+	}
+}
+
 // New returns a new in-memory Store implementation.
-func New(url string) (store *Store, err error) {
+func New(url string, opts ...Option) (store *Store, err error) {
+	var cfg storeConfig
+	for _, o := range opts {
+		o(&cfg)
+	}
 
 	dbUrl := url
 	if dbUrl != InMemory {
@@ -77,6 +95,17 @@ func New(url string) (store *Store, err error) {
 	db, err := sql.Open("sqlite", dbUrl)
 	if err != nil {
 		return nil, err
+	}
+
+	if cfg.multiProcessAccess {
+		for _, pragma := range []string{
+			"PRAGMA journal_mode=WAL",
+			"PRAGMA busy_timeout=5000",
+		} {
+			if _, err := db.Exec(pragma); err != nil {
+				return nil, fmt.Errorf("failed to set %s: %w", pragma, err)
+			}
+		}
 	}
 
 	err = initDb(db)
