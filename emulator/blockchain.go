@@ -1277,6 +1277,12 @@ func (b *Blockchain) SendTransaction(flowTx *flowgo.TransactionBody) error {
 	if b.conf.AutoMine {
 		_, _, err := b.executeAndCommitBlock()
 		if err != nil {
+			// Auto-mine should not leave the emulator permanently stuck in a
+			// started pending block on fatal execution/storage errors.
+			resetErr := b.resetPendingBlock()
+			if resetErr != nil {
+				return fmt.Errorf("auto-mine failed: %w (pending block reset failed: %v)", err, resetErr)
+			}
 			return err
 		}
 	}
@@ -1621,6 +1627,11 @@ func (b *Blockchain) executeAndCommitBlock() (*flowgo.Block, []*types.Transactio
 func (b *Blockchain) ResetPendingBlock() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+
+	return b.resetPendingBlock()
+}
+
+func (b *Blockchain) resetPendingBlock() error {
 
 	latestBlock, err := b.storage.LatestBlock(context.Background())
 	if err != nil {

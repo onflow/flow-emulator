@@ -181,9 +181,6 @@ func (b *pendingBlock) ExecuteNextTransaction(
 	txnBody := b.NextTransaction()
 	txnIndex := b.index
 
-	// increment transaction index even if transaction reverts
-	b.index++
-
 	executionSnapshot, output, err := vm.Run(
 		ctx,
 		fvm.Transaction(txnBody, txnIndex),
@@ -205,6 +202,11 @@ func (b *pendingBlock) ExecuteNextTransaction(
 		ProcedureOutput: output,
 		Index:           txnIndex,
 	}
+
+	// Advance execution index only after a successful VM run + state merge.
+	// This prevents leaving the pending block in a permanently "started" state
+	// when fatal execution/storage errors occur.
+	b.index++
 
 	return output, nil
 }
