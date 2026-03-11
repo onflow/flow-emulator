@@ -437,14 +437,21 @@ func (s *Store) resolveRegister(
 	return value, nil
 }
 
-// prefetchRegistersForOwner fetches all common register keys for a given account
-// owner in a single batched RPC call and populates both the global cache and
-// SQLite. This dramatically reduces the number of sequential gRPC round-trips
-// when the FVM first touches a new account.
+// prefetchRegistersForOwner fetches common account metadata and ALL Atree
+// storage slabs for a given account in batched RPC calls. This dramatically
+// reduces sequential gRPC round-trips when the FVM first touches a new account.
+//
+// Strategy:
+// 1. Fetch metadata registers + storage_index (tells us how many slabs exist)
+// 2. Parse storage_index to get the slab count
+// 3. Fetch ALL slabs in batched RPCs (up to batchSize per call)
+//
+// IMPORTANT: Only cache values that were actually returned by the access node.
+// Never cache empty bytes for registers that failed to fetch — this would
+// poison the cache and prevent resolveRegister from retrying individually.
 func (s *Store) prefetchRegistersForOwner(ctx context.Context, owner string, lookupHeight uint64) {
-	// Common register keys that FVM reads when touching an account.
-	// These are the low-level Atree storage register patterns.
-	commonKeys := []string{
+	// Phase 1: Fetch metadata registers including storage_index.
+	metaKeys := []string{
 		"public_key_count",
 		"public_key_0",
 		"public_key_1",
@@ -453,55 +460,117 @@ func (s *Store) prefetchRegistersForOwner(ctx context.Context, owner string, loo
 		"exists",
 		"storage_used",
 		"storage_index",
-		// Atree slab storage registers (account root slabs)
-		"$\x00\x00\x00\x00\x00\x00\x00\x01",
-		"$\x00\x00\x00\x00\x00\x00\x00\x02",
-		"$\x00\x00\x00\x00\x00\x00\x00\x03",
-		"$\x00\x00\x00\x00\x00\x00\x00\x04",
-		"$\x00\x00\x00\x00\x00\x00\x00\x05",
-		"$\x00\x00\x00\x00\x00\x00\x00\x06",
-		"$\x00\x00\x00\x00\x00\x00\x00\x07",
-		"$\x00\x00\x00\x00\x00\x00\x00\x08",
 	}
 
-	// Build register IDs, skipping any already in the global cache.
-	var toFetch []flowgo.RegisterID
-	for _, key := range commonKeys {
+	var metaIDs []flowgo.RegisterID
+	for _, key := range metaKeys {
 		rid := flowgo.RegisterID{Owner: owner, Key: key}
 		if _, ok := s.globalCache.Get(rid.String()); !ok {
-			toFetch = append(toFetch, rid)
+			metaIDs = append(metaIDs, rid)
 		}
 	}
 
-	if len(toFetch) == 0 {
+	var slabCount uint64
+	if len(metaIDs) > 0 {
+		metaResults := s.getRegisterBatch(ctx, metaIDs, lookupHeight)
+		cached := 0
+		for _, rid := range metaIDs {
+			key := rid.String()
+			if val, ok := metaResults[key]; ok {
+				s.globalCache.Add(key, val)
+				_ = s.DataSetter.SetBytesWithVersion(
+					ctx,
+					s.Storage(storage.LedgerStoreName),
+					[]byte(key),
+					val,
+					lookupHeight,
+				)
+				cached++
+			}
+			// Do NOT cache missing keys — let resolveRegister retry individually
+		}
+
+		// Parse storage_index to determine number of slabs.
+		storageIndexID := flowgo.RegisterID{Owner: owner, Key: "storage_index"}
+		if val, ok := metaResults[storageIndexID.String()]; ok && len(val) >= 8 {
+			// storage_index is a big-endian uint64 representing the next slab ID.
+			for i := 0; i < 8; i++ {
+				slabCount = (slabCount << 8) | uint64(val[i])
+			}
+		}
+
+		s.logger.Debug().
+			Str("owner", fmt.Sprintf("%x", owner)).
+			Int("fetched", len(metaIDs)).
+			Int("cached", cached).
+			Uint64("slabCount", slabCount).
+			Msg("prefetched metadata for owner")
+	} else {
+		// Metadata already cached — try to read storage_index from cache.
+		storageIndexID := flowgo.RegisterID{Owner: owner, Key: "storage_index"}
+		if val, ok := s.globalCache.Get(storageIndexID.String()); ok && len(val) >= 8 {
+			for i := 0; i < 8; i++ {
+				slabCount = (slabCount << 8) | uint64(val[i])
+			}
+		}
+	}
+
+	// Phase 2: Fetch ALL Atree slabs for this account.
+	// Cap at 500 to avoid pathological cases (major system contracts).
+	if slabCount == 0 {
+		slabCount = 16 // fallback: prefetch first 16 slabs if storage_index unavailable
+	}
+	if slabCount > 500 {
+		slabCount = 500
+	}
+
+	var slabIDs []flowgo.RegisterID
+	for i := uint64(1); i <= slabCount; i++ {
+		key := "$" + string([]byte{
+			byte(i >> 56), byte(i >> 48), byte(i >> 40), byte(i >> 32),
+			byte(i >> 24), byte(i >> 16), byte(i >> 8), byte(i),
+		})
+		rid := flowgo.RegisterID{Owner: owner, Key: key}
+		if _, ok := s.globalCache.Get(rid.String()); !ok {
+			slabIDs = append(slabIDs, rid)
+		}
+	}
+
+	if len(slabIDs) == 0 {
 		return
 	}
 
-	// Batch fetch
-	results := s.getRegisterBatch(ctx, toFetch, lookupHeight)
-
-	// Populate caches
-	for _, rid := range toFetch {
-		key := rid.String()
-		val, ok := results[key]
-		if !ok {
-			val = []byte{}
+	// Fetch slabs in batches.
+	totalCached := 0
+	for start := 0; start < len(slabIDs); start += batchSize {
+		end := start + batchSize
+		if end > len(slabIDs) {
+			end = len(slabIDs)
 		}
-		s.globalCache.Add(key, val)
-		_ = s.DataSetter.SetBytesWithVersion(
-			ctx,
-			s.Storage(storage.LedgerStoreName),
-			[]byte(key),
-			val,
-			lookupHeight,
-		)
+		batch := slabIDs[start:end]
+		results := s.getRegisterBatch(ctx, batch, lookupHeight)
+		for _, rid := range batch {
+			key := rid.String()
+			if val, ok := results[key]; ok {
+				s.globalCache.Add(key, val)
+				_ = s.DataSetter.SetBytesWithVersion(
+					ctx,
+					s.Storage(storage.LedgerStoreName),
+					[]byte(key),
+					val,
+					lookupHeight,
+				)
+				totalCached++
+			}
+			// Do NOT cache missing keys — let resolveRegister retry individually
+		}
 	}
 
 	s.logger.Debug().
 		Str("owner", fmt.Sprintf("%x", owner)).
-		Int("fetched", len(toFetch)).
-		Int("cached", len(results)).
-		Msg("prefetched registers for owner")
+		Int("slabsRequested", len(slabIDs)).
+		Int("slabsCached", totalCached).
+		Msg("prefetched slabs for owner")
 }
 
 func (s *Store) LedgerByHeight(
