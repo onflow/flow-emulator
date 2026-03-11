@@ -317,7 +317,7 @@ func (s *Store) getRegisterSingle(
 
 	if err != nil {
 		code := status.Code(err)
-		if code == codes.NotFound || code == codes.DeadlineExceeded {
+		if code == codes.NotFound || code == codes.DeadlineExceeded || code == codes.InvalidArgument {
 			s.logger.Warn().
 				Str("register", id.String()).
 				Err(err).
