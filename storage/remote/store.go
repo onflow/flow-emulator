@@ -383,12 +383,21 @@ func (s *Store) resolveRegister(
 ) (flowgo.RegisterValue, error) {
 	key := id.String()
 
-	// Tier 1: global in-memory cache
-	if val, ok := s.globalCache.Get(key); ok {
-		return val, nil
+	// Fork-height state is immutable; anything above fork height can be mutated
+	// by user transactions and must always prefer local storage. Only use the
+	// process-wide global cache when the lookup height is immutable data.
+	useGlobalCache := blockHeight <= s.forkHeight
+
+	// Tier 1: global in-memory cache (immutable fork data only)
+	if useGlobalCache {
+		if val, ok := s.globalCache.Get(key); ok {
+			return val, nil
+		}
 	}
 
-	// Tier 2: local SQLite
+	// Tier 2: local SQLite (contains all post-fork writes). Always check this
+	// first for mutable heights so we don't return stale fork-height data from
+	// the global cache.
 	value, err := s.DefaultStore.GetBytesAtVersion(
 		ctx,
 		s.Storage(storage.LedgerStoreName),
@@ -396,7 +405,9 @@ func (s *Store) resolveRegister(
 		blockHeight,
 	)
 	if err == nil && value != nil {
-		s.globalCache.Add(key, value)
+		if useGlobalCache {
+			s.globalCache.Add(key, value)
+		}
 		return value, nil
 	}
 
@@ -412,7 +423,9 @@ func (s *Store) resolveRegister(
 	}
 
 	// Write back to tier 1 + tier 2
-	s.globalCache.Add(key, value)
+	if lookupHeight == s.forkHeight {
+		s.globalCache.Add(key, value)
+	}
 	_ = s.DataSetter.SetBytesWithVersion(
 		ctx,
 		s.Storage(storage.LedgerStoreName),
