@@ -21,6 +21,8 @@ package remote
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/onflow/flow-go/engine/common/rpc/convert"
@@ -45,6 +47,24 @@ import (
 // Configuration
 const (
 	blockBuffer = 10 // Buffer to allow for block propagation
+
+	// globalCacheSize is the number of register entries held in the global
+	// in-memory LRU cache. Fork-mode data at the pinned height is immutable,
+	// so entries never go stale. 50k entries ≈ 200-500 MB depending on value
+	// sizes, which is a reasonable trade-off for eliminating repeated gRPC and
+	// SQLite lookups.
+	globalCacheSize = 50_000
+
+	// rpcTimeout is the per-call deadline for a single GetRegisterValues RPC.
+	// If the access node is slow or overloaded we'd rather skip a register
+	// (FVM treats missing registers as empty) than block the entire emulator
+	// for minutes via the retry interceptor.
+	rpcTimeout = 10 * time.Second
+
+	// batchSize is the maximum number of register IDs sent in one
+	// GetRegisterValues RPC. The access-node API supports arrays, but the
+	// original emulator only ever sent 1 at a time.
+	batchSize = 50
 )
 
 type Store struct {
@@ -56,6 +76,12 @@ type Store struct {
 	chainID         flowgo.ChainID
 	forkHeight      uint64
 	logger          *zerolog.Logger
+
+	// globalCache is a process-wide LRU cache for register values at the fork
+	// height. Because fork-height data is immutable, entries never need
+	// invalidation. This eliminates redundant SQLite reads and gRPC calls
+	// across snapshots / blocks.
+	globalCache *lru.Cache[string, flowgo.RegisterValue]
 }
 
 type Option func(*Store)
@@ -102,9 +128,15 @@ func WithClient(
 }
 
 func New(provider *sqlite.Store, logger *zerolog.Logger, options ...Option) (*Store, error) {
+	gc, err := lru.New[string, flowgo.RegisterValue](globalCacheSize)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create global register cache: %w", err)
+	}
+
 	store := &Store{
-		Store:  provider,
-		logger: logger,
+		Store:       provider,
+		logger:      logger,
+		globalCache: gc,
 	}
 
 	for _, opt := range options {
@@ -265,77 +297,227 @@ func (s *Store) BlockByHeight(ctx context.Context, height uint64) (*flowgo.Block
 	}, nil
 }
 
+// getRegisterSingle fetches a single register from the remote node with a
+// per-call timeout. If the call times out or the access node returns NotFound,
+// the function returns an empty byte slice (FVM treats missing registers as
+// empty) instead of propagating the error.
+func (s *Store) getRegisterSingle(
+	ctx context.Context,
+	id flowgo.RegisterID,
+	lookupHeight uint64,
+) (flowgo.RegisterValue, error) {
+	callCtx, cancel := context.WithTimeout(ctx, rpcTimeout)
+	defer cancel()
+
+	registerID := convert.RegisterIDToMessage(flowgo.RegisterID{Key: id.Key, Owner: id.Owner})
+	response, err := s.executionClient.GetRegisterValues(callCtx, &executiondata.GetRegisterValuesRequest{
+		BlockHeight: lookupHeight,
+		RegisterIds: []*entities.RegisterID{registerID},
+	})
+
+	if err != nil {
+		code := status.Code(err)
+		if code == codes.NotFound || code == codes.DeadlineExceeded {
+			s.logger.Warn().
+				Str("register", id.String()).
+				Err(err).
+				Msg("register fetch failed, returning empty")
+			return []byte{}, nil
+		}
+		return nil, err
+	}
+
+	if response != nil && len(response.Values) > 0 {
+		return response.Values[0], nil
+	}
+	return []byte{}, nil
+}
+
+// getRegisterBatch fetches multiple registers in a single RPC call.
+// Returns a map from register key string → value. On timeout, returns
+// whatever partial results are available (empty map on total failure).
+func (s *Store) getRegisterBatch(
+	ctx context.Context,
+	ids []flowgo.RegisterID,
+	lookupHeight uint64,
+) map[string]flowgo.RegisterValue {
+	callCtx, cancel := context.WithTimeout(ctx, rpcTimeout)
+	defer cancel()
+
+	regIDs := make([]*entities.RegisterID, len(ids))
+	for i, id := range ids {
+		regIDs[i] = convert.RegisterIDToMessage(flowgo.RegisterID{Key: id.Key, Owner: id.Owner})
+	}
+
+	response, err := s.executionClient.GetRegisterValues(callCtx, &executiondata.GetRegisterValuesRequest{
+		BlockHeight: lookupHeight,
+		RegisterIds: regIDs,
+	})
+
+	result := make(map[string]flowgo.RegisterValue, len(ids))
+	if err != nil {
+		s.logger.Warn().Err(err).Int("count", len(ids)).Msg("batch register fetch failed")
+		return result
+	}
+
+	if response != nil {
+		for i, val := range response.Values {
+			if i < len(ids) {
+				result[ids[i].String()] = val
+			}
+		}
+	}
+	return result
+}
+
+// resolveRegister looks up a single register through the 3-tier cache hierarchy:
+// 1. Global in-memory LRU cache (fastest)
+// 2. Local SQLite store (persistent across restarts)
+// 3. Remote gRPC call to access node (slowest)
+//
+// Results from tier 3 are written back to tiers 1 and 2.
+func (s *Store) resolveRegister(
+	ctx context.Context,
+	id flowgo.RegisterID,
+	blockHeight uint64,
+) (flowgo.RegisterValue, error) {
+	key := id.String()
+
+	// Tier 1: global in-memory cache
+	if val, ok := s.globalCache.Get(key); ok {
+		return val, nil
+	}
+
+	// Tier 2: local SQLite
+	value, err := s.DefaultStore.GetBytesAtVersion(
+		ctx,
+		s.Storage(storage.LedgerStoreName),
+		[]byte(key),
+		blockHeight,
+	)
+	if err == nil && value != nil {
+		s.globalCache.Add(key, value)
+		return value, nil
+	}
+
+	// Tier 3: remote gRPC
+	lookupHeight := blockHeight
+	if lookupHeight > s.forkHeight {
+		lookupHeight = s.forkHeight
+	}
+
+	value, err = s.getRegisterSingle(ctx, id, lookupHeight)
+	if err != nil {
+		return nil, err
+	}
+
+	// Write back to tier 1 + tier 2
+	s.globalCache.Add(key, value)
+	_ = s.DataSetter.SetBytesWithVersion(
+		ctx,
+		s.Storage(storage.LedgerStoreName),
+		[]byte(key),
+		value,
+		lookupHeight,
+	)
+
+	return value, nil
+}
+
+// prefetchRegistersForOwner fetches all common register keys for a given account
+// owner in a single batched RPC call and populates both the global cache and
+// SQLite. This dramatically reduces the number of sequential gRPC round-trips
+// when the FVM first touches a new account.
+func (s *Store) prefetchRegistersForOwner(ctx context.Context, owner string, lookupHeight uint64) {
+	// Common register keys that FVM reads when touching an account.
+	// These are the low-level Atree storage register patterns.
+	commonKeys := []string{
+		"public_key_count",
+		"public_key_0",
+		"public_key_1",
+		"public_key_2",
+		"contract_names",
+		"exists",
+		"storage_used",
+		"storage_index",
+		// Atree slab storage registers (account root slabs)
+		"$\x00\x00\x00\x00\x00\x00\x00\x01",
+		"$\x00\x00\x00\x00\x00\x00\x00\x02",
+		"$\x00\x00\x00\x00\x00\x00\x00\x03",
+		"$\x00\x00\x00\x00\x00\x00\x00\x04",
+		"$\x00\x00\x00\x00\x00\x00\x00\x05",
+		"$\x00\x00\x00\x00\x00\x00\x00\x06",
+		"$\x00\x00\x00\x00\x00\x00\x00\x07",
+		"$\x00\x00\x00\x00\x00\x00\x00\x08",
+	}
+
+	// Build register IDs, skipping any already in the global cache.
+	var toFetch []flowgo.RegisterID
+	for _, key := range commonKeys {
+		rid := flowgo.RegisterID{Owner: owner, Key: key}
+		if _, ok := s.globalCache.Get(rid.String()); !ok {
+			toFetch = append(toFetch, rid)
+		}
+	}
+
+	if len(toFetch) == 0 {
+		return
+	}
+
+	// Batch fetch
+	results := s.getRegisterBatch(ctx, toFetch, lookupHeight)
+
+	// Populate caches
+	for _, rid := range toFetch {
+		key := rid.String()
+		val, ok := results[key]
+		if !ok {
+			val = []byte{}
+		}
+		s.globalCache.Add(key, val)
+		_ = s.DataSetter.SetBytesWithVersion(
+			ctx,
+			s.Storage(storage.LedgerStoreName),
+			[]byte(key),
+			val,
+			lookupHeight,
+		)
+	}
+
+	s.logger.Debug().
+		Str("owner", fmt.Sprintf("%x", owner)).
+		Int("fetched", len(toFetch)).
+		Int("cached", len(results)).
+		Msg("prefetched registers for owner")
+}
+
 func (s *Store) LedgerByHeight(
 	ctx context.Context,
 	blockHeight uint64,
 ) (snapshot.StorageSnapshot, error) {
-	// Create a snapshot with LRU cache to avoid duplicate RPC calls within the same snapshot
-	// LRU cache with max 1000 entries to prevent memory bloat
-	cache, err := lru.New[string, flowgo.RegisterValue](1000)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LRU cache: %w", err)
-	}
+	// Track which owners we've already prefetched in this snapshot to avoid
+	// redundant batch calls within a single block execution.
+	prefetched := &sync.Map{}
 
 	return snapshot.NewReadFuncStorageSnapshot(func(id flowgo.RegisterID) (flowgo.RegisterValue, error) {
-		// Check LRU cache first to avoid duplicate RPC calls within this snapshot
-		if cachedValue, exists := cache.Get(id.String()); exists {
-			return cachedValue, nil
-		}
-		// create a copy so updating it doesn't affect future calls
-		lookupHeight := blockHeight
-
-		// first try to see if we have local stored ledger
-		value, err := s.DefaultStore.GetBytesAtVersion(
-			ctx,
-			s.Storage(storage.LedgerStoreName),
-			[]byte(id.String()),
-			lookupHeight,
-		)
-		if err == nil && value != nil {
-			return value, nil
-		}
-
-		// FVM expects an empty byte array if the value is not found
-		value = []byte{}
-
-		// if we don't have it, get it from the rpc host
-		// for consistency, always use data at the forked height for future blocks
-		if lookupHeight > s.forkHeight {
-			lookupHeight = s.forkHeight
-		}
-
-		registerID := convert.RegisterIDToMessage(flowgo.RegisterID{Key: id.Key, Owner: id.Owner})
-		response, err := s.executionClient.GetRegisterValues(ctx, &executiondata.GetRegisterValuesRequest{
-			BlockHeight: lookupHeight,
-			RegisterIds: []*entities.RegisterID{registerID},
-		})
-
-		if err != nil {
-			if status.Code(err) != codes.NotFound {
-				return nil, err
+		// Trigger prefetch for this owner if we haven't yet.
+		// This runs once per unique owner per snapshot and populates the global
+		// cache with common registers, so subsequent reads for the same owner
+		// hit tier-1 cache.
+		if id.Owner != "" {
+			if _, loaded := prefetched.LoadOrStore(id.Owner, true); !loaded {
+				lookupHeight := blockHeight
+				if lookupHeight > s.forkHeight {
+					lookupHeight = s.forkHeight
+				}
+				s.prefetchRegistersForOwner(ctx, id.Owner, lookupHeight)
 			}
 		}
 
-		if response != nil && len(response.Values) > 0 {
-			value = response.Values[0]
-		}
-
-		// cache the value for future use
-		err = s.DataSetter.SetBytesWithVersion(
-			ctx,
-			s.Storage(storage.LedgerStoreName),
-			[]byte(id.String()),
-			value,
-			lookupHeight)
-		if err != nil {
-			return nil, fmt.Errorf("could not cache ledger value: %w", err)
-		}
-
-		// Cache in LRU cache for this snapshot to avoid duplicate RPC calls
-		cache.Add(id.String(), value)
-		return value, nil
+		return s.resolveRegister(ctx, id, blockHeight)
 	}), nil
 }
+
 func (s *Store) Stop() {
 	_ = s.grpcConn.Close()
 }

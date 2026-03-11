@@ -28,9 +28,9 @@ import (
 )
 
 const (
-	defaultMaxAttempts    = 10
-	defaultInitialBackoff = 1 * time.Second
-	defaultMaxBackoff     = 30 * time.Second
+	defaultMaxAttempts    = 3              // reduced from 10 — fail fast instead of blocking
+	defaultInitialBackoff = 500 * time.Millisecond // reduced from 1s
+	defaultMaxBackoff     = 5 * time.Second        // reduced from 30s
 	defaultBackoffFactor  = 2.0
 )
 
@@ -91,4 +91,3 @@ func isRetryableCode(code codes.Code) bool {
 		return false
 	}
 }
-
