@@ -113,5 +113,6 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           file: ./cmd/emulator/Dockerfile
+          build-args: GO_VERSION=${{ env.GO_VERSION }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
