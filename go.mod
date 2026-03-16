@@ -17,7 +17,7 @@ require (
 	github.com/onflow/flow-go v0.47.0-ledger-service.1.0.20260306194353-7770192048a9
 	github.com/onflow/flow-go-sdk v1.9.16
 	github.com/onflow/flow-nft/lib/go/contracts v1.3.0
-	github.com/onflow/flow/protobuf/go/flow v0.4.19
+	github.com/onflow/flow/protobuf/go/flow v0.4.20
 	github.com/prometheus/client_golang v1.23.2
 	github.com/psiemens/graceland v1.0.0
 	github.com/psiemens/sconfig v0.1.0
