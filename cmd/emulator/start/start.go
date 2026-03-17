@@ -87,6 +87,7 @@ type Config struct {
 	ScheduledTransactionsEnabled bool          `default:"true" flag:"scheduled-transactions" info:"enable Cadence scheduled transactions"`
 	SetupVMBridgeEnabled         bool          `default:"true" flag:"setup-vm-bridge" info:"enable VM Bridge setup for the emulator, this will deploy the VM Bridge contracts"`
 	NumAccounts                  int           `default:"0" flag:"num-accounts" info:"number of precreated accounts at startup"`
+	EVMTestHelpersEnabled        bool          `default:"false" flag:"evm-test-helpers" info:"enable EVM test helper functions"`
 
 	// Deprecated hidden aliases
 	StartBlockHeight uint64 `default:"0" flag:"start-block-height" info:"(deprecated) use --fork-height"`
@@ -253,6 +254,7 @@ func Cmd(config StartConfig) *cobra.Command {
 				ScheduledTransactionsEnabled: conf.ScheduledTransactionsEnabled,
 				SetupVMBridgeEnabled:         conf.SetupVMBridgeEnabled,
 				NumAccounts:                  conf.NumAccounts,
+				EVMTestHelpersEnabled:        conf.EVMTestHelpersEnabled,
 			}
 
 			serviceAddress := flowsdk.ServiceAddress(flowsdk.ChainID(resolvedChainID))

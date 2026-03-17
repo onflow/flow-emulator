@@ -170,6 +170,8 @@ type Config struct {
 	SetupVMBridgeEnabled bool
 	// NumAccounts specifies how many accounts to precreate and fund at startup.
 	NumAccounts int
+	// EVMTestHelpersEnabled enables EVM test helper functions in the emulator, defaults to false.
+	EVMTestHelpersEnabled bool
 }
 
 type listener interface {
@@ -677,6 +679,7 @@ func configureBlockchain(logger *zerolog.Logger, chainID flowgo.ChainID, conf *C
 		emulator.WithChainID(chainID),
 		emulator.WithContractRemovalEnabled(conf.ContractRemovalEnabled),
 		emulator.WithSetupVMBridgeEnabled(conf.SetupVMBridgeEnabled),
+		emulator.WithEVMTestHelpersEnabled(conf.EVMTestHelpersEnabled),
 	}
 
 	if conf.SkipTransactionValidation {
