@@ -1010,6 +1010,20 @@ func (a *AccessAdapter) generateTransactionStatusUpdates(
 	return results
 }
 
+func (a *AccessAdapter) GetExecutionReceiptsByBlockID(
+	_ context.Context,
+	_ flowgo.Identifier,
+) ([]*flowgo.ExecutionReceipt, error) {
+	return nil, nil
+}
+
+func (a *AccessAdapter) GetExecutionReceiptsByResultID(
+	_ context.Context,
+	_ flowgo.Identifier,
+) ([]*flowgo.ExecutionReceipt, error) {
+	return nil, nil
+}
+
 func ConvertCCFEventsToJsonEvents(events []flowgo.Event) ([]flowgo.Event, error) {
 	converted := make([]flowgo.Event, 0, len(events))
 
