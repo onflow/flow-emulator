@@ -422,6 +422,46 @@ func (mr *MockAccessAPIClientMockRecorder) GetEventsForHeightRange(ctx, in any, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventsForHeightRange", reflect.TypeOf((*MockAccessAPIClient)(nil).GetEventsForHeightRange), varargs...)
 }
 
+// GetExecutionReceiptsByBlockID mocks base method.
+func (m *MockAccessAPIClient) GetExecutionReceiptsByBlockID(ctx context.Context, in *access.GetExecutionReceiptsByBlockIDRequest, opts ...grpc.CallOption) (*access.ExecutionReceiptsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetExecutionReceiptsByBlockID", varargs...)
+	ret0, _ := ret[0].(*access.ExecutionReceiptsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetExecutionReceiptsByBlockID indicates an expected call of GetExecutionReceiptsByBlockID.
+func (mr *MockAccessAPIClientMockRecorder) GetExecutionReceiptsByBlockID(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExecutionReceiptsByBlockID", reflect.TypeOf((*MockAccessAPIClient)(nil).GetExecutionReceiptsByBlockID), varargs...)
+}
+
+// GetExecutionReceiptsByResultID mocks base method.
+func (m *MockAccessAPIClient) GetExecutionReceiptsByResultID(ctx context.Context, in *access.GetExecutionReceiptsByResultIDRequest, opts ...grpc.CallOption) (*access.ExecutionReceiptsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetExecutionReceiptsByResultID", varargs...)
+	ret0, _ := ret[0].(*access.ExecutionReceiptsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetExecutionReceiptsByResultID indicates an expected call of GetExecutionReceiptsByResultID.
+func (mr *MockAccessAPIClientMockRecorder) GetExecutionReceiptsByResultID(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExecutionReceiptsByResultID", reflect.TypeOf((*MockAccessAPIClient)(nil).GetExecutionReceiptsByResultID), varargs...)
+}
+
 // GetExecutionResultByID mocks base method.
 func (m *MockAccessAPIClient) GetExecutionResultByID(ctx context.Context, in *access.GetExecutionResultByIDRequest, opts ...grpc.CallOption) (*access.ExecutionResultByIDResponse, error) {
 	m.ctrl.T.Helper()
