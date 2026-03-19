@@ -342,6 +342,13 @@ func WithSetupVMBridgeEnabled(enabled bool) Option {
 	}
 }
 
+// WithEVMTestHelpersEnabled enables/disables the EVM test helpers.
+func WithEVMTestHelpersEnabled(enabled bool) Option {
+	return func(c *config) {
+		c.EVMTestHelpersEnabled = enabled
+	}
+}
+
 // Contracts allows users to deploy the given contracts.
 // Some default common contracts are pre-configured in the `CommonContracts`
 // global variable. It includes contracts such as ExampleNFT but could
@@ -419,6 +426,7 @@ type config struct {
 	ComputationReportingEnabled  bool
 	ScheduledTransactionsEnabled bool
 	SetupVMBridgeEnabled         bool
+	EVMTestHelpersEnabled        bool
 }
 
 func (conf config) GetStore() storage.Store {
@@ -680,6 +688,7 @@ func configureFVM(blockchain *Blockchain, conf config, blocks *blocks) (*fvm.Vir
 		fvm.WithTransactionFeesEnabled(conf.TransactionFeesEnabled),
 		fvm.WithReusableCadenceRuntimePool(customRuntimePool),
 		fvm.WithEntropyProvider(blockchain.entropyProvider),
+		fvm.WithEVMTestOperationsAllowed(conf.EVMTestHelpersEnabled),
 	}
 
 	if !conf.TransactionValidationEnabled {
@@ -859,6 +868,7 @@ func configureBootstrapProcedure(
 		fvm.WithExecutionMemoryWeights(meter.DefaultMemoryWeights),
 		fvm.WithExecutionEffortWeights(conf.EffectiveExecutionEffortWeights()),
 		fvm.WithSetupVMBridgeEnabled(cadence.NewBool(conf.SetupVMBridgeEnabled)),
+		fvm.WithEVMTestHelpersEnabled(cadence.NewBool(conf.EVMTestHelpersEnabled)),
 	)
 
 	if conf.StorageLimitEnabled {

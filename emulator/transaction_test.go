@@ -2200,3 +2200,117 @@ func TestEVMTransaction(t *testing.T) {
 	require.Len(t, result.Logs, 1)
 	require.Equal(t, result.Logs[0], fmt.Sprintf("A.%s.EVM.EVMAddress(bytes: %s)", serviceAddr, addressBytesArray.String()))
 }
+
+func TestEVMTestHelpersEnabled(t *testing.T) {
+	t.Parallel()
+
+	serviceAddr := flowgo.Emulator.Chain().ServiceAddress()
+
+	t.Run("enabled", func(t *testing.T) {
+		t.Parallel()
+
+		b, adapter := setupTransactionTests(
+			t,
+			emulator.WithEVMTestHelpersEnabled(true),
+		)
+
+		// Create a COA and call EVM.store on it in a single transaction.
+		code := []byte(fmt.Sprintf(
+			`
+			import EVM from %s
+
+			transaction {
+				prepare(signer: auth(SaveValue) &Account) {
+					let coa <- EVM.createCadenceOwnedAccount()
+					EVM.store(
+						target: coa.address(),
+						slot: "0x0000000000000000000000000000000000000000000000000000000000000001",
+						value: "0x0000000000000000000000000000000000000000000000000000000000000042"
+					)
+					signer.storage.save(<-coa, to: /storage/evmTestCOA)
+				}
+			}
+			`,
+			serviceAddr.HexWithPrefix(),
+		))
+
+		tx := flowsdk.NewTransaction().
+			SetScript(code).
+			SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address).
+			AddAuthorizer(b.ServiceKey().Address)
+
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
+
+		err = adapter.SendTransaction(context.Background(), *tx)
+		require.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		require.NoError(t, err)
+		AssertTransactionSucceeded(t, result)
+	})
+
+	t.Run("disabled", func(t *testing.T) {
+		t.Parallel()
+
+		b, adapter := setupTransactionTests(
+			t,
+			emulator.WithEVMTestHelpersEnabled(false),
+		)
+
+		// When test helpers are disabled, EVM.store is not defined on the contract,
+		// so this transaction should fail.
+		code := []byte(fmt.Sprintf(
+			`
+			import EVM from %s
+
+			transaction(bytes: [UInt8; 20]) {
+				execute {
+					let addr = EVM.EVMAddress(bytes: bytes)
+					EVM.store(
+						target: addr,
+						slot: "0x0000000000000000000000000000000000000000000000000000000000000001",
+						value: "0x0000000000000000000000000000000000000000000000000000000000000042"
+					)
+				}
+			}
+			`,
+			serviceAddr.HexWithPrefix(),
+		))
+
+		genArr := make([]cadence.Value, 20)
+		for i := range genArr {
+			genArr[i] = cadence.UInt8(i)
+		}
+		addressBytesArray := cadence.NewArray(genArr).WithType(stdlib.EVMAddressBytesCadenceType)
+
+		tx := flowsdk.NewTransaction().
+			SetScript(code).
+			SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
+			SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+			SetPayer(b.ServiceKey().Address)
+
+		err := tx.AddArgument(addressBytesArray)
+		require.NoError(t, err)
+
+		signer, err := b.ServiceKey().Signer()
+		require.NoError(t, err)
+
+		err = tx.SignEnvelope(b.ServiceKey().Address, b.ServiceKey().Index, signer)
+		require.NoError(t, err)
+
+		err = adapter.SendTransaction(context.Background(), *tx)
+		require.NoError(t, err)
+
+		result, err := b.ExecuteNextTransaction()
+		require.NoError(t, err)
+		require.Error(t, result.Error)
+
+		require.ErrorContains(t, result.Error, "value of type `&EVM` has no member `store`")
+	})
+}
