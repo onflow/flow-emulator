@@ -65,6 +65,7 @@ func GenerateDefaultServiceKey(
 
 	return ServiceKey{
 		PrivateKey: privateKey,
+		PublicKey:  privateKey.PublicKey(),
 		SigAlgo:    sigAlgo,
 		HashAlgo:   hashAlgo,
 	}
@@ -75,19 +76,9 @@ func (s ServiceKey) Signer() (sdkcrypto.Signer, error) {
 }
 
 func (s ServiceKey) AccountKey() *flowsdk.AccountKey {
-
-	var publicKey sdkcrypto.PublicKey
-	if s.PublicKey != nil {
-		publicKey = s.PublicKey
-	}
-
-	if s.PrivateKey != nil {
-		publicKey = s.PrivateKey.PublicKey()
-	}
-
 	return &flowsdk.AccountKey{
 		Index:          s.Index,
-		PublicKey:      publicKey,
+		PublicKey:      s.PublicKey,
 		SigAlgo:        s.SigAlgo,
 		HashAlgo:       s.HashAlgo,
 		Weight:         s.Weight,
