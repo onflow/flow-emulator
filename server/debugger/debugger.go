@@ -35,7 +35,9 @@ type Debugger struct {
 	logger      *zerolog.Logger
 	emulator    emulator.Emulator
 	port        int
+	mu          sync.Mutex // protects listener and stopped
 	listener    net.Listener
+	stopped     bool
 	quit        chan interface{}
 	wg          sync.WaitGroup
 	stopOnce    sync.Once
@@ -58,7 +60,15 @@ func (d *Debugger) Start() (err error) {
 	if err != nil {
 		return err
 	}
+	d.mu.Lock()
 	d.listener = listener
+	alreadyStopped := d.stopped
+	d.mu.Unlock()
+
+	if alreadyStopped {
+		return listener.Close()
+	}
+
 	defer func() {
 		err = listener.Close()
 	}()
@@ -127,8 +137,12 @@ func (d *Debugger) handleConnection(conn net.Conn) {
 func (d *Debugger) Stop() {
 	d.stopOnce.Do(func() {
 		close(d.quit)
-		if d.listener != nil {
-			_ = d.listener.Close()
+		d.mu.Lock()
+		l := d.listener
+		d.stopped = true
+		d.mu.Unlock()
+		if l != nil {
+			_ = l.Close()
 		}
 		for _, conn := range d.connections {
 			_ = conn.Close()
