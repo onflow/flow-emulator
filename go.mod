@@ -4,7 +4,7 @@ go 1.25.1
 
 require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
-	github.com/fxamacker/cbor/v2 v2.9.1-0.20251019205732-39888e6be013
+	github.com/fxamacker/cbor/v2 v2.9.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/go-dap v0.11.0
 	github.com/gorilla/mux v1.8.1
