@@ -13,7 +13,7 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/onflow/cadence v1.10.2
 	github.com/onflow/crypto v0.25.4
-	github.com/onflow/flow-core-contracts/lib/go/templates v1.9.3
+	github.com/onflow/flow-core-contracts/lib/go/templates v1.10.1
 	github.com/onflow/flow-go v0.47.0-ledger-service.1.0.20260415182425-f08ee47a2bec
 	github.com/onflow/flow-go-sdk v1.10.2
 	github.com/onflow/flow-nft/lib/go/contracts v1.3.0
@@ -151,8 +151,8 @@ require (
 	github.com/onflow/flow-core-contracts/lib/go/contracts v1.9.3 // indirect
 	github.com/onflow/flow-evm-bridge v0.1.0 // indirect
 	github.com/onflow/flow-ft/lib/go/contracts v1.0.1 // indirect
-	github.com/onflow/flow-ft/lib/go/templates v1.0.1 // indirect
-	github.com/onflow/flow-nft/lib/go/templates v1.3.0 // indirect
+	github.com/onflow/flow-ft/lib/go/templates v1.1.0 // indirect
+	github.com/onflow/flow-nft/lib/go/templates v1.4.1 // indirect
 	github.com/onflow/go-ethereum v1.13.4 // indirect
 	github.com/onflow/nft-storefront/lib/go/contracts v1.0.0 // indirect
 	github.com/onflow/sdks v0.6.0-preview.1 // indirect
