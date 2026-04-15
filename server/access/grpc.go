@@ -29,6 +29,7 @@ import (
 	"github.com/onflow/flow-go/engine/access/state_stream/backend"
 	"github.com/onflow/flow-go/engine/access/subscription"
 	flowgo "github.com/onflow/flow-go/model/flow"
+	"github.com/onflow/flow-go/module/limiters"
 	mockModule "github.com/onflow/flow-go/module/mock"
 	accessproto "github.com/onflow/flow/protobuf/go/flow/access"
 	"github.com/onflow/flow/protobuf/go/flow/executiondata"
@@ -66,8 +67,13 @@ func NewGRPCServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 	me := new(mockModule.Local)
 	me.On("NodeID").Return(flowgo.ZeroID)
 
+	limiter, err := limiters.NewConcurrencyLimiter(subscription.DefaultMaxGlobalStreams)
+	if err != nil {
+		panic(err)
+	}
+
 	legacyaccessproto.RegisterAccessAPIServer(grpcServer, legacyaccess.NewHandler(adapter, chain))
-	accessproto.RegisterAccessAPIServer(grpcServer, rpc.NewHandler(adapter, chain, mockHeaderCache{}, me, subscription.DefaultMaxGlobalStreams))
+	accessproto.RegisterAccessAPIServer(grpcServer, rpc.NewHandler(adapter, chain, mockHeaderCache{}, me, limiter))
 
 	grpcprometheus.Register(grpcServer)
 
@@ -85,7 +91,7 @@ func NewGRPCServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 		HeartbeatInterval:    subscription.DefaultHeartbeatInterval,
 	}
 	streamBackend := NewStateStreamBackend(blockchain, *logger)
-	handler := backend.NewHandler(streamBackend, chain, streamConfig)
+	handler := backend.NewHandler(streamBackend, chain, streamConfig, limiter)
 	executiondata.RegisterExecutionDataAPIServer(grpcServer, handler)
 
 	return &GRPCServer{
