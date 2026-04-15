@@ -4,18 +4,18 @@ go 1.25.1
 
 require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
-	github.com/fxamacker/cbor/v2 v2.9.1-0.20251019205732-39888e6be013
+	github.com/fxamacker/cbor/v2 v2.9.2-0.20260331174317-a78e92ec038e
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/go-dap v0.11.0
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.10.0
+	github.com/onflow/cadence v1.10.2
 	github.com/onflow/crypto v0.25.4
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.9.3
-	github.com/onflow/flow-go v0.47.0-ledger-service.1.0.20260320214141-968222a41c12
-	github.com/onflow/flow-go-sdk v1.10.0
+	github.com/onflow/flow-go v0.47.0-ledger-service.1.0.20260415182425-f08ee47a2bec
+	github.com/onflow/flow-go-sdk v1.10.2
 	github.com/onflow/flow-nft/lib/go/contracts v1.3.0
 	github.com/onflow/flow/protobuf/go/flow v0.4.20
 	github.com/prometheus/client_golang v1.23.2
@@ -26,7 +26,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/atomic v1.11.0
 	go.uber.org/mock v0.6.0
-	google.golang.org/grpc v1.79.2
+	google.golang.org/grpc v1.79.3
 	modernc.org/sqlite v1.46.1
 )
 
@@ -146,7 +146,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/onflow/atree v0.14.0 // indirect
+	github.com/onflow/atree v0.16.0 // indirect
 	github.com/onflow/fixed-point v0.1.1 // indirect
 	github.com/onflow/flow-core-contracts/lib/go/contracts v1.9.3 // indirect
 	github.com/onflow/flow-evm-bridge v0.1.0 // indirect
@@ -220,7 +220,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gonum.org/v1/gonum v0.16.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260203192932-546029d2fa20 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260203192932-546029d2fa20 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
