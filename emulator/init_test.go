@@ -106,7 +106,7 @@ func TestInitialization(t *testing.T) {
 		// Submit a transaction adds some ledger state and event state
 		script := fmt.Sprintf(
 			`
-                import 0x%s
+                import Counting from 0x%s
 
                 transaction {
 
@@ -193,7 +193,7 @@ func TestInitialization(t *testing.T) {
 		t.Run("should be able to read ledger state", func(t *testing.T) {
 			readScript := fmt.Sprintf(
 				`
-                  import 0x%s
+                  import Counting from 0x%s
 
                   access(all) fun main(): Int {
                       return getAccount(0x%s).capabilities.borrow<&Counting.Counter>(/public/counter)?.count ?? 0

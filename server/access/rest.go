@@ -36,6 +36,7 @@ import (
 	flowgo "github.com/onflow/flow-go/model/flow"
 	"github.com/onflow/flow-go/module"
 	"github.com/onflow/flow-go/module/irrecoverable"
+	"github.com/onflow/flow-go/module/limiters"
 	"github.com/onflow/flow-go/module/metrics"
 	modutil "github.com/onflow/flow-go/module/util"
 	"github.com/prometheus/client_golang/prometheus"
@@ -125,6 +126,11 @@ func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 		}
 	}()
 
+	limiter, err := limiters.NewConcurrencyLimiter(subscription.DefaultMaxGlobalStreams)
+	if err != nil {
+		return nil, err
+	}
+
 	srv, err := rest.NewServer(
 		irrCtx,
 		adapter,
@@ -144,6 +150,7 @@ func NewRestServer(logger *zerolog.Logger, blockchain *emulator.Blockchain, adap
 		true,
 		websockets.NewDefaultWebsocketConfig(),
 		nil,
+		limiter,
 	)
 
 	if err != nil {
