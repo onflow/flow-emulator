@@ -105,7 +105,7 @@ func Test_Checkpoint_Storage(t *testing.T) {
 
 	addTwoScript := fmt.Sprintf(
 		`
-            import 0x%s
+            import Counting from 0x%s
 
             transaction {
                 prepare(signer: auth(Storage, Capabilities) &Account) {

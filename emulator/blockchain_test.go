@@ -68,7 +68,7 @@ const counterScript = `
 func GenerateAddTwoToCounterScript(counterAddress flowsdk.Address) string {
 	return fmt.Sprintf(
 		`
-            import 0x%s
+            import Counting from 0x%s
 
             transaction {
                 prepare(signer: auth(Storage, Capabilities) &Account) {
@@ -111,7 +111,7 @@ func DeployAndGenerateAddTwoScript(t *testing.T, adapter *adapters.SDKAdapter) (
 func GenerateGetCounterCountScript(counterAddress flowsdk.Address, accountAddress flowsdk.Address) string {
 	return fmt.Sprintf(
 		`
-            import 0x%s
+            import Counting from 0x%s
 
             access(all) fun main(): Int {
                 return getAccount(0x%s).capabilities.borrow<&Counting.Counter>(/public/counter)?.count ?? 0
