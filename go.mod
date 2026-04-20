@@ -3,7 +3,7 @@ module github.com/onflow/flow-emulator
 go 1.25.1
 
 require (
-	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0
 	github.com/fxamacker/cbor/v2 v2.9.2-0.20260331174317-a78e92ec038e
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/go-dap v0.11.0
