@@ -1,13 +1,20 @@
-<br />
+# flow-emulator — Local Flow Network for Development
+
+[![License](https://img.shields.io/github/license/onflow/flow-emulator.svg)](https://github.com/onflow/flow-emulator/blob/master/LICENSE)
+[![Release](https://img.shields.io/github/v/release/onflow/flow-emulator)](https://github.com/onflow/flow-emulator/releases)
+[![Discord](https://img.shields.io/badge/Discord-Flow-5865F2?logo=discord&logoColor=white)](https://discord.gg/flow)
+[![Built on Flow](https://img.shields.io/badge/Built%20on-Flow-00EF8B)](https://flow.com)
+[![Go Reference](https://pkg.go.dev/badge/github.com/onflow/flow-emulator.svg)](https://pkg.go.dev/github.com/onflow/flow-emulator)
+
 <p align="center">
-  <a href="https://docs.onflow.org/emulator/">
-    <img src="docs/emulator-banner.svg" alt="Logo" width="410" height="auto">
+  <a href="https://developers.flow.com/tools/emulator">
+    <img src="docs/emulator-banner.svg" alt="Flow Emulator" width="410" height="auto">
   </a>
 
   <p align="center">
-    <i>The Flow Emulator is a lightweight tool that emulates the behaviour of the real Flow network.</i>
+    <i>The Flow Emulator. Lightweight local Flow network for development and testing. Pair with Flow CLI and FCL for the full local dev loop.</i>
     <br />
-    <a href="https://docs.onflow.org/emulator/"><strong>Read the docs»</strong></a>
+    <a href="https://developers.flow.com/tools/emulator"><strong>Read the docs»</strong></a>
     <br />
     <br />
     <a href="https://github.com/onflow/flow-emulator/issues">Report Bug</a>
@@ -16,6 +23,16 @@
   </p>
 <br />
 <br />
+
+## TL;DR
+
+- **What:** A lightweight local Flow network that implements the Flow Access API with near feature parity to mainnet and testnet.
+- **Who it's for:** Cadence smart contract developers, Flow dApp builders, and teams running local integration tests.
+- **Why use it:** Run transactions, scripts, and tests locally without deploying to a live network. Snapshot and roll back state, fork mainnet/testnet, and integrate with Flow CLI and FCL.
+- **Status:** see [Releases](https://github.com/onflow/flow-emulator/releases) for the latest version.
+- **License:** Apache-2.0.
+- **Related repos:** [onflow/flow-cli](https://github.com/onflow/flow-cli), [onflow/flow-go-sdk](https://github.com/onflow/flow-go-sdk), [onflow/cadence](https://github.com/onflow/cadence)
+- The reference local development emulator for the Flow network, open-sourced since 2019.
 
 ### The Emulator
 
@@ -48,10 +65,10 @@ values.
 | `--log-format`                    | `FLOW_LOGFORMAT`                     | `text`         | Output log format (valid values `text`, `JSON`)                                                                                                                                                               |
 | `--block-time`, `-b`              | `FLOW_BLOCKTIME`                     | `0`            | Time between sealed blocks. Valid units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`                                                                                                                         |
 | `--contracts`                     | `FLOW_WITHCONTRACTS`                 | `false`        | Start with contracts like [ExampleNFT](https://github.com/onflow/flow-nft/blob/master/contracts/NonFungibleToken.cdc) when the emulator starts                                                                |
-| `--service-priv-key`              | `FLOW_SERVICEPRIVATEKEY`             | random         | Private key used for the [service account](https://docs.onflow.org/flow-token/concepts/#flow-service-account)                                                                                                 |
-| `--service-sig-algo`              | `FLOW_SERVICEKEYSIGALGO`             | `ECDSA_P256`   | Service account key [signature algorithm](https://docs.onflow.org/cadence/language/crypto/#signing-algorithms)                                                                                                |
-| `--service-hash-algo`             | `FLOW_SERVICEKEYHASHALGO`            | `SHA3_256`     | Service account key [hash algorithm](https://docs.onflow.org/cadence/language/crypto/#hashing)                                                                                                                |
-| `--init`                          | `FLOW_INIT`                          | `false`        | Generate and set a new [service account](https://docs.onflow.org/flow-token/concepts/#flow-service-account)                                                                                                   |
+| `--service-priv-key`              | `FLOW_SERVICEPRIVATEKEY`             | random         | Private key used for the [service account](https://developers.flow.com/build/basics/fees#service-account)                                                                                                    |
+| `--service-sig-algo`              | `FLOW_SERVICEKEYSIGALGO`             | `ECDSA_P256`   | Service account key [signature algorithm](https://cadence-lang.org/docs/language/crypto)                                                                                                                      |
+| `--service-hash-algo`             | `FLOW_SERVICEKEYHASHALGO`            | `SHA3_256`     | Service account key [hash algorithm](https://cadence-lang.org/docs/language/crypto)                                                                                                                           |
+| `--init`                          | `FLOW_INIT`                          | `false`        | Generate and set a new [service account](https://developers.flow.com/build/basics/fees#service-account)                                                                                                       |
 | `--rest-debug`                    | `FLOW_RESTDEBUG`                     | `false`        | Enable REST API debugging output                                                                                                                                                                              |
 | `--grpc-debug`                    | `FLOW_GRPCDEBUG`                     | `false`        | Enable gRPC server reflection for debugging with grpc_cli                                                                                                                                                     |
 | `--persist`                       | `FLOW_PERSIST`                       | false          | Enable persistence of the state between restarts                                                                                                                                                              |
@@ -59,12 +76,12 @@ values.
 | `--dbpath`                        | `FLOW_DBPATH`                        | `./flowdb`     | Specify path for the database file persisting the state                                                                                                                                                       |
 | `--simple-addresses`              | `FLOW_SIMPLEADDRESSES`               | `false`        | Use sequential addresses starting with `0x1`                                                                                                                                                                  |
 | `--token-supply`                  | `FLOW_TOKENSUPPLY`                   | `1000000000.0` | Initial FLOW token supply                                                                                                                                                                                     |
-| `--transaction-expiry`            | `FLOW_TRANSACTIONEXPIRY`             | `10`           | [Transaction expiry](https://docs.onflow.org/flow-go-sdk/building-transactions/#reference-block), measured in blocks                                                                                          |
-| `--storage-limit`                 | `FLOW_STORAGELIMITENABLED`           | `true`         | Enable [account storage limit](https://docs.onflow.org/cadence/language/accounts/#storage-limit)                                                                                                              |
+| `--transaction-expiry`            | `FLOW_TRANSACTIONEXPIRY`             | `10`           | [Transaction expiry](https://developers.flow.com/build/basics/transactions), measured in blocks                                                                                                               |
+| `--storage-limit`                 | `FLOW_STORAGELIMITENABLED`           | `true`         | Enable [account storage limit](https://developers.flow.com/build/basics/accounts)                                                                                                                             |
 | `--storage-per-flow`              | `FLOW_STORAGEMBPERFLOW`              |                | Specify size of the storage in MB for each FLOW in account balance. Default value from the flow-go                                                                                                            |
 | `--min-account-balance`           | `FLOW_MINIMUMACCOUNTBALANCE`         |                | Specify minimum balance the account must have. Default value from the flow-go                                                                                                                                 |
 | `--transaction-fees`              | `FLOW_TRANSACTIONFEESENABLED`        | `false`        | Enable variable transaction fees and execution effort metering <br> as described in [Variable Transaction Fees: Execution Effort](https://github.com/onflow/flow/pull/753) FLIP                               |
-| `--transaction-max-compute-limit` | `FLOW_TRANSACTIONMAXCOMPUTELIMIT`    | `9999`         | Maximum [compute limit for transactions](https://docs.onflow.org/flow-go-sdk/building-transactions/#gas-limit)                                                                                                |
+| `--transaction-max-compute-limit` | `FLOW_TRANSACTIONMAXCOMPUTELIMIT`    | `9999`         | Maximum [compute limit for transactions](https://developers.flow.com/build/basics/transactions)                                                                                                               |
 | `--script-compute-limit`          | `FLOW_SCRIPTCOMPUTELIMIT`            | `100000`       | Specify compute limit for script execution                                                                                                                                                                    |
 | ~~`--transaction-max-gas-limit`~~ | ~~`FLOW_TRANSACTIONMAXGASLIMIT`~~    | `9999`         | **Deprecated:** Use `--transaction-max-compute-limit` instead                                                                                                                                                 |
 | ~~`--script-gas-limit`~~          | ~~`FLOW_SCRIPTGASLIMIT`~~            | `100000`       | **Deprecated:** Use `--script-compute-limit` instead                                                                                                                                                          |
@@ -85,18 +102,18 @@ values.
     
 ## Running the emulator with the Flow CLI
 
-The emulator is bundled with the [Flow CLI](https://docs.onflow.org/flow-cli), a command-line interface for working with
+The emulator is bundled with the [Flow CLI](https://developers.flow.com/tools/flow-cli), a command-line interface for working with
 Flow.
 
 ### Installation
 
-Follow [these steps](https://docs.onflow.org/flow-cli/install/) to install the Flow CLI.
+Follow [these steps](https://developers.flow.com/tools/flow-cli/install) to install the Flow CLI.
 
 ### Starting the server
 
 Starting the emulator by using Flow CLI also leverages CLI configuration file `flow.json`.
 You can use the `flow.json` to specify the service account which will be reused between restarts.
-Read more about CLI configuration [here](https://docs.onflow.org/flow-cli/configuration/).
+Read more about CLI configuration [here](https://developers.flow.com/tools/flow-cli/flow.json/configuration).
 
 You can start the emulator with the Flow CLI:
 
@@ -111,7 +128,7 @@ You need to make sure the configuration `flow.json` exists, or create it beforeh
 You can start the emulator in your project context by running the above command
 in the same directory as `flow.json`. This will configure the emulator with your
 project's service account, meaning you can use it to sign and submit transactions.
-Read more about the project and configuration [here](https://docs.onflow.org/flow-cli/configuration/).
+Read more about the project and configuration [here](https://developers.flow.com/tools/flow-cli/flow.json/configuration).
 
 ## Using Emulator in Go
 
@@ -347,3 +364,35 @@ This will cause execution to pause at the debugger for any transaction or script
 ## Development
 
 Read [contributing document](./CONTRIBUTING.md).
+
+## FAQ
+
+**What is the Flow Emulator?**
+It is a local Flow network that implements the Flow Access API, allowing you to develop and test Cadence smart contracts and Flow applications without connecting to testnet or mainnet.
+
+**How do I start the emulator?**
+Install the [Flow CLI](https://developers.flow.com/tools/flow-cli) and run `flow emulator` in your project directory. The emulator can also be run via Docker or embedded as a Go module.
+
+**Can I fork mainnet or testnet?**
+Yes. Use `--fork-host` with the gRPC access node address (for example `access.mainnet.nodes.onflow.org:9000`) to fork from a live network. Pin a specific block with `--fork-height`.
+
+**How do I persist emulator state between restarts?**
+Start the emulator with the `--persist` flag. You can customize the database path with `--dbpath` or use Redis via `--redis-url`.
+
+**Does the emulator support snapshots?**
+Yes. Run with `--persist` and `--snapshot` to create named snapshots and roll back state via the admin API. This is useful for test setup and teardown.
+
+**How do I enable Cadence code coverage?**
+Run the emulator with `--coverage-reporting` and read the report from `http://localhost:8080/emulator/codeCoverage`.
+
+**How do I debug Cadence transactions?**
+Add the `#debugger()` pragma to your transaction or script and connect with VSCode or Flow CLI to pause execution at that point.
+
+## About Flow
+
+This repo is part of the [Flow network](https://flow.com), a Layer 1 blockchain built for consumer applications, AI Agents, and DeFi at scale.
+
+- Developer docs: https://developers.flow.com
+- Cadence language: https://cadence-lang.org
+- Community: [Flow Discord](https://discord.gg/flow) · [Flow Forum](https://forum.flow.com)
+- Governance: [Flow Improvement Proposals](https://github.com/onflow/flips)
