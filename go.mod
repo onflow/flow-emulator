@@ -11,11 +11,11 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/onflow/cadence v1.10.3
+	github.com/onflow/cadence v1.10.5
 	github.com/onflow/crypto v0.25.4
 	github.com/onflow/flow-core-contracts/lib/go/templates v1.10.3
-	github.com/onflow/flow-go v0.48.1-evm-cache-block.0.20260602223212-19c6bdbbe069
-	github.com/onflow/flow-go-sdk v1.10.3
+	github.com/onflow/flow-go v0.50.1-0.20260727121002-7305484aa748
+	github.com/onflow/flow-go-sdk v1.10.5
 	github.com/onflow/flow-nft/lib/go/contracts v1.4.1
 	github.com/onflow/flow/protobuf/go/flow v0.4.20
 	github.com/prometheus/client_golang v1.23.2
@@ -146,7 +146,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/onflow/atree v0.16.0 // indirect
+	github.com/onflow/atree v0.16.1 // indirect
 	github.com/onflow/fixed-point v0.1.1 // indirect
 	github.com/onflow/flow-core-contracts/lib/go/contracts v1.10.3 // indirect
 	github.com/onflow/flow-evm-bridge v0.2.1 // indirect

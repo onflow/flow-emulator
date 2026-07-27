@@ -23,6 +23,7 @@ import (
 
 	"github.com/onflow/flow-go-sdk/test"
 	"github.com/onflow/flow-go/fvm"
+	"github.com/onflow/flow-go/fvm/meter"
 	"github.com/onflow/flow/protobuf/go/flow/entities"
 	"github.com/stretchr/testify/assert"
 
@@ -53,11 +54,13 @@ func TestVm(t *testing.T) {
 
 				txnId := flowgo.Identifier(idGenerator.New())
 				output := fvm.ProcedureOutput{
-					Logs:            []string{"TestLog1", "TestLog2"},
-					Events:          []flowgo.Event{event1, event2},
-					ComputationUsed: 5,
-					MemoryEstimate:  1211,
-					Err:             nil,
+					MeteringResult: meter.MeteringResult{
+						ComputationUsed: 5,
+						MemoryEstimate:  1211,
+					},
+					Logs:   []string{"TestLog1", "TestLog2"},
+					Events: []flowgo.Event{event1, event2},
+					Err:    nil,
 				}
 
 				tr, err := convert.VMTransactionResultToEmulator(txnId, output)
