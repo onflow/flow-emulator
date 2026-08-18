@@ -38,7 +38,7 @@ type Debugger struct {
 	mu          sync.Mutex // protects listener and stopped
 	listener    net.Listener
 	stopped     bool
-	quit        chan interface{}
+	quit        chan any
 	wg          sync.WaitGroup
 	stopOnce    sync.Once
 	connections []net.Conn
@@ -49,7 +49,7 @@ func New(logger *zerolog.Logger, emulator emulator.Emulator, port int) *Debugger
 		logger:   logger,
 		emulator: emulator,
 		port:     port,
-		quit:     make(chan interface{}),
+		quit:     make(chan any),
 	}
 }
 
@@ -92,11 +92,9 @@ func (d *Debugger) serve() {
 				d.logger.Fatal().Err(err).Msg("failed to accept")
 			}
 		} else {
-			d.wg.Add(1)
-			go func() {
+			d.wg.Go(func() {
 				d.handleConnection(conn)
-				d.wg.Done()
-			}()
+			})
 		}
 	}
 }

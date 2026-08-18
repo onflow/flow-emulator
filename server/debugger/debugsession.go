@@ -99,11 +99,9 @@ func (s *session) handleRequest() error {
 
 	s.logger.Trace().Msgf("DAP request: %#+v", request)
 
-	s.sendWg.Add(1)
-	go func() {
+	s.sendWg.Go(func() {
 		s.dispatchRequest(request)
-		s.sendWg.Done()
-	}()
+	})
 
 	return nil
 }

@@ -81,9 +81,9 @@ func TestConcurrentStoreAccess(t *testing.T) {
 		wg.Add(1)
 		go func(idx int, store *Store) {
 			defer wg.Done()
-			for j := 0; j < numOps; j++ {
-				key := []byte(fmt.Sprintf("key-%d-%d", idx, j))
-				value := []byte(fmt.Sprintf("value-%d-%d", idx, j))
+			for j := range numOps {
+				key := fmt.Appendf(nil, "key-%d-%d", idx, j)
+				value := fmt.Appendf(nil, "value-%d-%d", idx, j)
 				err := store.SetBytes(ctx, storeName, key, value)
 				assert.NoError(t, err, "store %d write %d failed", idx, j)
 			}
@@ -96,10 +96,10 @@ func TestConcurrentStoreAccess(t *testing.T) {
 		wg.Add(1)
 		go func(idx int, store *Store) {
 			defer wg.Done()
-			for si := 0; si < numStores; si++ {
-				for j := 0; j < numOps; j++ {
-					key := []byte(fmt.Sprintf("key-%d-%d", si, j))
-					expected := []byte(fmt.Sprintf("value-%d-%d", si, j))
+			for si := range numStores {
+				for j := range numOps {
+					key := fmt.Appendf(nil, "key-%d-%d", si, j)
+					expected := fmt.Appendf(nil, "value-%d-%d", si, j)
 					val, err := store.GetBytes(ctx, storeName, key)
 					assert.NoError(t, err, "store %d read key-%d-%d failed", idx, si, j)
 					assert.Equal(t, expected, val)

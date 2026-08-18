@@ -755,7 +755,7 @@ func (a *AccessAdapter) subscribeBlocksFromLatest(ctx context.Context, getData s
 }
 
 func (a *AccessAdapter) getBlockResponse(blockStatus flowgo.BlockStatus) subscription.GetDataByHeightFunc {
-	return func(_ context.Context, height uint64) (interface{}, error) {
+	return func(_ context.Context, height uint64) (any, error) {
 		block, err := a.getBlock(height, blockStatus)
 		if err != nil {
 			return nil, err
@@ -771,7 +771,7 @@ func (a *AccessAdapter) getBlockResponse(blockStatus flowgo.BlockStatus) subscri
 }
 
 func (a *AccessAdapter) getBlockHeaderResponse(blockStatus flowgo.BlockStatus) subscription.GetDataByHeightFunc {
-	return func(_ context.Context, height uint64) (interface{}, error) {
+	return func(_ context.Context, height uint64) (any, error) {
 		header, err := a.getBlockHeader(height, blockStatus)
 		if err != nil {
 			return nil, err
@@ -787,7 +787,7 @@ func (a *AccessAdapter) getBlockHeaderResponse(blockStatus flowgo.BlockStatus) s
 }
 
 func (a *AccessAdapter) getBlockDigestResponse(blockStatus flowgo.BlockStatus) subscription.GetDataByHeightFunc {
-	return func(_ context.Context, height uint64) (interface{}, error) {
+	return func(_ context.Context, height uint64) (any, error) {
 		header, err := a.getBlockHeader(height, blockStatus)
 		if err != nil {
 			return nil, err
@@ -920,7 +920,7 @@ func (a *AccessAdapter) getTransactionStatusResponse(
 ) subscription.GetDataByHeightFunc {
 	lastStatus := flowgo.TransactionStatusUnknown
 
-	return func(ctx context.Context, height uint64) (interface{}, error) {
+	return func(ctx context.Context, height uint64) (any, error) {
 		// Check if block is ready
 		if err := a.validateHeight(height, flowgo.BlockStatusSealed); err != nil {
 			return nil, err

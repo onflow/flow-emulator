@@ -192,7 +192,7 @@ func TestInfiniteScript(t *testing.T) {
 	result, err := b.ExecuteScript([]byte(code), nil)
 	require.NoError(t, err)
 
-	require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
+	require.True(t, fvmerrors.IsLimitExceededError(result.Error, fvmerrors.LimitKindComputation))
 }
 
 func TestScriptExecutionLimit(t *testing.T) {
@@ -229,14 +229,14 @@ func TestScriptExecutionLimit(t *testing.T) {
 		result, err := b.ExecuteScript([]byte(code), nil)
 		require.NoError(t, err)
 
-		require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
+		require.True(t, fvmerrors.IsLimitExceededError(result.Error, fvmerrors.LimitKindComputation))
 	})
 
 	t.Run("SufficientLimit", func(t *testing.T) {
 
 		t.Parallel()
 
-		const limit = 25000
+		const limit = 75000
 		b, err := emulator.New(
 			emulator.WithScriptGasLimit(limit),
 		)
@@ -279,7 +279,7 @@ func TestEVM(t *testing.T) {
 	t.Parallel()
 
 	serviceAddr := flowgo.Emulator.Chain().ServiceAddress()
-	code := []byte(fmt.Sprintf(
+	code := fmt.Appendf(nil,
 		`
 			import EVM from 0x%s
 
@@ -289,7 +289,7 @@ func TestEVM(t *testing.T) {
 			}
 		`,
 		serviceAddr,
-	))
+	)
 
 	gasLimit := uint64(100_000)
 

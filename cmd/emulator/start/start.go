@@ -316,7 +316,7 @@ func initLogger(verbose bool) *zerolog.Logger {
 		return &logger
 	default:
 		writer := zerolog.ConsoleWriter{Out: os.Stdout}
-		writer.FormatMessage = func(i interface{}) string {
+		writer.FormatMessage = func(i any) string {
 			if i == nil {
 				return ""
 			}

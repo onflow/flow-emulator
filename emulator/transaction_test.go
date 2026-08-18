@@ -335,7 +335,7 @@ func TestSubmitTransaction_Invalid(t *testing.T) {
 		require.NoError(t, err)
 
 		// commit blocks until expiry window is exceeded
-		for i := 0; i < expiry+1; i++ {
+		for range expiry + 1 {
 			_, _, err := b.ExecuteAndCommitBlock()
 			require.NoError(t, err)
 		}
@@ -1134,13 +1134,13 @@ func TestSubmitTransaction_Arguments(t *testing.T) {
 	}
 
 	script := func(argType cadence.Type) []byte {
-		return []byte(fmt.Sprintf(`
+		return fmt.Appendf(nil, `
             transaction(x: %s) {
               execute {
                 log(x)
               }
             }
-		`, argType.ID()))
+		`, argType.ID())
 	}
 
 	for _, tt := range tests {
@@ -1461,7 +1461,7 @@ func TestGetTxByBlockIDMethods(t *testing.T) {
 	submittedTx := make([]*flowsdk.Transaction, 0)
 
 	// submit 5 tx to be executed in a single block
-	for i := uint64(0); i < 5; i++ {
+	for range uint64(5) {
 		tx := flowsdk.NewTransaction().
 			SetScript([]byte(code)).
 			SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
@@ -1606,7 +1606,7 @@ func TestHelloWorld_NewAccount(t *testing.T) {
 
 	accountKey = account.Keys[0]
 
-	callHelloCode := []byte(fmt.Sprintf(callHelloTxTemplate, newAccountAddress.Hex()))
+	callHelloCode := fmt.Appendf(nil, callHelloTxTemplate, newAccountAddress.Hex())
 	callHelloTx := flowsdk.NewTransaction().
 		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetScript(callHelloCode).
@@ -1730,7 +1730,7 @@ func TestHelloWorld_UpdateAccount(t *testing.T) {
 
 	accountKey.SequenceNumber++
 
-	callHelloCode := []byte(fmt.Sprintf(callHelloTxTemplate, newAccountAddress.Hex()))
+	callHelloCode := fmt.Appendf(nil, callHelloTxTemplate, newAccountAddress.Hex())
 	callHelloTx := flowsdk.NewTransaction().
 		SetComputeLimit(flowgo.DefaultMaxTransactionGasLimit).
 		SetScript(callHelloCode).
@@ -1802,7 +1802,7 @@ func TestInfiniteTransaction(t *testing.T) {
 	result, err := b.ExecuteNextTransaction()
 	assert.NoError(t, err)
 
-	require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
+	require.True(t, fvmerrors.IsLimitExceededError(result.Error, fvmerrors.LimitKindComputation))
 }
 
 func TestTransactionExecutionLimit(t *testing.T) {
@@ -1866,13 +1866,13 @@ func TestTransactionExecutionLimit(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
+		require.True(t, fvmerrors.IsLimitExceededError(result.Error, fvmerrors.LimitKindComputation))
 	})
 
 	t.Run("SufficientLimit", func(t *testing.T) {
 		t.Parallel()
 
-		const limit = 25000
+		const limit = 75000
 
 		b, adapter := setupTransactionTests(
 			t,
@@ -2152,7 +2152,7 @@ func TestEVMTransaction(t *testing.T) {
 	t.Parallel()
 
 	serviceAddr := flowgo.Emulator.Chain().ServiceAddress()
-	code := []byte(fmt.Sprintf(
+	code := fmt.Appendf(nil,
 		`
 		import EVM from %s
 
@@ -2164,7 +2164,7 @@ func TestEVMTransaction(t *testing.T) {
 		}
 	 `,
 		serviceAddr.HexWithPrefix(),
-	))
+	)
 
 	b, adapter := setupTransactionTests(t)
 
@@ -2215,7 +2215,7 @@ func TestEVMTestHelpersEnabled(t *testing.T) {
 		)
 
 		// Create a COA and call EVM.store on it in a single transaction.
-		code := []byte(fmt.Sprintf(
+		code := fmt.Appendf(nil,
 			`
 			import EVM from %s
 
@@ -2232,7 +2232,7 @@ func TestEVMTestHelpersEnabled(t *testing.T) {
 			}
 			`,
 			serviceAddr.HexWithPrefix(),
-		))
+		)
 
 		tx := flowsdk.NewTransaction().
 			SetScript(code).
@@ -2265,7 +2265,7 @@ func TestEVMTestHelpersEnabled(t *testing.T) {
 
 		// When test helpers are disabled, EVM.store is not defined on the contract,
 		// so this transaction should fail.
-		code := []byte(fmt.Sprintf(
+		code := fmt.Appendf(nil,
 			`
 			import EVM from %s
 
@@ -2281,7 +2281,7 @@ func TestEVMTestHelpersEnabled(t *testing.T) {
 			}
 			`,
 			serviceAddr.HexWithPrefix(),
-		))
+		)
 
 		genArr := make([]cadence.Value, 20)
 		for i := range genArr {

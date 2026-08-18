@@ -1,5 +1,4 @@
 //go:build wasm
-// +build wasm
 
 /*
  * Flow Emulator

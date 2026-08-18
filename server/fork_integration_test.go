@@ -24,6 +24,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -165,13 +166,7 @@ func TestForkingAgainstTestnet(t *testing.T) {
 	require.NoError(t, readResults[0].Error)
 
 	logs := readResults[0].Logs
-	found := false
-	for _, l := range logs {
-		if l == "true" {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(logs, "true")
 	require.True(t, found, "Should have successfully read stored value")
 }
 
@@ -482,13 +477,7 @@ func TestForkWithPersist(t *testing.T) {
 	require.True(t, readResults[0].Succeeded(), "Persist read transaction should succeed")
 
 	logs := readResults[0].Logs
-	found := false
-	for _, l := range logs {
-		if l == "true" {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(logs, "true")
 	require.True(t, found, "Should have found stored value from SQLite cache, logs: %v", logs)
 }
 

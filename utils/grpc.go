@@ -53,7 +53,7 @@ func retryInterceptor(
 	var lastErr error
 	backoff := defaultInitialBackoff
 
-	for attempt := 0; attempt < defaultMaxAttempts; attempt++ {
+	for attempt := range defaultMaxAttempts {
 		if attempt > 0 {
 			// Wait before retry
 			select {
@@ -62,10 +62,7 @@ func retryInterceptor(
 				return ctx.Err()
 			}
 			// Exponential backoff with cap
-			backoff = time.Duration(float64(backoff) * defaultBackoffFactor)
-			if backoff > defaultMaxBackoff {
-				backoff = defaultMaxBackoff
-			}
+			backoff = min(time.Duration(float64(backoff)*defaultBackoffFactor), defaultMaxBackoff)
 		}
 
 		lastErr = invoker(ctx, method, req, reply, cc, opts...)

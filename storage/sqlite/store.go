@@ -1,5 +1,4 @@
 //go:build !JS
-// +build !JS
 
 /*
  * Flow Emulator
@@ -192,8 +191,8 @@ func (s *Store) Snapshots() (snapshots []string, err error) {
 			continue
 		}
 
-		if strings.HasPrefix(file.Name(), snapshotPrefix) {
-			snapshotName := strings.TrimPrefix(file.Name(), snapshotPrefix)
+		if after, ok := strings.CutPrefix(file.Name(), snapshotPrefix); ok {
+			snapshotName := after
 			snapshots = append(snapshots, snapshotName)
 		}
 

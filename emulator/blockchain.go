@@ -34,7 +34,9 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -1507,12 +1509,8 @@ func (b *Blockchain) commitBlock() (*flowgo.Block, error) {
 		if err != nil {
 			return nil, err
 		}
-		for id, result := range convertedResults {
-			systemTransactionResults[id] = result
-		}
-		for id, t := range tx {
-			systemTransactionBodies[id] = t
-		}
+		maps.Copy(systemTransactionResults, convertedResults)
+		maps.Copy(systemTransactionBodies, tx)
 
 		// Append scheduled tx IDs in execution order
 		systemTransactionIDs = append(systemTransactionIDs, orderedIDs...)
@@ -1995,13 +1993,7 @@ func (b *Blockchain) GetSystemTransaction(txID flowgo.Identifier, blockID flowgo
 	}
 
 	// Check if the transaction is in the system transactions list
-	found := false
-	for _, id := range systemTxs.Transactions {
-		if id == txID {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(systemTxs.Transactions, txID)
 
 	if !found {
 		return nil, &types.TransactionNotFoundError{ID: txID}
@@ -2037,13 +2029,7 @@ func (b *Blockchain) GetSystemTransactionResult(txID flowgo.Identifier, blockID 
 	}
 
 	// Check if the transaction is in the system transactions list
-	found := false
-	for _, id := range systemTxs.Transactions {
-		if id == txID {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(systemTxs.Transactions, txID)
 
 	if !found {
 		return nil, &types.TransactionNotFoundError{ID: txID}
