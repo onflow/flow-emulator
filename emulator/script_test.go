@@ -279,7 +279,7 @@ func TestEVM(t *testing.T) {
 	t.Parallel()
 
 	serviceAddr := flowgo.Emulator.Chain().ServiceAddress()
-	code := []byte(fmt.Sprintf(
+	code := fmt.Appendf(nil,
 		`
 			import EVM from 0x%s
 
@@ -289,7 +289,7 @@ func TestEVM(t *testing.T) {
 			}
 		`,
 		serviceAddr,
-	))
+	)
 
 	gasLimit := uint64(100_000)
 

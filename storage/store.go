@@ -184,19 +184,19 @@ func (s *DefaultKeyGenerator) ForkedBlock() []byte {
 }
 
 func (s *DefaultKeyGenerator) BlockHeight(blockHeight uint64) []byte {
-	return []byte(fmt.Sprintf("%032d", blockHeight))
+	return fmt.Appendf(nil, "%032d", blockHeight)
 }
 
 func (s *DefaultKeyGenerator) Identifier(id flowgo.Identifier) []byte {
-	return []byte(fmt.Sprintf("%x", id))
+	return fmt.Appendf(nil, "%x", id)
 }
 
 func (s *DefaultKeyGenerator) ScheduledTransactionID(scheduledTxID uint64) []byte {
-	return []byte(fmt.Sprintf("scheduled_tx_%d", scheduledTxID))
+	return fmt.Appendf(nil, "scheduled_tx_%d", scheduledTxID)
 }
 
 func (s *DefaultKeyGenerator) SystemTransactionResult(blockID flowgo.Identifier, txID flowgo.Identifier) []byte {
-	return []byte(fmt.Sprintf("system_tx_result_%x_%x", blockID, txID))
+	return fmt.Appendf(nil, "system_tx_result_%x_%x", blockID, txID)
 }
 
 type DefaultStore struct {

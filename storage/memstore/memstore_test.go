@@ -50,10 +50,8 @@ func TestMemstore(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < 100; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 100 {
+		wg.Go(func() {
 
 			snapshot, err := store.LedgerByHeight(
 				context.Background(),
@@ -63,7 +61,7 @@ func TestMemstore(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, value, actualValue)
-		}()
+		})
 	}
 
 	wg.Wait()

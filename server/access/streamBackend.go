@@ -337,7 +337,7 @@ func (b *StateStreamBackend) SubscribeExecutionDataFromLatest(ctx context.Contex
 	return b.newSubscriptionByLatestHeight(ctx, b.getExecutionDataResponse)
 }
 
-func (b *StateStreamBackend) getExecutionDataResponse(ctx context.Context, height uint64) (interface{}, error) {
+func (b *StateStreamBackend) getExecutionDataResponse(ctx context.Context, height uint64) (any, error) {
 	executionData, err := b.getExecutionData(ctx, height)
 	if err != nil {
 		return nil, fmt.Errorf("could not get execution data for block %d: %w", height, err)
@@ -367,7 +367,7 @@ func (b *StateStreamBackend) SubscribeEvents(ctx context.Context, startBlockID f
 }
 
 func (b *StateStreamBackend) getEventsResponseFactory(filter state_stream.EventFilter) subscription.GetDataByHeightFunc {
-	return func(ctx context.Context, height uint64) (interface{}, error) {
+	return func(ctx context.Context, height uint64) (any, error) {
 		executionData, err := b.getExecutionData(ctx, height)
 		if err != nil {
 			return nil, fmt.Errorf("could not get execution data for block %d: %w", height, err)
@@ -394,7 +394,7 @@ func (b *StateStreamBackend) getEventsResponseFactory(filter state_stream.EventF
 func (b *StateStreamBackend) getAccountStatusResponseFactory(
 	filter state_stream.AccountStatusFilter,
 ) subscription.GetDataByHeightFunc {
-	return func(ctx context.Context, height uint64) (interface{}, error) {
+	return func(ctx context.Context, height uint64) (any, error) {
 		executionData, err := b.getExecutionData(ctx, height)
 		if err != nil {
 			return nil, fmt.Errorf("could not get execution data for block %d: %w", height, err)

@@ -1043,7 +1043,7 @@ func TestImportAccountCode(t *testing.T) {
 	address, err := adapter.CreateAccount(context.Background(), nil, accountContracts)
 	require.NoError(t, err)
 
-	script := []byte(fmt.Sprintf(`
+	script := fmt.Appendf(nil, `
 		// address imports can omit leading zeros
 		import Computer from 0x%s
 
@@ -1055,7 +1055,7 @@ func TestImportAccountCode(t *testing.T) {
 			}
 		  }
 		}
-	`, address))
+	`, address)
 
 	tx := flowsdk.NewTransaction().
 		SetScript(script).
