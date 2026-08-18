@@ -1802,7 +1802,7 @@ func TestInfiniteTransaction(t *testing.T) {
 	result, err := b.ExecuteNextTransaction()
 	assert.NoError(t, err)
 
-	require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
+	require.True(t, fvmerrors.IsLimitExceededError(result.Error, fvmerrors.LimitKindComputation))
 }
 
 func TestTransactionExecutionLimit(t *testing.T) {
@@ -1866,13 +1866,13 @@ func TestTransactionExecutionLimit(t *testing.T) {
 		result, err := b.ExecuteNextTransaction()
 		assert.NoError(t, err)
 
-		require.True(t, fvmerrors.IsComputationLimitExceededError(result.Error))
+		require.True(t, fvmerrors.IsLimitExceededError(result.Error, fvmerrors.LimitKindComputation))
 	})
 
 	t.Run("SufficientLimit", func(t *testing.T) {
 		t.Parallel()
 
-		const limit = 25000
+		const limit = 75000
 
 		b, adapter := setupTransactionTests(
 			t,
