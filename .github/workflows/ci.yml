@@ -17,7 +17,7 @@ on:
       - "release/**"
 
 env:
-  GO_VERSION: 1.25
+  GO_VERSION: 1.26
 
 jobs:
   test:
@@ -55,7 +55,7 @@ jobs:
         uses: golangci/golangci-lint-action@v9
         with:
           # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
-          version: v2.4
+          version: v2.12
           args: --timeout=10m
 
   docker:
